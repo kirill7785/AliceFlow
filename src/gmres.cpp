@@ -64,9 +64,9 @@ float128 Scal(float128* v1, float128* v2, integer n) {
 
 // умножение матрицы на вектор
 // используется формат хранения CRS
-// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
+// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером n*n.
 // Число уравнений равно числу неизвестных и равно n.
-// Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+// У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 void MatrixCRSByVector(float128* val, integer* col_ind, integer* row_ptr, float128* V, float128*& tmp, integer n)
 {
 
@@ -261,7 +261,7 @@ float Scal(float *v1, float *v2, integer n) {
 
 // умножение матрицы на вектор
 // используется формат хранения CRS
-// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
+// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером n*n.
 // Число уравнений равно числу неизвестных и равно n.
 // Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 /*
@@ -308,9 +308,9 @@ void MatrixCRSByVector(doublerealT1* val, integer* col_ind, integer* row_ptr, do
 
 // умножение матрицы на вектор
 // используется формат хранения CRS
-// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
+// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером n*n.
 // Число уравнений равно числу неизвестных и равно n.
-// Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+// У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, double* V, double* &tmp, integer n)
 {
 
@@ -352,9 +352,9 @@ void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, double* 
 
 // умножение матрицы на вектор
 // используется формат хранения CRS
-// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
+// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером n*n.
 // Число уравнений равно числу неизвестных и равно n.
-// Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+// У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 void MatrixCRSByVector(long double* val, integer* col_ind, integer* row_ptr, long double* V, long double*& tmp, integer n)
 {
 
@@ -395,7 +395,7 @@ void MatrixCRSByVector(long double* val, integer* col_ind, integer* row_ptr, lon
 } // MatrixCRSByVector
 
 
-  // Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+  // У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 void MatrixCRSByVector(float* val, integer* col_ind, integer* row_ptr, float* V, float* &tmp, integer n)
 {
 
@@ -435,7 +435,7 @@ void MatrixCRSByVector(float* val, integer* col_ind, integer* row_ptr, float* V,
 	//return tmp;
 } // MatrixCRSByVector
 
-  // Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+  // У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, float* V, float* &tmp, integer n)
 {
 
@@ -476,7 +476,7 @@ void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, float* V
 } // MatrixCRSByVector
 
 
-// 13 сентября 2017 года. Алгоритм Саада и Шульца.
+// 13 сентября 2017 года. Алгоритм Юсефа Саада и Мартина Г. Шульца.
 // Заимствован из iterative template library. 
 // Выделение и уничтожение памяти происходит внутри алгоритма.
 //*****************************************************************
@@ -834,7 +834,7 @@ void ApplyPlaneRotation(float &dx, float &dy, float &cs, float &sn)
 // Если использовать gmres с предобуславливателем AINV Bridson то нужно брать m_restart=32. 
 // Так рекомендуют в статье для решения уравнений теплопередачи с числом неизвестных до 1.5М.
 // Если использовать GMRES в качестве предобуславливателя то рекомендуют брать m_restart=2.
-// Даный метод существенно замедляется при увеличении числа итераций. Например он не сходится на Диффузионно дрейфовой модели для 
+// Данный метод существенно замедляется при увеличении числа итераций. Например он не сходится на Диффузионно дрейфовой модели для 
 // материала GaN в то время как BiCGStab сходится.
 template <typename doublerealT>
 integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, doublerealT *dV, doublerealT* &dX0,
@@ -1133,7 +1133,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound,
 	bool &bOkfgmres_amg1r5, BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
-	// информирует внешний вызывающий код сощелся алгоритм или нет.
+	// информирует внешний вызывающий код сошелся алгоритм или нет.
 	bOkfgmres_amg1r5 = false;
 
 	// 31 декабря 2017.
@@ -1252,7 +1252,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 										/*                  -- MOST OF THE OFF-DIAGONAL ENTRIES <= 0 ; */
 										/*                  -- ROWSUMS SHOULD BE >= 0 . */
 
-										// Матрица L положительно определённая : диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
+										// Матрица L положительно определённая: диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
 										// Сумма коэффициентов в строке больше либо равна нулю - диагональное преобладание.
 
 
@@ -1961,7 +1961,7 @@ L20:
 
 	if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+		printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -2226,7 +2226,7 @@ L20:
 			// Совсем без предобуславливателя.
 			//for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = v[i][i_1];
 
-			// Закоментировано без предобуславливания.
+			// закомментировано без предобуславливания.
 			//w = A * Z[i];
 			MatrixCRSByVector(val75, col_ind75, row_ptr75, Z[i], w, n75); // результат занесён в  w
 
@@ -2698,7 +2698,7 @@ L70:
 										/*                  -- MOST OF THE OFF-DIAGONAL ENTRIES <= 0 ; */
 										/*                  -- ROWSUMS SHOULD BE >= 0 . */
 
-										// Матрица L положительно определённая : диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
+										// Матрица L положительно определённая: диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
 										// Сумма коэффициентов в строке больше либо равна нулю - диагональное преобладание.
 
 
@@ -3371,7 +3371,7 @@ L20:
 
 	if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+		printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -3634,7 +3634,7 @@ L20:
 			// Совсем без предобуславливателя.
 			//for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = v[i][i_1];
 
-			// Закоментировано без предобуславливания.
+			// закомментировано без предобуславливания.
 			//w = A * Z[i];
 			MatrixCRSByVector(val75, col_ind75, row_ptr75, Z[i], w, n75); // результат занесён в  w
 

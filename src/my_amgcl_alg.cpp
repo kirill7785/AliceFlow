@@ -970,7 +970,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
 		printf("precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
 		break;
-	default : // smoothed aggregation
+	default: // smoothed aggregation
 		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
 		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
 		printf("precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
@@ -978,11 +978,11 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	}
 	
 	switch (my_amg_manager.amgcl_smoother) {
-	case 0 : // spai0
+	case 0: // spai0
 		amgcl_params_sets(prm, "precond.relax.type", "spai0");
 		printf("precond.relax.type==spai0. \n");
 		break;
-	case 1 : // ilu0
+	case 1: // ilu0
 		amgcl_params_sets(prm, "precond.relax.type", "ilu0");
 		printf("precond.relax.type==ilu0. \n");
 		break;
@@ -1013,14 +1013,14 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		amgcl_params_seti(prm, "precond.relax.k", 2);
 		printf("precond.relax.type==ilu(k==2).\n");
 		break;
-	default :	amgcl_params_sets(prm, "precond.relax.type", "spai0");
+	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
 		printf("precond.relax.type==spai0. \n");
 		break;
 	}
 	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
 	//amgcl_params_seti(prm, "solver.L", 1);
 	switch (my_amg_manager.amgcl_iterator) {
-	case 0 : // BiCGStab
+	case 0: // BiCGStab
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
 		printf("solver.type==bicgstab.\n");
 		break;
@@ -1028,7 +1028,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		amgcl_params_sets(prm, "solver.type", "fgmres");
 		printf("solver.type==fgmres.\n");
 		break;
-	default :
+	default:
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
 		printf("solver.type=bicgstab.\n");
 		break;

@@ -6,20 +6,20 @@
 
 // 
 // Коррекцию скорости надо разделить на две процедуры.
-// Первая процедура для внутренних КО. При этом используется интерполляция для 
+// Первая процедура для внутренних КО. При этом используется интерполяция для 
 // значений поправки давления на границе расчётной области. 
 // 
 // Вторая процедура коррекции для граничных КО. С интерполяцией скорости изнутри области на границу.
 // Коррекцию граничных КО можно и отключить, т.к. она может не понадобиться.
 // Возможно расчёт будет правилен даже в случае отсутствия коррекции граничных узлов.
 // Это нужно проверить непосредственно путём численного расчёта.
-// На данный момент решено включить коррекцию скорости на границе путём интерполляции изнутри области.
+// На данный момент решено включить коррекцию скорости на границе путём интерполяции изнутри области.
 
 // Коррекция граничных КО включена.
-// По поводу корекции граничных КО смотри mysolver SIMPLE Algorithm.
+// По поводу коррекции граничных КО смотри mysolver SIMPLE Algorithm.
 // В этом файле исправлены все интерполяционные формулы с 
 // учётом предельного перехода к предельным случаям.
-// Квадратичная интерполляция, увеличивающая скорость сходимости, введена в этом модуле 13,14,15 мая 2012 года.
+// Квадратичная интерполяция, увеличивающая скорость сходимости, введена в этом модуле 13,14,15 мая 2012 года.
 
 #ifndef CORRECT_VELOCITYv_0_07_CPP
 #define CORRECT_VELOCITYv_0_07_CPP 1
@@ -27,22 +27,23 @@
 
 
 // коррекция скорости для внутренних КО.
-// Скоректированные скорости удовлетворяют уравнению 
+// скорректированные скорости удовлетворяют уравнению 
 // несжимаемости.
 void correct_internal_volume(integer iP, integer iVar, equation3D** sl,   
 			 integer** nvtx, doublereal** &potent, integer maxelm, doublereal* alpha,
-			 TOCHKA* pa, ALICE_PARTITION** sosedi, integer iternumber) {
+			 TOCHKA* pa, ALICE_PARTITION** neighbors_for_the_internal_node, integer iternumber,
+	ORDER_DERIVATIVE iderivative_pressure) {
 
-    // квадратичная интерполляция добавлена 14 мая 2012 года.
-	// Ещё как вариант можно применить МНК интерполляцию (построить прямую по трём точкам).
-	integer interpol=0; // 0 - без всякой интерполляции, 1- линейная интерполляция, 2- квадратичная интерполляция.
+    // квадратичная интерполяция добавлена 14 мая 2012 года.
+	// Ещё как вариант можно применить МНК интерполяцию (построить прямую по трём точкам).
+	integer interpol=0; // 0 - без всякой интерполяции, 1- линейная интерполяция, 2- квадратичная интерполяция.
 
 	// Внимание можно использовать и второй порядок тоже. формула из книги Г.З.Гарбера  
 	// работает. Формула из книги Г.З. Гарбера обеспечивает точность производной от 
 	// поправки давления второго порядка на неравномерной сетке (она найдена как производная 
 	// от параболы построенная по трём точкам).
 	// порядок точности нахождения первой производной от давления.
-	integer iderivative_pressure=1; // 1 - первый порядок, 2 - второй порядок.
+	//integer iderivative_pressure=1; // 1 - первый порядок, 2 - второй порядок.
 
 
     // Внутренний узел и его соседи:
@@ -50,8 +51,8 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 
     // iP - номер центрального контрольного объёма
 	integer iE=-1, iN=-1, iT=-1, iW=-1, iS=-1, iB=-1; // номера соседних контрольных объёмов
-	iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	// индексировать соседей для поправки давления 
 	// ненужно, т.к. они уже проиндексированы в 
 	// my_elmatr_quad_PAm...
@@ -112,9 +113,9 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 
 	doublereal ds=0.0, dl=0.0, dv=0.0; // площадь грани, длина интервала и объём контрольного объёма.
 	switch (iVar) {
-       case VX : ds=dy*dz; dv=ds*dx; dl=dx; break;
-       case VY : ds=dx*dz; dv=ds*dy; dl=dy;  break;
-       case VZ : ds=dx*dy; dv=ds*dz; dl=dz;  break;
+       case VX: ds=dy*dz; dv=ds*dx; dl=dx; break;
+       case VY: ds=dx*dz; dv=ds*dy; dl=dy;  break;
+       case VZ: ds=dx*dy; dv=ds*dz; dl=dz;  break;
 	}
 
 	
@@ -158,20 +159,20 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		case 0: // значение которое получено после решения СЛАУ.
 			    PAmW=potent[PAM][iW]; 
 			    break;
-		case 1 : // линейная интерполляция
+		case 1: // линейная интерполяция
 		         center_cord3D(iP, nvtx, pa, pp,100);
 		         center_cord3D(iE, nvtx, pa, pb,ESIDE);
 		         PAmW=my_linear_interpolation('-', potent[PAM][iP], potent[PAM][iE], pp.x, pb.x, pp.x-0.5*dx); 
 			    break;
-		case 2 : // квадратичная интерполляция.
+		case 2: // квадратичная интерполяция.
 
 		         center_cord3D(iP, nvtx, pa, pp,100);
 		         center_cord3D(iE, nvtx, pa, pb,ESIDE);
-			     center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
+			     center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
 					
-			     PAmW=my_quadratic_interpolation('-', potent[PAM][sosedi[ESIDE][iE].iNODE1], potent[PAM][iE], potent[PAM][iP], pbb.x , pb.x, pp.x, pp.x-0.5*dx); 
+			     PAmW=my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[PAM][iE], potent[PAM][iP], pbb.x , pb.x, pp.x, pp.x-0.5*dx); 
 			    break;
-		default : // значение которое получено после решения СЛАУ.
+		default: // значение которое получено после решения СЛАУ.
 			      PAmW=potent[PAM][iW];
 			    break;
 		} // end switch
@@ -190,25 +191,25 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		TOCHKA pp,pb,pbb;
 
 		switch (interpol) {
-		case 0 : // значение которое получено после решения СЛАУ. 
+		case 0: // значение которое получено после решения СЛАУ. 
 			    PAmE=potent[PAM][iE];
 			    break;
-		case 1 : // линейная интерполяция
+		case 1: // линейная интерполяция
 
 		         center_cord3D(iP, nvtx, pa, pp,100);
 		         center_cord3D(iW, nvtx, pa, pb,WSIDE);
 		         PAmE=my_linear_interpolation('+', potent[PAM][iP], potent[PAM][iW], pp.x, pb.x, pp.x+0.5*dx);
 
 			    break;
-		case 2 : // квадратичная интерполляция.
+		case 2: // квадратичная интерполяция.
 						     
 		         center_cord3D(iP, nvtx, pa, pp,100);
 		         center_cord3D(iW, nvtx, pa, pb,WSIDE);
-				 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
+				 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
 					
-				 PAmE = my_quadratic_interpolation('+', potent[PAM][sosedi[WSIDE][iW].iNODE1], potent[PAM][iW], potent[PAM][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+				 PAmE = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[PAM][iW], potent[PAM][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 			    break;
-		default : // значение которое получено после решения СЛАУ.
+		default: // значение которое получено после решения СЛАУ.
 			     PAmE=potent[PAM][iE]; 
 			     break;
 		}
@@ -227,10 +228,10 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		TOCHKA pp,pb,pbb;
 
 		switch (interpol) {
-		case 0 : // значение которое получено после решения СЛАУ.  
+		case 0: // значение которое получено после решения СЛАУ.  
 			    PAmS=potent[PAM][iS];
 			    break;
-		case 1 :
+		case 1:
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
@@ -238,17 +239,17 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		        PAmS=my_linear_interpolation('-', potent[PAM][iP], potent[PAM][iN], pp.y, pb.y, pp.y-0.5*dy);
 
 			    break;
-		case 2 :  
-			    // квадратичная интерполляция.
+		case 2:  
+			    // квадратичная интерполяция.
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iN, nvtx, pa, pb,NSIDE);
-				center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb,NN);
+				center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb,NN);
 					
-				PAmS = my_quadratic_interpolation('-', potent[PAM][sosedi[NSIDE][iN].iNODE1], potent[PAM][iN], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+				PAmS = my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[PAM][iN], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
 			    break;
-		default : // значение которое получено после решения СЛАУ. 
+		default: // значение которое получено после решения СЛАУ. 
 			    PAmS=potent[PAM][iS];
 			    break;
 		}
@@ -267,26 +268,26 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		TOCHKA pp,pb,pbb;
 
 		switch (interpol) {
-		case 0 : // значение которое получено после решения СЛАУ. 
+		case 0: // значение которое получено после решения СЛАУ. 
 			    PAmN=potent[PAM][iN];
 			    break;
-		case 1 :
+		case 1:
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iS, nvtx, pa, pb,SSIDE);
 		        PAmN=my_linear_interpolation('+', potent[PAM][iP], potent[PAM][iS], pp.y, pb.y, pp.y+0.5*dy);
 			    break;
-		case 2 :
-			    // квадратичная интерполляция.
+		case 2:
+			    // квадратичная интерполяция.
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iS, nvtx, pa, pb,SSIDE);
-				center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
+				center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
 					
-				PAmN = my_quadratic_interpolation('+', potent[PAM][sosedi[SSIDE][iS].iNODE1], potent[PAM][iS], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+				PAmN = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[PAM][iS], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 			    break;
-		default : 
+		default: 
 			    // значение которое получено после решения СЛАУ. 
 			    PAmN=potent[PAM][iN];
 			    break;
@@ -308,26 +309,26 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		TOCHKA pp,pb,pbb;
 
 		switch (interpol) {
-		case 0 :
+		case 0:
 			    // значение которое получено после решения СЛАУ. 
 			    PAmB=potent[PAM][iB];
 			    break;
-		case 1 : 
+		case 1: 
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iT, nvtx, pa, pb,TSIDE);
 		        PAmB=my_linear_interpolation('-', potent[PAM][iP], potent[PAM][iT], pp.z, pb.z, pp.z-0.5*dz);
 			    break;
-		case 2 : // квадратичная интерполляция.
+		case 2: // квадратичная интерполяция.
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iT, nvtx, pa, pb,TSIDE);
-				center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb,TTSIDE);
+				center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb,TTSIDE);
 					
-				PAmB = my_quadratic_interpolation('-', potent[PAM][sosedi[TSIDE][iT].iNODE1], potent[PAM][iT], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+				PAmB = my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[PAM][iT], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 			    break;
-		default :
+		default:
 			    // значение которое получено после решения СЛАУ. 
 			    PAmB=potent[PAM][iB];
 			    break;
@@ -347,25 +348,25 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		TOCHKA pp,pb,pbb;
 
 		switch (interpol) {
-		case 0 : // значение которое получено после решения СЛАУ. 
+		case 0: // значение которое получено после решения СЛАУ. 
 			    PAmT=potent[PAM][iT];
 			    break;
-		case 1 : 
+		case 1: 
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iB, nvtx, pa, pb,BSIDE);
 		        PAmT=my_linear_interpolation('+', potent[PAM][iP], potent[PAM][iB], pp.z, pb.z, pp.z+0.5*dz);
 			    break;
-		case 2 :// квадратичная интерполляция.
+		case 2:// квадратичная интерполяция.
                 
 		        center_cord3D(iP, nvtx, pa, pp,100);
 		        center_cord3D(iB, nvtx, pa, pb,BSIDE);
-				center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
+				center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
 					
-				PAmT = my_quadratic_interpolation('+', potent[PAM][sosedi[BSIDE][iB].iNODE1], potent[PAM][iB], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+				PAmT = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[PAM][iB], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 			    break;
-		default : // значение которое получено после решения СЛАУ. 
+		default: // значение которое получено после решения СЛАУ. 
 			     PAmT=potent[PAM][iT];
 			    break;
 		} 
@@ -379,39 +380,39 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	// Линейная интерполяция давления на грань КО.
 	doublereal deltaP=0.0, gradP=0.0;
 	switch (iVar) {
-		case VX : if (iderivative_pressure==1) {
+		case VX: if (iderivative_pressure== FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 				      deltaP=(fwplus*PAmW+(1-fwplus)*PAmP);
 			          deltaP-=(feplus*PAmE+(1-feplus)*PAmP); 
 				      gradP=deltaP/dl; // первая производная от давления.
 				  }
-				  else if (iderivative_pressure==2) {
+				  else if (iderivative_pressure== SECOND_ORDER) {
 					  // аппроксимация второго порядка точности.
 					  // обязательно нужен знак минус иначе скорость
 					  // будет направлена в другую сторону.
 					  gradP=-rgradF(PAmW, PAmP, PAmE, hxminus, hxplus);
 				  }
 				  break;
-		case VY : if (iderivative_pressure==1) {
+		case VY: if (iderivative_pressure== FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 				      deltaP=(fsplus*PAmS+(1-fsplus)*PAmP);
 			          deltaP-=(fnplus*PAmN+(1-fnplus)*PAmP);
 				      gradP=deltaP/dl; // первая производная от давления.
 				  }
-				  else if (iderivative_pressure==2) {
+				  else if (iderivative_pressure== SECOND_ORDER) {
 					  // аппроксимация второго порядка точности.
 					  // обязательно нужен знак минус иначе скорость
 					  // будет направлена в другую сторону.
 					  gradP=-rgradF(PAmS, PAmP, PAmN, hyminus, hyplus);
 				  }
 			      break;
-        case VZ : if (iderivative_pressure==1) {
+        case VZ: if (iderivative_pressure== FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 			          deltaP=(fbplus*PAmB+(1-fbplus)*PAmP);
 			          deltaP-=(ftplus*PAmT+(1-ftplus)*PAmP);
 				      gradP=deltaP/dl; // первая производная от давления.
 				  }
-				  else if (iderivative_pressure==2) {
+				  else if (iderivative_pressure== SECOND_ORDER) {
 					  // аппроксимация второго порядка точности.
 					  // обязательно нужен знак минус иначе скорость
 					  // будет направлена в другую сторону.
@@ -447,18 +448,18 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	// выполнению граничных условий. А именно 1. если в граничном узле
 	// по скорости стоит условие Дирихле то никакой коррекции скорости 
 	// в граничном узле не требуется. 2. если в граничном узле по скорости
-	// стоит однородное условие Неймана то необходимо снести скоректированную 
+	// стоит однородное условие Неймана то необходимо снести скорректированную 
 	// скорость из ближайшего внутреннего узла в граничный.
 	
     
 } // correct_internal_volume
 
 // коррекция скорости для внутренних КО.
-// Скоректированные скорости удовлетворяют уравнению 
+// скорректированные скорости удовлетворяют уравнению 
 // несжимаемости.
 void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,   
 			 integer** nvtx, doublereal** &potent, integer maxelm, doublereal* alpha,
-			 TOCHKA* pa, ALICE_PARTITION** sosedi, integer iternumber) {
+			 TOCHKA* pa, ALICE_PARTITION** neighbors_for_the_internal_node, integer iternumber) {
 
 	// Процедура коррекции скорости во внутренних контрольных объёмах на 
 	// основе осреднённого градиента давления.
@@ -474,9 +475,9 @@ void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,
 
 	doublereal ds=0.0, dv=0.0; // площадь грани, длина интервала и объём контрольного объёма.
 	switch (iVar) {
-       case VX : ds=dy*dz; dv=ds*dx; break;
-       case VY : ds=dx*dz; dv=ds*dy; break;
-       case VZ : ds=dx*dy; dv=ds*dz; break;
+       case VX: ds=dy*dz; dv=ds*dx; break;
+       case VY: ds=dx*dz; dv=ds*dy; break;
+       case VZ: ds=dx*dy; dv=ds*dz; break;
 	}
 	
 	// Случай граничного узла G учитывается правильно,
@@ -485,11 +486,11 @@ void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,
 	// Линейная интерполяция давления на грань КО.
 	doublereal deltaP=0.0, gradP=0.0;
 	switch (iVar) {
-		case VX : gradP=-potent[GRADXPAM][iP];
+		case VX: gradP=-potent[GRADXPAM][iP];
 				  break;
-		case VY : gradP=-potent[GRADYPAM][iP];
+		case VY: gradP=-potent[GRADYPAM][iP];
 				  break;
-        case VZ : gradP=-potent[GRADZPAM][iP];
+        case VZ: gradP=-potent[GRADZPAM][iP];
 				  break;
 	}
 
@@ -520,14 +521,14 @@ void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,
 	// выполнению граничных условий. А именно 1. если в граничном узле
 	// по скорости стоит условие Дирихле то никакой коррекции скорости 
 	// в граничном узле не требуется. 2. если в граничном узле по скорости
-	// стоит однородное условие Неймана то необходимо снести скоректированную 
+	// стоит однородное условие Неймана то необходимо снести скорректированную 
 	// скорость из ближайшего внутреннего узла в граничный.
 	
     
 } // correct_internal_volume2
 
 // коррекция скорости для внутренних КО.
-// Скоректированные скорости удовлетворяют уравнению 
+// скорректированные скорости удовлетворяют уравнению 
 // несжимаемости (неразрывности).
 // begin 20 июня 2012 года.
 void correct_internal_volume3(integer iP, integer iVar, doublereal** prop,   
@@ -545,11 +546,11 @@ void correct_internal_volume3(integer iP, integer iVar, doublereal** prop,
 	// координатного направления.
 	doublereal gradP=0.0;
 	switch (iVar) {
-		case VX : gradP=-potent[GRADXPAM][iP];
+		case VX: gradP=-potent[GRADXPAM][iP];
 				  break;
-		case VY : gradP=-potent[GRADYPAM][iP];
+		case VY: gradP=-potent[GRADYPAM][iP];
 				  break;
-        case VZ : gradP=-potent[GRADZPAM][iP];
+        case VZ: gradP=-potent[GRADZPAM][iP];
 				  break;
 	}
 
@@ -583,21 +584,21 @@ void correct_internal_volume3(integer iP, integer iVar, doublereal** prop,
 	// играет роль гладкого ориентира к которому можно стремиться. См. Гаврилов Андрей.
 	// Если tau не сглаживать то возможна и весьма вероятна расходимость вычислительного
 	// процесса или утрата сходимости.
-	// В формуле для tau уже учитывается два варианта рабочего алгоритма : SIMPLE и SIMPLEC.
+	// В формуле для tau уже учитывается два варианта рабочего алгоритма: SIMPLE и SIMPLEC.
 	potent[iVar][iP]+=tau[iP]*gradP/prop[RHO][iP];
 
 	// Коррекция скорости в граничных узлах должна быть всецело подчинена
 	// выполнению граничных условий. А именно 1. если в граничном узле
 	// по скорости стоит условие Дирихле то никакой коррекции скорости 
 	// в граничном узле не требуется. 2. если в граничном узле по скорости
-	// стоит однородное условие Неймана то необходимо снести скоректированную 
+	// стоит однородное условие Неймана то необходимо снести скорректированную 
 	// скорость из ближайшего внутреннего узла в граничный.
 	
     
 } // correct_internal_volume3
 
 // коррекция скорости для внутренних КО.
-// Скоректированные скорости удовлетворяют уравнению 
+// скорректированные скорости удовлетворяют уравнению 
 // несжимаемости (неразрывности).
 // реализовано 23 июня 2012 года.
 // На основе сглаженного псевдовремени, а точнее
@@ -618,13 +619,13 @@ void correct_internal_volume4(integer iP, integer iVar, doublereal** prop,
 	doublereal gradPAM=0.0, tauP=0.0;
 	switch (iVar) {
 		// всё правильно перед градиентом именно знак минус.
-		case VX : gradPAM=-potent[GRADXPAM][iP];
+		case VX: gradPAM=-potent[GRADXPAM][iP];
 			      tauP=tau[VX][iP];
 				  break;
-		case VY : gradPAM=-potent[GRADYPAM][iP];
+		case VY: gradPAM=-potent[GRADYPAM][iP];
 			      tauP=tau[VY][iP];
 				  break;
-        case VZ : gradPAM=-potent[GRADZPAM][iP];
+        case VZ: gradPAM=-potent[GRADZPAM][iP];
 			      tauP=tau[VZ][iP];
 				  break;
 	}
@@ -659,14 +660,14 @@ void correct_internal_volume4(integer iP, integer iVar, doublereal** prop,
 	// играет роль гладкого ориентира к которому можно стремиться. См. Гаврилов Андрей.
 	// Если tau не сглаживать то возможна и весьма вероятна расходимость вычислительного
 	// процесса или утрата сходимости.
-	// В формуле для tau уже учитывается два варианта рабочего алгоритма : SIMPLE и SIMPLEC.
+	// В формуле для tau уже учитывается два варианта рабочего алгоритма: SIMPLE и SIMPLEC.
 	potent[iVar][iP]+=tauP*gradPAM/prop[RHO][iP];
 
 	// Коррекция скорости в граничных узлах должна быть всецело подчинена
 	// выполнению граничных условий. А именно 1. если в граничном узле
 	// по скорости стоит условие Дирихле то никакой коррекции скорости 
 	// в граничном узле не требуется. 2. если в граничном узле по скорости
-	// стоит однородное условие Неймана то необходимо снести скоректированную 
+	// стоит однородное условие Неймана то необходимо снести скорректированную 
 	// скорость из ближайшего внутреннего узла в граничный.
 	
     
@@ -676,8 +677,8 @@ void correct_internal_volume4(integer iP, integer iVar, doublereal** prop,
 // begin 25 июня 2012 года.
 // 8.12.2018 адаптация кода к АЛИС.
 void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal** tau,
-	TOCHKA* pa, ALICE_PARTITION** sosedi, integer** nvtx, integer maxelm,
-				BOUND* &sosedb, integer ls, integer lw, WALL* w, doublereal** prop_b,
+	TOCHKA* pa, ALICE_PARTITION** neighbors_for_the_internal_node, integer** nvtx, integer maxelm,
+				BOUND* &border_neighbor, integer ls, integer lw, WALL* w, doublereal** prop_b,
 	integer *ilevel_alice, integer* ptr) {
 
 					
@@ -694,20 +695,20 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 		// iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	    
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 
         // если с одной из сторон граница расчётной области 
@@ -937,7 +938,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bE) {
 				// граничный узел.
-				dSqe = sosedb[iE - maxelm].dS;
+				dSqe = border_neighbor[iE - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -945,7 +946,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqe = dy_loc * dz_loc;
@@ -963,7 +964,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bW) {
 				// граничный узел.
-				dSqw = sosedb[iW - maxelm].dS;
+				dSqw = border_neighbor[iW - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -971,7 +972,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqw = dy_loc * dz_loc;
@@ -988,7 +989,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bN) {
 				// граничный узел.
-				dSqn = sosedb[iN - maxelm].dS;
+				dSqn = border_neighbor[iN - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -996,7 +997,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqn = dx_loc * dz_loc;
@@ -1013,7 +1014,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bS) {
 				// граничный узел.
-				dSqs = sosedb[iS - maxelm].dS;
+				dSqs = border_neighbor[iS - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -1021,7 +1022,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqs = dx_loc * dz_loc;
@@ -1038,7 +1039,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bT) {
 				// граничный узел.
-				dSqt = sosedb[iT - maxelm].dS;
+				dSqt = border_neighbor[iT - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -1046,7 +1047,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqt = dx_loc * dy_loc;
@@ -1063,7 +1064,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bB) {
 				// граничный узел.
-				dSqb = sosedb[iB - maxelm].dS;
+				dSqb = border_neighbor[iB - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -1071,7 +1072,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqb = dx_loc * dy_loc;
@@ -1091,7 +1092,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bE2) {
 				// граничный узел.
-				dSqe2 = sosedb[iE2 - maxelm].dS;
+				dSqe2 = border_neighbor[iE2 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -1099,7 +1100,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqe2 = dy_loc * dz_loc;
@@ -1115,7 +1116,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bW) {
 				// граничный узел.
-				dSqw2 = sosedb[iW - maxelm].dS;
+				dSqw2 = border_neighbor[iW - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -1123,7 +1124,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqw2 = dy_loc * dz_loc;
@@ -1140,7 +1141,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bN2) {
 				// граничный узел.
-				dSqn2 = sosedb[iN2 - maxelm].dS;
+				dSqn2 = border_neighbor[iN2 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -1148,7 +1149,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqn2 = dx_loc * dz_loc;
@@ -1165,7 +1166,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bS2) {
 				// граничный узел.
-				dSqs2 = sosedb[iS2 - maxelm].dS;
+				dSqs2 = border_neighbor[iS2 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -1173,7 +1174,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqs2 = dx_loc * dz_loc;
@@ -1190,7 +1191,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bT2) {
 				// граничный узел.
-				dSqt2 = sosedb[iT2 - maxelm].dS;
+				dSqt2 = border_neighbor[iT2 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -1198,7 +1199,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqt2 = dx_loc * dy_loc;
@@ -1215,7 +1216,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bB2) {
 				// граничный узел.
-				dSqb2 = sosedb[iB2 - maxelm].dS;
+				dSqb2 = border_neighbor[iB2 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -1223,7 +1224,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqb2 = dx_loc * dy_loc;
@@ -1244,7 +1245,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bE3) {
 				// граничный узел.
-				dSqe3 = sosedb[iE3 - maxelm].dS;
+				dSqe3 = border_neighbor[iE3 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -1252,7 +1253,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqe3 = dy_loc * dz_loc;
@@ -1269,7 +1270,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bW3) {
 				// граничный узел.
-				dSqw3 = sosedb[iW3 - maxelm].dS;
+				dSqw3 = border_neighbor[iW3 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -1277,7 +1278,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqw3 = dy_loc * dz_loc;
@@ -1294,7 +1295,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bN3) {
 				// граничный узел.
-				dSqn3 = sosedb[iN3 - maxelm].dS;
+				dSqn3 = border_neighbor[iN3 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -1302,7 +1303,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqn3 = dx_loc * dz_loc;
@@ -1319,7 +1320,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bS3) {
 				// граничный узел.
-				dSqs3 = sosedb[iS3 - maxelm].dS;
+				dSqs3 = border_neighbor[iS3 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -1327,7 +1328,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqs3 = dx_loc * dz_loc;
@@ -1344,7 +1345,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bT3) {
 				// граничный узел.
-				dSqt3 = sosedb[iT3 - maxelm].dS;
+				dSqt3 = border_neighbor[iT3 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -1352,7 +1353,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqt3 = dx_loc * dy_loc;
@@ -1369,7 +1370,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bB3) {
 				// граничный узел.
-				dSqb3 = sosedb[iB3 - maxelm].dS;
+				dSqb3 = border_neighbor[iB3 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -1377,7 +1378,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqb3 = dx_loc * dy_loc;
@@ -1397,7 +1398,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bE4) {
 				// граничный узел.
-				dSqe4 = sosedb[iE4 - maxelm].dS;
+				dSqe4 = border_neighbor[iE4 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -1405,7 +1406,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqe4 = dy_loc * dz_loc;
@@ -1422,7 +1423,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bW4) {
 				// граничный узел.
-				dSqw4 = sosedb[iW4 - maxelm].dS;
+				dSqw4 = border_neighbor[iW4 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -1430,7 +1431,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqw4 = dy_loc * dz_loc;
@@ -1447,7 +1448,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bN4) {
 				// граничный узел.
-				dSqn4 = sosedb[iN4 - maxelm].dS;
+				dSqn4 = border_neighbor[iN4 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -1455,7 +1456,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqn4 = dx_loc * dz_loc;
@@ -1472,7 +1473,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bS4) {
 				// граничный узел.
-				dSqs4 = sosedb[iS4 - maxelm].dS;
+				dSqs4 = border_neighbor[iS4 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -1480,7 +1481,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqs4 = dx_loc * dz_loc;
@@ -1497,7 +1498,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bT4) {
 				// граничный узел.
-				dSqt4 = sosedb[iT4 - maxelm].dS;
+				dSqt4 = border_neighbor[iT4 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -1505,7 +1506,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqt4 = dx_loc * dy_loc;
@@ -1522,7 +1523,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 			if (bB4) {
 				// граничный узел.
-				dSqb4 = sosedb[iB4 - maxelm].dS;
+				dSqb4 = border_neighbor[iB4 - maxelm].dS;
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -1530,7 +1531,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				}
 				else {
 					// вычисление размеров соседнего контрольного объёма:
-					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 					volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 					dSqb4 = dx_loc * dy_loc;
@@ -1771,20 +1772,20 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	for (integer iP=0; iP<maxelm; iP++) {
 		// iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	    
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
         // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
@@ -1844,16 +1845,16 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 				inumber = iE4 - maxelm;
 			}
 			if (inumber > -1) {
-				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
 					mfloc[iP][ESIDE] = relax_bound * (mfloc[iP][ESIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][ESIDE];
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
 					mfloc[iP][ESIDE] = 0.0;
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][ESIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
+					mfloc[iP][ESIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
@@ -1878,16 +1879,16 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 			}
 			if (inumber > -1) {
 
-				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
 					mfloc[iP][WSIDE] = relax_bound * (mfloc[iP][WSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][WSIDE];
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
 					mfloc[iP][WSIDE] = 0.0;
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][WSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
+					mfloc[iP][WSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
@@ -1912,16 +1913,16 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 			}
 			if (inumber > -1) {
 
-				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
 					mfloc[iP][NSIDE] = relax_bound * (mfloc[iP][NSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][NSIDE];
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
 					mfloc[iP][NSIDE] = 0.0;
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][NSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
+					mfloc[iP][NSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
@@ -1946,16 +1947,16 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 			}
 			if (inumber > -1) {
 
-				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
 					mfloc[iP][SSIDE] = relax_bound * (mfloc[iP][SSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][SSIDE];
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
 					mfloc[iP][SSIDE] = 0.0;
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][SSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
+					mfloc[iP][SSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
@@ -1980,16 +1981,16 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 			}
 			if (inumber > -1) {
 
-				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
 					mfloc[iP][TSIDE] = relax_bound * (mfloc[iP][TSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][TSIDE];
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
 					mfloc[iP][TSIDE] = 0.0;
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][TSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
+					mfloc[iP][TSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
@@ -2015,16 +2016,16 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 			}
 			if (inumber > -1) {
 
-				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
 					mfloc[iP][BSIDE] = relax_bound * (mfloc[iP][BSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][BSIDE];
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
 					mfloc[iP][BSIDE] = 0.0;
 				}
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][BSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
+					mfloc[iP][BSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
@@ -2061,7 +2062,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 // сетки со скоростью, считанной из load.txt файла.
 void iscorrectmf(doublereal** &mf,
 	integer maxelm,
-	ALICE_PARTITION** sosedi, BOUND* &sosedb,
+	ALICE_PARTITION** neighbors_for_the_internal_node, BOUND* &border_neighbor,
 	integer ls, integer lw, WALL* w) {
 	integer iP = 0;
 	integer inumber;
@@ -2071,27 +2072,27 @@ void iscorrectmf(doublereal** &mf,
 	// iP - номер центрального контрольного объёма
 	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-		iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+		iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+		iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 
 		if (iE > -1) {
 			if (iE >= maxelm) {
 				// граничный узел
 				inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2115,7 +2116,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iW >= maxelm) {
 				// граничный узел
 				inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2137,7 +2138,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iN >= maxelm) {
 				// граничный узел
 				inumber = iN - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2159,7 +2160,7 @@ void iscorrectmf(doublereal** &mf,
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
-			if (sosedb[inumber].MCB == (ls + lw)) {
+			if (border_neighbor[inumber].MCB == (ls + lw)) {
 				if (fabs(mf[iP][SSIDE]) > admission) {
 					if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2182,7 +2183,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iT >= maxelm) {
 				// граничный узел
 				inumber = iT - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2203,7 +2204,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iB >= maxelm) {
 				// граничный узел
 				inumber = iB - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2226,7 +2227,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iE2 >= maxelm) {
 				// граничный узел
 				inumber = iE2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2248,7 +2249,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iW2 >= maxelm) {
 				// граничный узел
 				inumber = iW2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2271,7 +2272,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iN2 >= maxelm) {
 				// граничный узел
 				inumber = iN2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2294,7 +2295,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iS2 >= maxelm) {
 				// граничный узел
 				inumber = iS2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][SSIDE])>admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2317,7 +2318,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iT2 >= maxelm) {
 				// граничный узел
 				inumber = iT2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2339,7 +2340,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iB2 >= maxelm) {
 				// граничный узел
 				inumber = iB2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2362,7 +2363,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iE3 >= maxelm) {
 				// граничный узел
 				inumber = iE3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2385,7 +2386,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iW3 >= maxelm) {
 				// граничный узел
 				inumber = iW3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2408,7 +2409,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iN3 >= maxelm) {
 				// граничный узел
 				inumber = iN3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2431,7 +2432,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iS3 >= maxelm) {
 				// граничный узел
 				inumber = iS3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][SSIDE])>admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2454,7 +2455,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iT3 >= maxelm) {
 				// граничный узел
 				inumber = iT3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2476,7 +2477,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iB3 >= maxelm) {
 				// граничный узел
 				inumber = iB3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2499,7 +2500,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iE4 >= maxelm) {
 				// граничный узел
 				inumber = iE4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2522,7 +2523,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iW4 >= maxelm) {
 				// граничный узел
 				inumber = iW4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2545,7 +2546,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iN4 >= maxelm) {
 				// граничный узел
 				inumber = iN4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2568,7 +2569,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iS4 >= maxelm) {
 				// граничный узел
 				inumber = iS4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][SSIDE])>admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2591,7 +2592,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iT4 >= maxelm) {
 				// граничный узел
 				inumber = iT4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2613,7 +2614,7 @@ void iscorrectmf(doublereal** &mf,
 			if (iB4 >= maxelm) {
 				// граничный узел
 				inumber = iB4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
@@ -2645,7 +2646,7 @@ void iscorrectmf(doublereal** &mf,
 
 void iscorrectOk(doublereal** &potent,
 	integer maxelm,
-	ALICE_PARTITION** sosedi, BOUND* &sosedb,
+	ALICE_PARTITION** neighbors_for_the_internal_node, BOUND* &border_neighbor,
 	integer ls, integer lw, WALL* w)
 {
 	integer iP = 0;
@@ -2653,27 +2654,27 @@ void iscorrectOk(doublereal** &potent,
 	// iP - номер центрального контрольного объёма
 	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-		iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+		iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+		iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 
 		if (iE > -1) {
 			if (iE >= maxelm) {
 				// граничный узел
 				inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iE]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE=%lld", iE);
@@ -2713,7 +2714,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW >= maxelm) {
 				// граничный узел
 				inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iW]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW=%lld", iW);
@@ -2752,7 +2753,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN >= maxelm) {
 				// граничный узел
 				inumber = iN - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iN]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN=%lld", iN);
@@ -2791,7 +2792,7 @@ void iscorrectOk(doublereal** &potent,
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
+			if (border_neighbor[inumber].MCB==(ls+lw)) {
 				if (fabs(potent[VX][iS])>admission) {
 #if doubleintprecision == 1
 					printf("wall VX velocity non zero iS=%lld", iS);
@@ -2831,7 +2832,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT >= maxelm) {
 				// граничный узел
 				inumber = iT - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iT]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT=%lld", iT);
@@ -2870,7 +2871,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB >= maxelm) {
 				// граничный узел
 				inumber = iB - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iB]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB=%lld", iB);
@@ -2909,7 +2910,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE2 >= maxelm) {
 				// граничный узел
 				inumber = iE2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iE2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE2=%lld", iE2);
@@ -2949,7 +2950,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW2 >= maxelm) {
 				// граничный узел
 				inumber = iW2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iW2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW2=%lld", iW2);
@@ -2988,7 +2989,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN2 >= maxelm) {
 				// граничный узел
 				inumber = iN2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iN2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN=%lld", iN2);
@@ -3027,7 +3028,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iS2 >= maxelm) {
 				// граничный узел
 				inumber = iS2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iS2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iS2=%lld", iS2);
@@ -3067,7 +3068,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT2 >= maxelm) {
 				// граничный узел
 				inumber = iT2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iT2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT2=%lld", iT2);
@@ -3106,7 +3107,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB2 >= maxelm) {
 				// граничный узел
 				inumber = iB2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iB2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB2=%lld", iB2);
@@ -3145,7 +3146,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE3 >= maxelm) {
 				// граничный узел
 				inumber = iE3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iE3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE3=%lld", iE3);
@@ -3185,7 +3186,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW3 >= maxelm) {
 				// граничный узел
 				inumber = iW3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iW3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW3=%lld", iW3);
@@ -3224,7 +3225,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN3 >= maxelm) {
 				// граничный узел
 				inumber = iN3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iN3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN3=%lld", iN3);
@@ -3263,7 +3264,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iS3 >= maxelm) {
 				// граничный узел
 				inumber = iS3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iS3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iS3=%lld", iS3);
@@ -3303,7 +3304,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT3 >= maxelm) {
 				// граничный узел
 				inumber = iT3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iT3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT3=%lld", iT3);
@@ -3342,7 +3343,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB3 >= maxelm) {
 				// граничный узел
 				inumber = iB3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iB3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB3=%lld", iB3);
@@ -3381,7 +3382,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE4 >= maxelm) {
 				// граничный узел
 				inumber = iE4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iE4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE4=%lld", iE4);
@@ -3421,7 +3422,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW4 >= maxelm) {
 				// граничный узел
 				inumber = iW4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iW4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW4=%lld", iW4);
@@ -3460,7 +3461,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN4 >= maxelm) {
 				// граничный узел
 				inumber = iN4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iN4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN4=%lld", iN4);
@@ -3499,7 +3500,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iS4 >= maxelm) {
 				// граничный узел
 				inumber = iS4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iS4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iS4=%lld", iS4);
@@ -3539,7 +3540,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT4 >= maxelm) {
 				// граничный узел
 				inumber = iT4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iT4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT4=%lld", iT4);
@@ -3578,7 +3579,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB4 >= maxelm) {
 				// граничный узел
 				inumber = iB4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VX][iB4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB4=%lld", iB4);
@@ -3617,7 +3618,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE >= maxelm) {
 				// граничный узел
 				inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iE]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iE=%lld", iE);
@@ -3656,7 +3657,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW >= maxelm) {
 				// граничный узел
 				inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iW]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iW=%lld", iW);
@@ -3695,7 +3696,7 @@ void iscorrectOk(doublereal** &potent,
 		if (iN>=maxelm) {
 			// граничный узел
 			inumber=iN-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
+			if (border_neighbor[inumber].MCB==(ls+lw)) {
 				if (fabs(potent[VXCOR][iN])>admission) {
 #if doubleintprecision == 1
 					printf("wall VXCOR velocity non zero iN=%lld", iN);
@@ -3735,7 +3736,7 @@ void iscorrectOk(doublereal** &potent,
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
+			if (border_neighbor[inumber].MCB==(ls+lw)) {
 				if (fabs(potent[VXCOR][iS])>admission) {
 #if doubleintprecision == 1
 					printf("wall VXCOR velocity non zero iS=%lld", iS);
@@ -3774,7 +3775,7 @@ void iscorrectOk(doublereal** &potent,
 		if (iT>=maxelm) {
 			// граничный узел
 			inumber=iT-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
+			if (border_neighbor[inumber].MCB==(ls+lw)) {
 				if (fabs(potent[VXCOR][iT])>admission) {
 #if doubleintprecision == 1
 					printf("wall VXCOR velocity non zero iT=%lld", iT);
@@ -3814,7 +3815,7 @@ void iscorrectOk(doublereal** &potent,
 		if (iB>=maxelm) {
 			// граничный узел
 			inumber=iB-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
+			if (border_neighbor[inumber].MCB==(ls+lw)) {
 				if (fabs(potent[VXCOR][iB])>admission) {
 #if doubleintprecision == 1
 					printf("wall VXCOR velocity non zero iB=%lld", iB);
@@ -3854,7 +3855,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE2 >= maxelm) {
 				// граничный узел
 				inumber = iE2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iE2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iE2=%lld", iE2);
@@ -3893,7 +3894,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW2 >= maxelm) {
 				// граничный узел
 				inumber = iW2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iW2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iW2=%lld", iW2);
@@ -3932,7 +3933,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN2 >= maxelm) {
 				// граничный узел
 				inumber = iN2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iN2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iN2=%lld", iN2);
@@ -3972,7 +3973,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iS2 >= maxelm) {
 				// граничный узел
 				inumber = iS2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iS2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iS2=%lld", iS2);
@@ -4011,7 +4012,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT2 >= maxelm) {
 				// граничный узел
 				inumber = iT2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iT2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iT2=%lld", iT2);
@@ -4051,7 +4052,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB2 >= maxelm) {
 				// граничный узел
 				inumber = iB2 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iB2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iB2=%lld", iB2);
@@ -4092,7 +4093,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE3 >= maxelm) {
 				// граничный узел
 				inumber = iE3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iE3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iE3=%lld", iE3);
@@ -4131,7 +4132,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW3 >= maxelm) {
 				// граничный узел
 				inumber = iW3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iW3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iW3=%lld", iW3);
@@ -4170,7 +4171,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN3 >= maxelm) {
 				// граничный узел
 				inumber = iN3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iN3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iN3=%lld", iN3);
@@ -4210,7 +4211,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iS3 >= maxelm) {
 				// граничный узел
 				inumber = iS3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iS3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iS=%lld", iS3);
@@ -4249,7 +4250,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT3 >= maxelm) {
 				// граничный узел
 				inumber = iT3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iT3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iT3=%lld", iT3);
@@ -4289,7 +4290,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB3 >= maxelm) {
 				// граничный узел
 				inumber = iB3 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iB3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iB3=%lld", iB3);
@@ -4330,7 +4331,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iE4 >= maxelm) {
 				// граничный узел
 				inumber = iE4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iE4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iE4=%lld", iE4);
@@ -4369,7 +4370,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iW4 >= maxelm) {
 				// граничный узел
 				inumber = iW4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iW4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iW4=%lld", iW4);
@@ -4408,7 +4409,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iN4 >= maxelm) {
 				// граничный узел
 				inumber = iN4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iN4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iN4=%lld", iN4);
@@ -4448,7 +4449,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iS4 >= maxelm) {
 				// граничный узел
 				inumber = iS4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iS4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iS4=%lld", iS4);
@@ -4487,7 +4488,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iT4 >= maxelm) {
 				// граничный узел
 				inumber = iT4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iT4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iT4=%lld", iT4);
@@ -4527,7 +4528,7 @@ void iscorrectOk(doublereal** &potent,
 			if (iB4 >= maxelm) {
 				// граничный узел
 				inumber = iB4 - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iB4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VXCOR velocity non zero iB4=%lld", iB4);
@@ -4569,8 +4570,8 @@ void iscorrectOk(doublereal** &potent,
 // коррекция граничных узлов если на них стоит условие Неймана.
 void correct_boundary_volume(integer iVar, doublereal** &potent,
 							 integer maxelm, integer** nvtx, TOCHKA* pa, 
-							 ALICE_PARTITION** sosedi, BOUND* &sosedb,
-							 integer ls, integer lw, WALL* w, doublereal* &relax_value) {
+							 ALICE_PARTITION** neighbors_for_the_internal_node, BOUND* &border_neighbor,
+							 integer ls, integer lw, WALL* w, doublereal* &relax_value, integer binterpol) {
 
    // Алгоритм:
    // проход по всем внутренним КО. 
@@ -4590,9 +4591,9 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 	// А на границе стоит однородное условие Неймана, что означает равенство значений величины F
 	// в граничном и ближайшем приграничном узле. Поэтому, исходя из этих рассуждений, точное выполнение граничных
 	// условий обеспечивается величиной binterpol==0. Однако значение 0 замедляет сходимость. Наибольшая скорость 
-	// сходимости обеспечивается значением 2 (квадратичная интерполляция).
+	// сходимости обеспечивается значением 2 (квадратичная интерполяция).
 	// 1 использовать линейную интерполяцию на границе. (0 не использовать).
-	integer binterpol=0; // 2 - использовать квадратичную интерполляцию.
+	//const integer binterpol=0; // 2 - использовать квадратичную интерполяцию.
 	bool brelax_bound = false;
 	bool brelax_val2 = true;
 	const doublereal relaxboundconstvel = 1.0;
@@ -4602,20 +4603,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
     // iP - номер центрального контрольного объёма
 	for (iP=0; iP<maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 		// вычисление размеров текущего контрольного объёма:
 	    doublereal dx=0.0, dy=0.0, dz=0.0; // размеры контрольного объёма
@@ -4625,12 +4626,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iE >= maxelm) {
 				// граничный узел
 				inumber = iE - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE];
 							}
@@ -4658,7 +4659,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 							system("pause");
@@ -4669,20 +4670,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iE] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE];
 							}
@@ -4709,7 +4710,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -4719,19 +4720,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -4751,12 +4752,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iW >= maxelm) {
 				// граничный узел
 				inumber = iW - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW];
 							}
@@ -4782,7 +4783,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -4793,20 +4794,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iW] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW];
 							}
@@ -4832,7 +4833,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -4842,19 +4843,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -4873,12 +4874,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iN >= maxelm) {
 				// граничный узел
 				inumber = iN - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN];
 							}
@@ -4904,7 +4905,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -4915,19 +4916,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN];
 							}
@@ -4953,7 +4954,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -4964,20 +4965,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iN] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -4996,12 +4997,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iS >= maxelm) {
 				// граничный узел
 				inumber = iS - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS];
 							}
@@ -5027,7 +5028,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5038,20 +5039,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS];
 							}
@@ -5077,7 +5078,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5088,20 +5089,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iS] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5120,12 +5121,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iT >= maxelm) {
 				// граничный узел
 				inumber = iT - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT];
 							}
@@ -5151,7 +5152,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
@@ -5163,19 +5164,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
-				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT];
 							}
@@ -5201,7 +5202,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5213,20 +5214,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iT] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5245,12 +5246,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iB >= maxelm) {
 				// граничный узел
 				inumber = iB - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB];
 							}
@@ -5276,7 +5277,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5288,19 +5289,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB];
 							}
@@ -5326,7 +5327,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5337,20 +5338,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iB] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5370,12 +5371,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iE2 >= maxelm) {
 				// граничный узел
 				inumber = iE2 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE2];
 							}
@@ -5403,7 +5404,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 							system("pause");
@@ -5414,20 +5415,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iE2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE2];
 							}
@@ -5454,7 +5455,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -5464,19 +5465,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE2] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE2] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5496,12 +5497,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iW2 >= maxelm) {
 				// граничный узел
 				inumber = iW2 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW2];
 							}
@@ -5527,7 +5528,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5538,20 +5539,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iW2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW2];
 							}
@@ -5577,7 +5578,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -5587,19 +5588,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW2] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW2] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5618,12 +5619,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iN2 >= maxelm) {
 				// граничный узел
 				inumber = iN2 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN2];
 							}
@@ -5649,7 +5650,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5660,19 +5661,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN2];
 							}
@@ -5698,7 +5699,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5709,20 +5710,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iN2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN2] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN2] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5741,12 +5742,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iS2 >= maxelm) {
 				// граничный узел
 				inumber = iS2 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS2];
 							}
@@ -5772,7 +5773,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5783,20 +5784,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS2];
 							}
@@ -5822,7 +5823,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5833,20 +5834,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iS2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS2] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS2] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5865,12 +5866,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iT2 >= maxelm) {
 				// граничный узел
 				inumber = iT2 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT2];
 							}
@@ -5896,7 +5897,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
@@ -5908,19 +5909,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
-				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT2];
 							}
@@ -5946,7 +5947,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -5958,20 +5959,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iT2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT2] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT2] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -5990,12 +5991,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iB2 >= maxelm) {
 				// граничный узел
 				inumber = iB2 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB2];
 							}
@@ -6021,7 +6022,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6033,19 +6034,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB2];
 							}
@@ -6071,7 +6072,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6082,20 +6083,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iB2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB2] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB2] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6114,12 +6115,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iE3 >= maxelm) {
 				// граничный узел
 				inumber = iE3 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE3];
 							}
@@ -6147,7 +6148,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 							system("pause");
@@ -6158,20 +6159,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iE3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE3];
 							}
@@ -6198,7 +6199,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -6208,19 +6209,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE3] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE3] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6240,12 +6241,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iW3 >= maxelm) {
 				// граничный узел
 				inumber = iW3 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW3];
 							}
@@ -6271,7 +6272,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6282,20 +6283,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iW3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW3];
 							}
@@ -6321,7 +6322,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -6331,19 +6332,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW3] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW3] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6362,12 +6363,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iN3 >= maxelm) {
 				// граничный узел
 				inumber = iN3 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN3];
 							}
@@ -6393,7 +6394,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6404,19 +6405,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN3];
 							}
@@ -6442,7 +6443,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6453,20 +6454,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iN3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN3] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN3] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6485,12 +6486,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iS3 >= maxelm) {
 				// граничный узел
 				inumber = iS3 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS3];
 							}
@@ -6516,7 +6517,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6527,20 +6528,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS3];
 							}
@@ -6566,7 +6567,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6577,20 +6578,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iS3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS3] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS3] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6609,12 +6610,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iT3 >= maxelm) {
 				// граничный узел
 				inumber = iT3 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT3];
 							}
@@ -6640,7 +6641,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
@@ -6652,19 +6653,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
-				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT3];
 							}
@@ -6690,7 +6691,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6702,20 +6703,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iT3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT3] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT3] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6734,12 +6735,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iB3 >= maxelm) {
 				// граничный узел
 				inumber = iB3 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB3];
 							}
@@ -6765,7 +6766,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6777,19 +6778,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB3];
 							}
@@ -6815,7 +6816,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -6826,20 +6827,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iB3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB3] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB3] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6858,12 +6859,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iE4 >= maxelm) {
 				// граничный узел
 				inumber = iE4 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE4];
 							}
@@ -6891,7 +6892,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 							system("pause");
@@ -6902,20 +6903,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iE4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iE4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE4];
 							}
@@ -6942,7 +6943,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -6952,19 +6953,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE4] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE4] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -6984,12 +6985,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iW4 >= maxelm) {
 				// граничный узел
 				inumber = iW4 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW4];
 							}
@@ -7015,7 +7016,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7026,20 +7027,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: potent[iVar][iW4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					case VY: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iW4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW4];
 							}
@@ -7065,7 +7066,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
 									 system("pause");
@@ -7075,19 +7076,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW4] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW4] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -7106,12 +7107,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iN4 >= maxelm) {
 				// граничный узел
 				inumber = iN4 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN4];
 							}
@@ -7137,7 +7138,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7148,19 +7149,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iN4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN4];
 							}
@@ -7186,7 +7187,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7197,20 +7198,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iN4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN4] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN4] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -7229,12 +7230,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iS4 >= maxelm) {
 				// граничный узел
 				inumber = iS4 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS4];
 							}
@@ -7260,7 +7261,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7271,20 +7272,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VZ: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iS4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS4];
 							}
@@ -7310,7 +7311,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7321,20 +7322,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
 					case VY: potent[iVar][iS4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS4] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS4] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -7353,12 +7354,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iT4 >= maxelm) {
 				// граничный узел
 				inumber = iT4 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT4];
 							}
@@ -7384,7 +7385,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
@@ -7396,19 +7397,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
-				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iT4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT4];
 							}
@@ -7434,7 +7435,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7446,20 +7447,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iT4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT4] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT4] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
@@ -7478,12 +7479,12 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 			if (iB4 >= maxelm) {
 				// граничный узел
 				inumber = iB4 - maxelm;
-				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+				if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening))) {
 					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					// Значит скорость в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла.
 					if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB4];
 							}
@@ -7509,7 +7510,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
-						// квадратичная интерполляция.
+						// квадратичная интерполяция.
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7521,19 +7522,19 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
 						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
 					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
 					case VX: case VY: if (binterpol == 0) {
 						if (brelax_bound) {
-							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
 								potent[iVar][iB4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB4];
 							}
@@ -7559,7 +7560,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
-								 // квадратичная интерполляция.
+								 // квадратичная интерполяция.
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
@@ -7570,20 +7571,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
 								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
 					case VZ: potent[iVar][iB4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
-				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB4] = w[sosedb[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB4] = w[sosedb[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					case VX: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {

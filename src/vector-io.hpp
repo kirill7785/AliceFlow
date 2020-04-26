@@ -45,7 +45,7 @@ template<typename MatrixType>
 class my_inserter
 {
   public:
-    my_inserter(MatrixType & mat) : mat_(mat) {}
+    my_inserter(MatrixType & mat): mat_(mat) {}
 
     void apply(long row, long col, double value)
     {
@@ -80,7 +80,7 @@ class my_inserter<mtl::compressed2D<ScalarType> >
 {
     typedef mtl::compressed2D<ScalarType>    MatrixType;
   public:
-    my_inserter(MatrixType & mat) : mat_(mat), ins_(mat) {}
+    my_inserter(MatrixType & mat): mat_(mat), ins_(mat) {}
 
     void apply(long row, long col, ScalarType value)
     {

@@ -9,11 +9,11 @@
 
 // Сборка одного скалярного псевдовремени.
 // На пространственно неоднородных областях параметр tau сильно неоднороден это приводит к ухудшению 
-// обусловленности системы и в конечном счёте к расходимоти. Здесь предпринята попытка регулизовать параметр tau.
+// обусловленности системы и в конечном счёте к расходимости. Здесь предпринята попытка регулизовать параметр tau.
 void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 	          doublereal** prop, doublereal** prop_b, doublereal* alpha, 
 			  integer** nvtx, TOCHKA* pa, equation3D** sl,
-			  ALICE_PARTITION** sosedi, equation3D_bon** slb,
+			  ALICE_PARTITION** neighbors_for_the_internal_node, equation3D_bon** slb,
 			  bool btimedep, doublereal dtime, doublereal CFL1,
 			  integer inumberSIMPLEiteration, bool &bVERY_STABILITY_ON, bool boldscheme) {
 
@@ -21,12 +21,12 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 	// коэффициентами диффузии в уравнениях на скорость распределение шага по псевдо-времени
 	// будет также сильно неоднородно в пространстве, что приводит к расходимости вычислительного
 	// процесса в рамках SIMPLE процедуры. Данная функция по вычислению псевдо временного шага 
-	// специально написана для того чтобы сгладить сильно неоднородное распределение tau особьенно
+	// специально написана для того чтобы сгладить сильно неоднородное распределение tau особенно
 	// на первых итерациях SIMPLE алгоритма. Особой устойчивостью и стабильностью обладает просто постоянное 
 	// значение шага по псевдовремени.
 	
 
-	// Судя по данным CFX если с солвером всё нормально то порядка за 200 итераций устанавливается ламнарное течение.
+	// Судя по данным CFX если с солвером всё нормально то порядка за 200 итераций устанавливается ламинарное течение.
 	// Эта информация может помочь для правильного определения отсечки по номеру итерации. Предполагается что на первых итерациях
 	// мы будем использовать bVERY_STABILITY_ON==true, а дальше false.
 
@@ -51,8 +51,8 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 
         // iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	
 
 
@@ -137,11 +137,11 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 		// Например:
 		// alpha CFL2
 		// 0.7 2.33333
-		// 0.5 1.0 // Рекомендовано Патанкаром по умолчанию.
+		// 0.5 1.0 // Рекомендовано С. Патанкаром по умолчанию.
 		// 0.8 4.0 // Рекомендовано Гавриловым Андреем по умолчанию.
 		// 0.85 5.666
 		if (bVERY_STABILITY_ON==true) {
-			// пока просто запоминаем, оновное вычисление псевдовремени будет позже.
+			// пока просто запоминаем, основное вычисление псевдовремени будет позже.
 			tau[iP]=tau_loc;
 		}
 		else {
@@ -154,8 +154,8 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 			   // в этом случае также можно применить формулу для нестационарного случая,
 			   // вопрос в том что шаг по времени dtime теперь надо подбирать.
 			   if (dtime<=0.0) {
-				   // возьмём среднее арефметическое от всех существующих tau.
-			       tau[iP]=tau_loc; // пока просто запомним чтобы потом можно было вычислить среднее арефметическое.
+				   // возьмём среднее арифметическое от всех существующих tau.
+			       tau[iP]=tau_loc; // пока просто запомним чтобы потом можно было вычислить среднее арифметическое.
 			   }
 			   else {
 				   // если параметр dtime положителен то мы считаем что он задан пользователем из соображений пользователя.
@@ -219,8 +219,8 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 	// iP - номер центрального контрольного объёма
 	for (integer iP=0; iP<maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
         if (iE>=maxelm) {
 			// граничный узел
@@ -255,13 +255,13 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 } // tau_calc
 
 // На пространственно неоднородных областях параметр tau сильно неоднороден это приводит к ухудшению 
-// обусловленности системы и в конечном счёте к расходимоти. Здесь предпринята попытка регулизовать параметр tau.
+// обусловленности системы и в конечном счёте к расходимости. Здесь предпринята попытка регулизовать параметр tau.
 // Реализовано 23 июня 2012 года.
 // Модифицировано для АЛИС сеток 5 декабря 2018.
 void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	          doublereal** prop, doublereal** prop_b, doublereal* alpha, 
 			  integer** nvtx, TOCHKA* pa, 
-			  ALICE_PARTITION** sosedi, doublereal** sumanb,
+			  ALICE_PARTITION** neighbors_for_the_internal_node, doublereal** sumanb,
 			  bool btimedep, doublereal dtime, doublereal CFL1,
 			  integer inumberSIMPLEiteration, 
 			  bool &bVERY_STABILITY_ON, bool boldscheme) {
@@ -275,7 +275,7 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	// значение шага по псевдовремени.
 	// tau[VX or VY or VZ][iP] - для каждой компоненты скорости своё псевдовремя.
 
-	// Судя по данным CFX если с солвером всё нормально то порядка за 200 итераций устанавливается ламнарное течение.
+	// Судя по данным CFX если с солвером всё нормально то порядка за 200 итераций устанавливается ламинарное течение.
 	// Эта информация может помочь для правильного определения отсечки по номеру итерации. Предполагается что на первых итерациях
 	// мы будем использовать bVERY_STABILITY_ON==true, а дальше false.
 
@@ -302,20 +302,20 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 
         // iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	    // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
@@ -611,7 +611,7 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 		    // Например:
 		    // alpha CFL2
 		    // 0.7 2.33333
-		    // 0.5 1.0 // Рекомендовано Патанкаром по умолчанию.
+		    // 0.5 1.0 // Рекомендовано С. Патанкаром по умолчанию.
 		    // 0.8 4.0 // Рекомендовано Гавриловым Андреем по умолчанию.
 		    // 0.85 5.666
 		    if (bVERY_STABILITY_ON==true) {
@@ -632,8 +632,8 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 			   // в этом случае также можно применить формулу для нестационарного случая,
 			   // вопрос в том что шаг по времени dtime теперь надо подбирать.
 			   if (dtime<=0.0) {
-				   // возьмём среднее арефметическое от всех существующих tau.
-			       tau[VX][iP]=tau_loc[VX]; // пока просто запомним чтобы потом можно было вычислить среднее арефметическое.
+				   // возьмём среднее арифметическое от всех существующих tau.
+			       tau[VX][iP]=tau_loc[VX]; // пока просто запомним чтобы потом можно было вычислить среднее арифметическое.
                    tau[VY][iP]=tau_loc[VY];
 				   tau[VZ][iP]=tau_loc[VZ];
 			   }
@@ -725,20 +725,20 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 		// iP - номер центрального контрольного объёма
 		for (integer iP = 0; iP < maxelm; iP++) {
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-			iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-			iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+			iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+			iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-			iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-			iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+			iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+			iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-			iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-			iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+			iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+			iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-			iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-			iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+			iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+			iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 			if (iE > -1) {
 				if (iE >= maxelm) {
@@ -955,23 +955,23 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 		}
 	}
 	else {
-		// на основедиагональных коэффициентов в граничном условии.
+		// на основе диагональных коэффициентов в граничном условии.
 		for (integer iP = 0; iP < maxelm; iP++) {
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-			iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-			iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+			iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+			iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-			iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-			iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+			iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+			iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-			iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-			iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+			iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+			iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-			iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-			iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+			iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+			iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 
 			// вычисление размеров текущего контрольного объёма:

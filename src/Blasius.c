@@ -3,11 +3,11 @@
 // 2. Вычисление безразмерного локального коэффициента трения на пластине (Wall skin friction distribution);
 // 3. Вычисление толщины вытеснения на поверхности пластины (displacement thickness);
 // 4. Вычисление толщины температурного пограничного слоя (Thermal boundary layer distribution);
-// 5. Вычисление распределеия числа Нуссельта по поверхности пластины.
-// begin : 31 января 2012 года.
-// end first : 5 февраля 2012 года.
+// 5. Вычисление распределения числа Нуссельта по поверхности пластины.
+// begin: 31 января 2012 года.
+// end first: 5 февраля 2012 года.
 
-// Для задачи Блазиуса без учёта краевых эфектов сначала 2-3 длины пластинки,
+// Для задачи Блазиуса без учёта краевых эффектов сначала 2-3 длины пластинки,
 // в конце 3-5 длин пластинки.
 
 #pragma once
@@ -22,7 +22,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	// Предполагается что задача свелась к двумерной в плоскости YZ, 
 	// а скорость VX равна нулю.
 	// Т.к. программа оперирует трёхмерными объектами то нас интересует именно плоскость
-	// находящаяся по центру оси X : avgX=0.5*(minX+maxX);
+	// находящаяся по центру оси X: avgX=0.5*(minX+maxX);
 
 	// Пластина совпадает с осью Y при Z==0.0. Пластина начинается при Y==0.0 и длится 1 метр.
 
@@ -53,7 +53,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 
 	for (integer iP=0; iP<f[0].maxelm; iP++) {
 		// вычисление размеров текущего контрольного объёма:
-	    doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	    doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	    volume3D(iP, f[0].nvtx, f[0].pa, dx, dy, dz);
 
 		rho_avg+=dx*dy*dz*f[0].prop[RHO][iP];
@@ -75,16 +75,16 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	doublereal avg_Pe_number=avg_Re_number*avg_Pr_number; // Число Пекле.
 
 	// нахождение контрольного объёма максимально близкого к точке avgX=0.5*(minX+maxX);
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
-	TOCHKA p; // координаты центра текущего котрольного объёма.
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
+	TOCHKA p; // координаты центра текущего контрольного объёма.
 	integer iP=0;
 	doublereal minX, maxX, avgX;
-	while (f[0].sosedi[WSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].sosedi[WSIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
     // вычисление размеров текущего контрольного объёма:
 	volume3D(iP, f[0].nvtx, f[0].pa, dx, dy, dz);
 	center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 	minX=p.x-0.5*dx;
-	while (f[0].sosedi[ESIDE][iP].iNODE1<f[0].maxelm) iP=f[0].sosedi[ESIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
 	volume3D(iP, f[0].nvtx, f[0].pa, dx, dy, dz);
 	center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 	maxX=p.x+0.5*dx;
@@ -93,8 +93,8 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 	doublereal mindist=fabs(p.x-avgX);
 	integer iPC=iP;
-	while (f[0].sosedi[WSIDE][iP].iNODE1<f[0].maxelm) {
-		iP=f[0].sosedi[WSIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1<f[0].maxelm) {
+		iP=f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
 		center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 		if (fabs(p.x-avgX)<mindist) {
 			iPC=iP;
@@ -105,25 +105,25 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	// контрольный объём iPC наиболее приближен к центральной плоскости в которой будут производится замеры.
 	iP=iPC;
 
-	// Вычисление количества контрольных объёмов расположенных по длине пластины :
+	// Вычисление количества контрольных объёмов расположенных по длине пластины:
 	integer iclength=0;
-	while (f[0].sosedi[SSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].sosedi[SSIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1;
 
 	while (iP<f[0].maxelm) {
 		center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 		if ((p.y>0.0) && (p.y<1.0)) iclength++; // пластина расположена между 0.0 m и 1.0 m.
-		iP=f[0].sosedi[NSIDE][iP].iNODE1;
+		iP=f[0].neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
 	}
 
 	// Гидродинамический пограничный слой: (Boundary layer thickness).
 	doublereal* delta=new doublereal[iclength];
 	// соответствующее расстояние от передней кромки пластины:
 	doublereal* yposition=new doublereal[iclength];
-	// Безразмерная величина локальный коэффициент трения на поверхности пластины :
+	// Безразмерная величина локальный коэффициент трения на поверхности пластины:
 	// Cx[i]=SInvariantStrainRateTensor[i]/(0.5*rho_avg*U_inf*U_inf); См. Лыков.
 	// Wall skin friction distribution
 	doublereal* Cx=new doublereal[iclength];
-	// Средний коэффициент трения :
+	// Средний коэффициент трения:
 	doublereal avg_Cx=0.0; // integral(Cx[i]*dlength_plate)/length_plate;
 	// Толщина вытеснения на поверхности пластины. (displacement thickness) 
 	// см. Л.Д.Ландау, Е.М.Лифшиц Теоретическая физика. ГИДРОДИНАМИКА том VI. стр. 228.
@@ -140,7 +140,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	doublereal deltascal=0.95; // 95% пограничный слой.
 	doublereal deltaTscal=0.05; // 5% тепловой пограничный слой на нагретой пластине.
 	iP=iPC;
-	while (f[0].sosedi[SSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].sosedi[SSIDE][iP].iNODE1; // перемотка в начало.
+	while (f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1; // перемотка в начало.
 
 	integer ilengthcounter=0;
 	for (ilengthcounter=0; ilengthcounter<iclength; ilengthcounter++) {
@@ -161,22 +161,22 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 			yposition[ilengthcounter]=p.y; // абсцисса для толщины пограничного слоя.
 			
 			integer iBT=iP;
-			while (f[0].sosedi[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].sosedi[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
+			while (f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
 			// вычисление распределения безразмерного локального коэффициента трения на стенке:
 			// см. А.В.Лыков  Тепломассообмен справочник Москва., "Энергия", 1978г. стр. 184.
-			Cx[ilengthcounter]=mu_avg*f[0].SInvariantStrainRateTensor[f[0].sosedi[BSIDE][iBT].iNODE1]/(0.5*rho_avg*U_inf*U_inf);
+			Cx[ilengthcounter]=mu_avg*f[0].SInvariantStrainRateTensor[f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1]/(0.5*rho_avg*U_inf*U_inf);
 
 			// Вычисление толщины гидродинамического пограничного слоя.
 			doublereal VYB, VYT, zB, zT;
-			VYB=f[0].potent[VY][f[0].sosedi[BSIDE][iBT].iNODE1];
+			VYB=f[0].potent[VY][f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
 			VYT=f[0].potent[VY][iBT];
 			center_cord3D(iBT, f[0].nvtx, f[0].pa, p, BSIDE); // вычисление координат центра КО.
 			volume3D(iBT, f[0].nvtx, f[0].pa, dx, dy, dz);
 			zB=p.z-0.5*dz;
 			zT=p.z;
-			while ((f[0].sosedi[TSIDE][iBT].iNODE1<f[0].maxelm) && (VYT<deltascal*U_inf)) {
-				iBT=f[0].sosedi[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
-				VYB=f[0].potent[VY][f[0].sosedi[BSIDE][iBT].iNODE1];
+			while ((f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1<f[0].maxelm) && (VYT<deltascal*U_inf)) {
+				iBT=f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
+				VYB=f[0].potent[VY][f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
 			    VYT=f[0].potent[VY][iBT];
 				zB=zT;
 				center_cord3D(iBT, f[0].nvtx, f[0].pa, p, TSIDE); // вычисление координат центра КО.
@@ -187,21 +187,21 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 			b=(zT*VYB-VYT*zB)/(zT-zB);
 			delta[ilengthcounter]=(deltascal*U_inf-b)/a; // искомая толщина гидродинамического пограничного слоя.
 
-			while (f[0].sosedi[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].sosedi[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
+			while (f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
 			// Вычисление толщины вытеснения по скорости Uoperating (displacement thickness):
 			doublereal Uoperating=VyMAX; // U_inf - по скорости набегающего потока на бесконечности. (другой вариант по максимальной скорости - VyMAX)
-			while (f[0].sosedi[TSIDE][iBT].iNODE1<f[0].maxelm) {
+			while (f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1<f[0].maxelm) {
 				volume3D(iBT, f[0].nvtx, f[0].pa, dx, dy, dz);
 			    displacement_thickness[ilengthcounter]+=dz*(Uoperating-f[0].potent[VY][iBT]);
-                iBT=f[0].sosedi[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
+                iBT=f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
 			}
 			displacement_thickness[ilengthcounter]/=Uoperating; // толщина вытеснения.
 
 			// Температурный пограничный слой.
-			while (f[0].sosedi[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].sosedi[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
+			while (f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
 			doublereal TempB, TempT;
 			iBT=f[0].ptr[iBT];
-			TempB=t.potent[t.sosedi[BSIDE][iBT].iNODE1];
+			TempB=t.potent[t.neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
 			TempT=t.potent[iBT];
 			center_cord3D(iBT, t.nvtx, t.pa, p, BSIDE); // вычисление координат центра КО.
 			volume3D(iBT, t.nvtx, t.pa, dx, dy, dz);
@@ -209,13 +209,13 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 			zT=p.z;
 
 			// Вычисляем локальное Число Нуссельта:
-			local_Nusselt_number[ilengthcounter]=(t.prop_b[LAM][t.sosedi[BSIDE][iBT].iNODE1-t.maxelm]*((Twall-TempT)/(0.5*dz))*yposition[ilengthcounter])/((Twall-Tinf)*lam_avg);
+			local_Nusselt_number[ilengthcounter]=(t.prop_b[LAM][t.neighbors_for_the_internal_node[BSIDE][iBT].iNODE1-t.maxelm]*((Twall-TempT)/(0.5*dz))*yposition[ilengthcounter])/((Twall-Tinf)*lam_avg);
 
 			// Продолжение вычисления температурного пограничного слоя.
 			doublereal Temp_critical=Tinf+deltaTscal*(Twall-Tinf);
-			while ((t.sosedi[TSIDE][iBT].iNODE1<t.maxelm)&&(t.potent[iBT]>Temp_critical)) {
-				iBT=t.sosedi[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
-				TempB=t.potent[t.sosedi[BSIDE][iBT].iNODE1];
+			while ((t.neighbors_for_the_internal_node[TSIDE][iBT].iNODE1<t.maxelm)&&(t.potent[iBT]>Temp_critical)) {
+				iBT=t.neighbors_for_the_internal_node[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
+				TempB=t.potent[t.neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
 			    TempT=t.potent[iBT];
 				zB=zT;
                 center_cord3D(iBT, t.nvtx, t.pa, p, TSIDE); // вычисление координат центра КО.
@@ -227,7 +227,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 
             ilengthcounter++;
 		}
-		iP=f[0].sosedi[NSIDE][iP].iNODE1;
+		iP=f[0].neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
 	}
 
 	// Средний безразмерный коэффициент трения на стенке:
@@ -282,7 +282,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 			 fprintf(fpblas, "Average_Prandtl_number= %+.16f\n", avg_Pr_number);
 			 fprintf(fpblas, "Average_Peclet_number= %+.16f\n", avg_Pe_number);
 			 fprintf(fpblas, "Local_average_coefficient_of_friction_at_the_wall= %+.16f \n\n", avg_Cx);
-			 // XY plot :
+			 // XY plot:
 			 fprintf(fpblas, "XY Plots: \n");
 			 fprintf(fpblas, "ypos - y_position m; \n");
 			 fprintf(fpblas, "delta - 95%%_Boundary_layer_thickness m; \n");

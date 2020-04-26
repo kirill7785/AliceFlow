@@ -18,13 +18,13 @@
 // модификаций. Главное это то, что алгоритм теперь мыслится 
 // как предобуславливатель к Крыловскому алгоритму BiCGStab. Это плодотворно
 // сказалось на его сходимости во многих случаях важных для практики.
-// В основе нахождения C-F разбиения лежит АВЛ, SPLAY, BenaryHeap или Деамида.
-// На будущее стоит рассмотреть фиббоначиеву кучу и поддержать работоспособность
+// В основе нахождения C/F разбиения лежит АВЛ, SPLAY, BinaryHeap или Дерамида.
+// На будущее стоит рассмотреть Фибоначчиеву кучу и поддержать работоспособность
 // и улучшение ранее предложенных вариантов. В использовании сглаживателей есть 
-// продвижения. Введен в эксплуатацию ilu(0) сглаживатель, алгоритм Саада при этом
+// продвижения. Введен в эксплуатацию ilu(0) сглаживатель, алгоритм Юсефа Саада при этом
 //  специальным образом модифицирован (устранен линейный поиск). Положительно
 // использован сглаживатель на основе метода Рунге-Кутта. Полезным оказалось 
-// использование C-F порядка обхода узлов при сглаживании. Испробованы сглаживатели
+// использование C/F-порядка обхода узлов при сглаживании. Испробованы сглаживатели
 // gmres и bicgstab. От них пришлось отказаться - потеря сходимости, серьёзное 
 // ухудшение быстродействия. Алгоритм успешно использовался
 // во многих важных для практики случаях. Есть задачи с которыми он ещё не справляется. 
@@ -32,8 +32,8 @@
 // Алгоритм потребляет много оперативной памяти.
 //
 // 6 января 2016. Версия 0.13.  (см. classic_aglomerative_amg2).
-// АВЛ деревья во многих местах заменены на более быструю комбинацию хеш таблицы (поиск и вставка)
-// и стека (стек для очистки хеш таблицы).
+// АВЛ деревья во многих местах заменены на более быструю комбинацию хеш-таблицы (поиск и вставка)
+// и стека (стек для очистки хеш-таблицы).
 // Время счёта реальной тепловой задачи в 3.2М неизвестных составило 1мин 51с т.е.
 // удалось догнать BiCGStab+ILU(2) из SPARSKIT2 со временем счёта 1мин 50с.
 // Ю. Саада. Догнать amg1r5 с временем счёта 1мин пока не представилось возможным.
@@ -50,12 +50,12 @@
 // 9мин до 4мин. Потребляет 2.4Гб ОЗУ). 
 // У BiCGStab+ILU(2) всего 1мин 50с т.е.он в 2.2 раза быстрее.
 // 3 января 2016. Версия 0.12. (см. classic_aglomerative_amg2).
-// Протестированная на некоторых реальных здачах теплопередачи в программе AliceFlow&&AliceMesh.
+// Протестированная на некоторых реальных задачах теплопередачи в программе AliceFlow&&AliceMesh.
 // Для одного миллиона неизвестных время решения составляет 40с. Это время такое-же как и время 
 // алгоритма BiCGStab+ILU(2). Ещё раз подчёркиваю что задача реальная. Также решалась задача 
 // в 3.2М неизвестных (заняло 2Гб ОЗУ), время решения
 // которой составило 8мин 27с что 4.6раза медленнее алгоритма BiCGStab+ILU(2) время которого 1мин 50с.
-// В версии 0.12 произведены следующие улучшения : код очищен от устаревшего, в качестве сглаживателя
+// В версии 0.12 произведены следующие улучшения: код очищен от устаревшего, в качестве сглаживателя
 // (как пре так и пост) используется SOR с параметром omega=1.15 он чуть чуть быстрее.
 // Если будут проблемы можно переключить на надежный Зейдель. см. seidelq.
 // В residualq избавились от деления на элемент обратный диагональному, заменив эту операцию на более
@@ -69,60 +69,60 @@
 // вариант когда количество сглаживаний при погружении на глубокие уровни увеличивается.
 // Этот вариант не дал выигрыша в скорости.
 // В данный момент разрабатывается "идеальный" алгоритм интерполяции. Помимо стандартного,
-// в данный момент добавлена непрямая интерполляция, а
-// также гибрид стандартной и непрямой интерполляции. От интерполяции зависит количество 
+// в данный момент добавлена непрямая интерполяция, а
+// также гибрид стандартной и непрямой интерполяции. От интерполяции зависит количество 
 // итераций а значит и время счёта а также память. Разработка 
 // интерполяции ведётся в настоящий момент. 
 // Введена отсечка малых элементов в операторах Галёркина. Установлено оптимальное значение 
 // в 0.0001 умноженное на максимальный элемент в строке
 // быстродействие при котором наиболее велико (компромисс) по замерам на задаче в 1M неизвестных.
-// Недостатком программы вданный момент является чрезвычайно большое число итераций нужных для 
+// Недостатком программы в данный момент является чрезвычайно большое число итераций нужных для 
 // сходимости. Для 3.2М неизвестных их число составило 1000.
 // Реализована сортировка с подсчётом как и намечалось ранее. АВЛ дерево сохранено и доказало 
 // свою эффективность.
 // 21 декабря 2015. Версия 0.11 была протестирована на реальной задаче в 3D. Размерность реальной
 // задачи 1М неизвестных. Вывод состоит в том что метод 0.11 ещё не готов к реальным задачам,
 // число ненулевых элементов  в матрицах грубосеточных уровней растёт катострофическим образом. 
-// В ремя счёта настолько велико что ждать просто нет смысла.
+// Время счёта настолько велико что ждать просто нет смысла.
 // В то время как amg1r5 справился с этой реальной задачей за 17с. В следующей версии 0.12 будут
 // предприняты шаги по улучшению работоспособности данного программного решения. 
-// 13 декабря 2015. Версия 0.11. C-F разбиение выполнено на основе АВЛ дерева. Адельсон-Вельский 
-// и Ландис 1962.
+// 13 декабря 2015. Версия 0.11. C/F разбиение выполнено на основе АВЛ дерева. Г.М. Адельсон-Вельский 
+// и Е.М. Ландис 1962.
 // теперь оно существенно доработано, исправлены ошибки и быстродействие алгоритма по сравнению с версией 0.10 на
 // на трёхмерном уравнении Пуассона в кубе 120х120х120 1.7М неизвестных увеличилось в 11 раз!!! время решения 1мин.
 // Версия 0.11 полностью переведена на быструю сортировку Ч.Хоара 1960 т.к. она обгоняет пирамидальную сортировку в 5 раз.
 // В предыдущей версии кода в быстрой сортировке содержалась ошибка.См новые реализации qs, qsj.
-// Сортировка Хоара не требует дополнительной памяти. Размер стека программы увеличен до 4Мб в студии. 
+// Сортировка Ч. Хоара не требует дополнительной памяти. Размер стека программы увеличен до 4Мб в студии. 
 // Версия 0.11 полностью свободна от нумерации неизвестных в исходной матрице Это значит что версия 0.11 данного многосеточного
 // метода одинаково эффективно работает с любой нумерацией неизвестных !!! Никакой головной боли с шириной ленты матрицы,
 // нумеруйте как хотите, т.е. как удобно генератору сетки. 
 // Мысли о том то возможно будет реализовано в слудующей версии.
 // Если количество оперативной памяти не проблема для пользователя то есть возможность ускорить данную программу
-// за счёт применения сортировки с подсчётом которая выполняется асимптотически за O(n) операций на одном потоке, но жрёт при этом 
+// за счёт применения сортировки с подсчётом которая выполняется асимптотически за O(n) операций на одном потоке, но потребляет при этом 
 // дополнительные массивы памяти.
-// АВЛ дервья были изобретены более 40 лет назад, возможно их можно заменить современными более быстродействующими структурами данных.
+// АВЛ деревья были изобретены более 40 лет назад, возможно их можно заменить современными более быстродействующими структурами данных.
 // Алгоритм Фреда Густавсона разреженного матричного умножения по прежнему функционирует в данном коде, возможно можно улучшить и его
 // характеристики быстродействия если на это укажет профилировщик.
-// А да, кого интересует 2D : двмерная задача 1000х1000 1М неизвестных решается данным кодом за 18с. Подробные данные ждите в файле замеры
+// А да, кого интересует 2D: двумерная задача 1000х1000 1М неизвестных решается данным кодом за 18с. Подробные данные ждите в файле замеры
 // времени .doc который будет приложен к проекту позднее.
 // О том как использовать данное программное решение в своих проектах см. тело функции main.
 // По всем вопросам о использовании данной программы писать на kirill7785@mail.ru.
 //  ***---***      ***---***      ***---***
-// 9 декабря 2015. Версия 0.10. Существенно ускорено построение C-F разбиения. Threshold = 0.25 
+// 9 декабря 2015. Версия 0.10. Существенно ускорено построение C/F разбиения. Threshold = 0.25 
 // единый и для 2D и для 3D это подтверждается анализом статей в интернете. Задача Пуассона
 // в 3D кубе размерностью 120х120х120 решается теперь за 11минут вместо 25 мин.Ускорение более чем в двое в 3D.
 // 6 декабря 2015. Версия 0.09. Улучшения в решении 3D задач по сравнению с версией 0.08. 
-// Задача Пуассона в 3D кубе 120х120х120 решается за 25мин. Потребляет 1.86Гб оперативной пямяти.
+// Задача Пуассона в 3D кубе 120х120х120 решается за 25мин. Потребляет 1.86Гб оперативной памяти.
 // Это 1.7М неизвестных. Количество итераций при этом 317.
 // Алгоритмически версия 0.09 отличается от версии 0.08 тем что в ней предприняты шаги по сохранению разреженности
 // оператора Галёркина. Это главным образом дало возможность решать 3D задачи.
-// Параметры алгоритма : nu1, nu2 (количество итераций пред и пост сглаживания), mul_tolerance, theta
+// Параметры алгоритма: nu1, nu2 (количество итераций пред и пост сглаживания), mul_tolerance, theta
 // параметры отсечения малых элементов в матрице требуют подбора. Подбор пока произведен вручную на глазок. 
-// Также в версии 0.09 изменён принцип поиска соседей новых F узлов : оно запрограммировано теперь на двухсвязном 
+// Также в версии 0.09 изменён принцип поиска соседей новых F узлов: оно запрограммировано теперь на двухсвязном 
 // списке без band_sizei, что дало существенное ускорение в 3D и небольшое замедление в 2D.
 // Построение CF разбиения по прежнему испытывает существенные проблемы с быстродействием, поиск максимума в 3D 
 // задачах занимает львиную долю времени. Матричное умножение после сохранения разреженности оператора Галёркина
-// выполняется достаточно быстро и с ним всё впорядке.
+// выполняется достаточно быстро и с ним всё в порядке.
 // Код работает на любых размерностях влизающих в оперативную память до 300М ненулевых элементов в матрице СЛАУ.
 // Работы по тестированию алгоритма на реальных задачах ведутся достаточно успешно, но показывать их пока рано.
 // 15 ноября 2015. Версия 0.08 в которой исправлены ошибки версии 0.07. Ошибки были в организации двусвязного линейного
@@ -131,8 +131,8 @@
 // алгоритма. Задача Пуассона на сетке 800х800 теперь решается за 49с. Это не предел, у аналогов
 // например у amg1r5 быстродействие оценивается в 8с для данной задачи. Для трёхмерного Пуассона 
 // с быстродействием в версии 0.07 лучше чем в версии 0.06 но очень плохо по сравнению с 
-// комерческими аналогами. В версии 0.07 сделан прорыв в разреженном матричном умножении,алгоритм
-//  Фреда Густавсона существенно ускорен. Тестиование алгоритма на реальных задачах практически 
+// коммерческими аналогами. В версии 0.07 сделан прорыв в разреженном матричном умножении,алгоритм
+//  Фреда Густавсона существенно ускорен. Тестирование алгоритма на реальных задачах практически 
 // не было произведено по причине отсутствия реализации  Катхилла-Маки в реальном тестируемом
 // приложении (AliceFlow) а данный метод my_amg_v0.07  очень чувствителен  к ширине ленты матрицы.
 // 31 - октября 2015. Версия 0.06 в которой выполнена работа по дальнейшему улучшению
@@ -144,19 +144,19 @@
 // 22-23 октября 2015. Версия 0.05 в которой запрограммирована идея Писсанецки для
 // разреженного матричного умножения. Реализация идеи Писсанецки ускорила код на 15%
 // по сравнению с версией 0.04. Также в версии 0.05 реализован алгоритм Густавсона для
-// разреженного матричного умножения gustavson sparse matrix multiplayer IBM 1978.
+// разреженного матричного умножения Gustavson sparse matrix multiplication IBM 1978.
 // Алгоритм Густавсона ускорил код по сравнению с версией 0.04 более чем вдвое.
 // 18 октября 2015. Полностью работоспособный мультигрид.
 // Тестировалось на условиях Дирихле но должно работать на любых 
 // краевых задачах. 18 октября датируется версия 0.04. Версия 0.04 на треть
-// быстрее версии 0_03. Были ускорены как операции построения C-F разбиения, 
+// быстрее версии 0_03. Были ускорены как операции построения C/F разбиения, 
 // так и нахождение оператора Галёркина. При нахождении С-F разбиения 
-// учитывается уже построеннная его часть и поэтому число сканирований на
+// учитывается уже построенная его часть и поэтому число сканирований на
 // на поздних циклах сокращается охватывая только не построенную часть.
-// При нахождении произведеия Галёркина получена самая оптимальная по быстродествию версия,
+// При нахождении произведения Галёркина получена самая оптимальная по быстродействию версия,
 // Основанная на алгоритме слияния отсортированных списков.
-// version 0.03 15 october 2015. (Успешное построение иерархии сеток, операторов restriction
-// , interpolation.) По сравнению с версией 0.01 исправлены : бинарный поиск, нахождение
+// version 0.03 15 october 2015. (Успешное построение иерархии сеток, операторов restriction,
+// interpolation.) По сравнению с версией 0.01 исправлены: бинарный поиск, нахождение
 // оператора Галеркина. Внесены прочие мелкие исправления.
 // По сравнению с версией 0.02 код стал быстрее, продуманнее. Найдена ошибка в MergeSort
 //  поэтому от неё полностью отказались в пользу HeapSort.
@@ -190,144 +190,13 @@
 //#pragma comment(linker, "/STACK:16777216") // увеличение размера стека для быстрой сортировки
 #include <stdlib.h> // for библиотечной qsort
 #include <algorithm> // sort (IntroSort)
-#include "gmres.cpp" // Алгоритм Саада и Шульца GMRes [1986]
+
+#include "gmres.cpp" // Алгоритм Юсефа Саада и Мартина Г. Шульца FGMRes [1986]
+
 
 
 // Очередь по приоритетам на основе сортирующего дерева 
 //#include "priority_queue.cpp"
-
-// cuda primer start
-/*
-cudaError_t addWithCuda(integer *c, const integer *a, const integer *b, unsigned integer size);
-
-__global__ void addKernel(integer *c, const integer *a, const integer *b)
-{
-	integer i = threadIdx.x;
-	c[i] = a[i] + b[i];
-}
-
-integer main_test_example()
-{
-	const integer arraySize = 5;
-	const integer a[arraySize] = { 1, 2, 3, 4, 5 };
-	const integer b[arraySize] = { 10, 20, 30, 40, 50 };
-	integer c[arraySize] = { 0 };
-
-	// Add vectors in parallel.
-	cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "addWithCuda failed!");
-		return 1;
-	}
-
-	
-
-	#if doubleintprecision == 1
-		printf("{1,2,3,4,5} + {10,20,30,40,50} = {%lld,%lld,%lld,%lld,%lld}\n",
-		c[0], c[1], c[2], c[3], c[4]);
-	#else
-		printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",
-		c[0], c[1], c[2], c[3], c[4]);
-	#endif
-	
-
-	// cudaDeviceReset must be called before exiting in order for profiling and
-	// tracing tools such as Nsight and Visual Profiler to show complete traces.
-	cudaStatus = cudaDeviceReset();
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaDeviceReset failed!");
-		return 1;
-	}
-
-	return 0;
-}
-
-// Helper function for using CUDA to add vectors in parallel.
-cudaError_t addWithCuda(integer *c, const integer *a, const integer *b, unsigned integer size)
-{
-	integer *dev_a = 0;
-	integer *dev_b = 0;
-	integer *dev_c = 0;
-	cudaError_t cudaStatus;
-
-	// Choose which GPU to run on, change this on a multi-GPU system.
-	cudaStatus = cudaSetDevice(0);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
-		goto Error;
-	}
-
-	// Allocate GPU buffers for three vectors (two input, one output)    .
-	cudaStatus = cudaMalloc((void**)&dev_c, size * sizeof(integer));
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaMalloc failed!");
-		goto Error;
-	}
-
-	cudaStatus = cudaMalloc((void**)&dev_a, size * sizeof(integer));
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaMalloc failed!");
-		goto Error;
-	}
-
-	cudaStatus = cudaMalloc((void**)&dev_b, size * sizeof(integer));
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaMalloc failed!");
-		goto Error;
-	}
-
-	// Copy input vectors from host memory to GPU buffers.
-	cudaStatus = cudaMemcpy(dev_a, a, size * sizeof(integer), cudaMemcpyHostToDevice);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy failed!");
-		goto Error;
-	}
-
-	cudaStatus = cudaMemcpy(dev_b, b, size * sizeof(integer), cudaMemcpyHostToDevice);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy failed!");
-		goto Error;
-	}
-
-	// Launch a kernel on the GPU with one thread for each element.
-	addKernel << <1, size >> >(dev_c, dev_a, dev_b);
-
-	// Check for any errors launching the kernel
-	cudaStatus = cudaGetLastError();
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-		goto Error;
-	}
-
-	// cudaDeviceSynchronize waits for the kernel to finish, and returns
-	// any errors encountered during the launch.
-	cudaStatus = cudaDeviceSynchronize();
-	if (cudaStatus != cudaSuccess) {
-	#if doubleintprecision == 1
-		fprintf(stderr, "cudaDeviceSynchronize returned error code %lld after launching addKernel!\n", cudaStatus);
-	#else
-		fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
-	#endif
-		
-		goto Error;
-	}
-
-	// Copy output vector from GPU buffer to host memory.
-	cudaStatus = cudaMemcpy(c, dev_c, size * sizeof(integer), cudaMemcpyDeviceToHost);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaMemcpy failed!");
-		goto Error;
-	}
-
-Error:
-	cudaFree(dev_c);
-	cudaFree(dev_a);
-	cudaFree(dev_b);
-
-	return cudaStatus;
-}
-*/
-// cuda primer end
 
 // Объявление модели вещественной арифметики содержится в самом начале программы в главно модуле 
 // AliceFlow_v0_27
@@ -340,38 +209,25 @@ Error:
 
 // Управление алгебраическим многосеточным методом из интерфейса.
 typedef struct TMY_AMG_MANAGER {
-integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
-integer number_interpolation_procedure; // идентификатор процедуры интерполляции.
-integer nFinnest, nu1, nu2; // Количества сглаживаний.
-integer memory_size; // В размерах матрицы А.
+	integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
+	integer number_interpolation_procedure; // идентификатор процедуры интерполяции.
+	integer nFinnest, nu1, nu2; // Количества сглаживаний.
+	integer memory_size; // В размерах матрицы А.
 } MY_AMG_MANAGER;
 
 MY_AMG_MANAGER my_amg_manager;
 
 // amg default settings:
 // Параметры собственного многосеточного метода о умолчанию.
-my_amg_manager.maximum_levels = 20; // максимальное число уровней начиная с котрго начинается усечение.
+my_amg_manager.maximum_levels = 20; // максимальное число уровней начиная с которого начинается усечение.
 my_amg_manager.number_interpolation_procedure = 0; // номер интерполяционной процедуры.
 my_amg_manager.nFinnest = 2; // число итераций на подробной сетке.
 my_amg_manager.nu1 = 1; // число предсглаживаний.
-my_amg_manager.nu2 = 2; // число пост сглаживаий.
+my_amg_manager.nu2 = 2; // число пост сглаживаний.
 my_amg_manager.memory_size = 9; // количество оперативной памяти в размерностях матрицы А.
 
 */
 
-const integer QUICK_SORT_ALG = 1; // Быстрая сортировка Хоара.
-// Использовать ли quicksort qs and qsj.
-// Сортировка с подсчётом быстрее quickSort.
-// Использовать ли сортировку подсчётом которая 
-//жрёт килотонну памяти (Короче для машин у которых море оперативки).
-const integer COUNTING_SORT_ALG = 0; // Сортировка с подсчётом лучший выбор.
-// Сортировка с посчётом подходит потому что ключи целочисленны и 
-// лежат в заданном интервале непрерывно.
-const integer HEAP_SORT_ALG = 2; // пирмидальная сортировка.
-// количество рекурсивных вызовов ограничено, поэтому QuickSort не подходит.
-// В компиляторе надо увеличить размер стека до 4Мб.
-// сортировка Тима Петерсона. 15-16.03.2019
-const integer TIM_PETERSON_SORT_ALG = 3;
 
 typedef struct TAk {
 	integer i, j;
@@ -393,496 +249,19 @@ typedef struct TAk1 {
 // Разреженная матрица СЛАУ в CRS или COO форматах.
 typedef struct TAk2 {
 	// Раздельное хранение массивов.
-	integer *i, *j;
-	doublereal *aij;
-	doublereal *abs_aij; // Для ускорения вычислений предварительно вычисляем модуль.
+	integer *i=nullptr, *j=nullptr;
+	doublereal *aij=nullptr;
+	doublereal *abs_aij=nullptr; // Для ускорения вычислений предварительно вычисляем модуль.
 	//float *aij;
 	//integer *row_ptr_start, *row_ptr_end;
 } Ak2;
 
 
-// Для генерации матрицы СЛАУ требуется в случае реализации
-// на динамических массивах переупорядочивание элементов:
-// сортировка. Здесь будет реализована быстрая сортировка.
-// Брайан Керниган и Денис Ритчи "The C programming language".
-// swap: Обмен местами v[i] и v[j]
-template <typename doublerealT>
-void swapnd(integer* &v, doublerealT* &dkey, integer i, integer j)
-{
-	integer temp;
-
-	// change v[i] <-> v[j]
-	temp = v[i];
-	v[i] = v[j];
-	v[j] = temp;
-
-	doublerealT dtemp;
-
-	// change v[i] <-> v[j]
-	dtemp = dkey[i];
-	dkey[i] = dkey[j];
-	dkey[j] = dtemp;
-} // swap
-
-  // Вот алгоритм PivotList
-template <typename doublerealT>
-integer PivotListnd(integer* &list, doublerealT* &dkey, integer first, integer last) {
-	// list обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	doublerealT PivotValue = dkey[first];
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (dkey[index]<PivotValue) {
-			PivotPoint++;
-			swapnd<doublerealT>(list, dkey, PivotPoint, index);
-		}
-	}
-
-	swapnd<doublerealT>(list, dkey, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotList
-
-
-  // Быстрая сортировка Хоара.
-  // Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
-  // стр. 106.
-template <typename doublerealT>
-void QuickSortnd(integer* &list, doublerealT* &dkey, integer first, integer last) {
-	// list упорядочиваемый список элементов
-	// first номер первого элемента в сортируемой части списка
-	// last номер последнего элемента в сортируемой части списка
-
-	integer pivot;
-
-	if (first < last) {
-		pivot = PivotListnd<doublerealT>(list, dkey, first, last);
-		QuickSortnd<doublerealT>(list, dkey, first, pivot - 1);
-		QuickSortnd<doublerealT>(list, dkey, pivot + 1, last);
-	}
-} // QuickSort
-
-// Для библиотечной быстрой сортировки целочисленного массива.
-integer intcompare(const void  * i, const void * j)
-{
-	if (*(integer*)i > *(integer*)j) return (1);
-	if (*(integer*)i < *(integer*)j) return (-1);
-	return (0);
-} // для библиотечной функции быстрой сортировки.
-
-/*
-void handle_error(Ak1* &handle, char* ch_var, char* ch_function, integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (Ak1*)malloc((n) * sizeof(Ak1));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (Ak1*)malloc((n) * sizeof(Ak1));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-void handle_error(Ak1* &handle, const char ch_var[], const char ch_function[], integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (Ak1*)malloc((n) * sizeof(Ak1));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (Ak1*)malloc((n) * sizeof(Ak1));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-void handle_error(Ak* &handle, char* ch_var, char* ch_function, integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (Ak*)malloc((n) * sizeof(Ak));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (Ak*)malloc((n) * sizeof(Ak));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-
-void handle_error(Ak* &handle, const char ch_var[], const char ch_function[], integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (Ak*)malloc((n) * sizeof(Ak));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (Ak*)malloc((n) * sizeof(Ak));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-*/
-
-template <typename doublerealT>
-void handle_error(doublerealT* &handle, char* ch_var, char* ch_function, integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-
-template <typename doublerealT>
-void handle_error(doublerealT* &handle, const char ch_var[], const char ch_function[], integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-template <typename doublerealT>
-void handle_error(doublerealT* &handle, char* ch_var, integer id_var, char* ch_var2, char* ch_function, integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s %lld %s in %s.\n", ch_var, id_var, ch_var2, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s %lld %s in %s.\n", ch_var, id_var, ch_var2, ch_function);
-		}
-	}
-}
-
-template <typename doublerealT>
-void handle_error(doublerealT* &handle, const char ch_var[], integer id_var, const char ch_var2[], const char ch_function[], integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s %lld %s in %s.\n", ch_var, id_var, ch_var2, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s %lld %s in %s.\n", ch_var, id_var, ch_var2, ch_function);
-		}
-	}
-}
-
-/*
-void handle_error(bool* handle, char* ch_var, char* ch_function, integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (bool*)malloc((n) * sizeof(bool));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (bool*)malloc((n) * sizeof(bool));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-
-void handle_error(bool* handle, const char ch_var[], const char ch_function[], integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (bool*)malloc((n) * sizeof(bool));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (bool*)malloc((n) * sizeof(bool));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-void handle_error(integer* handle, char* ch_var, char* ch_function, integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (integer*)malloc((n) * sizeof(integer));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (integer*)malloc((n) * sizeof(integer));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-
-void handle_error(integer* handle, const char ch_var[], const char ch_function[], integer n)
-{
-	if (handle == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-		printf("Please any key to continue...\n");
-		system("pause");
-		// Здесь пользователь может закрыть другие приложения и освободить память.
-		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-		handle = (integer*)malloc((n) * sizeof(integer));
-		if (handle == nullptr) {
-			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-			printf("Please any key to continue...\n");
-			system("pause");
-			// Здесь пользователь может закрыть другие приложения и освободить память.
-			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
-			handle = (integer*)malloc((n) * sizeof(integer));
-			if (handle == nullptr) {
-				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
-				printf("Please any key to exit...\n");
-				system("pause");
-				exit(1);
-			}
-			else {
-				printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-			}
-		}
-		else {
-			printf("ok! memory allocation successfully for %s in %s.\n", ch_var, ch_function);
-		}
-	}
-}
-*/
+#include "My_Handle_Error.cpp"
 
 typedef struct Taccumulqtor_list {
-	integer ikey;
-	Taccumulqtor_list* next;
+	integer ikey=-1;
+	Taccumulqtor_list* next=nullptr;
 } accumulqtor_list;
 
 // Найти в линейном односвязном списке значение.
@@ -932,8 +311,8 @@ void clear_list(Taccumulqtor_list* &root) {
 
 typedef struct Thashlist {
 	Ak Amat;
-	Thashlist* next;
-	Thashlist* prev;
+	Thashlist* next=nullptr;
+	Thashlist* prev=nullptr;
 } hashlist;
 
 // вставка ключа в список
@@ -942,7 +321,7 @@ void insertion_hash(hashlist* p, Ak d) {
 		p = new hashlist;
 		if (p == 0) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for p in insertion hash my_agregat_amg...\n");
+			printf("Problem: not enough memory on your equipment for p in insertion hash my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -959,7 +338,7 @@ void insertion_hash(hashlist* p, Ak d) {
 		r=new hashlist;
 		if (r == 0) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for r in insertion hash my_agregat_amg...\n");
+			printf("Problem: not enough memory on your equipment for r in insertion hash my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -994,2869 +373,17 @@ void clear_hash(hashlist* p) {
 	}
 }
 
-
-
 typedef struct TList {
-	integer ii, i, countsosed;
-	TList* next;
-	TList* prev;
+	integer ii, i, count_neighbour;
+	TList* next=nullptr;
+	TList* prev=nullptr;
 } List;
 
-// Для АВЛ дерева
-// 12.12.2015
-// По видимому в 3D очень большое количество соседей и простой 
-// линейный двухсвязный список не справляется с таким большим 
-// количеством элементов по параметру быстродействие. 
-// Для сравнения в 2D при 1М неизвестных видно что линейный
-// список справляется прекрасным образом со своим 2D числом соседей
-// и даже по результатам 
-// профайлинга не видно чтобы он испытывал сколько-нибудь ощутимую
-// нагрузку. 
+// Сбалансированные двоичные деревья поиска.
+#include "Balanced_Tree.cpp"
 
-// АВЛ дерево это структура данных позволяющая производить все 
-// операции за log_2 (number of sosed count) операций. 
 
-// Адельсон-Вельский и Ландис 1962 (взято из интернета).
-// узел с максимальным значением ключа крайний правый.
-
-// для поля данных надо определить перегруженные операции,
-// меньше, больше и равно.
-
-// Поле данных в АВЛ дереве.
-// перенесена в файл priority_queue.cpp
-//struct data_BalTree
-//{
-	// --> high priority --> for operation <,>
-	//integer ii;
-	//integer  i, countsosed;
-	// countsosed есть key.
-//};
-
-//отношения порядка только в insert и remove
-
-// Узел АВЛ дерева.
-struct node_AVL
-{
-	data_BalTree key;
-	// Высота поддерева с корнем в данном узле.
-	unsigned char height;
-	node_AVL* left;
-	node_AVL* right;
-	// Конструктор.
-	node_AVL(data_BalTree k) { key = k; left = right = 0; height = 1; }
-};
-
-// Работает также и с пустыми деревьями.
-// Обёртка поля height
-unsigned char height(node_AVL* p)
-{
-	return p ? p->height : 0;
-};
-
-// Вычисляет balance factor заданного узла
-// работает только с ненулевыми указателями.
-integer bfactor(node_AVL* p)
-{
-	return height(p->right) - height(p->left);
-};
-
-// Восстанавливает корректное значение поля height
-// заданного узла (при условии, что значения этого поля 
-// в правом и левом дочерних узлах являются корректными).
-void fixheight(node_AVL* p)
-{
-	unsigned char hl = height(p->left);
-	unsigned char hr = height(p->right);
-	p->height = (hl > hr ? hl : hr) + 1;
-};
-
-// Балансировка узлов.
-node_AVL* rotateright(node_AVL* p)
-{
-	// правый поворот вокруг p
-	node_AVL* q = p->left;
-	p->left = q->right;
-	q->right = p;
-	fixheight(p);
-	fixheight(q);
-	return q;
-};
-
-// Левый поворот является симметричной копией правого :
-node_AVL* rotateleft(node_AVL* q)
-{
-	// левый поворот вокруг q
-	node_AVL* p = q->right;
-	q->right = p->left;
-	p->left = q;
-	fixheight(q);
-	fixheight(p);
-	return p;
-};
-
-// Код выполняющий балансировку сводится к проверке условий и выполнению поворотов
-node_AVL* balance(node_AVL* p) // балансировка узла p
-{
-	fixheight(p);
-	if (bfactor(p) == 2)
-	{
-		if (bfactor(p->right) < 0)
-			p->right = rotateright(p->right);
-		return rotateleft(p);
-	}
-	if (bfactor(p) == -2)
-	{
-		if (bfactor(p->left) > 0)
-			p->left = rotateleft(p->left);
-		return rotateright(p);
-	}
-	return p; // балансировка не нужна
-}
-
-// Вставка ключей в дерево.
-// Возвращает новое значение корня АВЛ дерева.
-node_AVL* insert(node_AVL* &p, data_BalTree k)
-{
-	// Вставка ключа k в дерево с корнем p
-	if (p == nullptr) {
-		node_AVL* r1 = nullptr;
-		r1 = new node_AVL(k);
-		if (r1 == nullptr) {
-			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for r1 in insert my_agregat_amg...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
-			system("pause");
-			exit(1);
-		}
-		return r1;
-	}
-	if (k.countsosed < p->key.countsosed)
-		p->left = insert(p->left, k);
-	else if (k.countsosed > p->key.countsosed)
-		p->right = insert(p->right, k);
-	else if (k.i < p->key.i)
-		p->left = insert(p->left, k);
-	//else if (k.i > p->key.i)
-	else
-		p->right = insert(p->right, k);
-	//else if (k.ii < p->key.ii)
-		//p->left = insert(p->left, k);
-	//else
-		//p->right = insert(p->right, k);
-	return balance(p);
-} // insert
-
-  // Возвращает true если узел найден в дереве
-bool isfound(node_AVL* p, data_BalTree k)
-{
-	if (p == 0) return false; // ненайден.
-	if (k.countsosed < p->key.countsosed)
-		return isfound(p->left, k);
-	else if (k.countsosed > p->key.countsosed)
-		return isfound(p->right, k);
-	else if (k.i < p->key.i)
-		return isfound(p->left, k);
-	else if (k.i > p->key.i)
-		return isfound(p->right, k);
-	//else if (k.ii < p->key.ii)
-		//return isfound(p->left, k);
-	//else if (k.ii > p->key.ii)
-		//return isfound(p->right, k);
-	else return true; // найден.
-}
-
-// Полное удаление бинарного дерева.
-void clear_AVL(node_AVL* p)
-{
-	if (p != 0) {
-		clear_AVL(p->left);
-		clear_AVL(p->right);
-		// удаляем лист.
-		delete p;
-		p = 0;
-	}
-} // clear_AVL
-
-  // Удаление узла с занными свойства с сохранением сбалансированности.
-node_AVL* findmin(node_AVL* p)
-{
-	// поиск узла с минимальным ключём в дереве p
-	//if (!p) {
-	return p->left ? findmin(p->left) : p;
-	//}
-	//else {
-	// на поиск минимума подан нулевой указатель.
-	//return 0;
-	//}
-} // findmin
-
-node_AVL* findmax(node_AVL* p)
-{
-	// поиск узла с максимальным ключём в дереве p
-	if (p != 0) {
-		return p->right ? findmax(p->right) : p;
-		/*
-		#if doubleintprecision == 1
-			if (p->right == 0) {
-				//printf("%lld %lld %lld\n", p->key.countsosed, p->key.i, p->key.ii);
-				//system("pause");
-				return p;
-			}
-			else {
-				//printf("%lld %lld %lld\n",p->key.countsosed,p->key.i,p->key.ii);
-				findmax(p->right);
-			}
-		#else
-			if (p->right == 0) {
-				//printf("%d %d %d\n", p->key.countsosed, p->key.i, p->key.ii);
-				//system("pause");
-				return p;
-			}
-			else {
-				//printf("%d %d %d\n",p->key.countsosed,p->key.i,p->key.ii);
-				findmax(p->right);
-			}
-		#endif
-		
-		*/
-	}
-	else {
-		// На поиск максимума подан нулевой указатель.
-		return 0;
-	}
-} // findmax
-
-data_BalTree get_max_AVL(node_AVL* p)
-{
-	// возвращение максимального узла в дереве.
-	return p->right ? get_max_AVL(p->right) : p->key;
-}
-
-node_AVL* removemin(node_AVL* p)
-{
-	// удаление узла с минимальным ключом из дерева p
-	if (p->left == 0)
-		return p->right;
-	p->left = removemin(p->left);
-	return balance(p);
-}
-
-// Удаление заданного элемента из AVL дерева
-// с полным сохранением балансировки.
-// на возвращаемое значение можно не обращать внимания.
-node_AVL* remove_AVL(node_AVL* p, data_BalTree k)
-{
-	// Отношение порядка определено 
-	// для структуры из трёх целых чисел.
-	// удаление ключа k из дерева p
-	if (p == 0) return 0;
-	// Двоичный поиск нужного элемента.
-	if (k.countsosed < p->key.countsosed)
-		p->left = remove_AVL(p->left, k);
-	else if (k.countsosed>p->key.countsosed)
-		p->right = remove_AVL(p->right, k);
-	else if (k.i < p->key.i)
-		p->left = remove_AVL(p->left, k);
-	else if (k.i>p->key.i)
-		p->right = remove_AVL(p->right, k);
-	//else if (k.ii < p->key.ii)
-		//p->left = remove_AVL(p->left, k);
-	//else if (k.ii>p->key.ii)
-		//p->right = remove_AVL(p->right, k);
-	else // k==p->key
-	{
-		node_AVL* q = p->left;
-		node_AVL* r = p->right;
-		delete p;
-		p = 0;
-		if (r == 0) return q;
-		node_AVL* min = findmin(r);
-		min->right = removemin(r);
-		min->left = q;
-		return balance(min);
-	}
-
-	// При выходе из рекурсии делаем балансировку.
-	return balance(p);
-}
-
-// Вставка ключа К в дерево если ключа k_search
-// еще нет в дереве или модификация ключа К_search на К.
-// Возвращает новое значение корня АВЛ дерева.
-node_AVL* insert_and_modify(node_AVL* p, data_BalTree k, data_BalTree k_search)
-{
-	if (isfound(p, k_search) == false) {
-		//   узла в дереве нет.
-		p = insert(p, k);
-		return p;
-	}
-	else {
-		// удаление k_search
-		p = remove_AVL(p, k_search); // необходимое действие
-									 //remove_AVL(p, k_search); // приводит к ошибке.
-		p = insert(p, k);							 // вставка к.
-			return p;
-	}
-}
-
-// print_AVL for debug.
-void print_AVL(node_AVL* p)
-{
-	if (p != 0) {
-		print_AVL(p->left);
-		for (integer i = 0; i <= p->height; i++) {
-			printf(" ");
-		}
-#if doubleintprecision == 1
-		//printf("%lld %lld %lld\n", p->key.countsosed, p->key.i, p->key.ii);
-		printf("%lld %lld\n", p->key.countsosed, p->key.i);
-#else
-		//printf("%d %d %d\n", p->key.countsosed, p->key.i, p->key.ii);
-		printf("%d %d\n", p->key.countsosed, p->key.i);
-#endif
-		
-		print_AVL(p->right);
-	}
-} // print_AVL
-
-  // тестирование АВЛ дерева
-  // 12 декабря 2015 удовлетворительно.
-void test_AVL()
-{
-	node_AVL* root = 0;
-	data_BalTree d3;
-	d3.countsosed = rand();
-	d3.i = rand();
-	//d3.ii = rand();
-	root = remove_AVL(root, d3);
-	for (integer i = 0; i < 10; i++)
-	{
-		data_BalTree d;
-		d.countsosed = rand();
-		d.i = rand();
-		//d.ii = rand();
-		root = insert_and_modify(root, d, d);
-		print_AVL(root);
-		if (i == 5) {
-
-			//41 18467 6334
-
-
-			data_BalTree d1;
-			d1.countsosed = 41;
-			d1.i = 18467;
-			//d1.ii = 6334;
-			data_BalTree d2;
-			d2.countsosed = rand();
-			d2.i = rand();
-			//d2.ii = rand();
-			root = insert_and_modify(root, d2, d1);
-			print_AVL(root);
-			printf("remove 41 18467 6334\n");
-			root = remove_AVL(root, d1);
-			print_AVL(root);
-			printf("found max\n");
-			node_AVL* emax;
-			emax = findmax(root);
-#if doubleintprecision == 1
-			printf("maximum id %lld\n", emax->key.countsosed);
-#else
-			printf("maximum id %d\n", emax->key.countsosed);
-#endif
-			
-			emax = 0;
-			//clear_AVL(root);
-			//root = 0;
-			print_AVL(root);
-		}
-
-		system("pause");
-	}
-	system("pause");
-}
-
-
-
-// Конец данных и методов используемых в АВЛ дереве.
-
-// Красночерное дерево поиска НАЧАЛО.
-// ссылка
-// красно-черное дерево c++ реализация в поисковике yandex.
-// http://www.cyberforum.ru/cpp-beginners/thread1009501.html
-// 22.06.2018.
-
-class RBtree {
-	struct node_st { node_st *p1=nullptr, *p2=nullptr; data_BalTree value; bool red=true; }; // структура узла
-	node_st *tree_root=nullptr;                 //!< корень
-	integer nodes_count=0;                    //!< число узлов дерева
-private:
-	node_st * NewNode(data_BalTree value);        //!< выделение новой вешины
-	void DelNode(node_st*);             //!< удаление вершины
-	void Clear(node_st*);               //!< снос(удаление) дерева (рекурсивная часть)
-	node_st *Rotate21(node_st*);        //!< вращение влево
-	node_st *Rotate12(node_st*);        //!< вращение вправо
-	void BalanceInsert(node_st**);      //!< балансировка вставки
-	bool BalanceRemove1(node_st**);     //!< левая балансировка удаления
-	bool BalanceRemove2(node_st**);     //!< правая балансировка удаления
-	bool Insert(data_BalTree, node_st**);         //!< рекурсивная часть вставки
-	bool GetMin(node_st**, node_st**);   //!< найти и убрать максимальный узел поддерева
-	bool Remove(node_st**, data_BalTree);         //!< рекурсивная часть удаления
-public: // отладочная часть
-	enum check_code { error_balance, error_struct, ok }; // код ошибки
-	void Show();                        //!< вывод дерева
-										//check_code Check();                 //!< проверка дерева
-										//bool TreeWalk(bool*, integer);           //!< обход дерева и сверка значений с массивом
-private: // отладочная часть
-	void Show(node_st*, integer, char);       //!< вывод дерева, рекурсивная часть
-											  //check_code Check(node_st*, integer, integer&);//!< проверка дерева (рекурсивная часть)
-											  //bool TreeWalk(node_st*, bool*, integer);  //!< обход дерева и сверка значений с массивом (рекурсивная часть)
-public:
-	RBtree();
-	~RBtree();
-	void Clear();           //!< снести дерево              
-	bool Find(data_BalTree);         //!< найти значение
-	void Insert(data_BalTree);       //!< вставить значение
-	void Remove(data_BalTree);       //!< удалить значение
-	void InsertAndModify(data_BalTree, data_BalTree); //!< вставить если нет элемента, модифицировать существующий элемент если он уже есть.
-	integer GetNodesCount();    //!< узнать число узлов
-	data_BalTree GetMaxElm(); //!< возвращает максимальный элемент в дереве.
-};
-
-//!< возвращает максимальный элемент в дереве.
-data_BalTree RBtree::GetMaxElm() {
-	if (tree_root) {
-		node_st *node = tree_root;
-		node_st *p2_loc = tree_root->p2;
-		if (p2_loc != nullptr) {
-			while (p2_loc != nullptr) {
-				node = p2_loc;
-				p2_loc = p2_loc->p2;
-			}
-			data_BalTree ir = node->value;
-			node = nullptr;
-			p2_loc = nullptr;
-			return ir;
-		}
-		else {
-			data_BalTree ir = node->value;
-			node = nullptr;
-			return ir;
-		}
-	}
-	else {
-		printf("Red - Black tree is empty...\n");
-		//getchar();
-		//exit(1);
-		data_BalTree ir;
-		ir.countsosed = -1;
-		ir.i = -1;
-		return ir;
-	}
-
-} // GetMaxElm
-
-// Конструктор.
-RBtree::RBtree()
-{
-	tree_root = nullptr;
-	nodes_count = 0;
-}
-
-// деструктор.
-RBtree::~RBtree()
-{
-	Clear(tree_root);
-}
-
-integer RBtree::GetNodesCount()
-{
-	return nodes_count;
-}
-
-// выделение новой вершины
-RBtree::node_st *RBtree::NewNode(data_BalTree value)
-{
-	nodes_count++;
-	node_st *node = new node_st;
-	node->value = value;
-	node->p1 = node->p2 = nullptr;
-	node->red = true;
-	return node;
-}
-
-// удаление вершины
-void RBtree::DelNode(node_st *node)
-{
-	nodes_count--;
-	delete node;
-}
-
-// снос дерева (рекурсивная часть)
-void RBtree::Clear(node_st *node)
-{
-	if (!node) return;
-	Clear(node->p1);
-	Clear(node->p2);
-	DelNode(node);
-}
-
-// вывод дерева, рекурсивная часть
-//! \param node узел
-//! \param depth глубина
-//! \param dir   значёк
-//! \code Show(root,0,'*'); \endcode
-void RBtree::Show(node_st *node, integer depth, char dir)
-{
-	integer n;
-	if (!node) return;
-	for (n = 0; n<depth; n++) putchar(' ');
-	printf("%c[%lld %lld] (%s)\n", dir, node->value.i, node->value.countsosed, node->red ? "red" : "black");
-	Show(node->p1, depth + 2, '-');
-	Show(node->p2, depth + 2, '+');
-}
-
-
-// вращение влево
-//! \param index индеск вершины
-//! \result новая вершина дерева
-RBtree::node_st *RBtree::Rotate21(node_st *node)
-{
-	node_st *p2 = node->p2;
-	node_st *p21 = p2->p1;
-	p2->p1 = node;
-	node->p2 = p21;
-	return p2;
-}
-
-// вращение вправо
-//! \param index индеск вершины
-//! \result новая вершина дерева
-RBtree::node_st *RBtree::Rotate12(node_st *node)
-{
-	node_st *p1 = node->p1;
-	node_st *p12 = p1->p2;
-	p1->p2 = node;
-	node->p1 = p12;
-	return p1;
-}
-
-
-// балансировка вершины
-void RBtree::BalanceInsert(node_st **root)
-{
-	node_st *p1, *p2, *px1, *px2;
-	node_st *node = *root;
-	if (node->red) return;
-	p1 = node->p1;
-	p2 = node->p2;
-	if ((p1 != nullptr) && p1->red) {
-		px2 = p1->p2;             // задача найти две рядом стоящие красные вершины
-		if ((px2 != nullptr) && px2->red) p1 = node->p1 = Rotate21(p1);
-		px1 = p1->p1;
-		if ((px1 != nullptr) && px1->red) {
-			node->red = true;
-			p1->red = false;
-			if ((p2 != nullptr) && p2->red) { // отделаемся перекраской вершин
-				px1->red = true;
-				p2->red = false;
-				return;
-			}
-			*root = Rotate12(node);
-			return;
-		}
-	}
-	// тоже самое в другую сторону
-	if ((p2 != nullptr) && p2->red) {
-		px1 = p2->p1;             // задача найти две рядом стоящие красные вершины
-		if ((px1 != nullptr) && px1->red) p2 = node->p2 = Rotate12(p2);
-		px2 = p2->p2;
-		if ((px2 != nullptr) && px2->red) {
-			node->red = true;
-			p2->red = false;
-			if ((p1 != nullptr) && p1->red) { // отделаемся перекраской вершин
-				px2->red = true;
-				p1->red = false;
-				return;
-			}
-			*root = Rotate21(node);
-			return;
-		}
-	}
-}
-
-
-bool RBtree::BalanceRemove1(node_st **root)
-{
-	node_st *node = *root;
-	node_st *p1 = node->p1;
-	node_st *p2 = node->p2;
-	if ((p1!=nullptr) && (p1->red)) {
-		p1->red = false; return false;
-	}
-	if ((p2!=nullptr) && (p2->red)) { // случай 1
-		node->red = true;
-		p2->red = false;
-		node = *root = Rotate21(node);
-		if (BalanceRemove1(&node->p1)) node->p1->red = false;
-		return false;
-	}
-	unsigned int mask = 0;
-	node_st *p21 = nullptr;
-	node_st *p22 = nullptr;
-	if (p2 != nullptr) {
-		p21 = p2->p1;
-		p22 = p2->p2;
-	}
-
-	if ((p21 != nullptr) && (p21->red)) mask |= 1;
-	if ((p22 != nullptr) && (p22->red)) mask |= 2;
-	switch (mask)
-	{
-	case 0:     // случай 2 - if((!p21 || !p21->red) && (!p22 || !p22->red))
-		p2->red = true;
-		return true;
-	case 1:
-	case 3:     // случай 3 - if(p21 && p21->red)
-		p2->red = true;
-		p21->red = false;
-		p2 = node->p2 = Rotate12(p2);
-		p22 = p2->p2;
-	case 2:     // случай 4 - if(p22 && p22->red)
-		p2->red = node->red;
-		p22->red = node->red = false;
-		*root = Rotate21(node);
-	}
-	return false;
-}
-
-bool RBtree::BalanceRemove2(node_st **root)
-{
-	node_st *node = *root;
-	node_st *p1 = node->p1;
-	node_st *p2 = node->p2;
-	if ((p2 != nullptr) && p2->red) { p2->red = false; return false; }
-	if ((p1 != nullptr) && p1->red) { // случай 1
-		node->red = true;
-		p1->red = false;
-		node = *root = Rotate12(node);
-		if (BalanceRemove2(&node->p2)) node->p2->red = false;
-		return false;
-	}
-	unsigned int mask = 0;
-	node_st *p11 = nullptr;
-	node_st *p12 = nullptr;
-
-	if (p1 != nullptr) {
-		p11 = p1->p1;
-		p12 = p1->p2;
-	}
-
-	if ((p11 != nullptr) && p11->red) mask |= 1;
-	if ((p12 != nullptr) && p12->red) mask |= 2;
-	switch (mask) {
-	case 0:     // случай 2 - if((!p12 || !p12->red) && (!p11 || !p11->red))
-		p1->red = true;
-		return true;
-	case 2:
-	case 3:     // случай 3 - if(p12 && p12->red)
-		p1->red = true;
-		p12->red = false;
-		p1 = node->p1 = Rotate21(p1);
-		p11 = p1->p1;
-	case 1:     // случай 4 - if(p11 && p11->red)
-		p1->red = node->red;
-		p11->red = node->red = false;
-		*root = Rotate12(node);
-	}
-	return false;
-}
-
-
-bool RBtree::Find(data_BalTree value)
-{
-	node_st *node = tree_root;
-	while (node != nullptr) {
-		if ((node->value.i == value.i) && (node->value.countsosed == value.countsosed)) return true;
-		//node = node->value>value ? node->p1 : node->p2;
-		if (value.countsosed < node->value.countsosed)
-			node = node->p1;
-		else if (value.countsosed >node->value.countsosed)
-			node = node->p2;
-		else if (value.i < node->value.i)
-			node = node->p1;
-		else if (value.i > node->value.i)
-			node = node->p2;
-	}
-	return false;
-}
-
-
-// рекурсивная часть вставки
-//! \result true если изменений небыло или балансировка в данной вершине не нужна
-bool RBtree::Insert(data_BalTree value, node_st **root)
-{
-	node_st *node = *root;
-	if (node == nullptr) *root = NewNode(value);
-	else {
-		if ((node->value.i == value.i) && (node->value.countsosed == value.countsosed))  return true; 
-		//if (Insert(value, value<node->value ? &node->p1 : &node->p2)) return true; 
-		if (value.countsosed < node->value.countsosed) {
-			if (Insert(value, &node->p1))  return true; 
-		}
-		else if (value.countsosed > node->value.countsosed) {
-			if (Insert(value, &node->p2))  return true; 
-		}
-		else if (value.i < node->value.i) {
-			if (Insert(value, &node->p1)) return true; 
-		}
-		else if (value.i > node->value.i) {
-			if (Insert(value, &node->p2))  return true; 
-		}
-
-		BalanceInsert(root);
-	}
-	
-	return false;
-}
-
-
-// найти и убрать максимальный узел поддерева
-//! \param root корень дерева в котором надо найти элемент
-//! \retval res эелемент который был удалён
-//! \result true если нужен баланс
-bool RBtree::GetMin(node_st **root, node_st **res)
-{
-	node_st *node = *root;
-	if (node->p1 != nullptr) {
-		if (GetMin(&node->p1, res)) return BalanceRemove1(root);
-	}
-	else {
-		*root = node->p2;
-		*res = node;
-		return !node->red;
-	}
-	return false;
-}
-
-
-// рекурсивная часть удаления
-//! \result true если нужен баланс
-bool RBtree::Remove(node_st **root, data_BalTree value)
-{
-	node_st *t, *node = *root;
-	if (node==nullptr) return false;
-	if ((node->value.countsosed<value.countsosed) || ((node->value.countsosed == value.countsosed) && (node->value.i<value.i))) {
-		if (Remove(&node->p2, value)) return BalanceRemove2(root);
-	}
-	else if ((node->value.countsosed>value.countsosed) || ((node->value.countsosed == value.countsosed) && (node->value.i>value.i))) {
-		if (Remove(&node->p1, value)) return BalanceRemove1(root);
-	}
-	else {
-		bool res;
-		if (node->p2==nullptr) {
-			*root = node->p1;
-			res = !node->red;
-		}
-		else {
-			res = GetMin(&node->p2, root);
-			t = *root;
-			t->red = node->red;
-			t->p1 = node->p1;
-			t->p2 = node->p2;
-			if (res) res = BalanceRemove2(root);
-		}
-		DelNode(node);
-		return res;
-	}
-	return 0;
-}
-
-
-// вывод дерева
-void RBtree::Show()
-{
-	printf("[tree]\n");
-	Show(tree_root, 0, '*');
-}
-
-// функция вставки
-void RBtree::Insert(data_BalTree value)
-{
-	Insert(value, &tree_root);
-	if (tree_root) tree_root->red = false;
-}
-
-// удаление узла
-void RBtree::Remove(data_BalTree value)
-{
-	Remove(&tree_root, value);
-}
-
-// снос дерева
-void RBtree::Clear()
-{
-	Clear(tree_root);
-	tree_root = 0;
-}
-
-//!< вставить если нет элемента, модифицировать существующий элемент если он уже есть.
-void RBtree::InsertAndModify(data_BalTree value, data_BalTree ksearch) {
-
-	if (Find(ksearch)) {
-		// Обект уже существует
-		Remove(ksearch);
-		// Замена ksearch на value.
-		Insert(value);
-	}
-	else {
-		// Объекта не существует
-		Insert(value);
-	}
-}
-
-/*
-// проверка дерева (рекурсивная часть)
-//! \param tree дерево
-//! \param d    текущая чёрная глубина
-//! \param h    эталонная чёрная глубина
-//! \result 0 или код ошибки
-RBtree::check_code RBtree::Check(node_st *tree, integer d, integer &h)
-{
-if (!tree) {
-// количество чёрных вершин на любом пути одинаковое
-if (h<0) h = d;
-return h == d ? ok : error_balance;
-}
-node_st *p1 = tree->p1;
-node_st *p2 = tree->p2;
-// красная вершина должна иметь чёрных потомков
-if (tree->red && (p1 && p1->red || p2 && p2->red)) return error_struct;
-if (p1 && tree->value<p1->value || p2 && tree->value>p2->value) return error_struct;
-if (!tree->red) d++;
-check_code n = Check(p1, d, h); if (n) return n;
-return Check(p2, d, h);
-}
-
-
-// проверка дерева
-RBtree::check_code RBtree::Check()
-{
-integer d = 0;
-integer h = -1;
-if (!tree_root) return ok;
-if (tree_root->red) return error_struct;
-return Check(tree_root, d, h);
-}
-
-// обход дерева и сверка значений с массивом (рекурсивная часть)
-//! \param node  корень дерева
-//! \param array массив для сверки
-//! \param size  размер массива
-bool RBtree::TreeWalk(node_st *node, bool *array, integer size)
-{
-if (!node) return false;
-integer value = node->value;
-if (value<0 || value >= size || !array[value]) return true;
-array[value] = false;
-return TreeWalk(node->p1, array, size) || TreeWalk(node->p2, array, size);
-}
-
-// обход дерева и сверка значений с массивом
-//! \param array массив для сверки
-//! \param size  размер массива
-bool RBtree::TreeWalk(bool *array, integer size)
-{
-if (TreeWalk(tree_root, array, size)) return true;
-for (integer n = 0; n<size; n++) if (array[n]) return true;
-return false;
-}
-*/
-
-//================================================================
-
-
-void test_Red_Black_Tree() {
-	RBtree root;
-	data_BalTree d3;
-	d3.countsosed = rand();
-	d3.i = rand();
-	root.Insert(d3);
-	//root.Show();
-	d3.countsosed = rand();
-	d3.i = rand();
-	root.Insert(d3);
-	//root.Show();
-	d3.countsosed = rand();
-	d3.i = rand();
-	root.Insert(d3);
-	d3.countsosed = rand();
-	d3.i = rand();
-	root.Insert(d3);
-	root.Show();
-	d3 = (root.GetMaxElm());
-	printf("i==%lld countsosed==%lld\n", d3.i, d3.countsosed);
-	d3.countsosed = rand();
-	d3.i = rand();
-	root.Insert(d3);
-	root.Show();
-	d3.i = rand();
-	root.Insert(d3);
-	d3.i = rand();
-	root.Insert(d3);
-	d3.i = rand();
-	root.Insert(d3);
-	d3.i = rand();
-	d3 = (root.GetMaxElm());
-	printf("i==%lld countsosed==%lld\n", d3.i, d3.countsosed);
-	root.Remove(d3);
-
-	d3 = (root.GetMaxElm());
-	printf("i==%lld countsosed==%lld\n", d3.i, d3.countsosed);
-	root.Show();
-	system("pause");
-}
-
-// Красночерное дерево поиска КОНЕЦ.
-
-// Рандомизированное дерево двоичного поиска.
-// Достоинства: Простота и понятность реализации при обеспечении логарифмической сложности операций.
-// 24 august 2017
-// По материалам статьи с хабрахабра: 7 июня 2012 в 23:43 Рандомизированные деревья поиска
-
-//Дерамида (объединение дерева и двоичной кучи). Сидель (Siedel) и Арагон (Aragon) 1996г.
-// Имеет опыт использования в качестве базовой структуры в тщательно проработанной библиотеке LEDA.
-// Описание заимствовано с сайта GeeksForGeeks.
-// Amat Treap Node
-struct TreapNode
-{
-	integer  priority;
-	data_BalTree key;
-	TreapNode *left, *right;
-};
-
-/* T1, T2 and T3 are subtrees of the tree rooted with y
-(on left side) or x (on right side)
-y                               x
-/ \     Right Rotation          /  \
-x   T3   – – – – – – – >        T1   y
-/ \       < - - - - - - -            / \
-T1  T2     Left Rotation            T2  T3 */
-
-// Amat utility function to right rotate subtree rooted with y
-// See the diagram given above.
-TreapNode *rightRotate(TreapNode *y)
-{
-	TreapNode *x = y->left, *T2 = x->right;
-
-	// Perform rotation
-	x->right = y;
-	y->left = T2;
-
-	// Return new root
-	return x;
-}
-
-// Amat utility function to left rotate subtree rooted with x
-// See the diagram given above.
-TreapNode *leftRotate(TreapNode *x)
-{
-	TreapNode *y = x->right, *T2 = y->left;
-
-	// Perform rotation
-	y->left = x;
-	x->right = T2;
-
-	// Return new root
-	return y;
-}
-
-/* Utility function to add a new key */
-TreapNode* newNode(data_BalTree key)
-{
-	TreapNode* temp = new TreapNode;
-	temp->key = key;
-	//temp->priority = rand() % 100;
-	//temp->priority = rand() % 200;
-	//temp->priority = rand() % 65536;
-	temp->priority = rand();
-	temp->left = temp->right = nullptr;
-	return temp;
-}
-
-// C function to search a given key in a given BST
-TreapNode* search_recursive(TreapNode* root, data_BalTree key)
-{
-	// Base Cases: root is null or key is present at root
-	if (root == nullptr || (root->key.i == key.i&&root->key.countsosed == key.countsosed))
-		return root;
-
-	// Key is greater than root's key
-	if (root->key.countsosed < key.countsosed)
-		return search_recursive(root->right, key);
-
-	// Key is smaller than root's key
-	if (root->key.countsosed > key.countsosed)
-	return search_recursive(root->left, key);
-
-	// Key is greater than root's key
-	if (root->key.i < key.i)
-		return search_recursive(root->right, key);
-
-	// Key is smaller than root's key
-	return search_recursive(root->left, key);
-}
-
-// Итеративный вариант должен бфыть быстрее.
-// C function to search a given key in a given BST
-TreapNode* search(TreapNode* root, data_BalTree key)
-{
-
-	TreapNode* scan = root;
-
-	for (;;) {
-
-		// Base Cases: root is null or key is present at root
-		if (scan == nullptr || (scan->key.i == key.i&&scan->key.countsosed == key.countsosed)) {
-			return scan;
-		}
-			
-
-		// Key is greater than root's key
-		if (scan->key.countsosed < key.countsosed) {
-			scan = scan->right;
-		}
-
-		// Key is smaller than root's key
-		else if (scan->key.countsosed > key.countsosed)
-		{
-			scan = scan->left;
-		}
-
-		// Key is greater than root's key
-		else if (scan->key.i < key.i) {
-			scan = scan->right;
-		}
-
-		// Key is smaller than root's key
-		else {
-			scan = scan->left;
-		}
-	}
-}
-
-
-/* Recursive implementation of insertion in Treap */
-TreapNode* insert(TreapNode* root, data_BalTree key)
-{
-	// If root is nullptr, create a new node and return it
-	if (!root)
-		return newNode(key);
-
-	// If key is smaller than root
-	if (key.countsosed < root->key.countsosed)
-	{
-		// Insert in left subtree
-		root->left = insert(root->left, key);
-
-		// Fix Heap property if it is violated
-		if (root->left->priority > root->priority)
-			root = rightRotate(root);
-	}
-	else if (key.countsosed > root->key.countsosed) // If key is greater
-	{
-		// Insert in right subtree
-		root->right = insert(root->right, key);
-
-		// Fix Heap property if it is violated
-		if (root->right->priority > root->priority)
-			root = leftRotate(root);
-	}
-	else if (key.i <= root->key.i)
-	{
-		// Insert in left subtree
-		root->left = insert(root->left, key);
-
-		// Fix Heap property if it is violated
-		if (root->left->priority > root->priority)
-			root = rightRotate(root);
-	}
-	else  // If key is greater
-	{
-		// Insert in right subtree
-		root->right = insert(root->right, key);
-
-		// Fix Heap property if it is violated
-		if (root->right->priority > root->priority)
-			root = leftRotate(root);
-	}
-	return root;
-}
-
-/* Recursive implementation of Delete() */
-TreapNode* deleteNode(TreapNode* root, data_BalTree key)
-{
-	if (root == nullptr)
-		return root;
-
-	if (key.countsosed < root->key.countsosed)
-		root->left = deleteNode(root->left, key);
-	else if (key.countsosed > root->key.countsosed)
-		root->right = deleteNode(root->right, key);
-	else if (key.i < root->key.i)
-		root->left = deleteNode(root->left, key);
-	else if (key.i > root->key.i)
-		root->right = deleteNode(root->right, key);
-
-	// IF KEY IS AT ROOT
-
-	// If left is nullptr
-	else if (root->left == nullptr)
-	{
-		TreapNode *temp = root->right;
-		delete(root);
-		root = temp;  // Make right child as root
-	}
-
-	// If Right is nullptr
-	else if (root->right == nullptr)
-	{
-		TreapNode *temp = root->left;
-		delete(root);
-		root = temp;  // Make left child as root
-	}
-
-	// If ksy is at root and both left and right are not nullptr
-	else if (root->left->priority < root->right->priority)
-	{
-		root = leftRotate(root);
-		root->left = deleteNode(root->left, key);
-	}
-	else
-	{
-		root = rightRotate(root);
-		root->right = deleteNode(root->right, key);
-	}
-
-	return root;
-}
-
-// Amat utility function to print tree
-void inorder(TreapNode* root)
-{
-	if (root)
-	{
-		inorder(root->left);
-		printf("key: i= %lld, countsosed = %lld  | priority: %lld ", root->key.i, root->key.countsosed, root->priority);
-		if (root->left)
-			printf(" | left child: i= %lld, countsosed = %lld ", root->left->key.i, root->key.countsosed);
-		if (root->right)
-			printf(" | right child: i= %lld, countsosed = %lld \n", root->right->key.i, root->key.countsosed);
-		inorder(root->right);
-	}
-}
-
-
-// Полное удаление бинарного радномизированного дерева поиска.
-void clear_random_tree(TreapNode* root)
-{
-	if (root != nullptr) {
-		clear_random_tree(root->left);
-		clear_random_tree(root->right);
-		// удаляем лист.
-		delete root;
-		//free(p);
-		root = nullptr;
-	}
-} // clear_random_tree
-
-TreapNode* findmax_random_tree(TreapNode* &p)
-{
-	TreapNode* p1 = p;
-	// поиск узла с минимальным ключём в дереве p
-	if (p1 != nullptr) {
-		//return p1->right ? findmax_random_tree(p1->right) : p1;
-		while (p1->right != nullptr) p1 = p1->right;
-		TreapNode* q = new TreapNode;
-		q->key = p1->key;
-		p1 = nullptr;
-		return q;
-	}
-	else {
-		// На поиск максимума подан нулевой указатель.
-		return nullptr;
-	}
-} // findmax
-
-// Driver Program to test above functions
-/*
-int test_Treap()
-{
-	srand(time(nullptr));
-
-	struct TreapNode *root = nullptr;
-	root = insert(root, 50);
-	root = insert(root, 30);
-	root = insert(root, 20);
-	root = insert(root, 40);
-	root = insert(root, 70);
-	root = insert(root, 60);
-	root = insert(root, 80);
-
-	printf("Inorder traversal of the given tree \n");
-	inorder(root);
-
-	printf("\nDelete 20\n";
-	root = deleteNode(root, 20);
-	printf("Inorder traversal of the modified tree \n");
-	inorder(root);
-
-	printf("\nDelete 30\n";
-	root = deleteNode(root, 30);
-	printf("Inorder traversal of the modified tree \n");
-	inorder(root);
-
-	printf("\nDelete 50\n");
-	root = deleteNode(root, 50);
-	printf("Inorder traversal of the modified tree \n");
-	inorder(root);
-
-	TreapNode *res = search(root, 50);
-	(res == nullptr) ? printf("\n50 Not Found "):
-		printf("\n50 found");
-
-	return 0;
-}
-*/
-
-/*
-struct node_random_tree // структура для представления узлов дерева
-{//+
-	data_BalTree key;
-	integer size;
-	node_random_tree* left;
-	node_random_tree* right;
-	node_random_tree(data_BalTree k) { key = k; left = right = 0; size = 1; }
-};
-
-//+
-// Обычный двоичный поиск.
-node_random_tree* find_random_tree(node_random_tree* p, data_BalTree k) // поиск ключа k в дереве p
-{
-					   
-
-	node_random_tree* q = p;
-
-	for (;;) {
-		if (p == nullptr) break;  // не найден.
-		else if (k.countsosed < p->key.countsosed) {
-			p = p->left;
-		}
-		else if (k.countsosed > p->key.countsosed) {
-			p = p->right;
-		}
-		else if (k.i < p->key.i) {
-			p = p->left;
-		}
-		else if (k.i > p->key.i) {
-			p = p->right;
-		}
-		//else if (k.ii < p->item.ii)
-		//return isfound(p->left, k);
-		//else if (k.ii > p->item.ii)
-		//return isfound(p->right, k);
-		else break; // найден.
-	}
-
-	if (p == nullptr) {
-		p = q;
-		q = nullptr;
-		return nullptr;
-	}
-	else {
-		node_random_tree* q1 = new node_random_tree(p->key);
-		p = q;
-		q = nullptr;
-		return q1;
-	}
-
-} // find_random_tree
-
-//+
-integer getsize_random_tree(node_random_tree* p) // обертка для поля size, работает с пустыми деревьями (t=nullptr)
-{
-	if (p==nullptr) return 0;
-	return p->size;
-}
-
-//+
-void fixsize_random_tree(node_random_tree* &p) // установление корректного размера дерева
-{
-	if (p!=nullptr) p->size = getsize_random_tree(p->left) + getsize_random_tree(p->right) + 1;
-}
-
-//+
-void insert_random_tree(node_random_tree* &p, data_BalTree k) // классическая вставка нового узла с ключом k в дерево p
-{
-	if (p == nullptr) {
-		p = new node_random_tree(k);
-	}
-	else {
-
-		if (k.countsosed < p->key.countsosed)
-			 insert_random_tree(p->left, k);
-		else if (k.countsosed > p->key.countsosed)
-			 insert_random_tree(p->right, k);
-		else if (k.i < p->key.i)
-			 insert_random_tree(p->left, k);
-		else if (k.i > p->key.i)
-			 insert_random_tree(p->right, k);
-
-		fixsize_random_tree(p);
-		
-	}
-} // insert_random_tree
-
-//+
-void rotateright_random_tree(node_random_tree* &p) // правый поворот вокруг узла p
-{
-	if (p == nullptr || p->left == nullptr) {
-		// ничего не делаем.
-	}
-	else {
-		node_random_tree* q = p->left;
-		if (q != nullptr) {
-			p->left = q->right;
-			q->right = p;			
-			fixsize_random_tree(p);
-			fixsize_random_tree(q);
-		}
-	}
-} // rotateright_random_tree
-
-//+
-void rotateleft_random_tree(node_random_tree* &q) // левый поворот вокруг узла q
-{
-	if (q == nullptr || q->right == nullptr) {
-		// ничего не делаем.
-	}
-	else {
-		node_random_tree* p = q->right;
-		if (p != nullptr) {
-			q->right = p->left;
-			p->left = q;
-			p->size = q->size;
-			fixsize_random_tree(p);
-			fixsize_random_tree(q);
-		}
-	}
-} // rotateleft_random_tree
-
-void insertroot_random_tree(node_random_tree* &p, data_BalTree k) // вставка нового узла с ключом k в корень дерева p 
-{
-	if (p == nullptr) {
-		//return new node_random_tree(k);
-		p=new node_random_tree(k);
-	}
-	else {
-
-		if (k.countsosed < p->key.countsosed) {
-			insertroot_random_tree(p->left, k);
-		    rotateright_random_tree(p);
-		}
-		else if (k.countsosed > p->key.countsosed) {
-			insertroot_random_tree(p->right, k);
-			rotateleft_random_tree(p);
-		}
-		else if (k.i < p->key.i) {
-			insertroot_random_tree(p->left, k);
-			rotateright_random_tree(p);
-		}
-		else if (k.i > p->key.i) {
-			insertroot_random_tree(p->right, k);
-			rotateleft_random_tree(p);
-		}
-
-		fixsize_random_tree(p);
-	}
-
-}// insertroot_random_tree
-
-
-void insert_work_random_tree(node_random_tree* &p, data_BalTree k) // рандомизированная вставка нового узла с ключом k в дерево p
-{
-	if (p == nullptr) { p = new node_random_tree(k);  }
-	else {
-		if (rand() < RAND_MAX / (p->size + 1)) {
-			insertroot_random_tree(p, k);
-		}
-		else {
-
-			if (k.countsosed < p->key.countsosed)
-				insert_work_random_tree(p->left, k);
-			else if (k.countsosed > p->key.countsosed)
-				insert_work_random_tree(p->right, k);
-			else if (k.i < p->key.i)
-				insert_work_random_tree(p->left, k);
-			else if (k.i > p->key.i)
-				insert_work_random_tree(p->right, k);
-
-		}
-		fixsize_random_tree(p);
-	}
-} // insert_work_random_tree
-
-node_random_tree* join_random_tree_base(node_random_tree* &p, node_random_tree* &q) // объединение двух деревьев
-{
-	if (p == nullptr) return q;
-	if (q == nullptr) return p;
-
-	insert_work_random_tree(q, p->key);
-	q->left = join_random_tree_base(p->left,q->left);
-	q->right= join_random_tree_base(p->right, q->right);
-	p->left = nullptr;
-	p->right = nullptr;
-	delete p;
-	p = nullptr;
-	fixsize_random_tree(q);
-	return q;
-}
-
-node_random_tree* join_random_tree(node_random_tree* &p, node_random_tree* &q) // объединение двух деревьев
-{
-	if (p==nullptr) return q;
-	if (q==nullptr) return p;
-	if (rand() /(RAND_MAX/(p->size + q->size) +1)<p->size)
-	{
-		p->right = join_random_tree_base(p->right, q);
-		fixsize_random_tree(p);
-		return p;
-	}
-	else
-	{
-		q->left = join_random_tree_base(p, q->left);
-		fixsize_random_tree(q);
-		return q;
-	}
-} // join_random_tree
-*/
-/*
-node_random_tree* remove_random_tree(node_random_tree* p, data_BalTree k) // удаление из дерева p первого найденного узла с ключом k 
-{
-	if (p==nullptr) return p;
-
-	if (k.countsosed < p->key.countsosed) {
-		p->left = remove_random_tree(p->left, k);		
-	}
-	else if (k.countsosed > p->key.countsosed) {
-		p->right = remove_random_tree(p->right, k);		
-	}
-	else if (k.i < p->key.i) {
-		p->left = remove_random_tree(p->left, k);		
-	}
-	else if (k.i > p->key.i) {
-		p->right = remove_random_tree(p->right, k);
-	}
-	else {
-		// ключи равны.
-		node_random_tree* q = join_random_tree(p->left, p->right);
-		delete p;
-		return q;
-	}
-
-	return p;
-}
-*/
-/*
-void remove_random_tree(node_random_tree* &p, data_BalTree k) //удаление из дерева p первого найденного узла с ключом k
-{
-	if (p != nullptr) {
-
-
-		node_random_tree* p1 = p;
-		//node_random_tree* p1_parent = p;
-		bool bleft = true;
-	
-
-		for (;;) {
-			if (p1 != nullptr) {
-				if (k.countsosed < p1->key.countsosed) {
-					bleft = true;
-					//p1_parent = p1;
-					 p1 = p1->left;
-				}
-				else if (k.countsosed > p1->key.countsosed) {
-					bleft = false;
-					//p1_parent = p1;
-				    p1 = p1->right;
-				}
-				else if (k.i < p1->key.i) {
-					bleft = true;
-					//p1_parent = p1;
-					p1 = p1->left;
-				}
-				else if (k.i > p1->key.i) {
-					 bleft = false;
-					 //p1_parent = p1;
-					 p1 = p1->right;
-				}
-			//else if (k.ii < p->item.ii)
-			//return isfound(p->left, k);
-			//else if (k.ii > p->item.ii)
-			//return isfound(p->right, k);
-			else if ((p1->key.i == k.i) && (p1->key.countsosed == k.countsosed))  {
-
-				/*if (p1_parent == p1) {
-
-					if ((p1->key.i == k.i)&&(p1->key.countsosed == k.countsosed)) {
-						p1 = nullptr;
-						p1_parent = nullptr;
-						delete p;
-						p = nullptr;
-					}
-				}
-				else {*/
-/*
-					// найден.
-					// ключи равны.
-					node_random_tree* p1_mem = p1;
-					//node_random_tree* q = join_random_tree(p1->left, p1->right);
-					p1= join_random_tree(p1->left, p1->right);
-					*/
-					/*
-					if (bleft) {
-						p1_parent->left = q;
-						q = nullptr;
-					}
-					else {
-						p1_parent->right = q;
-						q = nullptr;
-					}
-					p1_mem->left = nullptr;
-					p1_mem->right = nullptr;
-					delete p1_mem;
-					*/
-/*
-					p1_mem->left = nullptr;
-					p1_mem->right = nullptr;
-					delete p1_mem;
-					p1_mem = nullptr;
-					//p1_parent = nullptr;
-					//p1 = q;
-					// досрочный выход из цикла for.
-					break;
-				//}
-			}
-			}
-			else {
-				// досрочный выход из цикла for.
-				break; 
-			}
-		}
-
-	}
-}
-
-// Полное удаление бинарного радномизированного дерева поиска.
-void clear_random_tree(node_random_tree* &p)
-{
-	if (p != nullptr) {
-		clear_random_tree(p->left);
-		clear_random_tree(p->right);
-		// удаляем лист.
-		delete p;
-		//free(p);
-		p = nullptr;
-	}
-} // clear_random_tree
-
-node_random_tree* findmax_random_tree(node_random_tree* &p)
-{
-	node_random_tree* p1 = p;
-	// поиск узла с минимальным ключём в дереве p
-	if (p1 != nullptr) {
-		//return p1->right ? findmax_random_tree(p1->right) : p1;
-		while (p1->right != nullptr) p1 = p1->right;
-		node_random_tree* q = new node_random_tree(p1->key);
-		p1 = nullptr;
-		return q;
-	}
-	else {
-		// На поиск максимума подан нулевой указатель.
-		return nullptr;
-	}
-} // findmax
-*/
-// Конец данных рандомизированное дерево двоичного поиска.
-
-
-// Двунаправленный линейный список целочисленных элементов. 
-// Может сканироваться как вперёд так и назад.
-typedef struct Thashlist_i {
-	integer item;
-	Thashlist_i* next;
-	Thashlist_i* prev;
-} hashlist_i;
-
-// вставка целочисленного ключа в список
-void insertion_list_i(hashlist_i* &p, integer d) {
-	if (p == nullptr) {
-		p = new hashlist_i;
-		if (p == nullptr) {
-			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for p in insertion hashlist_i my_agregat_amg...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
-			system("pause");
-			exit(1);
-		}
-		p->prev = nullptr;
-		p->next = nullptr;
-		p->item = d;
-	}
-	else {
-		hashlist_i* scanner = p;
-		hashlist_i* r = nullptr;
-		r = new hashlist_i;
-		if (r == nullptr) {
-			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for r in insertion hashlist_i my_agregat_amg...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
-			system("pause");
-			exit(1);
-		}
-		r->prev = nullptr;
-		r->next = scanner;
-		r->item = d;
-		scanner->prev = r;
-		p = r;
-		r = nullptr;
-		scanner = nullptr;
-	}
-} // insertion_list_i
-
-  // очистка списка
-  // Вероятно содержит ошибку потому что память не освобождается.
-  // TODO 17 dec 2015
-  // Проверено 1 января 2017.
-void clear_hash_list_i(hashlist_i* &p) {
-	if (p != nullptr) {
-		hashlist_i* head = p;
-		p = nullptr;
-
-		hashlist_i* r = head;
-		while (r != nullptr) {
-			head = head->next;
-			if (head != nullptr)  head->prev = nullptr;
-			r->next = nullptr;
-			r->prev = nullptr;
-			delete r;
-			r = head;
-		}
-	}
-} // clear_hash_list_i
-
-
-// 5.01.2017
-// Для нахождения множества Strong Transpose нам 
-// потребуется хеш таблица АВЛ деревьев. (Лес АВЛ деревьев).
-// В литературе пишут что при создании C-F разбиения используют
-// именно Strong Transpose множества соседей.
-// Поле данных в АВЛ дереве.
-struct data_BalTreeST
-{
-	// --> high priority --> for operation <,>
-	integer  i=-1;
-	// i есть key.
-};
-
-//отношения порядка только в insert и remove
-
-// Узел АВЛ дерева.
-struct node_AVLST
-{
-	data_BalTreeST key = {-1};
-	// Высота поддерева с корнем в данном узле.
-	unsigned char height = 1;
-	node_AVLST* left=nullptr;
-	node_AVLST* right= nullptr;
-	// Конструктор.
-	node_AVLST(data_BalTreeST k) { key = k; left = right = nullptr; height = 1; }
-};
-
-// Работает также и с пустыми деревьями.
-// Обёртка поля height
-unsigned char height(node_AVLST* p)
-{
-	return p ? p->height : 0;
-};
-
-// Вычисляет balance factor заданного узла
-// работает только с ненулевыми указателями.
-integer bfactor(node_AVLST* p)
-{
-	return height(p->right) - height(p->left);
-};
-
-// Восстанавливает корректное значение поля height
-// заданного узла (при условии, что значения этого поля 
-// в правом и левом дочерних узлах являются корректными).
-void fixheight(node_AVLST* p)
-{
-	unsigned char hl = height(p->left);
-	unsigned char hr = height(p->right);
-	p->height = (hl > hr ? hl : hr) + 1;
-};
-
-// Балансировка узлов.
-node_AVLST* rotateright(node_AVLST* p)
-{
-	// правый поворот вокруг p
-	node_AVLST* q = p->left;
-	p->left = q->right;
-	q->right = p;
-	fixheight(p);
-	fixheight(q);
-	return q;
-};
-
-// Левый поворот является симметричной копией правого :
-node_AVLST* rotateleft(node_AVLST* q)
-{
-	// левый поворот вокруг q
-	node_AVLST* p = q->right;
-	q->right = p->left;
-	p->left = q;
-	fixheight(q);
-	fixheight(p);
-	return p;
-};
-
-// Код выполняющий балансировку сводится к проверке условий и выполнению поворотов
-node_AVLST* balance(node_AVLST* p) // балансировка узла p
-{
-	fixheight(p);
-	if (bfactor(p) == 2)
-	{
-		if (bfactor(p->right) < 0)
-			p->right = rotateright(p->right);
-		return rotateleft(p);
-	}
-	if (bfactor(p) == -2)
-	{
-		if (bfactor(p->left) > 0)
-			p->left = rotateleft(p->left);
-		return rotateright(p);
-	}
-	return p; // балансировка не нужна
-}
-
-// Вставка ключей в дерево.
-// Возвращает новое значение корня АВЛ дерева.
-node_AVLST* insert(node_AVLST* &p, data_BalTreeST k)
-{
-	// Вставка ключа k в дерево с корнем p
-	if (p == nullptr) {
-		node_AVLST* r1 = nullptr;
-		r1 = new node_AVLST(k);
-		if (r1 == nullptr) {
-			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for r1 in insert my_agregat_amg...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
-			system("pause");
-			exit(1);
-		}
-		return r1;
-	}
-	if (k.i >= p->key.i)
-		p->right = insert(p->right, k);
-	else	
-	    p->left = insert(p->left, k);
-	
-	return balance(p);
-} // insert
-
-  // Возвращает true если узел найден в дереве
-bool isfound(node_AVLST* p, data_BalTreeST k)
-{
-	if (p == nullptr) return false; // ненайден.
-	if (k.i < p->key.i)
-		return isfound(p->left, k);
-	else if (k.i > p->key.i)
-		return isfound(p->right, k);
-	else return true; // найден.
-}
-
-// Полное удаление бинарного дерева.
-void clear_AVL(node_AVLST* p)
-{
-	if (p != nullptr) {
-		clear_AVL(p->left);
-		clear_AVL(p->right);
-		// удаляем лист.
-		delete p;
-		p = nullptr;
-	}
-} // clear_AVL
-
-/*
-// НЕ РАБОТАЕТ
-// Ни в коем случае не раскоментировать. 6 июня 2017.
-// Скорее всего нужна parent ссылка.
-  // Полное удаление бинарного дерева.
-void clear_AVL(node_AVLST* top)
-{
-
-	
-	node_AVLST* stack[128];
-	integer count = 0;
-
-	while (!count == 0 || top != nullptr) {
-		if (!count == 0) {
-			top = stack[count];
-			stack[count] = nullptr;
-			count--;
-			if (!count == 0 && top->right == stack[count]) {
-				top = stack[count];
-				stack[count] = nullptr;
-				count--;
-			}
-			else {
-				delete top;
-				top = nullptr;
-			}
-		}
-
-		while (top != nullptr) {
-			stack[count++]=top;
-			if (top->right != nullptr) {
-				stack[count++]=(top->right);
-				stack[count++] = top;
-			}
-			top = top->left;
-		}
-		*/
-		/*
-		if (p) {
-			stack[count++] = p;
-			p = p->left;
-		}
-		else {
-			peekn = stack[count];
-			if (peekn->right && lnp != peekn->right) {
-				p = peekn->right;
-			}
-			else {
-
-				stack[count] = nullptr;
-				count--;
-				p = stack[count];
-				#if doubleintprecision == 1
-					//printf("visited %lld\n", peekn->data);
-				#else
-					//printf("visited %d\n", peekn->data);
-				#endif
-				
-				delete peekn;
-				peekn = nullptr;
-				lnp = peekn;
-			}
-		}
-		*//*
-	}
-
-	
-	
-} // clear_AVL
-*/
-
-// Предварительный подсчёт размерности множества set при 
-  // передачи списка Si Transpose из АВЛ дерева в множество set.
-void formirate_F_SiTranspose_get_num_elements_set(node_AVLST* &p, integer &imarker75_scan)
-{
-	if (p != nullptr) {
-		formirate_F_SiTranspose_get_num_elements_set(p->left, imarker75_scan);
-		formirate_F_SiTranspose_get_num_elements_set(p->right, imarker75_scan);
-		imarker75_scan++;
-
-	}
-} // formirate_F_SiTranspose_get_num_elements_set
-
-// Передача списка Si Transpose из АВЛ дерева в множество set.
-void formirate_F_SiTranspose(node_AVLST* &p, integer* &set, integer &imarker75_scan)
-{
-	if (p != nullptr) {
-		formirate_F_SiTranspose(p->left, set, imarker75_scan);
-		formirate_F_SiTranspose(p->right, set, imarker75_scan);
-		set[imarker75_scan] = p->key.i;
-		imarker75_scan++;
-
-	}
-}
-
-
-
-
-  // Удаление узла с занными свойства с сохранением сбалансированности.
-node_AVLST* findmin(node_AVLST* p)
-{
-	// поиск узла с минимальным ключём в дереве p
-	//if (!p) {
-	return p->left ? findmin(p->left) : p;
-	//}
-	//else {
-	// на поиск минимума подан нулевой указатель.
-	//return 0;
-	//}
-} // findmin
-
-node_AVLST* findmax(node_AVLST* p)
-{
-	// поиск узла с минимальным ключём в дереве p
-	if (p != nullptr) {
-		return p->right ? findmax(p->right) : p;
-	}
-	else {
-		// На поиск максимума подан нулевой указатель.
-		return nullptr;
-	}
-} // findmax
-
-data_BalTreeST get_max_AVL(node_AVLST* p)
-{
-	// возвращение максимального узла в дереве.
-	return p->right ? get_max_AVL(p->right) : p->key;
-}
-
-node_AVLST* removemin(node_AVLST* p)
-{
-	// удаление узла с минимальным ключом из дерева p
-	if (p->left == nullptr)
-		return p->right;
-	p->left = removemin(p->left);
-	return balance(p);
-}
-
-// Удаление заданного элемента из AVL дерева
-// с полным сохранением балансировки.
-// на возвращаемое значение можно не обращать внимания.
-node_AVLST* remove_AVL(node_AVLST* p, data_BalTreeST k)
-{
-	// Отношение порядка определено 
-	// для структуры из трёх целых чисел.
-	// удаление ключа k из дерева p
-	if (p == nullptr) return nullptr;
-	// Двоичный поиск нужного элемента.
-	if (k.i < p->key.i)
-		p->left = remove_AVL(p->left, k);
-	else if (k.i>p->key.i)
-		p->right = remove_AVL(p->right, k);
-	else // k==p->key
-	{
-		node_AVLST* q = p->left;
-		node_AVLST* r = p->right;
-		delete p;
-		p = nullptr;
-		if (r == nullptr) return q;
-		node_AVLST* min = findmin(r);
-		min->right = removemin(r);
-		min->left = q;
-		return balance(min);
-	}
-
-	// При выходе из рекурсии делаем балансировку.
-	return balance(p);
-}
-
-// Вставка ключа К в дерево если ключа k_search
-// еще нет в дереве или модификация ключа К_search на К.
-// Возвращает новое значение корня АВЛ дерева.
-node_AVLST* insert_and_modify(node_AVLST* p, data_BalTreeST k, data_BalTreeST k_search)
-{
-	if (isfound(p, k_search) == false) {
-		//   узла в дереве нет.
-		p = insert(p, k);
-		return p;
-	}
-	else {
-		// удаление k_search
-		p = remove_AVL(p, k_search); // необходимое действие
-									 //remove_AVL(p, k_search); // приводит к ошибке.
-		p = insert(p, k);							 // вставка к.
-		return p;
-	}
-}
-
-// print_AVL for debug.
-void print_AVL(node_AVLST* p)
-{
-	if (p != nullptr) {
-		print_AVL(p->left);
-		for (integer i = 0; i <= p->height; i++) {
-			printf(" ");
-		}
-#if doubleintprecision == 1
-		//printf("%lld %lld %lld\n", p->key.countsosed, p->key.i, p->key.ii);
-		printf("%lld\n", p->key.i);
-#else
-		//printf("%d %d %d\n", p->key.countsosed, p->key.i, p->key.ii);
-		printf("%d\n", p->key.i);
-#endif
-		
-		print_AVL(p->right);
-	}
-} // print_AVL
-
-// Возвращает количество узлов в АВЛ дереве.
-integer inumber_AVL_node_gl = 0;
-
-// getnumber_AVL_node_local.
-void getnumber_AVL_node_local(node_AVLST* p)
-{
-	if (p != nullptr) {
-		inumber_AVL_node_gl++;
-		getnumber_AVL_node_local(p->left);
-		getnumber_AVL_node_local(p->right);
-	}
-} // getnumber_AVL_node_local.
-
-integer getnumber_AVL_node_global(node_AVLST* p)
-{
-	inumber_AVL_node_gl = 0;
-	getnumber_AVL_node_local(p);
-	integer ir = inumber_AVL_node_gl;
-	inumber_AVL_node_gl = 0;
-	return ir;
-}
-
-
-// getlist_AVL_node_local.
-void getlist_AVL_node_local(node_AVLST* p, hashlist_i* &hl)
-{
-	if (p != nullptr) {
-		inumber_AVL_node_gl++;
-		insertion_list_i(hl, p->key.i);
-		getlist_AVL_node_local(p->left,hl);
-		getlist_AVL_node_local(p->right,hl);
-	}
-} // getlist_AVL_node_local.
-
-integer getlist_AVL_node_global(node_AVLST* p, hashlist_i* &hl)
-{
-	inumber_AVL_node_gl = 0;
-	getlist_AVL_node_local(p,hl);
-	integer ir = inumber_AVL_node_gl;
-	inumber_AVL_node_gl = 0;
-	return ir;
-} // getlist_AVL_node_global
-
-  // тестирование АВЛ дерева
-  // 12 декабря 2015 удовлетворительно.
-void test_AVLST()
-{
-	node_AVLST* root = 0;
-	data_BalTreeST d3;
-	d3.i = rand();
-	root = remove_AVL(root, d3);
-	for (integer i = 0; i < 10; i++)
-	{
-		data_BalTreeST d;
-		d.i = rand();
-		root = insert_and_modify(root, d, d);
-		print_AVL(root);
-		if (i == 5) {
-
-			//41 18467 6334
-
-
-			data_BalTreeST d1;
-			d1.i = 18467;
-			data_BalTreeST d2;
-			d2.i = rand();
-			root = insert_and_modify(root, d2, d1);
-			print_AVL(root);
-			printf("remove 41 18467 6334\n");
-			root = remove_AVL(root, d1);
-			print_AVL(root);
-			printf("found max\n");
-			node_AVLST* emax;
-			emax = findmax(root);
-#if doubleintprecision == 1
-			printf("maximum id %lld\n", emax->key.i);
-#else
-			printf("maximum id %d\n", emax->key.i);
-#endif
-			
-			emax = nullptr;
-			//clear_AVL(root);
-			//root = nullptr;
-			print_AVL(root);
-		}
-
-		system("pause");
-	}
-	system("pause");
-}
-// 5.01.2017 Конец реализации леса АВЛ деревьев.
-
-// splay tree 23 01 2016.
-// start.splay tree
-
-/*
-// 
-An implementation of top-down splaying
-D. Sleator <sleator@cs.cmu.edu>
-March 1992
-
-"Splay trees", or "self-adjusting search trees" are a simple and
-efficient data structure for storing an ordered set.  The data
-structure consists of a binary tree, without parent pointers, and no
-additional fields.  It allows searching, insertion, deletion,
-deletemin, deletemax, splitting, joining, and many other operations,
-all with amortized logarithmic performance.  Since the trees adapt to
-the sequence of requests, their performance on real access patterns is
-typically even better.  Splay trees are described in a number of texts
-and papers [1,2,3,4,5].
-
-The code here is adapted from simple top-down splay, at the bottom of
-page 669 of [3].  It can be obtained via anonymous ftp from
-spade.pc.cs.cmu.edu in directory /usr/sleator/public.
-
-The chief modification here is that the splay operation works even if the
-item being splayed is not in the tree, and even if the tree root of the
-tree is nullptr.  So the line:
-
-t = splay(i, t);
-
-causes it to search for item with key i in the tree rooted at t.  If it's
-there, it is splayed to the root.  If it isn't there, then the node put
-at the root is the last one before nullptr that would have been reached in a
-normal binary search for i.  (It's a neighbor of i in the tree.)  This
-allows many other operations to be easily implemented, as shown below.
-
-[1] "Fundamentals of data structures in C", Horowitz, Sahni,
-and Anderson-Freed, Computer Science Press, pp 542-547.
-[2] "Data Structures and Their Algorithms", Lewis and Denenberg,
-Harper Collins, 1991, pp 243-251.
-[3] "Self-adjusting Binary Search Trees" Sleator and Tarjan,
-JACM Volume 32, No 3, July 1985, pp 652-686.
-[4] "Data Structure and Algorithm Analysis", Mark Weiss,
-Benjamin Cummins, 1992, pp 119-130.
-[5] "Data Structures, Algorithms, and Performance", Derick Wood,
-Addison-Wesley, 1993, pp 367-375.
-
-The following code was written by Daniel Sleator, and is released
-in the public domain.
-*/
-
-integer size_splay_Tree;  /* number of nodes in the Tree_splay */
-/* Not actually needed for any of the operations */
-
-typedef struct Tree_splay_node Tree_splay;
-struct Tree_splay_node {
-	Tree_splay * left, *right;
-	data_BalTree item;
-};
-
-Tree_splay* findmax(Tree_splay* p)
-{
-	// поиск узла с минимальным ключём в дереве p
-	if (p != 0) {
-		return p->right ? findmax(p->right) : p;
-	}
-	else {
-		// На поиск максимума подан нулевой указатель.
-		return 0;
-	}
-} // findmax
-
-// Возвращает true если узел найден в SPLAY дереве
-bool isfound_recursive(Tree_splay* p, data_BalTree k)
-{
-	if (p == 0) return false; // ненайден.
-	if (k.countsosed < p->item.countsosed)
-		return isfound_recursive(p->left, k);
-	else if (k.countsosed > p->item.countsosed)
-		return isfound_recursive(p->right, k);
-	else if (k.i < p->item.i)
-		return isfound_recursive(p->left, k);
-	else if (k.i > p->item.i)
-		return isfound_recursive(p->right, k);
-	//else if (k.ii < p->item.ii)
-	//return isfound_recursive(p->left, k);
-	//else if (k.ii > p->item.ii)
-	//return isfound_recursive(p->right, k);
-	else return true; // найден.
-} // isfound_recursive in splay tree.
-
-  // Возвращает true если узел найден в SPLAY дереве
-bool isfound(Tree_splay* p1, data_BalTree k)
-{
-	//if (p == 0) return false; // не найден.
-	
-	Tree_splay* p;
-	p = p1;
-
-	for (;;) {
-		if (p == 0) return false; // не найден.
-		else if (k.countsosed < p->item.countsosed) {
-			p = p->left;
-		}
-		else if (k.countsosed > p->item.countsosed) {
-			p = p->right;
-		}
-		else if (k.i < p->item.i) {
-			p = p->left;
-		}
-		else if (k.i > p->item.i) {
-			p = p->right;
-			//else if (k.ii < p->item.ii)
-			//return isfound(p->left, k);
-			//else if (k.ii > p->item.ii)
-			//return isfound(p->right, k);
-		}
-		else {			
-			p = 0;
-			return true; // найден.
-		}
-	}
-} // isfound in splay tree.
-
-
-Tree_splay * splay(data_BalTree i, Tree_splay * t) {
-	/* Simple top down splay, not requiring i to be in the Tree_splay t.  */
-	/* What it does is described above.							 */
-	Tree_splay Nbuf, *l, *r, *y;
-	if (t == nullptr) return t;
-	Nbuf.left = Nbuf.right = nullptr;
-	l = r = &Nbuf;
-
-	for (;;) {
-		if (i.countsosed < t->item.countsosed) {
-			if (t->left == nullptr) break;
-			if ((i.countsosed < t->left->item.countsosed) || ((i.countsosed < t->left->item.countsosed) && (i.i < t->left->item.i)))
-			{
-				y = t->left;						   /* rotate right */
-				t->left = y->right;
-				y->right = t;
-				t = y;
-				if (t->left == nullptr) break;
-			}
-			r->left = t;							   /* link right */
-			r = t;
-			t = t->left;
-		}
-		else if (i.countsosed > t->item.countsosed) {
-			if (t->right == nullptr) break;
-			if ((i.countsosed > t->right->item.countsosed) || ((i.countsosed == t->right->item.countsosed) && (i.i > t->right->item.i))) {
-				y = t->right;						  /* rotate left */
-				t->right = y->left;
-				y->left = t;
-				t = y;
-				if (t->right == nullptr) break;
-			}
-			l->right = t;							  /* link left */
-			l = t;
-			t = t->right;
-		}
-		else if (i.i < t->item.i) {
-			if (t->left == nullptr) break;
-			if ((i.countsosed < t->left->item.countsosed) || ((i.countsosed == t->left->item.countsosed) && (i.i < t->left->item.i)))
-			{
-				y = t->left;						   /* rotate right */
-				t->left = y->right;
-				y->right = t;
-				t = y;
-				if (t->left == nullptr) break;
-			}
-			r->left = t;							   /* link right */
-			r = t;
-			t = t->left;
-		}
-		else if (i.i > t->item.i) {
-			if (t->right == nullptr) break;
-			if ((i.countsosed > t->right->item.countsosed) || ((i.countsosed == t->right->item.countsosed) && (i.i > t->right->item.i)))
-			{
-				y = t->right;						  /* rotate left */
-				t->right = y->left;
-				y->left = t;
-				t = y;
-				if (t->right == nullptr) break;
-			}
-			l->right = t;							  /* link left */
-			l = t;
-			t = t->right;
-		}
-		else {
-			break;
-		}
-	}
-	l->right = t->left;								/* assemble */
-	r->left = t->right;
-	t->left = Nbuf.right;
-	t->right = Nbuf.left;
-	return t;
-}
-
-// Данный метод не используется.
-/* Here is how sedgewick would have written this.					*/
-/* It does the same thing.										   */
-Tree_splay * sedgewickized_splay(data_BalTree i, Tree_splay * t) {
-	Tree_splay Nbuf, *l, *r, *y;
-	if (t == nullptr) return t;
-	Nbuf.left = Nbuf.right = nullptr;
-	l = r = &Nbuf;
-
-	for (;;) {
-		if (i.countsosed < t->item.countsosed) {
-			if (t->left != nullptr && i.countsosed < t->left->item.countsosed) {
-				y = t->left; t->left = y->right; y->right = t; t = y;
-			}
-			else if (t->left != nullptr && i.countsosed == t->left->item.countsosed && i.i < t->left->item.i) {
-				y = t->left; t->left = y->right; y->right = t; t = y;
-			}
-			if (t->left == nullptr) break;
-			r->left = t; r = t; t = t->left;
-		}
-		else if (i.countsosed > t->item.countsosed) {
-			if (t->right != nullptr && i.countsosed > t->right->item.countsosed) {
-				y = t->right; t->right = y->left; y->left = t; t = y;
-			}
-			else if (t->right != nullptr && i.countsosed == t->right->item.countsosed && i.i > t->right->item.i) {
-				y = t->right; t->right = y->left; y->left = t; t = y;
-			}
-			if (t->right == nullptr) break;
-			l->right = t; l = t; t = t->right;
-		}
-		else if (i.i < t->item.i) {
-			if (t->left != nullptr && i.countsosed < t->left->item.countsosed) {
-				y = t->left; t->left = y->right; y->right = t; t = y;
-			}
-			else if (t->left != nullptr && i.countsosed == t->left->item.countsosed && i.i < t->left->item.i) {
-				y = t->left; t->left = y->right; y->right = t; t = y;
-			}
-			if (t->left == nullptr) break;
-			r->left = t; r = t; t = t->left;
-		}
-		else if (i.i > t->item.i) {
-			if (t->right != nullptr && i.countsosed > t->right->item.countsosed) {
-				y = t->right; t->right = y->left; y->left = t; t = y;
-			}
-			else if (t->right != nullptr && i.countsosed == t->right->item.countsosed && i.i > t->right->item.i) {
-				y = t->right; t->right = y->left; y->left = t; t = y;
-			}
-			if (t->right == nullptr) break;
-			l->right = t; l = t; t = t->right;
-		}
-		else break;
-	}
-	l->right = t->left; r->left = t->right; t->left = Nbuf.right; t->right = Nbuf.left;
-	return t;
-}
-
-Tree_splay * insert(data_BalTree i, Tree_splay * t) {
-	/* Insert i into the Tree_splay t, unless it's already there.	*/
-	/* Return a pointer to the resulting Tree_splay.				 */
-	Tree_splay * new_splay_node=nullptr;
-
-	new_splay_node = (Tree_splay *)malloc(sizeof(Tree_splay));
-	if (new_splay_node == nullptr) {
-		printf("Ran out of space in SPLAY tree\n");
-		system("pause");
-		exit(1);
-	}
-	new_splay_node->item = i;
-	if (t == nullptr) {
-		new_splay_node->left = new_splay_node->right = nullptr;
-		size_splay_Tree = 1;
-		return new_splay_node;
-	}
-	t = splay(i, t);
-	if (i.countsosed < t->item.countsosed) {
-		new_splay_node->left = t->left;
-		new_splay_node->right = t;
-		t->left = nullptr;
-		size_splay_Tree++;
-		return new_splay_node;
-	}
-	else if (i.countsosed > t->item.countsosed) {
-		new_splay_node->right = t->right;
-		new_splay_node->left = t;
-		t->right = nullptr;
-		size_splay_Tree++;
-		return new_splay_node;
-	}
-	else if (i.i < t->item.i) {
-		new_splay_node->left = t->left;
-		new_splay_node->right = t;
-		t->left = nullptr;
-		size_splay_Tree++;
-		return new_splay_node;
-	}
-	else if (i.i > t->item.i) {
-		new_splay_node->right = t->right;
-		new_splay_node->left = t;
-		t->right = nullptr;
-		size_splay_Tree++;
-		return new_splay_node;
-	}
-	else { /* We get here if it's already in the Tree_splay */
-		/* Don't add it again					  */
-		free(new_splay_node);
-		return t;
-	}
-}
-
-Tree_splay * delete_splay_Tree(data_BalTree i, Tree_splay * t) {
-	/* Deletes i from the Tree_splay if it's there.			   */
-	/* Return a pointer to the resulting Tree_splay.			  */
-	Tree_splay * x;
-	if (t == nullptr) return nullptr;
-	t = splay(i, t);
-	if ((i.countsosed == t->item.countsosed) && (i.i == t->item.i)) {			   /* found it */
-		if (t->left == nullptr) {
-			x = t->right;
-		}
-		else {
-			x = splay(i, t->left);
-			x->right = t->right;
-		}
-		size_splay_Tree--;
-		free(t);
-		t = nullptr;
-		return x;
-	}
-	return t;						 /* It wasn't there */
-} // delete_splay_Tree 
-
-// Вставка ключа К в дерево если ключа k_search
-// еще нет в дереве или модификация ключа К_search на К.
-// Возвращает новое значение корня АВЛ дерева.
-Tree_splay* insert_and_modify(Tree_splay* &p, data_BalTree k, data_BalTree k_search)
-{
-	if (isfound(p, k_search) == false) {
-		//   узла в дереве нет.
-		p = insert(k, p);
-		return p;
-	}
-	else {
-		// удаление k_search
-		p = delete_splay_Tree(k_search, p); // необходимое действие
-		p = insert(k, p);							 // вставка к.
-		return p;
-	}
-} // insert_and_modify splay tree
-
-// Полное удаление бинарного splay дерева.
-void clear_SPLAY(Tree_splay* p)
-{
-	if (p != 0) {
-		clear_SPLAY(p->left);
-		clear_SPLAY(p->right);
-		// удаляем лист.
-		// delete p;
-		free(p);
-		p = 0;
-	}
-} // clear_SPLAY
-
-/*
-// Для целочисленного item.
-void test_splay_tree() {
-	// Amat sample use of these functions.  Start with the empty Tree_splay,		 
-	// insert some stuff into it, and then delete it						
-	Tree_splay * root;
-	integer i;
-	root = nullptr;			 // the empty Tree_splay 
-	size_splay_Tree_splay = 0;
-	for (i = 0; i < 1024; i++) {
-		root = insert((541 * i) & (1023), root);
-	}
-	for (i = 0; i < 1024; i++) {
-		root = delete_splay_Tree((541 * i) & (1023), root);
-	}
-	#if doubleintprecision == 1
-		printf("size_splay_Tree_splay = %d\n", size_splay_Tree_splay);
-	#else
-		printf("size_splay_Tree_splay = %d\n", size_splay_Tree_splay);
-	#endif
-	
-}
-*/
-
-// end splay tree
-
-
-// Для АВЛ дерева
-// Данное АВЛ дерево с целочисленным ключом 
-// используется в разреженном матричном умножении 
-// Фреда Густавсона для организации бинарного поиска.
-
-// АВЛ дерево это структура данных позволяющая производить все 
-// операции за log_2 (number of sosed count) операций. 
-
-// Адельсон-Вельский и Ландис 1962 (взято из интернета).
-// узел с максимальным значением ключа крайний правый.
-
-
-// Gus - Фред Густавсон IBM 1978.
-
-
-//отношения порядка только в insert и remove
-
-// Узел АВЛ дерева.
-struct node_AVL_Gus
-{
-	integer key;
-	// Высота поддерева с корнем в данном узле.
-	unsigned char height;
-	node_AVL_Gus* left;
-	node_AVL_Gus* right;
-	// Конструктор.
-	node_AVL_Gus(integer k) { key = k; left = right = 0; height = 1; }
-};
-
-
-// Работает также и с пустыми деревьями.
-// Обёртка поля height
-unsigned char height_Gus(node_AVL_Gus* p)
-{
-	return p ? p->height : 0;
-};
-
-// Вычисляет balance factor заданного узла
-// работает только с ненулевыми указателями.
-integer bfactor_Gus(node_AVL_Gus* p)
-{
-	return height_Gus(p->right) - height_Gus(p->left);
-};
-
-// Восстанавливает корректное значение поля height
-// заданного узла (при условии, что значения этого поля 
-// в правом и левом дочерних узлах являются корректными).
-void fixheight_Gus(node_AVL_Gus* p)
-{
-	unsigned char hl = height_Gus(p->left);
-	unsigned char hr = height_Gus(p->right);
-	p->height = (hl > hr ? hl : hr) + 1;
-};
-
-// Балансировка узлов.
-node_AVL_Gus* rotateright_Gus(node_AVL_Gus* p)
-{
-	// правый поворот вокруг p
-	node_AVL_Gus* q = p->left;
-	p->left = q->right;
-	q->right = p;
-	fixheight_Gus(p);
-	fixheight_Gus(q);
-	return q;
-};
-
-// Левый поворот является симметричной копией правого :
-node_AVL_Gus* rotateleft_Gus(node_AVL_Gus* q)
-{
-	// левый поворот вокруг q
-	node_AVL_Gus* p = q->right;
-	q->right = p->left;
-	p->left = q;
-	fixheight_Gus(q);
-	fixheight_Gus(p);
-	return p;
-};
-
-// Код выполняющий балансировку сводится к проверке условий и выполнению поворотов
-node_AVL_Gus* balance_Gus(node_AVL_Gus* p) // балансировка узла p
-{
-	fixheight_Gus(p);
-	if (bfactor_Gus(p) == 2)
-	{
-		if (bfactor_Gus(p->right) < 0)
-			p->right = rotateright_Gus(p->right);
-		return rotateleft_Gus(p);
-	}
-	if (bfactor_Gus(p) == -2)
-	{
-		if (bfactor_Gus(p->left) > 0)
-			p->left = rotateleft_Gus(p->left);
-		return rotateright_Gus(p);
-	}
-	return p; // балансировка не нужна
-}
-
-// Вставка ключей в дерево.
-// Возвращает новое значение корня АВЛ дерева.
-node_AVL_Gus* insert_Gus(node_AVL_Gus* p, integer k)
-{
-	// Вставка ключа k в дерево с корнем p
-	if (p == 0) {
-		node_AVL_Gus* r1 = nullptr;
-		r1 = new node_AVL_Gus(k);
-		if (r1 == nullptr) {
-			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for r1 in insert_Gus my_agregat_amg...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
-			system("pause");
-			exit(1);
-		}
-		return r1;
-	}
-	if (k < p->key)
-		p->left = insert_Gus(p->left, k);
-	else
-		p->right = insert_Gus(p->right, k);
-
-	return balance_Gus(p);
-} // insert
-
-  // Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
-// перекачка данных из одного дерева в другое.
-void formirate_F_SiTranspose_AVL_Gus(node_AVLST* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan)
-{
-	if (p != nullptr) {
-		formirate_F_SiTranspose_AVL_Gus(p->left, root_Gus_set, imarker75_scan);
-		formirate_F_SiTranspose_AVL_Gus(p->right, root_Gus_set, imarker75_scan);
-		root_Gus_set = insert_Gus(root_Gus_set, p->key.i);
-		imarker75_scan++;
-	}
-}
-
-// Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
-// перекачка данных из одного дерева в другое.
-void formirate_F_SiTranspose_AVL_Gus(Taccumulqtor_list* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan)
-{
-	Taccumulqtor_list* buf = p;
-	if (buf != nullptr) {
-		
-		root_Gus_set = insert_Gus(root_Gus_set, buf->ikey);
-		imarker75_scan++;
-
-		buf = buf->next;
-	}
-	buf=nullptr;
-}
-
-
-// Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
-// перекачка данных из одного дерева в другое.
-void formirate_F_SiTranspose_AVL_Gus2(Taccumulqtor_list* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan,
-	bool* &this_is_F_node, bool* &this_is_C_node)
-{
-	Taccumulqtor_list* buf = p;
-	if (buf != nullptr) {
-		if ((this_is_F_node[buf->ikey] == false) && (this_is_C_node[buf->ikey] == false)) {
-			root_Gus_set = insert_Gus(root_Gus_set, buf->ikey);
-			imarker75_scan++;
-		}
-		buf = buf->next;
-	}
-} // formirate_F_SiTranspose_AVL_Gus2
-
-// Передача списка Si Transpose из АВЛ дерева в множество root_Gus_set.
-// перекачка данных из одного дерева в другое.
-void formirate_F_SiTranspose_AVL_Gus2(node_AVLST* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan,
-	bool* &this_is_F_node, bool* &this_is_C_node)
-{
-	if (p != nullptr) {
-		formirate_F_SiTranspose_AVL_Gus2(p->left, root_Gus_set, imarker75_scan, this_is_F_node, this_is_C_node);
-		formirate_F_SiTranspose_AVL_Gus2(p->right, root_Gus_set, imarker75_scan, this_is_F_node, this_is_C_node);
-		if ((this_is_F_node[p->key.i] == false) && (this_is_C_node[p->key.i] == false)) {
-			root_Gus_set = insert_Gus(root_Gus_set, p->key.i);
-			imarker75_scan++;
-		}
-	}
-}
-
-// Передача root_Gus_set в множество set.
-// перекачка данных из одного дерева в массив.
-void formirate_root_Gus_set__2__set(node_AVL_Gus* &root_Gus_set, integer* &set, integer &ic_986)
-{
-	if (root_Gus_set != nullptr) {
-		formirate_root_Gus_set__2__set(root_Gus_set->left, set, ic_986);
-		formirate_root_Gus_set__2__set(root_Gus_set->right, set, ic_986);
-		set[ic_986] = root_Gus_set->key;
-		ic_986++;
-	}
-}
-
-
-
-  // Возвращает true если узел найден в дереве
-bool isfound_Gus(node_AVL_Gus* p, integer k)
-{
-	if (p == 0) return false; // ненайден.
-	if (k < p->key)
-		return isfound_Gus(p->left, k);
-	else if (k > p->key)
-		return isfound_Gus(p->right, k);
-	else return true; // найден.
-}
-
-// Полное удаление бинарного дерева.
-void clear_AVL_Gus(node_AVL_Gus* p)
-{
-	if (p != 0) {
-		clear_AVL_Gus(p->left);
-		clear_AVL_Gus(p->right);
-		// удаляем лист.
-		delete p;
-		p = 0;
-	}
-} // clear_AVL_Gus
-
-  // Удаление узла с занными свойства с сохранением сбалансированности.
-node_AVL_Gus* findmin_Gus(node_AVL_Gus* p)
-{
-	return p->left ? findmin_Gus(p->left) : p;
-} // findmin
-
-node_AVL_Gus* findmax_Gus(node_AVL_Gus* p)
-{
-	// поиск узла с минимальным ключём в дереве p
-	if (p != 0) {
-		return p->right ? findmax_Gus(p->right) : p;
-	}
-	else {
-		// На поиск максимума подан нулевой указатель.
-		return 0;
-	}
-} // findmax
-
-integer get_max_AVL_Gus(node_AVL_Gus* p)
-{
-	// возвращение максимального узла в дереве.
-	return p->right ? get_max_AVL_Gus(p->right) : p->key;
-}
-
-node_AVL_Gus* removemin_Gus(node_AVL_Gus* p)
-{
-	// удаление узла с минимальным ключом из дерева p
-	if (p->left == 0)
-		return p->right;
-	p->left = removemin_Gus(p->left);
-	return balance_Gus(p);
-}
-
-// Удаление заданного элемента из AVL дерева
-// с полным сохранением балансировки.
-// на возвращаемое значение можно не обращать внимания.
-node_AVL_Gus* remove_AVL_Gus(node_AVL_Gus* p, integer k)
-{
-	// Отношение порядка определено 
-	// для структуры из трёх целых чисел.
-	// удаление ключа k из дерева p
-	if (p == 0) return 0;
-	// Двоичный поиск нужного элемента.
-	if (k < p->key)
-		p->left = remove_AVL_Gus(p->left, k);
-	else if (k > p->key)
-		p->right = remove_AVL_Gus(p->right, k);
-	else // k==p->key
-	{
-		node_AVL_Gus* q = p->left;
-		node_AVL_Gus* r = p->right;
-		delete p;
-		p = 0;
-		if (r == 0) return q;
-		node_AVL_Gus* min = findmin_Gus(r);
-		min->right = removemin_Gus(r);
-		min->left = q;
-		return balance_Gus(min);
-	}
-
-	// При выходе из рекурсии делаем балансировку.
-	return balance_Gus(p);
-}
-
-// Вставка ключа К в дерево если ключа k_search
-// еще нет в дереве или модификация ключа К_search на К.
-// Возвращает новое значение корня АВЛ дерева.
-node_AVL_Gus* insert_and_modify_Gus(node_AVL_Gus* p, integer k, integer k_search)
-{
-	if (isfound_Gus(p, k_search) == false) {
-		//   узла в дереве нет.
-		return insert_Gus(p, k);
-	}
-	else {
-		// удаление k_search
-		p = remove_AVL_Gus(p, k_search); // необходимое действие
-										 // вставка к.
-		return insert_Gus(p, k);
-	}
-}
-
-// print_AVL for debug.
-void print_AVL_Gus(node_AVL_Gus* p)
-{
-	if (p != 0) {
-		print_AVL_Gus(p->left);
-		for (integer i = 0; i <= p->height; i++) {
-			printf(" ");
-		}
-#if doubleintprecision == 1
-		printf("%lld\n", p->key);
-#else
-		printf("%d\n", p->key);
-#endif
-		
-		print_AVL_Gus(p->right);
-	}
-} // print_AVL
-
-  // тестирование АВЛ дерева
-  // 12 декабря 2015 удовлетворительно.
-void test_AVL_Gus()
-{
-	node_AVL_Gus* root = 0;
-	integer d3;
-	d3 = rand();
-	root = remove_AVL_Gus(root, d3);
-	for (integer i = 0; i < 10; i++)
-	{
-		integer d;
-		d = rand();
-		root = insert_and_modify_Gus(root, d, d);
-		print_AVL_Gus(root);
-		if (i == 5) {
-
-			//41 18467 6334
-
-
-			integer d1;
-			d1 = 41;
-			integer d2;
-			d2 = rand();
-			root = insert_and_modify_Gus(root, d2, d1);
-			print_AVL_Gus(root);
-			printf("remove 41 \n");
-			root = remove_AVL_Gus(root, d1);
-			print_AVL_Gus(root);
-			printf("found max\n");
-			node_AVL_Gus* emax;
-			emax = findmax_Gus(root);
-#if doubleintprecision == 1
-			printf("maximum id %lld\n", emax->key);
-#else
-			printf("maximum id %d\n", emax->key);
-#endif
-			
-			emax = 0;
-			//clear_AVL(root);
-			//root = 0;
-			print_AVL_Gus(root);
-		}
-
-		system("pause");
-	}
-	system("pause");
-}
-
-// Конец данных и методов используемых в АВЛ дереве для разреженного матричного умножения.
-
-// Вставка и поиск на основе быстродействующей хеш таблицы.
+// Вставка и поиск на основе быстродействующей хеш-таблицы.
 // начало.
 
 bool* ihash_table_Gus_struct01 = nullptr;
@@ -3866,7 +393,7 @@ integer* istack_pool_hash_table_Gus_struct01 = nullptr;
 integer isize_stack_pool_hash_table_Gus_struct01 = 0; // достаточно 10000000 (10млн) для 2.1М.
 integer ipointer_pool_hash_table_Gus_struct01 = 0;
 
-// Полное освобождение оперативной памяти из под хеш таблицы.
+// Полное освобождение оперативной памяти из под хеш-таблицы.
 void free_hash_table_Gus_struct01() {
 	if (ihash_table_Gus_struct01 != nullptr) {
 		delete[] ihash_table_Gus_struct01;
@@ -3898,7 +425,7 @@ void insert_hash_table_Gus_struct01(integer id) {
 	}
 } // insert_hash_table_Gus_struct01
 
-// Быстрая очистка хеш таблицы.
+// Быстрая очистка хеш-таблицы.
 void clear_hash_table_Gus_struct01() {
 	for (integer i_2 = 0; i_2 < ipointer_pool_hash_table_Gus_struct01; i_2++) {
 		ihash_table_Gus_struct01[istack_pool_hash_table_Gus_struct01[i_2]] = false;
@@ -3907,7 +434,7 @@ void clear_hash_table_Gus_struct01() {
 } // clear_hash_table_Gus_struct01
 
   // Передача списка Si Transpose из АВЛ дерева в hash_table_Gus_struct01.
-  // перекачка данных из сбалансированного дерева в хеш таблицу.
+  // перекачка данных из сбалансированного дерева в хеш-таблицу.
 void formirate_F_SiTranspose_hash_table_Gus_struct01(node_AVLST* &p, integer &imarker75_scan)
 {
 	if (p != nullptr) {
@@ -3920,7 +447,7 @@ void formirate_F_SiTranspose_hash_table_Gus_struct01(node_AVLST* &p, integer &im
 
 
   // Передача списка Si Transpose из АВЛ дерева в hash_table_Gus_struct01.
-  // перекачка данных из сбалансированного дерева в хеш таблицу.
+  // перекачка данных из сбалансированного дерева в хеш-таблицу.
 void formirate_F_SiTranspose_hash_table_Gus_struct02(Taccumulqtor_list* &p, integer &imarker75_scan)
 {
 	Taccumulqtor_list* buf = p;
@@ -3966,7 +493,7 @@ void formirate_F_SiTranspose_hash_table_Gus2_struct01(node_AVLST* &p,  integer &
 	}
 } // formirate_F_SiTranspose_hash_table_Gus2_struct01
 
-// Перезаливка данных из хранилища хеш таблицы в множество set.
+// Перезаливка данных из хранилища хеш-таблицы в множество set.
 void formirate_hash_table_Gus_struct01__2__set(integer* &set, integer &ic_986) {
 	for (integer i_2 = 0; i_2 < ipointer_pool_hash_table_Gus_struct01; i_2++) {
 		set[ic_986] = istack_pool_hash_table_Gus_struct01[i_2];
@@ -3974,7 +501,7 @@ void formirate_hash_table_Gus_struct01__2__set(integer* &set, integer &ic_986) {
 	}
 } // formirate_hash_table_Gus_struct01__2__set
 
-// Выделение оперативной памяти под хеш таблицу.
+// Выделение оперативной памяти под хеш-таблицу.
 void construct_hash_table_Gus_struct01(integer isize) {
 	// Освобождение оперативной памяти, на тот случай если 
 	// память почему-то уже была выделена.
@@ -4017,1501 +544,12 @@ void construct_hash_table_Gus_struct01(integer isize) {
 
 // конец.
 
-
-// Для генерации матрицы СЛАУ требуется в случае реализации
-// на динамических массивах переупорядочивание элементов:
-// сортировка. Здесь будет реализована быстрая сортировка.
-// Брайан Керниган и Денис Ритчи "The C programming language".
-// swap: Обмен местами Amat[i] и Amat[j]
-void swap(Ak * &Amat, integer i, integer j)
-{
-	Ak A_temp;
-
-	// change Amat[i] <-> Amat[j]
-	A_temp = Amat[i];
-	Amat[i] = Amat[j];
-	Amat[j] = A_temp;
-
-} // swap
-
-void swap(Ak1 * &Amat, integer i, integer j)
-{
-	Ak1 A_temp;
-
-	// change Amat[i] <-> Amat[j]
-	A_temp = Amat[i];
-	Amat[i] = Amat[j];
-	Amat[j] = A_temp;
-
-} // swap
-
-  /*
-  // Вот алгоритм PivotList
-  integer PivotList(Ak * &Amat, integer n, integer first, integer last) {
-  // list==jptr and altr обрабатываемый список
-  // first номер первого элемента
-  // last номер последнего элемента
-
-  integer PivotValue = Amat[first].i*n+Amat[first].j;
-  integer PivotPointeger = first;
-
-  for (integer index = (first + 1); index <= last; index++) {
-  if (Amat[index].i*n+Amat[index].j<PivotValue) {
-  PivotPoint++;
-  swap(Amat, PivotPoint, index);
-  }
-  }
-
-  swap(Amat, first, PivotPoint);
-
-  return PivotPoint;
-  } // PivotListamg
-  */
-
-
-  // PivotList содержит ошибку.Обнаружено 12 декабря 2015.
-  // Вот алгоритм PivotList
-integer PivotList(Ak * &Amat, integer first, integer last) {
-	// list==jptr and altr обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	integer PivotValue_j = Amat[first].j;
-	integer PivotValue_i = Amat[first].i;
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (Amat[index].i<PivotValue_i) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-		else if ((Amat[index].i == PivotValue_i) && (Amat[index].j < PivotValue_j)) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-	}
-
-	swap(Amat, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotList
-
-// PivotList содержит ошибку.Обнаружено 12 декабря 2015.
-// Вот алгоритм PivotList
-integer PivotList(Ak1 * &Amat, integer first, integer last) {
-	// list==jptr and altr обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	integer PivotValue_j = Amat[first].j;
-	integer PivotValue_i = Amat[first].i;
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (Amat[index].i<PivotValue_i) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-		else if ((Amat[index].i == PivotValue_i) && (Amat[index].j < PivotValue_j)) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-	}
-
-	swap(Amat, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotList
-
-  // Вот алгоритм PivotList
-integer PivotList_j(Ak * &Amat, integer first, integer last) {
-	// list==jptr and altr обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	integer PivotValue_j = Amat[first].j;
-	integer PivotValue_i = Amat[first].i;
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (Amat[index].j<PivotValue_j) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-		else if ((Amat[index].j == PivotValue_j) && (Amat[index].i < PivotValue_i)) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-	}
-
-	swap(Amat, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotListamg_j
-
-// Вот алгоритм PivotList
-integer PivotList_j(Ak1 * &Amat, integer first, integer last) {
-	// list==jptr and altr обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	integer PivotValue_j = Amat[first].j;
-	integer PivotValue_i = Amat[first].i;
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (Amat[index].j<PivotValue_j) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-		else if ((Amat[index].j == PivotValue_j) && (Amat[index].i < PivotValue_i)) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-	}
-
-	swap(Amat, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotListamg_j
-
-  // Пирамидальная сортировка
-
-  // Переформировать пирамиду
-void FixHeap_j(Ak* &Amat,
-	integer root,
-	Ak m,
-	integer bound,
-	/*integer n,*/ integer iadd)
-{
-	integer vacant;
-	integer largerChild;
-
-	// list сортируемый список пирамида
-	// root номер корня пирамиды
-	// m ключевое значение вставляемое в пирамиду
-	// bound правая граница (номер) в пирамиде
-	vacant = root;
-	while (2 * vacant <= bound)
-	{
-		largerChild = 2 * vacant;
-		integer lCadd = largerChild + iadd;
-		integer lCadd1 = lCadd + 1;
-
-		// поиск наибольшего из двух непосредственных потомков
-		bool compare_result = false;
-		if (Amat[lCadd1].j > Amat[lCadd].j) {
-			compare_result = true;
-		}
-		else if (Amat[lCadd1].j == Amat[lCadd].j) {
-			if (Amat[lCadd1].i > Amat[lCadd].i) {
-				compare_result = true;
-			}
-		}
-		if ((largerChild<bound) && (compare_result /*Amat[largerChild + 1+iadd].j*n+ Amat[largerChild + 1 + iadd].i> Amat[largerChild + iadd].j*n+ Amat[largerChild + iadd].i*/))
-		{
-			largerChild = largerChild + 1;
-		}
-
-		lCadd = largerChild + iadd;
-		// находится ли ключ выше текущего потомка ?
-		compare_result = false;
-		if (m.j > Amat[lCadd].j) {
-			compare_result = true;
-		}
-		else if (m.j == Amat[lCadd].j) {
-			if (m.i > Amat[lCadd].i) {
-				compare_result = true;
-			}
-		}
-		if (compare_result /*m.j*n+m.i >  Amat[largerChild + iadd].j*n+ Amat[largerChild + iadd].i*/)
-		{
-			// да, цикл завершается
-			break;
-		}
-		else
-		{
-			// нет, большего непосредственного потомка
-			// следует поднять
-			Amat[vacant + iadd] = Amat[lCadd];
-			vacant = largerChild;
-		}
-	}
-	Amat[vacant + iadd] = m;
-} // FixHeap_j
-
-// Переформировать пирамиду
-void FixHeap_j(Ak1* &Amat,
-	integer root,
-	Ak1 m,
-	integer bound,
-	/*integer n,*/ integer iadd)
-{
-	integer vacant;
-	integer largerChild;
-
-	// list сортируемый список пирамида
-	// root номер корня пирамиды
-	// m ключевое значение вставляемое в пирамиду
-	// bound правая граница (номер) в пирамиде
-	vacant = root;
-	while (2 * vacant <= bound)
-	{
-		largerChild = 2 * vacant;
-		integer lCadd = largerChild + iadd;
-		integer lCadd1 = lCadd + 1;
-
-		// поиск наибольшего из двух непосредственных потомков
-		bool compare_result = false;
-		if (Amat[lCadd1].j > Amat[lCadd].j) {
-			compare_result = true;
-		}
-		else if (Amat[lCadd1].j == Amat[lCadd].j) {
-			if (Amat[lCadd1].i > Amat[lCadd].i) {
-				compare_result = true;
-			}
-		}
-		if ((largerChild<bound) && (compare_result /*Amat[largerChild + 1+iadd].j*n+ Amat[largerChild + 1 + iadd].i> Amat[largerChild + iadd].j*n+ Amat[largerChild + iadd].i*/))
-		{
-			largerChild = largerChild + 1;
-		}
-
-		lCadd = largerChild + iadd;
-		// находится ли ключ выше текущего потомка ?
-		compare_result = false;
-		if (m.j > Amat[lCadd].j) {
-			compare_result = true;
-		}
-		else if (m.j == Amat[lCadd].j) {
-			if (m.i > Amat[lCadd].i) {
-				compare_result = true;
-			}
-		}
-		if (compare_result /*m.j*n+m.i >  Amat[largerChild + iadd].j*n+ Amat[largerChild + iadd].i*/)
-		{
-			// да, цикл завершается
-			break;
-		}
-		else
-		{
-			// нет, большего непосредственного потомка
-			// следует поднять
-			Amat[vacant + iadd] = Amat[lCadd];
-			vacant = largerChild;
-		}
-	}
-	Amat[vacant + iadd] = m;
-} // FixHeap_j
-
-
-  // Переформировать пирамиду
-void FixHeap(Ak* &Amat,
-	integer root,
-	Ak m,
-	integer bound,
-	integer iadd)
-{
-	integer vacant;
-	integer largerChild;
-
-	// list сортируемый список пирамида
-	// root номер корня пирамиды
-	// m ключевое значение вставляемое в пирамиду
-	// bound правая граница (номер) в пирамиде
-	vacant = root;
-	while (2 * vacant <= bound)
-	{
-		largerChild = 2 * vacant;
-		integer lCadd = largerChild + iadd;
-		integer lCadd1 = lCadd + 1;
-
-		// поиск наибольшего из двух непосредственных потомков
-		//integer key1 = Amat[largerChild + 1 + iadd].i*n + Amat[largerChild + 1 + iadd].j;
-		//integer key2 = Amat[largerChild + iadd].i*n + Amat[largerChild + iadd].j;
-		bool compare_result = false;
-		if (Amat[lCadd1].i > Amat[lCadd].i) {
-			compare_result = true;
-		}
-		else if (Amat[lCadd1].i == Amat[lCadd].i) {
-			if (Amat[lCadd1].j > Amat[lCadd].j) {
-				compare_result = true;
-			}
-		}
-		if ((largerChild<bound) && compare_result/*(key1>key2)*/)
-		{
-			largerChild = largerChild + 1;
-		}
-
-		lCadd = largerChild + iadd;
-		// находится ли ключ выше текущего потомка ?
-		//integer key5 = m.i*n + m.j;
-		//integer key6 = Amat[largerChild + iadd].i*n + Amat[largerChild + iadd].j;
-		compare_result = false;
-		if (m.i > Amat[lCadd].i) {
-			compare_result = true;
-		}
-		else if (m.i == Amat[lCadd].i) {
-			if (m.j > Amat[lCadd].j) {
-				compare_result = true;
-			}
-		}
-		if (compare_result/*key5 > key6*/)
-		{
-			// да, цикл завершается
-			break;
-		}
-		else
-		{
-			// нет, большего непосредственного потомка
-			// следует поднять
-			Amat[vacant + iadd] = Amat[lCadd];
-			vacant = largerChild;
-		}
-	}
-	Amat[vacant + iadd] = m;
-} // FixHeap
-
-
-// Переформировать пирамиду
-void FixHeap(Ak1* &Amat,
-	integer root,
-	Ak1 m,
-	integer bound,
-	integer iadd)
-{
-	integer vacant;
-	integer largerChild;
-
-	// list сортируемый список пирамида
-	// root номер корня пирамиды
-	// m ключевое значение вставляемое в пирамиду
-	// bound правая граница (номер) в пирамиде
-	vacant = root;
-	while (2 * vacant <= bound)
-	{
-		largerChild = 2 * vacant;
-		integer lCadd = largerChild + iadd;
-		integer lCadd1 = lCadd + 1;
-
-		// поиск наибольшего из двух непосредственных потомков
-		//integer key1 = Amat[largerChild + 1 + iadd].i*n + Amat[largerChild + 1 + iadd].j;
-		//integer key2 = Amat[largerChild + iadd].i*n + Amat[largerChild + iadd].j;
-		bool compare_result = false;
-		if (Amat[lCadd1].i > Amat[lCadd].i) {
-			compare_result = true;
-		}
-		else if (Amat[lCadd1].i == Amat[lCadd].i) {
-			if (Amat[lCadd1].j > Amat[lCadd].j) {
-				compare_result = true;
-			}
-		}
-		if ((largerChild<bound) && compare_result/*(key1>key2)*/)
-		{
-			largerChild = largerChild + 1;
-		}
-
-		lCadd = largerChild + iadd;
-		// находится ли ключ выше текущего потомка ?
-		//integer key5 = m.i*n + m.j;
-		//integer key6 = Amat[largerChild + iadd].i*n + Amat[largerChild + iadd].j;
-		compare_result = false;
-		if (m.i > Amat[lCadd].i) {
-			compare_result = true;
-		}
-		else if (m.i == Amat[lCadd].i) {
-			if (m.j > Amat[lCadd].j) {
-				compare_result = true;
-			}
-		}
-		if (compare_result/*key5 > key6*/)
-		{
-			// да, цикл завершается
-			break;
-		}
-		else
-		{
-			// нет, большего непосредственного потомка
-			// следует поднять
-			Amat[vacant + iadd] = Amat[lCadd];
-			vacant = largerChild;
-		}
-	}
-	Amat[vacant + iadd] = m;
-} // FixHeap
-
-  // HeapSort очень быстрая только на размерностях до 10^5 а после вплоть до 10^8 она может замедляться раза в три. 
-
-  // Пирамидальная сортировка оптимальна как
-  // по памяти, так и по быстродействию, к тому же её алгоритм
-  // очень интересен.
-  // Ограничение состоит в том, что нумерация массива должна начинаться с 1.
-void HeapSort(Ak * &Amat, integer first, integer last)
-{
-
-	Ak maxelm; // элемент с наибольшим значением ключа
-
-			   // конструирование пирамиды
-	for (integer i = ((last - first + 1) / 2); i >= 1; i--)
-	{
-		FixHeap(Amat, i, Amat[i + first - 1], last - first + 1, first - 1);
-	}
-	for (integer i = last - first + 1; i >= 2; i--)
-	{
-		// скопировать корень пирамиды в список
-		// переформировать пирамиду
-		maxelm = Amat[first];
-		FixHeap(Amat, 1, Amat[i + first - 1], i - 1, first - 1);
-		Amat[i + first - 1] = maxelm;
-	}
-} // HeapSort
-
-// Пирамидальная сортировка оптимальна как
-// по памяти, так и по быстродействию, к тому же её алгоритм
-// очень интересен.
-// Ограничение состоит в том, что нумерация массива должна начинаться с 1.
-void HeapSort(Ak1 * &Amat, integer first, integer last)
-{
-
-	Ak1 maxelm; // элемент с наибольшим значением ключа
-
-	// конструирование пирамиды
-	for (integer i = ((last - first + 1) / 2); i >= 1; i--)
-	{
-		FixHeap(Amat, i, Amat[i + first - 1], last - first + 1, first - 1);
-	}
-	for (integer i = last - first + 1; i >= 2; i--)
-	{
-		// скопировать корень пирамиды в список
-		// переформировать пирамиду
-		maxelm = Amat[first];
-		FixHeap(Amat, 1, Amat[i + first - 1], i - 1, first - 1);
-		Amat[i + first - 1] = maxelm;
-	}
-} // HeapSort
-
-  // Пирамидальная сортировка оптимальна как
-  // по памяти, так и по быстродействию, к тому же её алгоритм
-  // очень интересен.
-  // Ограничение состоит в том, что нумерация массива должна начинаться с 1.
-void HeapSort_j(Ak * &Amat, integer first, integer last)
-{
-
-	Ak maxelm; // элемент с наибольшим значением ключа
-
-	integer iadd = first - 1;
-	// конструирование пирамиды
-	for (integer i = ((last - first + 1) / 2); i >= 1; i--)
-	{
-		FixHeap_j(Amat, i, Amat[i + iadd], last - first + 1, iadd);
-	}
-	for (integer i = last - first + 1; i >= 2; i--)
-	{
-		// скопировать корень пирамиды в список
-		// переформировать пирамиду
-		maxelm = Amat[1 + iadd];
-		FixHeap_j(Amat, 1, Amat[i + iadd], i - 1, iadd);
-		Amat[i + iadd] = maxelm;
-	}
-} // HeapSort_j
-
-// Пирамидальная сортировка оптимальна как
-// по памяти, так и по быстродействию, к тому же её алгоритм
-// очень интересен.
-// Ограничение состоит в том, что нумерация массива должна начинаться с 1.
-void HeapSort_j(Ak1 * &Amat, integer first, integer last)
-{
-
-	Ak1 maxelm; // элемент с наибольшим значением ключа
-
-	integer iadd = first - 1;
-	// конструирование пирамиды
-	for (integer i = ((last - first + 1) / 2); i >= 1; i--)
-	{
-		FixHeap_j(Amat, i, Amat[i + iadd], last - first + 1, iadd);
-	}
-	for (integer i = last - first + 1; i >= 2; i--)
-	{
-		// скопировать корень пирамиды в список
-		// переформировать пирамиду
-		maxelm = Amat[1 + iadd];
-		FixHeap_j(Amat, 1, Amat[i + iadd], i - 1, iadd);
-		Amat[i + iadd] = maxelm;
-	}
-} // HeapSort_j
-
-  // Сортировка слиянием. 
-  // Требует дополнительной пямяти.
-void MergeSort(Ak * &Aorig, integer size) {
-	// предполагается индексация от нуля до size-1.
-	// Массив А предполагается не менее двойного размера.
-	// Двойная память это недостаток данного алгоритма.
-	Ak* Amat = Aorig;
-	Ak* Bm = Amat + size;
-	Ak* C;
-
-	// Amat - сортируемый массив, B - вспомогательная память (справа от основных данных в А такого-же размера что и основные данные в А).
-	// C - указатель для обмена.
-	for (integer i = 1; i < size; i = i * 2) // размер объединяемых фрагментов
-	{
-		for (integer j = 0; j < size; j = j + 2 * i) // начало первого из объединяемых 
-												 // фрагментов
-		{
-			integer r = j + i; // начало второго из объединяемых фрагментов
-			integer n1 = 0, n2 = 0;
-			if (i < size - j) { n1 = i; }
-			else { n1 = size - j; };
-			if (i < size - r) { n2 = i; }
-			else { n2 = size - r; };
-
-			if (n1 < 0) n1 = 0;
-			if (n2 < 0) n2 = 0;
-
-			// слияние упорядоченных фрагментов
-			for (integer ia = 0, ib = 0, k = 0; k < n1 + n2; k++)
-			{
-				if (ia >= n1) Bm[j + k] = Amat[r + ib++];
-				else
-					if (ib >= n2) Bm[j + k] = Amat[j + ia++];
-					else {
-						bool compare_result = false;
-						integer lCadd = j + ia;
-						integer lCadd1 = r + ib;
-						if (Amat[lCadd1].i > Amat[lCadd].i) {
-							compare_result = true;
-						}
-						else if (Amat[lCadd1].i == Amat[lCadd].i) {
-							if (Amat[lCadd1].j > Amat[lCadd].j) {
-								compare_result = true;
-							}
-						}
-						if (compare_result) {
-							Bm[j + k] = Amat[j + ia++];
-						}
-						else {
-							Bm[j + k] = Amat[r + ib++];
-						}
-					}
-			}
-
-
-
-		}
-		C = Amat; Amat = Bm; Bm = C;
-
-	}
-
-	C = Amat; Amat = Bm; Bm = C;
-
-	// Копирование, если результат размещен не в основном а в вспомогательном массиве
-	if (Bm != Aorig)
-		memcpy(Aorig, Bm, size*sizeof(Ak));
-
-	Amat = nullptr; Bm = nullptr; C = nullptr;
-} // MergeSort
-
-
-// Сортировка слиянием. 
-// Требует дополнительной пямяти.
-void MergeSort(Ak1 * &Aorig, integer size) {
-	// предполагается индексация от нуля до size-1.
-	// Массив А предполагается не менее двойного размера.
-	// Двойная память это недостаток данного алгоритма.
-	Ak1* Amat = Aorig;
-	Ak1* Bm = Amat + size;
-	Ak1* C;
-
-	// Amat - сортируемый массив, B - вспомогательная память (справа от основных данных в А такого-же размера что и основные данные в А).
-	// C - указатель для обмена.
-	for (integer i = 1; i < size; i = i * 2) // размер объединяемых фрагментов
-	{
-		for (integer j = 0; j < size; j = j + 2 * i) // начало первого из объединяемых 
-			// фрагментов
-		{
-			integer r = j + i; // начало второго из объединяемых фрагментов
-			integer n1 = 0, n2 = 0;
-			if (i < size - j) { n1 = i; }
-			else { n1 = size - j; };
-			if (i < size - r) { n2 = i; }
-			else { n2 = size - r; };
-
-			if (n1 < 0) n1 = 0;
-			if (n2 < 0) n2 = 0;
-
-			// слияние упорядоченных фрагментов
-			for (integer ia = 0, ib = 0, k = 0; k < n1 + n2; k++)
-			{
-				if (ia >= n1) Bm[j + k] = Amat[r + ib++];
-				else
-					if (ib >= n2) Bm[j + k] = Amat[j + ia++];
-					else {
-						bool compare_result = false;
-						integer lCadd = j + ia;
-						integer lCadd1 = r + ib;
-						if (Amat[lCadd1].i > Amat[lCadd].i) {
-							compare_result = true;
-						}
-						else if (Amat[lCadd1].i == Amat[lCadd].i) {
-							if (Amat[lCadd1].j > Amat[lCadd].j) {
-								compare_result = true;
-							}
-						}
-						if (compare_result) {
-							Bm[j + k] = Amat[j + ia++];
-						}
-						else {
-							Bm[j + k] = Amat[r + ib++];
-						}
-					}
-			}
-
-
-
-		}
-		C = Amat; Amat = Bm; Bm = C;
-
-	}
-
-	C = Amat; Amat = Bm; Bm = C;
-
-	// Копирование, если результат размещен не в основном а в вспомогательном массиве
-	if (Bm != Aorig)
-		memcpy(Aorig, Bm, size*sizeof(Ak1));
-
-	Amat = nullptr; Bm = nullptr; C = nullptr;
-} // MergeSort
-
-
-  // Сортировка слиянием. 
-  // Требует дополнительной пямяти.
-void MergeSort_j(Ak * &Aorig, integer size) {
-	// предполагается индексация от нуля до size-1.
-	// Массив А предполагается не менее двойного размера.
-	// Двойная память это недостаток данного алгоритма.
-	Ak* Amat = Aorig;
-	Ak* Bm = Amat + size;
-	Ak* C;
-
-	// Amat - сортируемый массив, B - вспомогательная память (справа от основных данных в А такого-же размера что и основные данные в А).
-	// C - указатель для обмена.
-	for (integer i = 1; i < size; i = i * 2) // размер объединяемых фрагментов
-	{
-		for (integer j = 0; j < size; j = j + 2 * i) // начало первого из объединяемых 
-												 // фрагментов
-		{
-			integer r = j + i; // начало второго из объединяемых фрагментов
-			integer n1 = 0, n2 = 0;
-			if (i < size - j) { n1 = i; }
-			else { n1 = size - j; };
-			if (i < size - r) { n2 = i; }
-			else { n2 = size - r; };
-
-			if (n1 < 0) n1 = 0;
-			if (n2 < 0) n2 = 0;
-
-			// слияние упорядоченных фрагментов
-			for (integer ia = 0, ib = 0, k = 0; k < n1 + n2; k++)
-			{
-				if (ia >= n1) Bm[j + k] = Amat[r + ib++];
-				else
-					if (ib >= n2) Bm[j + k] = Amat[j + ia++];
-					else {
-						bool compare_result = false;
-						integer lCadd = j + ia;
-						integer lCadd1 = r + ib;
-						if (Amat[lCadd1].j > Amat[lCadd].j) {
-							compare_result = true;
-						}
-						else if (Amat[lCadd1].j == Amat[lCadd].j) {
-							if (Amat[lCadd1].i > Amat[lCadd].i) {
-								compare_result = true;
-							}
-						}
-						if (compare_result) {
-							Bm[j + k] = Amat[j + ia++];
-						}
-						else {
-							Bm[j + k] = Amat[r + ib++];
-						}
-					}
-			}
-
-
-
-		}
-		C = Amat; Amat = Bm; Bm = C;
-
-	}
-
-	C = Amat; Amat = Bm; Bm = C;
-
-	// Копирование, если результат размещен не в основном а в вспомогательном массиве
-	if (Bm != Aorig)
-		memcpy(Aorig, Bm, size*sizeof(Ak));
-
-	Amat = nullptr; Bm = nullptr; C = nullptr;
-} // MergeSort_j
-
-// Сортировка слиянием. 
-// Требует дополнительной пямяти.
-void MergeSort_j(Ak1 * &Aorig, integer size) {
-	// предполагается индексация от нуля до size-1.
-	// Массив А предполагается не менее двойного размера.
-	// Двойная память это недостаток данного алгоритма.
-	Ak1* Amat = Aorig;
-	Ak1* Bm = Amat + size;
-	Ak1* C;
-
-	// Amat - сортируемый массив, B - вспомогательная память (справа от основных данных в А такого-же размера что и основные данные в А).
-	// C - указатель для обмена.
-	for (integer i = 1; i < size; i = i * 2) // размер объединяемых фрагментов
-	{
-		for (integer j = 0; j < size; j = j + 2 * i) // начало первого из объединяемых 
-			// фрагментов
-		{
-			integer r = j + i; // начало второго из объединяемых фрагментов
-			integer n1 = 0, n2 = 0;
-			if (i < size - j) { n1 = i; }
-			else { n1 = size - j; };
-			if (i < size - r) { n2 = i; }
-			else { n2 = size - r; };
-
-			if (n1 < 0) n1 = 0;
-			if (n2 < 0) n2 = 0;
-
-			// слияние упорядоченных фрагментов
-			for (integer ia = 0, ib = 0, k = 0; k < n1 + n2; k++)
-			{
-				if (ia >= n1) Bm[j + k] = Amat[r + ib++];
-				else
-					if (ib >= n2) Bm[j + k] = Amat[j + ia++];
-					else {
-						bool compare_result = false;
-						integer lCadd = j + ia;
-						integer lCadd1 = r + ib;
-						if (Amat[lCadd1].j > Amat[lCadd].j) {
-							compare_result = true;
-						}
-						else if (Amat[lCadd1].j == Amat[lCadd].j) {
-							if (Amat[lCadd1].i > Amat[lCadd].i) {
-								compare_result = true;
-							}
-						}
-						if (compare_result) {
-							Bm[j + k] = Amat[j + ia++];
-						}
-						else {
-							Bm[j + k] = Amat[r + ib++];
-						}
-					}
-			}
-
-
-
-		}
-		C = Amat; Amat = Bm; Bm = C;
-
-	}
-
-	C = Amat; Amat = Bm; Bm = C;
-
-	// Копирование, если результат размещен не в основном а в вспомогательном массиве
-	if (Bm != Aorig)
-		memcpy(Aorig, Bm, size*sizeof(Ak1));
-
-	Amat = nullptr; Bm = nullptr; C = nullptr;
-} // MergeSort_j
-
-  // Сортировка подсчётом.
-  // За время O(n)
-  // Томас Кормен стр. 224.
-  // Внимание : Алгоритм жрёт очень много оперативной памяти.
-  // Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sort(Ak* &Amat, integer first, integer last)
-{
-	// смена на malloc и calloc 7 января 2016.
-
-	integer k = -1;
-	for (integer j = first; j <= last; j++) {
-		if (Amat[j].i > k) k = Amat[j].i;
-	}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((k+1)*sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (k + 1));
-
-	
-	for (integer i = 0; i <= k; i++) {
-		C[i] = 0; // инициализация.
-	}
-	for (integer j = first; j <= last; j++) {
-		C[Amat[j].i]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-	for (integer i = 1; i <= k; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak* Bm = new Ak[last - first + 2];
-	Ak* Bm = (Ak*)malloc((last - first + 2)*sizeof(Ak));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak>(Bm, c3, c4, (last - first + 2));
-	
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat[j].i;
-		Bm[C[ind]] = Amat[j];
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer j = first, i = 1; j <= last; j++, i++) {
-		//Amat[j] = B[j - first + 1];
-		Amat[j] = Bm[i];
-	}
-	//delete[] Bm;
-	free(Bm);
-	//delete[] C;
-	free(C);
-
-}
-
-// мы освобождаем память из под исходной матрицы СЛАУ,
-// А потом её восстанавливаем. Для восстановления матрицы слау надо 
-// запомнить первоначальный пордок следования элементов до применения сортировки.
-integer* the_original_order_of_values = nullptr;
-integer* the_original_order_of_values_reverse = nullptr;
-
-
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sortj(Ak* &Amat, integer first, integer last)
-{
-
-	integer k = -1;
-	for (integer j = first; j <= last; j++) {
-		if (Amat[j].j > k) k = Amat[j].j;
-	}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((k+1)*sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C,  c1, c2, (k + 1));
-
-#pragma omp parallel for
-	for (integer i = 0; i <= k; i++) {
-		C[i] = 0; // инициализация.
-	}
-	for (integer j = first; j <= last; j++) {
-		C[Amat[j].j]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-//НИ в коем случае !!! #pragma omp parallel for
-	for (integer i = 1; i <= k; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak* Bm = new Ak[last - first + 2];
-	Ak* Bm = (Ak*)malloc((last - first + 2)*sizeof(Ak));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak>(Bm, c3, c4, (last - first + 2));
-	
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat[j].j;
-		Bm[C[ind]] = Amat[j];
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer j = first, i = 1; j <= last; j++, i++) {
-		//Amat[j] = B[j - first + 1];
-		Amat[j] = Bm[i];
-	}
-	//delete[] Bm;
-	free(Bm);
-	//delete[] C;
-	free(C);
-
-}
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
-{
-	// смена на malloc и calloc 7 января 2016.
-	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = nullptr;
-
-	integer k = -1;
-	for (integer j = first; j <= last; j++) {
-		if (Amat[j].i > k) k = Amat[j].i;
-	}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((k + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (k + 1));
-
-	the_original_order_of_values_buf = (integer*)malloc((last + 1) * sizeof(integer));
-	char c7[34] = "the_original_order_of_values_buf";
-	char c6[14] = "Counting_Sort";
-	handle_error<integer>(the_original_order_of_values_buf, c7, c6, (last + 1));
-
-	if (bmemo) {
-		the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
-		char c5[29] = "the_original_order_of_values";
-
-		handle_error<integer>(the_original_order_of_values, c5, c6, (last + 1));
-
-		the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
-		char c8[38] = "the_original_order_of_values_reverse";
-		handle_error<integer>(the_original_order_of_values_reverse, c8, c6, (last + 1));
-
-	}
-
-#pragma omp parallel for
-	for (integer i = 0; i <= k; i++) {
-		C[i] = 0; // инициализация.
-	}
-	for (integer j = first; j <= last; j++) {
-		C[Amat[j].i]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-//НИ в коем случае !!! #pragma omp parallel for
-	for (integer i = 1; i <= k; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat[j].i;
-		Bm[C[ind]] = Amat[j];
-		if (bmemo) {
-			// j стал C[ind]
-			if (the_original_order_of_values_buf != nullptr) {
-				the_original_order_of_values_buf[C[ind]] = j;
-			}
-		}
-		C[ind]--;
-	}
-	// Обратное копирование.
-	
-	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
-		//Amat[jnew] = B[jnew - first + 1];
-		// i стал jnew. i ассоциируется с C[ind].
-		Amat[jnew] = Bm[i];
-		if (bmemo) {
-			if (the_original_order_of_values_buf != nullptr) {
-				if (the_original_order_of_values != nullptr) {
-					the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
-					the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
-				}
-			}
-		}
-	}
-	//delete[] Bm;
-	if (Bm != nullptr) {
-		free(Bm);
-		Bm = nullptr;
-	}
-	//delete[] C;
-	if (C != nullptr) {
-		free(C);
-		C = nullptr;
-	}
-
-	if (the_original_order_of_values_buf != nullptr) {
-		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = nullptr;
-	}
-
-
-}
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sortj(Ak1* &Amat, integer first, integer last)
-{
-
-	integer k = -1;
-	for (integer j = first; j <= last; j++) {
-		if (Amat[j].j > k) k = Amat[j].j;
-	}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((k + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (k + 1));
-
-#pragma omp parallel for
-	for (integer i = 0; i <= k; i++) {
-		C[i] = 0; // инициализация.
-	}
-	for (integer j = first; j <= last; j++) {
-		C[Amat[j].j]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-	for (integer i = 1; i <= k; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat[j].j;
-		Bm[C[ind]] = Amat[j];
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer j = first, i = 1; j <= last; j++, i++) {
-		//Amat[j] = B[j - first + 1];
-		Amat[j] = Bm[i];
-	}
-	//delete[] Bm;
-	free(Bm);
-	//delete[] C;
-	free(C);
-
-}
-
-// Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
-// пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
-void qs(Ak * &Amat, integer first, integer last) {
-	integer i = first, j = last;
-	Ak tmp;
-
-	/*
-	В случае явной рекурсии, как в программе выше, в стеке сохраняются не только границы подмассивов, но и ряд совершенно ненужных параметров, таких как локальные переменные. Если эмулировать стек программно, его размер можно уменьшить в несколько раз.
-	Чем на более равные части будет делиться массив - тем лучше. Потому в качестве опорного целесообразно брать средний из трех, а если массив достаточно велик - то из девяти произвольных элементов.
-	Пусть входные последовательности очень плохи для алгоритма. Например, их специально подбирают, чтобы средний элемент оказывался каждый раз минимумом. Как сделать QuickSort устойчивой к такому "саботажу" ? Очень просто - выбирать в качестве опорного случайный элемент входного массива. Тогда любые неприятные закономерности во входном потоке будут нейтрализованы. Другой вариант - переставить перед сортировкой элементы массива случайным образом.
-	Быструю сортировку можно использовать и для двусвязных списков. Единственная проблема при этом - отсутствие непосредственного доступа к случайному элементу. Так что в качестве опорного приходится выбирать первый элемент, и либо надеяться на хорошие исходные данные, либо случайным образом переставить элементы перед сортировкой.
-	*/
-	integer pivot;
-	if (1) {
-		if (last - first < 3000) {
-			pivot = Amat[(integer)((first + last) / 2)].i;
-		}
-		else if (last - first < 800000) {
-			pivot = (integer)((Amat[first + 100].i + Amat[(first + last) / 2].i + Amat[last - 100].i) / 3.0);
-		}
-		else {
-			//pivot = 0;
-			pivot = (integer)((Amat[first].i + Amat[first + 100000].i + Amat[first + 200000].i + Amat[first + 300000].i + Amat[first + 400000].i + Amat[first + 500000].i + Amat[first + 600000].i + Amat[first + 700000].i + Amat[last].i) / 9.0);
-		}
-
-	}
-	else {
-		pivot = Amat[(first + last) / 2].i;
-	}
-
-	// partition
-	while (i <= j) {
-		//while ((Amat[i].i < pivot) || ((Amat[i].i == pivot) && (Amat[i].j < pivot.j)))
-		//i++;
-		//while ((Amat[j].i > pivot) || ((Amat[j].i == pivot) && (Amat[j].j > pivot.j)))
-		//j--;
-		while (Amat[i].i < pivot)
-			i++;
-		while (Amat[j].i > pivot)
-			j--;
-		if (i <= j) {
-			tmp = Amat[i];
-			Amat[i] = Amat[j];
-			Amat[j] = tmp;
-			i++;
-			j--;
-		}
-	}
-
-	// recursion
-	if (first < j)
-		qs(Amat, first, j);
-	if (i < last)
-		qs(Amat, i, last);
-
-}
-
-integer compAi(Ak1 a, Ak1 b) {
-	if (a.i > b.i) return (1);
-	if (a.i < b.i) return (-1);
-	return (0);
-}
-
-integer compAj(Ak1 a, Ak1 b) {
-	if (a.j > b.j) return (1);
-	if (a.j < b.j) return (-1);
-	return (0);
-}
-
-/*
-// для библиотечной std::sort
-integer compAi(const void  * a, const void  * b)
-{
-	if ((*(Ak1*)a).i > (*(Ak1*)b).i) return (1);
-	if ((*(Ak1*)a).i < (*(Ak1*)b).i) return (-1);
-	return (0);
-} // compAi
-
-// для библиотечной std::sort
-integer compAj(const void  * a, const void  * b)
-{
-	if ((*(Ak1*)a).j > (*(Ak1*)b).j) return (1);
-	if ((*(Ak1*)a).j < (*(Ak1*)b).j) return (-1);
-	return (0);
-} // compAj
-*/
-
-// Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
-// пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
-void qs(Ak1 * &Amat, integer first, integer last) {
-	integer i = first, j = last;
-	Ak1 tmp;
-
-	/*
-	В случае явной рекурсии, как в программе выше, в стеке сохраняются не только границы подмассивов, но и ряд совершенно ненужных параметров, таких как локальные переменные. Если эмулировать стек программно, его размер можно уменьшить в несколько раз.
-	Чем на более равные части будет делиться массив - тем лучше. Потому в качестве опорного целесообразно брать средний из трех, а если массив достаточно велик - то из девяти произвольных элементов.
-	Пусть входные последовательности очень плохи для алгоритма. Например, их специально подбирают, чтобы средний элемент оказывался каждый раз минимумом. Как сделать QuickSort устойчивой к такому "саботажу" ? Очень просто - выбирать в качестве опорного случайный элемент входного массива. Тогда любые неприятные закономерности во входном потоке будут нейтрализованы. Другой вариант - переставить перед сортировкой элементы массива случайным образом.
-	Быструю сортировку можно использовать и для двусвязных списков. Единственная проблема при этом - отсутствие непосредственного доступа к случайному элементу. Так что в качестве опорного приходится выбирать первый элемент, и либо надеяться на хорошие исходные данные, либо случайным образом переставить элементы перед сортировкой.
-	*/
-	integer pivot;
-	if (1) {
-		if (last - first < 3000) {
-			pivot = Amat[(integer)((first + last) / 2)].i;
-		}
-		else if (last - first < 800000) {
-			pivot = (integer)((Amat[first + 100].i + Amat[(first + last) / 2].i + Amat[last - 100].i) / 3.0);
-		}
-		else {
-			//pivot = 0;
-			pivot = (integer)((Amat[first].i + Amat[first + 100000].i + Amat[first + 200000].i + Amat[first + 300000].i + Amat[first + 400000].i + Amat[first + 500000].i + Amat[first + 600000].i + Amat[first + 700000].i + Amat[last].i) / 9.0);
-		}
-
-	}
-	else {
-		pivot = Amat[(first + last) / 2].i;
-	}
-
-	// partition
-	while (i <= j) {
-		//while ((Amat[i].i < pivot) || ((Amat[i].i == pivot) && (Amat[i].j < pivot.j)))
-		//i++;
-		//while ((Amat[j].i > pivot) || ((Amat[j].i == pivot) && (Amat[j].j > pivot.j)))
-		//j--;
-		while (Amat[i].i < pivot)
-			i++;
-		while (Amat[j].i > pivot)
-			j--;
-		if (i <= j) {
-			tmp = Amat[i];
-			Amat[i] = Amat[j];
-			Amat[j] = tmp;
-			i++;
-			j--;
-		}
-	}
-
-	// recursion
-	if (first < j)
-		qs(Amat, first, j);
-	if (i < last)
-		qs(Amat, i, last);
-
-}
-
-// Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
-// пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
-void qsj(Ak * &Amat, integer first, integer last) {
-	integer i = first, j = last;
-	Ak tmp;
-	//Ak pivot = Amat[(first + last) / 2];
-	/*
-	В случае явной рекурсии, как в программе выше, в стеке сохраняются не только границы подмассивов, но и ряд совершенно ненужных параметров, таких как локальные переменные. Если эмулировать стек программно, его размер можно уменьшить в несколько раз.
-	Чем на более равные части будет делиться массив - тем лучше. Потому в качестве опорного целесообразно брать средний из трех, а если массив достаточно велик - то из девяти произвольных элементов.
-	Пусть входные последовательности очень плохи для алгоритма. Например, их специально подбирают, чтобы средний элемент оказывался каждый раз минимумом. Как сделать QuickSort устойчивой к такому "саботажу" ? Очень просто - выбирать в качестве опорного случайный элемент входного массива. Тогда любые неприятные закономерности во входном потоке будут нейтрализованы. Другой вариант - переставить перед сортировкой элементы массива случайным образом.
-	Быструю сортировку можно использовать и для двусвязных списков. Единственная проблема при этом - отсутствие непосредственного доступа к случайному элементу. Так что в качестве опорного приходится выбирать первый элемент, и либо надеяться на хорошие исходные данные, либо случайным образом переставить элементы перед сортировкой.
-	*/
-	integer pivot;
-	if (1) {
-		if (last - first < 3000) {
-			pivot = Amat[(integer)((first + last) / 2)].j;
-		}
-		else if (last - first < 800000) {
-			pivot = (integer)((Amat[first + 100].j + Amat[(first + last) / 2].j + Amat[last - 100].j) / 3.0);
-		}
-		else {
-			//pivot = 0;
-			pivot = (integer)((Amat[first].j + Amat[first + 100000].j + Amat[first + 200000].j + Amat[first + 300000].j + Amat[first + 400000].j + Amat[first + 500000].j + Amat[first + 600000].j + Amat[first + 700000].j + Amat[last].j) / 9.0);
-		}
-
-	}
-	else {
-		pivot = Amat[(first + last) / 2].j;
-	}
-
-
-
-	// partition
-	while (i <= j) {
-		//while ((Amat[i].j < pivot.j) || ((Amat[i].j == pivot.j) && (Amat[i].i < pivot.i)))
-		//i++;
-		//while ((Amat[j].j > pivot.j) || ((Amat[j].j == pivot.j) && (Amat[j].i > pivot.i)))
-		//j--;
-
-		while (Amat[i].j < pivot)
-			i++;
-		while (Amat[j].j > pivot)
-			j--;
-		if (i <= j) {
-			tmp = Amat[i];
-			Amat[i] = Amat[j];
-			Amat[j] = tmp;
-			i++;
-			j--;
-		}
-	}
-
-	// recursion
-	if (first < j)
-		qsj(Amat, first, j);
-	if (i < last)
-		qsj(Amat, i, last);
-
-}
-
-
-// Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
-// пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
-void qsj(Ak1 * &Amat, integer first, integer last) {
-	integer i = first, j = last;
-	Ak1 tmp;
-	//Ak1 pivot = Amat[(first + last) / 2];
-	/*
-	В случае явной рекурсии, как в программе выше, в стеке сохраняются не только границы подмассивов, но и ряд совершенно ненужных параметров, таких как локальные переменные. Если эмулировать стек программно, его размер можно уменьшить в несколько раз.
-	Чем на более равные части будет делиться массив - тем лучше. Потому в качестве опорного целесообразно брать средний из трех, а если массив достаточно велик - то из девяти произвольных элементов.
-	Пусть входные последовательности очень плохи для алгоритма. Например, их специально подбирают, чтобы средний элемент оказывался каждый раз минимумом. Как сделать QuickSort устойчивой к такому "саботажу" ? Очень просто - выбирать в качестве опорного случайный элемент входного массива. Тогда любые неприятные закономерности во входном потоке будут нейтрализованы. Другой вариант - переставить перед сортировкой элементы массива случайным образом.
-	Быструю сортировку можно использовать и для двусвязных списков. Единственная проблема при этом - отсутствие непосредственного доступа к случайному элементу. Так что в качестве опорного приходится выбирать первый элемент, и либо надеяться на хорошие исходные данные, либо случайным образом переставить элементы перед сортировкой.
-	*/
-	integer pivot;
-	if (1) {
-		if (last - first < 3000) {
-			pivot = Amat[(integer)((first + last) / 2)].j;
-		}
-		else if (last - first < 800000) {
-			pivot = (integer)((Amat[first + 100].j + Amat[(first + last) / 2].j + Amat[last - 100].j) / 3.0);
-		}
-		else {
-			//pivot = 0;
-			pivot = (integer)((Amat[first].j + Amat[first + 100000].j + Amat[first + 200000].j + Amat[first + 300000].j + Amat[first + 400000].j + Amat[first + 500000].j + Amat[first + 600000].j + Amat[first + 700000].j + Amat[last].j) / 9.0);
-		}
-
-	}
-	else {
-		pivot = Amat[(first + last) / 2].j;
-	}
-
-
-
-	// partition
-	while (i <= j) {
-		//while ((Amat[i].j < pivot.j) || ((Amat[i].j == pivot.j) && (Amat[i].i < pivot.i)))
-		//i++;
-		//while ((Amat[j].j > pivot.j) || ((Amat[j].j == pivot.j) && (Amat[j].i > pivot.i)))
-		//j--;
-
-		while (Amat[i].j < pivot)
-			i++;
-		while (Amat[j].j > pivot)
-			j--;
-		if (i <= j) {
-			tmp = Amat[i];
-			Amat[i] = Amat[j];
-			Amat[j] = tmp;
-			i++;
-			j--;
-		}
-	}
-
-	// recursion
-	if (first < j)
-		qsj(Amat, first, j);
-	if (i < last)
-		qsj(Amat, i, last);
-
-}
-
-
-
-
-// Быстрая сортировка Хоара.
-// Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
-// стр. 106.
-void QuickSort(Ak * &Amat, integer first, integer last) {
-	// list упорядочиваемый список элементов
-	// first номер первого элемента в сортируемой части списка
-	// last номер последнего элемента в сортируемой части списка
-
-	if (0) {
-		/*
-		// BubbleSort
-		integer numberOfPairs = last - first + 1;
-		bool swappedElements = true;
-		while (swappedElements) {
-		numberOfPairs--;
-		swappedElements = false;
-		for (integer i = first; i <= first + numberOfPairs - 1; i++) {
-		if (Amat[i].i*n+Amat[i].j>Amat[i + 1].i*n+Amat[i+1].j) {
-		swap(Amat, i, i + 1);
-		swappedElements = true;
-		}
-		}
-		}
-		*/
-	}
-	else
-	{
-		integer pivot;
-
-		if (first < last) {
-			pivot = PivotList(Amat, first, last);
-			QuickSort(Amat, first, pivot - 1);
-			QuickSort(Amat, pivot + 1, last);
-		}
-	}
-} // QuickSort
-
-// Быстрая сортировка Хоара.
-// Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
-// стр. 106.
-void QuickSort(Ak1 * &Amat, integer first, integer last) {
-	// list упорядочиваемый список элементов
-	// first номер первого элемента в сортируемой части списка
-	// last номер последнего элемента в сортируемой части списка
-
-	if (0) {
-		/*
-		// BubbleSort
-		integer numberOfPairs = last - first + 1;
-		bool swappedElements = true;
-		while (swappedElements) {
-		numberOfPairs--;
-		swappedElements = false;
-		for (integer i = first; i <= first + numberOfPairs - 1; i++) {
-		if (Amat[i].i*n+Amat[i].j>Amat[i + 1].i*n+Amat[i+1].j) {
-		swap(Amat, i, i + 1);
-		swappedElements = true;
-		}
-		}
-		}
-		*/
-	}
-	else
-	{
-		integer pivot;
-
-		if (first < last) {
-			pivot = PivotList(Amat, first, last);
-			QuickSort(Amat, first, pivot - 1);
-			QuickSort(Amat, pivot + 1, last);
-		}
-	}
-} // QuickSort
-
-  // Быстрая сортировка Хоара.
-  // Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
-  // стр. 106.
-void QuickSort_j(Ak * &Amat, integer first, integer last) {
-	// list упорядочиваемый список элементов
-	// first номер первого элемента в сортируемой части списка
-	// last номер последнего элемента в сортируемой части списка
-
-	if (0) {
-		// BubbleSort
-		integer numberOfPairs = last - first + 1;
-		bool swappedElements = true;
-		while (swappedElements) {
-			numberOfPairs--;
-			swappedElements = false;
-			for (integer i = first; i <= first + numberOfPairs - 1; i++) {
-				if (Amat[i].j > Amat[i + 1].j) {
-					swap(Amat, i, i + 1);
-					swappedElements = true;
-				}
-			}
-		}
-	}
-	else
-	{
-		integer pivot;
-
-		if (first < last) {
-			pivot = PivotList_j(Amat, first, last);
-			QuickSort_j(Amat, first, pivot - 1);
-			QuickSort_j(Amat, pivot + 1, last);
-		}
-	}
-} // QuickSort_j
-
-// Быстрая сортировка Хоара.
-// Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
-// стр. 106.
-void QuickSort_j(Ak1 * &Amat, integer first, integer last) {
-	// list упорядочиваемый список элементов
-	// first номер первого элемента в сортируемой части списка
-	// last номер последнего элемента в сортируемой части списка
-
-	if (0) {
-		// BubbleSort
-		integer numberOfPairs = last - first + 1;
-		bool swappedElements = true;
-		while (swappedElements) {
-			numberOfPairs--;
-			swappedElements = false;
-			for (integer i = first; i <= first + numberOfPairs - 1; i++) {
-				if (Amat[i].j > Amat[i + 1].j) {
-					swap(Amat, i, i + 1);
-					swappedElements = true;
-				}
-			}
-		}
-	}
-	else
-	{
-		integer pivot;
-
-		if (first < last) {
-			pivot = PivotList_j(Amat, first, last);
-			QuickSort_j(Amat, first, pivot - 1);
-			QuickSort_j(Amat, pivot + 1, last);
-		}
-	}
-} // QuickSort_j
-
+// Алгоритмы сортировки.
+#include "my_sort_algorithm.cpp"
 
   /*
   // Это исторически первоначальный код содержащий лишь построение последовательности
-  // вложенных матриц и не иодержащий построения операторов restriction и prolongation.
+  // вложенных матриц и не содержащий построения операторов restriction и prolongation.
   // создание этого кода завершено 1 сентября 2015 года.
   template <typename doublerealT>
   integer aggregative_amg(Ak* &Amat, integer nnz, integer n, doublerealT* &x, doublerealT* &b) {
@@ -5557,16 +595,16 @@ void QuickSort_j(Ak1 * &Amat, integer first, integer last) {
   }
 
   integer n_coarce = 1; // номер агрегата.
-  const integer max_sosed = 20;
-  const integer NULL_SOSED = -1;
-  integer vacant = NULL_SOSED;
+  const integer max_neighbour = 20;
+  const integer NULL_NEIGHBOUR = -1;
+  integer vacant = NULL_NEIGHBOUR;
   for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
   if (flag[Amat[ii].i] == false) {
   // Вычисляем по немодифиуцированной матрице А (хранящейся слева).
 
-  integer set[max_sosed]; // не более 20 узлов в одном агрегате.
-  for (integer js = 0; js < max_sosed; js++) {
-  set[js] = NULL_SOSED;
+  integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
+  for (integer js = 0; js < max_neighbour; js++) {
+  set[js] = NULL_NEIGHBOUR;
   }
   integer ic = 0;
   set[ic] = Amat[ii].i;
@@ -5577,10 +615,10 @@ void QuickSort_j(Ak1 * &Amat, integer first, integer last) {
   vacant = Amat[ii].j;
   for (integer js = 0; js < ic; js++) {
   if (vacant == set[js]) {
-  vacant = NULL_SOSED;
+  vacant = NULL_NEIGHBOUR;
   }
   }
-  if (vacant != NULL_SOSED) {
+  if (vacant != NULL_NEIGHBOUR) {
   set[ic] = vacant;
   ic++;
   }
@@ -5592,10 +630,10 @@ void QuickSort_j(Ak1 * &Amat, integer first, integer last) {
   vacant = Amat[iscan].j;
   for (integer js = 0; js < ic; js++) {
   if (vacant == set[js]) {
-  vacant = NULL_SOSED;
+  vacant = NULL_NEIGHBOUR;
   }
   }
-  if (vacant != NULL_SOSED) {
+  if (vacant != NULL_NEIGHBOUR) {
   set[ic] = vacant;
   ic++;
 
@@ -5668,9 +706,9 @@ void QuickSort_j(Ak1 * &Amat, integer first, integer last) {
   // запас памяти 1 nnz на fine уровне.
   for (integer ii = 2 * nnz_a[ilevel - 1]+1 + iadd; ii <= 3 * nnz_a[ilevel - 1] + iadd; ii++) {
   Amat[ii].aij = 0.0;
-  Amat[ii].ind = NULL_SOSED;
-  Amat[ii].i = NULL_SOSED;
-  Amat[ii].j = NULL_SOSED;
+  Amat[ii].ind = NULL_NEIGHBOUR;
+  Amat[ii].i = NULL_NEIGHBOUR;
+  Amat[ii].j = NULL_NEIGHBOUR;
   }
 
   for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) flag[ii] = false;
@@ -5712,9 +750,9 @@ void QuickSort_j(Ak1 * &Amat, integer first, integer last) {
   iadd += 2 * nnz_a[ilevel - 1];
 
   #if doubleintprecision == 1
-		 printf("nnz : fine=%lld, coarse=%lld, operator complexity=%e. n : fine=%lld, coarse=%lld grid complexity=%e.\n", nnz_a[ilevel - 1], nnz_a[ilevel], (doubleT)(nnz_a[ilevel])/(doubleT)( nnz_a[ilevel - 1]), n_a[ilevel - 1], n_a[ilevel], (doubleT)(n_a[ilevel])/ (doubleT)(n_a[ilevel - 1]));
+		 printf("nnz: fine=%lld, coarse=%lld, operator complexity=%e. n: fine=%lld, coarse=%lld grid complexity=%e.\n", nnz_a[ilevel - 1], nnz_a[ilevel], (doubleT)(nnz_a[ilevel])/(doubleT)( nnz_a[ilevel - 1]), n_a[ilevel - 1], n_a[ilevel], (doubleT)(n_a[ilevel])/ (doubleT)(n_a[ilevel - 1]));
   #else
-		printf("nnz : fine=%d, coarse=%d, operator complexity=%e. n : fine=%d, coarse=%d grid complexity=%e.\n", nnz_a[ilevel - 1], nnz_a[ilevel], (doubleT)(nnz_a[ilevel])/(doubleT)( nnz_a[ilevel - 1]), n_a[ilevel - 1], n_a[ilevel], (doubleT)(n_a[ilevel])/ (doubleT)(n_a[ilevel - 1]));
+		printf("nnz: fine=%d, coarse=%d, operator complexity=%e. n: fine=%d, coarse=%d grid complexity=%e.\n", nnz_a[ilevel - 1], nnz_a[ilevel], (doubleT)(nnz_a[ilevel])/(doubleT)( nnz_a[ilevel - 1]), n_a[ilevel - 1], n_a[ilevel], (doubleT)(n_a[ilevel])/ (doubleT)(n_a[ilevel - 1]));
   #endif
    getchar();
 
@@ -5829,7 +867,7 @@ doublereal buffers1omega, buffers2omega, buffers3omega;
 doublereal gold_const = 0.2; // 0.2 default
 doublereal gold_linear;
 
-// Мысль. Омегу вычислить заранее и считывать из хеш таблицы.
+// Мысль. Омегу вычислить заранее и считывать из хеш-таблицы.
 template <typename doublerealT>
 void optimal_omega(doublerealT rn, doublerealT &omega) {
 	
@@ -6298,7 +1336,7 @@ void early_naive_relaxation_method(Ak1* &Amat, integer istart, integer iend, dou
 						// aij*aji/djj;
 						// найти aji;
 						doublerealT aji = 0.0;
-						// Здесь нужно сделать хеш таблицу которая позволяет избавиться от линейного поиска.
+						// Здесь нужно сделать хеш-таблицу которая позволяет избавиться от линейного поиска.
 						// линейный поиск очень медленный особенно на каждой итерации.
 						for (integer ii1 = istart; ii1 <= iend; ii1++) {
 							if (Amat[ii1].i == Amat[ic].j) {
@@ -6380,7 +1418,7 @@ void seidel(Ak* &Amat, integer istart, integer iend, doublerealT* &x, doublereal
 {
 	//seidel1<doublerealT>(Amat,  istart,  iend, x, b, flag, n);
 	seidelsor<doublerealT>(Amat, istart, iend, x, b, flag, n);
-	// низкое быстродействие из-за линейного поиска, нужна хеш таблица.
+	// низкое быстродействие из-за линейного поиска, нужна хеш-таблица.
 	//classic_ilu<doublerealT>(Amat, istart, iend, x, b, flag, n);
 }
 
@@ -6450,7 +1488,7 @@ void seidel(Ak1* &Amat, integer istart, integer iend, doublerealT* &x, doublerea
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqstable(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqstable(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6474,7 +1512,7 @@ void seidelqstable(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, d
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqstable(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqstable(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6499,7 +1537,7 @@ integer isorintmemo = -1;
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6556,7 +1594,7 @@ void seidelqsor(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doub
 } // seidelqsor
 
 template <typename doublerealT>
-void seidelqsor(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6618,7 +1656,7 @@ void seidelqsor(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6688,7 +1726,7 @@ integer isimmetricGS_switch = 0;
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6741,7 +1779,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 		// copy
 
 		if (x_jacoby_buffer == nullptr) {
-			printf("ERROR : x_jacoby_buffer == nullptr.\n");
+			printf("ERROR: x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -6837,7 +1875,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 						//}
 					}
 					else {
-						// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+						// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 						// игнорирование positive connections.
 						if ((Amat[ii1].aij < 0.0)) {
@@ -6925,7 +1963,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, integer iorder)
+void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, integer iorder)
 {
 	// iorder == 3 or 5. Трёхшаговый или пятишаговый методы Рунге - Кутты.
 
@@ -7007,7 +2045,7 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 
 		
 		if (x_jacoby_buffer == nullptr) {
-			printf("ERROR : x_jacoby_buffer == nullptr.\n");
+			printf("ERROR: x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -7094,8 +2132,8 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, 
-	integer * &row_ptr_end, integer iadd, integer iorder, bool* &F_false_C_true, integer idirect)
+void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, 
+	integer* &row_ptr_end, integer iadd, integer iorder, bool* &F_false_C_true, integer idirect)
 {
 	// iorder == 3 or 5. Трёхшаговый или пятишаговый методы Рунге - Кутты.
 
@@ -7183,7 +2221,7 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 
 			if (idirect == 1) {
 
-				// Восходящая ветвь : сначала F потом C.
+				// Восходящая ветвь: сначала F потом C.
 
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
@@ -7299,7 +2337,7 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 
 			}
 			else {
-				// Нисходящая ветвь : сначала C потом F.
+				// Нисходящая ветвь: сначала C потом F.
 
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
@@ -7436,7 +2474,7 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
+void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
 {
 	// F_false_C_true - нумерация начинается с 1.
 	// idirect==0 douwn
@@ -7774,7 +2812,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat[ii1].aij < 0.0)) {
@@ -7842,7 +2880,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat[ii1].aij < 0.0)) {
@@ -7916,7 +2954,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat[ii1].aij < 0.0)) {
@@ -7984,7 +3022,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat[ii1].aij < 0.0)) {
@@ -8234,7 +3272,7 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -8265,9 +3303,10 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 	integer startpos = istartq + iadd;
 	integer endpos = iendq + iadd;
 
-	integer inumcore_loc = 2;
+	const integer inumcore_loc = 2;
 
-	if (inumcore_loc == 1) {
+if (inumcore_loc == 1) 
+	{
 
 		for (integer ii = startpos; ii <= endpos; ii++) {
 			integer istr = ii - iadd;
@@ -8296,7 +3335,8 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 
 	}
 
-	if (inumcore_loc == 2) {
+if (inumcore_loc == 2)
+	{
 
 		// Здесь отсутствует информация о nested_desection
 		// поэтому куча времени тратится на барьерную синхронизацию.
@@ -8374,6 +3414,7 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 	}
 
 
+
 } // seidelqsor2Pcpu
 
 
@@ -8385,7 +3426,7 @@ bool* bnested_desection_global_amg = nullptr;
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -8416,9 +3457,10 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 	integer startpos = istartq + iadd;
 	integer endpos = iendq + iadd;
 
-	integer inumcore_loc = 1;
+	const integer inumcore_loc = 1;
 
-	if (inumcore_loc == 1) {
+if (inumcore_loc == 1) 
+	{
 
 		// Однопоточный вариант программы.
 		for (integer ii = startpos; ii <= endpos; ii++) {
@@ -8448,7 +3490,9 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 
 	}
 
-	if (inumcore_loc == 2) {
+
+if (inumcore_loc == 2)
+	{
 
 		integer middle = (integer)(0.5*(startpos + endpos));
 		doublerealT omega1 = omega;
@@ -8619,19 +3663,20 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 	}
 
 
+
 } // seidelqsor2Pcpu+nested desection
 
 
 bool bswitch_direct_seidelqsor3 = false;
 // smoother.
 // 14 января 2015 каждый раз осуществляется смена направления сканирования.
-// Работает только с ноой логикой : nFinestSweeps=2, nPreSweeps=0, nPostSweeps=2.
+// Работает только с ноой логикой: nFinestSweeps=2, nPreSweeps=0, nPostSweeps=2.
 // Смена направлений оказалась значительно хуже по быстродействию.
 // 5 января 2016 с использованием формулы из книги Патрика Роуча.
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor3(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor3(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -8723,13 +3768,13 @@ void seidelqsor3(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 
 // smoother.
 // 14 января 2015 каждый раз осуществляется смена направления сканирования.
-// Работает только с ноой логикой : nFinestSweeps=2, nPreSweeps=0, nPostSweeps=2.
+// Работает только с ноой логикой: nFinestSweeps=2, nPreSweeps=0, nPostSweeps=2.
 // Смена направлений оказалась значительно хуже по быстродействию.
 // 5 января 2016 с использованием формулы из книги Патрика Роуча.
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor3(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor3(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -8829,7 +3874,7 @@ void seidelqsor3(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 // Этот код (данная функция) больше не используется. Это одна из ранних
 // наивных попыток написать метод релаксации.
 template <typename doublerealT>
-void early_naive_relaxation_method2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void early_naive_relaxation_method2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -8859,7 +3904,7 @@ void early_naive_relaxation_method2(Ak* &Amat, integer istartq, integer iendq, d
 	diagonal = new doublerealT[(integer)(rn)+1];
 	if (diagonal == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for diagonal in classical_ilu2...\n");
+		printf("Problem: not enough memory on your equipment for diagonal in classical_ilu2...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -8957,7 +4002,7 @@ void early_naive_relaxation_method2(Ak* &Amat, integer istartq, integer iendq, d
 // Этот код (данная функция) больше не используется. Это одна из ранних
 // наивных попыток написать метод релаксации.
 template <typename doublerealT>
-void early_naive_relaxation_method2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void early_naive_relaxation_method2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -8987,7 +4032,7 @@ void early_naive_relaxation_method2(Ak1* &Amat, integer istartq, integer iendq, 
 	diagonal = new doublerealT[(integer)(rn)+1];
 	if (diagonal == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for diagonal in classical_ilu2...\n");
+		printf("Problem: not enough memory on your equipment for diagonal in classical_ilu2...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -9079,7 +4124,7 @@ void early_naive_relaxation_method2(Ak1* &Amat, integer istartq, integer iendq, 
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	
 	//seidelqstable(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -9087,7 +4132,7 @@ void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doubler
 	// SOR!!!
 	// 3 jan 2016
 	//seidelqsor(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
-	// лучший выбор :
+	// лучший выбор:
 	seidelqsor2(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
 	// 14 января 2016 смена направлений сканирования.
 	// оказалось значительно хуже.
@@ -9104,7 +4149,7 @@ void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doubler
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 
 	//seidelqstable<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -9140,7 +4185,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 
 // 13.09.2017.
 template <typename doublerealT>
-void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	integer n = iendq - istartq + 1;
 
@@ -9270,7 +4315,7 @@ void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x,
   // 9 september 2015 and 4 june 2017.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
+void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
 {	
 	if (my_amg_manager.b_gmres) {
 		// gmres smoother
@@ -9311,7 +4356,7 @@ void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, double
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	seidelqsor2Pcpu<doublerealT>(Amat, istartq, iendq, x, b, bnested_desection,  row_ptr_start, row_ptr_end, iadd);
 	//seidelqsor2Pcpu(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -9323,7 +4368,7 @@ void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, double
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
+void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
 {
 	// , bool* &F_false_C_true, integer idirect Заглушка, параметры не используются.
 	// Внимание обратная совместимость.
@@ -9340,7 +4385,7 @@ void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, double
   // q - quick.
   // Якоби расходится.
   template <typename doublerealT>
-  void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+  void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
   {
   // istart - начальная позиция ненулевых элементов в матрице А.
   // iend - конечная позиция ненулевых элементов в матрице А.
@@ -9436,7 +4481,7 @@ void residual(Ak1* &Amat, integer istart, integer iend, doublerealT* &x, doubler
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void residualq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT* &residual)
+void residualq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT* &residual)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9456,7 +4501,7 @@ void residualq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doubl
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void residualq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT* &residual)
+void residualq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT* &residual)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9477,7 +4522,7 @@ void residualq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doub
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void residualq2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT* &residual, doublerealT* &my_diag)
+void residualq2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT* &residual, doublerealT* &my_diag)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9497,7 +4542,7 @@ void residualq2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doub
 
 // Эквивалентный клон функции 13.01.2018
 template <typename doublerealT>
-void residualq2(Ak* &Amat, integer istartq, integer iendq, doublereal* &x, doublereal* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT* &residual, doublerealT* &my_diag)
+void residualq2(Ak* &Amat, integer istartq, integer iendq, doublereal* &x, doublereal* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT* &residual, doublerealT* &my_diag)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9520,7 +4565,7 @@ void residualq2(Ak* &Amat, integer istartq, integer iendq, doublereal* &x, doubl
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT1, typename doublerealT2>
-void residualq2(Ak1* &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
+void residualq2(Ak1* &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9558,7 +4603,7 @@ void residualq2(Ak1* &Amat, integer istartq, integer iendq, doublerealT1* &x, do
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT1, typename doublerealT2>
-void residualq2_analysys(Ak1* &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
+void residualq2_analysys(Ak1* &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
 {
 	// Анализ структуры невязки.
 	// Мы делим вектор невязки на 20 равных частей и смотрим где невязка наиболее велика.
@@ -9611,7 +4656,7 @@ void residualq2_analysys(Ak1* &Amat, integer istartq, integer iendq, doublerealT
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void residualqspeshial(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT* &residual)
+void residualqspeshial(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT* &residual)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9641,7 +4686,7 @@ void residualqspeshial(Ak* &Amat, integer istartq, integer iendq, doublerealT* &
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void residualqspeshial(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT* &residual)
+void residualqspeshial(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT* &residual)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -9672,7 +4717,7 @@ void residualqspeshial(Ak1* &Amat, integer istartq, integer iendq, doublerealT* 
   // 6 september 2015.
   // должна быть отсортирована по i, порядок по j неважен.
 template <typename doublerealT>
-void restriction(Ak* &R, integer istart, integer iend, bool* &flag, doublerealT * &x_fine, doublerealT * &x_coarse, integer n_fine, integer n_coarse) {
+void restriction(Ak* &R, integer istart, integer iend, bool* &flag, doublerealT* &x_fine, doublerealT* &x_coarse, integer n_fine, integer n_coarse) {
 	// x_coarse[1..n_coarse]=R n_coarse x n_fine*x_fine[1..n_fine];
 	for (integer i = 1; i <= n_coarse; i++) {
 		flag[i] = false;
@@ -9697,7 +4742,7 @@ void restriction(Ak* &R, integer istart, integer iend, bool* &flag, doublerealT 
 // 6 september 2015.
 // должна быть отсортирована по i, порядок по j неважен.
 template <typename doublerealT>
-void restriction(Ak1* &R, integer istart, integer iend, bool* &flag, doublerealT * &x_fine, doublerealT * &x_coarse, integer n_fine, integer n_coarse) {
+void restriction(Ak1* &R, integer istart, integer iend, bool* &flag, doublerealT* &x_fine, doublerealT* &x_coarse, integer n_fine, integer n_coarse) {
 	// x_coarse[1..n_coarse]=R n_coarse x n_fine*x_fine[1..n_fine];
 #pragma omp parallel for
 	for (integer i = 1; i <= n_coarse; i++) {
@@ -9726,7 +4771,7 @@ void restriction(Ak1* &R, integer istart, integer iend, bool* &flag, doublerealT
 // 10 february 2019 - нашел более компактную форму записи.
 // должна быть отсортирована по i, порядок по j неважен.
 template <typename doublerealT>
-void restriction(Ak1* &R, integer istart, integer iend,  doublerealT * &x_fine, doublerealT * &x_coarse,  integer n_coarse) {
+void restriction(Ak1* &R, integer istart, integer iend,  doublerealT* &x_fine, doublerealT* &x_coarse,  integer n_coarse) {
 	// x_coarse[1..n_coarse]=R n_coarse x n_fine*x_fine[1..n_fine];
 #pragma omp parallel for
 	for (integer i = 1; i <= n_coarse; i++) {
@@ -9745,7 +4790,7 @@ void restriction(Ak1* &R, integer istart, integer iend,  doublerealT * &x_fine, 
   // должна быть отсортирована по j, порядок по i неважен.
   // P=transpose(R).
 template <typename doublerealT>
-void prolongation(Ak* &P, integer istart, integer iend, bool* &flag, doublerealT * &x_fine, doublerealT * &x_coarse, integer n_fine, integer n_coarse) {
+void prolongation(Ak* &P, integer istart, integer iend, bool* &flag, doublerealT* &x_fine, doublerealT* &x_coarse, integer n_fine, integer n_coarse) {
 	// x_fine[1..n_fine]=P n_fine x n_coarse*x_coarse[1..n_coarse];
 	// P=c*transpose(R); Pij=c*Rji;
 	for (integer j = 1; j <= n_fine; j++) {
@@ -9773,7 +4818,7 @@ void prolongation(Ak* &P, integer istart, integer iend, bool* &flag, doublerealT
 // должна быть отсортирована по j, порядок по i неважен.
 // P=transpose(R).
 template <typename doublerealT>
-void prolongation(Ak1* &P, integer istart, integer iend, bool* &flag, doublerealT * &x_fine, doublerealT * &x_coarse, integer n_fine, integer n_coarse) {
+void prolongation(Ak1* &P, integer istart, integer iend, bool* &flag, doublerealT* &x_fine, doublerealT* &x_coarse, integer n_fine, integer n_coarse) {
 	// x_fine[1..n_fine]=P n_fine x n_coarse*x_coarse[1..n_coarse];
 	// P=c*transpose(R); Pij=c*Rji;
 #pragma omp parallel for
@@ -9803,7 +4848,7 @@ void prolongation(Ak1* &P, integer istart, integer iend, bool* &flag, doublereal
 // должна быть отсортирована по j, порядок по i неважен.
 // P=transpose(R).
 template <typename doublerealT>
-void prolongation(Ak1* &P, integer istart, integer iend, doublerealT * &x_fine, doublerealT * &x_coarse, integer n_fine) {
+void prolongation(Ak1* &P, integer istart, integer iend, doublerealT* &x_fine, doublerealT* &x_coarse, integer n_fine) {
 	// x_fine[1..n_fine]=P n_fine x n_coarse*x_coarse[1..n_coarse];
 	// P=c*transpose(R); Pij=c*Rji;
 #pragma omp parallel for
@@ -9819,7 +4864,7 @@ void prolongation(Ak1* &P, integer istart, integer iend, doublerealT * &x_fine, 
 
 // Evklid norma of vector r in size n.
 template <typename doublerealT>
-doublerealT norma(doublerealT * &r, integer n) {
+doublerealT norma(doublerealT* &r, integer n) {
 	doublerealT ret = 0.0;
 
 #pragma omp parallel for  /*schedule (guided)*/ reduction (+:ret)
@@ -10034,7 +5079,7 @@ integer BinarySearchAj(Ak1* &Amat, integer key, integer istart, integer iend)
 // 16 сентября 2015 года обнаружено что операции 
 // сгрубления и интерполяции сделаны совершенно неверно,
 // и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-// Операции сгрубления и интерполляции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
+// Операции сгрубления и интерполяции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
 // 3 september 2015 Villa Borgese.
 template <typename doublerealT>
 integer aggregative_amg(Ak* &Amat, integer nnz,
@@ -10075,11 +5120,11 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		}
 		else {
 			if (nnz_a[ilevel - 1] < 100000) {
-				HeapSort(Amat, /*n_a[ilevel - 1],*/ 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				HeapSort(Amat, /*n_a[ilevel - 1],*/ 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 			}
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
-				MergeSort(Aorig, nnz_a[ilevel - 1]);
+				MergeSort(Aorig, nnz_a[ilevel - 1], comparei);
 				Aorig = nullptr;
 			}
 		}
@@ -10111,24 +5156,24 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		// сделаем копию А упорядочим её по j 
 		for (integer k = 1 + iadd; k <= nnz_a[ilevel - 1] + iadd; k++) {
 			Amat[k + 2 * nnz_a[ilevel - 1]] = Amat[k]; // copy
-			Amat[k + 2 * nnz_a[ilevel - 1]].ind = k; // запомиаем номер до сортировки.
+			Amat[k + 2 * nnz_a[ilevel - 1]].ind = k; // запоминаем номер до сортировки.
 		}
 		// сортировка по j.
 		if (nnz_a[ilevel - 1] < 100000) {
-			HeapSort_j(Amat,/* n_a[ilevel - 1]*/ 1 + iadd + 2 * nnz_a[ilevel - 1], nnz_a[ilevel - 1] + iadd + 2 * nnz_a[ilevel - 1]);
+			HeapSort(Amat,/* n_a[ilevel - 1]*/ 1 + iadd + 2 * nnz_a[ilevel - 1], nnz_a[ilevel - 1] + iadd + 2 * nnz_a[ilevel - 1], comparej);
 		}
 		else {
 			Ak* Aorig = &Amat[1 + iadd + 2 * nnz_a[ilevel - 1]];
-			MergeSort_j(Aorig, nnz_a[ilevel - 1]);
+			MergeSort(Aorig, nnz_a[ilevel - 1], comparej);
 			Aorig = nullptr;
 		}
 
 
 		integer n_coarce = 1; // номер агрегата.
 		nnzR = 1;
-		const integer max_sosed = 27850;
-		const integer NULL_SOSED = -1;
-		integer vacant = NULL_SOSED;
+		const integer max_neighbour = 27850;
+		const integer NULL_NEIGHBOUR = -1;
+		integer vacant = NULL_NEIGHBOUR;
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
 				// Вычисляем по немодифиуцированной матрице А (хранящейся слева).
@@ -10136,10 +5181,10 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 				doublerealT sum = 0.0;
 				integer nnzRl = nnzR + iaddR;
 
-				integer set[max_sosed]; // не более 20 узлов в одном агрегате.
+				integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
 										// инициализация убрана потомучто она не нужна и она сильно тормозит быстродействие.
-										//for (integer js = 0; js < max_sosed; js++) {
-										//set[js] = NULL_SOSED;
+										//for (integer js = 0; js < max_neighbour; js++) {
+										//set[js] = NULL_NEIGHBOUR;
 										//}
 				integer ic = 0;
 				set[ic] = Amat[ii].i;
@@ -10172,10 +5217,10 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 						vacant = Amat[ii].j;
 						for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = NULL_NEIGHBOUR;
 							}
 						}
-						if (vacant != NULL_SOSED) {
+						if (vacant != NULL_NEIGHBOUR) {
 							set[ic] = vacant;
 							sum += fabs(Amat[ii].aij);
 							R[nnzRl].aij = fabs(Amat[ii].aij);
@@ -10194,10 +5239,10 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 							vacant = Amat[iscan].j;
 							for (integer js = 0; js < ic; js++) {
 								if (vacant == set[js]) {
-									vacant = NULL_SOSED;
+									vacant = NULL_NEIGHBOUR;
 								}
 							}
-							if (vacant != NULL_SOSED) {
+							if (vacant != NULL_NEIGHBOUR) {
 								set[ic] = vacant;
 								sum += fabs(Amat[iscan].aij);
 								R[nnzRl].aij = fabs(Amat[iscan].aij);
@@ -10316,7 +5361,7 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		} // агрегаты созданы.
 
 
-		  // отладочная печать в рабочей версии требуется закоментировать.
+		  // отладочная печать в рабочей версии требуется закомментировать.
 		  //for (integer ii = 1; ii <= n; ii++) {
 		  //flag_[ii] = false;
 		  //}
@@ -10351,15 +5396,15 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 
 		// heapsort(P,key==j,iaddR+1,iaddR+nnzR - 1);
 		if (bquicktypesort) {
-			QuickSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+			QuickSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 		else {
-			HeapSort_j(P, /*n_a[ilevel-1]*/ 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(P, /*n_a[ilevel-1]*/ 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 
 		// оператор интерполяции это не просто транспонированный оператор проекции а
 		// а транспонированный оператор проекции умноженный на константу. Константа 
-		// определяется из следующего соображения : если сумма элементов оператора рестрикции в стоке единица,
+		// определяется из следующего соображения: если сумма элементов оператора рестрикции в стоке единица,
 		// то соответственно в столбце у оператора интерполяции максимальный элемент равен единица.
 		// этот код обязательно должен быть включён чтобы пара рестрикция-интерполяция была верна.
 
@@ -10423,15 +5468,15 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		// в позиции ind сохранён индекс предыдущей позиции.
 		//heapsort(Amat, key = i*(n_coarce - 1) + j, nnz + 1, 2 * nnz);
 		if (bquicktypesort) {
-			QuickSort(Amat, /*n_coarce - 1,*/ nnz_a[ilevel - 1] + 1 + iadd, 2 * nnz_a[ilevel - 1] + iadd);
+			QuickSort(Amat, /*n_coarce - 1,*/ nnz_a[ilevel - 1] + 1 + iadd, 2 * nnz_a[ilevel - 1] + iadd, comparei);
 		}
 		else {
 			if (nnz_a[ilevel - 1] < 100000) {
-				HeapSort(Amat, /*n_coarce - 1,*/ nnz_a[ilevel - 1] + 1 + iadd, 2 * nnz_a[ilevel - 1] + iadd);
+				HeapSort(Amat, /*n_coarce - 1,*/ nnz_a[ilevel - 1] + 1 + iadd, 2 * nnz_a[ilevel - 1] + iadd, comparei);
 			}
 			else {
 				Ak* Aorig = &Amat[nnz_a[ilevel - 1] + 1 + iadd];
-				MergeSort(Aorig, nnz_a[ilevel - 1]);
+				MergeSort(Aorig, nnz_a[ilevel - 1], comparei);
 				Aorig = nullptr;
 			}
 		}
@@ -10453,9 +5498,9 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		// запас памяти 1 nnz на fine уровне.
 		for (integer ii = 2 * nnz_a[ilevel - 1] + 1 + iadd; ii <= 3 * nnz_a[ilevel - 1] + iadd; ii++) {
 			Amat[ii].aij = 0.0;
-			Amat[ii].ind = NULL_SOSED;
-			Amat[ii].i = NULL_SOSED;
-			Amat[ii].j = NULL_SOSED;
+			Amat[ii].ind = NULL_NEIGHBOUR;
+			Amat[ii].i = NULL_NEIGHBOUR;
+			Amat[ii].j = NULL_NEIGHBOUR;
 		}
 
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) flag[ii] = false;
@@ -10497,12 +5542,12 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		iadd += 2 * nnz_a[ilevel - 1];
 
 #if doubleintprecision == 1
-		printf("nnz : fine=%lld, coarse=%lld, operator complexity=%e. \n", nnz_a[ilevel - 1], nnz_a[ilevel], (doublerealT)(nnz_a[ilevel]) / (doublerealT)(nnz_a[ilevel - 1]));
-		printf("n : fine=%lld, coarse=%lld grid complexity=%e.\n", n_a[ilevel - 1], n_a[ilevel], (doublerealT)(n_a[ilevel]) / (doublerealT)(n_a[ilevel - 1]));
+		printf("nnz: fine=%lld, coarse=%lld, operator complexity=%e. \n", nnz_a[ilevel - 1], nnz_a[ilevel], (doublerealT)(nnz_a[ilevel]) / (doublerealT)(nnz_a[ilevel - 1]));
+		printf("n: fine=%lld, coarse=%lld grid complexity=%e.\n", n_a[ilevel - 1], n_a[ilevel], (doublerealT)(n_a[ilevel]) / (doublerealT)(n_a[ilevel - 1]));
 		printf("nnz_aRP = %lld\n", nnz_aRP[ilevel - 1]);
 #else
-		printf("nnz : fine=%d, coarse=%d, operator complexity=%e. \n", nnz_a[ilevel - 1], nnz_a[ilevel], (doublerealT)(nnz_a[ilevel]) / (doublerealT)(nnz_a[ilevel - 1]));
-		printf("n : fine=%d, coarse=%d grid complexity=%e.\n", n_a[ilevel - 1], n_a[ilevel], (doublerealT)(n_a[ilevel]) / (doublerealT)(n_a[ilevel - 1]));
+		printf("nnz: fine=%d, coarse=%d, operator complexity=%e. \n", nnz_a[ilevel - 1], nnz_a[ilevel], (doublerealT)(nnz_a[ilevel]) / (doublerealT)(nnz_a[ilevel - 1]));
+		printf("n: fine=%d, coarse=%d grid complexity=%e.\n", n_a[ilevel - 1], n_a[ilevel], (doublerealT)(n_a[ilevel]) / (doublerealT)(n_a[ilevel - 1]));
 		printf("nnz_aRP = %d\n", nnz_aRP[ilevel - 1]);
 #endif
 
@@ -10965,7 +6010,7 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 	// 9 september 2015.
 	// q - quick.
 	// seidelq(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0);
-	//void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+	//void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 	//{
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -12396,27 +7441,27 @@ integer i_my_min(integer ia, integer ib) {
 }
 
 // 13 декабря 2015. Внедрено АВЛ дерево. При внедрении АВЛ дерева исправлена логическая ошибка в
-// построении С-F разбиения, теперь C-F разбиение строится корректно.
+// построении С/F разбиения, теперь C/F разбиение строится корректно.
 // Исправлен и внедрён quicksort (qs,qsj)
-// который в рять раз быстрее пирамидальной сортировки.
+// который в пять раз быстрее пирамидальной сортировки.
 // Полный отказ от band_size!!!.
 // Время работы алгоритма на 1.7М неизвестных в 3D составило ровно 1 минуту.
 // 18 октября 2015. Полностью работоспособный мультигрид.
 // Тестировалось на условиях Дирихле но должно работать на любых 
 // краевых задачах. 18 октября датируется версия 0.04. Версия 0.04 на треть
-// быстрее версии 0_03. Были ускорены как операции построения C-F разбиения, 
-// так и нахождение оператора Галёркина. При нахождении С-F разбиения 
-// учитывается уже построеннная его часть и поэтому число сканирований на
+// быстрее версии 0_03. Были ускорены как операции построения C/F разбиения, 
+// так и нахождение оператора Галёркина. При нахождении С/F разбиения 
+// учитывается уже построенная его часть и поэтому число сканирований на
 // на поздних циклах сокращается охватывая только не построенную часть.
-// При нахождении произведеия Галёркина получена самая оптимальная по быстродествию версия,
+// При нахождении произведения Галёркина получена самая оптимальная по быстродействию версия,
 // Основанная на алгоритме слияния отсортированных списков.
 // 4 октября правильное построение последовательности вложенных графов.
 // 30 сентября продолжаем исправление метода. Делаем классический 
-// алгебраический многосеточный метод на основе  C-F разбиения.
+// алгебраический многосеточный метод на основе  C/F разбиения.
 // 16 сентября 2015 года обнаружено что операции 
 // сгрубления и интерполяции сделаны совершенно неверно,
 // и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-// Операции сгрубления и интерполляции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
+// Операции сгрубления и интерполяции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
 // 3 september 2015 Villa Borgese.
 template <typename doublerealT>
 integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
@@ -12441,7 +7486,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 	bool bqs = true; // Использовать ли quicksort qs and qsj.
 					 // Сортировка с подсчётом быстрее quickSort.
-	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая жрёт килотонну памяти (Короче для машин у которых море оперативки).
+	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая потребляет килотонну памяти (Короче для машин у которых море оперативки).
 	bool blite_and_quick_version = false;
 	// false даёт более качественное построение иерархии матриц, 
 	// с ним количество итераций сокращается.
@@ -12453,13 +7498,13 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 	// включение/отключение отладочного режима.
 	bool debug_reshime = false;
 
-	const integer max_sosed = 27850;
+	const integer max_neighbour = 27850;
 	// Мы будем поддерживать информацию о максимальном количестве соседей.
-	integer Maximumsosedcount = -1;
+	integer Maximumneighbourcount = -1;
 	// мы получим порядковый номер элемента с максимальным число соседей в матрице А,
-	// прямо в результате построения C-F разбиения.
+	// прямо в результате построения C/F разбиения.
 	integer icandidate_shadow = -1;
-	bool bmaxsosedinfoactive = false;
+	bool bmaxneighbourinfoactive = false;
 
 	// количество рекурсивных вызовов ограничено, поэтому QuickSort не подходит.
 	bool bquicktypesort = false;
@@ -12489,13 +7534,13 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 	// храним соседей новых F узлов
 	const integer imaxpoolsize = 2000;
-	integer pool_sosed[imaxpoolsize];
+	integer pool_neighbour[imaxpoolsize];
 	integer imax_pool_ind;
 
 	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue)) {
 
-		Maximumsosedcount = -1;
-		bmaxsosedinfoactive = false;
+		Maximumneighbourcount = -1;
+		bmaxneighbourinfoactive = false;
 
 		//if (ilevel > 1) {
 		//if (n_a[ilevel - 2] == n_a[ilevel - 1]) break;
@@ -12616,30 +7661,30 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		}
 
 		// сортировка исходной  А  по i.
-		//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
+		//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1], comparei);
 		if (bquicktypesort) {
-			QuickSort(Amat, /*n_a[ilevel - 1],*/ 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			QuickSort(Amat, /*n_a[ilevel - 1],*/ 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 		}
 		else {
 			if (nnz_a[ilevel - 1] < heapsortsizelimit) {
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 					else {
 						// quicksort
-						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 				}
 				else {
-					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 				}
-				//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 
 			}
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
-				MergeSort(Aorig, nnz_a[ilevel - 1]);
+				MergeSort(Aorig, nnz_a[ilevel - 1], comparei);
 				Aorig = nullptr;
 			}
 		}
@@ -12698,15 +7743,15 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		if (bqs) {
 			if (bCounting_Sort) {
 				// Сортировка с подсчётом за линейное время.
-				Counting_Sortj(Atemp, 1, nnz_a[ilevel - 1]);
+				Counting_Sort(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 			}
 			else {
 				// Быстрая сортировка Чарльза Хоара.
-				qsj(Atemp, 1, nnz_a[ilevel - 1]);
+				qs(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 			}
 		}
 		else {
-			HeapSort_j(Atemp, 1, nnz_a[ilevel - 1]);
+			HeapSort(Atemp, 1, nnz_a[ilevel - 1], comparej);
 		}
 
 		// Экономично вычисляет полуширину ленты матрицы.
@@ -12814,9 +7859,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = new integer[n_a[ilevel - 1] + 1];
+		integer* count_neighbour = new integer[n_a[ilevel - 1] + 1];
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
-			count_sosed[ii] = 0; // нет соседей.
+			count_neighbour[ii] = 0; // нет соседей.
 		}
 
 		if (blite_and_quick_version)
@@ -12829,11 +7874,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 						ic++; //i,j
 					}
-					count_sosed[Amat[ii].i] = ic;
-					if (ic > Maximumsosedcount) {
-						Maximumsosedcount = ic;
+					count_neighbour[Amat[ii].i] = ic;
+					if (ic > Maximumneighbourcount) {
+						Maximumneighbourcount = ic;
 						icandidate_shadow = ii;
-						bmaxsosedinfoactive = true;
+						bmaxneighbourinfoactive = true;
 					}
 					flag[Amat[ii].i] = true;
 				}
@@ -12848,25 +7893,25 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 				if (flag[Amat[ii].i] == false) {
 					integer ic = -1;
-					integer cand[max_sosed];
+					integer cand[max_neighbour];
 					for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 						ic++; //i,j
 						cand[ic] = Amat[is0].j;
 					}
-					integer len_sosed = ic;
+					integer len_neighbour = ic;
 					// Найти столбец j который равен индексу Amat[ii].i
 					//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 					//if (Amat[ii1].i != Amat[ii].i) {
 					//	if (Amat[ii1].j == Amat[ii].i) {
 					// j,i
-					//		bool foundsosed = false;
-					//		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-					//			if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+					//		bool foundneighbour = false;
+					//		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+					//			if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 					//		}
-					//		if (!foundsosed) {
+					//		if (!foundneighbour) {
 					//			ic++;
 					//			cand[ic] = Amat[ii1].j;
-					//			len_sosed++;
+					//			len_neighbour++;
 					//		}
 					//	}
 					//}
@@ -12876,24 +7921,24 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					for (integer ii1 = ii2; (ii1 <= nnz_a[ilevel - 1]) && (Atemp[ii1].j == Amat[ii].i); ii1++) {
 						if (Atemp[ii1].i != Amat[ii].i) {
 							// j,i
-							bool foundsosed = false;
-							for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-								if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+							bool foundneighbour = false;
+							for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+								if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 							}
-							if (!foundsosed) {
+							if (!foundneighbour) {
 								ic++;
 								cand[ic] = Atemp[ii1].j;
-								len_sosed++;
+								len_neighbour++;
 							}
 						}
 					}
 
 
-					count_sosed[Amat[ii].i] = ic;
-					if (ic > Maximumsosedcount) {
-						Maximumsosedcount = ic;
+					count_neighbour[Amat[ii].i] = ic;
+					if (ic > Maximumneighbourcount) {
+						Maximumneighbourcount = ic;
 						icandidate_shadow = ii;
-						bmaxsosedinfoactive = true;
+						bmaxneighbourinfoactive = true;
 					}
 					flag[Amat[ii].i] = true;
 				}
@@ -12901,7 +7946,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		}
 
 
-		integer maxsosed = 0;
+		integer maxneighbour = 0;
 		integer icandidate = 0;
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
 			flag[ii] = false; // init flag
@@ -12910,13 +7955,13 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		// Это первый встретившийся узел с наибольшим числом соседей.
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
-				if (count_sosed[Amat[ii].i] > maxsosed) {
-					maxsosed = count_sosed[Amat[ii].i];
+				if (count_neighbour[Amat[ii].i] > maxneighbour) {
+					maxneighbour = count_neighbour[Amat[ii].i];
 					icandidate = ii;
-					if (bmaxsosedinfoactive) {
+					if (bmaxneighbourinfoactive) {
 						// организуем досрочный выход из цикла for.
 						// Это должно сильно сокращать количество сканирований.
-						if (maxsosed == Maximumsosedcount) break;
+						if (maxneighbour == Maximumneighbourcount) break;
 					}
 				}
 				flag[Amat[ii].i] = true;
@@ -12934,11 +7979,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		integer n_coarce = 1; // начальный номер C узла.
 		nnzR = 1;
 
-		const integer NULL_SOSED = -1;
-		integer vacant = NULL_SOSED;
+		const integer NULL_NEIGHBOUR = -1;
+		integer vacant = NULL_NEIGHBOUR;
 		bool bcontinue = true;
 
-		// Построение C-F разбиения.
+		// Построение C/F разбиения.
 		//while (icandidate != 0)
 		integer icountprohod = 0;
 		// Мы будем заоминать с какой позиции начинаются ещё не помеченные узлы,
@@ -12970,8 +8015,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		// здесь хранится индекс начала сканирования flag.
 		integer istartflag_scan = 1;
 
-		//if (bmaxsosedinfoactive == true) {
-		//printf("bmaxsosedinfoactive==true\n");
+		//if (bmaxneighbourinfoactive == true) {
+		//printf("bmaxneighbourinfoactive==true\n");
 		//getchar();
 		//}
 		List* plist = nullptr;
@@ -13000,10 +8045,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			
 
 
-			integer set[max_sosed]; // не более 20 узлов в одном агрегате.
+			integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
 									// инициализация убрана потому что она не нужна и она сильно тормозит быстродействие.
-									//for (integer js = 0; js < max_sosed; js++) {
-									//set[js] = NULL_SOSED;
+									//for (integer js = 0; js < max_neighbour; js++) {
+									//set[js] = NULL_NEIGHBOUR;
 									//}
 			integer ic = 0;
 
@@ -13024,7 +8069,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											 // учётом того что даже узел Дирихле связан с одним внутренним узлом расчётной области.
 				this_is_C_node[set[0]] = true;
 				bmarkervisit[set[0]] = true;
-				pool_sosed[0] = ii;
+				pool_neighbour[0] = ii;
 				for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == set[0]); is0++) {
 					if (Amat[is0].j == set[0]) {
 
@@ -13078,13 +8123,13 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				if (flag[Amat[ii].j] == false) {
 					if ((Amat[ii].j != set[0]) && (fabs(Amat[ii].aij) >= theta*max_vnediagonal)) {
 						vacant = Amat[ii].j;
-						pool_sosed[imax_pool_ind] = ii;
+						pool_neighbour[imax_pool_ind] = ii;
 						for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = NULL_NEIGHBOUR;
 							}
 						}
-						if (vacant != NULL_SOSED) {
+						if (vacant != NULL_NEIGHBOUR) {
 							set[ic] = vacant;
 							imax_pool_ind++;
 							if (imax_pool_ind > imaxpoolsize) {
@@ -13103,13 +8148,13 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					if (flag[Amat[iscan].j] == false) {
 						if ((Amat[iscan].j != set[0]) && (fabs(Amat[iscan].aij) >= theta*max_vnediagonal)) {
 							vacant = Amat[iscan].j;
-							pool_sosed[imax_pool_ind] = iscan;
+							pool_neighbour[imax_pool_ind] = iscan;
 							for (integer js = 0; js < ic; js++) {
 								if (vacant == set[js]) {
-									vacant = NULL_SOSED;
+									vacant = NULL_NEIGHBOUR;
 								}
 							}
-							if (vacant != NULL_SOSED) {
+							if (vacant != NULL_NEIGHBOUR) {
 								set[ic] = vacant;
 								imax_pool_ind++;
 								if (imax_pool_ind > imaxpoolsize) {
@@ -13140,10 +8185,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					//	vacant = Amat[ii1].i;
 					//	for (integer js = 0; js < ic; js++) {
 					//		if (vacant == set[js]) {
-					//			vacant = NULL_SOSED;
+					//			vacant = NULL_NEIGHBOUR;
 					//		}
 					//	}
-					//	if (vacant != NULL_SOSED) {
+					//	if (vacant != NULL_NEIGHBOUR) {
 					//		set[ic] = vacant; // j,i связь.
 
 					//		nnzRl++;
@@ -13163,10 +8208,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					//	vacant = Amat[ii1].i;
 					//	for (integer js = 0; js < ic; js++) {
 					//		if (vacant == set[js]) {
-					//			vacant = NULL_SOSED;
+					//			vacant = NULL_NEIGHBOUR;
 					//		}
 					//	}
-					//	if (vacant != NULL_SOSED) {
+					//	if (vacant != NULL_NEIGHBOUR) {
 					//		set[ic] = vacant; // j,i связь.
 
 					//		nnzRl++;
@@ -13184,13 +8229,13 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 						if ((Atemp[ii2].i != set[0]) && (!flag[Atemp[ii2].i])) {
 							if (fabs(Atemp[ii2].aij) >= theta*max_vnediagonal) {
 								vacant = Atemp[ii2].i;
-								pool_sosed[imax_pool_ind] = Atemp[ii2].ind; // Позиция в А.
+								pool_neighbour[imax_pool_ind] = Atemp[ii2].ind; // Позиция в А.
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant; // j,i связь.
 									imax_pool_ind++;
 									if (imax_pool_ind > imaxpoolsize) {
@@ -13236,11 +8281,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				}
 				}
 				}
-				count_sosed[isc] += ic2;
+				count_neighbour[isc] += ic2;
 				//	}
 				//}
 				// если среди них окажется из set[1..ic-1]
-				// значит увеличиваем счётчик count_sosed[isc] на единицу.
+				// значит увеличиваем счётчик count_neighbour[isc] на единицу.
 				}
 				}
 				*/
@@ -13270,11 +8315,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									}
 								}
 							}
-							count_sosed[isc] += ic2;
-							if (bmaxsosedinfoactive) {
+							count_neighbour[isc] += ic2;
+							if (bmaxneighbourinfoactive) {
 								// Обновляем информацию о максимальном количестве соседей.
-								if (count_sosed[isc] >= Maximumsosedcount) {
-									Maximumsosedcount = count_sosed[isc];
+								if (count_neighbour[isc] >= Maximumneighbourcount) {
+									Maximumneighbourcount = count_neighbour[isc];
 									icandidate_shadow = ii1;
 
 									if (plist == nullptr) {
@@ -13282,7 +8327,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 										plist->next = nullptr;
 										plist->prev = nullptr;
 										plist->ii = ii1;
-										plist->countsosed = count_sosed[isc];
+										plist->count_neighbour = count_neighbour[isc];
 										plist->i = isc;
 										plist_current = plist;
 									}
@@ -13290,7 +8335,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 										List *ptemp = new List;
 										ptemp->ii = ii1;
 										ptemp->i = isc;
-										ptemp->countsosed = count_sosed[isc];
+										ptemp->count_neighbour = count_neighbour[isc];
 										ptemp->next = nullptr;
 										ptemp->prev = plist_current;
 										plist_current->next = ptemp;
@@ -13306,7 +8351,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				else {
 
 					// Здесь в полной мере используется гипотеза локальности.
-					// Она состоит в следующем : узел с порядковым номером в матрице ii 
+					// Она состоит в следующем: узел с порядковым номером в матрице ii 
 					// имеет соседей лишь в окрестности +- band_size.
 
 
@@ -13353,11 +8398,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 										}
 									}
 								}
-								count_sosed[isc] += ic2;
-								if (bmaxsosedinfoactive) {
+								count_neighbour[isc] += ic2;
+								if (bmaxneighbourinfoactive) {
 									// Обновляем информацию о максимальном количестве соседей.
-									if (count_sosed[isc] >= Maximumsosedcount) {
-										Maximumsosedcount = count_sosed[isc];
+									if (count_neighbour[isc] >= Maximumneighbourcount) {
+										Maximumneighbourcount = count_neighbour[isc];
 										icandidate_shadow = ii1;
 
 										if (plist == nullptr) {
@@ -13365,7 +8410,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											plist->next = nullptr;
 											plist->prev = nullptr;
 											plist->ii = ii1;
-											plist->countsosed = count_sosed[isc];
+											plist->count_neighbour = count_neighbour[isc];
 											plist->i = isc;
 											plist_current = plist;
 										}
@@ -13373,7 +8418,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											List *ptemp = new List;
 											ptemp->ii = ii1;
 											ptemp->i = isc;
-											ptemp->countsosed = count_sosed[isc];
+											ptemp->count_neighbour = count_neighbour[isc];
 											ptemp->next = nullptr;
 											ptemp->prev = plist_current;
 											plist_current->next = ptemp;
@@ -13397,8 +8442,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									flag_shadow[i_1] = flag[i_1];
 								}
 
-								integer istart = i_my_max(1 + iadd, pool_sosed[js] - band_size - 1);
-								integer iend = i_my_min(nnz_a[ilevel - 1] + iadd, pool_sosed[js] + band_size + 1);
+								integer istart = i_my_max(1 + iadd, pool_neighbour[js] - band_size - 1);
+								integer iend = i_my_min(nnz_a[ilevel - 1] + iadd, pool_neighbour[js] + band_size + 1);
 								// Ищем только среди ближайшего окружения вновь добавленного F узла.
 								for (integer ii_2 = istart; ii_2 <= iend; ii_2++) {
 									integer isc = Amat[ii_2].i;
@@ -13415,11 +8460,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											}
 										}
 
-										count_sosed[isc] += ic2;
-										if (bmaxsosedinfoactive) {
+										count_neighbour[isc] += ic2;
+										if (bmaxneighbourinfoactive) {
 											// Обновляем информацию о максимальном количестве соседей.
-											if (count_sosed[isc] >= Maximumsosedcount) {
-												Maximumsosedcount = count_sosed[isc];
+											if (count_neighbour[isc] >= Maximumneighbourcount) {
+												Maximumneighbourcount = count_neighbour[isc];
 												icandidate_shadow = ii_2;
 
 												if (plist == nullptr) {
@@ -13427,7 +8472,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 													plist->next = nullptr;
 													plist->prev = nullptr;
 													plist->ii = ii_2;
-													plist->countsosed = count_sosed[isc];
+													plist->count_neighbour = count_neighbour[isc];
 													plist->i = isc;
 													plist_current = plist;
 												}
@@ -13435,7 +8480,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 													List *ptemp = new List;
 													ptemp->ii = ii_2;
 													ptemp->i = isc;
-													ptemp->countsosed = count_sosed[isc];
+													ptemp->count_neighbour = count_neighbour[isc];
 													ptemp->next = nullptr;
 													ptemp->prev = plist_current;
 													plist_current->next = ptemp;
@@ -13464,8 +8509,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							//flag_shadow[i_1] = flag[i_1];
 							//}
 
-							//integer istart = i_my_max(1 + iadd, pool_sosed[js] - band_size - 1);
-							//integer iend = i_my_min(nnz_a[ilevel - 1] + iadd, pool_sosed[js] + band_size + 1);
+							//integer istart = i_my_max(1 + iadd, pool_neighbour[js] - band_size - 1);
+							//integer iend = i_my_min(nnz_a[ilevel - 1] + iadd, pool_neighbour[js] + band_size + 1);
 
 							//integer i3 = 1;
 							//while ((i3 <= n_a[ilevel - 1]) && (row_startA[i3] < istart)) i3++;
@@ -13497,11 +8542,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							}
 							}
 
-							count_sosed[isc] += ic2;
-							if (bmaxsosedinfoactive) {
+							count_neighbour[isc] += ic2;
+							if (bmaxneighbourinfoactive) {
 							// Обновляем информацию о максимальном количестве соседей.
-							if (count_sosed[isc] >= Maximumsosedcount) {
-							Maximumsosedcount = count_sosed[isc];
+							if (count_neighbour[isc] >= Maximumneighbourcount) {
+							Maximumneighbourcount = count_neighbour[isc];
 							icandidate_shadow = ii_2;
 
 							if (plist == nullptr) {
@@ -13509,7 +8554,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							plist->next = nullptr;
 							plist->prev = nullptr;
 							plist->ii = ii_2;
-							plist->countsosed = count_sosed[isc];
+							plist->count_neighbour = count_neighbour[isc];
 							plist->i = isc;
 							plist_current = plist;
 							}
@@ -13517,7 +8562,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							List *ptemp = new List;
 							ptemp->ii = ii_2;
 							ptemp->i = isc;
-							ptemp->countsosed = count_sosed[isc];
+							ptemp->count_neighbour = count_neighbour[isc];
 							ptemp->next = nullptr;
 							ptemp->prev = plist_current;
 							plist_current->next = ptemp;
@@ -13551,7 +8596,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 								for (integer js = 0; js < ic; js++) {
 									data_BalTree ddel;
 									ddel.i = set[js];
-									ddel.countsosed = count_sosed[set[js]];
+									ddel.count_neighbour = count_neighbour[set[js]];
 									//ddel.ii = row_startA[ddel.i];
 									root = remove_AVL(root, ddel);
 									if (bAVL_deb)
@@ -13566,8 +8611,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 								//flag_shadow[i_1] = flag[i_1];
 								//}
 
-								//integer istart = i_my_max(1 + iadd, pool_sosed[js] - band_size - 1);
-								//integer iend = i_my_min(nnz_a[ilevel - 1] + iadd, pool_sosed[js] + band_size + 1);
+								//integer istart = i_my_max(1 + iadd, pool_neighbour[js] - band_size - 1);
+								//integer iend = i_my_min(nnz_a[ilevel - 1] + iadd, pool_neighbour[js] + band_size + 1);
 
 								//integer i3 = 1;
 								//while ((i3 <= n_a[ilevel - 1]) && (row_startA[i3] < istart)) i3++;
@@ -13601,7 +8646,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											lsos->next = nullptr;
 											lsos->i = Amat[is0].j;
 											lsos->ii = row_startA[lsos->i];
-											// lsos->countsosed // не используется.
+											// lsos->count_neighbour // не используется.
 											List *newnodesos = new List;
 											newnodesos->prev = lsos;
 											lsos->next = newnodesos;
@@ -13659,18 +8704,18 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 											icandidate_shadow = ii_2;
 										}
 
@@ -13694,7 +8739,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											// 12 декабря 2015.
 											// Добавление узла происходит за логарифмическое по основанию 2 время,
 											// причём после добавления дерево остаётся сбалансированным.
-											// Адельсон-Вельский и Ландис 1962.
+											// Г.М. Адельсон-Вельский и Е.М. Ландис 1962.
 											root = insert_and_modify(root, dadd, dsearch);
 											if (bAVL_deb)
 											{
@@ -13709,7 +8754,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 												plist->next = nullptr;
 												plist->prev = nullptr;
 												plist->ii = ii_2;
-												plist->countsosed = count_sosed[isc];
+												plist->count_neighbour = count_neighbour[isc];
 												plist->i = isc;
 												plist_current = plist;
 											}
@@ -13717,7 +8762,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 												List *ptemp = new List;
 												ptemp->ii = ii_2;
 												ptemp->i = isc;
-												ptemp->countsosed = count_sosed[isc];
+												ptemp->count_neighbour = count_neighbour[isc];
 												ptemp->next = nullptr;
 												ptemp->prev = plist_current;
 												plist_current->next = ptemp;
@@ -13771,7 +8816,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					bcontinue = true;
 					istartflag_scan = i_1; // сокращаем пределы сканирования.
 					break; // досрочный выход из цикла for.
-						   //if (maxsosed == -1) {
+						   //if (maxneighbour == -1) {
 #if doubleintprecision == 1
 						   //printf("ERROR!!!!  i_1=%lld\n", i_1);
 #else
@@ -13784,7 +8829,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			}
 
 			// Вычисление узла с максимальным количеством соседей.
-			maxsosed = -1;
+			maxneighbour = -1;
 			icandidate = 0;
 
 
@@ -13794,7 +8839,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			integer ipool[ipool_size_limit];
 			integer isize_p = -1;
 			for (integer isc = 0; isc < ic; isc++) {
-				//integer ii_s = pool_sosed[isc];// позиция в А.
+				//integer ii_s = pool_neighbour[isc];// позиция в А.
 				integer ii_s = BinarySearchAi(Amat, set[isc], 1 + iadd, iadd + nnz_a[ilevel - 1]);
 				integer ii_c = ii_s;
 				//while ((ii_c >= 1 + iadd) && (Amat[ii_c].i == Amat[ii_s].i)) ii_c--;
@@ -13811,9 +8856,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 						}
 						else {
 #if doubleintprecision == 1
-							printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+							printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 #else
-							printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+							printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 #endif
 							
 							system("pause");
@@ -13828,9 +8873,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 						}
 						else {
 #if doubleintprecision == 1
-							printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+							printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 #else
-							printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+							printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 #endif
 							
 							system("pause");
@@ -13842,7 +8887,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			}
 			// ipool хранит кандидатов для добавления в Atemp2.
 			for (integer i_7 = 0; i_7 <= isize_p; i_7++) {
-				// Позиции элементов в А остаются на месте, поэтому коллизий быть недолжно.
+				// Позиции элементов в А остаются на месте, поэтому коллизий быть не должно.
 
 				Ak temp = Atemp2[ibegining_start_index_found_maximum - iadd + i_7];
 				Atemp2[ibegining_start_index_found_maximum - iadd + i_7] = Amat[ipool[i_7]];
@@ -13860,7 +8905,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					printf("found max");
 				}
 				// Данный код чрезвычайно компактен.
-				bmaxsosedinfoactive = true;
+				bmaxneighbourinfoactive = true;
 				// Надо найти максимальный элемент в АВЛ дереве.
 				node_AVL* emax = 0;
 				emax = findmax(root);
@@ -13884,7 +8929,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				else {
 					root = 0;
 					icandidate = 0;
-					maxsosed = -1;
+					maxneighbour = -1;
 					bcontinue = false;
 
 				}
@@ -13897,7 +8942,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				// быстродействия.
 
 				// Мы будем делать досрочный выход из цикла for 19 раз из 20,
-				// и лишь один раз апдейтить информацию о максимальном количестве соседей.
+				// и лишь один раз обновлять информацию о максимальном количестве соседей.
 				// Данная модификация придумана 17 октября 2015 года.
 				// Эта эвристика обеспечила ускорение на 8% от суммарного времени исполнения 
 				// всего алгоритма.
@@ -13954,10 +8999,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					*/
 
 
-					if ((flag[Amat[icandidate_shadow].i] == false) && (count_sosed[Amat[icandidate_shadow].i] == Maximumsosedcount)) {
+					if ((flag[Amat[icandidate_shadow].i] == false) && (count_neighbour[Amat[icandidate_shadow].i] == Maximumneighbourcount)) {
 						// Дело в том что мы уже нашли узел с наибольшим числом соседей прямо в ходе
 						// модификации счётчиков соседей новых F узлов.
-						// просто сразу это было неочевидно поэтому мы организовали поиски.
+						// просто сразу это было не очевидно, поэтому мы организовали поиски.
 						icandidate = icandidate_shadow;
 						istat_new++;
 					}
@@ -13976,8 +9021,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 
 							if (flag_shadow[Atemp2[i_1].i] == false) {
-								if (count_sosed[Atemp2[i_1].i] > maxsosed) {
-									maxsosed = count_sosed[Atemp2[i_1].i];
+								if (count_neighbour[Atemp2[i_1].i] > maxneighbour) {
+									maxneighbour = count_neighbour[Atemp2[i_1].i];
 									//icandidate = i_1;
 									icandidate = Atemp2[i_1].ind;
 								}
@@ -13985,15 +9030,15 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							}
 						}
 
-						Maximumsosedcount = maxsosed;
-						bmaxsosedinfoactive = true;
+						Maximumneighbourcount = maxneighbour;
+						bmaxneighbourinfoactive = true;
 					}
 
 				}
 				else {
 
 					if ((flag[Amat[icandidate_shadow].i] == false) &&
-						(count_sosed[Amat[icandidate_shadow].i] == Maximumsosedcount)) {
+						(count_neighbour[Amat[icandidate_shadow].i] == Maximumneighbourcount)) {
 						// Дело в том что мы уже нашли узел с наибольшим числом соседей прямо в ходе
 						// модификации счётчиков соседей новых F узлов.
 						// просто сразу это было неочевидно поэтому мы организовали поиски.
@@ -14015,7 +9060,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							// Сканируем короткий пулл кандидатов
 							//while (plist_current != nullptr) {
 							while ((plist_current != nullptr) && (!(((flag[Amat[plist_current->ii].i] == false) &&
-								(count_sosed[Amat[plist_current->ii].i] == Maximumsosedcount))))) {
+								(count_neighbour[Amat[plist_current->ii].i] == Maximumneighbourcount))))) {
 								// первый элемент удалён и на него ссылаться нельзя.
 
 								//while (plist_current != nullptr) {
@@ -14089,8 +9134,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							integer candidatestart = -1;
 							if (pscan != nullptr) {
 								while (pscan != nullptr) {
-									if (icountsosmax < pscan->countsosed) {
-										icountsosmax = pscan->countsosed;
+									if (icountsosmax < pscan->count_neighbour) {
+										icountsosmax = pscan->count_neighbour;
 										candidatestart = pscan->ii;
 									}
 									pscan = pscan->prev;
@@ -14104,8 +9149,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 						}
 						//if (found_candidate == false) {
-						//Maximumsosedcount--;
-						//if (Maximumsosedcount < 3) break; // досрочный выход из прерывателя.
+						//Maximumneighbourcount--;
+						//if (Maximumneighbourcount < 3) break; // досрочный выход из прерывателя.
 						//}
 						//}
 
@@ -14116,7 +9161,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 						if (plist != nullptr) {
 						// Сканируем короткий пулл кандидатов.
 						//while ((plist_current != nullptr) && (!(((flag[Amat[plist_current->ii].i] == false) &&
-						//	(count_sosed[Amat[plist_current->ii].i] == Maximumsosedcount))))) {
+						//	(count_neighbour[Amat[plist_current->ii].i] == Maximumneighbourcount))))) {
 						while (plist_current != nullptr) {
 						if (flag[Amat[plist_current->ii].i] == true) {
 						// удаляем
@@ -14178,23 +9223,23 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 								if (flag_shadow[Atemp2[i_1].i] == false) {
 
-									if (count_sosed[Atemp2[i_1].i] < min_stat) {
-										min_stat = count_sosed[Atemp2[i_1].i];
+									if (count_neighbour[Atemp2[i_1].i] < min_stat) {
+										min_stat = count_neighbour[Atemp2[i_1].i];
 									}
-									if (count_sosed[Atemp2[i_1].i] > max_stat) {
-										max_stat = count_sosed[Atemp2[i_1].i];
+									if (count_neighbour[Atemp2[i_1].i] > max_stat) {
+										max_stat = count_neighbour[Atemp2[i_1].i];
 									}
 
 
-									if (count_sosed[Atemp2[i_1].i] > maxsosed) {
-										maxsosed = count_sosed[Atemp2[i_1].i];
+									if (count_neighbour[Atemp2[i_1].i] > maxneighbour) {
+										maxneighbour = count_neighbour[Atemp2[i_1].i];
 										//icandidate = i_1;
 										// icandidate номер элемента в матрице А отвечающий за найбольшее число соседей.
 										icandidate = Atemp2[i_1].ind;
-										if (bmaxsosedinfoactive) {
+										if (bmaxneighbourinfoactive) {
 											// Организуем досрочный выход из цикла,
-											// это длжно ускорить построение C-F разбиения.
-											if (maxsosed == Maximumsosedcount) break;
+											// это длжно ускорить построение C/F разбиения.
+											if (maxneighbour == Maximumneighbourcount) break;
 										}
 
 									}
@@ -14203,17 +9248,17 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							}
 
 #if doubleintprecision == 1
-							//printf("%lld %lld", Maximumsosedcount, max_stat);
+							//printf("%lld %lld", Maximumneighbourcount, max_stat);
 #else
-							//printf("%d %d", Maximumsosedcount, max_stat);
+							//printf("%d %d", Maximumneighbourcount, max_stat);
 #endif
 							
 							//system("pause");
-							Maximumsosedcount = max_stat;
+							Maximumneighbourcount = max_stat;
 #if doubleintprecision == 1
-							//printf("min=%lld max=%lld M=%lld\n", min_stat, max_stat, Maximumsosedcount);
+							//printf("min=%lld max=%lld M=%lld\n", min_stat, max_stat, Maximumneighbourcount);
 #else
-							//printf("min=%d max=%d M=%d\n", min_stat, max_stat, Maximumsosedcount);
+							//printf("min=%d max=%d M=%d\n", min_stat, max_stat, Maximumneighbourcount);
 #endif
 							
 							//system("pause");
@@ -14242,15 +9287,15 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			}
 
 #if doubleintprecision == 1
-			//printf("maximum number of sosed=%lld\n",maxsosed);
+			//printf("maximum number of neighbour=%lld\n",maxneighbour);
 #else
-			//printf("maximum number of sosed=%d\n",maxsosed);
+			//printf("maximum number of neighbour=%d\n",maxneighbour);
 #endif
 			
-			if (maxsosed == -1) if (debug_reshime) system("pause");
+			if (maxneighbour == -1) if (debug_reshime) system("pause");
 			//getchar();
 
-			if ((icandidate == 0) && (maxsosed == -1)) {
+			if ((icandidate == 0) && (maxneighbour == -1)) {
 				bcontinue = false;
 			}
 
@@ -14262,7 +9307,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 			icountprohod++;
 
-		} // Построение C-F разбиения. создано.
+		} // Построение C/F разбиения. создано.
 
 		delete[] bmarkervisit;
 		// Уничтожение памяти из по пула кандидатов.
@@ -14372,7 +9417,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 
 			// debug
-			// проверка качества C-F разбиения.
+			// проверка качества C/F разбиения.
 			//doublerealT* exp1 = new doublerealT[n_a[ilevel - 1] + 1];
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) exp1[i_1] = 0.0;
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) exp1[i_1] = 2.0;
@@ -14385,11 +9430,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			//system("pause");
 
 
-			// C-F разбиение построено, самое время построить оператор интерполяции.
+			// C/F разбиение построено, самое время построить оператор интерполяции.
 			// потом найти оператор проекции, как транспонированный оператор интерполяции.
 			// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
 
-			// Построение оператора интерполляции : 
+			// Построение оператора интерполяции: 
 			// coarse 2 fine.
 			//P*coarse==fine
 
@@ -14494,7 +9539,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublerealT maxelem_threshold = -1.0;
 				integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -14536,14 +9581,14 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 							if (fabs(sumP) < RealZERO) {
 								printf("error interpolation zero diagonal sumP.\n");
-								printf("Fnode all sosed is F");
+								printf("Fnode all neighbour is F");
 								//system("pause");
 								printf("i8 is Dirichlet node\n");
 								this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
 								this_is_C_node[i8] = true;
 								bweSholdbeContinue = true;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 							}
 							else {
 
@@ -14599,31 +9644,31 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			//}
 		}
 
-		// heapsort(P,key==j,iaddR+1,iaddR+nnzR - 1);
+		// heapsort(P,key==j,iaddR+1,iaddR+nnzR - 1, comparej);
 		if (bquicktypesort) {
-			QuickSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+			QuickSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 		else {
 			if (bqs) {
 				if (bCounting_Sort) {
-					Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+					Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 				}
 				else {
 					// Быстрая сортировка Хоара.
-					qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+					qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 				}
 			}
 			else {
-				HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+				HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 			}
 		}
 
 		/*
 		if (bquicktypesort) {
-		QuickSort_j(R,  1 + iaddR, iaddR + nnzR - 1);
+		QuickSort(R,  1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 		else {
-		HeapSort_j(R, n_a[ilevel - 1], 1 + iaddR, iaddR + nnzR - 1);
+		HeapSort(R, n_a[ilevel - 1], 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 
 		printf("start now\n");
@@ -14641,21 +9686,21 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		// R=P/ap.
 
 
-		// heapsort(R,key==i,iaddR+1,iaddR+nnzR - 1);
+		// heapsort(R,key==i,iaddR+1,iaddR+nnzR - 1, comparei);
 		if (bquicktypesort) {
-			QuickSort(R, 1 + iaddR, iaddR + nnzR - 1);
+			QuickSort(R, 1 + iaddR, iaddR + nnzR - 1, comparei);
 		}
 		else {
 			if (bqs) {
 				if (bCounting_Sort) {
-					Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1);
+					Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 				}
 				else {
-					qs(R, 1 + iaddR, iaddR + nnzR - 1);
+					qs(R, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 				}
 			}
 			else {
-				HeapSort(R, 1 + iaddR, iaddR + nnzR - 1);
+				HeapSort(R, 1 + iaddR, iaddR + nnzR - 1, comparei);
 			}
 		}
 
@@ -14742,34 +9787,34 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 
 		// Сортировка А по j.
-		//heapsort(Amat, key=j*n_a[ilevel - 1] + i, 1, nnz_a[ilevel - 1]);
+		//heapsort(Amat, key=j*n_a[ilevel - 1] + i, 1, nnz_a[ilevel - 1], comparej);
 		if (bquicktypesort) {
-			QuickSort_j(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparej);
 		}
 		else {
 			if (nnz_a[ilevel - 1] < heapsortsizelimit) {
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sortj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparej);
 					}
 					else {
-						qsj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparej);
 					}
 				}
 				else {
-					HeapSort_j(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparej);
 				}
 			}
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
-				MergeSort_j(Aorig, nnz_a[ilevel - 1]);
+				MergeSort(Aorig, nnz_a[ilevel - 1], comparej);
 				Aorig = nullptr;
 			}
 		}
 
-		// Нахождение матрицы грубосеточного уровня :
+		// Нахождение матрицы грубосеточного уровня:
 		// Acorse=R*Afine*P;
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -14837,7 +9882,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		//
 		//
 
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -14978,7 +10023,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			//Более быстрый вариант алгоритма.
 			// Быстрее этого кода на основе идеи слияния списков уже не будет.
 			// 17 октября 2015. Нужно двигаться в сторону Писсанецки.
-			// часть 1 : R*Afine.
+			// часть 1: R*Afine.
 			//         xxxxxx
 			//         xxxxxx
 			//  xxxxxx xxxxxx xxxxxx
@@ -15142,7 +10187,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			//Более быстрый вариант алгоритма.
 			// Быстрее этого кода на основе идеи слияния списков уже не будет.
 			// 22 октября 2015. Нужно двигаться в сторону Писсанецки.
-			// часть 1 : R*Afine.
+			// часть 1: R*Afine.
 			//         xxxxxx
 			//         xxxxxx
 			//  xxxxxx xxxxxx xxxxxx
@@ -15303,7 +10348,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				// Фред Густавсон IBM 1978.
 				// 23 октября 2015 года.
 
-				// часть 1 : R*Afine.
+				// часть 1: R*Afine.
 				//         xxxxxx
 				//         xxxxxx
 				//  xxxxxx xxxxxx xxxxxx
@@ -15314,14 +10359,14 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				// Сортировка А по строкам.
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 					else {
-						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 				}
 				else {
-					HeapSort(Amat, /*n_a[ilevel - 1],*/ 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					HeapSort(Amat, /*n_a[ilevel - 1],*/ 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 				}
 
 				// Преобразование к формату CRS.
@@ -15448,7 +10493,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				// Фред Густавсон IBM 1978.
 				// 23 октября 2015 года.
 
-				// часть 1 : R*Afine.
+				// часть 1: R*Afine.
 				//         xxxxxx
 				//         xxxxxx
 				//  xxxxxx xxxxxx xxxxxx
@@ -15459,14 +10504,14 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				// Сортировка А по строкам.
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 					else {
-						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 				}
 				else {
-					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 				}
 
 				// Преобразование к формату CRS.
@@ -15655,28 +10700,28 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		}
 
 		// Сортировка А по i (оригинала.).
-		//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
+		//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1], comparei);
 		if (bquicktypesort) {
-			QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 		}
 		else {
 			if (nnz_a[ilevel - 1] < heapsortsizelimit) {
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 					else {
-						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+						qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 					}
 				}
 				else
 				{
-					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 				}
 			}
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
-				MergeSort(Aorig, nnz_a[ilevel - 1]);
+				MergeSort(Aorig, nnz_a[ilevel - 1], comparei);
 				Aorig = nullptr;
 			}
 		}
@@ -15684,7 +10729,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		// Проверка пройдена успешно.
 		for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 			if (Amat[i_1].j < 0) {
-				printf("error : negativ j index\n");
+				printf("error: negativ j index\n");
 				system("pause");
 			}
 #if doubleintprecision == 1
@@ -15700,27 +10745,27 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 		// Часть 2. [R*Afine]*P=Abuf*P.
 		// Сортировка [R*А] по i.
-		//heapsort(Amat, key=i*n_coarce + j, 1, nnz_a[ilevel - 1]);
+		//heapsort(Amat, key=i*n_coarce + j, 1, nnz_a[ilevel - 1], comparei);
 		if (bquicktypesort) {
-			QuickSort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
+			QuickSort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1, comparei);
 		}
 		else {
 			if (nnz_a[ilevel - 1] < heapsortsizelimit) {
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
+						Counting_Sort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1, indx_comparei);
 					}
 					else {
-						qs(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
+						qs(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1, indx_comparei);
 					}
 				}
 				else {
-					HeapSort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
+					HeapSort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1, comparei);
 				}
 			}
 			else {
 				Ak* Aorig = &Amat[nnz_a[ilevel - 1] + 1 + iadd];
-				MergeSort(Aorig, istartAnew - 1 - (nnz_a[ilevel - 1] + 1 + iadd) + 1);
+				MergeSort(Aorig, istartAnew - 1 - (nnz_a[ilevel - 1] + 1 + iadd) + 1, comparei);
 				Aorig = nullptr;
 			}
 		}
@@ -15729,7 +10774,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		// Проверка пройдена успешно.
 		for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 			if (Amat[i_1].j < 0) {
-				printf("error : negativ j index\n");
+				printf("error: negativ j index\n");
 				system("pause");
 			}
 #if doubleintprecision == 1
@@ -15775,19 +10820,19 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		//}
 
 		if (bquicktypesort) {
-			QuickSort(P, 1 + iaddR, iaddR + nnzR - 1);
+			QuickSort(P, 1 + iaddR, iaddR + nnzR - 1, comparei);
 		}
 		else {
 			if (bqs) {
 				if (bCounting_Sort) {
-					Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1);
+					Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 				}
 				else {
-					qs(P, 1 + iaddR, iaddR + nnzR - 1);
+					qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 				}
 			}
 			else {
-				HeapSort(P, 1 + iaddR, iaddR + nnzR - 1);
+				HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparei);
 			}
 		}
 
@@ -16026,7 +11071,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			}
 
 
-			// Более быстрая версия кода : 15 октября 2015
+			// Более быстрая версия кода: 15 октября 2015
 			// сканируем по столбцам
 			for (integer jstr = 1; jstr <= icounter - 1; jstr++) {
 
@@ -16166,7 +11211,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			integer *ind = new integer[n_a[ilevel - 1] + 1];
 
 
-			// Более быстрая версия кода : 15 октября 2015
+			// Более быстрая версия кода: 15 октября 2015
 			// сканируем по столбцам
 			for (integer jstr = 1; jstr <= icounter - 1; jstr++) {
 
@@ -16260,23 +11305,23 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		else {
 			// Фред Густавсон IBM 1978
 			// В ядре кода Густавсона нету ни одного ветвления,
-			// а мы знаем что в результате профайлинга предыдущих версий кода :
+			// а мы знаем что в результате профайлинга предыдущих версий кода:
 			// (наивный, слияние, Писсанецки) львиная доля вычислительной работы уходила
-			// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно сумирование.
+			// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно суммирование.
 			// 23 октября 2015 года.
 
 			if (0) {
 				// Преобразование обоих матриц в формат CRS.
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+						Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 					}
 					else {
-						qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+						qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 					}
 				}
 				else {
-					HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+					HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 				}
 
 				integer* row_ind_AS = new integer[numberofcoarcenodes + 1];
@@ -16414,14 +11459,14 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 				// Преобразование обоих матриц в формат CRS.
 				if (bqs) {
 					if (bCounting_Sort) {
-						Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+						Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 					}
 					else {
-						qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+						qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 					}
 				}
 				else {
-					HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+					HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 				}
 
 				integer* row_ind_AS = new integer[numberofcoarcenodes + 1];
@@ -16810,7 +11855,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 		//проверка конец
 
-		delete[] count_sosed;
+		delete[] count_neighbour;
 		delete[] row_startA;
 
 	}// иерархия сеток построена.
@@ -16840,7 +11885,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 	//exit(1);
 
 	/*
-	// отладочная печать в рабочей версии требуется закоментировать.
+	// отладочная печать в рабочей версии требуется закомментировать.
 	for (integer ii = 1; ii <= n; ii++) {
 	flag_[ii] = false;
 	}
@@ -17305,7 +12350,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 	// 9 september 2015.
 	// q - quick.
 	// seidelq(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0);
-	//void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+	//void seidelq(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 	//{
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -17473,13 +12518,14 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		}
 		iter_limit++;
 
-
+#ifdef MY_DEBUG_NOT_NUMBER
 		if (dres!=dres) {
 			printf("divergence AMG detected\n");
 			printf("\a\a\a\a\a\a\a\a");
 			system("pause");
 			exit(1);
 		}
+#endif
 
 		// smother
 		for (integer iter = 0; iter < nu1; iter++) {
@@ -19037,8 +14083,8 @@ void nested_desection_patch(Ak1* &Amat, integer isize_na, bool* &nested_desectio
 
 
 // 22 января текущий работоспособный вариант кода.
-// Планы : 1. сделать версию amg3. 
-// В ней : 2. заменить все проверки на невыделение оперативной памяти на универсальную функцию единую для всего.
+// Планы: 1. сделать версию amg3. 
+// В ней: 2. заменить все проверки на невыделение оперативной памяти на универсальную функцию единую для всего.
 // это очевидно немного сократит программный код.
 // В ней 3. код V цикла оформить в виде цикла for. Тогда же можно будет попробовать вставить direct метод для самого грубого уровня.
 // Это же откроет возможности сделать из amg алгоритма предобуславливатель для BiCGStab.
@@ -19046,7 +14092,7 @@ void nested_desection_patch(Ak1* &Amat, integer isize_na, bool* &nested_desectio
 // 10 января 2016 двоичный поиск заменён на хеширование.
   // 15 декабря 2015. Данная версия кода будет полностью очищена от устаревшего кода.
   // 13 декабря 2015. Внедрено АВЛ дерево. При внедрении АВЛ дерева исправлена логическая ошибка в
-  // построении С-F разбиения, теперь C-F разбиение строится корректно.
+  // построении С-F разбиения, теперь C/F разбиение строится корректно.
   // Исправлен и внедрён quicksort (qs,qsj)
   // который в рять раз быстрее пирамидальной сортировки.
   // Полный отказ от band_size!!!.
@@ -19054,19 +14100,20 @@ void nested_desection_patch(Ak1* &Amat, integer isize_na, bool* &nested_desectio
   // 18 октября 2015. Полностью работоспособный мультигрид.
   // Тестировалось на условиях Дирихле но должно работать на любых 
   // краевых задачах. 18 октября датируется версия 0.04. Версия 0.04 на треть
-  // быстрее версии 0_03. Были ускорены как операции построения C-F разбиения, 
-  // так и нахождение оператора Галёркина. При нахождении С-F разбиения 
-  // учитывается уже построеннная его часть и поэтому число сканирований на
+  // быстрее версии 0.03. Были ускорены как операции построения C/F разбиения, 
+  // так и нахождение оператора Галёркина. При нахождении С/F разбиения 
+  // учитывается уже построенная его часть и поэтому число сканирований на
   // на поздних циклах сокращается охватывая только не построенную часть.
-  // При нахождении произведеия Галёркина получена самая оптимальная по быстродествию версия,
+  // При нахождении произведения Галёркина получена самая оптимальная по быстродействию версия,
   // Основанная на алгоритме слияния отсортированных списков.
   // 4 октября правильное построение последовательности вложенных графов.
   // 30 сентября продолжаем исправление метода. Делаем классический 
-  // алгебраический многосеточный метод на основе  C-F разбиения.
+  // алгебраический многосеточный метод на основе  C/F разбиения.
   // 16 сентября 2015 года обнаружено что операции 
   // сгрубления и интерполяции сделаны совершенно неверно,
   // и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-  // Операции сгрубления и интерполляции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
+  // Операции сгрубления и интерполяции будут сделаны заново на основе статьи
+  // К.Н. Волкова в новой версии солвера.
   // 3 september 2015 Villa Borgese.
 // Возвращает divergence detected.
 template <typename doublerealT>
@@ -19077,7 +14124,8 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	Ak1* &R, // restriction
 	Ak1* &P, // prolongation
 	doublereal* &x, doublereal* &b,
-	doublerealT &theta
+	doublerealT &theta,
+	integer imyinit = ZERO_INIT
 	) {
 
 	// Параметры отвечающие за автоматическую настройку SOR.
@@ -19119,7 +14167,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	// В компиляторе надо увеличить размер стека до 4Мб.
 	bool bqs = true; // Использовать ли quicksort qs and qsj.
 					 // Сортировка с подсчётом быстрее quickSort.
-	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая жрёт килотонну памяти (Короче для машин у которых море оперативки).
+	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая потребляет килотонну памяти (Короче для машин у которых море оперативки).
 
 
 	const doublerealT RealZERO = 1.0e-300;// 1.0e-10;
@@ -19128,12 +14176,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	// включение/отключение отладочного режима.
 	bool debug_reshime = false;
 
-	const integer max_sosed = 27850;
+	const integer max_neighbour = 27850;
 	// Мы будем поддерживать информацию о максимальном количестве соседей.
-	integer Maximumsosedcount = -1;
+	integer Maximumneighbourcount = -1;
 	// мы получим порядковый номер элемента с максимальным число соседей в матрице А,
-	// прямо в результате построения C-F разбиения.
-	bool bmaxsosedinfoactive = false;
+	// прямо в результате построения C/F разбиения.
+	bool bmaxneighbourinfoactive = false;
 
 
 	// Возможно можно обойтись без ji связи.
@@ -19174,14 +14222,14 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	istack = (integer*)malloc((istack_size_limit)*sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_2", (istack_size_limit));
 
-	// Для построения C-F декомпозиции нам тоже потребуется хеш таблица
-	// и стек для очистки хеш таблицы.
+	// Для построения C/F декомпозиции нам тоже потребуется хеш-таблица
+	// и стек для очистки хеш-таблицы.
 	bool* hash_table2 = (bool*)malloc((n + 1)*sizeof(bool));
 	handle_error<bool>(hash_table2, "hash_table2", "classic_aglomerative_amg_2", (n + 1));
 	
 	// Инициализация.
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
-	// И теперь стек для очистки хеш таблицы.
+	// И теперь стек для очистки хеш-таблицы.
 	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1)*sizeof(integer));
@@ -19248,8 +14296,8 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		*/
 
 
-		Maximumsosedcount = -1;
-		bmaxsosedinfoactive = false;
+		Maximumneighbourcount = -1;
+		bmaxneighbourinfoactive = false;
 
 		//if (ilevel > 1) {
 		//if (n_a[ilevel - 2] == n_a[ilevel - 1]) break;
@@ -19390,23 +14438,23 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// даёт на выходе отсортированную по строкам матрицу.
 		if (ilevel == 1) {
 			// сортировка исходной  А  по i.
-			//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
+			//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1], comparei);
 
 
 			// 7 января 2016. Обязательно нужна эта сортировка.
 			if (bqs) {
 				if (bCounting_Sort) {
-					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, true);
+					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, true, indx_comparei);
 				}
 				else {
 					// quicksort
-					qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 				}
 			}
 			else {
-				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 			}
-			//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 		}
 
 
@@ -19423,15 +14471,15 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			if (bqs) {
 				if (bCounting_Sort) {
 					// Сортировка с подсчётом за линейное время.
-					Counting_Sortj(Atemp, 1, nnz_a[ilevel - 1]);
+					Counting_Sort(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				}
 				else {
 					// Быстрая сортировка Чарльза Хоара.
-					qsj(Atemp, 1, nnz_a[ilevel - 1]);
+					qs(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				}
 			}
 			else {
-				HeapSort_j(Atemp, 1, nnz_a[ilevel - 1]);
+				HeapSort(Atemp, 1, nnz_a[ilevel - 1], comparej);
 			}
 		}
 
@@ -19462,13 +14510,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = nullptr;
-		//count_sosed = new integer[n_a[ilevel - 1] + 1];
-		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
-		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
+		integer* count_neighbour = nullptr;
+		//count_neighbour = new integer[n_a[ilevel - 1] + 1];
+		count_neighbour = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
+		handle_error<integer>(count_neighbour, "count_neighbour", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
 		
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
-			count_sosed[ii] = 0; // нет соседей.
+			count_neighbour[ii] = 0; // нет соседей.
 		}
 
 
@@ -19480,7 +14528,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
 				integer ic = -1;
-				integer cand[max_sosed];
+				integer cand[max_neighbour];
 				if (0) {
 					for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 						ic++; //i,j
@@ -19509,20 +14557,20 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						}
 					}
 				}
-				integer len_sosed = ic;
+				integer len_neighbour = ic;
 				// Найти столбец j который равен индексу Amat[ii].i
 				//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 				//if (Amat[ii1].i != Amat[ii].i) {
 				//	if (Amat[ii1].j == Amat[ii].i) {
 				// j,i
-				//		bool foundsosed = false;
-				//		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-				//			if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+				//		bool foundneighbour = false;
+				//		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+				//			if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 				//		}
-				//		if (!foundsosed) {
+				//		if (!foundneighbour) {
 				//			ic++;
 				//			cand[ic] = Amat[ii1].j;
-				//			len_sosed++;
+				//			len_neighbour++;
 				//		}
 				//	}
 				//}
@@ -19533,24 +14581,24 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					for (integer ii1 = ii2; (ii1 <= nnz_a[ilevel - 1]) && (Atemp[ii1].j == Amat[ii].i); ii1++) {
 						if (Atemp[ii1].i != Amat[ii].i) {
 							// j,i
-							bool foundsosed = false;
-							for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-								if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+							bool foundneighbour = false;
+							for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+								if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 							}
-							if (!foundsosed) {
+							if (!foundneighbour) {
 								ic++;
 								cand[ic] = Atemp[ii1].j;
-								len_sosed++;
+								len_neighbour++;
 							}
 						}
 					}
 				}
 
 
-				count_sosed[Amat[ii].i] = ic;
-				if (ic > Maximumsosedcount) {
-					Maximumsosedcount = ic;
-					bmaxsosedinfoactive = true;
+				count_neighbour[Amat[ii].i] = ic;
+				if (ic > Maximumneighbourcount) {
+					Maximumneighbourcount = ic;
+					bmaxneighbourinfoactive = true;
 				}
 				flag[Amat[ii].i] = true;
 			}
@@ -19558,7 +14606,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 
-		integer maxsosed = 0;
+		integer maxneighbour = 0;
 		integer icandidate = 0;
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
 			flag[ii] = false; // init flag
@@ -19567,13 +14615,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// Это первый встретившийся узел с наибольшим числом соседей.
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
-				if (count_sosed[Amat[ii].i] > maxsosed) {
-					maxsosed = count_sosed[Amat[ii].i];
+				if (count_neighbour[Amat[ii].i] > maxneighbour) {
+					maxneighbour = count_neighbour[Amat[ii].i];
 					icandidate = ii;
-					if (bmaxsosedinfoactive) {
+					if (bmaxneighbourinfoactive) {
 						// организуем досрочный выход из цикла for.
 						// Это должно сильно сокращать количество сканирований.
-						if (maxsosed == Maximumsosedcount) break;
+						if (maxneighbour == Maximumneighbourcount) break;
 					}
 				}
 				flag[Amat[ii].i] = true;
@@ -19591,11 +14639,11 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		integer n_coarce = 1; // начальный номер C узла.
 		nnzR = 1;
 
-		const integer NULL_SOSED = -1;
-		integer vacant = NULL_SOSED;
+		const integer NULL_NEIGHBOUR = -1;
+		integer vacant = NULL_NEIGHBOUR;
 		bool bcontinue = true;
 
-		// Построение C-F разбиения.
+		// Построение C/F разбиения.
 		//while (icandidate != 0)
 		integer icountprohod = 0;
 		// Мы будем заоминать с какой позиции начинаются ещё не помеченные узлы,
@@ -19643,10 +14691,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			
 
 
-			integer set[max_sosed]; // не более 20 узлов в одном агрегате.
+			integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
 									// инициализация убрана потому что она не нужна и она сильно тормозит быстродействие.
-									//for (integer js = 0; js < max_sosed; js++) {
-									//set[js] = NULL_SOSED;
+									//for (integer js = 0; js < max_neighbour; js++) {
+									//set[js] = NULL_NEIGHBOUR;
 									//}
 			integer ic = 0;
 
@@ -19776,10 +14824,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						vacant = Amat[ii].j;
 						for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = NULL_NEIGHBOUR;
 							}
 						}
-						if (vacant != NULL_SOSED) {
+						if (vacant != NULL_NEIGHBOUR) {
 							set[ic] = vacant;
 
 							ic++;
@@ -19796,10 +14844,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							vacant = Amat[iscan].j;
 							for (integer js = 0; js < ic; js++) {
 								if (vacant == set[js]) {
-									vacant = NULL_SOSED;
+									vacant = NULL_NEIGHBOUR;
 								}
 							}
-							if (vacant != NULL_SOSED) {
+							if (vacant != NULL_NEIGHBOUR) {
 								set[ic] = vacant;
 
 								ic++;
@@ -19824,10 +14872,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				  //	vacant = Amat[ii1].i;
 				  //	for (integer js = 0; js < ic; js++) {
 				  //		if (vacant == set[js]) {
-				  //			vacant = NULL_SOSED;
+				  //			vacant = NULL_NEIGHBOUR;
 				  //		}
 				  //	}
-				  //	if (vacant != NULL_SOSED) {
+				  //	if (vacant != NULL_NEIGHBOUR) {
 				  //		set[ic] = vacant; // j,i связь.
 
 				  //		ic++;
@@ -19846,10 +14894,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				  //	vacant = Amat[ii1].i;
 				  //	for (integer js = 0; js < ic; js++) {
 				  //		if (vacant == set[js]) {
-				  //			vacant = NULL_SOSED;
+				  //			vacant = NULL_NEIGHBOUR;
 				  //		}
 				  //	}
-				  //	if (vacant != NULL_SOSED) {
+				  //	if (vacant != NULL_NEIGHBOUR) {
 				  //		set[ic] = vacant; // j,i связь.
 
 				  //		ic++;
@@ -19869,10 +14917,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								vacant = Atemp[ii2].i;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant; // j,i связь.
 									ic++;
 								}
@@ -19921,7 +14969,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					for (integer js = 0; js < ic; js++) {
 						data_BalTree ddel;
 						ddel.i = set[js];
-						ddel.countsosed = count_sosed[set[js]];
+						ddel.count_neighbour = count_neighbour[set[js]];
 						//ddel.ii = row_startA[ddel.i];
 						switch (id_tree) {
 						case AVL_TREE_ID: root = remove_AVL(root, ddel);
@@ -19956,6 +15004,8 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					//for (integer ii_2 = istart; ii_2 <= iend; ii_2++) {
 
 					// Старая реализация которой присуща большая нагрузка на операторы new && delete.
+
+#if 0
 				if (0) {
 					for (integer js = 1; js < ic; js++) {
 
@@ -19981,7 +15031,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								lsos->next = nullptr;
 								lsos->i = Amat[is0].j;
 								lsos->ii = row_startA[lsos->i];
-								// lsos->countsosed // не используется.
+								// lsos->count_neighbour // не используется.
 								List *newnodesos = new List;
 								newnodesos->prev = lsos;
 								lsos->next = newnodesos;
@@ -20038,18 +15088,18 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						}
 
 						data_BalTree dsearch;
-						dsearch.countsosed = count_sosed[isc];
+						dsearch.count_neighbour = count_neighbour[isc];
 						//dsearch.ii = ii_2;
 						dsearch.i = isc;
-						count_sosed[isc] += ic2;
+						count_neighbour[isc] += ic2;
 						data_BalTree dadd;
-						dadd.countsosed = count_sosed[isc];
+						dadd.count_neighbour = count_neighbour[isc];
 						//dadd.ii = ii_2;
 						dadd.i = isc;
-						if (bmaxsosedinfoactive) {
+						if (bmaxneighbourinfoactive) {
 							// Обновляем информацию о максимальном количестве соседей.
-							if (count_sosed[isc] >= Maximumsosedcount) {
-								Maximumsosedcount = count_sosed[isc];
+							if (count_neighbour[isc] >= Maximumneighbourcount) {
+								Maximumneighbourcount = count_neighbour[isc];
 							}
 
 							// Добавляем соседа в любом случае
@@ -20109,7 +15159,8 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 				}
 					}
-				else if (0) {
+				else				
+				if (0) {
 					for (integer js = 1; js < ic; js++) {
 
 					// см.ниже  новый вариант от 10 января 2016.
@@ -20149,18 +15200,18 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								}
 
 								data_BalTree dsearch;
-								dsearch.countsosed = count_sosed[isc];
+								dsearch.count_neighbour = count_neighbour[isc];
 								//dsearch.ii = ii_2;
 								dsearch.i = isc;
-								count_sosed[isc] += ic2;
+								count_neighbour[isc] += ic2;
 								data_BalTree dadd;
-								dadd.countsosed = count_sosed[isc];
+								dadd.count_neighbour = count_neighbour[isc];
 								//dadd.ii = ii_2;
 								dadd.i = isc;
-								if (bmaxsosedinfoactive) {
+								if (bmaxneighbourinfoactive) {
 									// Обновляем информацию о максимальном количестве соседей.
-									if (count_sosed[isc] >= Maximumsosedcount) {
-										Maximumsosedcount = count_sosed[isc];
+									if (count_neighbour[isc] >= Maximumneighbourcount) {
+										Maximumneighbourcount = count_neighbour[isc];
 									}
 
 									// Добавляем соседа в любом случае
@@ -20244,12 +15295,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
 
@@ -20265,7 +15316,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 										{
 										case AVL_TREE_ID: root = insert_and_modify(root, dadd, dsearch);
 											break;
-										case SPLAY_TREE_ID : root_splay = insert_and_modify(root_splay, dadd, dsearch);
+										case SPLAY_TREE_ID: root_splay = insert_and_modify(root_splay, dadd, dsearch);
 											break;
 										default: root = insert_and_modify(root, dadd, dsearch);
 											break;
@@ -20277,10 +15328,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 										}
 									}
 
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 									}
 
@@ -20289,14 +15340,18 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							}
 						}
 					}
-					else if (1) {
+					else
+					
+#endif
+					if (1)
+					{
 						// 10 января 2016. Новая логика.
 						// Устраним некоторые повторные модификации (это должно снизить нагрузку на АВЛ дерево).
 						// Эта модификация даёт сокращение количества V циклов которые требуются до сходимости
 						// Эта модификация наиболее близка к классической описанной в литературе чем все предыдущие.
 						// На момент 13 января 2016 это лучший вариаент по скорости вычислений.
 						integer itop_stack2 = 0;
-						
+
 						// 10 января 2016. Старый вариант просто очищенный от устаревшего кода.
 						for (integer js = 1; js < ic; js++) {
 
@@ -20318,7 +15373,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 									// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 									// на ряде тестовых задач при таком подходе агломерация проходила очень
 									// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-									// Эта проблема проявилась на задачах :
+									// Эта проблема проявилась на задачах:
 									// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 									// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 									// Проблема не в этом месте кода.
@@ -20342,16 +15397,16 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 										}
 
 										data_BalTree dsearch;
-										dsearch.countsosed = count_sosed[isc];
+										dsearch.count_neighbour = count_neighbour[isc];
 										//dsearch.ii = ii_2;
 										dsearch.i = isc;
 										// Увеличиваем на количество связей с новыми F узлами.
-										count_sosed[isc] += ic2;
+										count_neighbour[isc] += ic2;
 										//if (ic2 > 0) {
-											//count_sosed[isc] += 1;
+											//count_neighbour[isc] += 1;
 										//}
 										data_BalTree dadd;
-										dadd.countsosed = count_sosed[isc];
+										dadd.count_neighbour = count_neighbour[isc];
 										//dadd.ii = ii_2;
 										dadd.i = isc;
 
@@ -20378,10 +15433,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 											}
 										}
 
-										if (bmaxsosedinfoactive) {
+										if (bmaxneighbourinfoactive) {
 											// Обновляем информацию о максимальном количестве соседей.
-											if (count_sosed[isc] >= Maximumsosedcount) {
-												Maximumsosedcount = count_sosed[isc];
+											if (count_neighbour[isc] >= Maximumneighbourcount) {
+												Maximumneighbourcount = count_neighbour[isc];
 											}
 										}
 									}
@@ -20391,12 +15446,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							}
 						}
 
-						// Очистка (восстановление хеш таблицы).
+						// Очистка (восстановление хеш-таблицы).
 						for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 							hash_table2[istack2[i_54]] = false;
 						}
 						itop_stack2 = 0; // стек снова готов к работе.
-
+					
 						
 					} // the end
 					else {
@@ -20439,7 +15494,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 										// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 										// на ряде тестовых задач при таком подходе агломерация проходила очень
 										// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-										// Эта проблема проявилась на задачах :
+										// Эта проблема проявилась на задачах:
 										// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 										// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 										// Проблема не в этом месте кода.
@@ -20484,12 +15539,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 												data_BalTree dsearch;
-												dsearch.countsosed = count_sosed[isc];
+												dsearch.count_neighbour = count_neighbour[isc];
 												//dsearch.ii = ii_2;
 												dsearch.i = isc;
-												count_sosed[isc] += ic2;
+												count_neighbour[isc] += ic2;
 												data_BalTree dadd;
-												dadd.countsosed = count_sosed[isc];
+												dadd.count_neighbour = count_neighbour[isc];
 												//dadd.ii = ii_2;
 												dadd.i = isc;
 
@@ -20517,10 +15572,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 												}
 											}
 
-											if (bmaxsosedinfoactive) {
+											if (bmaxneighbourinfoactive) {
 												// Обновляем информацию о максимальном количестве соседей.
-												if (count_sosed[isc] >= Maximumsosedcount) {
-													Maximumsosedcount = count_sosed[isc];
+												if (count_neighbour[isc] >= Maximumneighbourcount) {
+													Maximumneighbourcount = count_neighbour[isc];
 												}
 											}
 										}
@@ -20531,7 +15586,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							}
 						}
 
-						// Очистка (восстановление хеш таблицы).
+						// Очистка (восстановление хеш-таблицы).
 						for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 							hash_table2[istack2[i_54]] = false;
 						}
@@ -20556,7 +15611,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					bcontinue = true;
 					istartflag_scan = i_1; // сокращаем пределы сканирования.
 					break; // досрочный выход из цикла for.
-						   //if (maxsosed == -1) {
+						   //if (maxneighbour == -1) {
 #if doubleintprecision == 1
 						   //printf("ERROR!!!!  i_1=%lld\n", i_1);
 #else
@@ -20569,7 +15624,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			}
 
 			// Вычисление узла с максимальным количеством соседей.
-			maxsosed = -1;
+			maxneighbour = -1;
 			icandidate = 0;
 
 
@@ -20600,9 +15655,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							}
 							else {
 							#if doubleintprecision == 1
-								printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+								printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 							#else
-								printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+								printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 							#endif
 								
 								system("pause");
@@ -20617,9 +15672,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							}
 							else {
 							#if doubleintprecision == 1
-									printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+									printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 							#else
-									printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+									printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 							#endif
 								
 								system("pause");
@@ -20660,9 +15715,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							//}
 							//else {
 							#if doubleintprecision == 1
-									//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+									//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 							#else
-									//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+									//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 							#endif
 								
 								//system("pause");
@@ -20680,9 +15735,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							//}
 							//else {
 							#if doubleintprecision == 1
-								//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+								//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 							#else
-								//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+								//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 							#endif
 								
 								//system("pause");
@@ -20731,9 +15786,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						//}
 						//else {
 						#if doubleintprecision == 1
-								//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+								//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 						#else
-								//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+								//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 						#endif
 						
 						//system("pause");
@@ -20751,7 +15806,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								itop++;
 							}
 							else {
-								printf("itop>=istack_size_limit nado uvelichit istack_size_limit");
+								printf("itop>=istack_size_limit need to increase istack_size_limit");
 							}
 
 							//if (isize_p < ipool_size_limit) {
@@ -20759,9 +15814,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							//}
 							//else {
 							#if doubleintprecision == 1
-									//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+									//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 							#else
-									//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+									//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 							#endif
 							
 							//system("pause");
@@ -20793,7 +15848,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					printf("found max");
 				}
 				// Данный код чрезвычайно компактен.
-				bmaxsosedinfoactive = true;
+				bmaxneighbourinfoactive = true;
 				// Надо найти максимальный элемент в АВЛ дереве.
 				node_AVL* emax = 0;
 				Tree_splay* emax_splay = 0;
@@ -20809,7 +15864,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 				
 				switch (id_tree) {
-				case AVL_TREE_ID :
+				case AVL_TREE_ID:
 					// AVL tree
 					if (emax != 0) {
 						if (bAVL_deb)
@@ -20829,12 +15884,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
 					break;
-				case SPLAY_TREE_ID :
+				case SPLAY_TREE_ID:
 					// SPLAY tree
 					if (emax_splay != 0) {
 
@@ -20848,12 +15903,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						root_splay = 0;
 						size_splay_Tree = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
 					break;
-				default :
+				default:
 					// AVL tree
 					if (emax != 0) {
 						if (bAVL_deb)
@@ -20873,7 +15928,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -20886,15 +15941,15 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			}
 
 #if doubleintprecision == 1
-			//printf("maximum number of sosed=%lld\n",maxsosed);
+			//printf("maximum number of neighbour=%lld\n",maxneighbour);
 #else
-			//printf("maximum number of sosed=%d\n",maxsosed);
+			//printf("maximum number of neighbour=%d\n",maxneighbour);
 #endif
 			
-			if (maxsosed == -1) if (debug_reshime) system("pause");
+			if (maxneighbour == -1) if (debug_reshime) system("pause");
 			//getchar();
 
-			if ((icandidate == 0) && (maxsosed == -1)) {
+			if ((icandidate == 0) && (maxneighbour == -1)) {
 				bcontinue = false;
 			}
 
@@ -20906,7 +15961,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 			icountprohod++;
 
-		} // Построение C-F разбиения. создано.
+		} // Построение C/F разбиения. создано.
 
 		//delete[] bmarkervisit;
 		free(bmarkervisit);
@@ -20925,7 +15980,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			case AVL_TREE_ID: clear_AVL(root);
 				root = 0;
 				break;
-			case SPLAY_TREE_ID :
+			case SPLAY_TREE_ID:
 				clear_SPLAY(root_splay);
 				root_splay = 0;
 				break;
@@ -20957,7 +16012,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				integer icsos = 0;
 				// старая версия до 10 января 2016.
 				//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+				// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 				// 10 января 2016. на основе хеширования.
 				integer i_2 = row_startA[i_1];
 
@@ -21041,7 +16096,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 			// debug
-			// проверка качества C-F разбиения.
+			// проверка качества C/F разбиения.
 			//doublerealT* exp1 = new doublerealT[n_a[ilevel - 1] + 1];
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) exp1[i_1] = 0.0;
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) exp1[i_1] = 2.0;
@@ -21055,11 +16110,11 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 			
 
-			// C-F разбиение построено, самое время построить оператор интерполяции.
+			// C/F разбиение построено, самое время построить оператор интерполяции.
 			// потом найти оператор проекции, как транспонированный оператор интерполяции.
 			// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
 
-			// Построение оператора интерполляции : 
+			// Построение оператора интерполяции: 
 			// coarse 2 fine.
 			//P*coarse==fine
 
@@ -21150,7 +16205,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 			if (the_good_old_interpolation) {
 
-				// Старая добрая верная, проверенная интерполляция.
+				// Старая добрая верная, проверенная интерполяция.
 				// К тому же чрезвычайно простая.
 
 				if (0) {
@@ -21166,7 +16221,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 					    // Нам нужен разреженный оператор Галёркина.
 					    // 5 декабря 2015 года мы попробуем увеличить разреженность
-					    // оператора интерполляции а значит и оператора Галёркина.
+					    // оператора интерполяции а значит и оператора Галёркина.
 					    doublerealT maxelem_threshold = -1.0;
 						// O(log2(nnz))
 					    //integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -21174,7 +16229,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						integer ii1 = row_startA[i8];
 					    for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						    if (Amat[is0].j != Amat[ii1].i) {
-							    // Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							    // Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							    //if (this_is_C_node[Amat[is0].j] == true) {
 							    if (fabs(Amat[is0].aij) > maxelem_threshold) {
 							    	maxelem_threshold = fabs(Amat[is0].aij);
@@ -21188,7 +16243,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					   integer icsos = 0;
 
 					   // Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					   // Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					   // Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					   doublerealT sumP = 0.0;
 					   for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						   if (Amat[is0].j != Amat[ii1].i) {
@@ -21225,7 +16280,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 									     if (fabs(sumP) < RealZERO) {
 										     //printf("error interpolation zero diagonal sumP.\n");
-										     //printf("Fnode all sosed is F");
+										     //printf("Fnode all neighbour is F");
 										     //system("pause");
 										     //printf("i8 is Dirichlet node\n");
 										     this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -21233,7 +16288,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 										     bweSholdbeContinue = true;
 										     iadditionalCstatistic++;
 										     //exit(1);
-										     // здесь нужна непрямая интерполляция.
+										     // здесь нужна непрямая интерполяция.
 									     }
 									     else {
 
@@ -21264,8 +16319,8 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				if (0) {
 					// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-					// Прямая интерполляция с элементам непрямой.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 					// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
@@ -21284,7 +16339,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						// O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -21292,7 +16347,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -21306,7 +16361,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -21345,12 +16400,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
@@ -21364,7 +16419,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 								bool bCinsert = false;
 
-								// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+								// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 								for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 									if (Amat[is0].j != Amat[ii1].i) {
 										if (this_is_F_node[Amat[is0].j] == true) {
@@ -21410,7 +16465,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 												bool bvisit_sumPloc = false;
 
 												// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-												// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+												// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 												doublerealT sumP_loc = 0.0;
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -21436,7 +16491,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 												if (bvisit_sumPloc) {
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -21459,7 +16514,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													}
 												}
 												else {
-													// не было С соседей интерполляция может испытывать проблемы.
+													// не было С соседей интерполяция может испытывать проблемы.
 													// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 													// Данная проблема проявляется уже на втором уровне.
 													//printf("problem situation");
@@ -21488,7 +16543,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 									bool bstandart_vjzov = true;
 									for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 										// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-										// когда с не менее чем двух сторон интерполляция сработала, здесь 
+										// когда с не менее чем двух сторон интерполяция сработала, здесь 
 										// же срабатывание было лишь с одной из сторон как минимум.
 										if (empty_interpol[i_38] == true) {
 											bstandart_vjzov = false;
@@ -21547,14 +16602,14 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				if (0) {
 					// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-					// Прямая интерполляция с элементам непрямой. Экспериментальный вариант. TODO.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой. Экспериментальный вариант. TODO.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей или имеют недостаточное число С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 
-					// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполляцию.
+					// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполяцию.
 					// Идея в том чтобы узел F имеющий лишь одного Strong С соседа обработать так чтобы у него было не менее 
-					// двух  C соседей учитывая эффект непрямой интерполляции.
+					// двух  C соседей учитывая эффект непрямой интерполяции.
 
 
 					ipromah = 0;
@@ -21566,13 +16621,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -21587,7 +16642,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						integer icsosF = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -21618,7 +16673,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -21634,12 +16689,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
@@ -21694,7 +16749,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 												bool bvisit_sumPloc = false;
 
 												// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-												// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+												// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 												doublerealT sumP_loc = 0.0;
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -21720,7 +16775,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 												if (bvisit_sumPloc) {
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -21743,7 +16798,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													}
 												}
 												else {
-													// не было С соседей интерполляция может испытывать проблемы.
+													// не было С соседей интерполяция может испытывать проблемы.
 													// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 													// Данная проблема проявляется уже на втором уровне вложенности.
 													//printf("problem situation");
@@ -21767,7 +16822,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								bool bstandart_vjzov = true;
 								for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 									// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-									// когда с не менее чем двух сторон интерполляция сработала, здесь 
+									// когда с не менее чем двух сторон интерполяция сработала, здесь 
 									// же срабатывание было лишь с одной из сторон как минимум.
 									if (empty_interpol[i_38] == true) {
 										bstandart_vjzov = false;
@@ -21796,7 +16851,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//	printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -21804,7 +16859,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 													// Это как раз единственная Strong C связь. 
@@ -21831,7 +16886,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -21867,7 +16922,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -21889,7 +16944,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 															}
 														}
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -21994,13 +17049,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -22015,7 +17070,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -22050,7 +17105,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -22077,7 +17132,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													// заведомо один С сосед.
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -22086,7 +17141,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														iadditionalCstatistic++;
 														byes_add = true; // Были добавления узлов.
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													
 
@@ -22112,7 +17167,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -22121,7 +17176,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													iadditionalCstatistic++;
 													byes_add = true; // Были добавления узлов.
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												
 
@@ -22154,7 +17209,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
@@ -22163,7 +17218,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == istr_etalon1); is0++) {
 							iend_for1 = is0;
 							if (Amat[is0].j != istr_etalon1) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -22182,7 +17237,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -22216,7 +17271,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -22246,7 +17301,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 												if (fabs(Amat[is0].aij) > maxelem_threshold_theta) {
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -22254,7 +17309,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -22284,7 +17339,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													if (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F) {
 														// Рассматриваем Strong F связи.
 
-														// Смысл :
+														// Смысл:
 														// 
 
 
@@ -22323,7 +17378,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -22350,7 +17405,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 														doublerealT maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 														    if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -22487,7 +17542,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -22495,7 +17550,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 
@@ -22551,13 +17606,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -22572,7 +17627,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						integer icsosF = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -22603,7 +17658,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -22631,7 +17686,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//	printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -22639,7 +17694,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 													// Это как раз единственная Strong C связь. 
@@ -22666,7 +17721,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -22702,7 +17757,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -22724,7 +17779,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -22764,7 +17819,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -22772,7 +17827,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 
@@ -22799,7 +17854,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 													// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-													// Смысл :
+													// Смысл:
 													//
 
 
@@ -22835,7 +17890,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -22857,7 +17912,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 															}
 														}
 
-														// В общем это двойная интерполляционная сумма
+														// В общем это двойная интерполяционная сумма
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -22901,7 +17956,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					if (1) {
 						// шестая попытка.
 						// CGHV1J amg1r5 time 0.26
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25   0:48  29  6.55A
 						// 0.3    0:45  28  6.19A 
@@ -22915,7 +17970,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						// 0.35 1:46 27 3.51
 						// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 						// Electric potencial in FET2 amg1r5 time 1:38
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25 3:19 36 6.65
 						// 0.3 3:02 34 6.34
@@ -22937,13 +17992,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -22958,7 +18013,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -22989,7 +18044,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -23012,7 +18067,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 													 if (fabs(sumP) < RealZERO) {
 														 //printf("error interpolation zero diagonal sumP.\n");
-														 //printf("Fnode all sosed is F");
+														 //printf("Fnode all neighbour is F");
 														 //system("pause");
 														 //	printf("i8 is Dirichlet node\n");
 														 this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -23021,7 +18076,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														 iadditionalCstatistic++;
 														 byes_add = true;
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 													 }
 
 
@@ -23042,7 +18097,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 												 if (fabs(sumP) < RealZERO) {
 													 //printf("error interpolation zero diagonal sumP.\n");
-													 //printf("Fnode all sosed is F");
+													 //printf("Fnode all neighbour is F");
 													 //system("pause");
 													 //printf("i8 is Dirichlet node\n");
 													 this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -23051,7 +18106,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													 iadditionalCstatistic++;
 													 byes_add = true;
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 												 }
 
 
@@ -23078,7 +18133,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 						// шестая попытка.
 						// CGHV1J amg1r5 time 0.26
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25   0:48  29  6.55A
 						// 0.3    0:45  28  6.19A 
@@ -23092,7 +18147,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						// 0.35 1:46 27 3.51
 						// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 						// Electric potencial in FET2 amg1r5 time 1:38
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25 3:19 36 6.65
 						// 0.3 3:02 34 6.34
@@ -23114,13 +18169,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -23135,7 +18190,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -23166,7 +18221,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -23194,7 +18249,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -23202,7 +18257,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -23229,7 +18284,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 														// Рассматриваем Strong F связи.
 
-														// Смысл :
+														// Смысл:
 														// 
 
 
@@ -23265,7 +18320,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -23288,7 +18343,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 															}
 														}
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -23341,7 +18396,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -23349,7 +18404,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 
@@ -23378,7 +18433,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 													// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-													// Смысл :
+													// Смысл:
 													//
 
 
@@ -23417,7 +18472,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -23442,7 +18497,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 														icsos_loc = 0;
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc1 = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -23468,7 +18523,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 														}
 
 														if (icsos_loc > 0) {
-															// В общем это двойная интерполляционная сумма
+															// В общем это двойная интерполяционная сумма
 															for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 																if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																	if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -23525,7 +18580,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 									//}
 									//}
 
-									// Апосториорная корекция
+									// Апосториорная коррекция
 									for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 										P[i_95].aij = P[i_95].aij / sum_ok;
 									}
@@ -23545,7 +18600,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			else if (true) {
 
 
-				// Экспериментальная интерполляция 1 января 2016.
+				// Экспериментальная интерполяция 1 января 2016.
 
 				ipromah = 0;
 				ipromah_one = 0;
@@ -23555,7 +18610,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 					// Нам нужен разреженный оператор Галёркина.
 					// 5 декабря 2015 года мы попробуем увеличить разреженность
-					// оператора интерполляции а значит и оператора Галёркина.
+					// оператора интерполяции а значит и оператора Галёркина.
 					doublerealT maxelem_threshold = -1.0;
 					//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 					integer ii1 = row_startA[i8];
@@ -23576,7 +18631,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 					doublerealT SumPall = 0.0;
 					// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					doublerealT sumP = 0.0;
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
@@ -23621,7 +18676,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 									//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -23629,7 +18684,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -23654,7 +18709,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 								else
 									if (this_is_F_node[Amat[is0].j] == true) {
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -23688,7 +18743,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublerealT sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -23710,7 +18765,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 													if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -23744,9 +18799,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				}
 			}
 			else {
-				// От интерполляции зависит очень много поэтому
-				// реализуем следующую экспериментальную идею интерполляции.
-				// Эта интерполляция претендует быть единственно теоретически верной,
+				// От интерполяции зависит очень много поэтому
+				// реализуем следующую экспериментальную идею интерполяции.
+				// Эта интерполяция претендует быть единственно теоретически верной,
 				// сделанной на основе литературных данных.
 
 
@@ -23758,13 +18813,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 					// Нам нужен разреженный оператор Галёркина.
 					// 5 декабря 2015 года мы попробуем увеличить разреженность
-					// оператора интерполляции а значит и оператора Галёркина.
+					// оператора интерполяции а значит и оператора Галёркина.
 					doublerealT maxelem_threshold = -1.0;
 					//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 					integer ii1 = row_startA[i8];
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if (fabs(Amat[is0].aij) > maxelem_threshold) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -23778,7 +18833,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					//integer icsos = 0;
 
 					// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					doublerealT sumP = 0.0;
 					doublerealT sumPindicator = 0.0;
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -23823,7 +18878,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 						if (fabs(sumPindicator) < RealZERO) {
 							//printf("error interpolation zero diagonal sumP.\n");
-							//printf("Fnode all sosed is F");
+							//printf("Fnode all neighbour is F");
 							//system("pause");
 							//printf("i8 is Dirichlet node\n");
 							this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -23831,9 +18886,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							bweSholdbeContinue = true;
 							iadditionalCstatistic++;
 							//exit(1);
-							// здесь нужна непрямая интерполляция.
+							// здесь нужна непрямая интерполяция.
 
-							// Мы не будем добалять С узлы, мы будем использовать непрямую интерполляцию.
+							// Мы не будем добалять С узлы, мы будем использовать непрямую интерполяцию.
 
 
 
@@ -24024,18 +19079,18 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// R=P/ap. ????
 
 
-		// heapsort(R,key==i,iaddR+1,iaddR+nnzR - 1);
+		// heapsort(R,key==i,iaddR+1,iaddR+nnzR - 1, comparei);
 
 		if (bqs) {
 			if (bCounting_Sort) {
-				Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1,false);
+				Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1,false, indx_comparei);
 			}
 			else {
-				qs(R, 1 + iaddR, iaddR + nnzR - 1);
+				qs(R, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 			}
 		}
 		else {
-			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1, comparei);
 		}
 
 
@@ -24105,7 +19160,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 		// Лишний код потомучто потом сразу же следует сортировка по i.
 		/*
-		// 7 января 2016. закоментировано.
+		// 7 января 2016. закомментировано.
 		if (bqs) {
 			if (bCounting_Sort) {
 				Counting_Sortj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -24120,9 +19175,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		*/
 
 
-		// Нахождение матрицы грубосеточного уровня :
+		// Нахождение матрицы грубосеточного уровня:
 		// Acorse=R*Afine*P;
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -24147,7 +19202,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// Фред Густавсон IBM 1978.
 		// 23 октября 2015 года.
 
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -24287,6 +19342,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 			node_AVL_Gus* root_Gus = 0;
 
+#if 0
 			if (0) {
 
 				// линейный поиск очень медленный на больших размерностях.
@@ -24330,13 +19386,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			}
 			else if (0) {
 
-				// Закоментировано т.к. это медленная ветвь кода.
+				// закомментировано т.к. это медленная ветвь кода.
 				// Ситуация такая. Ранее на небольших задачах до 1М включительно,
 				// данная ветвь кода не показывала выигрыша в быстродействии и возможно 
 				// даже была слегка медленее (совсем немного). 
 				// Это быстрая часть кода на больших размерностях.
 				// Гораздо лучше линейного поиска. Сейчас это подтверждается
-				// на непрямой интерполляции при задаче в 3.2М неизвестных.
+				// на непрямой интерполяции при задаче в 3.2М неизвестных.
 				// Там на линейный поиск в данном месте тратится не менее 80% фазы построения грубосеточных операторов.
 
 				// На основе АВЛ
@@ -24384,7 +19440,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					}
 				}
 			}
-			else {
+			else
+#endif
+			{
 
 				// на основе hash таблицы. 
 
@@ -24562,7 +19620,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 			//if (Amat[i_1].j < 0) {
-			//	printf("error : negativ j index\n");
+			//	printf("error: negativ j index\n");
 			//	system("pause");
 			//}
 #if doubleintprecision == 1
@@ -24604,7 +19662,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 			//if (Amat[i_1].j < 0) {
-			//	printf("error : negativ j index\n");
+			//	printf("error: negativ j index\n");
 			//	system("pause");
 			//}
 #if doubleintprecision == 1
@@ -24656,9 +19714,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 		// Фред Густавсон IBM 1978
 		// В ядре кода Густавсона нету ни одного ветвления,
-		// а мы знаем что в результате профайлинга предыдущих версий кода :
+		// а мы знаем что в результате профайлинга предыдущих версий кода:
 		// (наивный, слияние, Писсанецки) львиная доля вычислительной работы уходила
-		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно сумирование.
+		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно суммирование.
 		// 23 октября 2015 года.
 		// 6 января 2016 года Добавлено АВЛ дерево.
 
@@ -24670,14 +19728,14 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// Преобразование обоих матриц в формат CRS.
 		if (bqs) {
 			if (bCounting_Sort) {
-				Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+				Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			}
 			else {
-				qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+				qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			}
 		}
 		else {
-			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 
 		integer* row_ind_AS = nullptr;
@@ -24803,6 +19861,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 			node_AVL_Gus* root_Gus = 0;
 
+#if 0
 			if (0) {
 				// сканируем все элементы строки левого операнда.
 				for (integer ii1 = row_ind_AS[istr]; ii1 <= row_ind_AE[istr]; ii1++) {
@@ -24836,7 +19895,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -24892,7 +19951,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -24906,7 +19965,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 				}
 
 			}
-			else {
+			else 
+#endif 
+{
 
 				// На основе hash таблицы.
 				// сканируем все элементы строки левого операнда.
@@ -24952,7 +20013,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -25274,8 +20335,8 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 		//проверка конец
 
-		//delete[] count_sosed;
-		free(count_sosed);
+		//delete[] count_neighbour;
+		free(count_neighbour);
 		//delete[] row_startA;
 		free(row_startA);
 
@@ -26088,7 +21149,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	// 9 september 2015.
 	// q - quick.
 	// seidelq(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0);
-	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 	//{
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -26285,7 +21346,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	residual_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	if (residual_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
+		printf("Problem: not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -26769,9 +21830,8 @@ handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglom
 
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	integer imyinit =  ZERO_INIT; // ZERO_INIT optimum
+	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	//integer imyinit =  ZERO_INIT; // ZERO_INIT optimum
 
 	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
@@ -26853,11 +21913,11 @@ handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglom
 					x[i47] = x_best_search[i47];
 				}
 				break;
-				// закоментировал 11.01.2020
+				// закомментировал 11.01.2020
 				// как недостижимый код.
 				// Эта ветвь кода вообще никогда не вызовется.
 				/*
-				printf("Fatal amg error : Strong divergence amg solver...%e \n", fabs(res_best_search / res0start));
+				printf("Fatal amg error: Strong divergence amg solver...%e \n", fabs(res_best_search / res0start));
 				printf("res_best_search=%e, res0start=%e\n", fabs(res_best_search), fabs(res0start));
 				printf("BiCGStab+ILU2 is start now...\n");
 				printf("please wait...");
@@ -29764,11 +24824,11 @@ if (ilevel > 1) {
 
 } // classic_aglomerative_amg2
 
-// 27 янв 2016. Предпринята попытка сделать в точности как у Руге и Стубена. Попытка провалилась.
+// 27 янв 2016. Предпринята попытка сделать в точности как у Руге и Штубена. Попытка провалилась.
 // Сходимость сильно испорчена.
 // 22 января текущий работоспособный вариант кода.
-// Планы : 1. сделать версию amg3. 
-// В ней : 2. заменить все проверки на невыделение оперативной памяти на универсальную функцию единую для всего.
+// Планы: 1. сделать версию amg3. 
+// В ней: 2. заменить все проверки на невыделение оперативной памяти на универсальную функцию единую для всего.
 // это очевидно немного сократит программный код.
 // В ней 3. код V цикла оформить в виде цикла for. Тогда же можно будет попробовать вставить direct метод для самого грубого уровня.
 // Это же откроет возможности сделать из amg алгоритма предобуславливатель для BiCGStab.
@@ -29776,7 +24836,7 @@ if (ilevel > 1) {
 // 10 января 2016 двоичный поиск заменён на хеширование.
 // 15 декабря 2015. Данная версия кода будет полностью очищена от устаревшего кода.
 // 13 декабря 2015. Внедрено АВЛ дерево. При внедрении АВЛ дерева исправлена логическая ошибка в
-// построении С-F разбиения, теперь C-F разбиение строится корректно.
+// построении С-F разбиения, теперь C/F разбиение строится корректно.
 // Исправлен и внедрён quicksort (qs,qsj)
 // который в рять раз быстрее пирамидальной сортировки.
 // Полный отказ от band_size!!!.
@@ -29784,19 +24844,20 @@ if (ilevel > 1) {
 // 18 октября 2015. Полностью работоспособный мультигрид.
 // Тестировалось на условиях Дирихле но должно работать на любых 
 // краевых задачах. 18 октября датируется версия 0.04. Версия 0.04 на треть
-// быстрее версии 0_03. Были ускорены как операции построения C-F разбиения, 
-// так и нахождение оператора Галёркина. При нахождении С-F разбиения 
-// учитывается уже построеннная его часть и поэтому число сканирований на
+// быстрее версии 0.03. Были ускорены как операции построения C/F разбиения, 
+// так и нахождение оператора Галёркина. При нахождении С/F разбиения 
+// учитывается уже построенная его часть и поэтому число сканирований на
 // на поздних циклах сокращается охватывая только не построенную часть.
-// При нахождении произведеия Галёркина получена самая оптимальная по быстродествию версия,
+// При нахождении произведения Галёркина получена самая оптимальная по быстродействию версия,
 // Основанная на алгоритме слияния отсортированных списков.
 // 4 октября правильное построение последовательности вложенных графов.
 // 30 сентября продолжаем исправление метода. Делаем классический 
-// алгебраический многосеточный метод на основе  C-F разбиения.
+// алгебраический многосеточный метод на основе  C/F разбиения.
 // 16 сентября 2015 года обнаружено что операции 
 // сгрубления и интерполяции сделаны совершенно неверно,
 // и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-// Операции сгрубления и интерполляции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
+// Операции сгрубления и интерполяции будут сделаны заново на основе статьи
+// К.Н. Волкова в новой версии солвера.
 // 3 september 2015 Villa Borgese.
 template <typename doublerealT>
 integer classic_aglomerative_amg3(Ak1* &Amat,
@@ -29806,7 +24867,8 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	Ak1* &R, // restriction
 	Ak1* &P, // prolongation
 	doublereal* &x, doublereal* &b,
-	doublerealT &theta
+	doublerealT &theta, 
+	integer imyinit = ZERO_INIT
 	) {
 
 	const bool bprint_mesage_diagnostic = true;
@@ -29839,7 +24901,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	// В компиляторе надо увеличить размер стека до 4Мб.
 	bool bqs = true; // Использовать ли quicksort qs and qsj.
 	// Сортировка с подсчётом быстрее quickSort.
-	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая жрёт килотонну памяти (Короче для машин у которых море оперативки).
+	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая потребляет килотонну памяти (Короче для машин у которых море оперативки).
 
 
 	const doublerealT RealZERO = 1.0e-300;// 1.0e-10;
@@ -29848,12 +24910,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	// включение/отключение отладочного режима.
 	bool debug_reshime = false;
 
-	const integer max_sosed = 27850;
+	const integer max_neighbour = 27850;
 	// Мы будем поддерживать информацию о максимальном количестве соседей.
-	integer Maximumsosedcount = -1;
+	integer Maximumneighbourcount = -1;
 	// мы получим порядковый номер элемента с максимальным число соседей в матрице А,
-	// прямо в результате построения C-F разбиения.
-	bool bmaxsosedinfoactive = false;
+	// прямо в результате построения C/F разбиения.
+	bool bmaxneighbourinfoactive = false;
 
 
 	// Возможно можно обойтись без ji связи.
@@ -29894,25 +24956,24 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	istack = (integer*)malloc((istack_size_limit)*sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_3", (istack_size_limit));
 
-	// Для построения C-F декомпозиции нам тоже потребуется хеш таблица
-	// и стек для очистки хеш таблицы.
+	// Для построения C/F декомпозиции нам тоже потребуется хеш-таблица
+	// и стек для очистки хеш-таблицы.
 	bool* hash_table2 = (bool*)malloc((n + 1)*sizeof(bool));
 	handle_error<bool>(hash_table2, "hash_table2", "classic_aglomerative_amg_3", (n + 1));
 
 	// Инициализация.
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
-	// И теперь стек для очистки хеш таблицы.
+	// И теперь стек для очистки хеш-таблицы.
 	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1)*sizeof(integer));
 	handle_error<integer>(istack2, "istack2", "classic_aglomerative_amg_3", (n + 1));
 
-
 	integer iadd = 0;
 	integer nnzR = 1;
 	integer iaddR = 0;
 	integer nnz_aRP[maxlevel];
-	bool bcontinue = true;
+	
 	//bool* this_is_C_node = new bool[n + 1];
 	//bool* this_is_F_node = new bool[n + 1];
 	bool* this_is_C_node = (bool*)malloc((n + 1)*sizeof(bool));
@@ -29922,7 +24983,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	handle_error<bool>(this_is_F_node, "this_is_F_node", "classic_aglomerative_amg_3", (n + 1));
 
 
-	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue)) {
+	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50)) {
 
 
 		/*
@@ -29968,8 +25029,8 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		*/
 
 
-		Maximumsosedcount = -1;
-		bmaxsosedinfoactive = false;
+		Maximumneighbourcount = -1;
+		bmaxneighbourinfoactive = false;
 
 		//if (ilevel > 1) {
 		//if (n_a[ilevel - 2] == n_a[ilevel - 1]) break;
@@ -30109,23 +25170,23 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// даёт на выходе отсортированную по строкам матрицу.
 		if (ilevel == 1) {
 			// сортировка исходной  А  по i.
-			//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
+			//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1], comparei);
 
 
 			// 7 января 2016. Обязательно нужна эта сортировка.
 			if (bqs) {
 				if (bCounting_Sort) {
-					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, true);
+					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, true, indx_comparei);
 				}
 				else {
 					// quicksort
-					qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 				}
 			}
 			else {
-				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 			}
-			//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 		}
 
 
@@ -30142,15 +25203,15 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			if (bqs) {
 				if (bCounting_Sort) {
 					// Сортировка с подсчётом за линейное время.
-					Counting_Sortj(Atemp, 1, nnz_a[ilevel - 1]);
+					Counting_Sort(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				}
 				else {
 					// Быстрая сортировка Чарльза Хоара.
-					qsj(Atemp, 1, nnz_a[ilevel - 1]);
+					qs(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				}
 			}
 			else {
-				HeapSort_j(Atemp, 1, nnz_a[ilevel - 1]);
+				HeapSort(Atemp, 1, nnz_a[ilevel - 1], comparej);
 			}
 		}
 
@@ -30181,13 +25242,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = nullptr;
-		//count_sosed = new integer[n_a[ilevel - 1] + 1];
-		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
-		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
+		integer* count_neighbour = nullptr;
+		//count_neighbour = new integer[n_a[ilevel - 1] + 1];
+		count_neighbour = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
+		handle_error<integer>(count_neighbour, "count_neighbour", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
 
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
-			count_sosed[ii] = 0; // нет соседей.
+			count_neighbour[ii] = 0; // нет соседей.
 		}
 
 
@@ -30199,7 +25260,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
 				integer ic = -1;
-				integer cand[max_sosed];
+				integer cand[max_neighbour];
 				if (0) {
 					for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 						ic++; //i,j
@@ -30228,20 +25289,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						}
 					}
 				}
-				integer len_sosed = ic;
+				integer len_neighbour = ic;
 				// Найти столбец j который равен индексу Amat[ii].i
 				//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 				//if (Amat[ii1].i != Amat[ii].i) {
 				//	if (Amat[ii1].j == Amat[ii].i) {
 				// j,i
-				//		bool foundsosed = false;
-				//		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-				//			if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+				//		bool foundneighbour = false;
+				//		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+				//			if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 				//		}
-				//		if (!foundsosed) {
+				//		if (!foundneighbour) {
 				//			ic++;
 				//			cand[ic] = Amat[ii1].j;
-				//			len_sosed++;
+				//			len_neighbour++;
 				//		}
 				//	}
 				//}
@@ -30252,24 +25313,24 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					for (integer ii1 = ii2; (ii1 <= nnz_a[ilevel - 1]) && (Atemp[ii1].j == Amat[ii].i); ii1++) {
 						if (Atemp[ii1].i != Amat[ii].i) {
 							// j,i
-							bool foundsosed = false;
-							for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-								if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+							bool foundneighbour = false;
+							for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+								if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 							}
-							if (!foundsosed) {
+							if (!foundneighbour) {
 								ic++;
 								cand[ic] = Atemp[ii1].j;
-								len_sosed++;
+								len_neighbour++;
 							}
 						}
 					}
 				}
 
 
-				count_sosed[Amat[ii].i] = ic;
-				if (ic > Maximumsosedcount) {
-					Maximumsosedcount = ic;
-					bmaxsosedinfoactive = true;
+				count_neighbour[Amat[ii].i] = ic;
+				if (ic > Maximumneighbourcount) {
+					Maximumneighbourcount = ic;
+					bmaxneighbourinfoactive = true;
 				}
 				flag[Amat[ii].i] = true;
 			}
@@ -30277,7 +25338,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 
-		integer maxsosed = 0;
+		integer maxneighbour = 0;
 		integer icandidate = 0;
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
 			flag[ii] = false; // init flag
@@ -30286,13 +25347,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// Это первый встретившийся узел с наибольшим числом соседей.
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
-				if (count_sosed[Amat[ii].i] > maxsosed) {
-					maxsosed = count_sosed[Amat[ii].i];
+				if (count_neighbour[Amat[ii].i] > maxneighbour) {
+					maxneighbour = count_neighbour[Amat[ii].i];
 					icandidate = ii;
-					if (bmaxsosedinfoactive) {
+					if (bmaxneighbourinfoactive) {
 						// организуем досрочный выход из цикла for.
 						// Это должно сильно сокращать количество сканирований.
-						if (maxsosed == Maximumsosedcount) break;
+						if (maxneighbour == Maximumneighbourcount) break;
 					}
 				}
 				flag[Amat[ii].i] = true;
@@ -30310,17 +25371,17 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		integer n_coarce = 1; // начальный номер C узла.
 		nnzR = 1;
 
-		const integer NULL_SOSED = -1;
-		integer vacant = NULL_SOSED;
+		const integer NULL_NEIGHBOUR = -1;
+		integer vacant = NULL_NEIGHBOUR;
 		bool bcontinue = true;
 
-		// Построение C-F разбиения.
+		// Построение C/F разбиения.
 		//while (icandidate != 0)
 		integer icountprohod = 0;
 		// Мы будем заоминать с какой позиции начинаются ещё не помеченные узлы,
 		// это сократит количество перебираемых элементов в поиске узла с максимальным 
 		// количеством соседей.
-		//integer ibegining_start_index_found_maximum = 1 + iadd;
+		// integer ibegining_start_index_found_maximum = 1 + iadd;
 		// храним те узлы которые уже были пройдены при конструировании.
 		bool *bmarkervisit = nullptr;
 		//bmarkervisit = new bool[n + 1];
@@ -30362,11 +25423,11 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			
 
 
-			integer set[max_sosed]; // не более 20 узлов в одном агрегате.
-			integer set17[max_sosed]; // для новой ветки кода.
+			integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
+			integer set17[max_neighbour]; // для новой ветки кода.
 			// инициализация убрана потому что она не нужна и она сильно тормозит быстродействие.
-			//for (integer js = 0; js < max_sosed; js++) {
-			//set[js] = NULL_SOSED;
+			//for (integer js = 0; js < max_neighbour; js++) {
+			//set[js] = NULL_NEIGHBOUR;
 			//}
 			integer ic = 0;
 
@@ -30497,10 +25558,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						vacant = Amat[ii].j;
 						for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = NULL_NEIGHBOUR;
 							}
 						}
-						if (vacant != NULL_SOSED) {
+						if (vacant != NULL_NEIGHBOUR) {
 							set[ic] = vacant;
 
 							ic++;
@@ -30517,10 +25578,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							vacant = Amat[iscan].j;
 							for (integer js = 0; js < ic; js++) {
 								if (vacant == set[js]) {
-									vacant = NULL_SOSED;
+									vacant = NULL_NEIGHBOUR;
 								}
 							}
-							if (vacant != NULL_SOSED) {
+							if (vacant != NULL_NEIGHBOUR) {
 								set[ic] = vacant;
 
 								ic++;
@@ -30545,10 +25606,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				//	vacant = Amat[ii1].i;
 				//	for (integer js = 0; js < ic; js++) {
 				//		if (vacant == set[js]) {
-				//			vacant = NULL_SOSED;
+				//			vacant = NULL_NEIGHBOUR;
 				//		}
 				//	}
-				//	if (vacant != NULL_SOSED) {
+				//	if (vacant != NULL_NEIGHBOUR) {
 				//		set[ic] = vacant; // j,i связь.
 
 				//		ic++;
@@ -30567,10 +25628,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				//	vacant = Amat[ii1].i;
 				//	for (integer js = 0; js < ic; js++) {
 				//		if (vacant == set[js]) {
-				//			vacant = NULL_SOSED;
+				//			vacant = NULL_NEIGHBOUR;
 				//		}
 				//	}
-				//	if (vacant != NULL_SOSED) {
+				//	if (vacant != NULL_NEIGHBOUR) {
 				//		set[ic] = vacant; // j,i связь.
 
 				//		ic++;
@@ -30590,10 +25651,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								vacant = Atemp[ii2].i;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant; // j,i связь.
 									ic++;
 								}
@@ -30642,7 +25703,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					for (integer js = 0; js < ic; js++) {
 						data_BalTree ddel;
 						ddel.i = set[js];
-						ddel.countsosed = count_sosed[set[js]];
+						ddel.count_neighbour = count_neighbour[set[js]];
 						//ddel.ii = row_startA[ddel.i];
 						switch (id_tree) {
 						case AVL_TREE_ID: root = remove_AVL(root, ddel);
@@ -30677,6 +25738,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				//for (integer ii_2 = istart; ii_2 <= iend; ii_2++) {
 
 				// Старая реализация которой присуща большая нагрузка на операторы new && delete.
+#if 0
 				if (0) {
 					for (integer js = 1; js < ic; js++) {
 
@@ -30702,7 +25764,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									lsos->next = nullptr;
 									lsos->i = Amat[is0].j;
 									lsos->ii = row_startA[lsos->i];
-									// lsos->countsosed // не используется.
+									// lsos->count_neighbour // не используется.
 									List *newnodesos = new List;
 									newnodesos->prev = lsos;
 									lsos->next = newnodesos;
@@ -30759,18 +25821,18 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							}
 
 							data_BalTree dsearch;
-							dsearch.countsosed = count_sosed[isc];
+							dsearch.count_neighbour = count_neighbour[isc];
 							//dsearch.ii = ii_2;
 							dsearch.i = isc;
-							count_sosed[isc] += ic2;
+							count_neighbour[isc] += ic2;
 							data_BalTree dadd;
-							dadd.countsosed = count_sosed[isc];
+							dadd.count_neighbour = count_neighbour[isc];
 							//dadd.ii = ii_2;
 							dadd.i = isc;
-							if (bmaxsosedinfoactive) {
+							if (bmaxneighbourinfoactive) {
 								// Обновляем информацию о максимальном количестве соседей.
-								if (count_sosed[isc] >= Maximumsosedcount) {
-									Maximumsosedcount = count_sosed[isc];
+								if (count_neighbour[isc] >= Maximumneighbourcount) {
+									Maximumneighbourcount = count_neighbour[isc];
 								}
 
 								// Добавляем соседа в любом случае
@@ -30870,18 +25932,18 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 
 										// Добавляем соседа в любом случае
@@ -30965,12 +26027,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								}
 
 								data_BalTree dsearch;
-								dsearch.countsosed = count_sosed[isc];
+								dsearch.count_neighbour = count_neighbour[isc];
 								//dsearch.ii = ii_2;
 								dsearch.i = isc;
-								count_sosed[isc] += ic2;
+								count_neighbour[isc] += ic2;
 								data_BalTree dadd;
-								dadd.countsosed = count_sosed[isc];
+								dadd.count_neighbour = count_neighbour[isc];
 								//dadd.ii = ii_2;
 								dadd.i = isc;
 
@@ -30998,10 +26060,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									}
 								}
 
-								if (bmaxsosedinfoactive) {
+								if (bmaxneighbourinfoactive) {
 									// Обновляем информацию о максимальном количестве соседей.
-									if (count_sosed[isc] >= Maximumsosedcount) {
-										Maximumsosedcount = count_sosed[isc];
+									if (count_neighbour[isc] >= Maximumneighbourcount) {
+										Maximumneighbourcount = count_neighbour[isc];
 									}
 								}
 
@@ -31039,7 +26101,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 								// на ряде тестовых задач при таком подходе агломерация проходила очень
 								// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-								// Эта проблема проявилась на задачах :
+								// Эта проблема проявилась на задачах:
 								// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 								// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 								// Проблема не в этом месте кода.
@@ -31063,12 +26125,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
 
@@ -31095,10 +26157,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 										}
 									}
 
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 									}
 								}
@@ -31108,7 +26170,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						}
 					}
 
-					// Очистка (восстановление хеш таблицы).
+					// Очистка (восстановление хеш-таблицы).
 					for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 						hash_table2[istack2[i_54]] = false;
 					}
@@ -31116,7 +26178,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 				} // the end
-				else {
+				else 
+#endif
+{
 					// 27 января 2016.
 					// 13 января 2016. Новая логика.
 					// Устраним некоторые повторные модификации (это должно снизить нагрузку на АВЛ дерево).
@@ -31158,7 +26222,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 									// на ряде тестовых задач при таком подходе агломерация проходила очень
 									// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-									// Эта проблема проявилась на задачах :
+									// Эта проблема проявилась на задачах:
 									// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 									// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 									// Проблема не в этом месте кода.
@@ -31204,12 +26268,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 											data_BalTree dsearch;
-											dsearch.countsosed = count_sosed[isc];
+											dsearch.count_neighbour = count_neighbour[isc];
 											//dsearch.ii = ii_2;
 											dsearch.i = isc;
-											count_sosed[isc] += ic2;
+											count_neighbour[isc] += ic2;
 											data_BalTree dadd;
-											dadd.countsosed = count_sosed[isc];
+											dadd.count_neighbour = count_neighbour[isc];
 											//dadd.ii = ii_2;
 											dadd.i = isc;
 
@@ -31237,10 +26301,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 											}
 										}
 
-										if (bmaxsosedinfoactive) {
+										if (bmaxneighbourinfoactive) {
 											// Обновляем информацию о максимальном количестве соседей.
-											if (count_sosed[isc] >= Maximumsosedcount) {
-												Maximumsosedcount = count_sosed[isc];
+											if (count_neighbour[isc] >= Maximumneighbourcount) {
+												Maximumneighbourcount = count_neighbour[isc];
 											}
 										}
 									}
@@ -31251,7 +26315,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						}
 					}
 
-					// Очистка (восстановление хеш таблицы).
+					// Очистка (восстановление хеш-таблицы).
 					for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 						hash_table2[istack2[i_54]] = false;
 					}
@@ -31273,11 +26337,11 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								if (ic17 > 0) {
 									for (integer js = 0; js < ic17; js++) {
 										if (vacant17 == set17[js]) {
-											vacant17 = NULL_SOSED;
+											vacant17 = NULL_NEIGHBOUR;
 										}
 									}
 								}
-								if (vacant17 != NULL_SOSED) {
+								if (vacant17 != NULL_NEIGHBOUR) {
 									set17[ic17] = vacant17;
 
 									ic17++;
@@ -31294,10 +26358,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									vacant17 = Amat[iscan].j;
 									for (integer js = 0; js < ic; js++) {
 										if (vacant17 == set17[js]) {
-											vacant17 = NULL_SOSED;
+											vacant17 = NULL_NEIGHBOUR;
 										}
 									}
-									if (vacant != NULL_SOSED) {
+									if (vacant != NULL_NEIGHBOUR) {
 										set17[ic17] = vacant;
 
 										ic17++;
@@ -31318,7 +26382,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						for (integer js = 0; js < ic17; js++) {
 							integer isc17 = set17[js];
 							data_BalTree dsearch;
-							dsearch.countsosed = count_sosed[isc17];
+							dsearch.count_neighbour = count_neighbour[isc17];
 							//dsearch.ii = ii_2;
 							dsearch.i = isc17;
 							bool foundnow = false;
@@ -31335,8 +26399,8 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							if (foundnow) {
 								data_BalTree  dadd;
 								// декрементация счётчика для всех Weakly соседей нового С узла.
-								dadd.countsosed = count_sosed[isc17] - 1;
-								count_sosed[isc17]--;
+								dadd.count_neighbour = count_neighbour[isc17] - 1;
+								count_neighbour[isc17]--;
 								dadd.i = isc17;
 								switch (id_tree)
 								{
@@ -31373,7 +26437,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					bcontinue = true;
 					istartflag_scan = i_1; // сокращаем пределы сканирования.
 					break; // досрочный выход из цикла for.
-					//if (maxsosed == -1) {
+					//if (maxneighbour == -1) {
 #if doubleintprecision == 1
 					//printf("ERROR!!!!  i_1=%lld\n", i_1);
 #else
@@ -31386,7 +26450,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 
 			// Вычисление узла с максимальным количеством соседей.
-			maxsosed = -1;
+			maxneighbour = -1;
 			icandidate = 0;
 
 
@@ -31417,9 +26481,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 			else {
 			#if doubleintprecision == 1
-				printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			system("pause");
@@ -31434,9 +26498,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 			else {
 			#if doubleintprecision == 1
-				printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			system("pause");
@@ -31477,9 +26541,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -31497,9 +26561,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -31548,9 +26612,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -31568,7 +26632,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			itop++;
 			}
 			else {
-			printf("itop>=istack_size_limit nado uvelichit istack_size_limit");
+			printf("itop>=istack_size_limit need to increase istack_size_limit");
 			}
 
 			//if (isize_p < ipool_size_limit) {
@@ -31576,9 +26640,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -31610,7 +26674,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					printf("found max");
 				}
 				// Данный код чрезвычайно компактен.
-				bmaxsosedinfoactive = true;
+				bmaxneighbourinfoactive = true;
 				// Надо найти максимальный элемент в АВЛ дереве.
 				node_AVL* emax = 0;
 				Tree_splay* emax_splay = 0;
@@ -31646,7 +26710,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -31665,7 +26729,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						root_splay = 0;
 						size_splay_Tree = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -31690,7 +26754,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -31703,15 +26767,15 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 
 #if doubleintprecision == 1
-			//printf("maximum number of sosed=%lld\n",maxsosed);
+			//printf("maximum number of neighbour=%lld\n",maxneighbour);
 #else
-			//printf("maximum number of sosed=%d\n",maxsosed);
+			//printf("maximum number of neighbour=%d\n",maxneighbour);
 #endif
 			
-			if (maxsosed == -1) if (debug_reshime) system("pause");
+			if (maxneighbour == -1) if (debug_reshime) system("pause");
 			//getchar();
 
-			if ((icandidate == 0) && (maxsosed == -1)) {
+			if ((icandidate == 0) && (maxneighbour == -1)) {
 				bcontinue = false;
 			}
 
@@ -31723,7 +26787,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 			icountprohod++;
 
-		} // Построение C-F разбиения. создано.
+		} // Построение C/F разбиения. создано.
 
 		//delete[] bmarkervisit;
 		free(bmarkervisit);
@@ -31774,7 +26838,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				integer icsos = 0;
 				// старая версия до 10 января 2016.
 				//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+				// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 				// 10 января 2016. на основе хеширования.
 				integer i_2 = row_startA[i_1];
 
@@ -31858,7 +26922,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 			// debug
-			// проверка качества C-F разбиения.
+			// проверка качества C/F разбиения.
 			//doublerealT* exp1 = new doublerealT[n_a[ilevel - 1] + 1];
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) exp1[i_1] = 0.0;
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) exp1[i_1] = 2.0;
@@ -31872,11 +26936,11 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 
-			// C-F разбиение построено, самое время построить оператор интерполяции.
+			// C/F разбиение построено, самое время построить оператор интерполяции.
 			// потом найти оператор проекции, как транспонированный оператор интерполяции.
 			// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
 
-			// Построение оператора интерполляции : 
+			// Построение оператора интерполяции: 
 			// coarse 2 fine.
 			//P*coarse==fine
 
@@ -31967,7 +27031,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 			if (the_good_old_interpolation) {
 
-				// Старая добрая верная, проверенная интерполляция.
+				// Старая добрая верная, проверенная интерполяция.
 				// К тому же чрезвычайно простая.
 
 				if (0) {
@@ -31983,7 +27047,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						// O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -31991,7 +27055,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -32005,7 +27069,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
@@ -32042,7 +27106,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -32050,7 +27114,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 
@@ -32081,8 +27145,8 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				if (0) {
 					// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-					// Прямая интерполляция с элементам непрямой.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 					// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
@@ -32101,7 +27165,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						// O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -32109,7 +27173,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -32123,7 +27187,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -32162,12 +27226,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
@@ -32181,7 +27245,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 								bool bCinsert = false;
 
-								// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+								// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 								for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 									if (Amat[is0].j != Amat[ii1].i) {
 										if (this_is_F_node[Amat[is0].j] == true) {
@@ -32227,7 +27291,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 												bool bvisit_sumPloc = false;
 
 												// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-												// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+												// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 												doublerealT sumP_loc = 0.0;
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -32253,7 +27317,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 												if (bvisit_sumPloc) {
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -32276,7 +27340,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													}
 												}
 												else {
-													// не было С соседей интерполляция может испытывать проблемы.
+													// не было С соседей интерполяция может испытывать проблемы.
 													// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 													// Данная проблема проявляется уже на втором уровне.
 													//printf("problem situation");
@@ -32305,7 +27369,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									bool bstandart_vjzov = true;
 									for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 										// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-										// когда с не менее чем двух сторон интерполляция сработала, здесь 
+										// когда с не менее чем двух сторон интерполяция сработала, здесь 
 										// же срабатывание было лишь с одной из сторон как минимум.
 										if (empty_interpol[i_38] == true) {
 											bstandart_vjzov = false;
@@ -32364,14 +27428,14 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				if (0) {
 					// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-					// Прямая интерполляция с элементам непрямой. Экспериментальный вариант. TODO.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой. Экспериментальный вариант. TODO.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей или имеют недостаточное число С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 
-					// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполляцию.
+					// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполяцию.
 					// Идея в том чтобы узел F имеющий лишь одного Strong С соседа обработать так чтобы у него было не менее 
-					// двух  C соседей учитывая эффект непрямой интерполляции.
+					// двух  C соседей учитывая эффект непрямой интерполяции.
 
 
 					ipromah = 0;
@@ -32383,13 +27447,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -32404,7 +27468,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						integer icsosF = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -32435,7 +27499,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -32451,12 +27515,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
@@ -32511,7 +27575,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 												bool bvisit_sumPloc = false;
 
 												// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-												// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+												// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 												doublerealT sumP_loc = 0.0;
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -32537,7 +27601,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 												if (bvisit_sumPloc) {
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -32560,7 +27624,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													}
 												}
 												else {
-													// не было С соседей интерполляция может испытывать проблемы.
+													// не было С соседей интерполяция может испытывать проблемы.
 													// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 													// Данная проблема проявляется уже на втором уровне вложенности.
 													//printf("problem situation");
@@ -32584,7 +27648,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								bool bstandart_vjzov = true;
 								for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 									// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-									// когда с не менее чем двух сторон интерполляция сработала, здесь 
+									// когда с не менее чем двух сторон интерполяция сработала, здесь 
 									// же срабатывание было лишь с одной из сторон как минимум.
 									if (empty_interpol[i_38] == true) {
 										bstandart_vjzov = false;
@@ -32613,7 +27677,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//	printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -32621,7 +27685,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 													// Это как раз единственная Strong C связь. 
@@ -32648,7 +27712,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -32684,7 +27748,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -32706,7 +27770,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -32811,13 +27875,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -32832,7 +27896,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -32867,7 +27931,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -32894,7 +27958,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													// заведомо один С сосед.
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -32903,7 +27967,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														iadditionalCstatistic++;
 														byes_add = true; // Были добавления узлов.
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 
 
@@ -32929,7 +27993,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -32938,7 +28002,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													iadditionalCstatistic++;
 													byes_add = true; // Были добавления узлов.
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 
 
@@ -32968,7 +28032,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
@@ -32977,7 +28041,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == istr_etalon1); is0++) {
 								iend_for1 = is0;
 								if (Amat[is0].j != istr_etalon1) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -32996,7 +28060,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -33030,7 +28094,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -33060,7 +28124,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 												if (fabs(Amat[is0].aij) > maxelem_threshold_theta) {
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -33068,7 +28132,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -33098,7 +28162,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													if (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F) {
 														// Рассматриваем Strong F связи.
 
-														// Смысл :
+														// Смысл:
 														// 
 
 
@@ -33137,7 +28201,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -33164,7 +28228,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 														doublerealT maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -33301,7 +28365,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -33309,7 +28373,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 
@@ -33366,13 +28430,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -33387,7 +28451,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						integer icsosF = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -33418,7 +28482,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -33446,7 +28510,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//	printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -33454,7 +28518,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 													// Это как раз единственная Strong C связь. 
@@ -33481,7 +28545,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -33517,7 +28581,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -33539,7 +28603,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -33579,7 +28643,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 											if (fabs(sumP) < RealZERO) {
 												//printf("error interpolation zero diagonal sumP.\n");
-												//printf("Fnode all sosed is F");
+												//printf("Fnode all neighbour is F");
 												//system("pause");
 												//printf("i8 is Dirichlet node\n");
 												this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -33587,7 +28651,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 												bweSholdbeContinue = true;
 												iadditionalCstatistic++;
 												//exit(1);
-												// здесь нужна непрямая интерполляция.
+												// здесь нужна непрямая интерполяция.
 											}
 											else {
 
@@ -33614,7 +28678,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 												// Рассматриваем Strong F связи.
 												// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-												// Смысл :
+												// Смысл:
 												//
 
 
@@ -33650,7 +28714,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -33672,7 +28736,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма
+													// В общем это двойная интерполяционная сумма
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -33716,7 +28780,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					if (1) {
 						// шестая попытка.
 						// CGHV1J amg1r5 time 0.26
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25   0:48  29  6.55A
 						// 0.3    0:45  28  6.19A 
@@ -33730,7 +28794,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						// 0.35 1:46 27 3.51
 						// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 						// Electric potencial in FET2 amg1r5 time 1:38
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25 3:19 36 6.65
 						// 0.3 3:02 34 6.34
@@ -33752,13 +28816,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -33773,7 +28837,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -33804,7 +28868,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -33827,7 +28891,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													 if (fabs(sumP) < RealZERO) {
 														 //printf("error interpolation zero diagonal sumP.\n");
-														 //printf("Fnode all sosed is F");
+														 //printf("Fnode all neighbour is F");
 														 //system("pause");
 														 //	printf("i8 is Dirichlet node\n");
 														 this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -33836,7 +28900,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														 iadditionalCstatistic++;
 														 byes_add = true;
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 													 }
 
 
@@ -33857,7 +28921,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 												 if (fabs(sumP) < RealZERO) {
 													 //printf("error interpolation zero diagonal sumP.\n");
-													 //printf("Fnode all sosed is F");
+													 //printf("Fnode all neighbour is F");
 													 //system("pause");
 													 //printf("i8 is Dirichlet node\n");
 													 this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -33866,7 +28930,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													 iadditionalCstatistic++;
 													 byes_add = true;
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 												 }
 
 
@@ -33893,7 +28957,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// шестая попытка.
 						// CGHV1J amg1r5 time 0.26
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25   0:48  29  6.55A
 						// 0.3    0:45  28  6.19A 
@@ -33907,7 +28971,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						// 0.35 1:46 27 3.51
 						// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 						// Electric potencial in FET2 amg1r5 time 1:38
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25 3:19 36 6.65
 						// 0.3 3:02 34 6.34
@@ -33929,13 +28993,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if (fabs(Amat[is0].aij) > maxelem_threshold) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -33950,7 +29014,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -33981,7 +29045,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -34009,7 +29073,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -34017,7 +29081,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -34044,7 +29108,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 														// Рассматриваем Strong F связи.
 
-														// Смысл :
+														// Смысл:
 														// 
 
 
@@ -34080,7 +29144,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -34103,7 +29167,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 															}
 														}
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -34156,7 +29220,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -34164,7 +29228,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 
@@ -34193,7 +29257,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 													// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-													// Смысл :
+													// Смысл:
 													//
 
 
@@ -34232,7 +29296,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -34257,7 +29321,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 														icsos_loc = 0;
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc1 = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -34283,7 +29347,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 														}
 
 														if (icsos_loc > 0) {
-															// В общем это двойная интерполляционная сумма
+															// В общем это двойная интерполяционная сумма
 															for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 																if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																	if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -34340,7 +29404,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									//}
 									//}
 
-									// Апосториорная корекция
+									// Апосториорная коррекция
 									for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 										P[i_95].aij = P[i_95].aij / sum_ok;
 									}
@@ -34360,7 +29424,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			else if (true) {
 
 
-				// Экспериментальная интерполляция 1 января 2016.
+				// Экспериментальная интерполяция 1 января 2016.
 
 				ipromah = 0;
 				ipromah_one = 0;
@@ -34370,7 +29434,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 					// Нам нужен разреженный оператор Галёркина.
 					// 5 декабря 2015 года мы попробуем увеличить разреженность
-					// оператора интерполляции а значит и оператора Галёркина.
+					// оператора интерполяции а значит и оператора Галёркина.
 					doublerealT maxelem_threshold = -1.0;
 					//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 					integer ii1 = row_startA[i8];
@@ -34391,7 +29455,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 					doublerealT SumPall = 0.0;
 					// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					doublerealT sumP = 0.0;
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
@@ -34436,7 +29500,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -34444,7 +29508,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -34469,7 +29533,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 								else
 									if (this_is_F_node[Amat[is0].j] == true) {
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -34503,7 +29567,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublerealT sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -34525,7 +29589,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 													if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -34559,9 +29623,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				}
 			}
 			else {
-				// От интерполляции зависит очень много поэтому
-				// реализуем следующую экспериментальную идею интерполляции.
-				// Эта интерполляция претендует быть единственно теоретически верной,
+				// От интерполяции зависит очень много поэтому
+				// реализуем следующую экспериментальную идею интерполяции.
+				// Эта интерполяция претендует быть единственно теоретически верной,
 				// сделанной на основе литературных данных.
 
 
@@ -34573,13 +29637,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 					// Нам нужен разреженный оператор Галёркина.
 					// 5 декабря 2015 года мы попробуем увеличить разреженность
-					// оператора интерполляции а значит и оператора Галёркина.
+					// оператора интерполяции а значит и оператора Галёркина.
 					doublerealT maxelem_threshold = -1.0;
 					//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 					integer ii1 = row_startA[i8];
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if (fabs(Amat[is0].aij) > maxelem_threshold) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -34593,7 +29657,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					//integer icsos = 0;
 
 					// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					doublerealT sumP = 0.0;
 					doublerealT sumPindicator = 0.0;
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -34638,7 +29702,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						if (fabs(sumPindicator) < RealZERO) {
 							//printf("error interpolation zero diagonal sumP.\n");
-							//printf("Fnode all sosed is F");
+							//printf("Fnode all neighbour is F");
 							//system("pause");
 							//printf("i8 is Dirichlet node\n");
 							this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -34646,9 +29710,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							bweSholdbeContinue = true;
 							iadditionalCstatistic++;
 							//exit(1);
-							// здесь нужна непрямая интерполляция.
+							// здесь нужна непрямая интерполяция.
 
-							// Мы не будем добалять С узлы, мы будем использовать непрямую интерполляцию.
+							// Мы не будем добалять С узлы, мы будем использовать непрямую интерполяцию.
 
 
 
@@ -34816,21 +29880,21 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			//}
 		}
 
-		// heapsort(P,key==j,iaddR+1,iaddR+nnzR - 1);
+		// heapsort(P,key==j,iaddR+1,iaddR+nnzR - 1, comparej);
 
 		/*
 		// 10 января 2016. Эта сортировка не требуется.
 		if (bqs) {
 		if (bCounting_Sort) {
-		Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+		Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 		}
 		else {
 		// Быстрая сортировка Хоара.
-		qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+		qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 		}
 		}
 		else {
-		HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+		HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 		*/
 
@@ -34839,18 +29903,18 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// R=P/ap. ????
 
 
-		// heapsort(R,key==i,iaddR+1,iaddR+nnzR - 1);
+		// heapsort(R,key==i,iaddR+1,iaddR+nnzR - 1, comparei);
 
 		if (bqs) {
 			if (bCounting_Sort) {
-				Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1,false);
+				Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1,false, indx_comparei);
 			}
 			else {
-				qs(R, 1 + iaddR, iaddR + nnzR - 1);
+				qs(R, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 			}
 		}
 		else {
-			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1, comparei);
 		}
 
 
@@ -34920,7 +29984,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 		// Лишний код потомучто потом сразу же следует сортировка по i.
 		/*
-		// 7 января 2016. закоментировано.
+		// 7 января 2016. закомментировано.
 		if (bqs) {
 		if (bCounting_Sort) {
 		Counting_Sortj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -34935,9 +29999,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		*/
 
 
-		// Нахождение матрицы грубосеточного уровня :
+		// Нахождение матрицы грубосеточного уровня:
 		// Acorse=R*Afine*P;
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -34962,7 +30026,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// Фред Густавсон IBM 1978.
 		// 23 октября 2015 года.
 
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -35102,6 +30166,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 			node_AVL_Gus* root_Gus = 0;
 
+#if 0
 			if (0) {
 
 				// линейный поиск очень медленный на больших размерностях.
@@ -35145,13 +30210,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 			else if (0) {
 
-				// Закоментировано т.к. это медленная ветвь кода.
+				// закомментировано т.к. это медленная ветвь кода.
 				// Ситуация такая. Ранее на небольших задачах до 1М включительно,
 				// данная ветвь кода не показывала выигрыша в быстродействии и возможно 
 				// даже была слегка медленее (совсем немного). 
 				// Это быстрая часть кода на больших размерностях.
 				// Гораздо лучше линейного поиска. Сейчас это подтверждается
-				// на непрямой интерполляции при задаче в 3.2М неизвестных.
+				// на непрямой интерполяции при задаче в 3.2М неизвестных.
 				// Там на линейный поиск в данном месте тратится не менее 80% фазы построения грубосеточных операторов.
 
 				// На основе АВЛ
@@ -35199,7 +30264,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 					}
 				}
 			}
-			else {
+			else
+#endif
+			{
 
 				// на основе hash таблицы. 
 
@@ -35378,7 +30445,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 		//if (Amat[i_1].j < 0) {
-		//	printf("error : negativ j index\n");
+		//	printf("error: negativ j index\n");
 		//	system("pause");
 		//}
 #if doubleintprecision == 1
@@ -35420,7 +30487,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 		//if (Amat[i_1].j < 0) {
-		//	printf("error : negativ j index\n");
+		//	printf("error: negativ j index\n");
 		//	system("pause");
 		//}
 #if doubleintprecision == 1
@@ -35472,9 +30539,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 		// Фред Густавсон IBM 1978
 		// В ядре кода Густавсона нету ни одного ветвления,
-		// а мы знаем что в результате профайлинга предыдущих версий кода :
+		// а мы знаем что в результате профайлинга предыдущих версий кода:
 		// (наивный, слияние, Писсанецки) львиная доля вычислительной работы уходила
-		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно сумирование.
+		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно суммирование.
 		// 23 октября 2015 года.
 		// 6 января 2016 года Добавлено АВЛ дерево.
 
@@ -35486,14 +30553,14 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// Преобразование обоих матриц в формат CRS.
 		if (bqs) {
 			if (bCounting_Sort) {
-				Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+				Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			}
 			else {
-				qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+				qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			}
 		}
 		else {
-			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 		}
 
 		integer* row_ind_AS = nullptr;
@@ -35626,7 +30693,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			//memset(vector_sum, 0, size_v);
 
 			node_AVL_Gus* root_Gus = 0;
-
+#if 0
 			if (0) {
 				// сканируем все элементы строки левого операнда.
 				for (integer ii1 = row_ind_AS[istr]; ii1 <= row_ind_AE[istr]; ii1++) {
@@ -35660,7 +30727,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -35717,7 +30784,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -35731,7 +30798,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 				}
 
 			}
-			else {
+			else
+#endif
+ {
 
 				// На основе hash таблицы.
 				// сканируем все элементы строки левого операнда.
@@ -35782,7 +30851,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -36107,8 +31176,8 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 		//проверка конец
 
-		//delete[] count_sosed;
-		free(count_sosed);
+		//delete[] count_neighbour;
+		free(count_neighbour);
 		//delete[] row_startA;
 		free(row_startA);
 
@@ -36655,7 +31724,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	// 9 september 2015.
 	// q - quick.
 	// seidelq(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0);
-	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 	//{
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -36847,7 +31916,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	residual_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	if (residual_fine == nullptr) {
 	// недостаточно памяти на данном оборудовании.
-	printf("Problem : not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
+	printf("Problem: not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
 	printf("Please any key to exit...\n");
 	//getchar();
 	system("pause");
@@ -37331,9 +32400,8 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	integer imyinit = ZERO_INIT; // ZERO_INIT optimum
+	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	//const integer imyinit = ZERO_INIT; // ZERO_INIT optimum
 
 
 
@@ -37353,14 +32421,14 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		}
 		iter_limit++;
 
-
+#ifdef MY_DEBUG_NOT_NUMBER
 		if (dres!=dres) {
 			printf("divergence AMG detected\n");
 			printf("\a\a\a\a\a\a\a\a");
 			system("pause");
 			exit(1);
 		}
-
+#endif
 
 		doublerealT R0_0 = 0.0;
 		doublerealT Rprev_0 = 0.0, Rnext_0 = 0.0;
@@ -37446,13 +32514,16 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 			// Amat*e=r;
 			//doublerealT* error_approx_coarse = new doublerealT[n_a[1] + 1];
-			if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+			{
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
 					error_approx_coarse[ii] = 0.0;
 				}
 			}
 
-			if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+			{
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
 					error_approx_coarse[ii] = (rand() / ((doublerealT)RAND_MAX));
 				}
@@ -37534,16 +32605,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 					// Amat*e=r;
 					//doublerealT* error_approx_coarse1 = new doublerealT[n_a[2] + 1];
-					if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+					{
 						for (integer ii = 1; ii <= n_a[2]; ii++) {
 							error_approx_coarse1[ii] = 0.0;
 						}
 					}
-					if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+					{
 						for (integer ii = 1; ii <= n_a[2]; ii++) {
 							error_approx_coarse1[ii] = (rand() / ((doublerealT)RAND_MAX));
 						}
 					}
+
 
 					//for (integer i_37 = 1; i_37 <= igam; i_37++)
 				{
@@ -37621,17 +32696,21 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// Amat*e=r;
 						//doublerealT* error_approx_coarse2 = new doublerealT[n_a[3] + 1];
-						if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+						{
 							for (integer ii = 1; ii <= n_a[3]; ii++) {
 								error_approx_coarse2[ii] = 0.0;
 							}
 						}
-						if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+						{
 							for (integer ii = 1; ii <= n_a[3]; ii++) {
 								error_approx_coarse2[ii] = (rand() / ((doublerealT)RAND_MAX));
 							}
 						}
-						//for (integer i_37 = 1; i_37 <= igam; i_37++)
+
+					//for (integer i_37 = 1; i_37 <= igam; i_37++)
 					{
 						doublerealT R0_3 = 0.0;
 						doublerealT Rprev_3 = 0.0, Rnext_3 = 0.0;
@@ -37711,16 +32790,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 							// Amat*e=r;
 							//doublerealT* error_approx_coarse3 = new doublerealT[n_a[4] + 1];
-							if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT) 
+							{
 								for (integer ii = 1; ii <= n_a[4]; ii++) {
 									error_approx_coarse3[ii] = 0.0;
 								}
 							}
-							if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+							{
 								for (integer ii = 1; ii <= n_a[4]; ii++) {
 									error_approx_coarse3[ii] = (rand() / ((doublerealT)RAND_MAX));
 								}
 							}
+
 
 							//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 						{
@@ -37802,16 +32885,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 								// Amat*e=r;
 								//doublerealT* error_approx_coarse4 = new doublerealT[n_a[5] + 1];
-								if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+								{
 									for (integer ii = 1; ii <= n_a[5]; ii++) {
 										error_approx_coarse4[ii] = 0.0;
 									}
 								}
-								if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+								{
 									for (integer ii = 1; ii <= n_a[5]; ii++) {
 										error_approx_coarse4[ii] = (rand() / ((doublerealT)RAND_MAX));
 									}
 								}
+
 
 								// pre smothing
 								//for (integer i_37 = 1; i_37 <= igam; i_37++)
@@ -37899,16 +32986,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 									// Amat*e=r;
 									//doublerealT* error_approx_coarse5 = new doublerealT[n_a[6] + 1];
-									if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+									{
 										for (integer ii = 1; ii <= n_a[6]; ii++) {
 											error_approx_coarse5[ii] = 0.0;
 										}
 									}
-									if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+									{
 										for (integer ii = 1; ii <= n_a[6]; ii++) {
 											error_approx_coarse5[ii] = (rand() / ((doublerealT)RAND_MAX));
 										}
 									}
+
 
 									//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 									{
@@ -37988,16 +33079,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 											// Amat*e=r;
 											//doublerealT* error_approx_coarse6 = new doublerealT[n_a[7] + 1];
-											if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+											{
 												for (integer ii = 1; ii <= n_a[7]; ii++) {
 													error_approx_coarse6[ii] = 0.0;
 												}
 											}
-											if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+											{
 												for (integer ii = 1; ii <= n_a[7]; ii++) {
 													error_approx_coarse6[ii] = (rand() / ((doublerealT)RAND_MAX));
 												}
 											}
+
 
 											//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 											{
@@ -38080,16 +33175,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 													// Amat*e=r;
 													//doublerealT* error_approx_coarse7 = new doublerealT[n_a[8] + 1];
-													if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+													{
 														for (integer ii = 1; ii <= n_a[8]; ii++) {
 															error_approx_coarse7[ii] = 0.0;
 														}
 													}
-													if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+													{
 														for (integer ii = 1; ii <= n_a[8]; ii++) {
 															error_approx_coarse7[ii] = (rand() / ((doublerealT)RAND_MAX));
 														}
 													}
+
 
 													//for (integer i_37 = 1; i_37 <= igam; i_37++)
 													{
@@ -38118,16 +33217,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 															// Amat*e=r;
 															//doublerealT* error_approx_coarse8 = new doublerealT[n_a[9] + 1];
-															if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+															{
 																for (integer ii = 1; ii <= n_a[9]; ii++) {
 																	error_approx_coarse8[ii] = 0.0;
 																}
 															}
-															if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+															{
 																for (integer ii = 1; ii <= n_a[9]; ii++) {
 																	error_approx_coarse8[ii] = (rand() / ((doublerealT)RAND_MAX));
 																}
 															}
+
 
 															//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 															{
@@ -38162,16 +33265,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 																	//doublerealT* error_approx_coarse9 = new doublerealT[n_a[10] + 1];
 
 
-																	if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																	{
 																		for (integer ii = 1; ii <= n_a[10]; ii++) {
 																			error_approx_coarse9[ii] = 0.0;
 																		}
 																	}
-																	if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																	{
 																		for (integer ii = 1; ii <= n_a[10]; ii++) {
 																			error_approx_coarse9[ii] = (rand() / ((doublerealT)RAND_MAX));
 																		}
 																	}
+
 
 																	//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 																	{
@@ -38207,16 +33314,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 																			//doublerealT* error_approx_coarse10 = new doublerealT[n_a[11] + 1];
 
 
-																			if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																			{
 																				for (integer ii = 1; ii <= n_a[11]; ii++) {
 																					error_approx_coarse10[ii] = 0.0;
 																				}
 																			}
-																			if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																			{
 																				for (integer ii = 1; ii <= n_a[11]; ii++) {
 																					error_approx_coarse10[ii] = (rand() / ((doublerealT)RAND_MAX));
 																				}
 																			}
+
 
 																			//for (integer i_37 = 1; i_37 <= igam; i_37++)
 																			{
@@ -38249,16 +33360,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 																					// Amat*e=r;
 																					//doublerealT* error_approx_coarse11 = new doublerealT[n_a[12] + 1];
 
-																					if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																					{
 																						for (integer ii = 1; ii <= n_a[12]; ii++) {
 																							error_approx_coarse11[ii] = 0.0;
 																						}
 																					}
-																					if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																					{
 																						for (integer ii = 1; ii <= n_a[12]; ii++) {
 																							error_approx_coarse11[ii] = (rand() / ((doublerealT)RAND_MAX));
 																						}
 																					}
+
 
 																					//for (integer i_37 = 1; i_37 <= igam; i_37++)
 																					{
@@ -38291,16 +33406,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 																							// Amat*e=r;
 																							//doublerealT* error_approx_coarse12 = new doublerealT[n_a[13] + 1];
 
-																							if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																							{
 																								for (integer ii = 1; ii <= n_a[13]; ii++) {
 																									error_approx_coarse12[ii] = 0.0;
 																								}
 																							}
-																							if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																							{
 																								for (integer ii = 1; ii <= n_a[13]; ii++) {
 																									error_approx_coarse12[ii] = (rand() / ((doublerealT)RAND_MAX));
 																								}
 																							}
+
 
 																							//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 																							{
@@ -38334,16 +33453,20 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 																									// Amat*e=r;
 																									//doublerealT* error_approx_coarse13 = new doublerealT[n_a[14] + 1];
 
-																									if (imyinit == ZERO_INIT) {
+																									if (imyinit == ZERO_INIT)
+																									{
 																										for (integer ii = 1; ii <= n_a[14]; ii++) {
 																											error_approx_coarse13[ii] = 0.0;
 																										}
 																									}
-																									if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																									{
 																										for (integer ii = 1; ii <= n_a[14]; ii++) {
 																											error_approx_coarse13[ii] = (rand() / ((doublerealT)RAND_MAX));
 																										}
 																									}
+
 
 
 																									//for (integer i_37 = 1; i_37 <= igam; i_37++)
@@ -40166,7 +35289,7 @@ void QuickSortCSIR(integer* &jptr, doublereal* &altr, integer first, integer las
 // Объявление структуры LEVEL_ADDITIONAL_DATA0 см. в файле ilut.c:
 // 11 августа 2016.
 
-// Выделение оперативной прамяти для : 
+// Выделение оперативной памяти для: 
 // LEVEL_ADDITIONAL_DATA_BUFER milu_gl_buffer
 void memory_allocation_apostoriory_buffer_ilu(LEVEL_ADDITIONAL_DATA* &milu2, integer ilevel) {
 	if (milu_gl_buffer.alu_copy != nullptr) {
@@ -40278,7 +35401,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		// Это сделано для кода BICGSTAB_internal3. дата изменения 12 апреля 2013.
 		// Другой код, использующий equation3dtoCRS может оказаться неработоспособным после этого изменения.
 		if (ballocmemory) {
-			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для попрапвки давления.
+			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для поправки давления.
 			//val = new doublereal[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			//col_ind = new integer[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			
@@ -40299,7 +35422,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 			if ((milu2.val == nullptr) || (milu2.col_ind == nullptr) || (milu2.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment...\n");
+				printf("Problem: not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -40517,13 +35640,13 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		}
 		if ((milu2.alu == nullptr) || (milu2.jlu == nullptr) || (milu2.levs == nullptr) || (milu2.ju == nullptr) || (milu2.w == nullptr) || (milu2.jw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
 
 		// копии объектов
-		// 9 ноября 2016 Копии объектов теперь хранятся централизованно :
+		// 9 ноября 2016 Копии объектов теперь хранятся централизованно:
 		// см. LEVEL_ADDITIONAL_DATA_BUFER milu_gl_buffer; in ilut.c module.
 		//milu2.alu_copy = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
 		//milu2.jlu_copy = new integer[milu2.iwk + 2];
@@ -40564,7 +35687,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		//if ((milu2.alu_copy == nullptr) || (milu2.jlu_copy == nullptr) || (milu2.ju_copy == nullptr) || (milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf==nullptr)||(milu2.zbuf2==nullptr)) {
 		if ((milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf == nullptr) || (milu2.zbuf2 == nullptr)) {
 		    // недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -40630,7 +35753,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				else {
 					// недостаточно памяти на данном оборудовании.
 					ipassage = 4;
-					printf("Problem : not enough memory on your equipment...\n");
+					printf("Problem: not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
@@ -40806,7 +35929,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 		// Это сделано для кода BICGSTAB_internal3. дата изменения 12 апреля 2013.
 		// Другой код, использующий equation3dtoCRS может оказаться неработоспособным после этого изменения.
 		if (ballocmemory) {
-			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для попрапвки давления.
+			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для поправки давления.
 			//val = new doublereal[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			//col_ind = new integer[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			milu0.val = new doublereal[n + 2];
@@ -40815,7 +35938,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 			milu0.row_ptr = new integer[maxelm_plus_maxbound + 1];
 			if ((milu0.val == nullptr) || (milu0.col_ind == nullptr) || (milu0.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for ILU0 decomposition...\n");
+				printf("Problem: not enough memory on your equipment for ILU0 decomposition...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -40975,7 +36098,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 		
 		if ((milu0.alu == nullptr) || (milu0.jlu == nullptr) || (milu0.ju == nullptr) || (milu0.iw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu, jlu, ju, iw...\n");
+			printf("Problem: not enough memory on your equipment for ILU0 decomposition: alu, jlu, ju, iw...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -40996,7 +36119,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 
 		if ((milu0.alu_copy == nullptr) || (milu0.jlu_copy == nullptr) || (milu0.ju_copy == nullptr) || (milu0.b_copy == nullptr) || (milu0.x_copy == nullptr) || (milu0.zbuf == nullptr) || (milu0.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu_copy, jlu_copy, ju_copy etc...\n");
+			printf("Problem: not enough memory on your equipment for ILU0 decomposition: alu_copy, jlu_copy, ju_copy etc...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -41048,7 +36171,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				else {
 					// недостаточно памяти на данном оборудовании.
 					ipassage = 4;
-					printf("Problem : not enough memory on your equipment...\n");
+					printf("Problem: not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
@@ -41115,7 +36238,7 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA* &milu2_loc, integer max_l
 		milu2_loc = new LEVEL_ADDITIONAL_DATA[max_levels];
 		if (milu2_loc == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -41146,7 +36269,7 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA* &milu2_loc, integer max_l
 	}
 } // init_level_additional_data
 
-// Освбождение оперативной памяти.
+// Освобождение оперативной памяти.
 void free_level_additional_data(LEVEL_ADDITIONAL_DATA* &milu2_loc, integer max_levels) {
 	if (milu2_loc != nullptr) {
 #pragma omp parallel for
@@ -41246,7 +36369,7 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_leve
 		milu0 = new LEVEL_ADDITIONAL_DATA0[max_levels];
 		if (milu0 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ILU0...\n");
+			printf("Problem: not enough memory on your equipment for ILU0...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -41277,7 +36400,7 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_leve
 } // init_level_additional_data ILU0
 
 // ILU0 4 november 2016.
-  // Освбождение оперативной памяти.
+  // Освобождение оперативной памяти.
 void free_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_levels) {
 	if (milu0 != nullptr) {
 
@@ -41357,7 +36480,7 @@ static integer iglnumberSimpleit = 0;
 
 // 3 ноября 2016.
 // Вызывается единожды лишь в случае нехватки выделеной памяти под оператор 
-// интерполляции.
+// интерполяции.
 // Это происходит очень редко - на узком классе задач.
 // Здесь происходит перевыделение оперативной памяти и увеличение значения nsizePR.
 void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
@@ -41385,7 +36508,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		R_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 		if (R_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for R_copy matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for R_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -41395,7 +36518,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		P_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 		if (P_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for P_copy matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for P_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -41421,7 +36544,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			R = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 			if (R == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
+				printf("Problem: not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -41431,7 +36554,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			P = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 			if (P == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
+				printf("Problem: not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -41475,7 +36598,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 
 // 3 ноября 2016.
 // Вызывается единожды лишь в случае нехватки выделеной памяти под оператор 
-// интерполляции.
+// интерполяции.
 // Это происходит очень редко - на узком классе задач.
 // Здесь происходит перевыделение оперативной памяти и увеличение значения nsizePR.
 void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
@@ -41505,7 +36628,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		R_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 		if (R_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for R_copy matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for R_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -41515,7 +36638,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		P_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 		if (P_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for P_copy matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for P_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -41525,7 +36648,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		bamg_bound_copy = new bool[(nsizePR * n) + 1];
 		if (bamg_bound_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for bamg_bound_copy matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for bamg_bound_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -41557,7 +36680,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			R = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 			if (R == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
+				printf("Problem: not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -41567,7 +36690,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			P = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
 			if (P == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
+				printf("Problem: not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -41576,7 +36699,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			bamg_bound = new bool[(nsizePR * n) + 1];
 			if (bamg_bound == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for bamg_bound matrix in my_agregat_amg.cpp algorithm...\n");
+				printf("Problem: not enough memory on your equipment for bamg_bound matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -41643,8 +36766,8 @@ void V_cycle_solve(Ak1* &Amat, doublereal* &z76, doublereal* &s76, bool process_
 	// Один V - цикл алгебраического многосеточного метода.
 	// A*z76=s76;
 
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	//const integer ZERO_INIT = 0;
+	//const integer RANDOM_INIT = 1;
 
 	for (integer i_13 = 0; i_13<inumberVcyclelocbicgstab; i_13++)
 	{
@@ -43192,7 +38315,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 
 	// Нам нужен разреженный оператор Галёркина.
 	// 5 декабря 2015 года мы попробуем увеличить разреженность
-	// оператора интерполляции а значит и оператора Галёркина.
+	// оператора интерполяции а значит и оператора Галёркина.
 	doublereal maxelem_threshold = -1.0;
 	// O(log2(nnz))
 	//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -43202,7 +38325,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 	if (bpositive_connections) {
 		for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 			if (Amat[is0].j != Amat[ii1].i) {
-				// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+				// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 				//if (this_is_C_node[Amat[is0].j] == true) {
 				if (fabs(Amat[is0].aij) > maxelem_threshold) {
 					maxelem_threshold = fabs(Amat[is0].aij);
@@ -43215,7 +38338,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 		// 23_10_2016 только negative connections.
 		for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 			if (Amat[is0].j != Amat[ii1].i) {
-				// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+				// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 				//if (this_is_C_node[Amat[is0].j] == true) {
 				if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 					maxelem_threshold = fabs(Amat[is0].aij);
@@ -43230,7 +38353,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 	integer icsos = 0;
 
 	// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-	// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+	// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 	doublereal sumP = 0.0;
 	if (bpositive_connections) {
 		for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -43287,7 +38410,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 
 					if (fabs(sumP) < RealZERO) {
 						//printf("error interpolation zero diagonal sumP.\n");
-						//printf("Fnode all sosed is F");
+						//printf("Fnode all neighbour is F");
 						//system("pause");
 						//printf("i8 is Dirichlet node\n");
 						if (this_is_C_node[i8] == false) iadditionalCstatistic++;
@@ -43295,7 +38418,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 						this_is_C_node[i8] = true;
 						bweSholdbeContinue = true;
 						//exit(1);
-						// здесь нужна непрямая интерполляция.
+						// здесь нужна непрямая интерполяция.
 					}
 					else {
 
@@ -43365,8 +38488,8 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 {
 	// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-	// Прямая интерполляция с элементам непрямой.
-	// Непрямая интерполляция применяется только для F узлов которые
+	// Прямая интерполяция с элементам непрямой.
+	// Непрямая интерполяция применяется только для F узлов которые
 	// не имеют С соседей.
 	// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 	// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
@@ -43385,7 +38508,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 		// Нам нужен разреженный оператор Галёркина.
 		// 5 декабря 2015 года мы попробуем увеличить разреженность
-		// оператора интерполляции а значит и оператора Галёркина.
+		// оператора интерполяции а значит и оператора Галёркина.
 		doublereal maxelem_threshold = -1.0;
 		// O(log2(nnz))
 		//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -43394,7 +38517,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 		if (bpositive_connections) {
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if (fabs(Amat[is0].aij) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat[is0].aij);
@@ -43406,7 +38529,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 		else {
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat[is0].aij);
@@ -43421,7 +38544,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 		integer icsos = 0;
 
 		// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-		// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+		// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 		doublereal sumP = 0.0;
 		doublereal SumPall = 0.0;
 		integer icount_StronglyF = 0;
@@ -43485,12 +38608,12 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 			if (fabs(sumP) < RealZERO) {
 				//printf("error interpolation zero diagonal sumP.\n");
-				//printf("Fnode all sosed is F");
+				//printf("Fnode all neighbour is F");
 				//system("pause");
 				//printf("i8 is Dirichlet node\n");
 
 				//exit(1);
-				// здесь нужна непрямая интерполляция.
+				// здесь нужна непрямая интерполяция.
 				bool* empty_interpol = nullptr;
 				//empty_interpol = new bool[icount_StronglyF];
 				empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
@@ -43508,7 +38631,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 				if (bpositive_connections) {
 
-					// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+					// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
 							if (this_is_F_node[Amat[is0].j] == true) {
@@ -43554,7 +38677,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -43580,7 +38703,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -43610,7 +38733,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне.
 										//printf("problem situation");
@@ -43635,7 +38758,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 				}
 				else {
-					// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+					// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
 							if (this_is_F_node[Amat[is0].j] == true) {
@@ -43681,7 +38804,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -43707,7 +38830,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -43737,7 +38860,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне.
 										//printf("problem situation");
@@ -43767,7 +38890,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 					bool bstandart_vjzov = true;
 					for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 						// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-						// когда с не менее чем двух сторон интерполляция сработала, здесь 
+						// когда с не менее чем двух сторон интерполяция сработала, здесь 
 						// же срабатывание было лишь с одной из сторон как минимум.
 						if (empty_interpol[i_38] == true) {
 							bstandart_vjzov = false;
@@ -43875,14 +38998,14 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 {
 	// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-	// Прямая интерполляция с элементам непрямой. Экспериментальный вариант. TODO.
-	// Непрямая интерполляция применяется только для F узлов которые
+	// Прямая интерполяция с элементам непрямой. Экспериментальный вариант. TODO.
+	// Непрямая интерполяция применяется только для F узлов которые
 	// не имеют С соседей или имеют недостаточное число С соседей.
 	// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 
-	// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполляцию.
+	// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполяцию.
 	// Идея в том чтобы узел F имеющий лишь одного Strong С соседа обработать так чтобы у него было не менее 
-	// двух  C соседей учитывая эффект непрямой интерполляции.
+	// двух  C соседей учитывая эффект непрямой интерполяции.
 
 
 	the_number_of_neighbors_that_are_not_C_nodes = 0;
@@ -43896,13 +39019,13 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if (fabs(Amat[is0].aij) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat[is0].aij);
@@ -43917,7 +39040,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -43948,7 +39071,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -43964,12 +39087,12 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 				if (fabs(sumP) < RealZERO) {
 					//printf("error interpolation zero diagonal sumP.\n");
-					//printf("Fnode all sosed is F");
+					//printf("Fnode all neighbour is F");
 					//system("pause");
 					//printf("i8 is Dirichlet node\n");
 
 					//exit(1);
-					// здесь нужна непрямая интерполляция.
+					// здесь нужна непрямая интерполяция.
 					bool* empty_interpol = nullptr;
 					//empty_interpol = new bool[icount_StronglyF];
 					empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
@@ -44026,7 +39149,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -44052,7 +39175,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -44082,7 +39205,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне вложенности.
 										//printf("problem situation");
@@ -44106,7 +39229,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 					bool bstandart_vjzov = true;
 					for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 						// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-						// когда с не менее чем двух сторон интерполляция сработала, здесь 
+						// когда с не менее чем двух сторон интерполяция сработала, здесь 
 						// же срабатывание было лишь с одной из сторон как минимум.
 						if (empty_interpol[i_38] == true) {
 							bstandart_vjzov = false;
@@ -44135,7 +39258,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -44143,7 +39266,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -44177,7 +39300,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -44213,7 +39336,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -44235,7 +39358,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -44322,13 +39445,13 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat[is0].aij);
@@ -44343,7 +39466,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -44374,7 +39497,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -44390,12 +39513,12 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 				if (fabs(sumP) < RealZERO) {
 					//printf("error interpolation zero diagonal sumP.\n");
-					//printf("Fnode all sosed is F");
+					//printf("Fnode all neighbour is F");
 					//system("pause");
 					//printf("i8 is Dirichlet node\n");
 
 					//exit(1);
-					// здесь нужна непрямая интерполляция.
+					// здесь нужна непрямая интерполяция.
 					bool* empty_interpol = nullptr;
 					//empty_interpol = new bool[icount_StronglyF];
 					empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
@@ -44452,7 +39575,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -44478,7 +39601,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -44508,7 +39631,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне вложенности.
 										//printf("problem situation");
@@ -44532,7 +39655,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 					bool bstandart_vjzov = true;
 					for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 						// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-						// когда с не менее чем двух сторон интерполляция сработала, здесь 
+						// когда с не менее чем двух сторон интерполяция сработала, здесь 
 						// же срабатывание было лишь с одной из сторон как минимум.
 						if (empty_interpol[i_38] == true) {
 							bstandart_vjzov = false;
@@ -44561,7 +39684,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -44569,7 +39692,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -44603,7 +39726,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -44639,7 +39762,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -44661,7 +39784,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -44760,7 +39883,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
-	integer itypemodifyinterpol=0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	const integer itypemodifyinterpol=0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass=0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -44831,7 +39954,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -44840,7 +39963,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				if (!btreshold_on_new_vetv) {
 					for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if (fabs(Amat[is0].aij) > maxelem_threshold) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -44859,7 +39982,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -44894,7 +40017,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -44906,7 +40029,9 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 					if ((icsos == 1) && (icsosF == 0)) {
 						// Накапливаем информацию.
-						if (itypemodifyinterpol > 0) {
+
+if (itypemodifyinterpol > 0)
+						{
 
 							if (itypemodifyinterpol > 1) {
 								// запоминаем позицию кандидата на С узел.
@@ -44937,6 +40062,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 						}
+
 					}
 					else if ((icsos == 1) && (icsosF != 0)) {
 						// Случай одного Strong C соседа в добавок к которому есть покрайней мере один Strong F сосед.
@@ -44955,7 +40081,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										// заведомо один С сосед.
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -44964,7 +40090,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true; // Были добавления узлов.
 															 //exit(1);
-															 // здесь нужна непрямая интерполляция.
+															 // здесь нужна непрямая интерполяция.
 										}
 
 
@@ -44991,7 +40117,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -45000,7 +40126,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -45013,7 +40139,8 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 			}
 			/////
-			if (itypemodifyinterpol > 0) {
+if (itypemodifyinterpol > 0) 
+			{
 
 				if (i8_candidate_arr != nullptr) {
 					i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
@@ -45093,7 +40220,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -45102,7 +40229,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				if (!btreshold_on_new_vetv) {
 					for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if ((Amat[is0].aij < 0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -45121,7 +40248,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -45156,7 +40283,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -45183,7 +40310,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										// заведомо один С сосед.
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -45192,7 +40319,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true; // Были добавления узлов.
 															 //exit(1);
-															 // здесь нужна непрямая интерполляция.
+															 // здесь нужна непрямая интерполяция.
 										}
 
 
@@ -45219,7 +40346,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -45228,7 +40355,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -45271,7 +40398,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -45281,7 +40408,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 					for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 						iend_for1 = is0;
 						if (Amat[is0].j != istr_etalon1) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if (fabs(Amat[is0].aij) > maxelem_threshold) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -45307,7 +40434,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -45341,7 +40468,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -45372,7 +40499,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 									if (fabs(Amat[is0].aij) > maxelem_threshold_theta) {
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -45380,7 +40507,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -45423,7 +40550,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										if (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F) {
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -45469,7 +40596,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -45507,7 +40634,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 											doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -45678,7 +40805,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -45686,11 +40813,11 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 
-											// Интерполляция только по ближайшим С узлам.
+											// интерполяция только по ближайшим С узлам.
 
 											// Внедиагональный элемент из множества С узлов.
 
@@ -45704,11 +40831,11 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 												P[icount1].j = i8;
 												P[icount1].i = C_numerate[Amat[is0].j];
 												if (fabs(sumP) < 1.0e-33) {
-													// Несколько опорных С узлов, они являются главными опорами при интерполляции.
+													// Несколько опорных С узлов, они являются главными опорами при интерполяции.
 													// (fabs(Amat[is0].aij) / sumP) не может быть больше единицы по определению. 
 													if ((fabs(sumP) < 1.0e-100) || (/*(fabs(sumP) >= 1.0e-100) &&*/ ((fabs(Amat[is0].aij) / sumP) < 0.1))) {
 														printf("error 4.0 ! division by zero. sumP =%e\n", sumP);
-														// Ситуация : fabs(Amat[is0].aij) / sumP==1.0, Amat[is0].aij<1.0e-33;
+														// Ситуация: fabs(Amat[is0].aij) / sumP==1.0, Amat[is0].aij<1.0e-33;
 														printf("diagnostic: aij=%e aij/sumP=%e\n", Amat[is0].aij, fabs(Amat[is0].aij) / sumP);
 														//getchar();
 														system("PAUSE");
@@ -45748,7 +40875,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -45758,7 +40885,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 					for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 						iend_for1 = is0;
 						if (Amat[is0].j != istr_etalon1) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if ((Amat[is0].aij < 0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -45784,7 +40911,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -45818,7 +40945,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -45848,7 +40975,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 									if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta)) {
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -45856,7 +40983,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -45899,7 +41026,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F)) {
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -45939,7 +41066,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -45977,7 +41104,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 											doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -46148,7 +41275,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -46156,7 +41283,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 
@@ -46231,7 +41358,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
-	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	const integer itypemodifyinterpol = 0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -46307,7 +41434,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -46316,7 +41443,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 			if (!btreshold_on_new_vetv) {
 				for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 					if (Amat[is0].j != Amat[ii1].i) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat[is0].j] == true) {
 						if (fabs(Amat[is0].aij) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat[is0].aij);
@@ -46337,7 +41464,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 			integer icsosF_pos = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal sumP_pos = 0.0;
 			doublereal SumPall = 0.0;
@@ -46385,7 +41512,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -46400,7 +41527,8 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 					// Накапливаем информацию.
-					if (itypemodifyinterpol > 0) {
+if (itypemodifyinterpol > 0) 
+					{
 
 
 
@@ -46433,6 +41561,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							}
 						}
 					}
+
 				}
 				else if ((icsos == 1) && (icsosF != 0)) {
 					// Случай одного Strong C соседа в добавок к которому есть покрайней мере один Strong F сосед.
@@ -46451,7 +41580,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									// заведомо один С сосед.
 									if ((fabs(sumP) < RealZERO) && (fabs(sumP_pos) < RealZERO)) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -46460,7 +41589,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -46487,7 +41616,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 									//printf("error interpolation zero diagonal sumP.\n");
-									//printf("Fnode all sosed is F");
+									//printf("Fnode all neighbour is F");
 									//system("pause");
 									//printf("i8 is Dirichlet node\n");
 									this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -46496,7 +41625,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									iadditionalCstatistic++;
 									byes_add = true; // Были добавления узлов.
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 								}
 
 
@@ -46509,7 +41638,8 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 		}
 		/////
-		if (itypemodifyinterpol > 0) {
+if (itypemodifyinterpol > 0) 
+		{
 
 			if (i8_candidate_arr != nullptr) {
 				i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
@@ -46568,6 +41698,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 		}
 
+
 		if (i8_candidate_arr != nullptr) {
 			free(i8_candidate_arr);
 			i8_candidate_arr = nullptr;
@@ -46606,7 +41737,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -46616,7 +41747,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 				for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 					iend_for1 = is0;
 					if (Amat[is0].j != istr_etalon1) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat[is0].j] == true) {
 						if (fabs(Amat[is0].aij) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat[is0].aij);
@@ -46644,7 +41775,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -46691,7 +41822,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -46724,7 +41855,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 								if (fabs(Amat[is0].aij) > maxelem_threshold_theta) {
 									if ((fabs(sumP) < RealZERO) && (fabs(sumP_pos) < RealZERO)) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -46732,7 +41863,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -46797,7 +41928,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -46843,7 +41974,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -46881,7 +42012,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -46934,7 +42065,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									if ((Amat[is0].aij>0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -46981,7 +42112,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -47019,7 +42150,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -47195,7 +42326,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 									if ((fabs(sumP) < RealZERO) && (fabs(sumP_pos) < RealZERO)) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -47203,11 +42334,11 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
-										// Интерполляция только по ближайшим С узлам.
+										// интерполяция только по ближайшим С узлам.
 
 										// Внедиагональный элемент из множества С узлов.
 
@@ -47298,7 +42429,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
-	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	const integer itypemodifyinterpol = 0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -47393,7 +42524,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold_plus = -1.0;
 			doublereal maxelem_threshold_minus = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -47402,7 +42533,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			integer iend_marker_position = row_startA[Amat[ii1].i + 1] - 1;
 			for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if ((Amat[is0].aij>0) && (fabs(Amat[is0].aij) > maxelem_threshold_plus)) {
 						maxelem_threshold_plus = fabs(Amat[is0].aij);
@@ -47422,7 +42553,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			integer icsosF_pos = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal sumP_pos = 0.0;
 			doublereal SumPall = 0.0;
@@ -47475,7 +42606,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -47490,7 +42621,8 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 					// Накапливаем информацию.
-					if (itypemodifyinterpol > 0) {
+if (itypemodifyinterpol > 0)
+					{
 
 
 
@@ -47523,6 +42655,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							}
 						}
 					}
+
 				}
 				else if ((icsos == 1) && (icsosF != 0)) {
 					// Случай одного Strong C соседа в добавок к которому есть покрайней мере один Strong F сосед.
@@ -47541,7 +42674,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									// заведомо один С сосед.
 									if ((fabs(sumP) < RealZERO) && (fabs(sumP_pos) < RealZERO)) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -47550,7 +42683,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -47577,7 +42710,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 									//printf("error interpolation zero diagonal sumP.\n");
-									//printf("Fnode all sosed is F");
+									//printf("Fnode all neighbour is F");
 									//system("pause");
 									//printf("i8 is Dirichlet node\n");
 									this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -47586,7 +42719,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									iadditionalCstatistic++;
 									byes_add = true; // Были добавления узлов.
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 								}
 
 
@@ -47599,7 +42732,8 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 		}
 		/////
-		if (itypemodifyinterpol > 0) {
+if (itypemodifyinterpol > 0) 
+		{
 
 
 			if (i8_candidate_arr != nullptr) {
@@ -47659,6 +42793,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 		}
 
+
 		if (i8_candidate_arr != nullptr) {
 			free(i8_candidate_arr);
 			i8_candidate_arr = nullptr;
@@ -47698,7 +42833,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold_plus = -1.0;
 			doublereal maxelem_threshold_minus = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -47708,7 +42843,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 				iend_for1 = is0;
 				if (Amat[is0].j != istr_etalon1) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if ((Amat[is0].aij>0) && (fabs(Amat[is0].aij) > maxelem_threshold_plus)) {
 						maxelem_threshold_plus = fabs(Amat[is0].aij);
@@ -47735,7 +42870,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			doublereal maxelem_threshold_theta_strong_F_minus = maxelem_threshold_minus*theta_strong_F;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -47782,7 +42917,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -47819,7 +42954,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 								if (((Amat[is0].aij<0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_minus)) || ((Amat[is0].aij>0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_plus))) {
 									if ((fabs(sumP) < RealZERO) && (fabs(sumP_pos) < RealZERO)) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -47827,7 +42962,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -47892,7 +43027,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F_minus)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -47938,7 +43073,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -47976,7 +43111,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -48029,7 +43164,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									if ((Amat[is0].aij>0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F_plus)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -48076,7 +43211,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -48114,7 +43249,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -48290,7 +43425,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 									if ((fabs(sumP) < RealZERO) && (fabs(sumP_pos) < RealZERO)) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -48298,11 +43433,11 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
-										// Интерполляция только по ближайшим С узлам.
+										// интерполяция только по ближайшим С узлам.
 
 										// Внедиагональный элемент из множества С узлов.
 
@@ -48412,13 +43547,13 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if (fabs(Amat[is0].aij) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat[is0].aij);
@@ -48433,7 +43568,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -48464,7 +43599,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -48492,7 +43627,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										if (this_is_C_node[i8] == false) iadditionalCstatistic++;
@@ -48500,7 +43635,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										this_is_C_node[i8] = true;
 										bweSholdbeContinue = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -48540,7 +43675,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -48582,7 +43717,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -48604,7 +43739,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -48657,7 +43792,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 								if (fabs(sumP) < RealZERO) {
 									//printf("error interpolation zero diagonal sumP.\n");
-									//printf("Fnode all sosed is F");
+									//printf("Fnode all neighbour is F");
 									//system("pause");
 									//printf("i8 is Dirichlet node\n");
 									if (this_is_C_node[i8] == false) iadditionalCstatistic++;
@@ -48665,7 +43800,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 									this_is_C_node[i8] = true;
 									bweSholdbeContinue = true;
 									//exit(1);
-									// здесь нужна непрямая интерполляция.
+									// здесь нужна непрямая интерполяция.
 								}
 								else {
 
@@ -48705,7 +43840,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 									// Рассматриваем Strong F связи.
 									// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-									// Смысл :
+									// Смысл:
 									//
 
 
@@ -48747,7 +43882,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -48769,7 +43904,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма
+										// В общем это двойная интерполяционная сумма
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -48829,13 +43964,13 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat[is0].j] == true) {
 					if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat[is0].aij);
@@ -48850,7 +43985,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -48881,7 +44016,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -48909,7 +44044,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										if (this_is_C_node[i8] == false) iadditionalCstatistic++;
@@ -48917,7 +44052,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										this_is_C_node[i8] = true;
 										bweSholdbeContinue = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -48957,7 +44092,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -48999,7 +44134,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -49021,7 +44156,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -49074,7 +44209,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 								if (fabs(sumP) < RealZERO) {
 									//printf("error interpolation zero diagonal sumP.\n");
-									//printf("Fnode all sosed is F");
+									//printf("Fnode all neighbour is F");
 									//system("pause");
 									//printf("i8 is Dirichlet node\n");
 									if (this_is_C_node[i8] == false) iadditionalCstatistic++;
@@ -49082,7 +44217,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 									this_is_C_node[i8] = true;
 									bweSholdbeContinue = true;
 									//exit(1);
-									// здесь нужна непрямая интерполляция.
+									// здесь нужна непрямая интерполяция.
 								}
 								else {
 
@@ -49122,7 +44257,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 									// Рассматриваем Strong F связи.
 									// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-									// Смысл :
+									// Смысл:
 									//
 
 
@@ -49158,7 +44293,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -49180,7 +44315,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма
+										// В общем это двойная интерполяционная сумма
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 											if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 												if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -49251,7 +44386,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 	if (1) {
 		// шестая попытка.
 		// CGHV1J amg1r5 time 0.26
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25   0:48  29  6.55A
 		// 0.3    0:45  28  6.19A 
@@ -49265,7 +44400,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 		// 0.35 1:46 27 3.51
 		// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 		// Electric potencial in FET2 amg1r5 time 1:38
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25 3:19 36 6.65
 		// 0.3 3:02 34 6.34
@@ -49292,13 +44427,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 					if (Amat[is0].j != Amat[ii1].i) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat[is0].j] == true) {
 						if (fabs(Amat[is0].aij) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat[is0].aij);
@@ -49313,7 +44448,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -49344,7 +44479,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -49367,7 +44502,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -49376,7 +44511,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 
 
@@ -49397,7 +44532,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -49406,7 +44541,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 
 
@@ -49436,13 +44571,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 					if (Amat[is0].j != Amat[ii1].i) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat[is0].j] == true) {
 						if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 							maxelem_threshold = fabs(Amat[is0].aij);
@@ -49457,7 +44592,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -49488,7 +44623,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -49511,7 +44646,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -49520,7 +44655,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 
 
@@ -49541,7 +44676,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -49550,7 +44685,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 
 
@@ -49580,7 +44715,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 		// шестая попытка.
 		// CGHV1J amg1r5 time 0.26
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25   0:48  29  6.55A
 		// 0.3    0:45  28  6.19A 
@@ -49594,7 +44729,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 		// 0.35 1:46 27 3.51
 		// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 		// Electric potencial in FET2 amg1r5 time 1:38
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25 3:19 36 6.65
 		// 0.3 3:02 34 6.34
@@ -49613,7 +44748,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 		if (bpositive_connections) {
 
-			// positive connections :
+			// positive connections:
 
 			// Построение пролонгации для узлов которые составляют F nodes.
 			// Каждый F-nodes окружён C-nodes.
@@ -49621,13 +44756,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 					if (Amat[is0].j != Amat[ii1].i) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat[is0].j] == true) {
 						if (fabs(Amat[is0].aij) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat[is0].aij);
@@ -49642,7 +44777,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -49673,7 +44808,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -49703,7 +44838,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -49711,7 +44846,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -49745,7 +44880,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -49781,7 +44916,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -49804,7 +44939,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 													if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -49866,7 +45001,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -49874,7 +45009,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -49910,7 +45045,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 										// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-										// Смысл :
+										// Смысл:
 										//
 
 
@@ -49949,7 +45084,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -49974,7 +45109,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											icsos_loc = 0;
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc1 = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -50000,7 +45135,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											}
 
 											if (icsos_loc > 0) {
-												// В общем это двойная интерполляционная сумма
+												// В общем это двойная интерполяционная сумма
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 														if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -50064,7 +45199,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 						//}
 						//}
 
-						// Апосториорная корекция
+						// Апосториорная коррекция
 						for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 							P[i_95].aij = P[i_95].aij / sum_ok;
 						}
@@ -50088,13 +45223,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 					if (Amat[is0].j != Amat[ii1].i) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat[is0].j] == true) {
 						if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 							maxelem_threshold = fabs(Amat[is0].aij);
@@ -50109,7 +45244,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -50140,7 +45275,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -50168,7 +45303,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//	printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -50176,7 +45311,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -50210,7 +45345,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -50246,7 +45381,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -50269,7 +45404,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 													if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -50331,7 +45466,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -50339,7 +45474,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -50375,7 +45510,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 										// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-										// Смысл :
+										// Смысл:
 										//
 
 
@@ -50414,7 +45549,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -50439,7 +45574,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											icsos_loc = 0;
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc1 = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -50465,7 +45600,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											}
 
 											if (icsos_loc > 0) {
-												// В общем это двойная интерполляционная сумма
+												// В общем это двойная интерполяционная сумма
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 														if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -50529,7 +45664,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 						//}
 						//}
 
-						// Апосториорная корекция
+						// Апосториорная коррекция
 						for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 							P[i_95].aij = P[i_95].aij / sum_ok;
 						}
@@ -50565,7 +45700,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 {
 	// INTERPOLATION SIX
 
-	// Экспериментальная интерполляция 1 января 2016.
+	// Экспериментальная интерполяция 1 января 2016.
 	printf("interpolation SIX: experimental version 1 jan 2016\n");
 	system("PAUSE");
 
@@ -50580,7 +45715,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -50601,7 +45736,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			doublereal SumPall = 0.0;
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
@@ -50646,7 +45781,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//	printf("i8 is Dirichlet node\n");
 								this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -50654,7 +45789,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 								bweSholdbeContinue = true;
 								iadditionalCstatistic++;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 							}
 							else {
 
@@ -50686,7 +45821,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 						else
 							if (this_is_F_node[Amat[is0].j] == true) {
 
-								// Смысл :
+								// Смысл:
 								// 
 
 
@@ -50720,7 +45855,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 									integer icsos_loc = 0;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -50742,7 +45877,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 										}
 									}
 
-									// В общем это двойная интерполляционная сумма 
+									// В общем это двойная интерполяционная сумма 
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 											if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -50792,7 +45927,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -50813,7 +45948,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			doublereal SumPall = 0.0;
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 				if (Amat[is0].j != Amat[ii1].i) {
@@ -50858,7 +45993,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//	printf("i8 is Dirichlet node\n");
 								this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -50866,7 +46001,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 								bweSholdbeContinue = true;
 								iadditionalCstatistic++;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 							}
 							else {
 
@@ -50898,7 +46033,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 						else
 							if (this_is_F_node[Amat[is0].j] == true) {
 
-								// Смысл :
+								// Смысл:
 								// 
 
 
@@ -50932,7 +46067,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 									integer icsos_loc = 0;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -50954,7 +46089,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 										}
 									}
 
-									// В общем это двойная интерполляционная сумма 
+									// В общем это двойная интерполяционная сумма 
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 										if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 											if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -51027,8 +46162,8 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 // поэтому вместо ТКМ2 у нас 
 // будет ILU2.
 // 22 января текущий работоспособный вариант кода.
-// Планы : 1. сделать версию amg3. 
-// В ней : 2. заменить все проверки на невыделение оперативной памяти на универсальную 
+// Планы: 1. сделать версию amg3. 
+// В ней: 2. заменить все проверки на невыделение оперативной памяти на универсальную 
 // функцию единую для всего.
 // это очевидно немного сократит программный код.
 // В ней 3. код V цикла оформить в виде цикла for. Тогда же можно будет попробовать вставить
@@ -51038,7 +46173,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 // 10 января 2016 двоичный поиск заменён на хеширование.
 // 15 декабря 2015. Данная версия кода будет полностью очищена от устаревшего кода.
 // 13 декабря 2015. Внедрено АВЛ дерево. При внедрении АВЛ дерева исправлена логическая ошибка в
-// построении С-F разбиения, теперь C-F разбиение строится корректно.
+// построении С-F разбиения, теперь C/F разбиение строится корректно.
 // Исправлен и внедрён quicksort (qs,qsj)
 // который в рять раз быстрее пирамидальной сортировки.
 // Полный отказ от band_size!!!.
@@ -51046,20 +46181,20 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 // 18 октября 2015. Полностью работоспособный мультигрид.
 // Тестировалось на условиях Дирихле но должно работать на любых 
 // краевых задачах. 18 октября датируется версия 0.04. Версия 0.04 на треть
-// быстрее версии 0_03. Были ускорены как операции построения C-F разбиения, 
-// так и нахождение оператора Галёркина. При нахождении С-F разбиения 
-// учитывается уже построеннная его часть и поэтому число сканирований на
+// быстрее версии 0.03. Были ускорены как операции построения C/F разбиения, 
+// так и нахождение оператора Галёркина. При нахождении С/F разбиения 
+// учитывается уже построенная его часть и поэтому число сканирований на
 // на поздних циклах сокращается охватывая только не построенную часть.
-// При нахождении произведеия Галёркина получена самая оптимальная по 
-// быстродествию версия,
+// При нахождении произведения Галёркина получена самая оптимальная по 
+// быстродействию версия,
 // Основанная на алгоритме слияния отсортированных списков.
 // 4 октября правильное построение последовательности вложенных графов.
 // 30 сентября продолжаем исправление метода. Делаем классический 
-// алгебраический многосеточный метод на основе  C-F разбиения.
+// алгебраический многосеточный метод на основе  C/F разбиения.
 // 16 сентября 2015 года обнаружено что операции 
 // сгрубления и интерполяции сделаны совершенно неверно,
 // и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-// Операции сгрубления и интерполляции будут сделаны заново на основе статьи 
+// Операции сгрубления и интерполяции будут сделаны заново на основе статьи 
 // К.Н. Волкова в новой версии солвера.
 // 3 september 2015 Villa Borgese.
 // Возвращает divergence detected.
@@ -51076,18 +46211,19 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	doublerealT &magic82, doublerealT &magic83,
 	doublerealT &ret74,	integer iVar,
 	bool bmemory_savings,
-	BLOCK* &my_body, integer &lb, integer maxelm_out
+	BLOCK* &my_body, integer &lb, integer maxelm_out,
+	integer imyinit = ZERO_INIT
 ) {
 
 
 	// 0 - используем сбалансированное дерево поиска.
-	// 1 - используем хеш таблицу.
+	// 1 - используем хеш-таблицу.
 	const integer btree_vs_hash = 1;
 	if (btree_vs_hash == 1) {
 		construct_hash_table_Gus_struct01(n);
 	}
 
-	// 23.12.2016 ускорение счёта нелинейных задач :
+	// 23.12.2016 ускорение счёта нелинейных задач:
 	// лучистые потоки обновляются после каждого V цикла,
 	// для этого внутрь передаётся 
 	// b и lb.
@@ -51146,24 +46282,24 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 	integer n_coarce = 1; // начальный номер C узла.
 
-	const integer NULL_SOSED = -1;
-	integer vacant = NULL_SOSED;
+	const integer NULL_NEIGHBOUR = -1;
+	integer vacant = NULL_NEIGHBOUR;
 	bool bcontinue = true;
 
-	// Построение C-F разбиения.
+	// Построение C/F разбиения.
 	//while (icandidate != 0)
 	integer icountprohod = 0;
 
-	integer maxsosed = 0;
+	integer maxneighbour = 0;
 	integer icandidate = 0;
 
 	integer* row_startA = nullptr;
-	integer* count_sosed = nullptr;
+	integer* count_neighbour = nullptr;
 
 	bool identiti = true;
 	
 
-	// Вершина технологии решения плохообусловленных разреженных СЛАУ : BiCGStab + camg(РУМБА).
+	// Вершина технологии решения плохообусловленных разреженных СЛАУ: BiCGStab + camg(РУМБА).
 	// 1. многосеточные технологии.
 	// 2. предобуславливание.
 	// 3. стабилизация.
@@ -51219,7 +46355,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 		bILU2smoother = 2; // ILU2
 
-						   // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне : iluk с lfil=0.
+						   // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне: iluk с lfil=0.
 						   // Возможно я ещё вернусь к ilu2 хотябы на нулевом уровне, т.к. там он особенно хорош.
 	}
 	//bILU2smoother = 0; // only seidel sor smoother.
@@ -51244,17 +46380,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	integer memo_icoarseningtype = my_amg_manager.icoarseningtype;
 	if (my_amg_manager.icoarseningtype >= 4) {
 		// only negative connections 
-		// Внедиагональные положительные связи игнорируются при создании C-F разбиения.
+		// Внедиагональные положительные связи игнорируются при создании C/F разбиения.
 		bpositive_connections_CF_decomp = false;
 		my_amg_manager.icoarseningtype -= 4;
 	}
-	// 19.01.2016 Для построения C-F разбиения и интерполляции используется разная логика
+	// 19.01.2016 Для построения C/F разбиения и интерполяции используется разная логика
 	// в области игнорирования и не игнорирования positive connections.
 	// Требует обсуждения следующий вопрос: 
-	// 1. При построениии процедуры интерполляции важны все связи как позитив так и негатив.
-	// 2. При построении C-F декомпозиции важны только негатив связи. 
+	// 1. При построениии процедуры интерполяции важны все связи как позитив так и негатив.
+	// 2. При построении C/F декомпозиции важны только негатив связи. 
 	// Это гипотеза требующая подтверждения.
-	// Разделение между bpositive_connections_CF_decomp используемом при построении C-F декомпозиции и bpositive_connections
+	// Разделение между bpositive_connections_CF_decomp используемом при построении C/F декомпозиции и bpositive_connections
 	// Произошло 19.01.2017.
 
 
@@ -51275,16 +46411,16 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	// AVL_TREE_ID   3мин 29с 590мс      {5}
 	// SPLAY_TREE_ID  3мин 16с 430мс {2}
 	// BINARY_HEAP 3мин 4с 0мс {1 *самая быстрая.}
-	// RANDOM_TREE_ID (Деамида) 3мин 28с 90мс {4}
+	// RANDOM_TREE_ID (Дерамида) 3мин 28с 90мс {4}
 	// RED_BLACK_TREE_ID 3мин 27с 210мс {3}
 
 
 	const integer AVL_TREE_ID = 0;   // АВЛ дерево поиска. 12.12.2015.
 	const integer SPLAY_TREE_ID = 1; // Скошенное дерево поиска.
 	const integer BINARY_HEAP = 2; // Двоичная куча. 16.06.2017.
-	const integer RANDOM_TREE_ID = 3; // (Деамида) Рандомизированное дерево поиска. 24.08.2017.
+	const integer RANDOM_TREE_ID = 3; // (Дерамида) Рандомизированное дерево поиска. 24.08.2017.
 	const integer RED_BLACK_TREE_ID = 4; // Красно-Чёрное дерево поиска. 22.06.2018.
-	const integer FIBONACCI_HEAP_ID = 5; // Фиббоначиева куча. 11.07.2018.
+	const integer FIBONACCI_HEAP_ID = 5; // Фибоначчиева куча. 11.07.2018.
 	const integer VAN_EMDE_BOAS_TREE_ID = 6; // ван Эмде Боас дерево поиска. 30.06.2018
 	//integer id_tree = BINARY_HEAP; // AVL_TREE_ID; // SPLAY_TREE_ID; // BINARY_HEAP; // RANDOM_TREE_ID; // RED_BLACK_TREE_ID;
 	// 28.01.2018 На выбор пользователя.
@@ -51313,7 +46449,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 	
 
-	// Для вычисления grid complexity оператора интерполляции:
+	// Для вычисления grid complexity оператора интерполяции:
 	integer nnz_P_memo_0 = 0;
 	integer nnz_P_memo_all = 0;
 
@@ -51352,7 +46488,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	// Использовать ли quicksort qs and qsj.
 	// Сортировка с подсчётом быстрее quickSort.
 	// Использовать ли сортировку подсчётом которая 
-	//жрёт килотонну памяти (Короче для машин у которых море оперативки).
+	//потребляет килотонну памяти (Короче для машин у которых море оперативки).
 	//const integer COUNTING_SORT_ALG = 0; // Сортировка с подсчётом лучший выбор.
     // Сортировка с посчётом подходит потому что ключи целочисленны и 
 	// лежат в заданном интервале непрерывно.
@@ -51368,12 +46504,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	// включение/отключение отладочного режима.
 	bool debug_reshime = false;
 
-	const integer max_sosed = 111400;
+	const integer max_neighbour = 111400;
 	// Мы будем поддерживать информацию о максимальном количестве соседей.
-	integer Maximumsosedcount = -1;
+	integer Maximumneighbourcount = -1;
 	// мы получим порядковый номер элемента с максимальным число соседей в матрице А,
-	// прямо в результате построения C-F разбиения.
-	bool bmaxsosedinfoactive = false;
+	// прямо в результате построения C/F разбиения.
+	bool bmaxneighbourinfoactive = false;
 
 
 	// Возможно можно обойтись без ji связи.
@@ -51467,8 +46603,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	istack = (integer*)malloc((istack_size_limit) * sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_4", (istack_size_limit));
 
-	// Для построения C-F декомпозиции нам тоже потребуется хеш таблица
-	// и стек для очистки хеш таблицы.
+	// Для построения C/F декомпозиции нам тоже потребуется хеш-таблица
+	// и стек для очистки хеш-таблицы.
 	bool* hash_table2 = nullptr;
 	hash_table2 = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(hash_table2, "hash_table2", "classic_aglomerative_amg_4", (n + 1));
@@ -51476,7 +46612,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	// Инициализация.
 #pragma omp parallel for
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
-	// И теперь стек для очистки хеш таблицы.
+	// И теперь стек для очистки хеш-таблицы.
 	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1) * sizeof(integer));
@@ -51526,7 +46662,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			fibo_heap.UpdateSize(n_a[ilevel -1]+1);
 		}
 
-		// защита от повторного срабатывания на добавление в интерполляции.
+		// защита от повторного срабатывания на добавление в интерполяции.
 		from_re_operation_protection0 = true;
 		ifrom_re_operation_protection = 0;
 
@@ -51573,8 +46709,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		*/
 
 
-		Maximumsosedcount = -1;
-		bmaxsosedinfoactive = false;
+		Maximumneighbourcount = -1;
+		bmaxneighbourinfoactive = false;
 
 		//if (ilevel > 1) {
 		//if (n_a[ilevel - 2] == n_a[ilevel - 1]) break;
@@ -51609,9 +46745,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 #pragma omp parallel for
 		for (integer ii = n_a[ilevel - 1] + 1; ii <= n; ii++) {
 #if doubleintprecision == 1
-			//printf("warning: n!=n_a[ilevel-1] : n=%lld, n_a=%lld, ilevel=%lld\n", n, n_a[ilevel - 1], ilevel);
+			//printf("warning: n!=n_a[ilevel-1]: n=%lld, n_a=%lld, ilevel=%lld\n", n, n_a[ilevel - 1], ilevel);
 #else
-			//printf("warning: n!=n_a[ilevel-1] : n=%d, n_a=%d, ilevel=%d\n", n, n_a[ilevel - 1], ilevel);
+			//printf("warning: n!=n_a[ilevel-1]: n=%d, n_a=%d, ilevel=%d\n", n, n_a[ilevel - 1], ilevel);
 #endif
 			
 			//getchar();
@@ -51628,23 +46764,23 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			
 			// 7 января 2016. Обязательно нужна эта сортировка.
 			switch (imy_sort_algorithm) {
-			case COUNTING_SORT_ALG :
-				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings);
+			case COUNTING_SORT_ALG:
+				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, indx_comparei);
 				break;
-			case HEAP_SORT_ALG :
-				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+			case HEAP_SORT_ALG:
+				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 				break;
-			case QUICK_SORT_ALG :
+			case QUICK_SORT_ALG:
 				// quicksort
-				qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				// Библиотечный алгоритм. O(nlog(n)).
+				qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
+				// Библиотечный алгоритм. O(n*log2(n)).
 				// Не использует лишней памяти.
-				//std::sort(Amat + (1 + iadd) * sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd + 1) * sizeof(Ak1), compAi);
+				//std::sort(Amat + 1 + iadd, Amat + nnz_a[ilevel - 1] + iadd + 1, compareAk1R);
 
 				//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				break;
-			default :
-				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings);
+			default:
+				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, indx_comparei);
 				break;
 			}	
 			
@@ -51687,23 +46823,23 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			// Сортируем копию по j.
 			// Мы сортируем по j, чтобы потом быстро искать по j.
 			switch (imy_sort_algorithm) {
-			case COUNTING_SORT_ALG :
+			case COUNTING_SORT_ALG:
 				// Сортировка с подсчётом за линейное время.
-				Counting_Sortj(Atemp, 1, nnz_a[ilevel - 1]);
+				Counting_Sort(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				break;
-			case HEAP_SORT_ALG :
-				HeapSort_j(Atemp, 1, nnz_a[ilevel - 1]);
+			case HEAP_SORT_ALG:
+				HeapSort(Atemp, 1, nnz_a[ilevel - 1], comparej);
 				break;
-			case QUICK_SORT_ALG :
+			case QUICK_SORT_ALG:
 				// Быстрая сортировка Чарльза Хоара.
-				qsj(Atemp, 1, nnz_a[ilevel - 1]);
-				// Библиотечный алгоритм. O(nlog(n)).
+				qs(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
+				// Библиотечный алгоритм. O(n*log2(n)).
 				// Не использует лишней памяти.
-				//std::sort(Atemp + 1 * sizeof(Ak1), Atemp + (nnz_a[ilevel - 1]+1) * sizeof(Ak1), compAj);
+				//std::sort(Atemp + 1, Atemp + nnz_a[ilevel - 1]+1, compareAk1P);
 				break;
-			default :
+			default:
 				// Сортировка с подсчётом за линейное время.
-				Counting_Sortj(Atemp, 1, nnz_a[ilevel - 1]);
+				Counting_Sort(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				break;
 			}
 		} // if (bji)
@@ -51739,14 +46875,14 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		count_sosed = nullptr;
-		//count_sosed = new integer[n_a[ilevel - 1] + 1];
-		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
-		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
+		count_neighbour = nullptr;
+		//count_neighbour = new integer[n_a[ilevel - 1] + 1];
+		count_neighbour = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
+		handle_error<integer>(count_neighbour, "count_neighbour", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
 
 #pragma omp parallel for
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
-			count_sosed[ii] = 0; // нет соседей.
+			count_neighbour[ii] = 0; // нет соседей.
 		}
 
 
@@ -51758,7 +46894,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 		if (flag[Amat[ii].i] == false) {
 		integer ic = -1;
-		integer cand[max_sosed];
+		integer cand[max_neighbour];
 		if (0) {
 		for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 		ic++; //i,j
@@ -51787,20 +46923,20 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		}
 		}
 		}
-		integer len_sosed = ic;
+		integer len_neighbour = ic;
 		// Найти столбец j который равен индексу Amat[ii].i
 		//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 		//if (Amat[ii1].i != Amat[ii].i) {
 		//	if (Amat[ii1].j == Amat[ii].i) {
 		// j,i
-		//		bool foundsosed = false;
-		//		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-		//			if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+		//		bool foundneighbour = false;
+		//		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+		//			if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 		//		}
-		//		if (!foundsosed) {
+		//		if (!foundneighbour) {
 		//			ic++;
 		//			cand[ic] = Amat[ii1].j;
-		//			len_sosed++;
+		//			len_neighbour++;
 		//		}
 		//	}
 		//}
@@ -51811,24 +46947,24 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		for (integer ii1 = ii2; (ii1 <= nnz_a[ilevel - 1]) && (Atemp[ii1].j == Amat[ii].i); ii1++) {
 		if (Atemp[ii1].i != Amat[ii].i) {
 		// j,i
-		bool foundsosed = false;
-		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-		if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+		bool foundneighbour = false;
+		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+		if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 		}
-		if (!foundsosed) {
+		if (!foundneighbour) {
 		ic++;
 		cand[ic] = Atemp[ii1].j;
-		len_sosed++;
+		len_neighbour++;
 		}
 		}
 		}
 		}
 
 
-		count_sosed[Amat[ii].i] = ic;
-		if (ic > Maximumsosedcount) {
-		Maximumsosedcount = ic;
-		bmaxsosedinfoactive = true;
+		count_neighbour[Amat[ii].i] = ic;
+		if (ic > Maximumneighbourcount) {
+		Maximumneighbourcount = ic;
+		bmaxneighbourinfoactive = true;
 		}
 		flag[Amat[ii].i] = true;
 		}
@@ -51894,7 +47030,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
 				integer ic = -1;
-				//integer cand[max_sosed];
+				//integer cand[max_neighbour];
 				node_AVL_Gus* root_Gus_cand = 0;
 				if (0) {
 					for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
@@ -52032,33 +47168,33 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						}
 					}
 				}
-				integer len_sosed = ic;
+				integer len_neighbour = ic;
 				// Найти столбец j который равен индексу Amat[ii].i
 				//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 				//if (Amat[ii1].i != Amat[ii].i) {
 				//	if (Amat[ii1].j == Amat[ii].i) {
 				// j,i
-				//		bool foundsosed = false;
-				//		//for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-				//			//if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+				//		bool foundneighbour = false;
+				//		//for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+				//			//if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 				//		//}
 				//if (btree_vs_hash == 1) {
-					//foundsosed = isfound_hash_table_Gus_struct01(Amat[ii1].j);
-					//if (!foundsosed) {
+					//foundneighbour = isfound_hash_table_Gus_struct01(Amat[ii1].j);
+					//if (!foundneighbour) {
 						//			ic++;
 						//			//cand[ic] = Amat[ii1].j;
 						//         	insert_hash_table_Gus_struct01(Amat[ii1].j);
-						//			len_sosed++;
+						//			len_neighbour++;
 						//		}
 					
 				//}
 				//else if (btree_vs_hash == 0) {
-					//      foundsosed = isfound_Gus(root_Gus_cand, Amat[ii1].j);
-					//		if (!foundsosed) {
+					//      foundneighbour = isfound_Gus(root_Gus_cand, Amat[ii1].j);
+					//		if (!foundneighbour) {
 					//			ic++;
 					//			//cand[ic] = Amat[ii1].j;
 					//          root_Gus_cand = insert_Gus(root_Gus_cand, Amat[ii1].j);
-					//			len_sosed++;
+					//			len_neighbour++;
 					//		}
 				//}
 				//	}
@@ -52070,26 +47206,26 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					for (integer ii1 = ii2; (ii1 <= row_startA[Amat[ii2].i + 1] - 1); ii1++) {
 						if (Atemp[ii1].i != Amat[ii].i) {
 							// j,i
-							bool foundsosed = false;
-							//for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-								//if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+							bool foundneighbour = false;
+							//for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+								//if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 							//}
 							if (btree_vs_hash == 1) {
-								foundsosed = isfound_hash_table_Gus_struct01(Atemp[ii1].j);
-								if (!foundsosed) {
+								foundneighbour = isfound_hash_table_Gus_struct01(Atemp[ii1].j);
+								if (!foundneighbour) {
 									ic++;
 									//cand[ic] = Atemp[ii1].j;
 									insert_hash_table_Gus_struct01(Atemp[ii1].j);
-									len_sosed++;
+									len_neighbour++;
 								}
 							}
 							else if (btree_vs_hash == 0) {
-								foundsosed = isfound_Gus(root_Gus_cand, Atemp[ii1].j);
-								if (!foundsosed) {
+								foundneighbour = isfound_Gus(root_Gus_cand, Atemp[ii1].j);
+								if (!foundneighbour) {
 									ic++;
 									//cand[ic] = Atemp[ii1].j;
 									root_Gus_cand = insert_Gus(root_Gus_cand, Atemp[ii1].j);
-									len_sosed++;
+									len_neighbour++;
 								}
 							}
 						}
@@ -52097,7 +47233,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				}
 
 
-				count_sosed[Amat[ii].i] = ic;
+				count_neighbour[Amat[ii].i] = ic;
 				// 22_12_2016
 				if (ic == 0) {
 					// Большой вопрос уместно ли так делать 8.апреля 2017 ???
@@ -52111,9 +47247,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					//this_is_C_node[Amat[ii].i] = true;
 					//this_is_F_node[Amat[ii].i] = false;
 				}
-				if (ic > Maximumsosedcount) {
-					Maximumsosedcount = ic;
-					bmaxsosedinfoactive = true;
+				if (ic > Maximumneighbourcount) {
+					Maximumneighbourcount = ic;
+					bmaxneighbourinfoactive = true;
 				}
 				flag[Amat[ii].i] = true;
 
@@ -52132,20 +47268,20 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			// Счётчик labda инициализирован согласно литературным описаниям через Strong Transpose.
 			for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) {
 #if doubleintprecision == 1
-				//printf("%lld ", count_sosed[i_1]);
+				//printf("%lld ", count_neighbour[i_1]);
 #else
-				//printf("%d ", count_sosed[i_1]);
+				//printf("%d ", count_neighbour[i_1]);
 #endif
 				
 				//if (hash_StrongTranspose_collection[i_1] == nullptr) {
 					//printf(" nullptr");
 					//system("PAUSE");
-					// Присутствуют элементы с nullptr у которых count_sosed[i_1] =0;
+					// Присутствуют элементы с nullptr у которых count_neighbour[i_1] =0;
 				//}
 				// 20.05.2017 Добавлен быстрый доступ по ключу для количества элементов в дереве.
-				//count_sosed[i_1] = getnumber_AVL_node_global(hash_StrongTranspose_collection[i_1]);
-				count_sosed[i_1] = isize_hash_StrongTranspose_collection[i_1];
-				if (count_sosed[i_1]==0) {
+				//count_neighbour[i_1] = getnumber_AVL_node_global(hash_StrongTranspose_collection[i_1]);
+				count_neighbour[i_1] = isize_hash_StrongTranspose_collection[i_1];
+				if (count_neighbour[i_1]==0) {
 					// 14.04.2017 Важнейшая положительная модификация 
 					// сокращающая количество итераций:
 					// # задача; число ит. до; число ит. после;
@@ -52159,9 +47295,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 				}
 #if doubleintprecision == 1
-				//printf("%lld \n", count_sosed[i_1]);
+				//printf("%lld \n", count_neighbour[i_1]);
 #else
-				//printf("%d \n", count_sosed[i_1]);
+				//printf("%d \n", count_neighbour[i_1]);
 #endif
 				
 				//system("PAUSE");
@@ -52169,7 +47305,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		}
 
 
-		maxsosed = 0;
+		maxneighbour = 0;
 		icandidate = 0;
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
 			flag[ii] = false; // init flag
@@ -52179,13 +47315,13 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		/*
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 		if (flag[Amat[ii].i] == false) {
-		if (count_sosed[Amat[ii].i] > maxsosed) {
-		maxsosed = count_sosed[Amat[ii].i];
+		if (count_neighbour[Amat[ii].i] > maxneighbour) {
+		maxneighbour = count_neighbour[Amat[ii].i];
 		icandidate = ii;
-		if (bmaxsosedinfoactive) {
+		if (bmaxneighbourinfoactive) {
 		// организуем досрочный выход из цикла for.
 		// Это должно сильно сокращать количество сканирований.
-		if (maxsosed == Maximumsosedcount) break;
+		if (maxneighbour == Maximumneighbourcount) break;
 		}
 		}
 		flag[Amat[ii].i] = true;
@@ -52193,13 +47329,13 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		}
 		*/
 		for (integer i7 = 1; i7 <= n_a[ilevel - 1]; i7++) {
-			if (count_sosed[i7] > maxsosed) {
-				maxsosed = count_sosed[i7];
+			if (count_neighbour[i7] > maxneighbour) {
+				maxneighbour = count_neighbour[i7];
 				icandidate = row_startA[i7];
-				if (bmaxsosedinfoactive) {
+				if (bmaxneighbourinfoactive) {
 					// организуем досрочный выход из цикла for.
 					// Это должно сильно сокращать количество сканирований.
-					if (maxsosed == Maximumsosedcount) break;
+					if (maxneighbour == Maximumneighbourcount) break;
 				}
 			}
 		}
@@ -52216,10 +47352,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		nnzR = 1;
 
 		
-		vacant = NULL_SOSED;
+		vacant = NULL_NEIGHBOUR;
 		bcontinue = true;
 
-		// Построение C-F разбиения.
+		// Построение C/F разбиения.
 		//while (icandidate != 0)
 		icountprohod = 0;
 		// Мы будем заоминать с какой позиции начинаются ещё не помеченные узлы,
@@ -52270,11 +47406,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		// 4 июля 2016.
 		// это случай когда следующий уровень вложенности просто не из чего строить и это 
 		// становится понятно только здесь.
-		if ((icandidate == 0) && (maxsosed == 0)) {
+		if ((icandidate == 0) && (maxneighbour == 0)) {
 #if doubleintprecision == 1
-			//printf("maxsosed==%lld\n",maxsosed);
+			//printf("maxneighbour==%lld\n",maxneighbour);
 #else
-			//printf("maxsosed==%d\n",maxsosed);
+			//printf("maxneighbour==%d\n",maxneighbour);
 #endif
 			
 			//getchar();
@@ -52287,12 +47423,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		// более быстро выделить её один раз. См. выделение памяти под set.
 		// 23.04.2017
 
-		//integer set[max_sosed]; // не более 20 узлов в одном агрегате.
-		//integer* set = new integer[max_sosed];
+		//integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
+		//integer* set = new integer[max_neighbour];
 		root_Gus_set = 0;
 		// инициализация убрана потому что она не нужна и она сильно тормозит быстродействие.
-		//for (integer js = 0; js < max_sosed; js++) {
-		//set[js] = NULL_SOSED;
+		//for (integer js = 0; js < max_neighbour; js++) {
+		//set[js] = NULL_NEIGHBOUR;
 		//}
 
 		while (bcontinue)
@@ -52520,9 +47656,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						// 21.05.2017 Устаревший код, его полностью заменяет 
 						// formirate_F_SiTranspose_AVL_Gus2.
 
-						//integer set_s[max_sosed];
+						//integer set_s[max_neighbour];
 						// ic+2 точно должно хватить, к томуже ic+2 в большинстве случаев 
-						// существенно меньше по размеру чем max_sosed. 
+						// существенно меньше по размеру чем max_neighbour. 
 						// Всегда лучше выделять памяти ровно столько сколько потребуется если 
 						// точно известно сколько нужно.
 						integer* set_s = new integer[ic+2];
@@ -52590,10 +47726,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								vacant = set_formirate_marker->item;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant; // Si_Transpose связи.
 									ic++;
 
@@ -52645,10 +47781,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								vacant = Amat[ii].j;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant;
 
 									ic++;
@@ -52680,10 +47816,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								vacant = Amat[ii].j;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant;
 
 									ic++;
@@ -52727,10 +47863,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									vacant = Amat[iscan].j;
 									for (integer js = 0; js < ic; js++) {
 										if (vacant == set[js]) {
-											vacant = NULL_SOSED;
+											vacant = NULL_NEIGHBOUR;
 										}
 									}
-									if (vacant != NULL_SOSED) {
+									if (vacant != NULL_NEIGHBOUR) {
 										set[ic] = vacant;
 
 										ic++;
@@ -52771,10 +47907,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									vacant = Amat[iscan].j;
 									for (integer js = 0; js < ic; js++) {
 										if (vacant == set[js]) {
-											vacant = NULL_SOSED;
+											vacant = NULL_NEIGHBOUR;
 										}
 									}
-									if (vacant != NULL_SOSED) {
+									if (vacant != NULL_NEIGHBOUR) {
 										set[ic] = vacant;
 
 										ic++;
@@ -52826,10 +47962,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						//	vacant = Amat[ii1].i;
 						//	for (integer js = 0; js < ic; js++) {
 						//		if (vacant == set[js]) {
-						//			vacant = NULL_SOSED;
+						//			vacant = NULL_NEIGHBOUR;
 						//		}
 						//	}
-						//	if (vacant != NULL_SOSED) {
+						//	if (vacant != NULL_NEIGHBOUR) {
 						//		set[ic] = vacant; // j,i связь.
 
 						//		ic++;
@@ -52869,10 +48005,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						//	vacant = Amat[ii1].i;
 						//	for (integer js = 0; js < ic; js++) {
 						//		if (vacant == set[js]) {
-						//			vacant = NULL_SOSED;
+						//			vacant = NULL_NEIGHBOUR;
 						//		}
 						//	}
-						//	if (vacant != NULL_SOSED) {
+						//	if (vacant != NULL_NEIGHBOUR) {
 						//		set[ic] = vacant; // j,i связь.
 
 						//		ic++;
@@ -52912,10 +48048,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											vacant = Atemp[ii2].i;
 											for (integer js = 0; js < ic; js++) {
 												if (vacant == set[js]) {
-													vacant = NULL_SOSED;
+													vacant = NULL_NEIGHBOUR;
 												}
 											}
-											if (vacant != NULL_SOSED) {
+											if (vacant != NULL_NEIGHBOUR) {
 												set[ic] = vacant; // j,i связь.
 												ic++;
 											}
@@ -52957,10 +48093,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											vacant = Atemp[ii2].i;
 											for (integer js = 0; js < ic; js++) {
 												if (vacant == set[js]) {
-													vacant = NULL_SOSED;
+													vacant = NULL_NEIGHBOUR;
 												}
 											}
-											if (vacant != NULL_SOSED) {
+											if (vacant != NULL_NEIGHBOUR) {
 												set[ic] = vacant; // j,i связь.
 												ic++;
 											}
@@ -52985,8 +48121,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					// 28.01.2017
 					// Мы берем узлы из SiTranspose только в пересечении с U так пишут в книге.
 
-					//integer set_s[max_sosed];
-					//integer* set_s = new integer[max_sosed];
+					//integer set_s[max_neighbour];
+					//integer* set_s = new integer[max_neighbour];
 					integer* set_s = new integer[ic + 2];
 					set_s[0] = set0;
 					integer i98 = 1;
@@ -53013,7 +48149,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				// 1. Перепаковка из root_Gus_set в set.
 				// 2. root_Gus_set больше не используется.
 				// 3. Именно здесь надо выделить данные под set.
-				//integer* set = new integer[max_sosed];
+				//integer* set = new integer[max_neighbour];
 				integer* set = nullptr;
 				set = new integer[ic + 2];
 				if (set == nullptr) {
@@ -53088,9 +48224,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					for (integer js = 0; js < ic; js++) {
 						data_BalTree ddel;
 						ddel.i = set[js];
-						ddel.countsosed = count_sosed[set[js]];
+						ddel.count_neighbour = count_neighbour[set[js]];
 						// Уникальный ключ для дерева ван Эмде Боаса.
-						integer  veb_del_key = (count_sosed[set[js]])*(n_a[ilevel - 1]+1) + (set[js] );
+						integer  veb_del_key = (count_neighbour[set[js]])*(n_a[ilevel - 1]+1) + (set[js] );
 						//ddel.ii = row_startA[ddel.i];
 						switch (id_tree) {
 						case AVL_TREE_ID: root = remove_AVL(root, ddel);
@@ -53098,7 +48234,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						case SPLAY_TREE_ID: root_splay = delete_splay_Tree(ddel, root_splay);
 							break;
 						case BINARY_HEAP:
-							// Уникальным ключём удаления является set[js].
+							// Уникальным ключом удаления является set[js].
 							binary_heap.remove(set[js]);
 							break;
 						case RANDOM_TREE_ID: 
@@ -53123,7 +48259,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							break;
 
 
-						case VAN_EMDE_BOAS_TREE_ID :
+						case VAN_EMDE_BOAS_TREE_ID:
 #if VEB_FLAG
 							// Если элемент присутствует то мы его удалим.
 							res_vanEMDE_BOAS_Tree = vEB_find(vanEMDE_BOAS_Tree, veb_del_key);
@@ -53133,7 +48269,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							else {
 								res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_del_key);
 								if (!res_vanEMDE_BOAS_Tree) {
-									printf("nevozmochno udalit post factum delete %lld %lld\n", ddel.countsosed, ddel.i);
+									printf("nevozmochno udalit post factum delete %lld %lld\n", ddel.count_neighbour, ddel.i);
 									system("pause");
 								}
 							}
@@ -53168,6 +48304,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				//for (integer ii_2 = istart; ii_2 <= iend; ii_2++) {
 
 				// Старая реализация которой присуща большая нагрузка на операторы new && delete.
+#if 0
 				if (0) {
 					for (integer js = 1; js < ic; js++) {
 
@@ -53194,7 +48331,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									lsos->next = nullptr;
 									lsos->i = Amat[is0].j;
 									lsos->ii = row_startA[lsos->i];
-									// lsos->countsosed // не используется.
+									// lsos->count_neighbour // не используется.
 									List *newnodesos = new List;
 									newnodesos->prev = lsos;
 									lsos->next = newnodesos;
@@ -53251,20 +48388,20 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							}
 
 							data_BalTree dsearch;
-							dsearch.countsosed = count_sosed[isc];
+							dsearch.count_neighbour = count_neighbour[isc];
 							//dsearch.ii = ii_2;
 							dsearch.i = isc;
-							count_sosed[isc] += ic2;
+							count_neighbour[isc] += ic2;
 							data_BalTree dadd;
-							dadd.countsosed = count_sosed[isc];
+							dadd.count_neighbour = count_neighbour[isc];
 							//dadd.ii = ii_2;
 							dadd.i = isc;
 
 							//node<integer>* fibo_n;
-							if (bmaxsosedinfoactive) {
+							if (bmaxneighbourinfoactive) {
 								// Обновляем информацию о максимальном количестве соседей.
-								if (count_sosed[isc] >= Maximumsosedcount) {
-									Maximumsosedcount = count_sosed[isc];
+								if (count_neighbour[isc] >= Maximumneighbourcount) {
+									Maximumneighbourcount = count_neighbour[isc];
 								}
 
 								// Добавляем соседа в любом случае
@@ -53288,8 +48425,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									TreapNode* save_root = nullptr;
 
 									// Уникальный ключ для дерева ван Эмде Боаса.
-									integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1]+1) + (dadd.i );
-									integer  veb_dsearch_key = (dsearch.countsosed )*(n_a[ilevel - 1]+1) + (dsearch.i );
+									integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1]+1) + (dadd.i );
+									integer  veb_dsearch_key = (dsearch.count_neighbour )*(n_a[ilevel - 1]+1) + (dsearch.i );
 
 									// добавляем элемент в АВЛ дерево,
 									// причём если элемент уже находился в дереве то он модифицируется.
@@ -53307,12 +48444,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											// Удаляем существующий элемент и вставляем новый.
 											binary_heap.remove(isc);
 											// Осуществляем вставку нового элемента.
-											binary_heap.insert(count_sosed[isc], isc);
+											binary_heap.insert(count_neighbour[isc], isc);
 										}
 										else {
 											// отсутствует.
 											// Осуществляем вставку нового элемента.
-											binary_heap.insert(count_sosed[isc], isc);
+											binary_heap.insert(count_neighbour[isc], isc);
 										}
 										break;
 									case RANDOM_TREE_ID:
@@ -53435,23 +48572,23 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
 
 									// Уникальный ключ для дерева ван Эмде Боаса.
-									integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1] + 1) + (dadd.i);
-									integer  veb_dsearch_key = (dsearch.countsosed)*(n_a[ilevel - 1] + 1) + (dsearch.i);
+									integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1] + 1) + (dadd.i);
+									integer  veb_dsearch_key = (dsearch.count_neighbour)*(n_a[ilevel - 1] + 1) + (dsearch.i);
 
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 
 										// Добавляем соседа в любом случае
@@ -53490,13 +48627,13 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 													// Удаляем существующий элемент и вставляем новый.
 													binary_heap.remove(isc);
 													// Осуществляем вставку нового элемента.
-													binary_heap.insert(count_sosed[isc], isc);
+													binary_heap.insert(count_neighbour[isc], isc);
 												}
 												else {
 													
 													// отсутствует.
 													// Осуществляем вставку нового элемента.
-													binary_heap.insert(count_sosed[isc], isc);
+													binary_heap.insert(count_neighbour[isc], isc);
 												}
 												break;
 											case RANDOM_TREE_ID:
@@ -53605,18 +48742,18 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								}
 
 								data_BalTree dsearch;
-								dsearch.countsosed = count_sosed[isc];
+								dsearch.count_neighbour = count_neighbour[isc];
 								//dsearch.ii = ii_2;
 								dsearch.i = isc;
-								count_sosed[isc] += ic2;
+								count_neighbour[isc] += ic2;
 								data_BalTree dadd;
-								dadd.countsosed = count_sosed[isc];
+								dadd.count_neighbour = count_neighbour[isc];
 								//dadd.ii = ii_2;
 								dadd.i = isc;
 
 								// Уникальный ключ для дерева ван Эмде Боаса.
-								integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1] + 1) + (dadd.i);
-								integer  veb_dsearch_key = (dsearch.countsosed)*(n_a[ilevel - 1] + 1) + (dsearch.i);
+								integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1] + 1) + (dadd.i);
+								integer  veb_dsearch_key = (dsearch.count_neighbour)*(n_a[ilevel - 1] + 1) + (dsearch.i);
 
 								//node<integer>* fibo_n;
 
@@ -53643,12 +48780,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											// Удаляем существующий элемент и вставляем новый.
 											binary_heap.remove(isc);
 											// Осуществляем вставку нового элемента.
-											binary_heap.insert(count_sosed[isc], isc);
+											binary_heap.insert(count_neighbour[isc], isc);
 										}
 										else {
 											// отсутствует.
 											// Осуществляем вставку нового элемента.
-											binary_heap.insert(count_sosed[isc], isc);
+											binary_heap.insert(count_neighbour[isc], isc);
 										}
 										break;
 									case RANDOM_TREE_ID:
@@ -53711,10 +48848,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									}
 								}
 
-								if (bmaxsosedinfoactive) {
+								if (bmaxneighbourinfoactive) {
 									// Обновляем информацию о максимальном количестве соседей.
-									if (count_sosed[isc] >= Maximumsosedcount) {
-										Maximumsosedcount = count_sosed[isc];
+									if (count_neighbour[isc] >= Maximumneighbourcount) {
+										Maximumneighbourcount = count_neighbour[isc];
 									}
 								}
 
@@ -53723,7 +48860,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						}
 					}
 				}
-				else if (1) {
+				else 
+#endif
+				if (1) {
 					//printf("additional and modify new neighbour\n");
 
 					// 10 января 2016. Новая логика.
@@ -53759,7 +48898,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 								// на ряде тестовых задач при таком подходе агломерация проходила очень
 								// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-								// Эта проблема проявилась на задачах :
+								// Эта проблема проявилась на задачах:
 								// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 								// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 								// Проблема не в этом месте кода.
@@ -53782,6 +48921,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									istart2 = row_startA[Amat[ii_2].i];
 									integer istopmarker2 = row_startA[Amat[ii_2].i + 1] - 1;
 
+#if 0
 									if (0) {
 										for (integer is01 = istart2; (is01 <= istopmarker2); is01++) {
 											if (Amat[is01].j == set[js]) {
@@ -53808,9 +48948,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											// уменьшить счетчик weakly соседа ?
 										}
 									}
-									else if ((my_amg_manager.ipatch_number == 2)) {
+									else 
+#endif
+									if ((my_amg_manager.ipatch_number == 2)) {
 										// 22 _12_2016
-										// Это лучший вариант : обеспечивает корректное построение иерархии
+										// Это лучший вариант: обеспечивает корректное построение иерархии
 										// уровней на задаче passive module 6 в то время как все остальные 
 										// отличные от этого способа давали сбой.
 										doublerealT max_vnediagonal33 = -1.0e30;
@@ -53832,7 +48974,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									}
 									else {
 										// 22 _12_2016
-										// Это лучший вариант : обеспечивает корректное построение иерархии
+										// Это лучший вариант: обеспечивает корректное построение иерархии
 										// уровней на задаче passive module 6 в то время как все остальные 
 										// отличные от этого способа давали сбой.
 										doublerealT max_vnediagonal33 = -1.0e30;
@@ -53855,22 +48997,22 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
 									// Увеличиваем на количество связей с новыми F узлами.
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									//if (ic2 > 0) {
-									//count_sosed[isc] += 1;
+									//count_neighbour[isc] += 1;
 									//}
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
 
 									// Уникальный ключ для дерева ван Эмде Боаса.
-									integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1] + 1) + (dadd.i);
-									integer  veb_dsearch_key = (dsearch.countsosed)*(n_a[ilevel - 1] + 1) + (dsearch.i);
+									integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1] + 1) + (dadd.i);
+									integer  veb_dsearch_key = (dsearch.count_neighbour)*(n_a[ilevel - 1] + 1) + (dsearch.i);
 
 									//node<integer>* fibo_n;
 
@@ -53894,16 +49036,16 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										case BINARY_HEAP:
 											if (binary_heap.isfound(isc)) {
 												// Найден
-												binary_heap.modify(isc, count_sosed[isc]);
+												binary_heap.modify(isc, count_neighbour[isc]);
 												// Удаляем существующий элемент и вставляем новый.
 												//binary_heap.remove(isc);
 												// Осуществляем вставку нового элемента.
-												//binary_heap.insert(count_sosed[isc], isc);
+												//binary_heap.insert(count_neighbour[isc], isc);
 											}
 											else {
 												// отсутствует.
 												// Осуществляем вставку нового элемента.
-												binary_heap.insert(count_sosed[isc], isc);
+												binary_heap.insert(count_neighbour[isc], isc);
 											}
 											break;
 										case RANDOM_TREE_ID:
@@ -53964,10 +49106,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										}
 									}
 
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 									}
 								}
@@ -53979,7 +49121,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 								// на ряде тестовых задач при таком подходе агломерация проходила очень
 								// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-								// Эта проблема проявилась на задачах :
+								// Эта проблема проявилась на задачах:
 								// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 								// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 								// Проблема не в этом месте кода.
@@ -54002,6 +49144,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									istart2 = row_startA[Amat[ii_2].i];
 									integer istopmarker2 = row_startA[Amat[ii_2].i + 1] - 1;
 
+#if 0
 									if (0) {
 										for (integer is01 = istart2; (is01 <= istopmarker2); is01++) {
 											if (Amat[is01].j == set[js]) {
@@ -54030,7 +49173,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									}
 									else if (0) {
 										// 22 _12_2016
-										// Это лучший вариант : обеспечивает корректное построение иерархии
+										// Это лучший вариант: обеспечивает корректное построение иерархии
 										// уровней на задаче passive module 6 в то время как все остальные 
 										// отличные от этого способа давали сбой.
 										doublerealT max_vnediagonal33 = -1.0e30;
@@ -54050,9 +49193,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											// уменьшить счетчик weakly соседа ?
 										}
 									}
-									else {
+									else
+#endif
+									{
 										// 22 _12_2016
-										// Это лучший вариант : обеспечивает корректное построение иерархии
+										// Это лучший вариант: обеспечивает корректное построение иерархии
 										// уровней на задаче passive module 6 в то время как все остальные 
 										// отличные от этого способа давали сбой.
 										doublerealT max_vnediagonal33 = -1.0e30;
@@ -54071,7 +49216,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 														if (js < ic_end_F_SiTranspose) {
 															// Увеличиваем счётчики только тех соседей F узлов которые
 															// являются соседями F узлов которые были получены из Si_Transpose связей.
-															// Именно так написано у Руге и Стубена.
+															// Именно так написано у Руге и Штубена.
 															ic2++;
 														}
 													}
@@ -54086,22 +49231,22 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
 									// Увеличиваем на количество связей с новыми F узлами.
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									//if (ic2 > 0) {
-									//count_sosed[isc] += 1;
+									//count_neighbour[isc] += 1;
 									//}
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
 
 									// Уникальный ключ для дерева ван Эмде Боаса.
-									integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1] + 1) + (dadd.i);
-									integer  veb_dsearch_key = (dsearch.countsosed)*(n_a[ilevel - 1] + 1) + (dsearch.i);
+									integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1] + 1) + (dadd.i);
+									integer  veb_dsearch_key = (dsearch.count_neighbour)*(n_a[ilevel - 1] + 1) + (dsearch.i);
 
 									//node<integer>* fibo_n;
 
@@ -54128,12 +49273,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 												// Удаляем существующий элемент и вставляем новый.
 												binary_heap.remove(isc);
 												// Осуществляем вставку нового элемента.
-												binary_heap.insert(count_sosed[isc], isc);
+												binary_heap.insert(count_neighbour[isc], isc);
 											}
 											else {
 												// отсутствует.
 												// Осуществляем вставку нового элемента.
-												binary_heap.insert(count_sosed[isc], isc);
+												binary_heap.insert(count_neighbour[isc], isc);
 											}
 											break;
 										case RANDOM_TREE_ID:
@@ -54194,10 +49339,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										}
 									}
 
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 									}
 								}
@@ -54208,7 +49353,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						}
 					}
 
-					// Очистка (восстановление хеш таблицы).
+					// Очистка (восстановление хеш-таблицы).
                      // НИ в коем случае не параллелить по OPENMP в этом месте.!!!
 					for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 						hash_table2[istack2[i_54]] = false;
@@ -54217,7 +49362,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 				} // the end
-				else {
+				else
+ {
 					// 13 января 2016. Новая логика.
 					// Устраним некоторые повторные модификации (это должно снизить нагрузку на АВЛ дерево).
 					// Отличие в том что мы учитываем лишь Strong связи при инкрементации счётчика.
@@ -54267,7 +49413,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 										// на ряде тестовых задач при таком подходе агломерация проходила очень
 										// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-										// Эта проблема проявилась на задачах :
+										// Эта проблема проявилась на задачах:
 										// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 										// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 										// Проблема не в этом месте кода.
@@ -54318,18 +49464,18 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 												data_BalTree dsearch;
-												dsearch.countsosed = count_sosed[isc];
+												dsearch.count_neighbour = count_neighbour[isc];
 												//dsearch.ii = ii_2;
 												dsearch.i = isc;
-												count_sosed[isc] += ic2;
+												count_neighbour[isc] += ic2;
 												data_BalTree dadd;
-												dadd.countsosed = count_sosed[isc];
+												dadd.count_neighbour = count_neighbour[isc];
 												//dadd.ii = ii_2;
 												dadd.i = isc;
 
 												// Уникальный ключ для дерева ван Эмде Боаса.
-												integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1] + 1) + (dadd.i);
-												integer  veb_dsearch_key = (dsearch.countsosed)*(n_a[ilevel - 1] + 1) + (dsearch.i);
+												integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1] + 1) + (dadd.i);
+												integer  veb_dsearch_key = (dsearch.count_neighbour)*(n_a[ilevel - 1] + 1) + (dsearch.i);
 
 												//node<integer>* fibo_n;
 
@@ -54356,12 +49502,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 															// Удаляем существующий элемент и вставляем новый.
 															binary_heap.remove(isc);
 															// Осуществляем вставку нового элемента.
-															binary_heap.insert(count_sosed[isc], isc);
+															binary_heap.insert(count_neighbour[isc], isc);
 														}
 														else {
 															// отсутствует.
 															// Осуществляем вставку нового элемента.
-															binary_heap.insert(count_sosed[isc], isc);
+															binary_heap.insert(count_neighbour[isc], isc);
 														}
 														break;
 													case RANDOM_TREE_ID:
@@ -54423,10 +49569,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 												}
 											}
 
-											if (bmaxsosedinfoactive) {
+											if (bmaxneighbourinfoactive) {
 												// Обновляем информацию о максимальном количестве соседей.
-												if (count_sosed[isc] >= Maximumsosedcount) {
-													Maximumsosedcount = count_sosed[isc];
+												if (count_neighbour[isc] >= Maximumneighbourcount) {
+													Maximumneighbourcount = count_neighbour[isc];
 												}
 											}
 										}
@@ -54480,7 +49626,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 										// на ряде тестовых задач при таком подходе агломерация проходила очень
 										// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-										// Эта проблема проявилась на задачах :
+										// Эта проблема проявилась на задачах:
 										// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 										// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 										// Проблема не в этом месте кода.
@@ -54531,18 +49677,18 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 												data_BalTree dsearch;
-												dsearch.countsosed = count_sosed[isc];
+												dsearch.count_neighbour = count_neighbour[isc];
 												//dsearch.ii = ii_2;
 												dsearch.i = isc;
-												count_sosed[isc] += ic2;
+												count_neighbour[isc] += ic2;
 												data_BalTree dadd;
-												dadd.countsosed = count_sosed[isc];
+												dadd.count_neighbour = count_neighbour[isc];
 												//dadd.ii = ii_2;
 												dadd.i = isc;
 
 												// Уникальный ключ для дерева ван Эмде Боаса.
-												integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1] + 1) + (dadd.i);
-												integer  veb_dsearch_key = (dsearch.countsosed)*(n_a[ilevel - 1] + 1) + (dsearch.i);
+												integer  veb_dadd_key = (dadd.count_neighbour)*(n_a[ilevel - 1] + 1) + (dadd.i);
+												integer  veb_dsearch_key = (dsearch.count_neighbour)*(n_a[ilevel - 1] + 1) + (dsearch.i);
 
 												//node<integer>* fibo_n;
 
@@ -54569,12 +49715,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 															// Удаляем существующий элемент и вставляем новый.
 															binary_heap.remove(isc);
 															// Осуществляем вставку нового элемента.
-															binary_heap.insert(count_sosed[isc], isc);
+															binary_heap.insert(count_neighbour[isc], isc);
 														}
 														else {
 															// отсутствует.
 															// Осуществляем вставку нового элемента.
-															binary_heap.insert(count_sosed[isc], isc);
+															binary_heap.insert(count_neighbour[isc], isc);
 														}
 														break;
 													case RANDOM_TREE_ID:
@@ -54637,10 +49783,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 												}
 											}
 
-											if (bmaxsosedinfoactive) {
+											if (bmaxneighbourinfoactive) {
 												// Обновляем информацию о максимальном количестве соседей.
-												if (count_sosed[isc] >= Maximumsosedcount) {
-													Maximumsosedcount = count_sosed[isc];
+												if (count_neighbour[isc] >= Maximumneighbourcount) {
+													Maximumneighbourcount = count_neighbour[isc];
 												}
 											}
 										}
@@ -54656,7 +49802,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 					}
 
-					// Очистка (восстановление хеш таблицы).
+					// Очистка (восстановление хеш-таблицы).
 					for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 						hash_table2[istack2[i_54]] = false;
 					}
@@ -54684,7 +49830,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					bcontinue = true;
 					istartflag_scan = i_1; // сокращаем пределы сканирования.
 					break; // досрочный выход из цикла for.
-						   //if (maxsosed == -1) {
+						   //if (maxneighbour == -1) {
 #if doubleintprecision == 1
 						   //printf("ERROR!!!!  i_1=%lld\n", i_1);
 #else
@@ -54697,7 +49843,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			}
 
 			// Вычисление узла с максимальным количеством соседей.
-			maxsosed = -1;
+			maxneighbour = -1;
 			icandidate = 0;
 
 
@@ -54728,9 +49874,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			}
 			else {
 			#if doubleintprecision == 1
-				printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			system("pause");
@@ -54745,9 +49891,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			}
 			else {
 			#if doubleintprecision == 1
-				printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			system("pause");
@@ -54788,9 +49934,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -54808,9 +49954,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -54859,9 +50005,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -54879,7 +50025,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			itop++;
 			}
 			else {
-			printf("itop>=istack_size_limit nado uvelichit istack_size_limit");
+			printf("itop>=istack_size_limit need to increase istack_size_limit");
 			}
 
 			//if (isize_p < ipool_size_limit) {
@@ -54887,9 +50033,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -54923,7 +50069,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					printf("found max");
 				}
 				// Данный код чрезвычайно компактен.
-				bmaxsosedinfoactive = true;
+				bmaxneighbourinfoactive = true;
 				// Надо найти максимальный элемент в АВЛ дереве.
 				node_AVL* emax = 0;
 				Tree_splay* emax_splay = 0;
@@ -54947,7 +50093,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					else {
 						size_splay_Tree = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 					}
 					break;
@@ -54973,22 +50119,22 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					else {
 						ui_emax = -fibo_heap.getMinimum();
 						dbt_emax.i = ((ui_emax) % (n_a[ilevel - 1] + 1));
-						dbt_emax.countsosed = ((ui_emax) / (n_a[ilevel - 1] + 1));
+						dbt_emax.count_neighbour = ((ui_emax) / (n_a[ilevel - 1] + 1));
 
-						//if (dbt_emax.countsosed < 4) {
+						//if (dbt_emax.count_neighbour < 4) {
 							//printf("Hipo\n");
 							///getchar();
 						//}
 
 						//dbt_emax2 = RBroot.GetMaxElm();
-						//if ((dbt_emax.countsosed != dbt_emax2.countsosed) || (dbt_emax.i!= dbt_emax2.i)) {
-						  //  printf("%d %d %d %d\n", dbt_emax.countsosed, dbt_emax.i, dbt_emax2.countsosed, dbt_emax2.i);
+						//if ((dbt_emax.count_neighbour != dbt_emax2.count_neighbour) || (dbt_emax.i!= dbt_emax2.i)) {
+						  //  printf("%d %d %d %d\n", dbt_emax.count_neighbour, dbt_emax.i, dbt_emax2.count_neighbour, dbt_emax2.i);
 						    //getchar();
 						//}
 
 						//if ((flag[Amat[row_startA[dbt_emax.i]].i] == true)) dbt_emax.i = -1;
 
-						//printf(" %d %d\n",  dbt_emax.countsosed, dbt_emax.i);
+						//printf(" %d %d\n",  dbt_emax.count_neighbour, dbt_emax.i);
 						//getchar();
 					}
 					break;
@@ -54999,18 +50145,18 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						if (ui_emax <= 0) {
 							// дерево ван Эмде Боаса пустое.
 							dbt_emax.i = -1;
-							dbt_emax.countsosed = -1;
+							dbt_emax.count_neighbour = -1;
 						}
 						else {
 							dbt_emax.i = ((ui_emax) % (n_a[ilevel - 1] + 1));
-							dbt_emax.countsosed = ((ui_emax) / (n_a[ilevel - 1] + 1));
+							dbt_emax.count_neighbour = ((ui_emax) / (n_a[ilevel - 1] + 1));
 						}
 
 					}
 					else {
 						// дерево ван Эмде Боаса пустое.
 						dbt_emax.i = -1;
-						dbt_emax.countsosed = -1;
+						dbt_emax.count_neighbour = -1;
 					}
 #endif
 					break;
@@ -55040,7 +50186,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -55061,7 +50207,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						size_splay_Tree = 0;
 						random_tree_root = nullptr;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -55084,7 +50230,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						size_splay_Tree = 0;
 						random_tree_root = nullptr;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 					}
 					break;
@@ -55098,7 +50244,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						size_splay_Tree = 0;
 						random_tree_root = nullptr;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 					}
 					break;
@@ -55111,7 +50257,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						size_splay_Tree = 0;
 						random_tree_root = nullptr;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 					}
 					else {
@@ -55130,7 +50276,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					    size_splay_Tree = 0;
 					    random_tree_root = nullptr;
 					    icandidate = 0;
-					    maxsosed = -1;
+					    maxneighbour = -1;
 					    bcontinue = false;
 				    }
 					else {
@@ -55159,7 +50305,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -55173,22 +50319,22 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 		
 #if doubleintprecision == 1
-			//printf("maximum number of sosed=%lld\n",maxsosed);
+			//printf("maximum number of neighbour=%lld\n",maxneighbour);
 #else
-			//printf("maximum number of sosed=%d\n",maxsosed);
+			//printf("maximum number of neighbour=%d\n",maxneighbour);
 #endif
 			
-			if (maxsosed == -1) if (debug_reshime) system("pause");
+			if (maxneighbour == -1) if (debug_reshime) system("pause");
 			//getchar();
 
-			if ((icandidate == 0) && (maxsosed == -1)) {
+			if ((icandidate == 0) && (maxneighbour == -1)) {
 				bcontinue = false;
 			}
 			// 4 june 2016
 #if doubleintprecision == 1
-			//printf("icandidate=%lld, maxsosed=%lld\n",icandidate, maxsosed);
+			//printf("icandidate=%lld, maxneighbour=%lld\n",icandidate, maxneighbour);
 #else
-			//printf("icandidate=%d, maxsosed=%d\n",icandidate, maxsosed);
+			//printf("icandidate=%d, maxneighbour=%d\n",icandidate, maxneighbour);
 #endif
 			
 
@@ -55200,7 +50346,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 			icountprohod++;
 
-		} // Построение C-F разбиения. создано.
+		} // Построение C/F разбиения. создано.
 
 		/*
 		if (set != nullptr) {
@@ -55209,10 +50355,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		}
 		*/
 
-		  //delete[] count_sosed;
-		if (count_sosed != nullptr) {
-			free(count_sosed);
-			count_sosed = nullptr;
+		  //delete[] count_neighbour;
+		if (count_neighbour != nullptr) {
+			free(count_neighbour);
+			count_neighbour = nullptr;
 		}
 
 		  //delete[] bmarkervisit;
@@ -55243,7 +50389,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				clear_SPLAY(root_splay);
 				root_splay = 0;
 				break;
-			case BINARY_HEAP :
+			case BINARY_HEAP:
 				binary_heap.clear();
 				break;
 			case RANDOM_TREE_ID:
@@ -55302,7 +50448,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					integer icsos = 0;
 					// старая версия до 10 января 2016.
 					//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-					// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+					// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 					// 10 января 2016. на основе хеширования.
 					integer i_2 = row_startA[i_1];
 
@@ -55351,7 +50497,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					integer icsos = 0;
 					// старая версия до 10 января 2016.
 					//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-					// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+					// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 					// 10 января 2016. на основе хеширования.
 					integer i_2 = row_startA[i_1];
 
@@ -55455,7 +50601,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						integer icsos = 0;
 						// старая версия до 10 января 2016.
 						//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-						// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+						// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 						// 10 января 2016. на основе хеширования.
 						integer i_2 = row_startA[i_1];
 
@@ -55559,7 +50705,7 @@ for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++)
 		integer icsos = 0;
 		// старая версия до 10 января 2016.
 		//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-		// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+		// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 		// 10 января 2016. на основе хеширования.
 		integer i_2 = row_startA[i_1];
 
@@ -55651,7 +50797,7 @@ if (bweSholdbeContinue_arr) {
 		}
 
 
-		// 01.01.2017 Алгоритм улучшения качества C-F разбиения. Проход 2. 
+		// 01.01.2017 Алгоритм улучшения качества C/F разбиения. Проход 2. 
 		// Цикл по всем F переменным, полученным после первого прохода.
 		// Пусть Fi текущая F переменная и у неё множество соседей не пусто.
 		// Сканируем строку элементов где Fi есть диагональный элемент.
@@ -55675,9 +50821,9 @@ if (bweSholdbeContinue_arr) {
 				doublerealT thresholdRS = -1.0;
 				integer i_2 = row_startA[i_1];
 				if (!bAVLST_ON) {
-					// Очистка хеш таблицы.
+					// Очистка хеш-таблицы.
 					clear_hash_table_Gus_struct01();
-					// занесение данных из линейного списка в хеш таблицу для дерева с корнем в Amat[i_2].i.
+					// занесение данных из линейного списка в хеш-таблицу для дерева с корнем в Amat[i_2].i.
 					integer imarker75_scan = 0;
 					formirate_F_SiTranspose_hash_table_Gus_struct02(hash_StrongTranspose_collection1[Amat[i_2].i], imarker75_scan);
 				}
@@ -55717,7 +50863,7 @@ if (bweSholdbeContinue_arr) {
 											//ibuffer_strongC[ibuffer_strongC_marker] = Amat[is0].j;
 										//}
 										//else {
-											//printf("Error!!! ibuffer_strongC : buffer overflow.\n");
+											//printf("Error!!! ibuffer_strongC: buffer overflow.\n");
 											//system("PAUSE");
 											//exit(1);
 										//}
@@ -55742,7 +50888,7 @@ if (bweSholdbeContinue_arr) {
 															//ibuffer_strongF[ibuffer_strongF_marker] = Amat[is0].j;
 														//}
 														//else {
-															//printf("Error!!! ibuffer_strongF : buffer overflow.\n");
+															//printf("Error!!! ibuffer_strongF: buffer overflow.\n");
 															//system("PAUSE");
 															//exit(1);
 														//}
@@ -55758,7 +50904,7 @@ if (bweSholdbeContinue_arr) {
 													//ibuffer_strongF[ibuffer_strongF_marker] = Amat[is0].j;
 													//}
 													//else {
-													//printf("Error!!! ibuffer_strongF : buffer overflow.\n");
+													//printf("Error!!! ibuffer_strongF: buffer overflow.\n");
 													//system("PAUSE");
 													//exit(1);
 													//}
@@ -55782,7 +50928,7 @@ if (bweSholdbeContinue_arr) {
 														//ibuffer_strongF[ibuffer_strongF_marker] = Amat[is0].j;
 														//}
 														//else {
-														//printf("Error!!! ibuffer_strongF : buffer overflow.\n");
+														//printf("Error!!! ibuffer_strongF: buffer overflow.\n");
 														//system("PAUSE");
 														//exit(1);
 														//}
@@ -55798,7 +50944,7 @@ if (bweSholdbeContinue_arr) {
 													//ibuffer_strongF[ibuffer_strongF_marker] = Amat[is0].j;
 													//}
 													//else {
-													//printf("Error!!! ibuffer_strongF : buffer overflow.\n");
+													//printf("Error!!! ibuffer_strongF: buffer overflow.\n");
 													//system("PAUSE");
 													//exit(1);
 													//}
@@ -55815,7 +50961,7 @@ if (bweSholdbeContinue_arr) {
 											//ibuffer_strongF[ibuffer_strongF_marker] = Amat[is0].j;
 											//}
 											//else {
-											//printf("Error!!! ibuffer_strongF : buffer overflow.\n");
+											//printf("Error!!! ibuffer_strongF: buffer overflow.\n");
 											//system("PAUSE");
 											//exit(1);
 											//}
@@ -55826,17 +50972,17 @@ if (bweSholdbeContinue_arr) {
 							}
 						}
 					}
-					// Очистка хеш таблицы.
+					// Очистка хеш-таблицы.
 					clear_hash_table_Gus_struct01();
 					// Сортировка буффера ibuffer_strongC по возрастанию.
 					integer* ibuffer_strong_C_bs = nullptr;
 					// рекомендуется использовать iusage_old_version = 0
-					// при котором активируется использование быстродействующей хеш таблицы.
+					// при котором активируется использование быстродействующей хеш-таблицы.
 					// Достигается ускорение полного цикла решения задачи при включённом RS2 coarsening
 					// на 7.5% по сравнению с двоичным поиском на массиве. 
 					// Полностью отпадает необходимость в использовании алгоритма сортировки.
 					// 11.06.2017.
-					integer iusage_old_version = 0; // 1 старая рабочая версия. // 0 новая версия на основе хеш таблицы.
+					integer iusage_old_version = 0; // 1 старая рабочая версия. // 0 новая версия на основе хеш-таблицы.
 					integer i_5 = 0;
 					if (iusage_old_version) {
 						// Выделяем память сразу с запасом, чтобы избежать перевыделений и уничтожений.
@@ -55855,7 +51001,7 @@ if (bweSholdbeContinue_arr) {
 						ibuffer_strongC_scan = nullptr;
 					}
 					else {
-						// Вместо сортировки и двоичного поиска используем хеш таблицу.
+						// Вместо сортировки и двоичного поиска используем хеш-таблицу.
 						clear_hash_table_Gus_struct01();
 						hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
 						while (ibuffer_strongC_scan != nullptr) {
@@ -55929,7 +51075,7 @@ if (bweSholdbeContinue_arr) {
 											//	ibuffer_strongCFj[ibuffer_strongCFj_marker] = Amat[is01].j;
 											//}
 											//else {
-											//	printf("Error!!! ibuffer_strongCFj : buffer overflow.\n");
+											//	printf("Error!!! ibuffer_strongCFj: buffer overflow.\n");
 											//	system("PAUSE");
 											//	exit(1);
 											//}
@@ -55961,7 +51107,7 @@ if (bweSholdbeContinue_arr) {
 							}
 						}
 						else {
-							// Версия на основе хеш таблицы.
+							// Версия на основе хеш-таблицы.
 							while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 								// Совпадение найдено мы ничего не делаем.
 								bfound_32 = isfound_hash_table_Gus_struct01(ibuffer_strongCFj_scan->item);
@@ -56004,7 +51150,7 @@ if (bweSholdbeContinue_arr) {
 									}
 								}
 								else {
-									// Очищаем хеш таблицу и заполняем её по новой.
+									// Очищаем хеш-таблицу и заполняем её по новой.
 									clear_hash_table_Gus_struct01();
 									while (ibuffer_strongC_scan != nullptr) {
 										insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
@@ -56106,7 +51252,7 @@ if (bweSholdbeContinue_arr) {
 
 				}
 			}
-		} // Алгоритм улучшения качества C-F разбиения. Проход 2.
+		} // Алгоритм улучшения качества C/F разбиения. Проход 2.
 
 		// TODO 22_10_2016
 		
@@ -56144,7 +51290,7 @@ if (bweSholdbeContinue_arr) {
 
 
 			// debug
-			// проверка качества C-F разбиения.
+			// проверка качества C/F разбиения.
 			//doublerealT* exp1 = new doublerealT[n_a[ilevel - 1] + 1];
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) exp1[i_1] = 0.0;
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) exp1[i_1] = 2.0;
@@ -56158,11 +51304,11 @@ if (bweSholdbeContinue_arr) {
 
 
 
-			// C-F разбиение построено, самое время построить оператор интерполяции.
+			// C/F разбиение построено, самое время построить оператор интерполяции.
 			// потом найти оператор проекции, как транспонированный оператор интерполяции.
 			// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
 
-			// Построение оператора интерполляции : 
+			// Построение оператора интерполяции: 
 			// coarse 2 fine.
 			//P*coarse==fine
 
@@ -56299,7 +51445,7 @@ if (bweSholdbeContinue_arr) {
 
 			if (the_good_old_interpolation) {
 
-				// Старая добрая верная, проверенная интерполляция.
+				// Старая добрая верная, проверенная интерполяция.
 				// К тому же чрезвычайно простая.
 
 				//my_amg_manager.number_interpolation_procedure == 0
@@ -56318,8 +51464,8 @@ if (bweSholdbeContinue_arr) {
 				// 0
 				if (my_amg_manager.number_interpolation_procedure == 7) {
 
-					// Прямая интерполляция с элементам непрямой.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 					// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
@@ -56499,7 +51645,7 @@ if (bweSholdbeContinue_arr) {
 
 				// INTERPOLATION SIX
 
-				// Экспериментальная интерполляция 1 января 2016.
+				// Экспериментальная интерполяция 1 января 2016.
 
 				// Интерполяционная процедура №6.
 				my_interpolation_procedure_number6(the_number_of_neighbors_that_are_not_C_nodes,
@@ -56515,9 +51661,9 @@ if (bweSholdbeContinue_arr) {
 					threshold_quick_only_negative);
 			}
 			else {
-				// От интерполляции зависит очень много поэтому
-				// реализуем следующую экспериментальную идею интерполляции.
-				// Эта интерполляция претендует быть единственно теоретически верной,
+				// От интерполяции зависит очень много поэтому
+				// реализуем следующую экспериментальную идею интерполяции.
+				// Эта интерполяция претендует быть единственно теоретически верной,
 				// сделанной на основе литературных данных.
 
 				printf("interpolation SIX: Theoretical approach in Montenegro.\n");
@@ -56536,13 +51682,13 @@ if (bweSholdbeContinue_arr) {
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if (fabs(Amat[is0].aij) > maxelem_threshold) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -56556,7 +51702,7 @@ if (bweSholdbeContinue_arr) {
 						//integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT sumPindicator = 0.0;
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -56601,7 +51747,7 @@ if (bweSholdbeContinue_arr) {
 
 							if (fabs(sumPindicator) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 								this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -56609,9 +51755,9 @@ if (bweSholdbeContinue_arr) {
 								bweSholdbeContinue = true;
 								iadditionalCstatistic++;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 
-								// Мы не будем добалять С узлы, мы будем использовать непрямую интерполляцию.
+								// Мы не будем добалять С узлы, мы будем использовать непрямую интерполяцию.
 
 
 
@@ -56753,13 +51899,13 @@ if (bweSholdbeContinue_arr) {
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -56773,7 +51919,7 @@ if (bweSholdbeContinue_arr) {
 						//integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT sumPindicator = 0.0;
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -56818,7 +51964,7 @@ if (bweSholdbeContinue_arr) {
 
 							if (fabs(sumPindicator) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 								this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -56826,9 +51972,9 @@ if (bweSholdbeContinue_arr) {
 								bweSholdbeContinue = true;
 								iadditionalCstatistic++;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 
-								// Мы не будем добалять С узлы, мы будем использовать непрямую интерполляцию.
+								// Мы не будем добалять С узлы, мы будем использовать непрямую интерполяцию.
 
 
 
@@ -57004,23 +52150,23 @@ if (bweSholdbeContinue_arr) {
 
 			/*
 			// Однопоточный вариант работает и без сортировки, 
-			// что говорит о том что оператор интерполляции уже предварительно был отсортирован по j.
+			// что говорит о том что оператор интерполяции уже предварительно был отсортирован по j.
 			switch (imy_sort_algorithm ) {
-			case COUNTING_SORT_ALG :
+			case COUNTING_SORT_ALG:
 			   //Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1, false);
 			   qsj(P, 1 + iaddR, iaddR + nnzR - 1);
 			   //HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 			break;
-			case QUICK_SORT_ALG :
+			case QUICK_SORT_ALG:
 			        qsj(P, 1 + iaddR, iaddR + nnzR - 1);
-					// Библиотечный алгоритм. O(nlog(n)).
+					// Библиотечный алгоритм. O(n*log2(n)).
 					// Не использует лишней памяти.
-					//std::sort(P + (1 + iaddR) * sizeof(Ak1), P + (iaddR + nnzR - 1+1) * sizeof(Ak1), compAi);
+					//std::sort(P + (1 + iaddR, P + iaddR + nnzR - 1+1, compareAk1P);
 			break;
-			case HEAP_SORT_ALG :
+			case HEAP_SORT_ALG:
 			    HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 			break;
-			default :
+			default:
 			   //Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1, false);
 			   qsj(P, 1 + iaddR, iaddR + nnzR - 1);
 			   //HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
@@ -57030,15 +52176,15 @@ if (bweSholdbeContinue_arr) {
 
 
 			// Большое число связей увеличивает сложность оператора Галеркина.
-			// Наличие слабых связей в процедуре интерполляции, приводит к замедлению 
+			// Наличие слабых связей в процедуре интерполяции, приводит к замедлению 
 			// сходимости или расходимости.
 			// Алгоритм усранения слабых связей:
 			//doublerealT const alpha_truncation = 0.2;
 			doublerealT alpha_truncation = my_amg_manager.truncation_interpolation;
-			// Рассмотрим каждую строку оператора интерполляции.
+			// Рассмотрим каждую строку оператора интерполяции.
 			// Найдем сумму элементов данной строки каждого знака.
 			// Найдём максимальный по модулю элемент каждого знака.
-			// Удалим все элементы в операторе интерполляции каждого знака 
+			// Удалим все элементы в операторе интерполяции каждого знака 
 			// которые меньше максимального по модулю того-же знака * на alpha_truncation.
 			// Проведём перемасштабирование чтобы сумма осталась неизменной.
 			// Сделаем это в памяти R.
@@ -57250,7 +52396,7 @@ if (bweSholdbeContinue_arr) {
 		}
 
 		// Этот оператор нужен для вычисления grid complexity для оператора 
-		// интерполляции и проекции. Данная информация важна для оптимизации количества выделяемой памяти.
+		// интерполяции и проекции. Данная информация важна для оптимизации количества выделяемой памяти.
 		if (ilevel - 1 == 0) {
 			nnz_P_memo_0 = iend_marker_position - (iaddR + 1) + 1;
 		}
@@ -57263,20 +52409,20 @@ if (bweSholdbeContinue_arr) {
 		/*
 		// 10 января 2016. Эта сортировка не требуется.
 		switch (imy_sort_algorithm) {
-		case COUNTING_SORT_ALG :
+		case COUNTING_SORT_ALG:
 		     Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
-		case HEAP_SORT_ALG :
+		case HEAP_SORT_ALG:
 		     HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
-		case QUICK_SORT_ALG :
+		case QUICK_SORT_ALG:
 		    // Быстрая сортировка Хоара.
 		    qsj(P, 1 + iaddR, iaddR + nnzR - 1);
 		    // Библиотечный алгоритм. O(nlog(n)).
 		    // Не использует лишней памяти.
-		    //std::sort(P+(1+iaddR)*sizeof(Ak1), P+(iaddR+ nnzR-1)*sizeof(Ak1), compAj);
+		    //std::sort(P+1+iaddR, P+iaddR+ nnzR-1+1, compareAk1P);
 		break;
-		default :
+		default:
 		    Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
 		}		
@@ -57293,19 +52439,19 @@ if (bweSholdbeContinue_arr) {
 
 		switch (imy_sort_algorithm) {
 		case COUNTING_SORT_ALG:
-			Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, false);
+			Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, false, indx_comparei);
 			break;
 		case QUICK_SORT_ALG:
-			qs(R, 1 + iaddR, iaddR + nnzR - 1);
-			// Библиотечный алгоритм. O(nlog(n)).
+			qs(R, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
+			// Библиотечный алгоритм. O(n*log2(n)).
 			// Не использует лишней памяти.
-			//std::sort(R + (1 + iaddR) * sizeof(Ak1), R + (iaddR + nnzR - 1+1) * sizeof(Ak1), compAi);
+			//std::sort(R + 1 + iaddR, R + iaddR + nnzR - 1+1, compareAk1R);
 			break;
 		case HEAP_SORT_ALG:
-			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1,comparei);
 			break;
 		default:
-			Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, false);
+			Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, false, indx_comparei);
 			break;
 		}
 
@@ -57315,19 +52461,19 @@ if (bweSholdbeContinue_arr) {
 		if (FUTURE_INJECTION) {
 			switch (imy_sort_algorithm) {
 			case COUNTING_SORT_ALG:
-				Counting_Sort(R_injection, 0, numberofcoarcenodes - 1, false);
+				Counting_Sort(R_injection, 0, numberofcoarcenodes - 1, false, indx_comparei);
 				break;
 			case QUICK_SORT_ALG:
-				qs(R_injection, 0, numberofcoarcenodes - 1);
+				qs(R_injection, 0, numberofcoarcenodes - 1, indx_comparei);
 				// Библиотечный алгоритм. O(nlog(n)).
 				// Не использует лишней памяти.
-				//std::sort(R_injection, R_injection + (numberofcoarcenodes - 1+1) * sizeof(Ak1), compAi);
+				//std::sort(R_injection, R_injection + numberofcoarcenodes - 1+1, compareAk1R);
 				break;
 			case HEAP_SORT_ALG:
-				HeapSort(R_injection, 0, numberofcoarcenodes - 1);
+				HeapSort(R_injection, 0, numberofcoarcenodes - 1,comparei);
 				break;
 			default:
-				Counting_Sort(R_injection, 0, numberofcoarcenodes - 1, false);
+				Counting_Sort(R_injection, 0, numberofcoarcenodes - 1, false, indx_comparei);
 				break;
 			}
 		}
@@ -57344,7 +52490,7 @@ if (bweSholdbeContinue_arr) {
 			
 		}
 
-		// Проверка Restriction нет ли пропусков строк при интерполляции: 
+		// Проверка Restriction нет ли пропусков строк при интерполяции: 
 		if (1) {
 #pragma omp parallel for
 			for (integer i_1 = 1; i_1 <= numberofcoarcenodes; i_1++) {
@@ -57446,18 +52592,18 @@ if (bweSholdbeContinue_arr) {
 
 		// Лишний код потомучто потом сразу же следует сортировка по i.
 		/*
-		// 7 января 2016. закоментировано.
+		// 7 января 2016. закомментировано.
 		switch ( imy_sort_algorithm ) {
-		case COUNTING_SORT_ALG :
+		case COUNTING_SORT_ALG:
 		    Counting_Sortj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
 		case QUICK_SORT_ALG:
 		    qsj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 	    	// Библиотечный алгоритм. O(nlog(n)).
 	    	// Не использует лишней памяти.
-	    	//std::sort(Amat + (1 + iadd)*sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd)*sizeof(Ak1), compAj);
+	    	//std::sort(Amat + 1 + iadd, Amat + nnz_a[ilevel - 1] + iadd+1, compareAk1P);
 		break;
-		case HEAP_SORT_ALG  :
+		case HEAP_SORT_ALG :
 		    HeapSort_j(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
 		default:
@@ -57468,9 +52614,9 @@ if (bweSholdbeContinue_arr) {
 
 		// MARKER GUSTAVSON
 
-		// Нахождение матрицы грубосеточного уровня :
+		// Нахождение матрицы грубосеточного уровня:
 		// Acorse=R*Afine*P;
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -57495,7 +52641,7 @@ if (bweSholdbeContinue_arr) {
 		// Фред Густавсон IBM 1978.
 		// 23 октября 2015 года.
 
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -57507,14 +52653,14 @@ if (bweSholdbeContinue_arr) {
 		/*
 		// 7 января 2016. Сортировка матрицы А была выполнена единожды при начале обработке данного уровня.
 		switch (imy_sort_algorithm) {
-		case COUNTING_SORT_ALG :
+		case COUNTING_SORT_ALG:
 		  Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
-		case QUICK_SORT_ALG  :
+		case QUICK_SORT_ALG :
      		qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-	    	// Библиотечный алгоритм. O(nlog(n)).
+	    	// Библиотечный алгоритм. O(n*log2(n)).
 	    	// Не использует лишней памяти.
-	    	//std::sort(Amat + (1 + iadd)*sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd)*sizeof(Ak1), compAi);
+	    	//std::sort(Amat + 1 + iadd, Amat + nnz_a[ilevel - 1] + iadd+1, compareAk1R);
 		break;
 		case HEAP_SORT_ALG:
 		     HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -57620,7 +52766,7 @@ if (bweSholdbeContinue_arr) {
 		if (0) {
 			// Однопоточная версия.
 
-			// Базовая верная версия цикла :
+			// Базовая верная версия цикла:
 			for (integer ii = istart3; ii <= iend3; ii++) {
 				if (flag[Amat[ii].i] == false) {
 					integer istr = Amat[ii].i;
@@ -57634,7 +52780,7 @@ if (bweSholdbeContinue_arr) {
 					row_ind_SA[istr] = ic;
 					row_ind_EA[istr] = kf;
 					flag[Amat[ii].i] = true;
-					// Ускорение 22_10_2016 : 
+					// Ускорение 22_10_2016: 
 					ii = kf;
 				}
 			}
@@ -57811,7 +52957,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 
-		Counting_Sort(Amat, istartAnew_mem, istartAnew-1, false);
+		Counting_Sort(Amat, istartAnew_mem, istartAnew-1, false, indx_comparei);
 		printf("Counting Sort End. \n");
 		
 		//getchar();
@@ -57877,13 +53023,13 @@ if (bweSholdbeContinue_arr) {
 			}
 			else if (0) {
 
-				// Закоментировано т.к. это медленная ветвь кода.
+				// закомментировано т.к. это медленная ветвь кода.
 				// Ситуация такая. Ранее на небольших задачах до 1М включительно,
 				// данная ветвь кода не показывала выигрыша в быстродействии и возможно 
 				// даже была слегка медленее (совсем немного). 
 				// Это быстрая часть кода на больших размерностях.
 				// Гораздо лучше линейного поиска. Сейчас это подтверждается
-				// на непрямой интерполляции при задаче в 3.2М неизвестных.
+				// на непрямой интерполяции при задаче в 3.2М неизвестных.
 				// Там на линейный поиск в данном месте тратится не менее 80% фазы построения грубосеточных операторов.
 
 				// На основе АВЛ
@@ -58184,19 +53330,19 @@ if (bweSholdbeContinue_arr) {
 		// Лишняя сортировка до этого уже была выполнена сортировка по i.
 		// 7 января 2016.
 		switch (imy_sort_algorithm ) {
-		case COUNTING_SORT_ALG :
+		case COUNTING_SORT_ALG:
 		    Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
-		case QUICK_SORT_ALG :
+		case QUICK_SORT_ALG:
 		    qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		    // Библиотечный алгоритм. O(nlog(n)).
 		    // Не использует лишней памяти.
-		    //std::sort(Amat + (1 + iadd)*sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd)*sizeof(Ak1), compAi);
+		    //std::sort(Amat + 1 + iadd, Amat + nnz_a[ilevel - 1] + iadd+1, compareAk1R);
 		break;
-		case HEAP_SORT_ALG :
+		case HEAP_SORT_ALG:
 		     HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
-		default :
+		default:
 		    Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
 		}		
@@ -58206,7 +53352,7 @@ if (bweSholdbeContinue_arr) {
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 		//if (Amat[i_1].j < 0) {
-		//	printf("error : negativ j index\n");
+		//	printf("error: negativ j index\n");
 		//	system("pause");
 		//}
 #if doubleintprecision == 1
@@ -58231,19 +53377,19 @@ if (bweSholdbeContinue_arr) {
 		/*
 		// Обязательно нужна сортировка.
 		switch (imy_sort_algorithm ) {
-		case COUNTING_SORT_ALG :
+		case COUNTING_SORT_ALG:
 		    Counting_Sort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
 		break;
-		case QUICK_SORT_ALG :
+		case QUICK_SORT_ALG:
 		    qs(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
 	    	// Библиотечный алгоритм. O(nlog(n)).
 	    	// Не использует лишней памяти.
-	    	//std::sort(Amat + (nnz_a[ilevel - 1] + 1 + iadd)*sizeof(Ak1), Amat + (istartAnew - 1)*sizeof(Ak1), compAi);
+	    	//std::sort(Amat + nnz_a[ilevel - 1] + 1 + iadd, Amat + istartAnew - 1+1, compareAk1R);
 		break;
-		case HEAP_SORT_ALG :
+		case HEAP_SORT_ALG:
 		     HeapSort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
 		break;
-		default :
+		default:
 		     Counting_Sort(Amat, nnz_a[ilevel - 1] + 1 + iadd, istartAnew - 1);
 		break;
 		}
@@ -58254,7 +53400,7 @@ if (bweSholdbeContinue_arr) {
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 		//if (Amat[i_1].j < 0) {
-		//	printf("error : negativ j index\n");
+		//	printf("error: negativ j index\n");
 		//	system("pause");
 		//}
 #if doubleintprecision == 1
@@ -58272,16 +53418,16 @@ if (bweSholdbeContinue_arr) {
 		/*
 		// 10 января 2016. Данная сортировка не требуется.
 		switch (imy_sort_algorithm ) {
-		case COUNTING_SORT_ALG :
+		case COUNTING_SORT_ALG:
 		    Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
-		case QUICK_SORT_ALG :
+		case QUICK_SORT_ALG:
 		    qs(P, 1 + iaddR, iaddR + nnzR - 1);
 		    // Библиотечный алгоритм. O(nlog(n)).
 		    // Не использует лишней памяти.
-		    //std::sort(P +  (1 + iaddR)*sizeof(Ak1), P + (iaddR + nnzR - 1)*sizeof(Ak1), compAi);
+		    //std::sort(P +  1 + iaddR, P + iaddR + nnzR - 1+1, compareAk1R);
 		break;
-		case HEAP_SORT_ALG :
+		case HEAP_SORT_ALG:
 		      HeapSort(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
 		default:
@@ -58313,9 +53459,9 @@ if (bweSholdbeContinue_arr) {
 
 		// Фред Густавсон IBM 1978
 		// В ядре кода Густавсона нету ни одного ветвления,
-		// а мы знаем что в результате профайлинга предыдущих версий кода :
+		// а мы знаем что в результате профайлинга предыдущих версий кода:
 		// (наивный, слияние, Писсанецки) львиная доля вычислительной работы уходила
-		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно сумирование.
+		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно суммирование.
 		// 23 октября 2015 года.
 		// 6 января 2016 года Добавлено АВЛ дерево.
 
@@ -58327,19 +53473,19 @@ if (bweSholdbeContinue_arr) {
 		// Преобразование обоих матриц в формат CRS.
 		switch (imy_sort_algorithm) {
 		case COUNTING_SORT_ALG:
-			Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			break;
 		case QUICK_SORT_ALG:
-			qsj(P, 1 + iaddR, iaddR + nnzR - 1);
-			// Библиотечный алгоритм. O(nlog(n)).
+			qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
+			// Библиотечный алгоритм. O(n*log2(n)).
 			// Не использует лишней памяти.
-			//std::sort(P + (1 + iaddR) * sizeof(Ak1), P + (iaddR + nnzR - 1+1) * sizeof(Ak1), compAj);
+			//std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1+1, compareAk1P);
 			break;
 		case HEAP_SORT_ALG:
-			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 			break;
-		default :
-			Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+		default:
+			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			break;
 		}
 		
@@ -58523,7 +53669,7 @@ if (bweSholdbeContinue_arr) {
 						//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 						vector_sum_m[tid][iaddind] = left_operand*right_operand;
 					}
-					// требуется реализовать следующую логику :
+					// требуется реализовать следующую логику:
 					// 1. поиск элемента по ключу 
 					// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 					// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -58547,7 +53693,7 @@ if (bweSholdbeContinue_arr) {
 				}
 			}
 			
-			// huck : 16.04.2017
+			// huck: 16.04.2017
 
 			for (integer i_61 = 1; i_61 <= index_size_m[tid]; i_61++) {
 
@@ -58584,7 +53730,7 @@ if (bweSholdbeContinue_arr) {
 					// вычитаем из этого отрицательную диагональ. Потом умножаем на два.
 					// B. Удвоение отрицательных внедиагональных коэффициентов.
 					// C. Полное зануление положительных внедиагональных коэффициентов (игнорирование).
-					printf("patching string 16.04.2017 : \n");
+					printf("patching string 16.04.2017: \n");
 					for (integer i_62 = 1; i_62 <= index_size_m[tid]; i_62++) {
 						integer jstr62 = index_visit_m[tid][i_62];
 						if (istr != jstr62) {
@@ -58672,7 +53818,7 @@ if (bweSholdbeContinue_arr) {
 								printf("bad string %d\n", istr);
 #endif
 
-								printf("error : diagonal element is negative...\n");
+								printf("error: diagonal element is negative...\n");
 								switch (iVar) {
 								case PAM: printf("PAM equation\n"); break;
 								case VX: printf("VX equation\n"); break;
@@ -58807,7 +53953,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 
-		Counting_Sort(Amat, istartAnew_mem2, istartAnew2 - 1, false);
+		Counting_Sort(Amat, istartAnew_mem2, istartAnew2 - 1, false, indx_comparei);
 		printf("Counting Sort End. \n");
 
 #else
@@ -58865,7 +54011,7 @@ if (bweSholdbeContinue_arr) {
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -58921,7 +54067,7 @@ if (bweSholdbeContinue_arr) {
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -58982,7 +54128,7 @@ if (bweSholdbeContinue_arr) {
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -59050,7 +54196,7 @@ if (bweSholdbeContinue_arr) {
 			}
 			*/
 
-			// huck : 16.04.2017
+			// huck: 16.04.2017
 
 			for (integer i_61 = 1; i_61 <= index_size; i_61++) {
 
@@ -59087,7 +54233,7 @@ if (bweSholdbeContinue_arr) {
 					// вычитаем из этого отрицательную диагональ. Потом умножаем на два.
 					// B. Удвоение отрицательных внедиагональных коэффициентов.
 					// C. Полное зануление положительных внедиагональных коэффициентов (игнорирование).
-					printf("patching string 16.04.2017 : \n");
+					printf("patching string 16.04.2017: \n");
 					for (integer i_62 = 1; i_62 <= index_size; i_62++) {
 						integer jstr62 = index_visit[i_62];
 						if (istr != jstr62) {
@@ -59175,7 +54321,7 @@ if (bweSholdbeContinue_arr) {
 								printf("bad string %d\n", istr);
 #endif
 								
-								printf("error : diagonal element is negative...\n");
+								printf("error: diagonal element is negative...\n");
 								switch (iVar) {
 								case PAM: printf("PAM equation\n"); break;
 								case VX: printf("VX equation\n"); break;
@@ -59348,7 +54494,7 @@ if (bweSholdbeContinue_arr) {
 		/*
 
 		switch (imy_sort_algorithm ) {
-		case COUNTING_SORT_ALG  :
+		case COUNTING_SORT_ALG :
 		    Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
 		case QUICK_SORT_ALG:
@@ -59356,12 +54502,12 @@ if (bweSholdbeContinue_arr) {
 		   qsj(P, 1 + iaddR, iaddR + nnzR - 1);
 		   // Библиотечный алгоритм. O(nlog(n)).
 		   // Не использует лишней памяти.
-		   //std::sort(P + (1 + iaddR)*sizeof(Ak1), P + (iaddR + nnzR - 1)*sizeof(Ak1), compAj);
+		   //std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1+1, compareAk1P);
 		break;
-		case HEAP_SORT_ALG :
+		case HEAP_SORT_ALG:
 		     HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
-		default :
+		default:
 		    Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
 		break;
 		}
@@ -59484,10 +54630,10 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 
-		//delete[] count_sosed;
-		if (count_sosed != nullptr) {
-			free(count_sosed);
-			count_sosed = nullptr;
+		//delete[] count_neighbour;
+		if (count_neighbour != nullptr) {
+			free(count_neighbour);
+			count_neighbour = nullptr;
 		}
 		//delete[] row_startA;
 		if (row_startA != nullptr) {
@@ -59497,7 +54643,7 @@ if (bweSholdbeContinue_arr) {
 
 
 		// построение иерархии уровней досрочно прекращено.
-		//BAD_STRING_MARKER : 
+		//BAD_STRING_MARKER: 
 
 		// сортировка А по i.
 		//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
@@ -59920,7 +55066,7 @@ if (bweSholdbeContinue_arr) {
 	diag = new doublerealT*[idim_diag];
 	if (diag == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for diag my_gregat_amg.cpp...\n");
+		printf("Problem: not enough memory on your equipment for diag my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -60741,7 +55887,7 @@ if (bweSholdbeContinue_arr) {
 	nested_desection = new bool*[idim_diag];
 	if (nested_desection == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for nested_desection my_gregat_amg.cpp...\n");
+		printf("Problem: not enough memory on your equipment for nested_desection my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -61030,9 +56176,9 @@ if (bweSholdbeContinue_arr) {
 			integer icdiag = ii;
 			if (istr >= isize_row_ptr) {
 #if doubleintprecision == 1
-				printf("nado uvelichit isize_row_ptr %lld", istr);
+				printf("need to increase isize_row_ptr %lld", istr);
 #else
-				printf("nado uvelichit isize_row_ptr %d", istr);
+				printf("need to increase isize_row_ptr %d", istr);
 #endif
 				
 				//getchar();
@@ -61068,9 +56214,9 @@ if (bweSholdbeContinue_arr) {
 			}
 			if (istr >= isize_row_ptr) {
 #if doubleintprecision == 1
-				printf("nado uvelichit isize_row_ptr %lld", istr);
+				printf("need to increase isize_row_ptr %lld", istr);
 #else
-				printf("nado uvelichit isize_row_ptr %d", istr);
+				printf("need to increase isize_row_ptr %d", istr);
 #endif
 				
 				//getchar();
@@ -61193,9 +56339,9 @@ if (bweSholdbeContinue_arr) {
 					
 					if (istart_row_ptr >= isize_row_ptr) {
 #if doubleintprecision == 1
-						printf("nado uvelichit isize_row_ptr %lld", istart_row_ptr);
+						printf("need to increase isize_row_ptr %lld", istart_row_ptr);
 #else
-						printf("nado uvelichit isize_row_ptr %d", istart_row_ptr);
+						printf("need to increase isize_row_ptr %d", istart_row_ptr);
 #endif
 						
 						//getchar();
@@ -61393,9 +56539,9 @@ if (bweSholdbeContinue_arr) {
 
 					if (istart_row_ptr >= isize_row_ptr) {
 #if doubleintprecision == 1
-						printf("nado uvelichit isize_row_ptr %lld", istart_row_ptr);
+						printf("need to increase isize_row_ptr %lld", istart_row_ptr);
 #else
-						printf("nado uvelichit isize_row_ptr %d", istart_row_ptr);
+						printf("need to increase isize_row_ptr %d", istart_row_ptr);
 #endif
 
 						//getchar();
@@ -61595,7 +56741,7 @@ if (bweSholdbeContinue_arr) {
 			}
 
 
-			// statistic log :
+			// statistic log:
 			if (bprint_mesage_diagnostic) {
 				//printf("procent positive connections %e \n", 100.0*inum_only_positive_vnediagonal / inum_vnediagonal_all);
 				//printf("the ratio of the maximum positive connections to the diagonal\n");
@@ -61636,7 +56782,7 @@ if (bweSholdbeContinue_arr) {
 	}
 
 
-	// ЗАКОМЕНТИРОВАННЫЙ КОД ОТНОСИТСЯ К УСТАРЕВШЕМУ. 
+	// закомментировАННЫЙ КОД ОТНОСИТСЯ К УСТАРЕВШЕМУ. 
 	// 4 ноября 2016 прописано 15 уровней вложенности.
 	// восьмой уровень вложенности.
 	/*
@@ -61790,7 +56936,7 @@ if (bweSholdbeContinue_arr) {
 	// 9 september 2015.
 	// q - quick.
 	// seidelq(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0);
-	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 	//{
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -61921,7 +57067,7 @@ if (bweSholdbeContinue_arr) {
 
 
 
-	// Двойной вакуумный промежуток вызывает проблемы сходимости :
+	// Двойной вакуумный промежуток вызывает проблемы сходимости:
 	//nu1 = 10;
 	//nu2 = 20;
 
@@ -61970,7 +57116,7 @@ if (bweSholdbeContinue_arr) {
 	residual_fine = new doublerealT*[idim_diag];
 	if (residual_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for residual_fine my_gregat_amg4.cpp...\n");
+		printf("Problem: not enough memory on your equipment for residual_fine my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -61978,7 +57124,7 @@ if (bweSholdbeContinue_arr) {
 	residual_coarse = new doublerealT*[idim_diag];
 	if (residual_coarse == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for residual_coarse my_gregat_amg4.cpp...\n");
+		printf("Problem: not enough memory on your equipment for residual_coarse my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -61986,7 +57132,7 @@ if (bweSholdbeContinue_arr) {
 	error_approx_coarse = new doublerealT*[idim_diag];
 	if (error_approx_coarse == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for error_approx_coarse my_gregat_amg4.cpp...\n");
+		printf("Problem: not enough memory on your equipment for error_approx_coarse my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -61994,7 +57140,7 @@ if (bweSholdbeContinue_arr) {
 	error_approx_fine = new doublerealT*[idim_diag];
 	if (error_approx_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for error_approx_fine my_gregat_amg4.cpp...\n");
+		printf("Problem: not enough memory on your equipment for error_approx_fine my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -62008,7 +57154,7 @@ if (bweSholdbeContinue_arr) {
 	
 	// Устаревший код инициализации значением nullptr 4 декабря 2016. 
 	
-	// Закоментированный код безнадёжно устарел. В данный момент 
+	// закомментированный код безнадёжно устарел. В данный момент 
 	//5.06.2017 поддерживается 100 уровней вложенности.
 
 	// 25.04.2018 На этом месте удалён большой фрагмент устаревшего кода.
@@ -62052,9 +57198,9 @@ if (bweSholdbeContinue_arr) {
 
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	integer imyinit = ZERO_INIT; // ZERO_INIT optimum
+	//const integer ZERO_INIT = 0;
+	//const integer RANDOM_INIT = 1;
+	//integer imyinit = ZERO_INIT; // ZERO_INIT optimum
 
 	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
@@ -62103,7 +57249,7 @@ if (bweSholdbeContinue_arr) {
 	doublerealT dres_initial = norma(residual_fine[0], n_a[0]);
 	if (((iVar == VX) || (iVar == VY) || (iVar == VZ)) && (dres_initial > 20.0)) {
 		// Это признак ошибки в сборке матрицы СЛАУ на компоненты скорости.
-		printf("my be problem convergence : very big dres0=%e\n", dres_initial);
+		printf("my be problem convergence: very big dres0=%e\n", dres_initial);
 		printf("run residualq2 analysys.\n");
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 	}
@@ -62185,7 +57331,7 @@ if (bweSholdbeContinue_arr) {
 	x_best_search2 = new doublereal[n_a[0] + 1];
 	if (x_best_search2 == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for x_best_search2 my_agregat_amg.cpp...\n");
+		printf("Problem: not enough memory on your equipment for x_best_search2 my_agregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -62193,7 +57339,7 @@ if (bweSholdbeContinue_arr) {
 	x_best_search_init = new doublereal[n_a[0] + 1];
 	if (x_best_search_init == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for x_best_search_init my_agregat_amg.cpp...\n");
+		printf("Problem: not enough memory on your equipment for x_best_search_init my_agregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -62295,7 +57441,7 @@ if (bweSholdbeContinue_arr) {
 			// главная причина установки значения 1 является сокращение числа проходов для устранения
 			// нелинейности в системе с 26 до 4. При установке 1 в данном месте кода надо в модуле
 			// mysolver_v0_03 установить fHORF=1.0; 
-			if (((iVar == TEMP) && (my_amg_manager.istabilization == 3)) && (iVar == TEMP)) {
+			if ((iVar == TEMP) && (my_amg_manager.istabilization == 3)) {
 				if (bonly_solid_calculation == true) {
 					if (bvacuumPrism) {
 						// предполагается неизменый порядок следования позиций в x
@@ -62306,7 +57452,7 @@ if (bweSholdbeContinue_arr) {
 						x_temper = (doublereal*)malloc(((integer)(n_a[0])+1) * sizeof(doublereal));
 						if (x_temper == nullptr) {
 							// недостаточно памяти на данном оборудовании.
-							printf("Problem : not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
+							printf("Problem: not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
 							exit(1);
 						}
@@ -62322,11 +57468,11 @@ if (bweSholdbeContinue_arr) {
 						}
 
 						// На старте мы блокируем Стефана Больцмана дав сойтись лучистым потокам.
-						// Вычисление осреднённых температур в К на границах вакуумных промежутков :
+						// Вычисление осреднённых температур в К на границах вакуумных промежутков:
 						for (integer i23 = 0; i23 < lb; i23++) {
 							update_avg_temperatures(x_temper, my_body[i23]);
 						}
-						// Вычисление плотностей радиационных тепловых потоков :
+						// Вычисление плотностей радиационных тепловых потоков:
 						for (integer i23 = 0; i23 < lb; i23++) {
 							calculation_density_radiation_heat_flux(my_body[i23]);
 						}
@@ -62337,7 +57483,7 @@ if (bweSholdbeContinue_arr) {
 						rthdsd_loc123 = (doublereal*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublereal));
 						if (rthdsd_loc123 == nullptr) {
 							// недостаточно памяти на данном оборудовании.
-							printf("Problem : not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
+							printf("Problem: not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
 							exit(1);
 						}
@@ -62381,7 +57527,7 @@ if (bweSholdbeContinue_arr) {
 						x_temper = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
 						if (x_temper == nullptr) {
 							// недостаточно памяти на данном оборудовании.
-							printf("Problem : not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
+							printf("Problem: not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
 							exit(1);
 						}
@@ -62403,7 +57549,7 @@ if (bweSholdbeContinue_arr) {
 						rthdsd_loc123 = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
 						if (rthdsd_loc123 == nullptr) {
 							// недостаточно памяти на данном оборудовании.
-							printf("Problem : not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
+							printf("Problem: not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
 							exit(1);
 						}
@@ -62501,7 +57647,7 @@ if (bweSholdbeContinue_arr) {
 			res0start = fabs(dres);
 		}
 
-		// Невязка по температуре :
+		// Невязка по температуре:
 		// НЕТ сходимости для поля температур в гидродинамическом решателе и параметры не помогают.
 		//if (iVar == TEMP) printf("temp res=%e\n", fabs(dres));
 
@@ -62573,11 +57719,11 @@ if (bweSholdbeContinue_arr) {
 					x[i47] = x_best_search[i47];
 				}
 				break;
-				// закоментировал 11.01.2020
+				// закомментировал 11.01.2020
 				// как недостижимый код.
 				// Эта ветвь кода вообще никогда не вызовется.
 				/*
-				printf("Fatal amg error : Strong divergence amg solver...%e \n", fabs(res_best_search / res0start));
+				printf("Fatal amg error: Strong divergence amg solver...%e \n", fabs(res_best_search / res0start));
 				printf("res_best_search=%e, res0start=%e\n", fabs(res_best_search), fabs(res0start));
 				printf("BiCGStab+ILU2 is start now...\n");
 				printf("please wait...");
@@ -62662,7 +57808,8 @@ if (bweSholdbeContinue_arr) {
 					// Можно еще единократно немного улучшить nu1 и nu2.
 					doublerealT signumnow = 1.0;
 					if (rand() % 2 == 0) signumnow = -1.0;
-					x[i47] = signumnow *1.0*(rand() % 90 + 10) / 100.0; // Случайное число в интервале от 0 до 1.
+					doublereal drand = (doublereal)(((double)(rand())) / ((double)(RAND_MAX + 1)));
+					x[i47] = signumnow *1.0*drand; // Случайное число в интервале от 0 до 1.
 				}
 			}
 			if (i_count_stagnation == 30 || i_count_stagnation == 31) gold_const = 0.2;
@@ -63021,7 +58168,7 @@ if (bweSholdbeContinue_arr) {
 		row_ptr75 = new integer[n_a[0] + 1];
 		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+			printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -63101,7 +58248,7 @@ if (bweSholdbeContinue_arr) {
 		z75 = new doublereal[n75];
 		if ((ri75 == nullptr) || (roc75 == nullptr) || (s75 == nullptr) || (t75 == nullptr) || (vi75 == nullptr) || (pi75 == nullptr) || (dx75 == nullptr) || (dax75 == nullptr) || (y75 == nullptr) || (z75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for : bicgStab + camg...\n");
+			printf("Problem: not enough memory on your equipment for: bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -63209,7 +58356,7 @@ if (bweSholdbeContinue_arr) {
 		}
 		else if ((n75 >= 30000) && (n75 < 100000)) {
 			// Здесь я немного увеличил число итераций и 
-			// скоректировал условие окончания чтобы считало 
+			// скорректировал условие окончания чтобы считало 
 			// поточнее, но это не повлияло.
 			// Главный вопрос в том что невязка по температуре почему-то не меняется.
 			// задача небольшой размерности.
@@ -63720,7 +58867,7 @@ if (bweSholdbeContinue_arr) {
 		row_ptr75 = new integer[n_a[0] + 1];
 		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+			printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -63937,7 +59084,7 @@ if (bweSholdbeContinue_arr) {
 				// Совсем без предобуславливателя.
 				//for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = v[i][i_1];
 
-				// Закоментировано без предобуславливания.
+				// закомментировано без предобуславливания.
 				//w = A * Z[i];
 				MatrixCRSByVector(val75, col_ind75, row_ptr75, Z[i], w, n75); // результат занесён в  w
 
@@ -64144,7 +59291,7 @@ LABEL_FGMRES_CONTINUE:
 
 
 
-	// Внимание : именно эта строчка обеспечивает сходимость.
+	// Внимание: именно эта строчка обеспечивает сходимость.
 #pragma omp parallel for
 	for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 		x[i47] = x_best_search[i47];
@@ -64469,8 +59616,8 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 // успешный опыт использования ILU2 предобуславливателя из библиотеки SPARSKIT2 Ю.Саада поэтому вместо ТКМ2 у нас 
 // будет ILU2.
 // 22 января текущий работоспособный вариант кода.
-// Планы : 1. сделать версию amg3. 
-// В ней : 2. заменить все проверки на невыделение оперативной памяти на универсальную функцию единую для всего.
+// Планы: 1. сделать версию amg3. 
+// В ней: 2. заменить все проверки на невыделение оперативной памяти на универсальную функцию единую для всего.
 // это очевидно немного сократит программный код.
 // В ней 3. код V цикла оформить в виде цикла for. Тогда же можно будет попробовать вставить direct метод для самого грубого уровня.
 // Это же откроет возможности сделать из amg алгоритма предобуславливатель для BiCGStab.
@@ -64478,7 +59625,7 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 // 10 января 2016 двоичный поиск заменён на хеширование.
 // 15 декабря 2015. Данная версия кода будет полностью очищена от устаревшего кода.
 // 13 декабря 2015. Внедрено АВЛ дерево. При внедрении АВЛ дерева исправлена логическая ошибка в
-// построении С-F разбиения, теперь C-F разбиение строится корректно.
+// построении С-F разбиения, теперь C/F разбиение строится корректно.
 // Исправлен и внедрён quicksort (qs,qsj)
 // который в рять раз быстрее пирамидальной сортировки.
 // Полный отказ от band_size!!!.
@@ -64486,19 +59633,20 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 // 18 октября 2015. Полностью работоспособный мультигрид.
 // Тестировалось на условиях Дирихле но должно работать на любых 
 // краевых задачах. 18 октября датируется версия 0.04. Версия 0.04 на треть
-// быстрее версии 0_03. Были ускорены как операции построения C-F разбиения, 
-// так и нахождение оператора Галёркина. При нахождении С-F разбиения 
-// учитывается уже построеннная его часть и поэтому число сканирований на
+// быстрее версии 0.03. Были ускорены как операции построения C/F разбиения, 
+// так и нахождение оператора Галёркина. При нахождении С/F разбиения 
+// учитывается уже построенная его часть и поэтому число сканирований на
 // на поздних циклах сокращается охватывая только не построенную часть.
-// При нахождении произведеия Галёркина получена самая оптимальная по быстродествию версия,
+// При нахождении произведения Галёркина получена самая оптимальная по быстродействию версия,
 // Основанная на алгоритме слияния отсортированных списков.
 // 4 октября правильное построение последовательности вложенных графов.
 // 30 сентября продолжаем исправление метода. Делаем классический 
-// алгебраический многосеточный метод на основе  C-F разбиения.
+// алгебраический многосеточный метод на основе  C/F разбиения.
 // 16 сентября 2015 года обнаружено что операции 
 // сгрубления и интерполяции сделаны совершенно неверно,
 // и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-// Операции сгрубления и интерполляции будут сделаны заново на основе статьи К.Н. Волкова в новой версии солвера.
+// Операции сгрубления и интерполяции будут сделаны заново на основе статьи
+// К.Н. Волкова в новой версии солвера.
 // 3 september 2015 Villa Borgese.
 // Возвращает divergence detected.
 template <typename doublerealT>
@@ -64513,7 +59661,8 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	bool* &bamg_bound, // true - граничный узел, false - внутренний.
 	doublerealT &theta, doublerealT &theta83, doublerealT &magic82, doublerealT &magic83, doublerealT &ret74,
 	integer iVar,
-	bool bmemory_savings
+	bool bmemory_savings,
+	integer imyinit = ZERO_INIT
 	) {
 
 	bfirst_jacoby_start = true;
@@ -64551,7 +59700,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		bILU2smoother = 2; // ILU2
 
-						   // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне : iluk с lfil=0.
+						   // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне: iluk с lfil=0.
 						   // Возможно я ещё вернусь к ilu2 хотябы на нулевом уровне, т.к. там он особенно хорош.
 	}
 	//bILU2smoother = 0; // only seidel sor smoother.
@@ -64582,7 +59731,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	integer id_tree = SPLAY_TREE_ID;
 
 
-	// Для вычисления grid complexity оператора интерполляции:
+	// Для вычисления grid complexity оператора интерполяции:
 	integer nnz_P_memo_0 = 0;
     integer nnz_P_memo_all = 0;
 
@@ -64621,7 +59770,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	// Если bqs == false то используется пирамидальная сортировка.
 	bool bqs = false; // Использовать ли quicksort qs and qsj.
 	// Сортировка с подсчётом быстрее quickSort.
-	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая жрёт килотонну памяти (Короче для машин у которых море оперативки).
+	bool bCounting_Sort = true; // Использовать ли сортировку подсчётом которая потребляет килотонну памяти (Короче для машин у которых море оперативки).
 
 
 	const doublereal RealZERO = 1.0e-300;// 1.0e-10;
@@ -64630,12 +59779,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	// включение/отключение отладочного режима.
 	bool debug_reshime = false;
 
-	const integer max_sosed = 27850;
+	const integer max_neighbour = 27850;
 	// Мы будем поддерживать информацию о максимальном количестве соседей.
-	integer Maximumsosedcount = -1;
+	integer Maximumneighbourcount = -1;
 	// мы получим порядковый номер элемента с максимальным число соседей в матрице А,
-	// прямо в результате построения C-F разбиения.
-	bool bmaxsosedinfoactive = false;
+	// прямо в результате построения C/F разбиения.
+	bool bmaxneighbourinfoactive = false;
 
 
 	// Возможно можно обойтись без ji связи.
@@ -64684,26 +59833,25 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	istack = (integer*)malloc((istack_size_limit)*sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_5", (istack_size_limit));
 
-	// Для построения C-F декомпозиции нам тоже потребуется хеш таблица
-	// и стек для очистки хеш таблицы.
+	// Для построения C/F декомпозиции нам тоже потребуется хеш-таблица
+	// и стек для очистки хеш-таблицы.
 	bool* hash_table2 = nullptr;
 	hash_table2 = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(hash_table2, "hash_table2", "classic_aglomerative_amg_5", (n + 1));
 
 	// Инициализация.
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
-	// И теперь стек для очистки хеш таблицы.
+	// И теперь стек для очистки хеш-таблицы.
 	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1)*sizeof(integer));
 	handle_error<integer>(istack2, "istack2", "classic_aglomerative_amg_5", (n + 1));
 
-
 	integer iadd = 0;
 	integer nnzR = 1;
 	integer iaddR = 0;
 	integer nnz_aRP[maxlevel];
-	bool bcontinue = true;
+	
 	//bool* this_is_C_node = new bool[n + 1];
 	//bool* this_is_F_node = new bool[n + 1];
 	bool* this_is_C_node = nullptr;
@@ -64715,7 +59863,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	handle_error<bool>(this_is_F_node, "this_is_F_node", "classic_aglomerative_amg_5", (n + 1));
 
 
-	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue)) {
+	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50)) {
 
 
 		/*
@@ -64761,8 +59909,8 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		*/
 
 
-		Maximumsosedcount = -1;
-		bmaxsosedinfoactive = false;
+		Maximumneighbourcount = -1;
+		bmaxneighbourinfoactive = false;
 
 		//if (ilevel > 1) {
 		//if (n_a[ilevel - 2] == n_a[ilevel - 1]) break;
@@ -64894,9 +60042,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		for (integer ii = n_a[ilevel - 1]+1; ii <= n; ii++) {
 #if doubleintprecision == 1
-			//printf("warning: n!=n_a[ilevel-1] : n=%lld, n_a=%lld, ilevel=%lld\n", n, n_a[ilevel - 1], ilevel);
+			//printf("warning: n!=n_a[ilevel-1]: n=%lld, n_a=%lld, ilevel=%lld\n", n, n_a[ilevel - 1], ilevel);
 #else
-			//printf("warning: n!=n_a[ilevel-1] : n=%d, n_a=%d, ilevel=%d\n", n, n_a[ilevel - 1], ilevel);
+			//printf("warning: n!=n_a[ilevel-1]: n=%d, n_a=%d, ilevel=%d\n", n, n_a[ilevel - 1], ilevel);
 #endif
 			
 			//getchar();
@@ -64915,15 +60063,15 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			// 7 января 2016. Обязательно нужна эта сортировка.
 			if (bqs) {
 				if (bCounting_Sort) {
-					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings);
+					Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, indx_comparei);
 				}
 				else {
 					// quicksort
-					qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, indx_comparei);
 				}
 			}
 			else {
-				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd,comparei);
 			}
 			//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		}
@@ -64942,15 +60090,15 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			if (bqs) {
 				if (bCounting_Sort) {
 					// Сортировка с подсчётом за линейное время.
-					Counting_Sortj(Atemp, 1, nnz_a[ilevel - 1]);
+					Counting_Sort(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				}
 				else {
 					// Быстрая сортировка Чарльза Хоара.
-					qsj(Atemp, 1, nnz_a[ilevel - 1]);
+					qs(Atemp, 1, nnz_a[ilevel - 1], indx_comparej);
 				}
 			}
 			else {
-				HeapSort_j(Atemp, 1, nnz_a[ilevel - 1]);
+				HeapSort(Atemp, 1, nnz_a[ilevel - 1], comparej);
 			}
 		}
 
@@ -64982,13 +60130,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = nullptr;
-		//count_sosed = new integer[n_a[ilevel - 1] + 1];
-		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
-		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
+		integer* count_neighbour = nullptr;
+		//count_neighbour = new integer[n_a[ilevel - 1] + 1];
+		count_neighbour = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
+		handle_error<integer>(count_neighbour, "count_neighbour", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
 
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
-			count_sosed[ii] = 0; // нет соседей.
+			count_neighbour[ii] = 0; // нет соседей.
 		}
 
 
@@ -65000,7 +60148,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 		if (flag[Amat[ii].i] == false) {
 		integer ic = -1;
-		integer cand[max_sosed];
+		integer cand[max_neighbour];
 		if (0) {
 		for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 		ic++; //i,j
@@ -65029,20 +60177,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}
 		}
 		}
-		integer len_sosed = ic;
+		integer len_neighbour = ic;
 		// Найти столбец j который равен индексу Amat[ii].i
 		//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 		//if (Amat[ii1].i != Amat[ii].i) {
 		//	if (Amat[ii1].j == Amat[ii].i) {
 		// j,i
-		//		bool foundsosed = false;
-		//		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-		//			if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+		//		bool foundneighbour = false;
+		//		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+		//			if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 		//		}
-		//		if (!foundsosed) {
+		//		if (!foundneighbour) {
 		//			ic++;
 		//			cand[ic] = Amat[ii1].j;
-		//			len_sosed++;
+		//			len_neighbour++;
 		//		}
 		//	}
 		//}
@@ -65053,24 +60201,24 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		for (integer ii1 = ii2; (ii1 <= nnz_a[ilevel - 1]) && (Atemp[ii1].j == Amat[ii].i); ii1++) {
 		if (Atemp[ii1].i != Amat[ii].i) {
 		// j,i
-		bool foundsosed = false;
-		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-		if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+		bool foundneighbour = false;
+		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+		if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 		}
-		if (!foundsosed) {
+		if (!foundneighbour) {
 		ic++;
 		cand[ic] = Atemp[ii1].j;
-		len_sosed++;
+		len_neighbour++;
 		}
 		}
 		}
 		}
 
 
-		count_sosed[Amat[ii].i] = ic;
-		if (ic > Maximumsosedcount) {
-		Maximumsosedcount = ic;
-		bmaxsosedinfoactive = true;
+		count_neighbour[Amat[ii].i] = ic;
+		if (ic > Maximumneighbourcount) {
+		Maximumneighbourcount = ic;
+		bmaxneighbourinfoactive = true;
 		}
 		flag[Amat[ii].i] = true;
 		}
@@ -65083,7 +60231,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 			if (flag[Amat[ii].i] == false) {
 				integer ic = -1;
-				integer cand[max_sosed];
+				integer cand[max_neighbour];
 				if (0) {
 					for (integer is0 = ii; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii].i); is0++) {
 						ic++; //i,j
@@ -65117,20 +60265,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						}
 					}
 				}
-				integer len_sosed = ic;
+				integer len_neighbour = ic;
 				// Найти столбец j который равен индексу Amat[ii].i
 				//for (integer ii1 = 1 + iadd; ii1 <= nnz_a[ilevel - 1] + iadd; ii1++) {
 				//if (Amat[ii1].i != Amat[ii].i) {
 				//	if (Amat[ii1].j == Amat[ii].i) {
 				// j,i
-				//		bool foundsosed = false;
-				//		for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-				//			if (Amat[ii1].j == cand[i_1]) foundsosed = true;
+				//		bool foundneighbour = false;
+				//		for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+				//			if (Amat[ii1].j == cand[i_1]) foundneighbour = true;
 				//		}
-				//		if (!foundsosed) {
+				//		if (!foundneighbour) {
 				//			ic++;
 				//			cand[ic] = Amat[ii1].j;
-				//			len_sosed++;
+				//			len_neighbour++;
 				//		}
 				//	}
 				//}
@@ -65141,24 +60289,24 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					for (integer ii1 = ii2; (ii1 <= row_startA[Amat[ii2].i + 1] - 1); ii1++) {
 						if (Atemp[ii1].i != Amat[ii].i) {
 							// j,i
-							bool foundsosed = false;
-							for (integer i_1 = 0; i_1 <= len_sosed; i_1++) {
-								if (Atemp[ii1].j == cand[i_1]) foundsosed = true;
+							bool foundneighbour = false;
+							for (integer i_1 = 0; i_1 <= len_neighbour; i_1++) {
+								if (Atemp[ii1].j == cand[i_1]) foundneighbour = true;
 							}
-							if (!foundsosed) {
+							if (!foundneighbour) {
 								ic++;
 								cand[ic] = Atemp[ii1].j;
-								len_sosed++;
+								len_neighbour++;
 							}
 						}
 					}
 				}
 
 
-				count_sosed[Amat[ii].i] = ic;
-				if (ic > Maximumsosedcount) {
-					Maximumsosedcount = ic;
-					bmaxsosedinfoactive = true;
+				count_neighbour[Amat[ii].i] = ic;
+				if (ic > Maximumneighbourcount) {
+					Maximumneighbourcount = ic;
+					bmaxneighbourinfoactive = true;
 				}
 				flag[Amat[ii].i] = true;
 			}
@@ -65166,7 +60314,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 
-		integer maxsosed = 0;
+		integer maxneighbour = 0;
 		integer icandidate = 0;
 		for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
 			flag[ii] = false; // init flag
@@ -65176,13 +60324,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		/*
 		for (integer ii = 1 + iadd; ii <= nnz_a[ilevel - 1] + iadd; ii++) {
 		if (flag[Amat[ii].i] == false) {
-		if (count_sosed[Amat[ii].i] > maxsosed) {
-		maxsosed = count_sosed[Amat[ii].i];
+		if (count_neighbour[Amat[ii].i] > maxneighbour) {
+		maxneighbour = count_neighbour[Amat[ii].i];
 		icandidate = ii;
-		if (bmaxsosedinfoactive) {
+		if (bmaxneighbourinfoactive) {
 		// организуем досрочный выход из цикла for.
 		// Это должно сильно сокращать количество сканирований.
-		if (maxsosed == Maximumsosedcount) break;
+		if (maxneighbour == Maximumneighbourcount) break;
 		}
 		}
 		flag[Amat[ii].i] = true;
@@ -65190,13 +60338,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}
 		*/
 		for (integer i7 = 1; i7 <= n_a[ilevel - 1]; i7++) {
-			if (count_sosed[i7] > maxsosed) {
-				maxsosed = count_sosed[i7];
+			if (count_neighbour[i7] > maxneighbour) {
+				maxneighbour = count_neighbour[i7];
 				icandidate = row_startA[i7];
-				if (bmaxsosedinfoactive) {
+				if (bmaxneighbourinfoactive) {
 					// организуем досрочный выход из цикла for.
 					// Это должно сильно сокращать количество сканирований.
-					if (maxsosed == Maximumsosedcount) break;
+					if (maxneighbour == Maximumneighbourcount) break;
 				}
 			}
 		}
@@ -65212,11 +60360,11 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		integer n_coarce = 1; // начальный номер C узла.
 		nnzR = 1;
 
-		const integer NULL_SOSED = -1;
-		integer vacant = NULL_SOSED;
+		const integer NULL_NEIGHBOUR = -1;
+		integer vacant = NULL_NEIGHBOUR;
 		
 
-		// Построение C-F разбиения.
+		// Построение C/F разбиения.
 		//while (icandidate != 0)
 		integer icountprohod = 0;
 		// Мы будем заоминать с какой позиции начинаются ещё не помеченные узлы,
@@ -65264,11 +60412,11 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// 4 июля 2016.
 		// это случай когда следующий уровень вложенности просто не из чего строить и это 
 		// становится понятно только здесь.
-		if ((icandidate == 0) && (maxsosed == 0)) {
+		if ((icandidate == 0) && (maxneighbour == 0)) {
 #if doubleintprecision == 1
-			//printf("maxsosed==%lld\n",maxsosed);
+			//printf("maxneighbour==%lld\n",maxneighbour);
 #else
-			//printf("maxsosed==%d\n",maxsosed);
+			//printf("maxneighbour==%d\n",maxneighbour);
 #endif
 			
 			//getchar();
@@ -65290,10 +60438,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			
 
 
-			integer set[max_sosed]; // не более 20 узлов в одном агрегате.
+			integer set[max_neighbour]; // не более 20 узлов в одном агрегате.
 			// инициализация убрана потому что она не нужна и она сильно тормозит быстродействие.
-			//for (integer js = 0; js < max_sosed; js++) {
-			//set[js] = NULL_SOSED;
+			//for (integer js = 0; js < max_neighbour; js++) {
+			//set[js] = NULL_NEIGHBOUR;
 			//}
 			integer ic = 0;
 
@@ -65424,10 +60572,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						vacant = Amat[ii].j;
 						for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = NULL_NEIGHBOUR;
 							}
 						}
-						if (vacant != NULL_SOSED) {
+						if (vacant != NULL_NEIGHBOUR) {
 							set[ic] = vacant;
 
 							ic++;
@@ -65451,10 +60599,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								vacant = Amat[iscan].j;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant;
 
 									ic++;
@@ -65481,10 +60629,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				//	vacant = Amat[ii1].i;
 				//	for (integer js = 0; js < ic; js++) {
 				//		if (vacant == set[js]) {
-				//			vacant = NULL_SOSED;
+				//			vacant = NULL_NEIGHBOUR;
 				//		}
 				//	}
-				//	if (vacant != NULL_SOSED) {
+				//	if (vacant != NULL_NEIGHBOUR) {
 				//		set[ic] = vacant; // j,i связь.
 
 				//		ic++;
@@ -65503,10 +60651,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				//	vacant = Amat[ii1].i;
 				//	for (integer js = 0; js < ic; js++) {
 				//		if (vacant == set[js]) {
-				//			vacant = NULL_SOSED;
+				//			vacant = NULL_NEIGHBOUR;
 				//		}
 				//	}
-				//	if (vacant != NULL_SOSED) {
+				//	if (vacant != NULL_NEIGHBOUR) {
 				//		set[ic] = vacant; // j,i связь.
 
 				//		ic++;
@@ -65526,10 +60674,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								vacant = Atemp[ii2].i;
 								for (integer js = 0; js < ic; js++) {
 									if (vacant == set[js]) {
-										vacant = NULL_SOSED;
+										vacant = NULL_NEIGHBOUR;
 									}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != NULL_NEIGHBOUR) {
 									set[ic] = vacant; // j,i связь.
 									ic++;
 								}
@@ -65578,7 +60726,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					for (integer js = 0; js < ic; js++) {
 						data_BalTree ddel;
 						ddel.i = set[js];
-						ddel.countsosed = count_sosed[set[js]];
+						ddel.count_neighbour = count_neighbour[set[js]];
 						//ddel.ii = row_startA[ddel.i];
 						switch (id_tree) {
 						case AVL_TREE_ID: root = remove_AVL(root, ddel);
@@ -65613,6 +60761,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				//for (integer ii_2 = istart; ii_2 <= iend; ii_2++) {
 
 				// Старая реализация которой присуща большая нагрузка на операторы new && delete.
+#if 0
 				if (0) {
 					for (integer js = 1; js < ic; js++) {
 
@@ -65639,7 +60788,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									lsos->next = nullptr;
 									lsos->i = Amat[is0].j;
 									lsos->ii = row_startA[lsos->i];
-									// lsos->countsosed // не используется.
+									// lsos->count_neighbour // не используется.
 									List *newnodesos = new List;
 									newnodesos->prev = lsos;
 									lsos->next = newnodesos;
@@ -65696,18 +60845,18 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							}
 
 							data_BalTree dsearch;
-							dsearch.countsosed = count_sosed[isc];
+							dsearch.count_neighbour = count_neighbour[isc];
 							//dsearch.ii = ii_2;
 							dsearch.i = isc;
-							count_sosed[isc] += ic2;
+							count_neighbour[isc] += ic2;
 							data_BalTree dadd;
-							dadd.countsosed = count_sosed[isc];
+							dadd.count_neighbour = count_neighbour[isc];
 							//dadd.ii = ii_2;
 							dadd.i = isc;
-							if (bmaxsosedinfoactive) {
+							if (bmaxneighbourinfoactive) {
 								// Обновляем информацию о максимальном количестве соседей.
-								if (count_sosed[isc] >= Maximumsosedcount) {
-									Maximumsosedcount = count_sosed[isc];
+								if (count_neighbour[isc] >= Maximumneighbourcount) {
+									Maximumneighbourcount = count_neighbour[isc];
 								}
 
 								// Добавляем соседа в любом случае
@@ -65807,18 +60956,18 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 
 										// Добавляем соседа в любом случае
@@ -65902,12 +61051,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								}
 
 								data_BalTree dsearch;
-								dsearch.countsosed = count_sosed[isc];
+								dsearch.count_neighbour = count_neighbour[isc];
 								//dsearch.ii = ii_2;
 								dsearch.i = isc;
-								count_sosed[isc] += ic2;
+								count_neighbour[isc] += ic2;
 								data_BalTree dadd;
-								dadd.countsosed = count_sosed[isc];
+								dadd.count_neighbour = count_neighbour[isc];
 								//dadd.ii = ii_2;
 								dadd.i = isc;
 
@@ -65935,10 +61084,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									}
 								}
 
-								if (bmaxsosedinfoactive) {
+								if (bmaxneighbourinfoactive) {
 									// Обновляем информацию о максимальном количестве соседей.
-									if (count_sosed[isc] >= Maximumsosedcount) {
-										Maximumsosedcount = count_sosed[isc];
+									if (count_neighbour[isc] >= Maximumneighbourcount) {
+										Maximumneighbourcount = count_neighbour[isc];
 									}
 								}
 
@@ -65947,7 +61096,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						}
 					}
 				}
-				else if (1) {
+				else 
+#endif 
+				if (1) {
 					//printf("additional and modify new neighbour\n");
 
 					// 10 января 2016. Новая логика.
@@ -65981,7 +61132,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 								// на ряде тестовых задач при таком подходе агломерация проходила очень
 								// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-								// Эта проблема проявилась на задачах :
+								// Эта проблема проявилась на задачах:
 								// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 								// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 								// Проблема не в этом месте кода.
@@ -66006,16 +61157,16 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									}
 
 									data_BalTree dsearch;
-									dsearch.countsosed = count_sosed[isc];
+									dsearch.count_neighbour = count_neighbour[isc];
 									//dsearch.ii = ii_2;
 									dsearch.i = isc;
 									// Увеличиваем на количество связей с новыми F узлами.
-									count_sosed[isc] += ic2;
+									count_neighbour[isc] += ic2;
 									//if (ic2 > 0) {
-									//count_sosed[isc] += 1;
+									//count_neighbour[isc] += 1;
 									//}
 									data_BalTree dadd;
-									dadd.countsosed = count_sosed[isc];
+									dadd.count_neighbour = count_neighbour[isc];
 									//dadd.ii = ii_2;
 									dadd.i = isc;
 
@@ -66042,10 +61193,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 										}
 									}
 
-									if (bmaxsosedinfoactive) {
+									if (bmaxneighbourinfoactive) {
 										// Обновляем информацию о максимальном количестве соседей.
-										if (count_sosed[isc] >= Maximumsosedcount) {
-											Maximumsosedcount = count_sosed[isc];
+										if (count_neighbour[isc] >= Maximumneighbourcount) {
+											Maximumneighbourcount = count_neighbour[isc];
 										}
 									}
 								}
@@ -66055,7 +61206,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						}
 					}
 
-					// Очистка (восстановление хеш таблицы).
+					// Очистка (восстановление хеш-таблицы).
 					for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 						hash_table2[istack2[i_54]] = false;
 					}
@@ -66103,7 +61254,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									// Это даёт стандартный алгоритм сгрубления описаный в статьях, но
 									// на ряде тестовых задач при таком подходе агломерация проходила очень
 									// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-									// Эта проблема проявилась на задачах :
+									// Эта проблема проявилась на задачах:
 									// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
 									// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
 									// Проблема не в этом месте кода.
@@ -66148,12 +61299,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 											data_BalTree dsearch;
-											dsearch.countsosed = count_sosed[isc];
+											dsearch.count_neighbour = count_neighbour[isc];
 											//dsearch.ii = ii_2;
 											dsearch.i = isc;
-											count_sosed[isc] += ic2;
+											count_neighbour[isc] += ic2;
 											data_BalTree dadd;
-											dadd.countsosed = count_sosed[isc];
+											dadd.count_neighbour = count_neighbour[isc];
 											//dadd.ii = ii_2;
 											dadd.i = isc;
 
@@ -66181,10 +61332,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 											}
 										}
 
-										if (bmaxsosedinfoactive) {
+										if (bmaxneighbourinfoactive) {
 											// Обновляем информацию о максимальном количестве соседей.
-											if (count_sosed[isc] >= Maximumsosedcount) {
-												Maximumsosedcount = count_sosed[isc];
+											if (count_neighbour[isc] >= Maximumneighbourcount) {
+												Maximumneighbourcount = count_neighbour[isc];
 											}
 										}
 									}
@@ -66195,7 +61346,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						}
 					}
 
-					// Очистка (восстановление хеш таблицы).
+					// Очистка (восстановление хеш-таблицы).
 					for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 						hash_table2[istack2[i_54]] = false;
 					}
@@ -66220,7 +61371,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					bcontinue = true;
 					istartflag_scan = i_1; // сокращаем пределы сканирования.
 					break; // досрочный выход из цикла for.
-					//if (maxsosed == -1) {
+					//if (maxneighbour == -1) {
 #if doubleintprecision == 1
 					//printf("ERROR!!!!  i_1=%lld\n", i_1);
 #else
@@ -66233,7 +61384,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 
 			// Вычисление узла с максимальным количеством соседей.
-			maxsosed = -1;
+			maxneighbour = -1;
 			icandidate = 0;
 
 
@@ -66264,9 +61415,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 			else {
 			#if doubleintprecision == 1
-				printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			system("pause");
@@ -66281,9 +61432,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 			else {
 			#if doubleintprecision == 1
-				printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			system("pause");
@@ -66324,9 +61475,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -66344,9 +61495,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -66395,9 +61546,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -66415,7 +61566,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			itop++;
 			}
 			else {
-			printf("itop>=istack_size_limit nado uvelichit istack_size_limit");
+			printf("itop>=istack_size_limit need to increase istack_size_limit");
 			}
 
 			//if (isize_p < ipool_size_limit) {
@@ -66423,9 +61574,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			//}
 			//else {
 			#if doubleintprecision == 1
-				//printf("nado uvelichiti ipool bolee %lld, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %lld, string 4118\n", ipool_size_limit);
 			#else
-				//printf("nado uvelichiti ipool bolee %d, string 4118\n", ipool_size_limit);
+				//printf("need to increase ipool bolee %d, string 4118\n", ipool_size_limit);
 			#endif
 			
 			//system("pause");
@@ -66457,7 +61608,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					printf("found max");
 				}
 				// Данный код чрезвычайно компактен.
-				bmaxsosedinfoactive = true;
+				bmaxneighbourinfoactive = true;
 				// Надо найти максимальный элемент в АВЛ дереве.
 				node_AVL* emax = 0;
 				Tree_splay* emax_splay = 0;
@@ -66493,7 +61644,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -66512,7 +61663,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						root_splay = 0;
 						size_splay_Tree = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -66537,7 +61688,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					else {
 						root = 0;
 						icandidate = 0;
-						maxsosed = -1;
+						maxneighbour = -1;
 						bcontinue = false;
 
 					}
@@ -66550,22 +61701,22 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 
 #if doubleintprecision == 1
-			//printf("maximum number of sosed=%lld\n",maxsosed);
+			//printf("maximum number of neighbour=%lld\n",maxneighbour);
 #else
-			//printf("maximum number of sosed=%d\n",maxsosed);
+			//printf("maximum number of neighbour=%d\n",maxneighbour);
 #endif
 			
-			if (maxsosed == -1) if (debug_reshime) system("pause");
+			if (maxneighbour == -1) if (debug_reshime) system("pause");
 			//getchar();
 
-			if ((icandidate == 0) && (maxsosed == -1)) {
+			if ((icandidate == 0) && (maxneighbour == -1)) {
 				bcontinue = false;
 			}
 			// 4 june 2016
 #if doubleintprecision == 1
-			//printf("icandidate=%lld, maxsosed=%lld\n",icandidate, maxsosed);
+			//printf("icandidate=%lld, maxneighbour=%lld\n",icandidate, maxneighbour);
 #else
-			//printf("icandidate=%d, maxsosed=%d\n",icandidate, maxsosed);
+			//printf("icandidate=%d, maxneighbour=%d\n",icandidate, maxneighbour);
 #endif
 			
 
@@ -66577,7 +61728,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 			icountprohod++;
 
-		} // Построение C-F разбиения. создано.
+		} // Построение C/F разбиения. создано.
 
 		//delete[] bmarkervisit;
 		free(bmarkervisit);
@@ -66632,7 +61783,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				integer icsos = 0;
 				// старая версия до 10 января 2016.
 				//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+				// Быстрый вариант без поиска, просто индексирование на основе "хеш-таблицы".
 				// 10 января 2016. на основе хеширования.
 				integer i_2 = row_startA[i_1];
 
@@ -66704,7 +61855,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		problem_conservation = new doublerealT[35 * n_a[ilevel - 1] + 1];
 		if (problem_conservation == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for problem_conservation vector in my_agregat_amg5.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for problem_conservation vector in my_agregat_amg5.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -66734,7 +61885,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 			// debug
-			// проверка качества C-F разбиения.
+			// проверка качества C/F разбиения.
 			//doublerealT* exp1 = new doublerealT[n_a[ilevel - 1] + 1];
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) exp1[i_1] = 0.0;
 			//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) exp1[i_1] = 2.0;
@@ -66748,11 +61899,11 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 
-			// C-F разбиение построено, самое время построить оператор интерполяции.
+			// C/F разбиение построено, самое время построить оператор интерполяции.
 			// потом найти оператор проекции, как транспонированный оператор интерполяции.
 			// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
 
-			// Построение оператора интерполляции : 
+			// Построение оператора интерполяции: 
 			// coarse 2 fine.
 			//P*coarse==fine
 
@@ -66862,7 +62013,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 			if (the_good_old_interpolation) {
 
-				// Старая добрая верная, проверенная интерполляция.
+				// Старая добрая верная, проверенная интерполяция.
 				// К тому же чрезвычайно простая.
 
 				// my_amg_manager.number_interpolation_procedure == 0
@@ -66880,7 +62031,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						// O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -66888,7 +62039,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -66902,7 +62053,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
@@ -66939,7 +62090,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 										if (fabs(sumP) < RealZERO) {
 											//printf("error interpolation zero diagonal sumP.\n");
-											//printf("Fnode all sosed is F");
+											//printf("Fnode all neighbour is F");
 											//system("pause");
 											//printf("i8 is Dirichlet node\n");
 											this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -66947,7 +62098,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 
@@ -66987,8 +62138,8 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				if (my_amg_manager.number_interpolation_procedure == 1) {
 					// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-					// Прямая интерполляция с элементам непрямой.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 					// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
@@ -67007,7 +62158,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						// O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -67015,7 +62166,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -67029,7 +62180,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						integer icsos = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -67068,12 +62219,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
@@ -67087,7 +62238,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 								bool bCinsert = false;
 
-								// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+								// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 								for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 									if (Amat[is0].j != Amat[ii1].i) {
 										if (this_is_F_node[Amat[is0].j] == true) {
@@ -67133,7 +62284,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												bool bvisit_sumPloc = false;
 
 												// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-												// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+												// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 												doublerealT sumP_loc = 0.0;
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -67159,7 +62310,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												
 												if (bvisit_sumPloc) {
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -67189,7 +62340,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													}
 												}
 												else {
-													// не было С соседей интерполляция может испытывать проблемы.
+													// не было С соседей интерполяция может испытывать проблемы.
 													// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 													// Данная проблема проявляется уже на втором уровне.
 													//printf("problem situation");
@@ -67218,7 +62369,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									bool bstandart_vjzov = true;
 									for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 										// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-										// когда с не менее чем двух сторон интерполляция сработала, здесь 
+										// когда с не менее чем двух сторон интерполяция сработала, здесь 
 										// же срабатывание было лишь с одной из сторон как минимум.
 										if (empty_interpol[i_38] == true) {
 											bstandart_vjzov = false;
@@ -67286,14 +62437,14 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				if (my_amg_manager.number_interpolation_procedure == 2) {
 					// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-					// Прямая интерполляция с элементам непрямой. Экспериментальный вариант. TODO.
-					// Непрямая интерполляция применяется только для F узлов которые
+					// Прямая интерполяция с элементам непрямой. Экспериментальный вариант. TODO.
+					// Непрямая интерполяция применяется только для F узлов которые
 					// не имеют С соседей или имеют недостаточное число С соседей.
 					// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 
-					// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполляцию.
+					// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполяцию.
 					// Идея в том чтобы узел F имеющий лишь одного Strong С соседа обработать так чтобы у него было не менее 
-					// двух  C соседей учитывая эффект непрямой интерполляции.
+					// двух  C соседей учитывая эффект непрямой интерполяции.
 
 
 					ipromah = 0;
@@ -67305,13 +62456,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -67326,7 +62477,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						integer icsosF = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -67357,7 +62508,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -67373,12 +62524,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							if (fabs(sumP) < RealZERO) {
 								//printf("error interpolation zero diagonal sumP.\n");
-								//printf("Fnode all sosed is F");
+								//printf("Fnode all neighbour is F");
 								//system("pause");
 								//printf("i8 is Dirichlet node\n");
 
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
@@ -67433,7 +62584,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												bool bvisit_sumPloc = false;
 
 												// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-												// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+												// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 												doublerealT sumP_loc = 0.0;
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -67459,7 +62610,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 												if (bvisit_sumPloc) {
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -67489,7 +62640,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													}
 												}
 												else {
-													// не было С соседей интерполляция может испытывать проблемы.
+													// не было С соседей интерполяция может испытывать проблемы.
 													// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 													// Данная проблема проявляется уже на втором уровне вложенности.
 													//printf("problem situation");
@@ -67513,7 +62664,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								bool bstandart_vjzov = true;
 								for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 									// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-									// когда с не менее чем двух сторон интерполляция сработала, здесь 
+									// когда с не менее чем двух сторон интерполяция сработала, здесь 
 									// же срабатывание было лишь с одной из сторон как минимум.
 									if (empty_interpol[i_38] == true) {
 										bstandart_vjzov = false;
@@ -67542,7 +62693,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//	printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -67550,7 +62701,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 													// Это как раз единственная Strong C связь. 
@@ -67584,7 +62735,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -67620,7 +62771,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -67642,7 +62793,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -67768,14 +62919,14 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							//for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							for (integer is0 = ii1; (is0 <= row_startA[Amat[ii1].i + 1] - 1); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -67791,7 +62942,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -67826,7 +62977,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 											   // Следующий случай назван "безнадёжным".
 											   // Безнадёжный случай оставляется без изменений.
 											   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-											   // интерполляцию на этих уровнях можно улучшить.
+											   // интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -67855,7 +63006,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														// заведомо один С сосед.
 														if (fabs(sumP) < RealZERO) {
 															//printf("error interpolation zero diagonal sumP.\n");
-															//printf("Fnode all sosed is F");
+															//printf("Fnode all neighbour is F");
 															//system("pause");
 															//	printf("i8 is Dirichlet node\n");
 															this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -67864,7 +63015,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 															iadditionalCstatistic++;
 															byes_add = true; // Были добавления узлов.
 																			 //exit(1);
-																			 // здесь нужна непрямая интерполляция.
+																			 // здесь нужна непрямая интерполяция.
 														}
 
 
@@ -67890,7 +63041,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -67899,7 +63050,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														iadditionalCstatistic++;
 														byes_add = true; // Были добавления узлов.
 																		 //exit(1);
-																		 // здесь нужна непрямая интерполляция.
+																		 // здесь нужна непрямая интерполяция.
 													}
 
 
@@ -67942,7 +63093,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
@@ -67951,7 +63102,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 								iend_for1 = is0;
 								if (Amat[is0].j != istr_etalon1) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold)) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -67970,7 +63121,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -68004,7 +63155,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 											   // Следующий случай назван "безнадёжным".
 											   // Безнадёжный случай оставляется без изменений.
 											   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-											   // интерполляцию на этих уровнях можно улучшить.
+											   // интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -68034,7 +63185,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta)) {
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -68042,7 +63193,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -68080,7 +63231,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F)) {
 														// Рассматриваем Strong F связи.
 
-														// Смысл :
+														// Смысл:
 														// 
 
 
@@ -68119,7 +63270,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -68146,7 +63297,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 														doublerealT maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -68198,7 +63349,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 										// Очень большое количество сильных С узлов. 
 										// Это нужно использовать для интерполяции.
 										//if (ilevel > 3) {
-										//printf("horosho :  icsos>=4\n");
+										//printf("horosho:  icsos>=4\n");
 										//getchar();
 										//}
 										doublerealT SumPall7 = 0.0;
@@ -68214,7 +63365,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta)) {
 														if (fabs(sumP) < RealZERO) {
 															//printf("error interpolation zero diagonal sumP.\n");
-															//printf("Fnode all sosed is F");
+															//printf("Fnode all neighbour is F");
 															//system("pause");
 															//	printf("i8 is Dirichlet node\n");
 															this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -68222,7 +63373,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 															bweSholdbeContinue = true;
 															iadditionalCstatistic++;
 															//exit(1);
-															// здесь нужна непрямая интерполляция.
+															// здесь нужна непрямая интерполяция.
 														}
 														else {
 															// Это как раз единственная Strong C связь. 
@@ -68408,7 +63559,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 														if (fabs(sumP) < RealZERO) {
 															//printf("error interpolation zero diagonal sumP.\n");
-															//printf("Fnode all sosed is F");
+															//printf("Fnode all neighbour is F");
 															//system("pause");
 															//printf("i8 is Dirichlet node\n");
 															this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -68416,7 +63567,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 															bweSholdbeContinue = true;
 															iadditionalCstatistic++;
 															//exit(1);
-															// здесь нужна непрямая интерполляция.
+															// здесь нужна непрямая интерполяция.
 														}
 														else {
 
@@ -68514,14 +63665,14 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							//for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							for (integer is0 = ii1; (is0 <= row_startA[Amat[ii1].i + 1] - 1); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -68535,7 +63686,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							//for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							for (integer is0 = ii1; (is0 <= row_startA[Amat[ii1].i + 1] - 1); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij>0.0) && (fabs(Amat[is0].aij) > maxelem_thresholdpc)) {
 										maxelem_thresholdpc = fabs(Amat[is0].aij);
@@ -68550,7 +63701,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -68585,7 +63736,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -68594,7 +63745,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							integer icsosF_pc = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP_pc = 0.0;
 							doublerealT SumPall_pc = 0.0;
 							integer icount_StronglyF_pc = 0;
@@ -68649,7 +63800,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														// заведомо один С сосед.
 														if (fabs(sumP) < RealZERO) {
 															//printf("error interpolation zero diagonal sumP.\n");
-															//printf("Fnode all sosed is F");
+															//printf("Fnode all neighbour is F");
 															//system("pause");
 															//	printf("i8 is Dirichlet node\n");
 															this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -68658,7 +63809,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 															iadditionalCstatistic++;
 															byes_add = true; // Были добавления узлов.
 															//exit(1);
-															// здесь нужна непрямая интерполляция.
+															// здесь нужна непрямая интерполяция.
 														}
 
 
@@ -68684,7 +63835,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -68693,7 +63844,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														iadditionalCstatistic++;
 														byes_add = true; // Были добавления узлов.
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 
 
@@ -68736,7 +63887,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
@@ -68745,7 +63896,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 								iend_for1 = is0;
 								if (Amat[is0].j != istr_etalon1) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -68764,7 +63915,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -68798,7 +63949,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -68828,7 +63979,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta)) {
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -68836,7 +63987,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -68874,7 +64025,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta_strong_F)) {
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -68913,7 +64064,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -68940,7 +64091,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													doublerealT maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 													for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 														if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -68992,7 +64143,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 										// Очень большое количество сильных С узлов. 
 										// Это нужно использовать для интерполяции.
 										//if (ilevel > 3) {
-											//printf("horosho :  icsos>=4\n");
+											//printf("horosho:  icsos>=4\n");
 											//getchar();
 										//}
 										doublerealT SumPall7 = 0.0;
@@ -69008,7 +64159,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													if ((Amat[is0].aij<0.0) && (fabs(Amat[is0].aij) > maxelem_threshold_theta)) {
 														if (fabs(sumP) < RealZERO) {
 															//printf("error interpolation zero diagonal sumP.\n");
-															//printf("Fnode all sosed is F");
+															//printf("Fnode all neighbour is F");
 															//system("pause");
 															//	printf("i8 is Dirichlet node\n");
 															this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -69016,7 +64167,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 															bweSholdbeContinue = true;
 															iadditionalCstatistic++;
 															//exit(1);
-															// здесь нужна непрямая интерполляция.
+															// здесь нужна непрямая интерполяция.
 														}
 														else {
 															// Это как раз единственная Strong C связь. 
@@ -69202,7 +64353,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -69210,7 +64361,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 
@@ -69406,13 +64557,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// Нам нужен разреженный оператор Галёркина.
 						// 5 декабря 2015 года мы попробуем увеличить разреженность
-						// оператора интерполляции а значит и оператора Галёркина.
+						// оператора интерполяции а значит и оператора Галёркина.
 						doublerealT maxelem_threshold = -1.0;
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 						integer ii1 = row_startA[i8];
 						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 							if (Amat[is0].j != Amat[ii1].i) {
-								// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+								// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 								//if (this_is_C_node[Amat[is0].j] == true) {
 								if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 									maxelem_threshold = fabs(Amat[is0].aij);
@@ -69427,7 +64578,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						integer icsosF = 0;
 
 						// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-						// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+						// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 						doublerealT sumP = 0.0;
 						doublerealT SumPall = 0.0;
 						integer icount_StronglyF = 0;
@@ -69458,7 +64609,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							// Следующий случай назван "безнадёжным".
 							// Безнадёжный случай оставляется без изменений.
 							// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-							// интерполляцию на этих уровнях можно улучшить.
+							// интерполяцию на этих уровнях можно улучшить.
 							if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 						}
 
@@ -69486,7 +64637,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//	printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -69494,7 +64645,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 													// Это как раз единственная Strong C связь. 
@@ -69528,7 +64679,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 
-													// Смысл :
+													// Смысл:
 													// 
 
 
@@ -69564,7 +64715,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -69586,7 +64737,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма 
+													// В общем это двойная интерполяционная сумма 
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -69633,7 +64784,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 											if (fabs(sumP) < RealZERO) {
 												//printf("error interpolation zero diagonal sumP.\n");
-												//printf("Fnode all sosed is F");
+												//printf("Fnode all neighbour is F");
 												//system("pause");
 												//printf("i8 is Dirichlet node\n");
 												this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -69641,7 +64792,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												bweSholdbeContinue = true;
 												iadditionalCstatistic++;
 												//exit(1);
-												// здесь нужна непрямая интерполляция.
+												// здесь нужна непрямая интерполяция.
 											}
 											else {
 
@@ -69675,7 +64826,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												// Рассматриваем Strong F связи.
 												// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-												// Смысл :
+												// Смысл:
 												//
 
 
@@ -69711,7 +64862,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													integer icsos_loc = 0;
 
 													// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-													// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+													// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 													doublerealT sumP_loc = 0.0;
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -69733,7 +64884,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														}
 													}
 
-													// В общем это двойная интерполляционная сумма
+													// В общем это двойная интерполяционная сумма
 													for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 														if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 															if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -69787,7 +64938,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					if (1) {
 						// шестая попытка.
 						// CGHV1J amg1r5 time 0.26
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25   0:48  29  6.55A
 						// 0.3    0:45  28  6.19A 
@@ -69801,7 +64952,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						// 0.35 1:46 27 3.51
 						// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 						// Electric potencial in FET2 amg1r5 time 1:38
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25 3:19 36 6.65
 						// 0.3 3:02 34 6.34
@@ -69823,13 +64974,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -69844,7 +64995,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -69875,7 +65026,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -69898,7 +65049,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													 if (fabs(sumP) < RealZERO) {
 														 //printf("error interpolation zero diagonal sumP.\n");
-														 //printf("Fnode all sosed is F");
+														 //printf("Fnode all neighbour is F");
 														 //system("pause");
 														 //	printf("i8 is Dirichlet node\n");
 														 this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -69907,7 +65058,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														 iadditionalCstatistic++;
 														 byes_add = true;
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 													 }
 
 
@@ -69928,7 +65079,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												 if (fabs(sumP) < RealZERO) {
 													 //printf("error interpolation zero diagonal sumP.\n");
-													 //printf("Fnode all sosed is F");
+													 //printf("Fnode all neighbour is F");
 													 //system("pause");
 													 //printf("i8 is Dirichlet node\n");
 													 this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -69937,7 +65088,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													 iadditionalCstatistic++;
 													 byes_add = true;
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 												 }
 
 
@@ -69964,7 +65115,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// шестая попытка.
 						// CGHV1J amg1r5 time 0.26
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25   0:48  29  6.55A
 						// 0.3    0:45  28  6.19A 
@@ -69978,7 +65129,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						// 0.35 1:46 27 3.51
 						// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 						// Electric potencial in FET2 amg1r5 time 1:38
-						// cl_agl_amg_v0_14 time :
+						// cl_agl_amg_v0_14 time:
 						// magic  time number V cycles grid complexity
 						// 0.25 3:19 36 6.65
 						// 0.3 3:02 34 6.34
@@ -70000,13 +65151,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Нам нужен разреженный оператор Галёркина.
 							// 5 декабря 2015 года мы попробуем увеличить разреженность
-							// оператора интерполляции а значит и оператора Галёркина.
+							// оператора интерполяции а значит и оператора Галёркина.
 							doublerealT maxelem_threshold = -1.0;
 							//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 							integer ii1 = row_startA[i8];
 							for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 								if (Amat[is0].j != Amat[ii1].i) {
-									// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+									// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 									//if (this_is_C_node[Amat[is0].j] == true) {
 									if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 										maxelem_threshold = fabs(Amat[is0].aij);
@@ -70021,7 +65172,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							integer icsosF = 0;
 
 							// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-							// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+							// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 							doublerealT sumP = 0.0;
 							doublerealT SumPall = 0.0;
 							integer icount_StronglyF = 0;
@@ -70052,7 +65203,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								// Следующий случай назван "безнадёжным".
 								// Безнадёжный случай оставляется без изменений.
 								// К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-								// интерполляцию на этих уровнях можно улучшить.
+								// интерполяцию на этих уровнях можно улучшить.
 								if (icsosF == 0) ipromah_oneF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 							}
 
@@ -70080,7 +65231,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													if (fabs(sumP) < RealZERO) {
 														//printf("error interpolation zero diagonal sumP.\n");
-														//printf("Fnode all sosed is F");
+														//printf("Fnode all neighbour is F");
 														//system("pause");
 														//	printf("i8 is Dirichlet node\n");
 														this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -70088,7 +65239,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														bweSholdbeContinue = true;
 														iadditionalCstatistic++;
 														//exit(1);
-														// здесь нужна непрямая интерполляция.
+														// здесь нужна непрямая интерполяция.
 													}
 													else {
 														// Это как раз единственная Strong C связь. 
@@ -70122,7 +65273,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 														// Рассматриваем Strong F связи.
 
-														// Смысл :
+														// Смысл:
 														// 
 
 
@@ -70158,7 +65309,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -70181,7 +65332,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 															}
 														}
 
-														// В общем это двойная интерполляционная сумма 
+														// В общем это двойная интерполяционная сумма 
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -70241,7 +65392,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 												if (fabs(sumP) < RealZERO) {
 													//printf("error interpolation zero diagonal sumP.\n");
-													//printf("Fnode all sosed is F");
+													//printf("Fnode all neighbour is F");
 													//system("pause");
 													//printf("i8 is Dirichlet node\n");
 													this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -70249,7 +65400,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 													bweSholdbeContinue = true;
 													iadditionalCstatistic++;
 													//exit(1);
-													// здесь нужна непрямая интерполляция.
+													// здесь нужна непрямая интерполяция.
 												}
 												else {
 
@@ -70285,7 +65436,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													// Рассматриваем Strong F связи.
 													// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-													// Смысл :
+													// Смысл:
 													//
 
 
@@ -70324,7 +65475,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														integer icsos_loc = 0;
 
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -70349,7 +65500,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 														icsos_loc = 0;
 														// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-														// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+														// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 														doublerealT sumP_loc1 = 0.0;
 														for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 															if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -70375,7 +65526,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 														}
 
 														if (icsos_loc > 0) {
-															// В общем это двойная интерполляционная сумма
+															// В общем это двойная интерполяционная сумма
 															for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 																if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 																	if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -70439,7 +65590,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									//}
 									//}
 
-									// Апосториорная корекция
+									// Апосториорная коррекция
 									for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 										P[i_95].aij = P[i_95].aij / sum_ok;
 									}
@@ -70459,7 +65610,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			else if (true) {
 
 
-				// Экспериментальная интерполляция 1 января 2016.
+				// Экспериментальная интерполяция 1 января 2016.
 
 				ipromah = 0;
 				ipromah_one = 0;
@@ -70469,7 +65620,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 					// Нам нужен разреженный оператор Галёркина.
 					// 5 декабря 2015 года мы попробуем увеличить разреженность
-					// оператора интерполляции а значит и оператора Галёркина.
+					// оператора интерполяции а значит и оператора Галёркина.
 					doublerealT maxelem_threshold = -1.0;
 					//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 					integer ii1 = row_startA[i8];
@@ -70490,7 +65641,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 					doublerealT SumPall = 0.0;
 					// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					doublerealT sumP = 0.0;
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
@@ -70535,7 +65686,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 									if (fabs(sumP) < RealZERO) {
 										//printf("error interpolation zero diagonal sumP.\n");
-										//printf("Fnode all sosed is F");
+										//printf("Fnode all neighbour is F");
 										//system("pause");
 										//	printf("i8 is Dirichlet node\n");
 										this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -70543,7 +65694,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -70575,7 +65726,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 								else
 									if (this_is_F_node[Amat[is0].j] == true) {
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -70609,7 +65760,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublerealT sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
@@ -70631,7 +65782,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat[is0_loc].i == Amat[ii1_loc].i); is0_loc++) {
 												if (Amat[is0_loc].j != Amat[ii1_loc].i) {
 													if (this_is_C_node[Amat[is0_loc].j] == true) {
@@ -70672,9 +65823,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				}
 			}
 			else {
-				// От интерполляции зависит очень много поэтому
-				// реализуем следующую экспериментальную идею интерполляции.
-				// Эта интерполляция претендует быть единственно теоретически верной,
+				// От интерполяции зависит очень много поэтому
+				// реализуем следующую экспериментальную идею интерполяции.
+				// Эта интерполяция претендует быть единственно теоретически верной,
 				// сделанной на основе литературных данных.
 
 
@@ -70686,13 +65837,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 					// Нам нужен разреженный оператор Галёркина.
 					// 5 декабря 2015 года мы попробуем увеличить разреженность
-					// оператора интерполляции а значит и оператора Галёркина.
+					// оператора интерполяции а значит и оператора Галёркина.
 					doublerealT maxelem_threshold = -1.0;
 					//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 					integer ii1 = row_startA[i8];
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
 						if (Amat[is0].j != Amat[ii1].i) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat[is0].j] == true) {
 							if ((Amat[is0].aij<0.0)&&(fabs(Amat[is0].aij) > maxelem_threshold)) {
 								maxelem_threshold = fabs(Amat[is0].aij);
@@ -70708,7 +65859,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					
 
 					// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-					// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+					// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 					doublerealT sumP = 0.0;
 					doublerealT sumPindicator = 0.0;
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[ii1].i); is0++) {
@@ -70753,7 +65904,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						if (fabs(sumPindicator) < RealZERO) {
 							//printf("error interpolation zero diagonal sumP.\n");
-							//printf("Fnode all sosed is F");
+							//printf("Fnode all neighbour is F");
 							//system("pause");
 							//printf("i8 is Dirichlet node\n");
 							this_is_F_node[i8] = false; // Этот узел Дирихле станет С нодом.
@@ -70761,9 +65912,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							bweSholdbeContinue = true;
 							iadditionalCstatistic++;
 							//exit(1);
-							// здесь нужна непрямая интерполляция.
+							// здесь нужна непрямая интерполяция.
 
-							// Мы не будем добалять С узлы, мы будем использовать непрямую интерполляцию.
+							// Мы не будем добалять С узлы, мы будем использовать непрямую интерполяцию.
 
 
 
@@ -70957,7 +66108,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}
 
 		// Этот оператор нужен для вычисления grid complexity для оператора 
-		// интерполляции и проекции. Данная информация важна для оптимизации количества выделяемой памяти.
+		// интерполяции и проекции. Данная информация важна для оптимизации количества выделяемой памяти.
 		if (ilevel - 1 == 0) {
 			nnz_P_memo_0 = iend_marker_position - (iaddR + 1) + 1;
 		}
@@ -71043,14 +66194,14 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		if (bqs) {
 			if (bCounting_Sort) {
-				Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, false);
+				Counting_Sort(R, 1 + iaddR, iaddR + nnzR - 1, false, indx_comparei);
 			}
 			else {
-				qs(R, 1 + iaddR, iaddR + nnzR - 1);
+				qs(R, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 			}
 		}
 		else {
-			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(R, 1 + iaddR, iaddR + nnzR - 1,comparei);
 		}
 
 
@@ -71120,7 +66271,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		// Лишний код потомучто потом сразу же следует сортировка по i.
 		/*
-		// 7 января 2016. закоментировано.
+		// 7 января 2016. закомментировано.
 		if (bqs) {
 		if (bCounting_Sort) {
 		Counting_Sortj(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -71136,9 +66287,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		// MARKER GUSTAVSON
 
-		// Нахождение матрицы грубосеточного уровня :
+		// Нахождение матрицы грубосеточного уровня:
 		// Acorse=R*Afine*P;
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -71163,7 +66314,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// Фред Густавсон IBM 1978.
 		// 23 октября 2015 года.
 
-		// часть 1 : R*Afine.
+		// часть 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -71302,7 +66453,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			//memset(vector_sum, 0,size_v );
 
 			node_AVL_Gus* root_Gus = 0;
-
+#if 0
 			if (0) {
 
 				// линейный поиск очень медленный на больших размерностях.
@@ -71346,13 +66497,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 			else if (0) {
 
-				// Закоментировано т.к. это медленная ветвь кода.
+				// закомментировано т.к. это медленная ветвь кода.
 				// Ситуация такая. Ранее на небольших задачах до 1М включительно,
 				// данная ветвь кода не показывала выигрыша в быстродействии и возможно 
 				// даже была слегка медленее (совсем немного). 
 				// Это быстрая часть кода на больших размерностях.
 				// Гораздо лучше линейного поиска. Сейчас это подтверждается
-				// на непрямой интерполляции при задаче в 3.2М неизвестных.
+				// на непрямой интерполяции при задаче в 3.2М неизвестных.
 				// Там на линейный поиск в данном месте тратится не менее 80% фазы построения грубосеточных операторов.
 
 				// На основе АВЛ
@@ -71400,7 +66551,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					}
 				}
 			}
-			else {
+			else 
+#endif
+			{
 
 				// на основе hash таблицы. 
 
@@ -71602,7 +66755,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 		//if (Amat[i_1].j < 0) {
-		//	printf("error : negativ j index\n");
+		//	printf("error: negativ j index\n");
 		//	system("pause");
 		//}
 #if doubleintprecision == 1
@@ -71644,7 +66797,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// Проверка пройдена успешно.
 		//for (integer i_1 = nnz_a[ilevel - 1] + 1 + iadd; i_1 <= istartAnew - 1; i_1++) {
 		//if (Amat[i_1].j < 0) {
-		//	printf("error : negativ j index\n");
+		//	printf("error: negativ j index\n");
 		//	system("pause");
 		//}
 #if doubleintprecision == 1
@@ -71696,9 +66849,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		// Фред Густавсон IBM 1978
 		// В ядре кода Густавсона нету ни одного ветвления,
-		// а мы знаем что в результате профайлинга предыдущих версий кода :
+		// а мы знаем что в результате профайлинга предыдущих версий кода:
 		// (наивный, слияние, Писсанецки) львиная доля вычислительной работы уходила
-		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно сумирование.
+		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно суммирование.
 		// 23 октября 2015 года.
 		// 6 января 2016 года Добавлено АВЛ дерево.
 
@@ -71710,14 +66863,14 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// Преобразование обоих матриц в формат CRS.
 		if (bqs) {
 			if (bCounting_Sort) {
-				Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1);
+				Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			}
 			else {
-				qsj(P, 1 + iaddR, iaddR + nnzR - 1);
+				qs(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			}
 		}
 		else {
-			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
+			HeapSort(P, 1 + iaddR, iaddR + nnzR - 1,comparej);
 		}
 
 		integer* row_ind_AS = nullptr;
@@ -71843,6 +66996,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 			node_AVL_Gus* root_Gus = 0;
 
+#if 0
 			if (0) {
 				// сканируем все элементы строки левого операнда.
 				for (integer ii1 = row_ind_AS[istr]; ii1 <= row_ind_AE[istr]; ii1++) {
@@ -71876,7 +67030,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -71932,7 +67086,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -71946,7 +67100,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				}
 
 			}
-			else {
+			else
+#endif
+ {
 
 				// На основе hash таблицы.
 				// сканируем все элементы строки левого операнда.
@@ -71992,7 +67148,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							//vector_sum[index_visit[ifoundind]] = left_operand*right_operand;
 							vector_sum[iaddind] = left_operand*right_operand;
 						}
-						// требуется реализовать следующую логику :
+						// требуется реализовать следующую логику:
 						// 1. поиск элемента по ключу 
 						// 2. если элемент не найден то добавление нового узла со значением ключа сохраняя балансировку.
 						// Если элемент найден то нужно просто изменить foundnow на true. 
@@ -72344,8 +67500,8 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 		//проверка конец
 
-		//delete[] count_sosed;
-		free(count_sosed);
+		//delete[] count_neighbour;
+		free(count_neighbour);
 		//delete[] row_startA;
 		free(row_startA);
 
@@ -72884,9 +68040,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			integer icdiag = ii;
 			if (istr >= isize_row_ptr) {
 #if doubleintprecision == 1
-				printf("nado uvelichit isize_row_ptr %lld", istr);
+				printf("need to increase isize_row_ptr %lld", istr);
 #else
-				printf("nado uvelichit isize_row_ptr %d", istr);
+				printf("need to increase isize_row_ptr %d", istr);
 #endif
 				
 				//getchar();
@@ -72920,9 +68076,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 			if (istr >= isize_row_ptr) {
 #if doubleintprecision == 1
-				printf("nado uvelichit isize_row_ptr %lld", istr);
+				printf("need to increase isize_row_ptr %lld", istr);
 #else
-				printf("nado uvelichit isize_row_ptr %d", istr);
+				printf("need to increase isize_row_ptr %d", istr);
 #endif
 				
 				//getchar();
@@ -72977,7 +68133,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	// 14 сентября 2015 понедельник четвёртый уровень вложенности.
 	// Уровни вложенности с первого по седьмой сразу. 12.07.2016.
 
-	// Заголовочная надпись :
+	// Заголовочная надпись:
 	if (bprint_mesage_diagnostic) {
 		printf("1. positive connections %% 2. max positive/ diagonal %%\n");
 	}
@@ -73023,9 +68179,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					}
 					if (istart_row_ptr >= isize_row_ptr) {
 #if doubleintprecision == 1
-						printf("nado uvelichit isize_row_ptr %lld", istart_row_ptr);
+						printf("need to increase isize_row_ptr %lld", istart_row_ptr);
 #else
-						printf("nado uvelichit isize_row_ptr %d", istart_row_ptr);
+						printf("need to increase isize_row_ptr %d", istart_row_ptr);
 #endif
 						
 						//getchar();
@@ -73067,9 +68223,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 					}
 					if (istart_row_ptr >= isize_row_ptr) {
 #if doubleintprecision == 1
-						printf("nado uvelichit isize_row_ptr %lld", istart_row_ptr);
+						printf("need to increase isize_row_ptr %lld", istart_row_ptr);
 #else
-						printf("nado uvelichit isize_row_ptr %d", istart_row_ptr);
+						printf("need to increase isize_row_ptr %d", istart_row_ptr);
 #endif
 						
 						//getchar();
@@ -73166,7 +68322,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 
 
-			// statistic log :
+			// statistic log:
 			if (bprint_mesage_diagnostic) {
 				//printf("procent positive connections %e \n", 100.0*inum_only_positive_vnediagonal / inum_vnediagonal_all);
 				//printf("the ratio of the maximum positive connections to the diagonal\n");
@@ -73199,7 +68355,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	}
 
 
-	// ЗАКОМЕНТИРОВАННЫЙ КОД ОТНОСИТСЯ К УСТАРЕВШЕМУ. 
+	// закомментировАННЫЙ КОД ОТНОСИТСЯ К УСТАРЕВШЕМУ. 
 	// 4 ноября 2016 прописано 15 уровней вложенности.
 
 
@@ -73378,7 +68534,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	// 9 september 2015.
 	// q - quick.
 	// seidelq(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0);
-	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+	//void seidelq(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 	//{
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -73496,7 +68652,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 
-	// Двойной вакуумный промежуток вызывает проблемы сходимости :
+	// Двойной вакуумный промежуток вызывает проблемы сходимости:
 	//nu1 = 10;
 	//nu2 = 20;
 
@@ -73627,7 +68783,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	residual_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	if (residual_fine == nullptr) {
 	// недостаточно памяти на данном оборудовании.
-	printf("Problem : not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
+	printf("Problem: not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
 	printf("Please any key to exit...\n");
 	//getchar();
 	system("pause");
@@ -74166,9 +69322,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	integer imyinit = ZERO_INIT; // ZERO_INIT optimum
+	//const integer ZERO_INIT = 0;
+	//const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	//const integer imyinit = ZERO_INIT; // ZERO_INIT optimum
 
 	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
@@ -74473,7 +69629,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 				}
 				break;
 				// Эта ветвь кода вообще никогда не вызовется.
-				printf("Fatal amg error : Strong divergence amg solver...%e \n", fabs(res_best_search / res0start));
+				printf("Fatal amg error: Strong divergence amg solver...%e \n", fabs(res_best_search / res0start));
 				printf("res_best_search=%e, res0start=%e\n", fabs(res_best_search), fabs(res0start));
 				printf("BiCGStab+ILU2 is start now...\n");
 				printf("please wait...");
@@ -74762,17 +69918,21 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 			// Amat*e=r;
 			//doublerealT* error_approx_coarse = new doublerealT[n_a[1] + 1];
-			if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT) 
+			{
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
 					error_approx_coarse[ii] = 0.0;
 				}
 			}
 
-			if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+			{
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
 					error_approx_coarse[ii] = (rand() / ((doublerealT)RAND_MAX));
 				}
 			}
+
 
 
 			for (integer i_37 = 1; i_37 <= igam; i_37++) {
@@ -74903,16 +70063,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 					// Amat*e=r;
 					//doublerealT* error_approx_coarse1 = new doublerealT[n_a[2] + 1];
-					if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT) 
+					{
 						for (integer ii = 1; ii <= n_a[2]; ii++) {
 							error_approx_coarse1[ii] = 0.0;
 						}
 					}
-					if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+					{
 						for (integer ii = 1; ii <= n_a[2]; ii++) {
 							error_approx_coarse1[ii] = (rand() / ((doublerealT)RAND_MAX));
 						}
 					}
+
 
 					//for (integer i_37 = 1; i_37 <= igam; i_37++)
 				{
@@ -75016,16 +70180,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// Amat*e=r;
 						//doublerealT* error_approx_coarse2 = new doublerealT[n_a[3] + 1];
-						if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT) 
+						{
 							for (integer ii = 1; ii <= n_a[3]; ii++) {
 								error_approx_coarse2[ii] = 0.0;
 							}
 						}
-						if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+						{
 							for (integer ii = 1; ii <= n_a[3]; ii++) {
 								error_approx_coarse2[ii] = (rand() / ((doublerealT)RAND_MAX));
 							}
 						}
+
 						//for (integer i_37 = 1; i_37 <= igam; i_37++)
 					{
 						doublerealT R0_3 = 0.0;
@@ -75132,16 +70300,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 							// Amat*e=r;
 							//doublerealT* error_approx_coarse3 = new doublerealT[n_a[4] + 1];
-							if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+							{
 								for (integer ii = 1; ii <= n_a[4]; ii++) {
 									error_approx_coarse3[ii] = 0.0;
 								}
 							}
-							if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+							{
 								for (integer ii = 1; ii <= n_a[4]; ii++) {
 									error_approx_coarse3[ii] = (rand() / ((doublerealT)RAND_MAX));
 								}
 							}
+
 
 							//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 						{
@@ -75249,16 +70421,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 								// Amat*e=r;
 								//doublerealT* error_approx_coarse4 = new doublerealT[n_a[5] + 1];
-								if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+								{
 									for (integer ii = 1; ii <= n_a[5]; ii++) {
 										error_approx_coarse4[ii] = 0.0;
 									}
 								}
-								if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+								{
 									for (integer ii = 1; ii <= n_a[5]; ii++) {
 										error_approx_coarse4[ii] = (rand() / ((doublerealT)RAND_MAX));
 									}
 								}
+
 
 								// pre smothing
 								//for (integer i_37 = 1; i_37 <= igam; i_37++)
@@ -75372,16 +70548,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 									// Amat*e=r;
 									//doublerealT* error_approx_coarse5 = new doublerealT[n_a[6] + 1];
-									if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+									{
 										for (integer ii = 1; ii <= n_a[6]; ii++) {
 											error_approx_coarse5[ii] = 0.0;
 										}
 									}
-									if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+									{
 										for (integer ii = 1; ii <= n_a[6]; ii++) {
 											error_approx_coarse5[ii] = (rand() / ((doublerealT)RAND_MAX));
 										}
 									}
+
 
 									//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 									{
@@ -75487,16 +70667,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 											// Amat*e=r;
 											//doublerealT* error_approx_coarse6 = new doublerealT[n_a[7] + 1];
-											if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+											{
 												for (integer ii = 1; ii <= n_a[7]; ii++) {
 													error_approx_coarse6[ii] = 0.0;
 												}
 											}
-											if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+											{
 												for (integer ii = 1; ii <= n_a[7]; ii++) {
 													error_approx_coarse6[ii] = (rand() / ((doublerealT)RAND_MAX));
 												}
 											}
+
 
 											//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 											{
@@ -75607,16 +70791,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 													// Amat*e=r;
 													//doublerealT* error_approx_coarse7 = new doublerealT[n_a[8] + 1];
-													if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+													{
 														for (integer ii = 1; ii <= n_a[8]; ii++) {
 															error_approx_coarse7[ii] = 0.0;
 														}
 													}
-													if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+													{
 														for (integer ii = 1; ii <= n_a[8]; ii++) {
 															error_approx_coarse7[ii] = (rand() / ((doublerealT)RAND_MAX));
 														}
 													}
+
 
 													//for (integer i_37 = 1; i_37 <= igam; i_37++)
 													{
@@ -75725,16 +70913,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 															// Amat*e=r;
 															//doublerealT* error_approx_coarse8 = new doublerealT[n_a[9] + 1];
-															if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+															{
 																for (integer ii = 1; ii <= n_a[9]; ii++) {
 																	error_approx_coarse8[ii] = 0.0;
 																}
 															}
-															if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+															{
 																for (integer ii = 1; ii <= n_a[9]; ii++) {
 																	error_approx_coarse8[ii] = (rand() / ((doublerealT)RAND_MAX));
 																}
 															}
+
 
 															//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 															{
@@ -75851,16 +71043,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																	//doublerealT* error_approx_coarse9 = new doublerealT[n_a[10] + 1];
 
 
-																	if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																	{
 																		for (integer ii = 1; ii <= n_a[10]; ii++) {
 																			error_approx_coarse9[ii] = 0.0;
 																		}
 																	}
-																	if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																	{
 																		for (integer ii = 1; ii <= n_a[10]; ii++) {
 																			error_approx_coarse9[ii] = (rand() / ((doublerealT)RAND_MAX));
 																		}
 																	}
+
 
 																	//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 																	{
@@ -75973,16 +71169,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																			//doublerealT* error_approx_coarse10 = new doublerealT[n_a[11] + 1];
 
 
-																			if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																			{
 																				for (integer ii = 1; ii <= n_a[11]; ii++) {
 																					error_approx_coarse10[ii] = 0.0;
 																				}
 																			}
-																			if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																			{
 																				for (integer ii = 1; ii <= n_a[11]; ii++) {
 																					error_approx_coarse10[ii] = (rand() / ((doublerealT)RAND_MAX));
 																				}
 																			}
+
 
 																			//for (integer i_37 = 1; i_37 <= igam; i_37++)
 																			{
@@ -76092,16 +71292,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																					// Amat*e=r;
 																					//doublerealT* error_approx_coarse11 = new doublerealT[n_a[12] + 1];
 
-																					if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																					{
 																						for (integer ii = 1; ii <= n_a[12]; ii++) {
 																							error_approx_coarse11[ii] = 0.0;
 																						}
 																					}
-																					if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																					{
 																						for (integer ii = 1; ii <= n_a[12]; ii++) {
 																							error_approx_coarse11[ii] = (rand() / ((doublerealT)RAND_MAX));
 																						}
 																					}
+
 
 																					//for (integer i_37 = 1; i_37 <= igam; i_37++)
 																					{
@@ -76211,16 +71415,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																							// Amat*e=r;
 																							//doublerealT* error_approx_coarse12 = new doublerealT[n_a[13] + 1];
 
-																							if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																							{
 																								for (integer ii = 1; ii <= n_a[13]; ii++) {
 																									error_approx_coarse12[ii] = 0.0;
 																								}
 																							}
-																							if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																							{
 																								for (integer ii = 1; ii <= n_a[13]; ii++) {
 																									error_approx_coarse12[ii] = (rand() / ((doublerealT)RAND_MAX));
 																								}
 																							}
+
 
 																							//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 																							{
@@ -76330,16 +71538,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																									// Amat*e=r;
 																									//doublerealT* error_approx_coarse13 = new doublerealT[n_a[14] + 1];
 
-																									if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT) 
+																									{
 																										for (integer ii = 1; ii <= n_a[14]; ii++) {
 																											error_approx_coarse13[ii] = 0.0;
 																										}
 																									}
-																									if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																									{
 																										for (integer ii = 1; ii <= n_a[14]; ii++) {
 																											error_approx_coarse13[ii] = (rand() / ((doublerealT)RAND_MAX));
 																										}
 																									}
+
 
 
 																									//for (integer i_37 = 1; i_37 <= igam; i_37++)
@@ -76448,16 +71660,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 																											// Amat*e=r;
 																											//doublerealT* error_approx_coarse14 = new doublerealT[n_a[15] + 1];
-																											if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																											{
 																												for (integer ii = 1; ii <= n_a[15]; ii++) {
 																													error_approx_coarse14[ii] = 0.0;
 																												}
 																											}
-																											if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT)
+																											{
 																												for (integer ii = 1; ii <= n_a[15]; ii++) {
 																													error_approx_coarse14[ii] = (rand() / ((doublerealT)RAND_MAX));
 																												}
 																											}
+
 
 																											//for (integer i_37 = 1; i_37 <= igam; i_37++) 
 																											{
@@ -76567,16 +71783,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																													// Amat*e=r;
 																													//doublerealT* error_approx_coarse15 = new doublerealT[n_a[16] + 1];
 
-																													if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																													{
 																														for (integer ii = 1; ii <= n_a[16]; ii++) {
 																															error_approx_coarse15[ii] = 0.0;
 																														}
 																													}
-																													if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																													{
 																														for (integer ii = 1; ii <= n_a[16]; ii++) {
 																															error_approx_coarse15[ii] = (rand() / ((doublerealT)RAND_MAX));
 																														}
 																													}
+
 
 																													//for (integer i_37 = 1; i_37 <= igam; i_37++)
 																													{
@@ -76686,16 +71906,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																																																														
 																															// Amat*e=r;
 																															//doublerealT* error_approx_coarse16 = new doublerealT[n_a[17] + 1];
-																															if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																															{
 																																for (integer ii = 1; ii <= n_a[17]; ii++) {
 																																	error_approx_coarse16[ii] = 0.0;
 																																}
 																															}
-																															if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																															{
 																																for (integer ii = 1; ii <= n_a[17]; ii++) {
 																																	error_approx_coarse16[ii] = (rand() / ((doublerealT)RAND_MAX));
 																																}
 																															}
+
 
 
 																															//for (integer i_37 = 1; i_37 <= igam; i_37++)
@@ -76806,16 +72030,20 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 																																	// Amat*e=r;
 																																	//doublerealT* error_approx_coarse17 = new doublerealT[n_a[18] + 1];
 
-																																	if (imyinit == ZERO_INIT) {
+if (imyinit == ZERO_INIT)
+																																	{
 																																		for (integer ii = 1; ii <= n_a[18]; ii++) {
 																																			error_approx_coarse17[ii] = 0.0;
 																																		}
 																																	}
-																																	if (imyinit == RANDOM_INIT) {
+
+if (imyinit == RANDOM_INIT) 
+																																	{
 																																		for (integer ii = 1; ii <= n_a[18]; ii++) {
 																																			error_approx_coarse17[ii] = (rand() / ((doublerealT)RAND_MAX));
 																																		}
 																																	}
+
 
 
 																																	//for (integer i_37 = 1; i_37 <= igam; i_37++)
@@ -79265,7 +74493,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	if (debug_reshime) system("pause");
 	//system("pause");
 
-	// Внимание : именно эта строчка обеспечивает сходимость.
+	// Внимание: именно эта строчка обеспечивает сходимость.
 	for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 		x[i47] = x_best_search[i47];
 	}
@@ -80103,7 +75331,7 @@ integer main()
 		FILE* fp;
 		errno_t err;
 		if ((err = fopen_s(&fp, "amg_input.txt", "r")) != 0) {
-			printf("error input file : amg_input.txt \n");
+			printf("error input file: amg_input.txt \n");
 			//getchar();
 			system("pause");
 			exit(1);
@@ -80307,7 +75535,7 @@ integer main()
 			// 3D
 			n = m*m*m;
 			nnz = 7 * ((m - 2)*(m - 2)*(m - 2)) + 8 + 6 * (m - 2)*(m - 2) + 12 * (m - 2);
-			// куб : 8 вершин, 12 рёбер, 6 граней.
+			// куб: 8 вершин, 12 рёбер, 6 граней.
 
 			#if doubleintprecision == 1
 				printf("%lldx%lldx%lld\n", m, m, m);
@@ -80492,7 +75720,7 @@ integer main()
 
 
 // Здесь содержится обвязка вызывающая РУМБА.
-// локальное выдление памяти :всё внутри, многократные alloc и free.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
 // РУМБА для решения задачи напряженно-деформированнного состояния.
 // Нет сходимости. Дата успешного подключения 24 сентября 2017.
 void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
@@ -80530,7 +75758,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	my_amg_manager.memory_size = my_amg_manager.memory_size_Stress;
 	my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Stress;
 	my_amg_manager.icoarseningtype = my_amg_manager.icoarseningStress; // standart vs RS 2.
-	my_amg_manager.istabilization = my_amg_manager.istabilizationStress; // Stabilization : 0 - none, 1 - bicgstab + amg (РУМБА).
+	my_amg_manager.istabilization = my_amg_manager.istabilizationStress; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА).
 	my_amg_manager.magic = my_amg_manager.F_to_F_Stress; // magic
 	my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Stress;
 	my_amg_manager.iCFalgorithm_and_data_structure=my_amg_manager.iCFalgorithm_and_data_structure_Stress;
@@ -80565,7 +75793,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 		}
 	}
 
-	integer id = 0;
+	//const integer id = 0;
 
 	simplesparsetoCRS(sparseM, m.val, m.col_ind, m.row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
 																//m.ballocCRScfd = true;
@@ -80787,7 +76015,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	integer levelx = 0;
 	levelx = 25;
 	integer ifirst = 0;
-	// начальное приближение :
+	// начальное приближение:
 	// 0 - используется из вне.
 	// 1 - нулевое.
 	// 2 - единицы.
@@ -80837,21 +76065,21 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 
 	// allocate memory.
 	// allocate memory 2 jan 2016.
-	// BSK Dmitrii 3.012  (2.892 для прямой интерполляции с элементами непрямой). 
+	// BSK Dmitrii 3.012  (2.892 для прямой интерполяции с элементами непрямой). 
 	// tgf series no metalization
 	// tgf2023-2_01 2.64 643mb
 	// tgf2023-2-02 2.58 988mb
 	// tgf2023-2-05 2.44 2022mb
 	// tgf2023-2-20 3.58 2967mb
-	// CGHV1J metalization 3.133 (2.84 для прямой интерполляции с элементами непрямой). 
+	// CGHV1J metalization 3.133 (2.84 для прямой интерполяции с элементами непрямой). 
 	// тор Докторович 2.89
 	// Концевой 3.05
 	// Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-	// Вывод : максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+	// Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
 	// Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
 	// Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
 	// Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
-	//Amat = new Ak1[(integer)(7 * nna) + 1]; // 6 // 45 // 4
+	// Amat = new Ak1[(integer)(7 * nna) + 1]; // 6 // 45 // 4
 	// памяти надо много для 6 варианта интерполяции.
 	// 9,35,35 28
 	integer nsizeA = ((integer)(9 * nna) + 1);
@@ -80859,7 +76087,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 
 	if (bPhysics_PTBSH_memory == true) {
 		// ПТБШ.
-		//printf("bPhysics_PTBSH_memory==true\n");
+		// printf("bPhysics_PTBSH_memory==true\n");
 		nsizeA = ((integer)(4 * nna) + 1);
 		nsizePR = 13;
 	}
@@ -80915,7 +76143,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 	if (Atemp == nullptr) {
 	// недостаточно памяти на данном оборудовании.
-	printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
+	printf("Problem: not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
 	//getchar();
 	system("pause");
@@ -80925,7 +76153,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 	if (Atemp2 == nullptr) {
 	// недостаточно памяти на данном оборудовании.
-	printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
+	printf("Problem: not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
 	//getchar();
 	system("pause");
@@ -80972,7 +76200,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	// см. equation3DtoCRS.
 
     integer ik = 0; // счётчик ненулевых элементов СЛАУ
-	id = 1;
+	const integer id = 1;
 
 	//if (iVar == PAM) {
 	//printf("alpharelax=%e\n", alpharelax);
@@ -81067,7 +76295,10 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	// в каждой строке элементы отсортированы по номерам столбцов:
 	// Но диагональный элемент всегда на первом месте в строке матрицы.
 	integer imove = 0;
-	if (id == 0) imove = -1;
+	if (id == 0) {
+		imove = -1;
+	}
+
 
 	// сортировка ненужна порядок следования любой, но главное чтобы первый в строке был имено диагональный элемент.
 	//for (integer k=0; k<(maxelm+maxbound); k++) QuickSortCSIR_amg(ja, a, ia[k+1]+1+imove, ia[k+2]-1+imove); // первый элемент всегда диагональный.
@@ -81199,7 +76430,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 }//my_agr_amg_loc_memory_Stress_old
 
 // Здесь содержится обвязка вызывающая РУМБА.
-// локальное выдление памяти :всё внутри, многократные alloc и free.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
 // РУМБА для решения задачи напряженно-деформированнного состояния.
 // Нет сходимости. Дата успешного подключения 24 сентября 2017.
 void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
@@ -81232,7 +76463,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	my_amg_manager.memory_size = my_amg_manager.memory_size_Stress;
 	my_amg_manager.ilu2_smoother = my_amg_manager.ilu2_smoother_Stress;
 	my_amg_manager.icoarseningtype = my_amg_manager.icoarseningStress; // standart vs RS 2.
-	my_amg_manager.istabilization = my_amg_manager.istabilizationStress; // Stabilization : 0 - none, 1 - bicgstab + amg (РУМБА).
+	my_amg_manager.istabilization = my_amg_manager.istabilizationStress; // Stabilization: 0 - none, 1 - bicgstab + amg (РУМБА).
 	my_amg_manager.magic = my_amg_manager.F_to_F_Stress; // magic
 	my_amg_manager.number_interpolation_procedure = my_amg_manager.number_interpolation_procedure_Stress;
 	my_amg_manager.iCFalgorithm_and_data_structure = my_amg_manager.iCFalgorithm_and_data_structure_Stress;
@@ -81266,7 +76497,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		}
 	}
 
-	integer id = 0;
+	//const integer id = 0;
 
 	simplesparsetoCRS(sparseM, m.val, m.col_ind, m.row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
 																//m.ballocCRScfd = true;
@@ -81488,7 +76719,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	integer levelx = 0;
 	levelx = 25;
 	integer ifirst = 0;
-	// начальное приближение :
+	// начальное приближение:
 	// 0 - используется из вне.
 	// 1 - нулевое.
 	// 2 - единицы.
@@ -81543,17 +76774,17 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 
 	// allocate memory.
 	// allocate memory 2 jan 2016.
-	// BSK Dmitrii 3.012  (2.892 для прямой интерполляции с элементами непрямой). 
+	// BSK Dmitrii 3.012  (2.892 для прямой интерполяции с элементами непрямой). 
 	// tgf series no metalization
 	// tgf2023-2_01 2.64 643mb
 	// tgf2023-2-02 2.58 988mb
 	// tgf2023-2-05 2.44 2022mb
 	// tgf2023-2-20 3.58 2967mb
-	// CGHV1J metalization 3.133 (2.84 для прямой интерполляции с элементами непрямой). 
+	// CGHV1J metalization 3.133 (2.84 для прямой интерполяции с элементами непрямой). 
 	// тор Докторович 2.89
 	// Концевой 3.05
 	// Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-	// Вывод : максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+	// Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
 	// Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
 	// Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
 	// Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -81626,7 +76857,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 	if (Atemp == nullptr) {
 	// недостаточно памяти на данном оборудовании.
-	printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
+	printf("Problem: not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
 	//getchar();
 	system("pause");
@@ -81636,7 +76867,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 	if (Atemp2 == nullptr) {
 	// недостаточно памяти на данном оборудовании.
-	printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
+	printf("Problem: not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
 	//getchar();
 	system("pause");
@@ -81683,7 +76914,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	// см. equation3DtoCRS.
 
 	integer ik = 0; // счётчик ненулевых элементов СЛАУ
-	id = 1;
+	const integer id = 1;
 
 	//if (iVar == PAM) {
 	//printf("alpharelax=%e\n", alpharelax);
@@ -81778,7 +77009,10 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	// в каждой строке элементы отсортированы по номерам столбцов:
 	// Но диагональный элемент всегда на первом месте в строке матрицы.
 	integer imove = 0;
-	if (id == 0) imove = -1;
+	if (id == 0) {
+		imove = -1;
+	}
+
 
 	// сортировка ненужна порядок следования любой, но главное чтобы первый в строке был имено диагональный элемент.
 	//for (integer k=0; k<(maxelm+maxbound); k++) QuickSortCSIR_amg(ja, a, ia[k+1]+1+imove, ia[k+2]-1+imove); // первый элемент всегда диагональный.
@@ -81926,7 +77160,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 
 
 // Здесь содержится обвязка вызывающая РУМБА v0_14 решатель.
-// локальное выдление памяти :всё внутри, многократные alloc и free.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
 void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0,
@@ -81958,7 +77192,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	case QUICK_SORT_ALG: case HEAP_SORT_ALG: case TIM_PETERSON_SORT_ALG:
 		bmemory_savings = false;
 		break;
-	default :
+	default:
 		bmemory_savings = true;
 		break;
 	}
@@ -81968,7 +77202,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		dX0 = new doublereal[maxelm + maxbound];
 		if (dX0 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for dX0 my_agregat_amg.cpp...\n");
+			printf("Problem: not enough memory on your equipment for dX0 my_agregat_amg.cpp...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -82364,7 +77598,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		integer levelx = 0;
 		levelx = 25;
 		integer ifirst = 0;
-		// начальное приближение :
+		// начальное приближение:
 		// 0 - используется из вне.
 		// 1 - нулевое.
 		// 2 - единицы.
@@ -82403,27 +77637,27 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		//getchar();
 		// Симметричная положительно определённая матрица это такая матрица
 		// которая возникает для поправки давления при решении вязких несжимаемых уравнений Навье-Стокса в
-		// случае задач : каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
+		// случае задач: каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
 		// конвекции охлаждающие висящие в воздухе без контакта с теплоотводом греющиеся изделия.
 		// Это особый специфический класс задач.
 		matrix = 11;
 		}
 		*/
-       // для прямой интерполляции с элементами непрямой можно выставить коэффициент 3 и освободить память из под 
+       // для прямой интерполяции с элементами непрямой можно выставить коэффициент 3 и освободить память из под 
        // исходной матрицы (для той структуры на которой была выполнена сборка матрицы изначально). 
 
 		// allocate memory 2 jan 2016.
-        // BSK Dmitrii 3.012  (2.892 для прямой интерполляции с элементами непрямой). 
+        // BSK Dmitrii 3.012  (2.892 для прямой интерполяции с элементами непрямой). 
         // tgf series no metalization
         // tgf2023-2_01 2.64 643mb
         // tgf2023-2-02 2.58 988mb
         // tgf2023-2-05 2.44 2022mb
         // tgf2023-2-20 3.58 2967mb
-        // CGHV1J metalization 3.133 (2.84 для прямой интерполляции с элементами непрямой). 
+        // CGHV1J metalization 3.133 (2.84 для прямой интерполяции с элементами непрямой). 
         // тор Докторович 2.89
         // Концевой 3.05
         // Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-        // Вывод : максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+        // Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
         // Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
         // Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
         // Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -82490,7 +77724,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 		if (Atemp == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -82500,7 +77734,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 		if (Atemp2 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -82796,7 +78030,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				// val[ik]=slb[k].aw/alpharelax;
 				Amat[ik + id].aij = slb[k].aw; // релаксация для граничных узлов не применяется.
 											/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
-											// Внимание !!! было произведено тестирование : один вариант был с нижней релаксацией для граничных узлов,
+											// Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
 											// а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
 											// более благоприятен вариант без нижней релаксации на граничных узлах.
 											// Данное изменение согласовано с функцией solve.
@@ -82813,7 +78047,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				}
 				else {
 					// Neiman.
-					// Условия Неймана при построении C-F разбиения обрабатываем как обычно как внутренний узел.
+					// Условия Неймана при построении C/F разбиения обрабатываем как обычно как внутренний узел.
 					bamg_bound[Amat[ik + id].i] = false;
 				}
 				rthdsd_amg[slb[k].iW + 1] = dV[slb[k].iW];
@@ -82860,7 +78094,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		handle_error<Ak1>(P, c8, c1, ((nsizePR * nnu) + 1));
 
 
-		// TODO : 
+		// TODO: 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		// Экономим 1 размер матрицы для мультигрида.
@@ -82977,7 +78211,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 			sl = new equation3D[maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
 			if (sl == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
+				printf("Problem: not enough memory on your equipment for slau temperature constr struct...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -82990,7 +78224,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		slb = new equation3D_bon[maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
 		if (slb == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
+			printf("Problem: not enough memory on your equipment for slau boundary temperature constr struct...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -83262,7 +78496,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 
 
 // Здесь содержится обвязка вызывающая РУМБА v0_14 решатель.
-// локальное выдление памяти :всё внутри, многократные alloc и free.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
 void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0,
@@ -83323,7 +78557,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		dX0 = new doublereal[maxelm + maxbound];
 		if (dX0 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for dX0 my_agregat_amg.cpp...\n");
+			printf("Problem: not enough memory on your equipment for dX0 my_agregat_amg.cpp...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -83728,7 +78962,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		integer levelx = 0;
 		levelx = 25;
 		integer ifirst = 0;
-		// начальное приближение :
+		// начальное приближение:
 		// 0 - используется из вне.
 		// 1 - нулевое.
 		// 2 - единицы.
@@ -83767,27 +79001,27 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		//getchar();
 		// Симметричная положительно определённая матрица это такая матрица
 		// которая возникает для поправки давления при решении вязких несжимаемых уравнений Навье-Стокса в
-		// случае задач : каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
+		// случае задач: каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
 		// конвекции охлаждающие висящие в воздухе без контакта с теплоотводом греющиеся изделия.
 		// Это особый специфический класс задач.
 		matrix = 11;
 		}
 		*/
-		// для прямой интерполляции с элементами непрямой можно выставить коэффициент 3 и освободить память из под 
+		// для прямой интерполяции с элементами непрямой можно выставить коэффициент 3 и освободить память из под 
 		// исходной матрицы (для той структуры на которой была выполнена сборка матрицы изначально). 
 
 		 // allocate memory 2 jan 2016.
-		 // BSK Dmitrii 3.012  (2.892 для прямой интерполляции с элементами непрямой). 
+		 // BSK Dmitrii 3.012  (2.892 для прямой интерполяции с элементами непрямой). 
 		 // tgf series no metalization
 		 // tgf2023-2_01 2.64 643mb
 		 // tgf2023-2-02 2.58 988mb
 		 // tgf2023-2-05 2.44 2022mb
 		 // tgf2023-2-20 3.58 2967mb
-		 // CGHV1J metalization 3.133 (2.84 для прямой интерполляции с элементами непрямой). 
+		 // CGHV1J metalization 3.133 (2.84 для прямой интерполяции с элементами непрямой). 
 		 // тор Докторович 2.89
 		 // Концевой 3.05
 		 // Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-		 // Вывод : максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+		 // Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
 		 // Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
 		 // Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
 		 // Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -83842,18 +79076,22 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		char c2[5] = "Amat";
 		Amat.i = (integer*)malloc(nsizeA * sizeof(integer));  // 9
 		handle_error<integer>(Amat.i, c2, c1, (nsizeA));
+		printf("i alloc succseful...\n");
 		Amat.j = (integer*)malloc(nsizeA * sizeof(integer));  // 9
 		handle_error<integer>(Amat.j, c2, c1, (nsizeA));
+		printf("j alloc succseful...\n");
 		Amat.aij = (doublereal*)malloc(nsizeA * sizeof(doublereal));  // 9
 		handle_error<doublereal>(Amat.aij, c2, c1, (nsizeA));
+		printf("aij alloc succseful...\n");
 		Amat.abs_aij = (doublereal*)malloc(nsizeA * sizeof(doublereal));  // 9
 		handle_error<doublereal>(Amat.abs_aij, c2, c1, (nsizeA));
+		printf("abs_aij alloc succseful...\n");
 
 
 		char c0[11] = "bamg_bound";
 		bamg_bound = new bool[((nsizePR * nnu) + 1)];
 		handle_error<bool>(bamg_bound, c0, c1, ((nsizePR * nnu) + 1));
-
+		printf("bamg_bound alloc succseful...\n");
 
 		// real size 9.4 for resistor.
 		// 
@@ -83861,7 +79099,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 		if (Atemp == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -83871,7 +79109,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
 		if (Atemp2 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -83883,12 +79121,13 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		result_amg = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 		char c3[11] = "result_amg";
 		handle_error<doublereal>(result_amg, c3, c1, (nnu + 1));
-
+		printf("result_amg alloc succseful...\n");
 
 		//rthdsd_amg = new doublereal[nnu + 1];
 		rthdsd_amg = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 		char c4[11] = "rthdsd_amg";
 		handle_error<doublereal>(rthdsd_amg, c4, c1, (nnu + 1));
+		printf("rthdsd_amg alloc succseful...\n");
 
 
 
@@ -83934,12 +79173,14 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			for (integer i_1 = 0; i_1 < (7 * maxelm + 1); i_1++) {
 				icompression[i_1] = -1;
 			}
+			printf("icompression alloc succseful...\n");
 			rcompressionb = (doublereal*)malloc((maxelm + 1) * sizeof(doublereal)); // +1 запас.
 			char c6[14] = "rcompressionb";
 			handle_error<doublereal>(rcompressionb, c6, c1, (maxelm + 1));
 			for (integer i_1 = 0; i_1 < (maxelm); i_1++) {
 				rcompressionb[i_1] = sl[i_1].b;
 			}
+			printf("rcompressionb alloc succseful...\n");
 		}
 
 		integer iscan1 = 0;
@@ -84167,7 +79408,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				// val[ik]=slb[k].aw/alpharelax;
 				Amat.aij[ik + id] = slb[k].aw; // релаксация для граничных узлов не применяется.
 											/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
-											// Внимание !!! было произведено тестирование : один вариант был с нижней релаксацией для граничных узлов,
+											// Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
 											// а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
 											// более благоприятен вариант без нижней релаксации на граничных узлах.
 											// Данное изменение согласовано с функцией solve.
@@ -84184,7 +79425,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				}
 				else {
 					// Neiman.
-					// Условия Неймана при построении C-F разбиения обрабатываем как обычно как внутренний узел.
+					// Условия Неймана при построении C/F разбиения обрабатываем как обычно как внутренний узел.
 					bamg_bound[Amat.i[ik + id]] = false;
 				}
 				rthdsd_amg[slb[k].iW + 1] = dV[slb[k].iW];
@@ -84231,7 +79472,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		//handle_error<Ak1>(P, c8, c1, ((nsizePR * nnu) + 1));
 
 
-		// TODO : 
+		// TODO: 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		// Экономим 1 размер матрицы для мультигрида.
@@ -84260,6 +79501,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		for (integer i47 = 1; i47 <= nnu; i47++) {
 			x_copy[i47] = result_amg[i47];
 		}
+		printf("x_copy alloc succseful...\n");
 
 		//doublereal theta83 = 0.23;
 		//doublereal magic82 = 0.4;
@@ -84273,6 +79515,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			//float theta82f=(float)theta82, theta83f= (float)theta83, magic82f= (float)magic82, magic83f= (float)magic83, ret74f= (float)ret74;
 			//doublereal theta82f = (doublereal)theta82, theta83f = (doublereal)theta83, magic82f = (doublereal)magic82, magic83f = (doublereal)magic83, ret74f = (doublereal)ret74;
 			//bdivergence_detected = classic_aglomerative_amg4<float>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg,  theta82f, theta83f, magic82f, magic83f, ret74f, iVar, bmemory_savings,b, lb, maxelm);
+			printf("START CAMG RUMBA...\n");
 			bdivergence_detected = classic_aglomerative_amg6<doublereal>(Amat, nsizeA,  nna, nnu, x_copy, rthdsd_amg,  ret74, iVar, bmemory_savings, b, lb, maxelm);
 		}
 		else {
@@ -84348,7 +79591,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			sl = new equation3D[maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
 			if (sl == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
+				printf("Problem: not enough memory on your equipment for slau temperature constr struct...\n");
 				printf("Please any key to exit...\n");
 				//getchar();
 				system("pause");
@@ -84361,7 +79604,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		slb = new equation3D_bon[maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
 		if (slb == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
+			printf("Problem: not enough memory on your equipment for slau boundary temperature constr struct...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -84656,10 +79899,10 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 program output // пример из pamg.
 
 multilevel_solver
-Number of Levels : 6
-Operator Complexity : 2.198
-Grid Complexity : 1.666
-Coarse Solver : 'pinv2'
+Number of Levels: 6
+Operator Complexity: 2.198
+Grid Complexity: 1.666
+Coarse Solver: 'pinv2'
 level   unknowns     nonzeros
 0       250000      1248000[45.50%]
 1       125000      1121002[40.87%]

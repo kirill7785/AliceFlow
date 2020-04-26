@@ -160,7 +160,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 
 			// количество уникальных данных с табличными данными 
-			// по зависимости расеиваемой мощности от температуры.
+			// по зависимости рассеиваемой мощности от температуры.
 			if (imakesource("iltdp", idin)) {
 				// Найдено успешно.
 				if (idin >= 0) {
@@ -449,7 +449,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+			// Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 			if (imakesource("SolverSetting", idin)) {
 				// Найдено успешно.
 				if ((idin >= 0) && (idin < 14)) {
@@ -473,7 +473,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 
 
-			// Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+			// Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 			if (imakesource("StaticStructuralSolverSetting", idin)) {
 				// Найдено успешно.
 				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
@@ -924,7 +924,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 			else {
 				printf("WARNING!!! amg_manager_sorting_alg not found in file premeshin.txt\n");
-				my_amg_manager.imySortAlgorithm = 0; // Counting Sort Саусвела.
+				my_amg_manager.imySortAlgorithm = 0; // Counting Sort Х.Г. Сьювард 1954г..
 				printf("my_amg_manager.imySortAlgorithm =%lld\n", my_amg_manager.imySortAlgorithm);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -977,7 +977,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// type interpolation procedure :			
+			// type interpolation procedure:			
 			if (imakesource("interpolation", idin)) {
 				// Найдено успешно.
 				my_amg_manager.number_interpolation_procedure_Temperature = (integer)(idin);
@@ -1322,7 +1322,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// number nFinnest sweeps :
+			// number nFinnest sweeps:
 			if (imakesource("nFinnest", idin)) {
 				// Найдено успешно.
 				my_amg_manager.nFinnest_Temperature = (integer)(idin);
@@ -1420,7 +1420,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// number postsweeps :
+			// number postsweeps:
 			if (imakesource("numberpostsweeps", idin)) {
 				// Найдено успешно.
 				my_amg_manager.nu2_Temperature = (integer)(idin);
@@ -1470,7 +1470,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 
 
-			// memory size :
+			// memory size:
 			if (imakesource("memorysize", idin)) {
 				// Найдено успешно.
 				my_amg_manager.memory_size_Temperature = (integer)(idin);
@@ -1626,7 +1626,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
 
-			// strength threshold :
+			// strength threshold:
 
 			if (fmakesource("threshold", fin)) {
 				// Найдено успешно.
@@ -1701,7 +1701,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// magic threshold :
+			// magic threshold:
 			// magic <=> F_to_F
 			if (fmakesource("magicT", fin)) {
 				// Найдено успешно.
@@ -1777,7 +1777,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 
 			// AMG Splitting (coarsening)
-			// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+			// Способ построения C-F разбиения: 0 - standart, 1 - RS 2.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			if (imakesource("coarseningTemp", idin)) {
 				// Найдено успешно.
@@ -2329,7 +2329,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 				}
-				// ортотропность теплопроводности :
+				// ортотропность теплопроводности:
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
 				_itoa(i, buffer, 10);
@@ -2447,7 +2447,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					printf(" matlist[%d].beta_t_solid =%e\n", i, matlist[i].beta_t_solid);
 					if (bSTOP_Reading) system("pause");
 				}
-				// Коэффициенты Лямэ.
+				// Коэффициенты Ламе.
 				//doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
 				//doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
 				//matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
@@ -4889,13 +4889,24 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				if (imakesource("stabilization_amg1r5_algorithm", idin)) {
 					// Найдено успешно.
-					stabilization_amg1r5_algorithm = (integer)(idin);
-					//printf(" stabilization_amg1r5_algorithm=%lld\n",stabilization_amg1r5_algorithm );
+					
+					switch (idin) {
+					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+						break;
+					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+						break;
+					default:
+						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					}
+					//printf(" stabilization_amg1r5_algorithm=%lld\n",idin );
 				}
 				else {
 					printf("WARNING!!! stabilization_amg1r5_algorithm not found in file premeshin.txt\n");
-					stabilization_amg1r5_algorithm = 1; // default BiCGStab+amg1r5.
-					printf(" stabilization_amg1r5_algorithm=%lld\n", stabilization_amg1r5_algorithm);
+					stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5; // default BiCGStab+amg1r5.
+					printf(" stabilization_amg1r5_algorithm=BiCGStab_plus_amg1r5\n");
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -5020,10 +5031,10 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 
 			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf(fp, "%d", &din);
 			if (din == 1) {
@@ -5223,7 +5234,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			fscanf(fp, "%d", &din);
 			my_amg_manager.maximum_delete_levels_Stress = din;
 
-			// type interpolation procedure :
+			// type interpolation procedure:
 			//fscanf(fp, "%d", &din);
 			//my_amg_manager.number_interpolation_procedure = din;
 
@@ -5282,7 +5293,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			fscanf(fp, "%f", &fin);
 			my_amg_manager.truncation_interpolation_Stress = fin;
 
-			// number nFinnest sweeps :
+			// number nFinnest sweeps:
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nFinnest_Temperature = din;
 			fscanf(fp, "%d", &din);
@@ -5302,7 +5313,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nu1_Stress = din;
 
-			// number postsweeps :
+			// number postsweeps:
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nu2_Temperature = din;
 			fscanf(fp, "%d", &din);
@@ -5312,7 +5323,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nu2_Stress = din;
 
-			// memory size :
+			// memory size:
 			fscanf(fp, "%d", &din);
 			my_amg_manager.memory_size_Temperature = din;
 			fscanf(fp, "%d", &din);
@@ -5378,7 +5389,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
 			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
-			// strength threshold :
+			// strength threshold:
 			fscanf(fp, "%f", &fin);
 			my_amg_manager.theta_Temperature = fin;
 			fscanf(fp, "%f", &fin);
@@ -5388,7 +5399,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			fscanf(fp, "%f", &fin);
 			my_amg_manager.theta_Stress = fin;
 
-			// magic threshold :
+			// magic threshold:
 			//fscanf(fp, "%f", &fin);
 			//my_amg_manager.magic = fin;
 			// magic <=> F_to_F
@@ -5402,7 +5413,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			my_amg_manager.F_to_F_Stress = fin;
 
 			// AMG Splitting (coarsening)
-			// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+			// Способ построения C-F разбиения: 0 - standart, 1 - RS 2.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			fscanf(fp, "%d", &din);
 			my_amg_manager.icoarseningTemp = din;
@@ -5540,7 +5551,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					fscanf(fp, "%f", &fin);
 					matlist[i].arr_lam[i_4] = fin;
 				}
-				// ортотропность теплопроводности :
+				// ортотропность теплопроводности:
 				fscanf(fp, "%f", &fin);
 				matlist[i].orthotropy_multiplyer_x = fin;
 				fscanf(fp, "%f", &fin);
@@ -5558,7 +5569,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				Youngmodule = fin * 1e9;
 				fscanf(fp, "%f", &fin);
 				matlist[i].beta_t_solid = fin * 1E-6;
-				// Коэффициенты Лямэ.
+				// Коэффициенты Ламе.
 				doublereal E1_koef = Youngmodule / (1.0 - Poissonratio * Poissonratio);
 				doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
 				matlist[i].mu_Lame = E1_koef / (2.0 * (1.0 + nu1_koef));
@@ -6271,7 +6282,17 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 #else
 					fscanf(fp, "%d", &din);
 #endif
-					stabilization_amg1r5_algorithm = (integer)(din);
+					switch (din) {
+					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+						break;
+					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+						break;
+					default:
+						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					}
 
 				}
 			}
@@ -6391,7 +6412,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					ilb_p++;
 
 					dpower += pdiss * vol;
-					//printf("ERROR : non zero power in cylinder object.\n");
+					//printf("ERROR: non zero power in cylinder object.\n");
 					//system("PAUSE");
 					//exit(1);
 				}
@@ -6404,7 +6425,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				if (pdiss > 0.0) {
 					ilb_p++;
-					printf("ERROR : non zero power in polygon object.\n");
+					printf("ERROR: non zero power in polygon object.\n");
 					system("PAUSE");
 					exit(1);
 				}

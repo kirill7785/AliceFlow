@@ -1,5 +1,5 @@
 // Файл my_interpolate_v0_07.cpp содержит
-// некоторые необходимые для интерполляции функции.
+// некоторые необходимые для интерполяции функции.
 // Перечень функций следующий:
 // 1. Формула вычисления первой производной на неравномерной сетке с точностью O(h^2).
 // Данная формула заимствована из книги Г.З. Гарбера и обеспечивает второй порядок на неравномерной сетке.
@@ -13,19 +13,11 @@
 // Производная от искомой величины в точности на грани КО.
 // позиция грани xg.
 doublereal DFDXg(doublereal x1, doublereal x2, doublereal x3, doublereal x4, doublereal xg,
-	      doublereal f1, doublereal f2, doublereal f3, doublereal f4) {
+	      doublereal f1, doublereal f2, doublereal f3, doublereal f4, ORDER_INTERPOLATION imetod) {
 
 	doublereal DFDXgran=0.0;
 
-	const integer parabola_MNK=0; // производная от параболы построенная по способу наименьших квадратов.
-	// Внимание : line_MNK лучше не использовать, т.к. экспериментально установлено, на примере задачи
-	// статики tgf2023_01 что сходимости при таком задании производной не наступает, наблюдаются некие автоколебания на протяжени
-	// более чем 40 глобальных итераций и более. Возможна даже расходимость.
-	const integer line_MNK=1; // тангенс угла наклона прямой, прямая построена по способу МНК по четырём точкам.
-	// данный метод также не рекомендуется использовать ! ввиду отсутствия сходимости.
-	const integer cubic_parabola=2; // кубическая парабола по 4 точкам и от неё производная.
-
-	integer imetod=parabola_MNK;
+	
 
 	
 	if (imetod==parabola_MNK) 
@@ -272,10 +264,10 @@ doublereal my_linear_interpolation(char chdirect, doublereal PP, doublereal PbG,
 	doublereal r=0.0;
 
 	switch (chdirect) {
-    	case '+' : a=(PP-PbG)/(posP-posbG);
+    	case '+': a=(PP-PbG)/(posP-posbG);
 	    	       b=(PbG*posP-PP*posbG)/(posP-posbG);
 		           break;
-	    case '-' : a=(PbG-PP)/(posbG-posP);
+	    case '-': a=(PbG-PP)/(posbG-posP);
 		    	   b=(PP*posbG-PbG*posP)/(posbG-posP);
 		           break;
 	}
@@ -288,7 +280,7 @@ doublereal my_linear_interpolation(char chdirect, doublereal PP, doublereal PbG,
 doublereal my_quadratic_interpolation(char chdirect, doublereal PbGG, doublereal PbG, doublereal PP,
 	                            doublereal posbGG, doublereal posbG, doublereal posP, doublereal posvirtual) {
 
-    // Для интерполляции давления за границами расчётной области
+    // Для интерполяции давления за границами расчётной области
     doublereal **B3x3=nullptr;
 	B3x3=new doublereal*[3];
 	integer l=0; // счётчик цикла for
@@ -300,7 +292,7 @@ doublereal my_quadratic_interpolation(char chdirect, doublereal PbGG, doublereal
 	doublereal r=0.0; // здесь будет формироваться возвращаемое значение
 
 	switch (chdirect) {
-	case '+' : B3x3[0][0]=1.0; B3x3[0][1]=posbGG; B3x3[0][2]=posbGG2;
+	case '+': B3x3[0][0]=1.0; B3x3[0][1]=posbGG; B3x3[0][2]=posbGG2;
 	           B3x3[1][0]=1.0; B3x3[1][1]=posbG; B3x3[1][2]=posbG2;
 	           B3x3[2][0]=1.0; B3x3[2][1]=posP; B3x3[2][2]=posP2;
 
@@ -310,7 +302,7 @@ doublereal my_quadratic_interpolation(char chdirect, doublereal PbGG, doublereal
 	           r+=posvirtual*(B3x3[1][0]*PbGG+B3x3[1][1]*PbG+B3x3[1][2]*PP);
 	           r+=posvirtual*posvirtual*(B3x3[2][0]*PbGG+B3x3[2][1]*PbG+B3x3[2][2]*PP);
 		       break;
-	case '-' : B3x3[0][0]=1.0; B3x3[0][1]=posP; B3x3[0][2]=posP2;
+	case '-': B3x3[0][0]=1.0; B3x3[0][1]=posP; B3x3[0][2]=posP2;
 	           B3x3[1][0]=1.0; B3x3[1][1]=posbG; B3x3[1][2]=posbG2;
 	           B3x3[2][0]=1.0; B3x3[2][1]=posbGG; B3x3[2][2]=posbGG2;
 

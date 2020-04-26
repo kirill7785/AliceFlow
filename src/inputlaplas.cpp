@@ -1,6 +1,6 @@
 // файл inputlaplas.cpp
 // содержит ввод структур данных  
-// построенных графической чертилкой.
+// построенных графическим редактором.
 
 #pragma once
 #ifndef _INPUTLAPLAS_CPP_
@@ -10,7 +10,7 @@
 #include <cmath>
 #include <math.h> // математические функции
 //#include <string.h> // функции обработки строк
-#include "power_temperature_depend.cpp" // сплайновая интерполляция таблично заданной функции (зависимость мощности от температуры).
+#include "power_temperature_depend.cpp" // сплайновая интерполяция таблично заданной функции (зависимость мощности от температуры).
 
 // передаваемый из файла параметр отвечающий за подробность расчётной сетки.
 doublereal etalon_max_size_ratio = 2.0;// Более реалистичный подход 10.0
@@ -37,9 +37,9 @@ doublereal shorter_length_for_simplificationZ_BASIC = 1.0e30;
 integer bsnap_TO_global = 1; // snap to grid
 // Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 // помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
-// при повторном обращении идет обращение к ячейки хеш таблицы.
+// при повторном обращении идет обращение к ячейки хеш-таблицы.
 // 20mm ПТБШ ускорился с 1мин 9с до 53с за счет режима bFULL_AUTOMATIC.
-// Хеш таблицы для automatic
+// Хеш-таблицы для automatic
 const integer isize_shorter_hash = 10000000;// Сделан значительный запас точности хеширования.
 doublereal* shorter_hash_X = nullptr;
 doublereal* shorter_hash_Y = nullptr;
@@ -100,13 +100,13 @@ typedef struct TGEOM {
 // Мощность рассеиваемая в тепло зависит от
 // температуры и смещения стока.
 // Информация о зависимости хранится в таблично заданной 
-// функция. Таблица взята из результатов расчёта в програме
+// функция. Таблица взята из результатов расчёта в программе
 // Г.З. Гарбера.
 typedef struct TTEMP_DEP_POWER {
 	char* sname = nullptr; // имя текстового файла содержащего табличную функцию.
 
 	integer intemp = 0; // количество различных дискретных значений температуры.
-	integer inoffset_drain = 0; // количество различных дискретных хначений смещения стока.
+	integer inoffset_drain = 0; // количество различных дискретных значений смещения стока.
 
 	// таблица: левый столбец температуры,
 	// верхняя строка без первого значения - смещения стока.
@@ -145,7 +145,7 @@ typedef struct TSOURCE {
 	integer iunion_id = 0;
 } SOURCE;
 
-// стенка (идеальный теплооотвод)
+// стенка (идеальный теплоотвод)
 typedef struct TWALL {
 	// 1 - Дирихле, 2 - однородное условие Неймана.
 	integer ifamily = 2; // род краевого условия по температуре
@@ -210,12 +210,12 @@ typedef struct TPROP {
 	// 16_11_2016
 	// температура передаётся в градусах Цельсия.
 	// температурно - зависимые теплопроводность и теплоёмкость.
-	integer n_lam = -1, n_cp = -1; // число точек для линейной интерполляции.
+	integer n_lam = -1, n_cp = -1; // число точек для линейной интерполяции.
 	// arr_lam=f(temp_lam);
 	// arr_cp=f(temp_cp);
 	doublereal *temp_lam=nullptr, *temp_cp=nullptr, *arr_lam=nullptr, *arr_cp=nullptr;
-	// Ортотропность теплопроводности :
-	// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью :
+	// Ортотропность теплопроводности:
+	// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью:
 	// CuMoCu, SiC и текстолитовые платы.
 	// теплопроводность в заданном координатном направлении домножается на этот множитель.
 	doublereal orthotropy_multiplyer_x=1.0, orthotropy_multiplyer_y = 1.0, orthotropy_multiplyer_z = 1.0;
@@ -253,7 +253,7 @@ typedef struct TPROP {
 
 	// 8.4.2017 
 	// Параметры прочности материала.
-	doublereal mu_Lame = -1.0e30, lambda_Lame = -1.0e30; // Коэффициенты Лямэ.
+	doublereal mu_Lame = -1.0e30, lambda_Lame = -1.0e30; // Коэффициенты Ламе.
 
 } PROP;
 
@@ -261,7 +261,7 @@ typedef struct TPROP {
 typedef struct TMY_AMG_MANAGER {
 
 	// Алгоритм сортировки используемый в многосеточном методе РУМБА.
-	// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT.
+	// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT, 4 - TimSort.
 	integer imySortAlgorithm = 0; // 0 - Counting Sort Default.
 
 	// 0 - не печатать портрет матрицы, 
@@ -280,7 +280,8 @@ typedef struct TMY_AMG_MANAGER {
 	integer nFinnest_Temperature = 2, nu1_Temperature = 1, nu2_Temperature = 2;
 	integer memory_size_Temperature = 13; //13*size(matrix A)
 	integer ilu2_smoother_Temperature = 0; // 0 - не использовать, 1 - использовать.
-	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
+	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
 	integer iCFalgorithm_and_data_structure_Temperature = 2;
 	// Speed
@@ -289,7 +290,8 @@ typedef struct TMY_AMG_MANAGER {
 	integer nFinnest_Speed = 2, nu1_Speed = 1, nu2_Speed = 2;
 	integer memory_size_Speed = 13;
 	integer ilu2_smoother_Speed = 0; // 0 - не использовать, 1 - использовать.
-	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
+	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
 	integer iCFalgorithm_and_data_structure_Speed = 2;
 	// Pressure
@@ -298,7 +300,8 @@ typedef struct TMY_AMG_MANAGER {
 	integer nFinnest_Pressure = 2, nu1_Pressure = 1, nu2_Pressure = 2;
 	integer memory_size_Pressure = 15;
 	integer ilu2_smoother_Pressure = 0; // 0 - не использовать, 1 - использовать.
-	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
+	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
 	integer iCFalgorithm_and_data_structure_Pressure = 2;
 	// Stress
@@ -307,11 +310,12 @@ typedef struct TMY_AMG_MANAGER {
 	integer nFinnest_Stress = 2, nu1_Stress = 1, nu2_Stress = 2;
 	integer memory_size_Stress = 22;
 	integer ilu2_smoother_Stress = 0; // 0 - не использовать, 1 - использовать.
-	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
+	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
 	integer iCFalgorithm_and_data_structure_Stress = 2;
 	// global
-	bool bCFJacoby = true;
+	bool bCFJacoby = true; // C/F упорядочивание при сглаживании.
 	integer iRunge_Kutta_smoother = 0; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
 	integer iFinnest_ilu = 0; // 0 не используется, 1 - ilu0. Только на самой подробной сетке.
 	// Использование iluk разложения на глубоких уровнях вложенности для которых
@@ -321,13 +325,15 @@ typedef struct TMY_AMG_MANAGER {
 	//integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
 	integer maximum_delete_levels = 0; // Количество уровней отсекаемых снизу в области грубой сетки.
 	integer nFinnest = 2, nu1 = 1, nu2 = 2; // Количества сглаживаний.
-	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
+	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 2.
 	integer iCFalgorithm_and_data_structure = 2;
 	integer memory_size = 13; // В размерах матрицы А.
 	// Для метода верхней релаксации в сглаживателе.
+	const integer FULL_F_to_F_INTERPOLATION = 0; // Интерполяция по расширенному шаблону.
 	const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
-	integer number_interpolation_procedure = AMG1R5_IN_HOUSE; // идентификатор процедуры интерполляции.
+	integer number_interpolation_procedure = AMG1R5_IN_HOUSE; // идентификатор процедуры интерполяции.
 	integer number_interpolation_procedure_Temperature = AMG1R5_IN_HOUSE;
 	integer number_interpolation_procedure_Speed = AMG1R5_IN_HOUSE;
 	integer number_interpolation_procedure_Pressure = AMG1R5_IN_HOUSE;
@@ -335,7 +341,7 @@ typedef struct TMY_AMG_MANAGER {
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
-	//integer itypemodifyinterpol=0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol=0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	//integer inumberadaptpass=0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 	//integer baglomeration_with_consistency_scaling = 0;
 	// Принудительное усиление диагонали
@@ -358,17 +364,18 @@ typedef struct TMY_AMG_MANAGER {
 	doublereal F_to_F_Temperature = 0.4, F_to_F_Speed = 0.4, F_to_F_Pressure = 0.4, F_to_F_Stress = 0.4; // magic
 	integer ilu2_smoother = 0; // 0 - не использовать, 1 - использовать.
 	// AMG Splitting (coarsening)
-	// Способ построения C-F разбиения : 0 - standart, 1 - RS2, 3 - ST classical standart, 4 - RS2 ST.
+	// Способ построения C-F разбиения: 0 - standart, 1 - RS2, 2 - ST classical standart (по умолчанию), 3 - RS2 ST.	
 	// RS2 улучшенная версия построения C-F разбиения содержащая второй проход.
 	// ST - на основе STRONG Transpose.
-	integer icoarseningTemp = 3, icoarseningSpeed = 3, icoarseningPressure = 3, icoarseningStress = 3;
-	integer icoarseningtype = 3;
+	// 8 - PMIS, 9 -HMIS.
+	integer icoarseningTemp = 2, icoarseningSpeed = 2, icoarseningPressure = 2, icoarseningStress = 2;
+	integer icoarseningtype = 2;
 	// Stabilization BiCGStab.
 	// 8.01.2017
-	// предобусловленный алгебраичесеким многосеточным методом.
+	// предобусловленный алгебраическим многосеточным методом.
 	// 0 - используется просто алгебраический многосеточный метод без какого-либо привлечения алгоритмов подпространства Крылова,
-	// 1 - Используется алгоритм Х. Ван дер Ворста BiCGStab [1992], предобусловленный алгебраическим многосеточным методом.
-	// 2 - Используется алгоритм Саада и Шульца FGMRes [1986], предобусловленный алгебраическим многосеточным методом.
+	// 1 - Используется алгоритм Хенка ван дер Ворста BiCGStab [1992], предобусловленный алгебраическим многосеточным методом.
+	// 2 - Используется алгоритм Юсефа Саада и Мартина Г. Шульца FGMRes [1986], предобусловленный алгебраическим многосеточным методом.
 	// 3 - Нелинейный многосеточный метод (обновление правой части на каждом V цикле). Для нелинейных граничных условий.
 	integer istabilizationTemp = 0, istabilizationSpeed = 0, istabilizationPressure = 0, istabilizationStress = 0; // 0 - none
 	integer istabilization = 0; // 0 - none
@@ -378,8 +385,16 @@ typedef struct TMY_AMG_MANAGER {
 	integer iprint_log = 1, iprint_log_Temperature = 1, iprint_log_Speed = 1, iprint_log_Pressure = 1, iprint_log_Stress = 1;
 
 	// truncation for interpolation.
-	integer itruncation_interpolation = 0, itruncation_interpolation_Temperature = 0, itruncation_interpolation_Speed = 0, itruncation_interpolation_Pressure = 0, itruncation_interpolation_Stress = 0;
-	doublereal truncation_interpolation = 0.2, truncation_interpolation_Temperature = 0.2, truncation_interpolation_Speed = 0.2, truncation_interpolation_Pressure = 0.2, truncation_interpolation_Stress = 0.2;
+	integer itruncation_interpolation = 0;
+	integer itruncation_interpolation_Temperature = 0;
+	integer itruncation_interpolation_Speed = 0;
+	integer itruncation_interpolation_Pressure = 0;
+	integer itruncation_interpolation_Stress = 0;
+	doublereal truncation_interpolation = 0.2;
+	doublereal truncation_interpolation_Temperature = 0.2;
+	doublereal truncation_interpolation_Speed = 0.2;
+	doublereal truncation_interpolation_Pressure = 0.2;
+	doublereal truncation_interpolation_Stress = 0.2;
 
 	// gmres smoother
 	// Ю.Саад, Мартин Г. Шульц [1986].
@@ -400,7 +415,7 @@ typedef struct TMY_AMG_MANAGER {
 	// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
 	// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
 	integer amgcl_smoother = 0; 
-	integer amgcl_selector = 0; // 0 - Ruge-Stueben (amg1r5 analog); 1 - smoother aggregation.
+	integer amgcl_selector = 0; // 0 - Ruge and Stuben (amg1r5 analog); 1 - smoother aggregation.
 	integer amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes;
 
 } MY_AMG_MANAGER;
@@ -414,16 +429,17 @@ void my_amg_manager_init() {
 	
 	// Алгоритм сортировки используемый в 
 	// алгебраическом многосеточном методе РУМБА.
-	// 0 - COUNTING SORT
-	// 1 - QUICK SORT
-	// 2 - HEAP SORT
+	// 0 - COUNTING SORT Х.Г. Сьювард 1954г.
+	// 1 - QUICK SORT Чарльз Хоар 1962г.
+	// 2 - HEAP SORT Вильямс 1964г.
+	// 3 - Tim SORT Тим Петерсом 2002 г.
 	my_amg_manager.imySortAlgorithm = 0; // default value COUNTING SORT
 
 	// Параметры собственного многосеточного метода о умолчанию.
 	// Настройки решателя СЛАУ зависят от типа уравнения которое подаётся на вход:
 	// симметричность <-> анизотропность, несимметричность, диффузионная задача <-> конвективная задача,
 	// степень преобладания конвекции (число Рейнольдса).
-	//my_amg_manager.maximum_levels = 20; // максимальное число уровней начиная с которого начинается усечение.
+	// my_amg_manager.maximum_levels = 20; // максимальное число уровней начиная с которого начинается усечение.
 	my_amg_manager.maximum_delete_levels = 0; // Количество уровней отсекаемых в нижней части где грубая сетка.
 	my_amg_manager.number_interpolation_procedure = 3; // номер интерполяционной процедуры.
 	my_amg_manager.number_interpolation_procedure_Temperature = 3;
@@ -434,6 +450,8 @@ void my_amg_manager_init() {
 	//my_amg_manager.baglomeration_with_consistency_scaling = 0;
 	my_amg_manager.bdiagonal_dominant = 1;
 
+	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	my_amg_manager.iCFalgorithm_and_data_structure = 3; // 3-Treap.
 	my_amg_manager.iCFalgorithm_and_data_structure_Temperature = 3;// 3-Treap.
 	my_amg_manager.iCFalgorithm_and_data_structure_Speed = 3;// 3-Treap.
@@ -449,7 +467,7 @@ void my_amg_manager_init() {
 
 	my_amg_manager.nFinnest = 2; // число итераций на подробной сетке.
 	my_amg_manager.nu1 = 1; // число предсглаживаний.
-	my_amg_manager.nu2 = 2; // число пост сглаживаий.	
+	my_amg_manager.nu2 = 2; // число пост сглаживаний.	
 	my_amg_manager.memory_size = 9; // количество оперативной памяти в размерностях матрицы А.
 	my_amg_manager.gold_const = 0.2; // Параметр верхней релаксации в сглаживателе.
 	my_amg_manager.gold_const_Temperature = 0.2;
@@ -479,7 +497,7 @@ void my_amg_manager_init() {
 	my_amg_manager.ilu2_smoother = 0; // 0 - не использовать, 1 - использовать.
 
 	// Устаревшие переменные, более не используются и подлежат удалению. 11.05.2019
-	//my_amg_manager.itypemodifyinterpol=0; // номер модификации интерполляции.
+	//my_amg_manager.itypemodifyinterpol=0; // номер модификации интерполяции.
 	//my_amg_manager.inumberadaptpass=0; // максимальное количество сканов-проходов с модификациями.
 
 	my_amg_manager.theta_Temperature = 0.24;
@@ -514,13 +532,13 @@ void my_amg_manager_init() {
 	my_amg_manager.memory_size_Stress = 9;
 	my_amg_manager.ilu2_smoother_Stress = 0; // 0 - не использовать, 1 - использовать.
 	// AMG Splitting (coarsening)
-	// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+	// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart ST, 3 - RS2 ST. ST - strong transpose.
 	// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
-	my_amg_manager.icoarseningTemp = 0; // standart
-	my_amg_manager.icoarseningSpeed = 0; // standart
-	my_amg_manager.icoarseningPressure = 0; // standart
-	my_amg_manager.icoarseningStress = 0; // standart
-	my_amg_manager.icoarseningtype = 0; // standart vs RS 2.
+	my_amg_manager.icoarseningTemp = 2; // standart strong transpose ST.
+	my_amg_manager.icoarseningSpeed = 2; // standart strong transpose ST.
+	my_amg_manager.icoarseningPressure = 2; // standart strong transpose ST.
+	my_amg_manager.icoarseningStress = 2; // standart strong transpose ST.
+	my_amg_manager.icoarseningtype = 2; // standart vs RS 2.
 	// Stabilization BiCGStab.
 	// 8.01.2017 Метод ван дер Ворста BiCGStab 
 	// предобусловленный алгебраичесеким многосеточным методом.
@@ -607,7 +625,7 @@ doublereal return_gold_const(integer irelx) {
 	case 4:// damped Jacoby
 		double_gold_const = -0.6667;
 		break;
-	case 5:// П.Роуч SOR
+	case 5:// П. Роуч SOR
 		double_gold_const  = 0.2;
 		break;
 	default: double_gold_const = -1.0;
@@ -626,7 +644,7 @@ void printLOGO() {
 	printf(" #     #   #        #    #   #  #			#       #       #   #      # #   # #    \n");
 	printf("#       #  #######  #     ###   #####		#       #######  ###        #     #    #\n");
 	printf("\n");
-	printf("version v0.48 2009 - 2019\n");
+	printf("version v0.48 2009 - 2020\n");
 	Sleep(3000);
 }
 */
@@ -687,7 +705,7 @@ doublereal view_factor_aligned_parallel_rectangles(doublereal x34, doublereal y3
 } //view_factor_aligned_parallel_rectangles
 
 // Для вычисления усреднённой температуры на грани нужен
-// список узлов грани (два внутрених соседа для внутренней грани) и 
+// список узлов грани (два внутренних соседа для внутренней грани) и 
 // (граничный узел и ближайший к нему соседний внутренний для узлов на границе расчётной области).
 typedef struct TMY_PAIR {
 	integer node1=-1, node21=-1, node22=-1, node23=-1, node24=-1; // если отсутствует то стоит -1.
@@ -701,7 +719,7 @@ typedef struct TMY_PAIR {
 const doublereal alpha_Radiation_block = 0.2;//0.1 optimum
 // Постоянная Стефана-Больцмана для вычисления плотностей радиационных потоков.
 const doublereal sigma_Radiation_block = 5.670367e-8; // W*m!-2*K!-4.
-// фиксированное число итераций для нахождения плотностей радиационых потоков.
+// фиксированное число итераций для нахождения плотностей радиационных потоков.
 const integer maxiter_Radiation_block = 1000; // вообще хватает и 200, здесь с запасом.
 
 
@@ -755,7 +773,7 @@ typedef struct TBLOCK {
 	// Всё относящееся к теплообмену излучением:
 	// излучательные способности поверхностей, модель вакуумного промежутка.
 	BLOCKRADIATION radiation;
-	bool bvisible=true; // Виден ли блок при экспорте в техплот.
+	bool bvisible=true; // Виден ли блок при экспорте в tecplot.
 
 	// принадлежность объединению 
 	// 0 - не принадлежит (принадлежит кабинету),
@@ -800,7 +818,7 @@ doublereal shorter_length_for_simplificationX(doublereal g, BLOCK* &b, integer l
 							dmult = dbody_LGATE_situation_multiplyer;
 						}
 						if ((g >= b[i].g.xS - dmult *(b[i].g.xE - b[i].g.xS)) && (g <= b[i].g.xE + dmult *(b[i].g.xE - b[i].g.xS))) {
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.xE - b[i].g.xS)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.xE - b[i].g.xS));
 						}
 					}
@@ -809,22 +827,22 @@ doublereal shorter_length_for_simplificationX(doublereal g, BLOCK* &b, integer l
 						case XY: case XZ:
 							if (b[i].g.R_in_cyl < 1.0e-40) {
 								if ((g >= b[i].g.xC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.xC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
-									// g в зоне влияния блока сномером i.
+									// g в зоне влияния блока с номером i.
 									if (((1.0 / rdivision_interval)*(b[i].g.R_out_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_out_cyl));
 								}
 							}
 							else {
 								if ((g >= b[i].g.xC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.xC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
-									// g в зоне влияния блока сномером i.
+									// g в зоне влияния блока с номером i.
 									if (((1.0 / rdivision_interval)*(b[i].g.R_in_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_in_cyl));
-									// g в зоне влияния блока сномером i.
+									// g в зоне влияния блока с номером i.
 									if (((1.0 / rdivision_interval)*(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_out_cyl - b[i].g.R_in_cyl));
 								}
 							}
 							break;
 						case YZ:
 							if ((g >= b[i].g.xC - dbody_Hcyl_multiplyer *b[i].g.Hcyl) && (g <= b[i].g.xC + b[i].g.Hcyl + dbody_Hcyl_multiplyer *b[i].g.Hcyl)) {
-								// g в зоне влияния блока сномером i.
+								// g в зоне влияния блока с номером i.
 								if (((1.0 / rdivision_interval)*(b[i].g.Hcyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.Hcyl));
 							}
 							break;
@@ -901,7 +919,7 @@ doublereal shorter_length_for_simplificationY(doublereal g, BLOCK* &b, integer l
 				}
 
 				if ((g >= b[i].g.yS - dmult *(b[i].g.yE - b[i].g.yS)) && (g <= b[i].g.yE + dmult *(b[i].g.yE - b[i].g.yS))) {
-					// g в зоне влияния блока сномером i.
+					// g в зоне влияния блока с номером i.
 					if (((1.0 / rdivision_interval)*(b[i].g.yE - b[i].g.yS)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.yE - b[i].g.yS));
 				}
 			}
@@ -910,22 +928,22 @@ doublereal shorter_length_for_simplificationY(doublereal g, BLOCK* &b, integer l
 				case XY: case YZ:
 					if (b[i].g.R_in_cyl < 1.0e-40) {
 						if ((g >= b[i].g.yC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.yC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.R_out_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_out_cyl));
 						}
 					}
 					else {
 						if ((g >= b[i].g.yC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.yC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.R_in_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_in_cyl));
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_out_cyl - b[i].g.R_in_cyl));
 						}
 					}
 					break;
 				case XZ:
 					if ((g >= b[i].g.yC- dbody_Hcyl_multiplyer *b[i].g.Hcyl) && (g <= b[i].g.yC + b[i].g.Hcyl+ dbody_Hcyl_multiplyer *b[i].g.Hcyl)) {
-						// g в зоне влияния блока сномером i.
+						// g в зоне влияния блока с номером i.
 						if (((1.0 / rdivision_interval)*(b[i].g.Hcyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.Hcyl));
 					}
 					break;
@@ -1004,7 +1022,7 @@ doublereal shorter_length_for_simplificationZ(doublereal g, BLOCK* &b, integer l
 
 
 				if ((g >= b[i].g.zS - dmult*(b[i].g.zE - b[i].g.zS)) && (g <= b[i].g.zE+ dmult*(b[i].g.zE - b[i].g.zS))) {
-					// g в зоне влияния блока сномером i.
+					// g в зоне влияния блока с номером i.
 					if (((1.0 / rdivision_interval)*(b[i].g.zE - b[i].g.zS)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.zE - b[i].g.zS));
 				}
 			}
@@ -1013,22 +1031,22 @@ doublereal shorter_length_for_simplificationZ(doublereal g, BLOCK* &b, integer l
 				case XZ: case YZ:
 					if (b[i].g.R_in_cyl < 1.0e-40) {
 						if ((g >= b[i].g.zC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.zC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.R_out_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_out_cyl));
 						}
 					}
 					else {
 						if ((g >= b[i].g.zC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.zC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.R_in_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_in_cyl));
-							// g в зоне влияния блока сномером i.
+							// g в зоне влияния блока с номером i.
 							if (((1.0 / rdivision_interval)*(b[i].g.R_out_cyl - b[i].g.R_in_cyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.R_out_cyl - b[i].g.R_in_cyl));
 						}
 					}
 					break;
 				case XY:
 					if ((g >= b[i].g.zC- dbody_Hcyl_multiplyer *b[i].g.Hcyl) && (g <= b[i].g.zC + b[i].g.Hcyl+ dbody_Hcyl_multiplyer *b[i].g.Hcyl)) {
-						// g в зоне влияния блока сномером i.
+						// g в зоне влияния блока с номером i.
 						if (((1.0 / rdivision_interval)*(b[i].g.Hcyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.Hcyl));
 					}
 					break;
@@ -1279,7 +1297,7 @@ doublereal get_power(integer nsize_Sc, doublereal* &temp_Sc, doublereal* &arr_Sc
 } // get_power
 
 // Вычисляет плотность теплового потока излучения на гранях вакуумного промежутка
-// по заданным значениям :
+// по заданным значениям:
 // 1. излучательных способностей на гранях промежутка: emissivity,
 // 2. Усреднённым температурам на гранях промежутка.
 // 3. массиву View Factors на гранях промежутка.
@@ -1350,13 +1368,7 @@ void calculation_density_radiation_heat_flux(BLOCK &b)
 
 		printf("TW=%e TE=%e TS=%e TN=%e TB=%e TT=%e\n", b.radiation.TempW, b.radiation.TempE, b.radiation.TempS, b.radiation.TempN, b.radiation.TempB, b.radiation.TempT);
 		printf("JW=%e JE=%e JS=%e JN=%e JB=%e JT=%e\n", b.radiation.JW, b.radiation.JE, b.radiation.JS, b.radiation.JN, b.radiation.JB, b.radiation.JT);
-	    //	system("PAUSE");
-
-#ifdef MINGW_COMPILLER
-		fprintf(fp_radiation_log, "%e %e ", b.radiation.TempB, b.radiation.TempT);
-#else
-		fprintf_s(fp_radiation_log, "%e %e ", b.radiation.TempB, b.radiation.TempT);
-#endif			
+	    //	system("PAUSE");		
 		
 	}
 } // calculation_density_radiation_heat_flux
@@ -1398,7 +1410,7 @@ bool b_is_intersect(doublereal x1, doublereal y1,
 						printf("x2=%e y2=%e\n", x2, y2);
 						printf("x3=%e y3=%e\n", x3, y3);
 						printf("x4=%e y4=%e\n", x4, y4);
-						bintersect = true; // пересекаются
+						//bintersect = true; // пересекаются
 					}
 				}
 				else if ((fabs(y1 - y2) < 1.0e-40) && (fabs(y1 - y3) < 1.0e-40) && (fabs(y1 - y4) < 1.0e-40)) {
@@ -1415,7 +1427,7 @@ bool b_is_intersect(doublereal x1, doublereal y1,
 						printf("x2=%e y2=%e\n", x2, y2);
 						printf("x3=%e y3=%e\n", x3, y3);
 						printf("x4=%e y4=%e\n", x4, y4);
-						bintersect = true; // пересекаются
+						//bintersect = true; // пересекаются
 					}
 				}
 				else {
@@ -1426,7 +1438,7 @@ bool b_is_intersect(doublereal x1, doublereal y1,
 					printf("x2=%e y2=%e\n", x2, y2);
 					printf("x3=%e y3=%e\n", x3, y3);
 					printf("x4=%e y4=%e\n", x4, y4);
-					bintersect = true; // пересекаются
+					//bintersect = true; // пересекаются
 				}
 			}
 			else {
@@ -1446,7 +1458,7 @@ bool b_is_intersect(doublereal x1, doublereal y1,
 		if (Ua > 1.0e-40 && Ua < 1.0-1.0e-40 && Ub > 1.0e-40 && Ub < 1.0-1.0e-40) {
 			printf("denominator=%e\n", denominator);
 			printf("Ua=%e Ub=%e\n", Ua, Ub);
-			bintersect = true;
+			//bintersect = true;
 		}
 		else {
 			bintersect = false;
@@ -1833,11 +1845,11 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							i_t3 = ip + it_c+3;
 							if (i_t3 >= b[i].g.nsizei) i_t3 -= b[i].g.nsizei;
 
-							// Мы попарно роверяем есть ли самопересечения каждый с каждым.
+							// Мы попарно проверяем есть ли самопересечения каждый с каждым.
 							if (b_is_intersect(b[i].g.xi[ip], b[i].g.yi[ip], b[i].g.xi[i_t1], b[i].g.yi[i_t1],
 								b[i].g.xi[i_t2], b[i].g.yi[i_t2], b[i].g.xi[i_t3], b[i].g.yi[i_t3])) {
 								// ОШИБКА: обнаружено самопересечение отрезков в полигоне.
-								printf("Error in POLYGON : Self-intersection of segments in body[%lld]\n",i);
+								printf("Error in POLYGON: Self-intersection of segments in body[%lld]\n",i);
 								system("pause");
 								bOk = false;
 							}
@@ -1895,11 +1907,11 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							i_t3 = ip + it_c + 3;
 							if (i_t3 >= b[i].g.nsizei) i_t3 -= b[i].g.nsizei;
 
-							// Мы попарно роверяем есть ли самопересечения каждый с каждым.
+							// Мы попарно проверяем есть ли самопересечения каждый с каждым.
 							if (b_is_intersect(b[i].g.xi[ip], b[i].g.zi[ip], b[i].g.xi[i_t1], b[i].g.zi[i_t1],
 								b[i].g.xi[i_t2], b[i].g.zi[i_t2], b[i].g.xi[i_t3], b[i].g.zi[i_t3])) {
 								// ОШИБКА: обнаружено самопересечение отрезков в полигоне.
-								printf("Error in POLYGON : Self-intersection of segments in body[%lld]\n", i);
+								printf("Error in POLYGON: Self-intersection of segments in body[%lld]\n", i);
 								system("pause");
 								bOk = false;
 							}
@@ -1959,11 +1971,11 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							i_t3 = ip + it_c + 3;
 							if (i_t3 >= b[i].g.nsizei) i_t3 -= b[i].g.nsizei;
 
-							// Мы попарно роверяем есть ли самопересечения каждый с каждым.
+							// Мы попарно проверяем есть ли самопересечения каждый с каждым.
 							if (b_is_intersect(b[i].g.yi[ip], b[i].g.zi[ip], b[i].g.yi[i_t1], b[i].g.zi[i_t1],
 								b[i].g.yi[i_t2], b[i].g.zi[i_t2], b[i].g.yi[i_t3], b[i].g.zi[i_t3])) {
 								// ОШИБКА: обнаружено самопересечение отрезков в полигоне.
-								printf("Error in POLYGON : Self-intersection of segments in body[%lld]\n", i);
+								printf("Error in POLYGON: Self-intersection of segments in body[%lld]\n", i);
 								system("pause");
 								bOk = false;
 							}
@@ -2104,7 +2116,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		}
 
 		switch (w[i].iPlane) {
-		case XY :
+		case XY:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.xS >= w[i].g.xE) {
 				//printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
@@ -2132,7 +2144,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			break;
-		case XZ :
+		case XZ:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.xS >= w[i].g.xE) {
 				//printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
@@ -2160,7 +2172,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			break;
-		case YZ :
+		case YZ:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.yS >= w[i].g.yE) {
 				//printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
@@ -2429,22 +2441,25 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 // Параметры которые используются для 
 // настройки модели Смагоринского.
 typedef struct TSMAGORINSKYINFO {
-	doublereal Cs; // константа Смагоринского.
-	bool bDynamic_Stress; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
-	bool bLimiters_Cs; // ограничивать ли постоянную Смагоринского ?
-	doublereal minCs, maxCs; // минимальное и максимальное значения константы Смагоринского.
-	integer itypeFiltrGermano; // тип фильтра который используется для осреднения в модели Германо.
-	doublereal roughness; // значение шероховатости на твёрдой неподвижной стенке.
+	doublereal Cs=0.151; // константа Смагоринского.
+	bool bDynamic_Stress=false; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
+	bool bLimiters_Cs=false; // ограничивать ли постоянную Смагоринского ?
+	doublereal minCs=-1.0e30, maxCs=1.0e30; // минимальное и максимальное значения константы Смагоринского.
+	// 2-SIMPSON
+	integer itypeFiltrGermano=2; // тип фильтра который используется для осреднения в модели Германо.
+	// 10 micron
+	doublereal roughness=10.0; // значение шероховатости на твёрдой неподвижной стенке.
 						  // показатель степени для учёта шероховатости на стенке.
-	integer ipowerroughness; // может принимать значения только 1 или 2.
-	bool bfdelta; // использовать ли поправку дающую улучшение на неравномерной сетке ?
-	bool bSmagorinsky_Lilly; // использовать ли модель Смагоринского-Лиллу ?
-	bool bsurface_roughness; // использовать ли поправку учитывающую шероховатость стенки ?
-	bool bSelectiveSmagorinsky; // использовать ли Selective Smagorinsky Model ?
-	integer itypeFILTRSelectiveSmagorinsky; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
-	doublereal SSangle; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
-	bool bRichardsonCorrect; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
-	doublereal rRichardsonMultiplyer; // коэффициент в поправочной формуле связанной с кривизной линий тока.
+	integer ipowerroughness=1; // может принимать значения только 1 или 2.
+	bool bfdelta=true; // использовать ли поправку дающую улучшение на неравномерной сетке ?
+	bool bSmagorinsky_Lilly=false; // использовать ли модель Смагоринского-Лиллу ?
+	bool bsurface_roughness=false; // использовать ли поправку учитывающую шероховатость стенки ?
+	bool bSelectiveSmagorinsky=false; // использовать ли Selective Smagorinsky Model ?
+	// 2-SIMPSON
+	integer itypeFILTRSelectiveSmagorinsky=2; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
+	doublereal SSangle=15.0; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
+	bool bRichardsonCorrect=false; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
+	doublereal rRichardsonMultiplyer=1.0; // коэффициент в поправочной формуле связанной с кривизной линий тока.
 } SMAGORINSKYINFO;
 
 // Для полилинейного метода:
@@ -2459,7 +2474,7 @@ typedef struct TNODELR_BASE {
 	struct TNODELR *root = nullptr; // корень новой сеточной линии
 	struct TNODELR_BASE *next = nullptr; // указатель на следующую сеточную линию или nullptr
 
-	// Особый случай :
+	// Особый случай:
 	// обработка плоского бесконечно 
 	// тонкого источника тепла.
 	// Переменные равны истине если связь с источником 
@@ -2494,7 +2509,7 @@ typedef struct TBOUND {
 	integer iW[6] = {-1, -1, -1, -1, -1, -1 };
 
 	// Для внутреннего источника указывает
-	// на сосендний внутренний узел с обратной стороны
+	// на соседний внутренний узел с обратной стороны
 	// источника противоположной текущей стороне, или на -1
 	// если источник на границе hollow блока.
 	// TODO 6 мая 2016.
@@ -2516,9 +2531,9 @@ typedef struct TBOUND {
 typedef struct TFLOWINFO {
 	// опорная точка
 	doublereal xc=1.0e30, yc=1.0e30, zc=1.0e30;
-	// нужно ли расчитывать поле течения
+	// нужно ли рассчитывать поле течения
 	integer iflow=0;
-	// режим течения : 0 - ламинарный, 1 - турбулентный
+	// режим течения: 0 - ламинарный, 1 - турбулентный
 	integer iflowregime=0;
 	// модель турбулентности
 	// 0 - Zero Equation Turbulence Model (RANS).
@@ -2531,7 +2546,7 @@ typedef struct TFLOWINFO {
 	// параметры модели Смагоринского:
 	doublereal Cs=0.151; // постоянная Смагоринского.
 	bool bDynamic_Stress = false; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
-	bool bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского : ограничение на минимальное и максимальное значения.
+	bool bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского: ограничение на минимальное и максимальное значения.
 	doublereal rminCs=-1.0e20, rmaxCs=1.0e23; // минимальное и максимальное ограничение для константы Смагоринского.
 	// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
 	integer itypeFiltrGermano=2; // SIMPSON filter	
@@ -2696,14 +2711,14 @@ typedef struct TTEMPER {
 	integer maxelm=0; // число ненулевых контрольных объёмов
 					// nvtx[0..7][0..maxelm-1]
 	integer **nvtx = nullptr; // список узлов для каждого элемента (ненулевого контрольного объёма)
-						   // sosedi[0..11][0..maxelm-1]
-						   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
+						   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
+						   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
 						   // AliceMesh
-	ALICE_PARTITION **sosedi = nullptr;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
+	ALICE_PARTITION **neighbors_for_the_internal_node = nullptr;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
 	integer maxbound=0; // число граничных узлов
 	integer maxp=0; // maxp == maxelm + maxbound;
-				  // sosedb[0..maxbound-1];
-	BOUND* sosedb = nullptr; // граничные узлы расчётной области 
+				  // border_neighbor[0..maxbound-1];
+	BOUND* border_neighbor = nullptr; // граничные узлы расчётной области 
 						  // для всех граничных КО. Равно истине если имеем дело с
 						  // границей строго внутри расчётной области причём на ней 
 						  // расположен именно плоский бесконечно тонкий источник и по 
@@ -2743,11 +2758,11 @@ typedef struct TTEMPER {
 	equation3D *slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО
 	equation3D_bon *slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
 
-									 // для полилинейного метода :
+									 // для полилинейного метода:
 									 // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
 									 // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
 									 // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
-									 // может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
+									 // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab.
 	NODELR_BASE *rootWE = nullptr;
 	NODELR_BASE *rootSN = nullptr;
 	NODELR_BASE *rootBT = nullptr;
@@ -2795,14 +2810,14 @@ typedef struct TFLOW {
 						   // pa[0..maxnod-1]
 	TOCHKA* pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
 
-					   // sosedi[0..11][0..maxelm-1]
-					   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего КО
+					   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
+					   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего КО
 					   // Для ALICEMESH сетки.
-	ALICE_PARTITION **sosedi = nullptr;// соседние контрольные объёмы для каждого внутреннего КО
+	ALICE_PARTITION **neighbors_for_the_internal_node = nullptr;// соседние контрольные объёмы для каждого внутреннего КО
 	integer maxbound = 0; // число граничных КО
 	integer maxp = 0; // число уравнений
-				  // sosedb[0..maxbound-1];
-	BOUND* sosedb = nullptr; // граничные узлы расчётной области
+				  // border_neighbor[0..maxbound-1];
+	BOUND* border_neighbor = nullptr; // граничные узлы расчётной области
 
 	integer *ptr = nullptr; // Связь с теплопроводностью
 
@@ -2820,7 +2835,7 @@ typedef struct TFLOW {
 	doublereal *alpha = nullptr; // параметры нижней релаксации
 	equation3D **slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО.
 	equation3D_bon **slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
-									  // для реализации монотонизатора Рхи-Чоу требуется хранить диагональные коэффициенты.
+									  // для реализации монотонизатора Рхи-Чоу 1983 требуется хранить диагональные коэффициенты.
 	doublereal **diag_coef = nullptr;
 	doublereal OpTemp=0.0; // Operating Temperature
 
@@ -2829,11 +2844,11 @@ typedef struct TFLOW {
 	bool bPressureFix = false; // нужно ли фиксировать давление в одной точке
 	bool bLR1free=false; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
 
-				   // для полилинейного метода :
+				   // для полилинейного метода:
 				   // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
 				   // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
 				   // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
-				   // может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
+				   // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab 1992.
 
 	integer iWE=-1000, iSN = -1000, iBT = -1000; // число сеточных линий вдоль каждого из направлений.
 	integer** iN = nullptr; //iN[3][max3(iWE,iSN,iBT)];
@@ -2861,7 +2876,7 @@ typedef struct TFLOW {
 	// S инвариант тензора скоростей-деформаций
 	doublereal* SInvariantStrainRateTensor = nullptr; // [0..maxelm+maxbound-1]; // инициализируется нулём.
 
-												   // массовый поток через грани КО :
+												   // массовый поток через грани КО:
 	doublereal** mf = nullptr;
 
 	SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
@@ -2894,7 +2909,7 @@ typedef struct TUNION {
 	integer id=-1; // Уникальный номер объединения.
 
 				// Из кабинета юнион видится как Hollow блок
-				// в виде прмой прямоугольной призмы.
+				// в виде прямой прямоугольной призмы.
 				// размеры передаются из интерфейса.
 	doublereal xS=0.0, xE=0.0, yS=0.0, yE=0.0, zS=0.0, zE=0.0;
 
@@ -2934,10 +2949,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 	// Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 	// помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
-	// при повторном обращении идет обращение к ячейки хеш таблицы.
+	// при повторном обращении идет обращение к ячейки хеш-таблицы.
 	// 20mm ПТБШ ускорился с 1мин 9с до 53с за счет режима bFULL_AUTOMATIC.
-	// Хеш таблицы для automatic
-	// Инициализация хеш таблицы.
+	// Хеш-таблицы для automatic
+	// Инициализация хеш-таблицы.
 	for (integer i_1 = 0; i_1 < isize_shorter_hash; i_1++) {
 		bshorter_hash_X[i_1] = false;
 		bshorter_hash_Y[i_1] = false;
@@ -3053,15 +3068,15 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			case 1: bsnap_TO_global = 1;  break;
 			case 2: bsnap_TO_global = 2;  break;
 			case 3: bsnap_TO_global = 3;  break;
-			default : bsnap_TO_global = 1;  break;
+			default: bsnap_TO_global = 1;  break;
 			}
 			
 
 			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf(fp, "%d", &din);
 			if (din == 1) {
@@ -3261,7 +3276,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%d", &din);
 			my_amg_manager.maximum_delete_levels_Stress = din;
 
-			// type interpolation procedure :
+			// type interpolation procedure:
 			//fscanf(fp, "%d", &din);
 			//my_amg_manager.number_interpolation_procedure = din;
 
@@ -3320,7 +3335,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%f", &fin);
 			my_amg_manager.truncation_interpolation_Stress = fin;
 
-			// number nFinnest sweeps :
+			// number nFinnest sweeps:
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nFinnest_Temperature = din;
 			fscanf(fp, "%d", &din);
@@ -3340,7 +3355,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nu1_Stress = din;
 
-			// number postsweeps :
+			// number postsweeps:
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nu2_Temperature = din;
 			fscanf(fp, "%d", &din);
@@ -3350,7 +3365,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%d", &din);
 			my_amg_manager.nu2_Stress = din;
 
-			// memory size :
+			// memory size:
 			fscanf(fp, "%d", &din);
 			my_amg_manager.memory_size_Temperature = din;
 			fscanf(fp, "%d", &din);
@@ -3418,7 +3433,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
 			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
-			// strength threshold :
+			// strength threshold:
 			fscanf(fp, "%f", &fin);
 			my_amg_manager.theta_Temperature = fin;
 			fscanf(fp, "%f", &fin);
@@ -3428,7 +3443,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%f", &fin);
 			my_amg_manager.theta_Stress = fin;
 
-			// magic threshold :
+			// magic threshold:
 			//fscanf(fp, "%f", &fin);
 			//my_amg_manager.magic = fin;
 			// magic <=> F_to_F
@@ -3442,7 +3457,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.F_to_F_Stress = fin;
 
 			// AMG Splitting (coarsening)
-			// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+			// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			fscanf(fp, "%d", &din);
 			my_amg_manager.icoarseningTemp = din;
@@ -3455,8 +3470,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 			// Если din==1, Stabilization BiCGStab.
-			// 8.01.2017 Метод ван дер Ворста BiCGStab 
-			// предобусловленный алгебраичесеким многосеточным методом.
+			// 8.01.2017 Метод Хенка ван дер Ворста BiCGStab 1992. 
+			// предобусловленный алгебраическим многосеточным методом.
 			// 9.01.2018 Если din==2, FGMRes предобусловленный алгебраическим многосеточным методом.
 			fscanf(fp, "%d", &din);
 			my_amg_manager.istabilizationTemp = din; // 0 - none
@@ -3580,7 +3595,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf(fp, "%f", &fin);
 					matlist[i].arr_lam[i_4] = fin;
 				}
-				// ортотропность теплопроводности :
+				// ортотропность теплопроводности:
 				fscanf(fp, "%f", &fin);
 				matlist[i].orthotropy_multiplyer_x=fin;
 				fscanf(fp, "%f", &fin);
@@ -3598,7 +3613,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				Youngmodule = fin*1e9;
 				fscanf(fp, "%f", &fin);
 				matlist[i].beta_t_solid = fin*1E-6;
-				// Коэффициенты Лямэ.
+				// Коэффициенты Ламе.
 				doublereal E1_koef = Youngmodule / (1.0- Poissonratio*Poissonratio);
 				doublereal nu1_koef = Poissonratio / (1.0- Poissonratio);
 				matlist[i].mu_Lame = E1_koef/(2.0*(1.0+ nu1_koef));
@@ -4351,7 +4366,18 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 					fscanf(fp, "%d", &din);
 #endif
-					stabilization_amg1r5_algorithm = din;
+					switch (din) {
+					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+						break;
+					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+						break;
+					default:
+						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					}
+					 
 				}
 			}
 
@@ -4470,7 +4496,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					ilb_p++;
 
 					dpower += pdiss*vol;
-					//printf("ERROR : non zero power in cylinder object.\n");
+					//printf("ERROR: non zero power in cylinder object.\n");
 					//system("PAUSE");
 					//exit(1);
 				}
@@ -4483,7 +4509,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				if (pdiss > 0.0) {
 					ilb_p++;
-					printf("ERROR : non zero power in polygon object.\n");
+					printf("ERROR: non zero power in polygon object.\n");
 					system("PAUSE");
 					exit(1);
 				}
@@ -4640,10 +4666,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 			fscanf_s(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf_s(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf_s(fp, "%d", &din);
 			if (din == 1) {
@@ -4847,7 +4873,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.maximum_delete_levels_Stress = din;
 
-			// type interpolation procedure :
+			// type interpolation procedure:
 			//fscanf_s(fp, "%d", &din);
 			//my_amg_manager.number_interpolation_procedure = din;
 
@@ -4907,7 +4933,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%f", &fin);
 			my_amg_manager.truncation_interpolation_Stress = fin;
 
-			// number nFinnest sweeps :
+			// number nFinnest sweeps:
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.nFinnest_Temperature = din;
 			fscanf_s(fp, "%d", &din);
@@ -4927,7 +4953,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.nu1_Stress = din;
 
-			// number postsweeps :
+			// number postsweeps:
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.nu2_Temperature = din;
 			fscanf_s(fp, "%d", &din);
@@ -4937,7 +4963,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.nu2_Stress = din;
 
-			// memory size :
+			// memory size:
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.memory_size_Temperature = din;
 			fscanf_s(fp, "%d", &din);
@@ -5003,7 +5029,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
 			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
-			// strength threshold :
+			// strength threshold:
 			fscanf_s(fp, "%f", &fin);
 			my_amg_manager.theta_Temperature = fin;
 			fscanf_s(fp, "%f", &fin);
@@ -5013,7 +5039,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%f", &fin);
 			my_amg_manager.theta_Stress = fin;
 
-			// magic threshold :
+			// magic threshold:
 			//fscanf_s(fp, "%f", &fin);
 			//my_amg_manager.magic = fin;
 
@@ -5028,7 +5054,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.F_to_F_Stress = fin;
 
 			// AMG Splitting (coarsening)
-			// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+			// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.icoarseningTemp = din;
@@ -5041,8 +5067,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 			// Если din==1, Stabilization BiCGStab.
-			// 8.01.2017 Метод ван дер Ворста BiCGStab 
-			// предобусловленный алгебраичесеким многосеточным методом.
+			// 8.01.2017 Метод Хенка ван дер Ворста BiCGStab 1992.
+			// предобусловленный алгебраическим многосеточным методом.
 			// 9.01.2018 Если din==2, FGMRes предобусловленный алгебраическим многосеточным методом.
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.istabilizationTemp = din; // 0 - none
@@ -5167,7 +5193,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf_s(fp, "%f", &fin);
 					matlist[i].arr_lam[i_4] = fin;
 				}
-				// ортотропность теплопроводности :
+				// ортотропность теплопроводности:
 				fscanf_s(fp, "%f", &fin);
 				matlist[i].orthotropy_multiplyer_x = fin;
 				fscanf_s(fp, "%f", &fin);
@@ -5186,7 +5212,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				fscanf_s(fp, "%f", &fin);
 				// beta_t_solid*1E-6
 				matlist[i].beta_t_solid = fin * 1E-6;
-				// Коэффициенты Лямэ.
+				// Коэффициенты Ламе.
 				doublereal E1_koef = Youngmodule / (1.0 - Poissonratio * Poissonratio);
 				doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
 				matlist[i].mu_Lame = E1_koef / (2.0 * (1.0 + nu1_koef));
@@ -5958,7 +5984,18 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 					fscanf_s(fp, "%d", &din);
 #endif
-					stabilization_amg1r5_algorithm = (integer)(din);
+					switch (din) {
+					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+						break;
+					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+						break;
+					default:
+						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					}
+					
 
 				}
 			}
@@ -6013,7 +6050,7 @@ else
 		fscanf_s(fp, "%lld", &din);
 		lw = din;
 		fscanf_s(fp, "%lld", &din);
-		ltdp = din; // количество уникальных данных с табличными данными по зависимости расеиваемой мощности от температуры.
+		ltdp = din; // количество уникальных данных с табличными данными по зависимости рассеиваемой мощности от температуры.
 		
 
 					// Считываем значение вектора силы тяжести:
@@ -6080,10 +6117,10 @@ else
 		}
 
 		fscanf_s(fp, "%lld", &din);
-		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 		fscanf_s(fp, "%lld", &din);
-		iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+		iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 		fscanf_s(fp, "%lld", &din);
 		if (din == 1) {
@@ -6288,7 +6325,7 @@ else
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.maximum_delete_levels_Stress = din;
 
-		// type interpolation procedure :
+		// type interpolation procedure:
 		//fscanf_s(fp, "%d", &din);
 		//my_amg_manager.number_interpolation_procedure = din;
 
@@ -6347,7 +6384,7 @@ else
 		fscanf_s(fp, "%f", &fin);
 		my_amg_manager.truncation_interpolation_Stress = fin;
 
-		// number nFinnest sweeps :
+		// number nFinnest sweeps:
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.nFinnest_Temperature = din;
 		fscanf_s(fp, "%lld", &din);
@@ -6367,7 +6404,7 @@ else
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.nu1_Stress = din;
 
-		// number postsweeps :
+		// number postsweeps:
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.nu2_Temperature = din;
 		fscanf_s(fp, "%lld", &din);
@@ -6377,7 +6414,7 @@ else
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.nu2_Stress = din;
 
-		// memory size :
+		// memory size:
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.memory_size_Temperature = din;
 		fscanf_s(fp, "%lld", &din);
@@ -6444,7 +6481,7 @@ else
 		my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
 
-		// strength threshold :
+		// strength threshold:
 		fscanf_s(fp, "%f", &fin);
 		my_amg_manager.theta_Temperature = fin;
 		fscanf_s(fp, "%f", &fin);
@@ -6454,7 +6491,7 @@ else
 		fscanf_s(fp, "%f", &fin);
 		my_amg_manager.theta_Stress = fin;
 
-		// magic threshold :
+		// magic threshold:
 		//fscanf_s(fp, "%f", &fin);
 		//my_amg_manager.magic = fin;
 
@@ -6469,7 +6506,7 @@ else
 		my_amg_manager.F_to_F_Stress = fin;
 
 		// AMG Splitting (coarsening)
-		// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+		// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 		// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.icoarseningTemp = din;
@@ -6482,8 +6519,8 @@ else
 
 		// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 		// Если din==1, Stabilization BiCGStab.
-		// 8.01.2017 Метод ван дер Ворста BiCGStab 
-		// предобусловленный алгебраичесеким многосеточным методом.
+		// 8.01.2017 Метод Хенка ван дер Ворста BiCGStab 1992.
+		// предобусловленный алгебраическим многосеточным методом.
 		// 9.01.2018 Если din==2, FGMRes предобусловленный алгебраическим многосеточным методом.
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.istabilizationTemp = din; // 0 - none
@@ -6608,7 +6645,7 @@ else
 				fscanf_s(fp, "%f", &fin);
 				matlist[i].arr_lam[i_4] = fin;
 			}
-			// ортотропность теплопроводности :
+			// ортотропность теплопроводности:
 			fscanf_s(fp, "%f", &fin);
 			matlist[i].orthotropy_multiplyer_x = fin;
 			fscanf_s(fp, "%f", &fin);
@@ -6618,7 +6655,7 @@ else
 			// 5.08.2017.
 			// Коэффициенты для задачи упругости.
 			// Модуль Юнга и коэффициент Пуассона.
-			// Алюминий стр. 232 В.Н.Сидоров, В.В. Вершинин Метод конечных элементов в расчёте сооружений.
+			// Алюминий стр. 232 В.Н.Сидоров, В.В. Вершинин. Метод конечных элементов в расчёте сооружений.
 			//doublereal Poissonratio = 0.33;
 			//doublereal Youngmodule = 71.7e9;
 			// steel
@@ -6636,12 +6673,12 @@ else
 			fscanf_s(fp, "%f", &fin);
 			// beta_t_solid*1E-6
 			matlist[i].beta_t_solid = fin*1E-6;
-			// Коэффициенты Лямэ.
+			// Коэффициенты Ламе.
 			//doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
 			//doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
 			//matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
 			//matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef*nu1_koef);
-			// стр. 25 В.Н.Сидоров, В.В. Вершинин Метод конечных элементов в расчёте сооружений.
+			// стр. 25 В.Н.Сидоров, В.В. Вершинин. Метод конечных элементов в расчёте сооружений.
 			//+ 19.10.2018 проверено.
 			matlist[i].mu_Lame = Youngmodule / (2.0*(1.0+ Poissonratio));
 		    matlist[i].lambda_Lame = (Poissonratio*Youngmodule) / ((1.0+ Poissonratio)*(1.0-2.0*Poissonratio));
@@ -7584,7 +7621,17 @@ else
 #else
 				fscanf_s(fp, "%d", &din);
 #endif
-				stabilization_amg1r5_algorithm = (integer)(din);
+				switch (din) {
+				case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+					break;
+				case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+					break;
+				case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+					break;
+				default:
+					stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+					break;
+				}
 
 			}
 		}
@@ -7651,7 +7698,7 @@ else
 				// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 				// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 				switch (b[i_1].g.iPlane) {
-				case XY :
+				case XY:
 					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.Hcyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.R_out_cyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -7661,7 +7708,7 @@ else
 						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_in_cyl;
 					}
 					break;
-				case XZ :
+				case XZ:
 					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.Hcyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_out_cyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -7701,7 +7748,7 @@ else
 						dpower += pdiss*vol;
 						//printf("pdiss=%e vol=%e dpower=%e\n",pdiss, vol, dpower);
 						//system("pause");
-						//printf("ERROR : non zero power in cylinder object.\n");
+						//printf("ERROR: non zero power in cylinder object.\n");
 						//system("PAUSE");
 						//exit(1);
 					}
@@ -7714,7 +7761,7 @@ else
 					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 					if (pdiss > 0.0) {
 						ilb_p++;
-						printf("ERROR : non zero power in polygon object.\n");
+						printf("ERROR: non zero power in polygon object.\n");
 						system("PAUSE");
 						exit(1);
 					}
@@ -7792,7 +7839,7 @@ bool isname(char * name, char * pattern) {
 
 
 // Массив строк для ускорения обработки файлов.
-const integer ilimit_StringList = 1000000;
+const integer ilimit_StringList = 10000000;
 integer icurrentSize_StringList = 0;
 integer icurrent_position__StringList = 0;
 char ** StringList = new char*[ilimit_StringList];
@@ -7854,7 +7901,7 @@ void loadFromFile()
 
 						if (icurrentSize_StringList > ilimit_StringList) {
 							printf("Error!!! buffer StringList is overflow...\n");
-							printf("icurrentSize_StringList > ilimit_StringList==400K\n");
+							printf("icurrentSize_StringList > ilimit_StringList==4000K\n");
 							system("pause");
 							exit(1);
 						}
@@ -7909,7 +7956,7 @@ void freeStringList() {
 // анализирует строку символов buf длиной ilen.
 bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
 {
-	// состав анализируемой строки :
+	// состав анализируемой строки:
 	// ключевое слово, символ равенства, число без знака.
 	bool bfound = false;
 
@@ -7973,7 +8020,7 @@ bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
 // анализирует строку символов buf длиной ilen.
 bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
 {
-	// состав анализируемой строки :
+	// состав анализируемой строки:
 	// ключевое слово, символ равенства, число без знака.
 	bool bfound = false;
 
@@ -7998,7 +8045,7 @@ bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
 			i++;
 			name[i] = '\0'; // конец строки
 			//printf("%s \n", name); // debug
-			char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+			char* value = (char*)malloc(1024); // строка значение переменной с именем name
 			if (value != nullptr) {
 				i = inum + 1;
 				int j = 0;
@@ -8199,8 +8246,8 @@ bool fmakesource(const char* name0_const, double& fret)
 	strcpy_s(name0, (strlen(name0_const) + 1)*sizeof(char), name0_const);
 #endif
 
-
-	char* buf = (char*)malloc(1024); // строка буфер
+	const integer sizeN = 1024;
+	char* buf = (char*)malloc(sizeN); // строка буфер
 
 	bool bfound_loc = false;
 	double fret_loc = 0.0;
@@ -8231,8 +8278,22 @@ bool fmakesource(const char* name0_const, double& fret)
 				}
 				if (c == '\n') {
 					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
+					if (buf != nullptr) {
+						if (k < sizeN - 2) {
+					        buf[k++] = '\n';
+					        buf[k] = '\0';
+						}
+						else {
+							printf("size vector buf is greater %lld.\n", sizeN);
+							system("pause");
+							exit(1);
+						}
+					}
+					else {
+						printf("buf is nullptr pointer.\n");
+						system("pause");
+						exit(1);
+					}
 
 					//bfound_loc = false;
 					bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
@@ -8246,7 +8307,21 @@ bool fmakesource(const char* name0_const, double& fret)
 					break;
 				}
 				if (bbeginstring) {
-					buf[k++] = c;
+					if (buf != nullptr) {
+						if (k < sizeN - 1) {
+					        buf[k++] = c;
+						}
+						else {
+							printf("size vector buf is greater %lld.\n", sizeN);
+							system("pause");
+							exit(1);
+						}
+					}
+					else {
+						printf("buf is nullptr pointer.\n");
+						system("pause");
+						exit(1);
+					}
 					// printf("%c \n",c);
 				}
 			} // while
@@ -8271,8 +8346,22 @@ bool fmakesource(const char* name0_const, double& fret)
 					c = StringList[i_1][k];
 					if (c == '#') {
 						bbeginstring = false;
-						buf[k++] = '\n';
-						buf[k] = '\0';
+						if (buf != nullptr) {
+							if (k < sizeN - 2) {
+								buf[k++] = '\n';
+								buf[k] = '\0';
+							}
+							else {
+								printf("size vector buf is greater %lld.\n",sizeN);
+								system("pause");
+								exit(1);
+							}
+						}
+						else {
+							printf("buf is nullptr pointer.\n");
+							system("pause");
+							exit(1);
+						}
 						//bfound_loc = false;
 						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
 						if (bfound_loc) {
@@ -8286,8 +8375,23 @@ bool fmakesource(const char* name0_const, double& fret)
 					}
 					if (c == '\n') {
 						bbeginstring = false;
-						buf[k++] = '\n';
-						buf[k] = '\0';
+						if (buf != nullptr) {
+							if (k < sizeN - 2) {
+						       buf[k++] = '\n';
+					           buf[k] = '\0';
+							}
+							else {
+								printf("error!!! string length > %lld\n", sizeN);
+								system("pause");
+								exit(1);
+							}
+						}
+						else {
+							printf("error!!! string is nullptr \n");
+							system("pause");
+							exit(1);
+						}
+
 
 						//bfound_loc = false;
 						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
@@ -8301,7 +8405,19 @@ bool fmakesource(const char* name0_const, double& fret)
 						break;
 					}
 					if (bbeginstring) {
-						buf[k++] = c;
+						if (buf != nullptr) {
+							if (k < sizeN - 1) {
+								buf[k++] = c;
+							}
+							else {
+								printf("error!!! string length > %lld\n", sizeN);
+								system("pause");
+								exit(1);
+							}
+						}
+						else {
+							k++;
+						}
 						// printf("%c \n",c);
 					}
 				} // while
@@ -8415,7 +8531,7 @@ bool imakesource_old(char *name0, int &iret)
 
 // считывает данные из входного файла
 // premeshin.txt
-// реализовано 23 apr 2010.
+// реализовано 23 апреля 2010.
 // revised 21 августа 2019.
 bool fmakesource_old(char *name0, double &fret)
 {
@@ -8448,7 +8564,8 @@ bool fmakesource_old(char *name0, double &fret)
 			bool bbeginstring = true; // строка ещё не кончилась
 			bool b1 = true;
 			int k = 0;
-			char* buf = (char*)malloc(1024); // строка буфер
+			const integer sizeN = 1024;
+			char* buf = (char*)malloc(sizeN); // строка буфер
 			c = fgetc(fp); // читает один символ
 			buf[k++] = c;
 			bool bfound_loc = false;
@@ -8459,8 +8576,22 @@ bool fmakesource_old(char *name0, double &fret)
 				if (c == '#') bbeginstring = false;
 				if (c == '\n') {
 					bbeginstring = true;
-					buf[k++] = '\n';
-					buf[k] = '\0';
+					if (buf != nullptr) {
+						if (k < sizeN - 2) {
+					        buf[k++] = '\n';
+					        buf[k] = '\0';
+						}
+						else {
+							printf("size vector buf is greater %lld.\n", sizeN);
+							system("pause");
+							exit(1);
+						}
+					}
+					else {
+						printf("buf is nullptr pointer.\n");
+						system("pause");
+						exit(1);
+					}
 					//bfound_loc = false;
 					bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
 					if (bfound_loc) {
@@ -8474,14 +8605,42 @@ bool fmakesource_old(char *name0, double &fret)
 					k = 0;
 				}
 				if ((b1) && (bbeginstring == true)) {
-					buf[k++] = c;
+					if (buf != nullptr) {
+						if (k < sizeN - 1) {
+							buf[k++] = c;
+						}
+						else {
+							printf("size vector buf is greater %lld.\n", sizeN);
+							system("pause");
+							exit(1);
+						}
+					}
+					else {
+						printf("buf is nullptr pointer.\n");
+						system("pause");
+						exit(1);
+					}
 					// printf("%c \n",c);
 				}
 
 			}// while
 			if (!bfound) {
-				buf[k++] = '\n';
-				buf[k] = '\0';
+				if (buf != nullptr) {
+					if (k < sizeN - 2) {
+						buf[k++] = '\n';
+						buf[k] = '\0';
+					}
+					else {
+						printf("size vector buf is greater %lld.\n", sizeN);
+						system("pause");
+						exit(1);
+					}
+				}
+				else {
+					printf("buf is nullptr pointer.\n");
+					system("pause");
+					exit(1);
+				}
 				//bfound_loc = false;
 				bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
 				if (bfound_loc) {
@@ -8518,10 +8677,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 	// Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 	// помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
-	// при повторном обращении идет обращение к ячейки хеш таблицы.
+	// при повторном обращении идет обращение к ячейки хеш-таблицы.
 	// 20mm ПТБШ ускорился с 1мин 9с до 53с за счет режима bFULL_AUTOMATIC.
-	// Хеш таблицы для automatic
-	// Инициализация хеш таблицы.
+	// Хеш-таблицы для automatic
+	// Инициализация хеш-таблицы.
 	for (integer i_1 = 0; i_1 < isize_shorter_hash; i_1++) {
 		bshorter_hash_X[i_1] = false;
 		bshorter_hash_Y[i_1] = false;
@@ -8676,7 +8835,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							ilb_p++;
 
 							dpower += pdiss * vol;
-							//printf("ERROR : non zero power in cylinder object.\n");
+							//printf("ERROR: non zero power in cylinder object.\n");
 							//system("PAUSE");
 							//exit(1);
 						}
@@ -8691,7 +8850,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 						if (pdiss > 0.0) {
 							ilb_p++;
-							printf("ERROR : non zero power in polygon object.\n");
+							printf("ERROR: non zero power in polygon object.\n");
 							system("PAUSE");
 							exit(1);
 						}
@@ -9173,7 +9332,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+			// Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 			if (imakesource("SolverSetting", idin)) {
 				// Найдено успешно.
 				if ((idin >= 0) && (idin < 14)) {
@@ -9197,7 +9356,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			 
-			// Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+			// Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 			if (imakesource("StaticStructuralSolverSetting", idin)) {
 				// Найдено успешно.
 				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
@@ -9663,7 +9822,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								system("pause");
 								exit(1);
 							}
-							// m - множитель на который домнажается значение тепловой мощности на данном шаге по времени. 
+							// m - множитель на который домножается значение тепловой мощности на данном шаге по времени. 
 #ifdef MINGW_COMPILLER
 							fscanf(fp_piecewise_const, "%f", &fin_piecewise_const);
 #else
@@ -9765,7 +9924,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! amg_manager_sorting_alg not found in file premeshin.txt\n");
-				my_amg_manager.imySortAlgorithm = 0; // Counting Sort Саусвела.
+				my_amg_manager.imySortAlgorithm = 0; // Counting Sort Х.Г. Сьювард 1954г.
 				printf("my_amg_manager.imySortAlgorithm =%lld\n", my_amg_manager.imySortAlgorithm);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -9818,7 +9977,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// type interpolation procedure :			
+			// type interpolation procedure:			
 			if (imakesource("interpolation", idin)) {
 				// Найдено успешно.
 				my_amg_manager.number_interpolation_procedure_Temperature = (integer)(idin);
@@ -10163,7 +10322,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// number nFinnest sweeps :
+			// number nFinnest sweeps:
 			if (imakesource("nFinnest", idin)) {
 				// Найдено успешно.
 				my_amg_manager.nFinnest_Temperature = (integer)(idin);
@@ -10261,7 +10420,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// number postsweeps :
+			// number postsweeps:
 			if (imakesource("numberpostsweeps", idin)) {
 				// Найдено успешно.
 				my_amg_manager.nu2_Temperature = (integer)(idin);
@@ -10311,7 +10470,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 
-			// memory size :
+			// memory size:
 		    if (imakesource("memorysize", idin)) {
 				// Найдено успешно.
 				my_amg_manager.memory_size_Temperature = (integer)(idin);
@@ -10472,7 +10631,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
 
-			// strength threshold :
+			// strength threshold:
 			
 			if (fmakesource("threshold", fin)) {
 				// Найдено успешно.
@@ -10547,7 +10706,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
-			// magic threshold :
+			// magic threshold:
 			// magic <=> F_to_F
 			if (fmakesource("magicT", fin)) {
 				// Найдено успешно.
@@ -10623,7 +10782,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			// AMG Splitting (coarsening)
-			// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
+			// Способ построения C/F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			if (imakesource("coarseningTemp", idin)) {
 				// Найдено успешно.
@@ -10632,7 +10791,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! coarseningTemp not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningTemp = 0; // 0 - standart, 1 - RS 2.
+				my_amg_manager.icoarseningTemp = 2; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 				printf("my_amg_manager.icoarseningTemp =%lld\n", my_amg_manager.icoarseningTemp);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -10644,7 +10803,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! coarseningSpeed not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningSpeed = 0; // 0 - standart, 1 - RS 2.
+				my_amg_manager.icoarseningSpeed = 0; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 				printf("my_amg_manager.icoarseningSpeed =%lld\n", my_amg_manager.icoarseningSpeed);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -10656,7 +10815,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! coarseningPressure not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningPressure = 0; // 0 - standart, 1 - RS 2.
+				my_amg_manager.icoarseningPressure = 0; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 				printf("my_amg_manager.icoarseningPressure =%lld\n", my_amg_manager.icoarseningPressure);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -10668,15 +10827,15 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! coarseningStress not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningStress = 0; // 0 - standart, 1 - RS 2.
+				my_amg_manager.icoarseningStress = 0; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 				printf("my_amg_manager.icoarseningStress =%lld\n", my_amg_manager.icoarseningStress);
 				if (bSTOP_Reading) system("pause");
 			}
 
 			// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 			// Если din==1, Stabilization BiCGStab.
-			// 8.01.2017 Метод ван дер Ворста BiCGStab 
-			// предобусловленный алгебраичесеким многосеточным методом.
+			// 8.01.2017 Метод Хенка ван дер Ворста BiCGStab 1992
+			// предобусловленный алгебраическим многосеточным методом.
 			// 9.01.2018 Если din==2, FGMRes предобусловленный алгебраическим многосеточным методом.
 			if (imakesource("StabilizationTemp", idin)) {
 				// Найдено успешно.
@@ -10884,12 +11043,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("my_amg_manager.amgcl_selector must be 0<= value <=1. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (analog amg1r5); 1 - smoother aggregation.
+					my_amg_manager.amgcl_selector = 1; // 0 - John W. Ruge и K. Stueben (analog amg1r5); 1 - smoother aggregation.
 				}
 			}
 			else {
 				printf("WARNING!!! amgcl_selector not found in file premeshin.txt\n");
-				my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (analog amg1r5); 1 - smoother aggregation.
+				my_amg_manager.amgcl_selector = 1; // 0 - John W. Ruge и K. Stueben  (analog amg1r5); 1 - smoother aggregation.
 				printf("my_amg_manager.amgcl_selector =%lld\n", my_amg_manager.amgcl_selector);
 				printf(" 0 - Ruge-Stueben (analog amg1r5); 1 - smoother aggregation. \n");
 				if (bSTOP_Reading) system("pause");
@@ -10980,6 +11139,14 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			matlist = new TPROP[lmatmax];
 			if (b == nullptr) {
 				b = new BLOCK[lb];
+				for (integer i_7 = 0; i_7 < lb; i_7++) {
+					b[i_7].temp_Sc = nullptr;
+					b[i_7].arr_Sc = nullptr;
+					b[i_7].g.hi = nullptr;
+					b[i_7].g.xi = nullptr;
+					b[i_7].g.yi = nullptr;
+					b[i_7].g.zi = nullptr;
+				}
 			}
 			else {
 				for (integer i_7 = 0; i_7 < lb; i_7++) {
@@ -11010,21 +11177,29 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 				delete[] b;
 				b = new BLOCK[lb];
+				for (integer i_7 = 0; i_7 < lb; i_7++) {
+					b[i_7].temp_Sc = nullptr;
+					b[i_7].arr_Sc = nullptr;
+					b[i_7].g.hi = nullptr;
+					b[i_7].g.xi = nullptr;
+					b[i_7].g.yi = nullptr;
+					b[i_7].g.zi = nullptr;
+				}
 			}
-			if (s == nullptr) {
-				s = new SOURCE[ls];
-			}
-			else {
+			//if (s == nullptr) {
+				//s = new SOURCE[ls];
+			//}
+			//else {
 				delete[] s;
 				s = new SOURCE[ls];
-			}
-			if (w == nullptr) {
-				w = new WALL[lw];
-			}
-			else {
+			//}
+			//if (w == nullptr) {
+				//w = new WALL[lw];
+			//}
+			//else {
 				delete[] w;
 				w = new WALL[lw];
-			}
+			//}
 			int i = 0; // счётчик цикла for
 
 			for (i = 0; i < ltdp; i++) {
@@ -11219,7 +11394,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (bSTOP_Reading) system("pause");
 					}
 				}
-				// ортотропность теплопроводности :
+				// ортотропность теплопроводности:
 				name0[0] = '\0'; strcat_s(name0, "matherial");
 				buffer[0] = '\0';
 				_itoa_s(i, buffer, 10);
@@ -11337,12 +11512,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					printf(" matlist[%d].beta_t_solid =%e\n", i, matlist[i].beta_t_solid);
 					if (bSTOP_Reading) system("pause");
 				}
-				// Коэффициенты Лямэ.
+				// Коэффициенты Ламе.
 				//doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
 				//doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
 				//matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
 				//matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef*nu1_koef);
-				// стр. 25 В.Н.Сидоров, В.В. Вершинин Метод конечных элементов в расчёте сооружений.
+				// стр. 25 В.Н.Сидоров, В.В. Вершинин. Метод конечных элементов в расчёте сооружений.
 				//+ 19.10.2018 проверено.
 				matlist[i].mu_Lame = Youngmodule / (2.0*(1.0 + Poissonratio));
 				matlist[i].lambda_Lame = (Poissonratio*Youngmodule) / ((1.0 + Poissonratio)*(1.0 - 2.0*Poissonratio));
@@ -11877,7 +12052,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.zS = b[i].g.zC;
 						b[i].g.zE = b[i].g.zC + b[i].g.Hcyl;
 						break;
-					case XZ :
+					case XZ:
 						b[i].g.xS = b[i].g.xC - b[i].g.R_out_cyl;
 						b[i].g.xE = b[i].g.xC + b[i].g.R_out_cyl;
 						b[i].g.zS = b[i].g.zC - b[i].g.R_out_cyl;
@@ -11938,6 +12113,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 				//printf("nsizei=%d\n", b[i].g.nsizei);
 #endif			
+				delete[] b[i].g.hi;
+				delete[] b[i].g.xi;
+				delete[] b[i].g.yi;
+				delete[] b[i].g.zi;
 				b[i].g.hi = new doublereal[b[i].g.nsizei];
 				b[i].g.xi = new doublereal[b[i].g.nsizei];
 				b[i].g.yi = new doublereal[b[i].g.nsizei];
@@ -12275,8 +12454,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (bSTOP_Reading) system("pause");
 				}
 
-				b[i].arr_Sc = nullptr;
-				b[i].temp_Sc = nullptr;
+				//b[i].arr_Sc = nullptr;
+				//b[i].temp_Sc = nullptr;
+				delete[] b[i].arr_Sc;
+				delete[] b[i].temp_Sc;
 				b[i].arr_Sc = new doublereal[b[i].n_Sc];
 				b[i].temp_Sc = new doublereal[b[i].n_Sc];
 				if (b[i].temp_Sc == nullptr) {
@@ -13275,7 +13456,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					my_union[i].id = i+1; // Уникальный идентификатор АССЕМБЛЕСА.
+					my_union[i].id = (integer)(i+1); // Уникальный идентификатор АССЕМБЛЕСА.
 					printf(" my_union[%d].id=%lld\n",i, my_union[i].id);
 					if (bSTOP_Reading) system("pause");
 				}
@@ -13870,13 +14051,23 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				
 				if (imakesource("stabilization_amg1r5_algorithm", idin)) {
 					// Найдено успешно.
-					stabilization_amg1r5_algorithm = (integer)(idin);
-					//printf(" stabilization_amg1r5_algorithm=%lld\n",stabilization_amg1r5_algorithm );
+					switch (idin) {
+					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+						break;
+					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+						break;
+					default:
+						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						break;
+					}
+					//printf(" stabilization_amg1r5_algorithm=%lld\n",din );
 				}
 				else {
 					printf("WARNING!!! stabilization_amg1r5_algorithm not found in file premeshin.txt\n");
-					stabilization_amg1r5_algorithm = 1; // default BiCGStab+amg1r5.
-					printf(" stabilization_amg1r5_algorithm=%lld\n", stabilization_amg1r5_algorithm);
+					stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5; // default BiCGStab+amg1r5.
+					printf(" stabilization_amg1r5_algorithm= BiCGStab_plus_amg1r5\n");
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14101,8 +14292,8 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							if (b[i_1].n_Sc > 0) {
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								doublereal vol = 0.0;
-								const doublereal MPI0 = 3.1415926;
-								vol = b[i_1].g.Hcyl*MPI0*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
+								//const doublereal MPI0 = 3.1415926; // M_PI constant math.h
+								vol = b[i_1].g.Hcyl*M_PI*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
 								if (vol < 1.0e-40) {
 									printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
 									system("PAUSE");
@@ -14114,7 +14305,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 									dpower += pdiss * vol;
 									//printf("Cylinder id==%lld pdiss=%e vol=%e dpower=%e\n", i_1, pdiss, vol, dpower);
 									//system("pause");
-									//printf("ERROR : non zero power in cylinder object.\n");
+									//printf("ERROR: non zero power in cylinder object.\n");
 									//system("PAUSE");
 									//exit(1);
 								}
@@ -14129,7 +14320,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								if (pdiss > 0.0) {
 									ilb_p++;
-									printf("ERROR : non zero power in polygon object.\n");
+									printf("ERROR: non zero power in polygon object.\n");
 									system("PAUSE");
 									exit(1);
 								}

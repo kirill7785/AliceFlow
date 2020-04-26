@@ -36,7 +36,7 @@
 // в двухслойной модели на основе стандартной k-epsilon модели.
 void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	integer iP,
-	BOUND* sosedb,
+	BOUND* border_neighbor,
 	integer lw,
 	integer ls,
 	equation3D** &sl,
@@ -53,7 +53,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	doublereal** prop,
 	doublereal** prop_b,
 	integer maxelm,
-	ALICE_PARTITION** sosedi,
+	ALICE_PARTITION** neighbors_for_the_internal_node,
 	//doublereal* alpha,
 	//doublereal dgx,
 	//doublereal dgy,
@@ -81,8 +81,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iE = iE; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iN = iN; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iT = iT;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iS = iS; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iW = iW; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iB = iB;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iP = iP;
@@ -95,12 +95,12 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 
 										  // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iE2 = iE2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iN2 = iN2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iT2 = iT2;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iS2 = iS2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iW2 = iW2; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].iB2 = iB2;
@@ -143,8 +143,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab4 = 0.0;
 
 
-	// Признак прсутствия связи.
-	// От булевых флагов можно избавиться в целях экономии памяти ЭВМ.
+	// Признак присутствия связи.
+	// От булевых флагов можно избавиться в целях экономии оперативной памяти ЭВМ.
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].bE2 = false; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].bW2 = false; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].bS2 = false;
 	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].bN2 = false; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].bB2 = false; sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].bT2 = false;
 
@@ -598,7 +598,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 
 	/*
 	Особенности реализации:
-	По видимому интерполляция Рхи-Чоу скорости на грани КО
+	По видимому интерполяция Рхи-Чоу скорости на грани КО
 	должна быть применена и в уравнениях для компонент скорости.
 	Она действительно должна быть применена для вычисления потоков на грани контрольного объёма
 	в уравнениях сохранения импульса, теплопроводности и турбулентных характеристик т.к. её применение
@@ -607,16 +607,16 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	только в уравнении сохранения импульса и теплопроводности. для поправки давления применять обязательно
 	следует иначе возникнут шахматные осцилляции) но потоки массы не будут удовлетворять уравнению неразрывности
 	и следовательно решение будет неверным.
-	Особенностью реализации интерполляции является то что она запоминается, а
+	Особенностью реализации интерполяции является то что она запоминается, а
 	не вычисляется каждый раз. Она вычисляется после процедуры корректировки скорости один раз на основе
-	скоректированной скорости и давления. При вычислении требуются диагональные коэффициенты в
+	скорректированной скорости и давления. При вычислении требуются диагональные коэффициенты в
 	уравнениях для компонент скорости. Они берутся с прошлой итерации алгоритма
 	SIMPLE (на момент непосредственного вычисления потоков коэффициенты берутся с текущей итерации, но
 	дело в том что потом мы на следующей итерации используем вычисленные ранее потоки массы (которые были запомнены в памяти)
-	и поэтому говорим что диагональные коэффициенты беруться с предыдущей итерации).
+	и поэтому говорим что диагональные коэффициенты берутся с предыдущей итерации).
 	требуется всеобъемлющая проверка... TODO
 	Особенно должна обрабатываться первая итерация, т.к. на ней диагональные коэффициенты
-	для всех точек ещё не посчитаны. Поэтому предлагается включать интерполляцию Рхи-Чоу только
+	для всех точек ещё не посчитаны. Поэтому предлагается включать интерполяцию Рхи-Чоу только
 	со второй итерации алгоритма SIMPLE. На первой итерации стационарного солвера используется
 	массовый поток полученный простой линейной интерполяцией скорости.
 	*/
@@ -659,7 +659,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iE > -1) {
 			if (bE) {
 				// граничный узел.
-				Fe = mf[iP][ESIDE] * (sosedb[iE - maxelm].dS / (dy*dz));
+				Fe = mf[iP][ESIDE] * (border_neighbor[iE - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -676,7 +676,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iW > -1) {
 			if (bW) {
 				// граничный узел.
-				Fw = mf[iP][WSIDE] * (sosedb[iW - maxelm].dS / (dy*dz));
+				Fw = mf[iP][WSIDE] * (border_neighbor[iW - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -693,7 +693,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iN > -1) {
 			if (bN) {
 				// граничный узел.
-				Fn = mf[iP][NSIDE] * (sosedb[iN - maxelm].dS / (dx*dz));
+				Fn = mf[iP][NSIDE] * (border_neighbor[iN - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -710,7 +710,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iS > -1) {
 			if (bS) {
 				// граничный узел.
-				Fs = mf[iP][SSIDE] * (sosedb[iS - maxelm].dS / (dx*dz));
+				Fs = mf[iP][SSIDE] * (border_neighbor[iS - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -727,7 +727,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iT > -1) {
 			if (bT) {
 				// граничный узел.
-				Ft = mf[iP][TSIDE] * (sosedb[iT - maxelm].dS / (dx*dy));
+				Ft = mf[iP][TSIDE] * (border_neighbor[iT - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -744,7 +744,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iB > -1) {
 			if (bB) {
 				// граничный узел.
-				Fb = mf[iP][BSIDE] * (sosedb[iB - maxelm].dS / (dx*dy));
+				Fb = mf[iP][BSIDE] * (border_neighbor[iB - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -761,7 +761,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iE2 > -1) {
 			if (bE2) {
 				// граничный узел.
-				Fe2 = mf[iP][ESIDE] * (sosedb[iE2 - maxelm].dS / (dy*dz));
+				Fe2 = mf[iP][ESIDE] * (border_neighbor[iE2 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -778,7 +778,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iW2 > -1) {
 			if (bW2) {
 				// граничный узел.
-				Fw2 = mf[iP][WSIDE] * (sosedb[iW2 - maxelm].dS / (dy*dz));
+				Fw2 = mf[iP][WSIDE] * (border_neighbor[iW2 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
@@ -795,7 +795,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iN2 > -1) {
 			if (bN2) {
 				// граничный узел.
-				Fn2 = mf[iP][NSIDE] * (sosedb[iN2 - maxelm].dS / (dx*dz));
+				Fn2 = mf[iP][NSIDE] * (border_neighbor[iN2 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -812,7 +812,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iS2 > -1) {
 			if (bS2) {
 				// граничный узел.
-				Fs2 = mf[iP][SSIDE] * (sosedb[iS2 - maxelm].dS / (dx*dz));
+				Fs2 = mf[iP][SSIDE] * (border_neighbor[iS2 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -829,7 +829,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iT2 > -1) {
 			if (bT2) {
 				// граничный узел.
-				Ft2 = mf[iP][TSIDE] * (sosedb[iT2 - maxelm].dS / (dx*dy));
+				Ft2 = mf[iP][TSIDE] * (border_neighbor[iT2 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -846,7 +846,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iB2 > -1) {
 			if (bB2) {
 				// граничный узел.
-				Fb2 = mf[iP][BSIDE] * (sosedb[iB2 - maxelm].dS / (dx*dy));
+				Fb2 = mf[iP][BSIDE] * (border_neighbor[iB2 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -864,7 +864,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iE3 > -1) {
 			if (bE3) {
 				// граничный узел.
-				Fe3 = mf[iP][ESIDE] * (sosedb[iE3 - maxelm].dS / (dy*dz));
+				Fe3 = mf[iP][ESIDE] * (border_neighbor[iE3 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -881,7 +881,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iW3 > -1) {
 			if (bW3) {
 				// граничный узел.
-				Fw3 = mf[iP][WSIDE] * (sosedb[iW3 - maxelm].dS / (dy*dz));
+				Fw3 = mf[iP][WSIDE] * (border_neighbor[iW3 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -898,7 +898,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iN3 > -1) {
 			if (bN3) {
 				// граничный узел.
-				Fn3 = mf[iP][NSIDE] * (sosedb[iN3 - maxelm].dS / (dx*dz));
+				Fn3 = mf[iP][NSIDE] * (border_neighbor[iN3 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -915,7 +915,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iS3 > -1) {
 			if (bS3) {
 				// граничный узел.
-				Fs3 = mf[iP][SSIDE] * (sosedb[iS3 - maxelm].dS / (dx*dz));
+				Fs3 = mf[iP][SSIDE] * (border_neighbor[iS3 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -932,7 +932,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iT3 > -1) {
 			if (bT3) {
 				// граничный узел.
-				Ft3 = mf[iP][TSIDE] * (sosedb[iT3 - maxelm].dS / (dx*dy));
+				Ft3 = mf[iP][TSIDE] * (border_neighbor[iT3 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -949,7 +949,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iB3 > -1) {
 			if (bB3) {
 				// граничный узел.
-				Fb3 = mf[iP][BSIDE] * (sosedb[iB3 - maxelm].dS / (dx*dy));
+				Fb3 = mf[iP][BSIDE] * (border_neighbor[iB3 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -966,7 +966,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iE4 > -1) {
 			if (bE4) {
 				// граничный узел.
-				Fe4 = mf[iP][ESIDE] * (sosedb[iE4 - maxelm].dS / (dy*dz));
+				Fe4 = mf[iP][ESIDE] * (border_neighbor[iE4 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -983,7 +983,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iW4 > -1) {
 			if (bW4) {
 				// граничный узел.
-				Fw4 = mf[iP][WSIDE] * (sosedb[iW4 - maxelm].dS / (dy*dz));
+				Fw4 = mf[iP][WSIDE] * (border_neighbor[iW4 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -1000,7 +1000,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iN4 > -1) {
 			if (bN4) {
 				// граничный узел.
-				Fn4 = mf[iP][NSIDE] * (sosedb[iN4 - maxelm].dS / (dx*dz));
+				Fn4 = mf[iP][NSIDE] * (border_neighbor[iN4 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -1017,7 +1017,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iS4 > -1) {
 			if (bS4) {
 				// граничный узел.
-				Fs4 = mf[iP][SSIDE] * (sosedb[iS4 - maxelm].dS / (dx*dz));
+				Fs4 = mf[iP][SSIDE] * (border_neighbor[iS4 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -1034,7 +1034,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iT4 > -1) {
 			if (bT4) {
 				// граничный узел.
-				Ft4 = mf[iP][TSIDE] * (sosedb[iT4 - maxelm].dS / (dx*dy));
+				Ft4 = mf[iP][TSIDE] * (border_neighbor[iT4 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -1051,7 +1051,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		if (iB4 > -1) {
 			if (bB4) {
 				// граничный узел.
-				Fb4 = mf[iP][BSIDE] * (sosedb[iB4 - maxelm].dS / (dx*dy));
+				Fb4 = mf[iP][BSIDE] * (border_neighbor[iB4 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -1257,7 +1257,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iE > -1) {
 		if (bE) {
 			// граничный узел.
-			De = Ge * sosedb[iE - maxelm].dS / dxe;
+			De = Ge * border_neighbor[iE - maxelm].dS / dxe;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -1265,7 +1265,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De = Ge * dy_loc*dz_loc / dxe;
@@ -1276,7 +1276,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iW > -1) {
 		if (bW) {
 			// граничный узел
-			Dw = Gw * sosedb[iW - maxelm].dS / dxw;
+			Dw = Gw * border_neighbor[iW - maxelm].dS / dxw;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -1284,7 +1284,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw = Gw * dy_loc*dz_loc / dxw;
@@ -1295,7 +1295,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iN > -1) {
 		if (bN) {
 			// граничный узел.
-			Dn = Gn * sosedb[iN - maxelm].dS / dyn;
+			Dn = Gn * border_neighbor[iN - maxelm].dS / dyn;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -1303,7 +1303,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn = Gn * dx_loc*dz_loc / dyn;
@@ -1313,7 +1313,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iS > -1) {
 		if (bS) {
 			// граничный узел
-			Ds = Gs * sosedb[iS - maxelm].dS / dys;
+			Ds = Gs * border_neighbor[iS - maxelm].dS / dys;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -1321,7 +1321,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds = Gs * dx_loc*dz_loc / dys;
@@ -1331,7 +1331,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iT > -1) {
 		if (bT) {
 			// граничный узел.
-			Dt = Gt * sosedb[iT - maxelm].dS / dzt;
+			Dt = Gt * border_neighbor[iT - maxelm].dS / dzt;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -1339,7 +1339,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt = Gt * dx_loc*dy_loc / dzt;
@@ -1351,7 +1351,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iB > -1) {
 		if (bB) {
 			// граничный узел
-			Db = Gb * sosedb[iB - maxelm].dS / dzb;
+			Db = Gb * border_neighbor[iB - maxelm].dS / dzb;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -1359,7 +1359,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db = Gb * dx_loc*dy_loc / dzb;
@@ -1374,7 +1374,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iE2 > -1) {
 		if (bE2) {
 			// граничный узел.
-			De2 = Ge2 * sosedb[iE2 - maxelm].dS / dxe2;
+			De2 = Ge2 * border_neighbor[iE2 - maxelm].dS / dxe2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -1382,7 +1382,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De2 = Ge2 * dy_loc*dz_loc / dxe2;
@@ -1393,7 +1393,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iW2 > -1) {
 		if (bW2) {
 			// граничный узел
-			Dw2 = Gw2 * sosedb[iW2 - maxelm].dS / dxw2;
+			Dw2 = Gw2 * border_neighbor[iW2 - maxelm].dS / dxw2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
@@ -1401,7 +1401,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw2 = Gw2 * dy_loc*dz_loc / dxw2;
@@ -1412,7 +1412,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iN2 > -1) {
 		if (bN2) {
 			// граничный узел.
-			Dn2 = Gn2 * sosedb[iN2 - maxelm].dS / dyn2;
+			Dn2 = Gn2 * border_neighbor[iN2 - maxelm].dS / dyn2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -1420,7 +1420,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn2 = Gn2 * dx_loc*dz_loc / dyn2;
@@ -1430,7 +1430,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iS2 > -1) {
 		if (bS2) {
 			// граничный узел
-			Ds2 = Gs2 * sosedb[iS2 - maxelm].dS / dys2;
+			Ds2 = Gs2 * border_neighbor[iS2 - maxelm].dS / dys2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -1438,7 +1438,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds2 = Gs2 * dx_loc*dz_loc / dys2;
@@ -1448,7 +1448,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iT2 > -1) {
 		if (bT2) {
 			// граничный узел.
-			Dt2 = Gt2 * sosedb[iT2 - maxelm].dS / dzt2;
+			Dt2 = Gt2 * border_neighbor[iT2 - maxelm].dS / dzt2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -1456,7 +1456,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt2 = Gt2 * dx_loc*dy_loc / dzt2;
@@ -1468,7 +1468,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iB2 > -1) {
 		if (bB2) {
 			// граничный узел
-			Db2 = Gb2 * sosedb[iB2 - maxelm].dS / dzb2;
+			Db2 = Gb2 * border_neighbor[iB2 - maxelm].dS / dzb2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -1476,7 +1476,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db2 = Gb2 * dx_loc*dy_loc / dzb2;
@@ -1491,7 +1491,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iE3 > -1) {
 		if (bE3) {
 			// граничный узел.
-			De3 = Ge3 * sosedb[iE3 - maxelm].dS / dxe3;
+			De3 = Ge3 * border_neighbor[iE3 - maxelm].dS / dxe3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -1499,7 +1499,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De3 = Ge3 * dy_loc*dz_loc / dxe3;
@@ -1510,7 +1510,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iW3 > -1) {
 		if (bW3) {
 			// граничный узел
-			Dw3 = Gw3 * sosedb[iW3 - maxelm].dS / dxw3;
+			Dw3 = Gw3 * border_neighbor[iW3 - maxelm].dS / dxw3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -1518,7 +1518,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw3 = Gw3 * dy_loc*dz_loc / dxw3;
@@ -1529,7 +1529,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iN3 > -1) {
 		if (bN3) {
 			// граничный узел.
-			Dn3 = Gn3 * sosedb[iN3 - maxelm].dS / dyn3;
+			Dn3 = Gn3 * border_neighbor[iN3 - maxelm].dS / dyn3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -1537,7 +1537,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn3 = Gn3 * dx_loc*dz_loc / dyn3;
@@ -1547,7 +1547,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iS3 > -1) {
 		if (bS3) {
 			// граничный узел
-			Ds3 = Gs3 * sosedb[iS3 - maxelm].dS / dys3;
+			Ds3 = Gs3 * border_neighbor[iS3 - maxelm].dS / dys3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -1555,7 +1555,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds3 = Gs3 * dx_loc*dz_loc / dys3;
@@ -1565,7 +1565,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iT3 > -1) {
 		if (bT3) {
 			// граничный узел.
-			Dt3 = Gt3 * sosedb[iT3 - maxelm].dS / dzt3;
+			Dt3 = Gt3 * border_neighbor[iT3 - maxelm].dS / dzt3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -1573,7 +1573,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt3 = Gt3 * dx_loc*dy_loc / dzt3;
@@ -1585,7 +1585,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iB3 > -1) {
 		if (bB3) {
 			// граничный узел
-			Db3 = Gb3 * sosedb[iB3 - maxelm].dS / dzb3;
+			Db3 = Gb3 * border_neighbor[iB3 - maxelm].dS / dzb3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -1593,7 +1593,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db3 = Gb3 * dx_loc*dy_loc / dzb3;
@@ -1608,7 +1608,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iE4 > -1) {
 		if (bE4) {
 			// граничный узел.
-			De4 = Ge4 * sosedb[iE4 - maxelm].dS / dxe4;
+			De4 = Ge4 * border_neighbor[iE4 - maxelm].dS / dxe4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -1616,7 +1616,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De4 = Ge4 * dy_loc*dz_loc / dxe4;
@@ -1627,7 +1627,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iW4 > -1) {
 		if (bW4) {
 			// граничный узел
-			Dw4 = Gw4 * sosedb[iW4 - maxelm].dS / dxw4;
+			Dw4 = Gw4 * border_neighbor[iW4 - maxelm].dS / dxw4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -1635,7 +1635,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw4 = Gw4 * dy_loc*dz_loc / dxw4;
@@ -1646,7 +1646,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iN4 > -1) {
 		if (bN4) {
 			// граничный узел.
-			Dn4 = Gn4 * sosedb[iN4 - maxelm].dS / dyn4;
+			Dn4 = Gn4 * border_neighbor[iN4 - maxelm].dS / dyn4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -1654,7 +1654,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn4 = Gn4 * dx_loc*dz_loc / dyn4;
@@ -1664,7 +1664,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iS4 > -1) {
 		if (bS4) {
 			// граничный узел
-			Ds4 = Gs4 * sosedb[iS4 - maxelm].dS / dys4;
+			Ds4 = Gs4 * border_neighbor[iS4 - maxelm].dS / dys4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -1672,7 +1672,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds4 = Gs4 * dx_loc*dz_loc / dys4;
@@ -1682,7 +1682,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iT4 > -1) {
 		if (bT4) {
 			// граничный узел.
-			Dt4 = Gt4 * sosedb[iT4 - maxelm].dS / dzt4;
+			Dt4 = Gt4 * border_neighbor[iT4 - maxelm].dS / dzt4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -1690,7 +1690,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt4 = Gt4 * dx_loc*dy_loc / dzt4;
@@ -1702,7 +1702,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (iB4 > -1) {
 		if (bB4) {
 			// граничный узел
-			Db4 = Gb4 * sosedb[iB4 - maxelm].dS / dzb4;
+			Db4 = Gb4 * border_neighbor[iB4 - maxelm].dS / dzb4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -1710,7 +1710,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db4 = Gb4 * dx_loc*dy_loc / dzb4;
@@ -1718,7 +1718,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		}
 	}
 
-	// Принудительно выполняем правила Патанкара.
+	// Принудительно выполняем правила С. Патанкара.
 	De = fmax(De, 0.0);
 	Dw = fmax(Dw, 0.0);
 	Dn = fmax(Dn, 0.0);
@@ -1873,7 +1873,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	if (ishconvection < distsheme) {
 
 		if (1) {
-			// Оставил как единственно верное и рекомендованное в литератре 7.05.2017. 
+			// Оставил как единственно верное и рекомендованное в литературе 7.05.2017. 
 			if (b_on_adaptive_local_refinement_mesh) {
 				// Вычисление коэффициентов дискретного аналога:
 				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
@@ -1922,14 +1922,14 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		}
 		else
 		{
-			// написано на замену вышезакоментированного 25 июля 2015.
+			// написано на замену вышезакомментированного 25 июля 2015.
 			if (!bE) {
 				sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 			}
 			else {
 				integer inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fabs(Fe);
 				}
@@ -1942,8 +1942,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fabs(Fw);
 				}
@@ -1956,8 +1956,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iN - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fabs(Fn);
 				}
@@ -1970,8 +1970,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iS - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fabs(Fs);
 				}
@@ -1984,8 +1984,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iT - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fabs(Ft);
 				}
@@ -1999,8 +1999,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			else
 			{
 				integer inumber = iB - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fabs(Fb);
 				}
@@ -2235,7 +2235,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			positionxE = pointP.x;
 			positionxe = positionxP + 0.5*dx;
 
-			integer iEE = sosedi[EE][iP].iNODE1;
+			integer iEE = neighbors_for_the_internal_node[EE][iP].iNODE1;
 			if ((iEE >= 0) && (iEE < maxelm)) {
 				// внутренний узел
 				SpeedEE = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iEE];
@@ -2265,7 +2265,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			positionxw = positionxP - 0.5*dx;
 			SpeedW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW];
 
-			integer iWW = sosedi[WW][iP].iNODE1;
+			integer iWW = neighbors_for_the_internal_node[WW][iP].iNODE1;
 			if ((iWW >= 0) && (iWW < maxelm)) {
 				// внутренний узел
 				SpeedWW = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iWW];
@@ -2297,7 +2297,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			positionyN = pointP.y;
 			positionyn = positionxP + 0.5*dy;
 
-			integer iNN = sosedi[NN][iP].iNODE1;
+			integer iNN = neighbors_for_the_internal_node[NN][iP].iNODE1;
 			if ((iNN >= 0) && (iNN < maxelm)) {
 				// внутренний узел
 				SpeedNN = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iNN];
@@ -2327,7 +2327,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			positionyS = pointP.y;
 			positionys = positionyP - 0.5*dy;
 
-			integer iSS = sosedi[SS][iP].iNODE1;
+			integer iSS = neighbors_for_the_internal_node[SS][iP].iNODE1;
 			if ((iSS >= 0) && (iSS < maxelm)) {
 				// внутренний узел
 				SpeedSS = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iSS];
@@ -2358,7 +2358,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			positionzT = pointP.z;
 			positionzt = positionzP + 0.5*dz;
 
-			integer iTT = sosedi[TTSIDE][iP].iNODE1;
+			integer iTT = neighbors_for_the_internal_node[TTSIDE][iP].iNODE1;
 			if ((iTT >= 0) && (iTT < maxelm)) {
 				// внутренний узел
 				SpeedTT = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iTT];
@@ -2388,7 +2388,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			positionzB = pointP.z;
 			positionzb = positionzP - 0.5*dz;
 
-			integer iBB = sosedi[BB][iP].iNODE1;
+			integer iBB = neighbors_for_the_internal_node[BB][iP].iNODE1;
 			if ((iBB >= 0) && (iBB < maxelm)) {
 				// внутренний узел
 				SpeedBB = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iBB];
@@ -2433,8 +2433,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 
 
 			/*
-			// Закоментированный фрагмент относится к одной устаревшей реализации схемы QUICK на неравномерной сетке.
-			// Реализация была заимствована из статьи : ...
+			// закомментированный фрагмент относится к одной устаревшей реализации схемы QUICK на неравномерной сетке.
+			// Реализация была заимствована из статьи: ...
 			// В данный момент данная реализация не используется.
 			//doublereal gamma1E, gamma2E, gamma1W, gamma2W, delta1E, delta2E, delta1W, delta2W;
 			//doublereal gamma1N, gamma2N, gamma1S, gamma2S, delta1N, delta2N, delta1S, delta2S;
@@ -2535,7 +2535,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 		  // I. Sezai - Eastern Mediterranean University, Mechanical Engineering Department, Mersin 10-Turkey Revised in January, 2011.
 
 		  // Вычисление коэффициентов дискретного аналога:
-		  // Реализуется метод отложенной коррекции :
+		  // Реализуется метод отложенной коррекции:
 		  // неявно реализуется только противопоточная часть, 
 		  // а уточняющие члены записываются в правую часть 
 		  // линейной системы уравнений.
@@ -2597,8 +2597,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ae = De + fabs(Fe);
 				}
@@ -2614,8 +2614,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].aw = Dw + fabs(Fw);
 				}
@@ -2631,8 +2631,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iN - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].an = Dn + fabs(Fn);
 				}
@@ -2648,8 +2648,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iS - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].as = Ds + fabs(Fs);
 				}
@@ -2665,8 +2665,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iT - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].at = Dt + fabs(Ft);
 				}
@@ -2682,8 +2682,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iB - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].ab = Db + fabs(Fb);
 				}
@@ -2760,15 +2760,15 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	// источниковый член
 	doublereal dSc = 0.0, dSp = 0.0;
 
-	// под конвективными потоками Fe, Fw, Fn, Fs, Ft, Fb - понимаются итоговые потоки после применения монотонизатора Рхи-Чоу.
+	// под конвективными потоками Fe, Fw, Fn, Fs, Ft, Fb - понимаются итоговые потоки после применения монотонизатора Рхи-Чоу 1983г.
 	// 02.05.2017
 	// Это неверно т.к. приводит к отрицательным диагональным коэффициентам.
-	// только этот вариант : deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
+	// только этот вариант: deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
 	// единственно верно согласуется с картинками из ANSYS Icepak.
 	// Это проявляется на поле давления сразу за обтекаемым тело - там образуется диполь давления.
-	//doublereal deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
+	// doublereal deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
 	// При точном выполнении уравнения несжимаемости это слагаемое равно нулю.
-	// В случае если приобладает истечение или наоборот втечение жидкости в элементарную ячейку (КО)
+	// В случае если преобладает истечение или наоборот втечение жидкости в элементарную ячейку (КО)
 	// это добавочное слагаемое усиливает диагональное преобладание, на точном выполнении закона сохранения массы 
 	// вклад этого слагаемого полностью пропадает.
 	// 8.05.2017.
@@ -2795,7 +2795,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 	}
 
 
-	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].b = attrs; // метод отложеннной коррекции для схемы высокой разрешающей способности.
+	sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].b = attrs; // метод отложенной коррекции для схемы высокой разрешающей способности.
 	if (sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].b != sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][iP].b) {
 		printf("exptsr+attrs error NAN or INF in control volume %lld TURBULENT_KINETIK_ENERGY\n", iP);
 		system("pause");
@@ -2982,7 +2982,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 // учёт граничных условий для кинетической энергии турбулентных пульсаций.
 void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 	integer inumber, integer maxelm,
-	bool bDirichlet, BOUND* sosedb, integer ls, integer lw,
+	bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 	WALL* w,
 	//integer iVar,
 	equation3D_bon* &slb,
@@ -3012,11 +3012,11 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 	*/
 
 	// Алгоритм.
-	/* 1. Условие дирихле.
+	/* 1. Условие Дирихле.
 	Это обязательно стенка.
 	условие симметрии и не выходная граница bpressure.
 	и не opening в случае вытекания потока.
-	2. Условие дирихле. это источник тепла или твёрдая стенка.
+	2. Условие Дирихле. это источник тепла или твёрдая стенка.
 	*/
 
 	// Параметр для множителя для значения на входной границе потока.
@@ -3025,8 +3025,8 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 	const doublereal Kturm_C_k = 0.005;// 1E-2..1.0e-3;
 
 									   // Сначала запишем граничные условия Дирихле
-									   //if (bDirichlet && (sosedb[inumber].MCB<(ls + lw)) && (sosedb[inumber].MCB >= ls) && (!w[sosedb[inumber].MCB - ls].bopening) && (!w[sosedb[inumber].MCB - ls].bsymmetry) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
-	if (bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((!w[sosedb[inumber].MCB - ls].bpressure) && (!w[sosedb[inumber].MCB - ls].bsymmetry))) {
+									   //if (bDirichlet && (border_neighbor[inumber].MCB<(ls + lw)) && (border_neighbor[inumber].MCB >= ls) && (!w[border_neighbor[inumber].MCB - ls].bopening) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[border_neighbor[inumber].MCB - ls].bpressure)) {
+	if (bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
 
 		//system("PAUSE");
 
@@ -3037,48 +3037,48 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 		slb[inumber].aw = 1.0;
 		slb[inumber].ai = 0.0;
 
-		//sosedb[inumber].Norm - внутренняя нормаль.
-		if (w[sosedb[inumber].MCB - ls].bopening) {
-			if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
+		//border_neighbor[inumber].Norm - внутренняя нормаль.
+		if (w[border_neighbor[inumber].MCB - ls].bopening) {
+			if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 			{
 
 				doublereal speed2 = 0.0;
-				if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) {
+				if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) {
 					speed2 = potent[VXCOR][maxelm + inumber] * potent[VXCOR][maxelm + inumber];
 				}
-				if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) {
+				if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) {
 					speed2 = potent[VYCOR][maxelm + inumber] * potent[VYCOR][maxelm + inumber];
 				}
-				if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)) {
+				if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)) {
 					speed2 = potent[VZCOR][maxelm + inumber] * potent[VZCOR][maxelm + inumber];
 				}
 
 				// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
 				// 10.10.2019
 
-				if ((sosedb[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = Kturm_C_k * speed2;
 				}
-				if ((sosedb[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = Kturm_C_k * speed2;
 				}
-				if ((sosedb[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = Kturm_C_k * speed2;
 				}
-				if ((sosedb[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = Kturm_C_k * speed2;
 				}
-				if ((sosedb[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = Kturm_C_k * speed2;
 				}
-				if ((sosedb[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = Kturm_C_k * speed2;
 				}
@@ -3086,48 +3086,48 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 
 			}
 		}
-		else if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(w[sosedb[inumber].MCB - ls].Vx) > 1.0e-20)) ||
-			((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vy) > 1.0e-20) ||
-			((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vz) > 1.0e-20))
+		else if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(w[border_neighbor[inumber].MCB - ls].Vx) > 1.0e-20)) ||
+			((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vy) > 1.0e-20) ||
+			((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20))
 		{
 
 
 			doublereal speed2 = 0.0;
-			if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(w[sosedb[inumber].MCB - ls].Vx) > 1.0e-20)) {
-				speed2 = w[sosedb[inumber].MCB - ls].Vx*w[sosedb[inumber].MCB - ls].Vx;
+			if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(w[border_neighbor[inumber].MCB - ls].Vx) > 1.0e-20)) {
+				speed2 = w[border_neighbor[inumber].MCB - ls].Vx*w[border_neighbor[inumber].MCB - ls].Vx;
 			}
-			if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vy) > 1.0e-20) {
-				speed2 = w[sosedb[inumber].MCB - ls].Vy*w[sosedb[inumber].MCB - ls].Vy;
+			if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vy) > 1.0e-20) {
+				speed2 = w[border_neighbor[inumber].MCB - ls].Vy*w[border_neighbor[inumber].MCB - ls].Vy;
 			}
-			if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vz) > 1.0e-20) {
-				speed2 = w[sosedb[inumber].MCB - ls].Vz*w[sosedb[inumber].MCB - ls].Vz;
+			if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20) {
+				speed2 = w[border_neighbor[inumber].MCB - ls].Vz*w[border_neighbor[inumber].MCB - ls].Vz;
 			}
 
 
 			// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
 			// 10.10.2019
 
-			if ((sosedb[inumber].Norm == ESIDE) && (w[sosedb[inumber].MCB - ls].Vx > 0.0)) {
+			if ((border_neighbor[inumber].Norm == ESIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
 				// Входная граница потока
 				slb[inumber].b = Kturm_C_k* speed2;
 			}
-			if ((sosedb[inumber].Norm == WSIDE) && (w[sosedb[inumber].MCB - ls].Vx < 0.0)) {
+			if ((border_neighbor[inumber].Norm == WSIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
 				// Входная граница потока
 				slb[inumber].b = Kturm_C_k * speed2;
 			}
-			if ((sosedb[inumber].Norm == NSIDE) && (w[sosedb[inumber].MCB - ls].Vy > 0.0)) {
+			if ((border_neighbor[inumber].Norm == NSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
 				// Входная граница потока
 				slb[inumber].b = Kturm_C_k * speed2;
 			}
-			if ((sosedb[inumber].Norm == SSIDE) && (w[sosedb[inumber].MCB - ls].Vy < 0.0)) {
+			if ((border_neighbor[inumber].Norm == SSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
 				// Входная граница потока
 				slb[inumber].b = Kturm_C_k * speed2;
 			}
-			if ((sosedb[inumber].Norm == TSIDE) && (w[sosedb[inumber].MCB - ls].Vz > 0.0)) {
+			if ((border_neighbor[inumber].Norm == TSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
 				// Входная граница потока
 				slb[inumber].b = Kturm_C_k * speed2;
 			}
-			if ((sosedb[inumber].Norm == BSIDE) && (w[sosedb[inumber].MCB - ls].Vz < 0.0)) {
+			if ((border_neighbor[inumber].Norm == BSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
 				// Входная граница потока
 				slb[inumber].b = Kturm_C_k * speed2;
 			}
@@ -3141,11 +3141,11 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 		}
 
 		slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-		slb[inumber].iW = sosedb[inumber].iB;
+		slb[inumber].iW = border_neighbor[inumber].iB;
 #if doubleintprecision == 1
-		//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+		//printf("%lld, soseddb=%lld\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #else
-		//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+		//printf("%d, soseddb=%d\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #endif
 
 
@@ -3157,9 +3157,9 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 		slb[inumber].iW3 = NON_EXISTENT_NODE;
 		slb[inumber].iW4 = NON_EXISTENT_NODE;
 	}
-	else if (bDirichlet && ((sosedb[inumber].MCB == (ls + lw)) || (sosedb[inumber].MCB < ls))) { // 
+	else if (bDirichlet && ((border_neighbor[inumber].MCB == (ls + lw)) || (border_neighbor[inumber].MCB < ls))) { // 
 																								 // источник тоже является твёрдой стенкой.
-																								 // либо твёрдая стенка. твёрдая стенка распознаётся по условию (sosedb[inumber].MCB==(ls+lw)).
+																								 // либо твёрдая стенка. твёрдая стенка распознаётся по условию (border_neighbor[inumber].MCB==(ls+lw)).
 
 																								 // граничное условие Дирихле
 																								 // Задана условие прилипания на твёрдой стенке.
@@ -3168,7 +3168,7 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 		slb[inumber].ai = 0.0;
 		slb[inumber].b = 0.0; // нулевая кинетическая энергия турбулентных пульсаций.
 		slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-		slb[inumber].iW = sosedb[inumber].iB;
+		slb[inumber].iW = border_neighbor[inumber].iB;
 
 		// Это условие Дирихле:
 		// только диагональный элемент 
@@ -3178,7 +3178,7 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 		slb[inumber].iW3 = NON_EXISTENT_NODE;
 		slb[inumber].iW4 = NON_EXISTENT_NODE;
 	}
-	else if ((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((w[sosedb[inumber].MCB - ls].bpressure) || (w[sosedb[inumber].MCB - ls].bsymmetry)/*|| ((w[sosedb[inumber].MCB - ls].bopening))*/)) {
+	else if ((border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((w[border_neighbor[inumber].MCB - ls].bpressure) || (w[border_neighbor[inumber].MCB - ls].bsymmetry)/*|| ((w[border_neighbor[inumber].MCB - ls].bopening))*/)) {
 
 		// Выходная граница потока.
 
@@ -3192,74 +3192,74 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 			// переносятся на уравнение для компоненты скорости, с точностью 
 			// до коэффициентов в уравнении.
 
-			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 
 		}
 	}
-	else if (!bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((!w[sosedb[inumber].MCB - ls].bpressure) && (!w[sosedb[inumber].MCB - ls].bsymmetry))) {
+	else if (!bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
 		// Неявная выходная граница. Однородное условие Неймана.
 
-		if (w[sosedb[inumber].MCB - ls].bopening) {
-			if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
+		if (w[border_neighbor[inumber].MCB - ls].bopening) {
+			if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 			{
 
-				if ((sosedb[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
 
 			}
 		}
-		else if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(w[sosedb[inumber].MCB - ls].Vx) > 1.0e-20)) ||
-			((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vy) > 1.0e-20) ||
-			((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vz) > 1.0e-20))
+		else if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(w[border_neighbor[inumber].MCB - ls].Vx) > 1.0e-20)) ||
+			((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vy) > 1.0e-20) ||
+			((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20))
 		{
 
-			if ((sosedb[inumber].Norm == ESIDE) && (w[sosedb[inumber].MCB - ls].Vx < 0.0)) {
+			if ((border_neighbor[inumber].Norm == ESIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == WSIDE) && (w[sosedb[inumber].MCB - ls].Vx > 0.0)) {
+			if ((border_neighbor[inumber].Norm == WSIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == NSIDE) && (w[sosedb[inumber].MCB - ls].Vy < 0.0)) {
+			if ((border_neighbor[inumber].Norm == NSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == SSIDE) && (w[sosedb[inumber].MCB - ls].Vy > 0.0)) {
+			if ((border_neighbor[inumber].Norm == SSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == TSIDE) && (w[sosedb[inumber].MCB - ls].Vz < 0.0)) {
+			if ((border_neighbor[inumber].Norm == TSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == BSIDE) && (w[sosedb[inumber].MCB - ls].Vz > 0.0)) {
+			if ((border_neighbor[inumber].Norm == BSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
 
 		}
@@ -3274,7 +3274,7 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
   // в двухслойной модели на основе стандартной k-epsilon модели.
 void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	integer iP,
-	BOUND* sosedb,
+	BOUND* border_neighbor,
 	integer lw,
 	integer ls,
 	equation3D** &sl,
@@ -3291,7 +3291,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	doublereal** prop,
 	doublereal** prop_b,
 	integer maxelm,
-	ALICE_PARTITION** sosedi,
+	ALICE_PARTITION** neighbors_for_the_internal_node,
 	//doublereal* alpha,
 	//doublereal dgx,
 	//doublereal dgy,
@@ -3333,8 +3333,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iE = iE;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iN = iN;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iT = iT;
@@ -3351,12 +3351,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 	// NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iE2 = iE2;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].iN2 = iN2;
@@ -3411,7 +3411,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 = 0.0;
 
 
-	// Признак прсутствия связи.
+	// Признак присутствия связи.
 	// От булевых флагов можно избавиться в целях экономии памяти ЭВМ.
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].bE2 = false; sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].bW2 = false; sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].bS2 = false;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].bN2 = false; sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].bB2 = false; sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].bT2 = false;
@@ -3866,7 +3866,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 	/*
 	Особенности реализации:
-	По видимому интерполляция Рхи-Чоу скорости на грани КО
+	По видимому интерполяция Рхи-Чоу скорости на грани КО
 	должна быть применена и в уравнениях для компонент скорости.
 	Она действительно должна быть применена для вычисления потоков на грани контрольного объёма
 	в уравнениях сохранения импульса, теплопроводности и турбулентных характеристик т.к. её применение
@@ -3875,16 +3875,16 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	только в уравнении сохранения импульса и теплопроводности. для поправки давления применять обязательно
 	следует иначе возникнут шахматные осцилляции) но потоки массы не будут удовлетворять уравнению неразрывности
 	и следовательно решение будет неверным.
-	Особенностью реализации интерполляции является то что она запоминается, а
+	Особенностью реализации интерполяции является то что она запоминается, а
 	не вычисляется каждый раз. Она вычисляется после процедуры корректировки скорости один раз на основе
-	скоректированной скорости и давления. При вычислении требуются диагональные коэффициенты в
+	скорректированной скорости и давления. При вычислении требуются диагональные коэффициенты в
 	уравнениях для компонент скорости. Они берутся с прошлой итерации алгоритма
 	SIMPLE (на момент непосредственного вычисления потоков коэффициенты берутся с текущей итерации, но
 	дело в том что потом мы на следующей итерации используем вычисленные ранее потоки массы (которые были запомнены в памяти)
 	и поэтому говорим что диагональные коэффициенты беруться с предыдущей итерации).
 	требуется всеобъемлющая проверка... TODO
 	Особенно должна обрабатываться первая итерация, т.к. на ней диагональные коэффициенты
-	для всех точек ещё не посчитаны. Поэтому предлагается включать интерполляцию Рхи-Чоу только
+	для всех точек ещё не посчитаны. Поэтому предлагается включать интерполяцию Рхи-Чоу только
 	со второй итерации алгоритма SIMPLE. На первой итерации стационарного солвера используется
 	массовый поток полученный простой линейной интерполяцией скорости.
 	*/
@@ -3927,7 +3927,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iE > -1) {
 			if (bE) {
 				// граничный узел.
-				Fe = mf[iP][ESIDE] * (sosedb[iE - maxelm].dS / (dy*dz));
+				Fe = mf[iP][ESIDE] * (border_neighbor[iE - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -3944,7 +3944,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iW > -1) {
 			if (bW) {
 				// граничный узел.
-				Fw = mf[iP][WSIDE] * (sosedb[iW - maxelm].dS / (dy*dz));
+				Fw = mf[iP][WSIDE] * (border_neighbor[iW - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -3961,7 +3961,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iN > -1) {
 			if (bN) {
 				// граничный узел.
-				Fn = mf[iP][NSIDE] * (sosedb[iN - maxelm].dS / (dx*dz));
+				Fn = mf[iP][NSIDE] * (border_neighbor[iN - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -3978,7 +3978,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iS > -1) {
 			if (bS) {
 				// граничный узел.
-				Fs = mf[iP][SSIDE] * (sosedb[iS - maxelm].dS / (dx*dz));
+				Fs = mf[iP][SSIDE] * (border_neighbor[iS - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -3995,7 +3995,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iT > -1) {
 			if (bT) {
 				// граничный узел.
-				Ft = mf[iP][TSIDE] * (sosedb[iT - maxelm].dS / (dx*dy));
+				Ft = mf[iP][TSIDE] * (border_neighbor[iT - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -4012,7 +4012,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iB > -1) {
 			if (bB) {
 				// граничный узел.
-				Fb = mf[iP][BSIDE] * (sosedb[iB - maxelm].dS / (dx*dy));
+				Fb = mf[iP][BSIDE] * (border_neighbor[iB - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -4029,7 +4029,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iE2 > -1) {
 			if (bE2) {
 				// граничный узел.
-				Fe2 = mf[iP][ESIDE] * (sosedb[iE2 - maxelm].dS / (dy*dz));
+				Fe2 = mf[iP][ESIDE] * (border_neighbor[iE2 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -4046,7 +4046,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iW2 > -1) {
 			if (bW2) {
 				// граничный узел.
-				Fw2 = mf[iP][WSIDE] * (sosedb[iW2 - maxelm].dS / (dy*dz));
+				Fw2 = mf[iP][WSIDE] * (border_neighbor[iW2 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
@@ -4063,7 +4063,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iN2 > -1) {
 			if (bN2) {
 				// граничный узел.
-				Fn2 = mf[iP][NSIDE] * (sosedb[iN2 - maxelm].dS / (dx*dz));
+				Fn2 = mf[iP][NSIDE] * (border_neighbor[iN2 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -4080,7 +4080,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iS2 > -1) {
 			if (bS2) {
 				// граничный узел.
-				Fs2 = mf[iP][SSIDE] * (sosedb[iS2 - maxelm].dS / (dx*dz));
+				Fs2 = mf[iP][SSIDE] * (border_neighbor[iS2 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -4097,7 +4097,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iT2 > -1) {
 			if (bT2) {
 				// граничный узел.
-				Ft2 = mf[iP][TSIDE] * (sosedb[iT2 - maxelm].dS / (dx*dy));
+				Ft2 = mf[iP][TSIDE] * (border_neighbor[iT2 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -4114,7 +4114,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iB2 > -1) {
 			if (bB2) {
 				// граничный узел.
-				Fb2 = mf[iP][BSIDE] * (sosedb[iB2 - maxelm].dS / (dx*dy));
+				Fb2 = mf[iP][BSIDE] * (border_neighbor[iB2 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -4132,7 +4132,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iE3 > -1) {
 			if (bE3) {
 				// граничный узел.
-				Fe3 = mf[iP][ESIDE] * (sosedb[iE3 - maxelm].dS / (dy*dz));
+				Fe3 = mf[iP][ESIDE] * (border_neighbor[iE3 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -4149,7 +4149,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iW3 > -1) {
 			if (bW3) {
 				// граничный узел.
-				Fw3 = mf[iP][WSIDE] * (sosedb[iW3 - maxelm].dS / (dy*dz));
+				Fw3 = mf[iP][WSIDE] * (border_neighbor[iW3 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -4166,7 +4166,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iN3 > -1) {
 			if (bN3) {
 				// граничный узел.
-				Fn3 = mf[iP][NSIDE] * (sosedb[iN3 - maxelm].dS / (dx*dz));
+				Fn3 = mf[iP][NSIDE] * (border_neighbor[iN3 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -4183,7 +4183,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iS3 > -1) {
 			if (bS3) {
 				// граничный узел.
-				Fs3 = mf[iP][SSIDE] * (sosedb[iS3 - maxelm].dS / (dx*dz));
+				Fs3 = mf[iP][SSIDE] * (border_neighbor[iS3 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -4200,7 +4200,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iT3 > -1) {
 			if (bT3) {
 				// граничный узел.
-				Ft3 = mf[iP][TSIDE] * (sosedb[iT3 - maxelm].dS / (dx*dy));
+				Ft3 = mf[iP][TSIDE] * (border_neighbor[iT3 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -4217,7 +4217,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iB3 > -1) {
 			if (bB3) {
 				// граничный узел.
-				Fb3 = mf[iP][BSIDE] * (sosedb[iB3 - maxelm].dS / (dx*dy));
+				Fb3 = mf[iP][BSIDE] * (border_neighbor[iB3 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -4234,7 +4234,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iE4 > -1) {
 			if (bE4) {
 				// граничный узел.
-				Fe4 = mf[iP][ESIDE] * (sosedb[iE4 - maxelm].dS / (dy*dz));
+				Fe4 = mf[iP][ESIDE] * (border_neighbor[iE4 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -4251,7 +4251,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iW4 > -1) {
 			if (bW4) {
 				// граничный узел.
-				Fw4 = mf[iP][WSIDE] * (sosedb[iW4 - maxelm].dS / (dy*dz));
+				Fw4 = mf[iP][WSIDE] * (border_neighbor[iW4 - maxelm].dS / (dy*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -4268,7 +4268,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iN4 > -1) {
 			if (bN4) {
 				// граничный узел.
-				Fn4 = mf[iP][NSIDE] * (sosedb[iN4 - maxelm].dS / (dx*dz));
+				Fn4 = mf[iP][NSIDE] * (border_neighbor[iN4 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -4285,7 +4285,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iS4 > -1) {
 			if (bS4) {
 				// граничный узел.
-				Fs4 = mf[iP][SSIDE] * (sosedb[iS4 - maxelm].dS / (dx*dz));
+				Fs4 = mf[iP][SSIDE] * (border_neighbor[iS4 - maxelm].dS / (dx*dz));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -4302,7 +4302,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iT4 > -1) {
 			if (bT4) {
 				// граничный узел.
-				Ft4 = mf[iP][TSIDE] * (sosedb[iT4 - maxelm].dS / (dx*dy));
+				Ft4 = mf[iP][TSIDE] * (border_neighbor[iT4 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -4319,7 +4319,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		if (iB4 > -1) {
 			if (bB4) {
 				// граничный узел.
-				Fb4 = mf[iP][BSIDE] * (sosedb[iB4 - maxelm].dS / (dx*dy));
+				Fb4 = mf[iP][BSIDE] * (border_neighbor[iB4 - maxelm].dS / (dx*dy));
 			}
 			else {
 				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -4544,7 +4544,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iE > -1) {
 		if (bE) {
 			// граничный узел.
-			De = Ge * sosedb[iE - maxelm].dS / dxe;
+			De = Ge * border_neighbor[iE - maxelm].dS / dxe;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -4552,7 +4552,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De = Ge * dy_loc*dz_loc / dxe;
@@ -4563,7 +4563,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iW > -1) {
 		if (bW) {
 			// граничный узел
-			Dw = Gw * sosedb[iW - maxelm].dS / dxw;
+			Dw = Gw * border_neighbor[iW - maxelm].dS / dxw;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -4571,7 +4571,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw = Gw * dy_loc*dz_loc / dxw;
@@ -4582,7 +4582,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iN > -1) {
 		if (bN) {
 			// граничный узел.
-			Dn = Gn * sosedb[iN - maxelm].dS / dyn;
+			Dn = Gn * border_neighbor[iN - maxelm].dS / dyn;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -4590,7 +4590,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn = Gn * dx_loc*dz_loc / dyn;
@@ -4600,7 +4600,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iS > -1) {
 		if (bS) {
 			// граничный узел
-			Ds = Gs * sosedb[iS - maxelm].dS / dys;
+			Ds = Gs * border_neighbor[iS - maxelm].dS / dys;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -4608,7 +4608,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds = Gs * dx_loc*dz_loc / dys;
@@ -4618,7 +4618,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iT > -1) {
 		if (bT) {
 			// граничный узел.
-			Dt = Gt * sosedb[iT - maxelm].dS / dzt;
+			Dt = Gt * border_neighbor[iT - maxelm].dS / dzt;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -4626,7 +4626,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt = Gt * dx_loc*dy_loc / dzt;
@@ -4638,7 +4638,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iB > -1) {
 		if (bB) {
 			// граничный узел
-			Db = Gb * sosedb[iB - maxelm].dS / dzb;
+			Db = Gb * border_neighbor[iB - maxelm].dS / dzb;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -4646,7 +4646,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db = Gb * dx_loc*dy_loc / dzb;
@@ -4661,7 +4661,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iE2 > -1) {
 		if (bE2) {
 			// граничный узел.
-			De2 = Ge2 * sosedb[iE2 - maxelm].dS / dxe2;
+			De2 = Ge2 * border_neighbor[iE2 - maxelm].dS / dxe2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -4669,7 +4669,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De2 = Ge2 * dy_loc*dz_loc / dxe2;
@@ -4680,7 +4680,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iW2 > -1) {
 		if (bW2) {
 			// граничный узел
-			Dw2 = Gw2 * sosedb[iW2 - maxelm].dS / dxw2;
+			Dw2 = Gw2 * border_neighbor[iW2 - maxelm].dS / dxw2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW2]]) {
@@ -4688,7 +4688,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw2 = Gw2 * dy_loc*dz_loc / dxw2;
@@ -4699,7 +4699,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iN2 > -1) {
 		if (bN2) {
 			// граничный узел.
-			Dn2 = Gn2 * sosedb[iN2 - maxelm].dS / dyn2;
+			Dn2 = Gn2 * border_neighbor[iN2 - maxelm].dS / dyn2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -4707,7 +4707,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn2 = Gn2 * dx_loc*dz_loc / dyn2;
@@ -4717,7 +4717,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iS2 > -1) {
 		if (bS2) {
 			// граничный узел
-			Ds2 = Gs2 * sosedb[iS2 - maxelm].dS / dys2;
+			Ds2 = Gs2 * border_neighbor[iS2 - maxelm].dS / dys2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -4725,7 +4725,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds2 = Gs2 * dx_loc*dz_loc / dys2;
@@ -4735,7 +4735,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iT2 > -1) {
 		if (bT2) {
 			// граничный узел.
-			Dt2 = Gt2 * sosedb[iT2 - maxelm].dS / dzt2;
+			Dt2 = Gt2 * border_neighbor[iT2 - maxelm].dS / dzt2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -4743,7 +4743,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt2 = Gt2 * dx_loc*dy_loc / dzt2;
@@ -4755,7 +4755,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iB2 > -1) {
 		if (bB2) {
 			// граничный узел
-			Db2 = Gb2 * sosedb[iB2 - maxelm].dS / dzb2;
+			Db2 = Gb2 * border_neighbor[iB2 - maxelm].dS / dzb2;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -4763,7 +4763,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db2 = Gb2 * dx_loc*dy_loc / dzb2;
@@ -4778,7 +4778,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iE3 > -1) {
 		if (bE3) {
 			// граничный узел.
-			De3 = Ge3 * sosedb[iE3 - maxelm].dS / dxe3;
+			De3 = Ge3 * border_neighbor[iE3 - maxelm].dS / dxe3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -4786,7 +4786,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De3 = Ge3 * dy_loc*dz_loc / dxe3;
@@ -4797,7 +4797,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iW3 > -1) {
 		if (bW3) {
 			// граничный узел
-			Dw3 = Gw3 * sosedb[iW3 - maxelm].dS / dxw3;
+			Dw3 = Gw3 * border_neighbor[iW3 - maxelm].dS / dxw3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -4805,7 +4805,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw3 = Gw3 * dy_loc*dz_loc / dxw3;
@@ -4816,7 +4816,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iN3 > -1) {
 		if (bN3) {
 			// граничный узел.
-			Dn3 = Gn3 * sosedb[iN3 - maxelm].dS / dyn3;
+			Dn3 = Gn3 * border_neighbor[iN3 - maxelm].dS / dyn3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -4824,7 +4824,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn3 = Gn3 * dx_loc*dz_loc / dyn3;
@@ -4834,7 +4834,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iS3 > -1) {
 		if (bS3) {
 			// граничный узел
-			Ds3 = Gs3 * sosedb[iS3 - maxelm].dS / dys3;
+			Ds3 = Gs3 * border_neighbor[iS3 - maxelm].dS / dys3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -4842,7 +4842,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds3 = Gs3 * dx_loc*dz_loc / dys3;
@@ -4852,7 +4852,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iT3 > -1) {
 		if (bT3) {
 			// граничный узел.
-			Dt3 = Gt3 * sosedb[iT3 - maxelm].dS / dzt3;
+			Dt3 = Gt3 * border_neighbor[iT3 - maxelm].dS / dzt3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -4860,7 +4860,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt3 = Gt3 * dx_loc*dy_loc / dzt3;
@@ -4872,7 +4872,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iB3 > -1) {
 		if (bB3) {
 			// граничный узел
-			Db3 = Gb3 * sosedb[iB3 - maxelm].dS / dzb3;
+			Db3 = Gb3 * border_neighbor[iB3 - maxelm].dS / dzb3;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -4880,7 +4880,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db3 = Gb3 * dx_loc*dy_loc / dzb3;
@@ -4895,7 +4895,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iE4 > -1) {
 		if (bE4) {
 			// граничный узел.
-			De4 = Ge4 * sosedb[iE4 - maxelm].dS / dxe4;
+			De4 = Ge4 * border_neighbor[iE4 - maxelm].dS / dxe4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -4903,7 +4903,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				De4 = Ge4 * dy_loc*dz_loc / dxe4;
@@ -4914,7 +4914,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iW4 > -1) {
 		if (bW4) {
 			// граничный узел
-			Dw4 = Gw4 * sosedb[iW4 - maxelm].dS / dxw4;
+			Dw4 = Gw4 * border_neighbor[iW4 - maxelm].dS / dxw4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -4922,7 +4922,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dw4 = Gw4 * dy_loc*dz_loc / dxw4;
@@ -4933,7 +4933,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iN4 > -1) {
 		if (bN4) {
 			// граничный узел.
-			Dn4 = Gn4 * sosedb[iN4 - maxelm].dS / dyn4;
+			Dn4 = Gn4 * border_neighbor[iN4 - maxelm].dS / dyn4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -4941,7 +4941,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dn4 = Gn4 * dx_loc*dz_loc / dyn4;
@@ -4951,7 +4951,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iS4 > -1) {
 		if (bS4) {
 			// граничный узел
-			Ds4 = Gs4 * sosedb[iS4 - maxelm].dS / dys4;
+			Ds4 = Gs4 * border_neighbor[iS4 - maxelm].dS / dys4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -4959,7 +4959,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Ds4 = Gs4 * dx_loc*dz_loc / dys4;
@@ -4969,7 +4969,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iT4 > -1) {
 		if (bT4) {
 			// граничный узел.
-			Dt4 = Gt4 * sosedb[iT4 - maxelm].dS / dzt4;
+			Dt4 = Gt4 * border_neighbor[iT4 - maxelm].dS / dzt4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -4977,7 +4977,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Dt4 = Gt4 * dx_loc*dy_loc / dzt4;
@@ -4989,7 +4989,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (iB4 > -1) {
 		if (bB4) {
 			// граничный узел
-			Db4 = Gb4 * sosedb[iB4 - maxelm].dS / dzb4;
+			Db4 = Gb4 * border_neighbor[iB4 - maxelm].dS / dzb4;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -4997,7 +4997,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				Db4 = Gb4 * dx_loc*dy_loc / dzb4;
@@ -5005,7 +5005,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		}
 	}
 
-	// Принудительно выполняем правила Патанкара.
+	// Принудительно выполняем правила С. Патанкара.
 	De = fmax(De, 0.0);
 	Dw = fmax(Dw, 0.0);
 	Dn = fmax(Dn, 0.0);
@@ -5168,7 +5168,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	if (ishconvection < distsheme) {
 
 		if (1) {
-			// Оставил как единственно верное и рекомендованное в литератре 7.05.2017. 
+			// Оставил как единственно верное и рекомендованное в литературе 7.05.2017. 
 			if (b_on_adaptive_local_refinement_mesh) {
 				// Вычисление коэффициентов дискретного аналога:
 				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
@@ -5220,14 +5220,14 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		}
 		else
 		{
-			// написано на замену вышезакоментированного 25 июля 2015.
+			// написано на замену вышезакомментированного 25 июля 2015.
 			if (!bE) {
 				sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 			}
 			else {
 				integer inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fabs(Fe);
 				}
@@ -5240,8 +5240,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fabs(Fw);
 				}
@@ -5254,8 +5254,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iN - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an = Dn * ApproxConvective(fabs(Pn), ishconvection) + fabs(Fn);
 				}
@@ -5268,8 +5268,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iS - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as = Ds * ApproxConvective(fabs(Ps), ishconvection) + fabs(Fs);
 				}
@@ -5282,8 +5282,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iT - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at = Dt * ApproxConvective(fabs(Pt), ishconvection) + fabs(Ft);
 				}
@@ -5297,8 +5297,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			else
 			{
 				integer inumber = iB - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab = Db * ApproxConvective(fabs(Pb), ishconvection) + fabs(Fb);
 				}
@@ -5540,7 +5540,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			positionxE = pointP.x;
 			positionxe = positionxP + 0.5*dx;
 
-			integer iEE = sosedi[EE][iP].iNODE1;
+			integer iEE = neighbors_for_the_internal_node[EE][iP].iNODE1;
 			if ((iEE >= 0) && (iEE < maxelm)) {
 				// внутренний узел
 				SpeedEE = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iEE];
@@ -5570,7 +5570,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			positionxw = positionxP - 0.5*dx;
 			SpeedW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW];
 
-			integer iWW = sosedi[WW][iP].iNODE1;
+			integer iWW = neighbors_for_the_internal_node[WW][iP].iNODE1;
 			if ((iWW >= 0) && (iWW < maxelm)) {
 				// внутренний узел
 				SpeedWW = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iWW];
@@ -5602,7 +5602,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			positionyN = pointP.y;
 			positionyn = positionxP + 0.5*dy;
 
-			integer iNN = sosedi[NN][iP].iNODE1;
+			integer iNN = neighbors_for_the_internal_node[NN][iP].iNODE1;
 			if ((iNN >= 0) && (iNN < maxelm)) {
 				// внутренний узел
 				SpeedNN = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iNN];
@@ -5632,7 +5632,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			positionyS = pointP.y;
 			positionys = positionyP - 0.5*dy;
 
-			integer iSS = sosedi[SS][iP].iNODE1;
+			integer iSS = neighbors_for_the_internal_node[SS][iP].iNODE1;
 			if ((iSS >= 0) && (iSS < maxelm)) {
 				// внутренний узел
 				SpeedSS = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iSS];
@@ -5663,7 +5663,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			positionzT = pointP.z;
 			positionzt = positionzP + 0.5*dz;
 
-			integer iTT = sosedi[TTSIDE][iP].iNODE1;
+			integer iTT = neighbors_for_the_internal_node[TTSIDE][iP].iNODE1;
 			if ((iTT >= 0) && (iTT < maxelm)) {
 				// внутренний узел
 				SpeedTT = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iTT];
@@ -5693,7 +5693,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			positionzB = pointP.z;
 			positionzb = positionzP - 0.5*dz;
 
-			integer iBB = sosedi[BB][iP].iNODE1;
+			integer iBB = neighbors_for_the_internal_node[BB][iP].iNODE1;
 			if ((iBB >= 0) && (iBB < maxelm)) {
 				// внутренний узел
 				SpeedBB = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iBB];
@@ -5738,8 +5738,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 
 			/*
-			// Закоментированный фрагмент относится к одной устаревшей реализации схемы QUICK на неравномерной сетке.
-			// Реализация была заимствована из статьи : ...
+			// закомментированный фрагмент относится к одной устаревшей реализации схемы QUICK на неравномерной сетке.
+			// Реализация была заимствована из статьи: ...
 			// В данный момент данная реализация не используется.
 			//doublereal gamma1E, gamma2E, gamma1W, gamma2W, delta1E, delta2E, delta1W, delta2W;
 			//doublereal gamma1N, gamma2N, gamma1S, gamma2S, delta1N, delta2N, delta1S, delta2S;
@@ -5840,7 +5840,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		  // I. Sezai - Eastern Mediterranean University, Mechanical Engineering Department, Mersin 10-Turkey Revised in January, 2011.
 
 		  // Вычисление коэффициентов дискретного аналога:
-		  // Реализуется метод отложенной коррекции :
+		  // Реализуется метод отложенной коррекции:
 		  // неявно реализуется только противопоточная часть, 
 		  // а уточняющие члены записываются в правую часть 
 		  // линейной системы уравнений.
@@ -5902,8 +5902,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iE - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae = De + fabs(Fe);
 				}
@@ -5919,8 +5919,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iW - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw = Dw + fabs(Fw);
 				}
@@ -5936,8 +5936,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iN - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an = Dn + fabs(Fn);
 				}
@@ -5953,8 +5953,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iS - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as = Ds + fabs(Fs);
 				}
@@ -5970,8 +5970,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iT - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at = Dt + fabs(Ft);
 				}
@@ -5987,8 +5987,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			}
 			else {
 				integer inumber = iB - maxelm;
-				if (sosedb[inumber].MCB == (ls + lw)) {
-					// условие по умолчанию : твёрдая стенка.
+				if (border_neighbor[inumber].MCB == (ls + lw)) {
+					// условие по умолчанию: твёрдая стенка.
 					// усиление влияния нуля на границе, нам же нужно влияние стенки.
 					sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab = Db + fabs(Fb);
 				}
@@ -6113,12 +6113,12 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	// под конвективными потоками Fe, Fw, Fn, Fs, Ft, Fb - понимаются итоговые потоки после применения монотонизатора Рхи-Чоу.
 	// 02.05.2017
 	// Это неверно т.к. приводит к отрицательным диагональным коэффициентам.
-	// только этот вариант : deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
+	// только этот вариант: deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
 	// единственно верно согласуется с картинками из ANSYS Icepak.
 	// Это проявляется на поле давления сразу за обтекаемым тело - там образуется диполь давления.
-	//doublereal deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
+	// doublereal deltaF=(Fe-Fw+Fn-Fs+Ft-Fb);
 	// При точном выполнении уравнения несжимаемости это слагаемое равно нулю.
-	// В случае если приобладает истечение или наоборот втечение жидкости в элементарную ячейку (КО)
+	// В случае если преобладает истечение или наоборот втечение жидкости в элементарную ячейку (КО)
 	// это добавочное слагаемое усиливает диагональное преобладание, на точном выполнении закона сохранения массы 
 	// вклад этого слагаемого полностью пропадает.
 	// 8.05.2017.
@@ -6148,7 +6148,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	}
 
 
-	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b = attrs; // метод отложеннной коррекции для схемы высокой разрешающей способности.
+	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b = attrs; // метод отложенной коррекции для схемы высокой разрешающей способности.
 	if (sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b != sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b) {
 		printf("exptsr+attrs error NAN or INF in control volume %lld TURBULENT_KINETIK_ENERGY\n", iP);
 		system("pause");
@@ -6363,7 +6363,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 // учёт граничных условий для скорости диссипации кинетической энергии турбулентных пульсаций.
 void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 	integer inumber, integer maxelm,
-	bool bDirichlet, BOUND* sosedb, integer ls, integer lw,
+	bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 	WALL* w,
 	//integer iVar,
 	equation3D_bon* &slb,
@@ -6397,7 +6397,7 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 	// Алгоритм.
 	/* На твёрдой стенке и выходной границе потока ставится однородное условие Неймана.
     *  Условие симметрии также моделируется однородным условием Неймана.
-	*  На входной границе потока ставится условие Дирихле - Kturm_C_k от квадрата входной сорости.
+	*  На входной границе потока ставится условие Дирихле - Kturm_C_k от квадрата входной скорости.
 	*  Эти граничные условия описаны в статье из Новосибирска.
 	*/
 
@@ -6407,8 +6407,8 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 	const doublereal Kturm_C_k = 0.005;// 1E-2..1.0e-3;
 
 	// Сначала запишем граничные условия Дирихле
-	//if (bDirichlet && (sosedb[inumber].MCB<(ls + lw)) && (sosedb[inumber].MCB >= ls) && (!w[sosedb[inumber].MCB - ls].bopening) && (!w[sosedb[inumber].MCB - ls].bsymmetry) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
-	if  ((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((!w[sosedb[inumber].MCB - ls].bpressure) && (!w[sosedb[inumber].MCB - ls].bsymmetry))) {
+	//if (bDirichlet && (border_neighbor[inumber].MCB<(ls + lw)) && (border_neighbor[inumber].MCB >= ls) && (!w[border_neighbor[inumber].MCB - ls].bopening) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[border_neighbor[inumber].MCB - ls].bpressure)) {
+	if  ((border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
 
 		//system("PAUSE");
 
@@ -6418,11 +6418,11 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 
 		
 
-		//sosedb[inumber].Norm - внутренняя нормаль.
-		if (w[sosedb[inumber].MCB - ls].bopening) {
-			if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
+		//border_neighbor[inumber].Norm - внутренняя нормаль.
+		if (w[border_neighbor[inumber].MCB - ls].bopening) {
+			if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 			{
 				if (bDirichlet) {
 
@@ -6431,13 +6431,13 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 
 					doublereal speed2 = 0.0;
 					doublereal lmix = 0.0;
-					if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) {
+					if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) {
 						speed2 = potent[VXCOR][maxelm + inumber] * potent[VXCOR][maxelm + inumber];
 					}
-					if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) {
+					if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) {
 						speed2 = potent[VYCOR][maxelm + inumber] * potent[VYCOR][maxelm + inumber];
 					}
-					if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)) {
+					if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)) {
 						speed2 = potent[VZCOR][maxelm + inumber] * potent[VZCOR][maxelm + inumber];
 					}
 
@@ -6449,37 +6449,37 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 					// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
 					// 10.10.2019
 
-					if ((sosedb[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
+					if ((border_neighbor[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 						// Входная граница потока
 						slb[inumber].b = eps0;
 					}
-					if ((sosedb[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
+					if ((border_neighbor[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 						// Входная граница потока
 						slb[inumber].b = eps0;
 					}
-					if ((sosedb[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
+					if ((border_neighbor[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 						// Входная граница потока
 						slb[inumber].b = eps0;
 					}
-					if ((sosedb[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
+					if ((border_neighbor[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 						// Входная граница потока
 						slb[inumber].b = eps0;
 					}
-					if ((sosedb[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
+					if ((border_neighbor[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 						// Входная граница потока
 						slb[inumber].b = eps0;
 					}
-					if ((sosedb[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
+					if ((border_neighbor[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 						// Входная граница потока
 						slb[inumber].b = eps0;
 					}
 
 					slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-					slb[inumber].iW = sosedb[inumber].iB;
+					slb[inumber].iW = border_neighbor[inumber].iB;
 #if doubleintprecision == 1
-					//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+					//printf("%lld, soseddb=%lld\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #else
-					//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+					//printf("%d, soseddb=%d\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #endif
 
 
@@ -6493,9 +6493,9 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 				}
 			}
 		}
-		else if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(w[sosedb[inumber].MCB - ls].Vx) > 1.0e-20)) ||
-			((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vy) > 1.0e-20) ||
-			((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vz) > 1.0e-20))
+		else if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(w[border_neighbor[inumber].MCB - ls].Vx) > 1.0e-20)) ||
+			((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vy) > 1.0e-20) ||
+			((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20))
 		{
 
 			if (bDirichlet) {
@@ -6506,14 +6506,14 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 
 				doublereal speed2 = 0.0;
 				doublereal lmix = 0.0;
-				if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(w[sosedb[inumber].MCB - ls].Vx) > 1.0e-20)) {
-					speed2 = w[sosedb[inumber].MCB - ls].Vx*w[sosedb[inumber].MCB - ls].Vx;
+				if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(w[border_neighbor[inumber].MCB - ls].Vx) > 1.0e-20)) {
+					speed2 = w[border_neighbor[inumber].MCB - ls].Vx*w[border_neighbor[inumber].MCB - ls].Vx;
 				}
-				if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vy) > 1.0e-20) {
-					speed2 = w[sosedb[inumber].MCB - ls].Vy*w[sosedb[inumber].MCB - ls].Vy;
+				if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vy) > 1.0e-20) {
+					speed2 = w[border_neighbor[inumber].MCB - ls].Vy*w[border_neighbor[inumber].MCB - ls].Vy;
 				}
-				if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vz) > 1.0e-20) {
-					speed2 = w[sosedb[inumber].MCB - ls].Vz*w[sosedb[inumber].MCB - ls].Vz;
+				if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20) {
+					speed2 = w[border_neighbor[inumber].MCB - ls].Vz*w[border_neighbor[inumber].MCB - ls].Vz;
 				}
 
 
@@ -6526,37 +6526,37 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 				// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
 				// 10.10.2019
 
-				if ((sosedb[inumber].Norm == ESIDE) && (w[sosedb[inumber].MCB - ls].Vx > 0.0)) {
+				if ((border_neighbor[inumber].Norm == ESIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = eps0;
 				}
-				if ((sosedb[inumber].Norm == WSIDE) && (w[sosedb[inumber].MCB - ls].Vx < 0.0)) {
+				if ((border_neighbor[inumber].Norm == WSIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = eps0;
 				}
-				if ((sosedb[inumber].Norm == NSIDE) && (w[sosedb[inumber].MCB - ls].Vy > 0.0)) {
+				if ((border_neighbor[inumber].Norm == NSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = eps0;
 				}
-				if ((sosedb[inumber].Norm == SSIDE) && (w[sosedb[inumber].MCB - ls].Vy < 0.0)) {
+				if ((border_neighbor[inumber].Norm == SSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = eps0;
 				}
-				if ((sosedb[inumber].Norm == TSIDE) && (w[sosedb[inumber].MCB - ls].Vz > 0.0)) {
+				if ((border_neighbor[inumber].Norm == TSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = eps0;
 				}
-				if ((sosedb[inumber].Norm == BSIDE) && (w[sosedb[inumber].MCB - ls].Vz < 0.0)) {
+				if ((border_neighbor[inumber].Norm == BSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
 					// Входная граница потока
 					slb[inumber].b = eps0;
 				}
 
 				slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-				slb[inumber].iW = sosedb[inumber].iB;
+				slb[inumber].iW = border_neighbor[inumber].iB;
 #if doubleintprecision == 1
-				//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+				//printf("%lld, soseddb=%lld\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #else
-				//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+				//printf("%d, soseddb=%d\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #endif
 
 
@@ -6576,7 +6576,7 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 			// Кинетическая энергия турбулентных пульсаций на твердой неподвижной стенке равна нулю.
 			if (!bDirichlet) {
 				
-				//Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				//Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
 			else {
 				// Вычисление шага сетки, ближайшего к стенке.
@@ -6584,44 +6584,44 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 				slb[inumber].aw = 1.0;
 				slb[inumber].ai = 0.0;
 
-				doublereal speed2 = potent[VX][sosedb[inumber].iI] * potent[VX][sosedb[inumber].iI] +
-					potent[VY][sosedb[inumber].iI] * potent[VY][sosedb[inumber].iI] +
-					potent[VZ][sosedb[inumber].iI] * potent[VZ][sosedb[inumber].iI];
+				doublereal speed2 = potent[VX][border_neighbor[inumber].iI] * potent[VX][border_neighbor[inumber].iI] +
+					potent[VY][border_neighbor[inumber].iI] * potent[VY][border_neighbor[inumber].iI] +
+					potent[VZ][border_neighbor[inumber].iI] * potent[VZ][border_neighbor[inumber].iI];
 
-				doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контроольного объёма
-				volume3D(sosedb[inumber].iI, nvtx, pa, hx, hy, hz);
+				doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контрольного объёма
+				volume3D(border_neighbor[inumber].iI, nvtx, pa, hx, hy, hz);
 				// Неподвижная стенка.
-				if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+				if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE)) {
 					slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hx*hx);
 				}
-				else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+				else if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE)) {
 					slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hy*hy);
 				}
-				else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+				else if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE)) {
 					slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hz*hz);
 				}
-				//slb[inumber].b *= potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI];
+				//slb[inumber].b *= potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI];
 				//slb[inumber].b *= speed2 / sqrt(eqin.fluidinfo[0].C_mu_std_ke);
-				if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+				if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE)) {
 					//slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hx * potent[CURL][inumber + maxelm];
-					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI],eqin.fluidinfo[0].karman  * hx * potent[CURL][inumber + maxelm]);
+					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI],eqin.fluidinfo[0].karman  * hx * potent[CURL][inumber + maxelm]);
 
 				}
-				else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+				else if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE)) {
 			//		slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hy * potent[CURL][inumber + maxelm];
-					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI],eqin.fluidinfo[0].karman  * hy * potent[CURL][inumber + maxelm]);
+					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI],eqin.fluidinfo[0].karman  * hy * potent[CURL][inumber + maxelm]);
 				}
-				else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+				else if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE)) {
 				//	slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hz * potent[CURL][inumber + maxelm];
-					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman  * hz * potent[CURL][inumber + maxelm]);
+					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI], eqin.fluidinfo[0].karman  * hz * potent[CURL][inumber + maxelm]);
 				}
 
 				slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-				slb[inumber].iW = sosedb[inumber].iB;
+				slb[inumber].iW = border_neighbor[inumber].iB;
 #if doubleintprecision == 1
-				//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+				//printf("%lld, soseddb=%lld\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #else
-				//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+				//printf("%d, soseddb=%d\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #endif
 
 
@@ -6639,11 +6639,11 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 
 		
 	}
-	else if (((sosedb[inumber].MCB == (ls + lw)) || (sosedb[inumber].MCB < ls))) { // 
+	else if (((border_neighbor[inumber].MCB == (ls + lw)) || (border_neighbor[inumber].MCB < ls))) { // 
 		// источник тоже является твёрдой стенкой.
-		// либо твёрдая стенка. твёрдая стенка распознаётся по условию (sosedb[inumber].MCB==(ls+lw)).
+		// либо твёрдая стенка. твёрдая стенка распознаётся по условию (border_neighbor[inumber].MCB==(ls+lw)).
 	if (!bDirichlet) {
-		//Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+		//Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 	}
 	else {
 	    // Вычисление шага сетки, ближайшего к стенке.
@@ -6651,44 +6651,44 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 	    slb[inumber].aw = 1.0;
 	    slb[inumber].ai = 0.0;
 
-		doublereal speed2 = potent[VX][sosedb[inumber].iI] * potent[VX][sosedb[inumber].iI] +
-			potent[VY][sosedb[inumber].iI] * potent[VY][sosedb[inumber].iI] +
-			potent[VZ][sosedb[inumber].iI] * potent[VZ][sosedb[inumber].iI];
+		doublereal speed2 = potent[VX][border_neighbor[inumber].iI] * potent[VX][border_neighbor[inumber].iI] +
+			potent[VY][border_neighbor[inumber].iI] * potent[VY][border_neighbor[inumber].iI] +
+			potent[VZ][border_neighbor[inumber].iI] * potent[VZ][border_neighbor[inumber].iI];
 
-	    doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контроольного объёма
-	    volume3D(sosedb[inumber].iI, nvtx, pa, hx, hy, hz);
+	    doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контрольного объёма
+	    volume3D(border_neighbor[inumber].iI, nvtx, pa, hx, hy, hz);
 	    // Неподвижная стенка.
-	    if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+	    if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE)) {
 	    	slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hx*hx);
 	    }
-	    else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+	    else if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE)) {
 		    slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hy*hy);
 	    }
-	    else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+	    else if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE)) {
 	     	slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hz*hz);
 	    }
-	    //slb[inumber].b *= potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI];
+	    //slb[inumber].b *= potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI];
 		//slb[inumber].b *= speed2 / sqrt(eqin.fluidinfo[0].C_mu_std_ke);
-		if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+		if ((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE)) {
 			//slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hx * potent[CURL][inumber + maxelm];
-			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman  * hx * potent[CURL][inumber + maxelm]);
+			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI], eqin.fluidinfo[0].karman  * hx * potent[CURL][inumber + maxelm]);
 
 		}
-		else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+		else if ((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE)) {
 			//		slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hy * potent[CURL][inumber + maxelm];
-			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman  * hy * potent[CURL][inumber + maxelm]);
+			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI], eqin.fluidinfo[0].karman  * hy * potent[CURL][inumber + maxelm]);
 		}
-		else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+		else if ((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE)) {
 			//	slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hz * potent[CURL][inumber + maxelm];
-			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman * hz * potent[CURL][inumber + maxelm]);
+			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][border_neighbor[inumber].iI], eqin.fluidinfo[0].karman * hz * potent[CURL][inumber + maxelm]);
 		}
 
 	    slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
-	    slb[inumber].iW = sosedb[inumber].iB;
+	    slb[inumber].iW = border_neighbor[inumber].iB;
 #if doubleintprecision == 1
-				//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+				//printf("%lld, soseddb=%lld\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #else
-				//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+				//printf("%d, soseddb=%d\n",inumber, border_neighbor[inumber].iB); getchar(); // debug
 #endif
 
 
@@ -6703,7 +6703,7 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 			}
 			
 	}
-	else if ((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((w[sosedb[inumber].MCB - ls].bpressure) || (w[sosedb[inumber].MCB - ls].bsymmetry)/*|| ((w[sosedb[inumber].MCB - ls].bopening))*/)) {
+	else if ((border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((w[border_neighbor[inumber].MCB - ls].bpressure) || (w[border_neighbor[inumber].MCB - ls].bsymmetry)/*|| ((w[border_neighbor[inumber].MCB - ls].bopening))*/)) {
 
 		// Выходная граница потока.
 
@@ -6717,74 +6717,74 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 			// переносятся на уравнение для компоненты скорости, с точностью 
 			// до коэффициентов в уравнении.
 
-			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 
 		}
 	}
-	else if (!bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((!w[sosedb[inumber].MCB - ls].bpressure) && (!w[sosedb[inumber].MCB - ls].bsymmetry))) {
+	else if (!bDirichlet && (border_neighbor[inumber].MCB < (ls + lw)) && (border_neighbor[inumber].MCB >= ls) && ((!w[border_neighbor[inumber].MCB - ls].bpressure) && (!w[border_neighbor[inumber].MCB - ls].bsymmetry))) {
 		// Неявная выходная граница. Однородное условие Неймана.
 
-		if (w[sosedb[inumber].MCB - ls].bopening) {
-			if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
-				((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
+		if (w[border_neighbor[inumber].MCB - ls].bopening) {
+			if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
+				((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 			{
 
-				if ((sosedb[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
+				if ((border_neighbor[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
-				if ((sosedb[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
+				if ((border_neighbor[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 					// Выходная граница потока
-					Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+					Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 				}
 
 			}
 		}
-		else if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(w[sosedb[inumber].MCB - ls].Vx) > 1.0e-20)) ||
-			((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vy) > 1.0e-20) ||
-			((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(w[sosedb[inumber].MCB - ls].Vz) > 1.0e-20))
+		else if (((border_neighbor[inumber].Norm == ESIDE || border_neighbor[inumber].Norm == WSIDE) && (fabs(w[border_neighbor[inumber].MCB - ls].Vx) > 1.0e-20)) ||
+			((border_neighbor[inumber].Norm == NSIDE || border_neighbor[inumber].Norm == SSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vy) > 1.0e-20) ||
+			((border_neighbor[inumber].Norm == TSIDE || border_neighbor[inumber].Norm == BSIDE) && fabs(w[border_neighbor[inumber].MCB - ls].Vz) > 1.0e-20))
 		{
 
-			if ((sosedb[inumber].Norm == ESIDE) && (w[sosedb[inumber].MCB - ls].Vx < 0.0)) {
+			if ((border_neighbor[inumber].Norm == ESIDE) && (w[border_neighbor[inumber].MCB - ls].Vx < 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == WSIDE) && (w[sosedb[inumber].MCB - ls].Vx > 0.0)) {
+			if ((border_neighbor[inumber].Norm == WSIDE) && (w[border_neighbor[inumber].MCB - ls].Vx > 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == NSIDE) && (w[sosedb[inumber].MCB - ls].Vy < 0.0)) {
+			if ((border_neighbor[inumber].Norm == NSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy < 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == SSIDE) && (w[sosedb[inumber].MCB - ls].Vy > 0.0)) {
+			if ((border_neighbor[inumber].Norm == SSIDE) && (w[border_neighbor[inumber].MCB - ls].Vy > 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == TSIDE) && (w[sosedb[inumber].MCB - ls].Vz < 0.0)) {
+			if ((border_neighbor[inumber].Norm == TSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz < 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
-			if ((sosedb[inumber].Norm == BSIDE) && (w[sosedb[inumber].MCB - ls].Vz > 0.0)) {
+			if ((border_neighbor[inumber].Norm == BSIDE) && (w[border_neighbor[inumber].MCB - ls].Vz > 0.0)) {
 				// Выходная граница потока
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, border_neighbor);
 			}
 
 		}

@@ -69,7 +69,7 @@ TvEB::~TvEB()
 
 int64_t powTwoRoundUp(int64_t x)
 {
-	if (x < 0) return 0;
+	if (x < 1) return 0;
 	--x;
 	x |= x >> 1;
 	x |= x >> 2;

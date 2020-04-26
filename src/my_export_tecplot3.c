@@ -9,7 +9,7 @@
 #include <string.h>
 
 
-// проверка построеной сетки
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal** potent, doublereal **rhie_chow)
 {
@@ -179,7 +179,7 @@ void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, intege
 	}
 } // exporttecplotxy360_3D
 
-// проверка построеной сетки
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 void exporttecplotxy360T_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal* potent)
 {
@@ -273,14 +273,14 @@ void exporttecplotxy360T_3D(integer maxelm, integer ncell, integer** nvtx, integ
 } // exporttecplotxy360T_3D
 
 // Трёхэтапная запись файла позволяет сэкономить 19N оперативной памяти.
-// Далее везде применяется трёхэтампное формирование выходного файла.
+// Далее везде применяется трёхэтапное формирование выходного файла.
 
-// проверка построеной сетки
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // части 1 и 3.
 void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxbound, bool bextendedprint, integer ncell,
 									  integer** nvtx, integer** nvtxcell, TOCHKA* pa,
-									  BOUND* sosedb, integer ivarexport, integer** ptr_out)
+									  BOUND* border_neighbor, integer ivarexport, integer** ptr_out)
 {
 
 	if (bvery_big_memory) {
@@ -288,7 +288,7 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 		t.database.maxelm = maxelm;
 		t.database.ncell = ncell;
 
-		// extended printeger не предусмотрено.
+		// extended print integer не предусмотрено.
 
 		// Если память уже выделялась ранее то её надо освободить.
 		if (t.database.x != nullptr) {
@@ -429,10 +429,10 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 
 			// запись имён переменных
 			switch (ivarexport) {
-			case 1 : fprintf(fp, "VARIABLES = x, y, z, Temp, Lam\n"); break; // печатается только поле температур
-			case 2 : fprintf(fp, "VARIABLES = x, y, z, Speed, Pressure, Vx, Vy, Vz, Rho, Mu, Mut\n"); break; // печатается только гидродинамика
-			case 3 : fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, Speed, Pressure, Vx, Vy, Vz, Rho, Mu, Mut\n"); break; // печатается и температура и гидродинамика
-			default : printf("Error export tecplot. Nonselected exporting variables...\n"); getchar();
+			case 1: fprintf(fp, "VARIABLES = x, y, z, Temp, Lam\n"); break; // печатается только поле температур
+			case 2: fprintf(fp, "VARIABLES = x, y, z, Speed, Pressure, Vx, Vy, Vz, Rho, Mu, Mut\n"); break; // печатается только гидродинамика
+			case 3: fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, Speed, Pressure, Vx, Vy, Vz, Rho, Mu, Mut\n"); break; // печатается и температура и гидродинамика
+			default: printf("Error export tecplot. Nonselected exporting variables...\n"); getchar();
 			}
 
 			#if doubleintprecision == 1
@@ -457,18 +457,18 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 
 			if (bextendedprint) {
 				for (i = 0; i < maxbound; i++) {
-					switch (sosedb[i].Norm) {// определим внутреннюю нормаль к границе
-					case ESIDE: fprintf(fp, "%+.16f ", pa[nvtx[0][sosedb[i].iI] - 1].x);
+					switch (border_neighbor[i].Norm) {// определим внутреннюю нормаль к границе
+					case ESIDE: fprintf(fp, "%+.16f ", pa[nvtx[0][border_neighbor[i].iI] - 1].x);
 						break;
-					case WSIDE: fprintf(fp, "%+.16f ", pa[nvtx[1][sosedb[i].iI] - 1].x);
+					case WSIDE: fprintf(fp, "%+.16f ", pa[nvtx[1][border_neighbor[i].iI] - 1].x);
 						break;
-					case NSIDE : fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].x + pa[nvtx[1][sosedb[i].iI] - 1].x));
+					case NSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].x + pa[nvtx[1][border_neighbor[i].iI] - 1].x));
 						break;
-					case SSIDE:fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].x + pa[nvtx[1][sosedb[i].iI] - 1].x));
+					case SSIDE:fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].x + pa[nvtx[1][border_neighbor[i].iI] - 1].x));
 						break;
-					case TSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].x + pa[nvtx[1][sosedb[i].iI] - 1].x));
+					case TSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].x + pa[nvtx[1][border_neighbor[i].iI] - 1].x));
 						break;
-					case BSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].x + pa[nvtx[1][sosedb[i].iI] - 1].x));
+					case BSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].x + pa[nvtx[1][border_neighbor[i].iI] - 1].x));
 						break;
 					}
 					if (i % 10 == 0) fprintf(fp, "\n");
@@ -485,18 +485,18 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 
 			if (bextendedprint) {
 				for (i = 0; i < maxbound; i++) {
-					switch (sosedb[i].Norm) {// определим внутреннюю нормаль к границе
-					case ESIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].y + pa[nvtx[2][sosedb[i].iI] - 1].y));
+					switch (border_neighbor[i].Norm) {// определим внутреннюю нормаль к границе
+					case ESIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].y + pa[nvtx[2][border_neighbor[i].iI] - 1].y));
 						break;
-					case WSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].y + pa[nvtx[2][sosedb[i].iI] - 1].y));
+					case WSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].y + pa[nvtx[2][border_neighbor[i].iI] - 1].y));
 						break;
-					case NSIDE : fprintf(fp, "%+.16f ", pa[nvtx[0][sosedb[i].iI] - 1].y);
+					case NSIDE: fprintf(fp, "%+.16f ", pa[nvtx[0][border_neighbor[i].iI] - 1].y);
 						break;
-					case SSIDE: fprintf(fp, "%+.16f ", pa[nvtx[2][sosedb[i].iI] - 1].y);
+					case SSIDE: fprintf(fp, "%+.16f ", pa[nvtx[2][border_neighbor[i].iI] - 1].y);
 						break;
-					case TSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].y + pa[nvtx[2][sosedb[i].iI] - 1].y));
+					case TSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].y + pa[nvtx[2][border_neighbor[i].iI] - 1].y));
 						break;
-					case BSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].y + pa[nvtx[2][sosedb[i].iI] - 1].y));
+					case BSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].y + pa[nvtx[2][border_neighbor[i].iI] - 1].y));
 						break;
 					}
 					if (i % 10 == 0) fprintf(fp, "\n");
@@ -513,18 +513,18 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 
 			if (bextendedprint) {
 				for (i = 0; i < maxbound; i++) {
-					switch (sosedb[i].Norm) {// определим внутреннюю нормаль к границе
-					case ESIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].z + pa[nvtx[4][sosedb[i].iI] - 1].z));
+					switch (border_neighbor[i].Norm) {// определим внутреннюю нормаль к границе
+					case ESIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].z + pa[nvtx[4][border_neighbor[i].iI] - 1].z));
 						break;
-					case WSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].z + pa[nvtx[4][sosedb[i].iI] - 1].z));
+					case WSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].z + pa[nvtx[4][border_neighbor[i].iI] - 1].z));
 						break;
-					case NSIDE : fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].z + pa[nvtx[4][sosedb[i].iI] - 1].z));
+					case NSIDE: fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].z + pa[nvtx[4][border_neighbor[i].iI] - 1].z));
 						break;
-					case SSIDE:fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][sosedb[i].iI] - 1].z + pa[nvtx[4][sosedb[i].iI] - 1].z));
+					case SSIDE:fprintf(fp, "%+.16f ", 0.5*(pa[nvtx[0][border_neighbor[i].iI] - 1].z + pa[nvtx[4][border_neighbor[i].iI] - 1].z));
 						break;
-					case TSIDE: fprintf(fp, "%+.16f ", pa[nvtx[0][sosedb[i].iI] - 1].z);
+					case TSIDE: fprintf(fp, "%+.16f ", pa[nvtx[0][border_neighbor[i].iI] - 1].z);
 						break;
-					case BSIDE: fprintf(fp, "%+.16f ", pa[nvtx[4][sosedb[i].iI] - 1].z);
+					case BSIDE: fprintf(fp, "%+.16f ", pa[nvtx[4][border_neighbor[i].iI] - 1].z);
 						break;
 					}
 					if (i % 10 == 0) fprintf(fp, "\n");
@@ -575,9 +575,9 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 
 } // exporttecplotxy360T_3D_part1and3
 
-// 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-// а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-// проверка построеной сетки
+// 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+// а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
 void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint)
@@ -642,7 +642,7 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 
         
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count>0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i=0; i<flow_interior_count; i++) if (f[i].bactive) {
@@ -1918,15 +1918,15 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 			for (i=0; i<t.maxelm; i++) {
 				// Только внутренние узлы.
 				green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-					t.sosedi, t.maxelm, false, 
-					t.sosedb,  Tx, Ty, Tz, t.ilevel_alice);
+					t.neighbors_for_the_internal_node, t.maxelm, false, 
+					t.border_neighbor,  Tx, Ty, Tz, t.ilevel_alice);
 			}
 
 			for (i=0; i<t.maxelm; i++) {
 				// Только граничные узлы.
 				green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-					t.sosedi, t.maxelm, true, 
-					t.sosedb,Tx, Ty, Tz, t.ilevel_alice);
+					t.neighbors_for_the_internal_node, t.maxelm, true, 
+					t.border_neighbor,Tx, Ty, Tz, t.ilevel_alice);
 			}
 			
 
@@ -2264,7 +2264,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				if (Speed > SpeedMax) SpeedMax = Speed;
 				if (Speed < SpeedMin) SpeedMin = Speed;
 
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, f[0].nvtx, f[0].pa, dx, dy, dz);
 				
 				if (Ux != nullptr) {
@@ -2754,9 +2754,9 @@ doublereal signlog10(doublereal r21) {
 	}
 }
 
-// 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-// а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-// проверка построеной сетки
+// 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+// а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
 void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
@@ -2867,7 +2867,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 
 
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count>0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
@@ -3050,23 +3050,23 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 							inode7 = t.database.nvtxcell[6][i] - 1;
 							inode8 = t.database.nvtxcell[7][i] - 1;
 							
-							integer inode2W= t.sosedi[WSIDE][inode1].iNODE1;
-							integer inode3W= t.sosedi[WSIDE][inode4].iNODE1;
-							integer inode6W= t.sosedi[WSIDE][inode5].iNODE1;
-							integer inode7W= t.sosedi[WSIDE][inode8].iNODE1;
+							integer inode2W= t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+							integer inode3W= t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+							integer inode6W= t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+							integer inode7W= t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 							
 							
-							integer inode5B= t.sosedi[BSIDE][inode1].iNODE1;
-							integer inode6B= t.sosedi[BSIDE][inode2].iNODE1;
-							integer inode7B= t.sosedi[BSIDE][inode3].iNODE1;
-							integer inode8B= t.sosedi[BSIDE][inode4].iNODE1;
+							integer inode5B= t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+							integer inode6B= t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+							integer inode7B= t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+							integer inode8B= t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 							
 
 							
-							integer inode3S = t.sosedi[SSIDE][inode2].iNODE1; 
-							integer inode4S = t.sosedi[SSIDE][inode1].iNODE1; 
-							integer inode7S = t.sosedi[SSIDE][inode6].iNODE1; 
-							integer inode8S = t.sosedi[SSIDE][inode5].iNODE1; 
+							integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1; 
+							integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1; 
+							integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1; 
+							integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1; 
 							
 							//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
 							//center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
@@ -3793,15 +3793,15 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 			for (i = 0; i<t.maxelm; i++) {
 				// Только внутренние узлы.
 				green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-					t.sosedi, t.maxelm, false,
-					t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+					t.neighbors_for_the_internal_node, t.maxelm, false,
+					t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 			}
 
 			for (i = 0; i<t.maxelm; i++) {
 				// Только граничные узлы.
 				green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-					t.sosedi, t.maxelm, true,
-					t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+					t.neighbors_for_the_internal_node, t.maxelm, true,
+					t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 			}
 
 
@@ -5040,23 +5040,23 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 						inode7 = t.database.nvtxcell[6][i] - 1;
 						inode8 = t.database.nvtxcell[7][i] - 1;
 
-						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-						integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-						integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+						integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+						integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+						integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+						integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-						integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-						integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-						integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-						integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+						integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+						integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+						integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+						integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-						integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-						integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-						integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-						integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+						integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+						integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+						integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+						integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 						
 						//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
@@ -5451,7 +5451,7 @@ void tecplot360patcher_for_print_in_report() {
 			case 0: ch2 = '1'; break;
 			case 1: ch2 = '2'; break;
 			case 2: ch2 = '3'; break;
-			default :
+			default:
 				printf("Unknown directional in variable pfpir.idir=%lld\n", pfpir.idir);
 				printf("1 - X, 2 - Y, 3 - Z - anather unknown.\n");
 				printf("ERROR function tecplot360pather_for_print_in_report();");
@@ -5698,9 +5698,9 @@ void tecplot360patcher_for_print_in_report() {
 }// tecplot360patcher_for_print_in_report
 
 
-// 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-// а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-// проверка построеной сетки
+// 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+// а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
 void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPER &t,
@@ -5813,7 +5813,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count>0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
@@ -5913,6 +5913,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				if (1 && 2 == steady_or_unsteady_global_determinant) {
 					// Вызов только сеточного генератора
 					fprintf(fp, "VARIABLES = x, y, z, quolity, log(quolity) \n");  // печатается только расчётная сетка
+					//fprintf(fp, "VARIABLES = x, y, z, F(microW/cm!2), log(F(microW/cm!2)) \n");
 				}
 				else {
 					// печатается только поле температур
@@ -5959,9 +5960,50 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					}
 
 					if (1 && 2 == steady_or_unsteady_global_determinant) {
-						// quolity
+						/*
+						// Расчёт освещенности.
+						printf("calculation osveshennosti\n");
+						system("PAUSE");
+						doublereal* distance = new doublereal[t.maxelm + t.maxbound];
+						for (i = 0; i < t.maxelm; i++) {
+							distance[i] = 1.0e30;
+							if (b[t.whot_is_block[i]].itype == SOLID) {
+								distance[i] = 0.1e-3;// одна десятая мм
+							}
+						}
+						for (integer ibid = 0; ibid < lb; ibid++) {
+							if (b[ibid].arr_Sc[0]>1.0e-30) {
+								doublereal x0 = 0.5 * (b[ibid].g.xS + b[ibid].g.xE);
+								doublereal y0 = 0.5 * (b[ibid].g.yS + b[ibid].g.yE);
+								doublereal z0 = 0.5 * (b[ibid].g.zS + b[ibid].g.zE);
+								for (i = 0; i < t.maxelm; i++) {
+									TOCHKA p1;
+									center_cord3D(i, t.nvtx, t.pa, p1, 100);
+									doublereal dist0 = sqrt((p1.x-x0)*(p1.x-x0)+(p1.y-y0)*(p1.y-y0)+(p1.z-z0)*(p1.z-z0));
+									if (dist0 < distance[i]) {
+										distance[i] = dist0;
+									}
+								}
+							}
+						}
+
 						for (i = 0; i < t.database.maxelm; i++) {
-							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+							doublereal dmax = dx;
+							doublereal dmin = dx;
+							if (dy > dmax) dmax = dy;
+							if (dz > dmax) dmax = dz;
+							if (dy < dmin) dmin = dy;
+							if (dz < dmin) dmin = dz;
+
+							fprintf(fp, "%+.6f ", 1.0/(3.141* distance[i]* distance[i]));
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						*/
+
+						for (i = 0; i < t.database.maxelm; i++) {
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 							doublereal dmax = dx;
 							doublereal dmin = dx;
@@ -5973,10 +6015,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							fprintf(fp, "%+.6f ", dmax / dmin);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
-
+						
 						// log10(quolity)
 						for (i = 0; i < t.database.maxelm; i++) {
-							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 							doublereal dmax = dx;
 							doublereal dmin = dx;
@@ -6083,23 +6125,23 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 									b[t.whot_is_block[inode7]].bvisible&&
 									b[t.whot_is_block[inode8]].bvisible) {
 
-								integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-								integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-								integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-								integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+								integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+								integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+								integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+								integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-								integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-								integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-								integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-								integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+								integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+								integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+								integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+								integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-								integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-								integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-								integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-								integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+								integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+								integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+								integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+								integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 								TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
 								center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
@@ -6299,7 +6341,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				}
 				else {
 					// 19,03,2019
-					fprintf(fp, "\nVARIABLES = x, y, z, quolity, log(quolity)\n");// Только вызов Мешера
+					//fprintf(fp, "\nVARIABLES = x, y, z, quolity, log(quolity)\n"); // Только вызов Мешера
+					fprintf(fp, "\nVARIABLES = x, y, z, F(microW/cm!2), log(F(microW/cm!2))\n");
 				}
 
 #if doubleintprecision == 1
@@ -6342,9 +6385,128 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						}
 
 						if (1 && (2 == steady_or_unsteady_global_determinant)) {
+							/*
+													// Расчёт освещенности.
+							printf("calculation osveshennosti\n");
+							system("PAUSE");
+							doublereal* distance = new doublereal[t.maxelm + t.maxbound];
+							for (i = 0; i < t.maxelm; i++) {
+								distance[i] = 1.0e30;
+								if (b[t.whot_is_block[i]].itype == SOLID) {
+									distance[i] = -0.1e-3;// одна десятая мм
+								}
+							}
+							for (integer ibid = 0; ibid < lb; ibid++) {
+								if (b[ibid].arr_Sc[0] > 1.0e-30) {
+									printf("power %e\n", b[ibid].arr_Sc[0]);
+									doublereal x0 = 0.5 * (b[ibid].g.xS + b[ibid].g.xE);
+									doublereal y0 = 0.5 * (b[ibid].g.yS + b[ibid].g.yE);
+									doublereal z0 = 0.5 * (b[ibid].g.zS + b[ibid].g.zE);
+									for (i = 0; i < t.maxelm; i++) {
+										TOCHKA p1;
+										center_cord3D(i, t.nvtx, t.pa, p1, 100);
+										doublereal dist0 = sqrt((p1.x - x0) * (p1.x - x0) + (p1.y - y0) * (p1.y - y0) + (p1.z - z0) * (p1.z - z0));
+										if (dist0 < distance[i]) {
+											distance[i] = dist0;
+										}
+									}
+								}
+							}
+							for (i = 0; i < t.maxelm; i++) {
+								if (distance[i] < 0.0) {
+									distance[i] = 1.0e10;
+								}
+							}
+							//for (i = 0; i < t.maxelm; i++) {
+
+							//}
+							//for (i = 0; i < t.maxbound; i++) {
+
+							//}
+
+							for (i = 0; i < t.database.maxelm; i++) {
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+								doublereal dmax = dx;
+								doublereal dmin = dx;
+								if (dy > dmax) dmax = dy;
+								if (dz > dmax) dmax = dz;
+								if (dy < dmin) dmin = dy;
+								if (dz < dmin) dmin = dz;
+
+								fprintf(fp, "%+.6f ", 1.0 / (3.141 * distance[i] * distance[i]));
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+
+							delete[] distance;
+							*/
+							// Расчёт освещенности.
+							printf("calculation illumination\n");
+							system("PAUSE");
+							doublereal* distance = new doublereal[t.maxelm + t.maxbound];
+							doublereal* myF= new doublereal[t.maxelm + t.maxbound];
+							for (i = 0; i < t.maxelm; i++) {
+								myF[i] = 0.0;
+							}
+							for (integer ibid = 0; ibid < lb; ibid++) {
+								for (i = 0; i < t.maxelm; i++) {
+									distance[i] = 1.0e30;
+									if (b[t.whot_is_block[i]].itype == SOLID) {
+										distance[i] = -0.1e-3;// одна десятая мм
+									}
+								}
+							
+								if (b[ibid].arr_Sc[0] > 1.0e-30) {
+									printf("power %e\n", b[ibid].arr_Sc[0]);
+									doublereal x0 = 0.5 * (b[ibid].g.xS + b[ibid].g.xE);
+									doublereal y0 = 0.5 * (b[ibid].g.yS + b[ibid].g.yE);
+									doublereal z0 = 0.5 * (b[ibid].g.zS + b[ibid].g.zE);
+									for (i = 0; i < t.maxelm; i++) {
+										TOCHKA p1;
+										center_cord3D(i, t.nvtx, t.pa, p1, 100);
+										doublereal dist0 = sqrt((p1.x - x0) * (p1.x - x0) + (p1.y - y0) * (p1.y - y0) + (p1.z - z0) * (p1.z - z0));
+										if (dist0 < distance[i]) {
+											distance[i] = dist0;
+										}
+									}
+									for (i = 0; i < t.maxelm; i++) {
+										if (distance[i] < 0.0) {
+											distance[i] = 1.0e10;
+										}
+									}
+									for (i = 0; i < t.database.maxelm; i++) {
+										myF[i]+=1.0 / (3.141 * distance[i] * distance[i]);
+									}
+								}
+							}
+							
+							//for (i = 0; i < t.maxelm; i++) {
+
+							//}
+							//for (i = 0; i < t.maxbound; i++) {
+
+							//}
+
+							for (i = 0; i < t.database.maxelm; i++) {
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+								doublereal dmax = dx;
+								doublereal dmin = dx;
+								if (dy > dmax) dmax = dy;
+								if (dz > dmax) dmax = dz;
+								if (dy < dmin) dmin = dy;
+								if (dz < dmin) dmin = dz;
+
+								fprintf(fp, "%+.6f ", myF[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+
+							delete[] distance;
+							delete[] myF;
+/*
 							// quolity
 							for (i = 0; i < t.database.maxelm; i++) {
-								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 								doublereal dmax = dx;
 								doublereal dmin = dx;
@@ -6356,10 +6518,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 								fprintf(fp, "%+.6f ", dmax/dmin);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
-
+							*/
 							// log10(quolity)
 							for (i = 0; i < t.database.maxelm; i++) {
-								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 								doublereal dmax = dx;
 								doublereal dmin = dx;
@@ -6393,7 +6555,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						if (1 && (2 == steady_or_unsteady_global_determinant)) {
 							// quolity
 							for (i = 0; i < t.database.maxelm; i++) {
-								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 								doublereal dmax = dx;
 								doublereal dmin = dx;
@@ -6408,7 +6570,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 							// log10(quolity)
 							for (i = 0; i < t.database.maxelm; i++) {
-								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 								doublereal dmax = dx;
 								doublereal dmin = dx;
@@ -7110,15 +7272,15 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 		for (i = 0; i<t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, false,
-				t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
 		for (i = 0; i<t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, true,
-				t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
 
@@ -8358,23 +8520,23 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						inode7 = t.database.nvtxcell[6][i] - 1;
 						inode8 = t.database.nvtxcell[7][i] - 1;
 
-						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-						integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-						integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+						integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+						integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+						integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+						integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-						integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-						integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-						integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-						integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+						integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+						integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+						integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+						integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-						integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-						integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-						integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-						integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+						integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+						integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+						integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+						integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
@@ -8719,7 +8881,7 @@ void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCH
 
 		for (integer i = 0; i < ncell; i++) {
 			if (bcheck_visible[i]) {
-				// где то выше по коду перепутанпорядок в nvtx. Здесь он восстановлен.
+				// где то выше по коду перепутан порядок в nvtx. Здесь он восстановлен.
 				if (b_on_adaptive_local_refinement_mesh) {
 					fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
 				}
@@ -8876,9 +9038,9 @@ void exporttecplot_assembles_mesh(TEMPER &t, integer lu, UNION* &my_union) {
 
 }
 
-  // 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-  // а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-  // проверка построеной сетки
+  // 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+  // а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+  // проверка построенной сетки
   // экспорт результата расчёта в программу tecplot360
   // часть 2.
 void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell, 
@@ -9010,7 +9172,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count>0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
@@ -9049,8 +9211,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					//center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
 
 					integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
-					// Использование быстродействующей хеш таблицы whot_is_block значительно
-					// быстрее и не приводит к каким бы то ни было отличиям от прямого метда.
+					// Использование быстродействующей хеш-таблицы whot_is_block значительно
+					// быстрее и не приводит к каким бы то ни было отличиям от прямого метода.
 					ib1 = t.whot_is_block[inode1];
 					//in_model_temp(p1, ib1, b, lb);	
 					//if (ib1 != t.whot_is_block[inode1]) {
@@ -9131,8 +9293,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 						//center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
 
 						integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
-						// Использование быстродействующей хеш таблицы whot_is_block значительно
-						// быстрее и не приводит к каким бы то ни было отличиям от прямого метда.
+						// Использование быстродействующей хеш-таблицы whot_is_block значительно
+						// быстрее и не приводит к каким бы то ни было отличиям от прямого метода.
 						ib1 = my_union[iunion_scan].t.whot_is_block[inode1];
 						//in_model_temp(p1, ib1, b, lb);	
 						//if (ib1 != t.whot_is_block[inode1]) {
@@ -9404,23 +9566,23 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 							inode7 = t.database.nvtxcell[6][i] - 1;
 							inode8 = t.database.nvtxcell[7][i] - 1;
 
-							integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-							integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-							integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-							integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+							integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+							integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+							integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+							integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-							integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-							integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-							integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-							integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+							integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+							integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+							integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+							integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-							integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-							integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-							integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-							integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+							integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+							integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+							integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+							integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 							TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
 							center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
@@ -9526,23 +9688,23 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 								inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
 								inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
 
-								integer inode2W = my_union[iunion_scan].t.sosedi[WSIDE][inode1].iNODE1;
-								integer inode3W = my_union[iunion_scan].t.sosedi[WSIDE][inode4].iNODE1;
-								integer inode6W = my_union[iunion_scan].t.sosedi[WSIDE][inode5].iNODE1;
-								integer inode7W = my_union[iunion_scan].t.sosedi[WSIDE][inode8].iNODE1;
+								integer inode2W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+								integer inode3W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+								integer inode6W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+								integer inode7W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-								integer inode5B = my_union[iunion_scan].t.sosedi[BSIDE][inode1].iNODE1;
-								integer inode6B = my_union[iunion_scan].t.sosedi[BSIDE][inode2].iNODE1;
-								integer inode7B = my_union[iunion_scan].t.sosedi[BSIDE][inode3].iNODE1;
-								integer inode8B = my_union[iunion_scan].t.sosedi[BSIDE][inode4].iNODE1;
+								integer inode5B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+								integer inode6B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+								integer inode7B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+								integer inode8B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-								integer inode3S = my_union[iunion_scan].t.sosedi[SSIDE][inode2].iNODE1;
-								integer inode4S = my_union[iunion_scan].t.sosedi[SSIDE][inode1].iNODE1;
-								integer inode7S = my_union[iunion_scan].t.sosedi[SSIDE][inode6].iNODE1;
-								integer inode8S = my_union[iunion_scan].t.sosedi[SSIDE][inode5].iNODE1;
+								integer inode3S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+								integer inode4S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+								integer inode7S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+								integer inode8S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 								TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
 								center_cord3D(inode1, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p1, 100);
@@ -9651,14 +9813,10 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					}
 				}
 				// Полный набор искомых величин и теплопередача и гидродинамика:
-				if (bextendedprint) {
-					//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
-				}
-				else {
-					//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
-				}
+				
+				//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
+				fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
+				
 
 				integer maxelm_global = maxelm;
 				integer maxbound_global = t.maxbound;
@@ -10855,15 +11013,15 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 		for (i = 0; i<t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, false,
-				t.sosedb, Tx[0], Ty[0], Tz[0], t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, Tx[0], Ty[0], Tz[0], t.ilevel_alice);
 		}
 
 		for (i = 0; i<t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, true,
-				t.sosedb, Tx[0], Ty[0], Tz[0], t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, Tx[0], Ty[0], Tz[0], t.ilevel_alice);
 		}
 
 
@@ -10872,16 +11030,16 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 			for (i = 0; i<my_union[iunion_scan].t.maxelm; i++) {
 				// Только внутренние узлы.
 				green_gaussTemperature(i, my_union[iunion_scan].t.potent, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa,
-					my_union[iunion_scan].t.sosedi, my_union[iunion_scan].t.maxelm, false,
-					my_union[iunion_scan].t.sosedb, Tx[iunion_scan + 1], Ty[iunion_scan + 1], Tz[iunion_scan + 1], 
+					my_union[iunion_scan].t.neighbors_for_the_internal_node, my_union[iunion_scan].t.maxelm, false,
+					my_union[iunion_scan].t.border_neighbor, Tx[iunion_scan + 1], Ty[iunion_scan + 1], Tz[iunion_scan + 1], 
 					my_union[iunion_scan].t.ilevel_alice);
 			}
 
 			for (i = 0; i<my_union[iunion_scan].t.maxelm; i++) {
 				// Только граничные узлы.
 				green_gaussTemperature(i, my_union[iunion_scan].t.potent, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa,
-					my_union[iunion_scan].t.sosedi, my_union[iunion_scan].t.maxelm, true,
-					my_union[iunion_scan].t.sosedb, Tx[iunion_scan + 1], Ty[iunion_scan + 1], Tz[iunion_scan + 1],
+					my_union[iunion_scan].t.neighbors_for_the_internal_node, my_union[iunion_scan].t.maxelm, true,
+					my_union[iunion_scan].t.border_neighbor, Tx[iunion_scan + 1], Ty[iunion_scan + 1], Tz[iunion_scan + 1],
 					my_union[iunion_scan].t.ilevel_alice);
 			}
 		}
@@ -13264,23 +13422,23 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 						inode7 = t.database.nvtxcell[6][i] - 1;
 						inode8 = t.database.nvtxcell[7][i] - 1;
 
-						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-						integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-						integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+						integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+						integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+						integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+						integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-						integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-						integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-						integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-						integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+						integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+						integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+						integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+						integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-						integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-						integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-						integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-						integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+						integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+						integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+						integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+						integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
@@ -13512,23 +13670,23 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 							inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
 							inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
 
-							integer inode2W = my_union[iunion_scan].t.sosedi[WSIDE][inode1].iNODE1;
-							integer inode3W = my_union[iunion_scan].t.sosedi[WSIDE][inode4].iNODE1;
-							integer inode6W = my_union[iunion_scan].t.sosedi[WSIDE][inode5].iNODE1;
-							integer inode7W = my_union[iunion_scan].t.sosedi[WSIDE][inode8].iNODE1;
+							integer inode2W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+							integer inode3W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+							integer inode6W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+							integer inode7W = my_union[iunion_scan].t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-							integer inode5B = my_union[iunion_scan].t.sosedi[BSIDE][inode1].iNODE1;
-							integer inode6B = my_union[iunion_scan].t.sosedi[BSIDE][inode2].iNODE1;
-							integer inode7B = my_union[iunion_scan].t.sosedi[BSIDE][inode3].iNODE1;
-							integer inode8B = my_union[iunion_scan].t.sosedi[BSIDE][inode4].iNODE1;
+							integer inode5B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+							integer inode6B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+							integer inode7B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+							integer inode8B = my_union[iunion_scan].t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-							integer inode3S = my_union[iunion_scan].t.sosedi[SSIDE][inode2].iNODE1;
-							integer inode4S = my_union[iunion_scan].t.sosedi[SSIDE][inode1].iNODE1;
-							integer inode7S = my_union[iunion_scan].t.sosedi[SSIDE][inode6].iNODE1;
-							integer inode8S = my_union[iunion_scan].t.sosedi[SSIDE][inode5].iNODE1;
+							integer inode3S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+							integer inode4S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+							integer inode7S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+							integer inode8S = my_union[iunion_scan].t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 
 							TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
@@ -13748,9 +13906,9 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 } // exporttecplotxy360T_3D_part2_assembles
 
-// 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-// а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-// проверка построеной сетки
+// 10 января 2016. Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+// а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2. Для анимации. Если inumbercadr==0 то первый кадр.
 void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey,
@@ -13879,7 +14037,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count > 0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i = 0; i < flow_interior_count; i++) if (f[i].bactive) {
@@ -13976,7 +14134,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 
 				if (bvery_big_memory) {
-					// extended printeger не предусмотрено.
+					// extended print integer не предусмотрено.
 
 					// запись x
 					for (i = 0; i < t.database.maxelm; i++) {
@@ -14076,22 +14234,22 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 							inode7 = t.database.nvtxcell[6][i] - 1;
 							inode8 = t.database.nvtxcell[7][i] - 1;
 
-							integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-							integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-							integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-							integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+							integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+							integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+							integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+							integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-							integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-							integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-							integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-							integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+							integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+							integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+							integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+							integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
-							integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-							integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-							integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-							integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+							integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+							integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+							integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+							integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 							//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
 							//center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
@@ -14202,16 +14360,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 				}
 				if (inumbercadr == 0) {
 					// Полный набор искомых величин и теплопередача и гидродинамика:
-					if (bextendedprint) {
-						//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-						fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
+					
+					//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
+					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
 						
-					}
-					else {
-						//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-						fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
-						
-					}
+					
 				}
 #if doubleintprecision == 1
 				// запись информации о зонах
@@ -14833,15 +14986,15 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 		for (i = 0; i<t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, false,
-				t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
 		for (i = 0; i<t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, true,
-				t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
 
@@ -16083,23 +16236,23 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 						inode7 = t.database.nvtxcell[6][i] - 1;
 						inode8 = t.database.nvtxcell[7][i] - 1;
 
-						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-						integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-						integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+						integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+						integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+						integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+						integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-						integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-						integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-						integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-						integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+						integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+						integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+						integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+						integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-						integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-						integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-						integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-						integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+						integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+						integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+						integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+						integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 
 						//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
@@ -16319,15 +16472,15 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 }
 
 // специально для контроля над алгебраическим многосеточным методом.
-// 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-// а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-// проверка построеной сетки
+// 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+// а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
 void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedprint, integer imove)
 {
 	integer ianimate = 0;
-	integer flow_interior_count = 1;
+	const integer flow_interior_count = 1;
 	// imove 0 или 1 для нумерации с нуля или с единицы.
 
 	// ianimate - номер добавляемый к имени файла для анимации.
@@ -16389,13 +16542,13 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 
 
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
-			if (flow_interior_count>0) {
-				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
-				for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
-					ivarexport = 3; // считаем что температура всегда активна
-				}
+			// Особенность: иногда необходимо изменить вторую строку в файле:
+			
+			// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
+			for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
+				ivarexport = 3; // считаем что температура всегда активна
 			}
+			
 
 			if (ivarexport == 1) {
 				// запись заголовка
@@ -16428,7 +16581,7 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 						}
 
 				if (bvery_big_memory) {
-					// extended printeger не предусмотрено.
+					// extended print integer не предусмотрено.
 
 					// запись x
 					for (i = 0; i < t.database.maxelm; i++) {
@@ -16491,12 +16644,9 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 				}
 				*/
 				// Полный набор искомых величин и теплопередача и гидродинамика:
-				if (bextendedprint) {
-					fprintf(fp, "\nVARIABLES = x, y, z, u\n");
-				}
-				else {
-					fprintf(fp, "\nVARIABLES = x, y, z, u\n");
-				}
+				
+				fprintf(fp, "\nVARIABLES = x, y, z, u\n");
+				
 
 				// запись информации о зонах
 				if (bextendedprint) {
@@ -17039,15 +17189,15 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 		for (i = 0; i<t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, false,
-				t.sosedb, Tx, Ty, Tz);
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, Tx, Ty, Tz);
 		}
 
 		for (i = 0; i<t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, true,
-				t.sosedb, Tx, Ty, Tz);
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, Tx, Ty, Tz);
 		}
 
 
@@ -17231,9 +17381,9 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 } // for amg
 
 
-// 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
-// а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
-// проверка построеной сетки
+// 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
+// а то при записи в текстовом режиме время открытия файла tecplotом соизмеримо со временем вычисления. 
+// проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
 void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, BLOCK* &b, integer lb)
@@ -17297,7 +17447,7 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 
 
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count>0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
@@ -17314,14 +17464,14 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, heat_flux_x, heat_flux_y, heat_flux_z, mag_heat_flux\n");  // печатается только поле температур
 
 
-#if doubleintprecision == 1																													// запись информации о зонах
+#if doubleintprecision == 1		// запись информации о зонах
 				if (bextendedprint) {
 					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell);
 			    }
 				else {
 					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell);
 				}
-#else																											// запись информации о зонах
+#else							// запись информации о зонах
 				if (bextendedprint) {
 					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell);
 				}
@@ -17333,7 +17483,7 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				
 
 				if (bvery_big_memory) {
-					// extended printeger не предусмотрено.
+					// extended print integer не предусмотрено.
 
 					// запись x
 					for (i = 0; i < t.database.maxelm; i++) {
@@ -17444,12 +17594,8 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 					}
 				}
 				// Полный набор искомых величин и теплопередача и гидродинамика:
-				if (bextendedprint) {
-					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-				}
-				else {
-					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-				}
+				fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
+				
 
 #if doubleintprecision == 1
 				// запись информации о зонах
@@ -17987,15 +18133,15 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 		for (i = 0; i<t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, false,
-				t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
 		for (i = 0; i<t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
-				t.sosedi, t.maxelm, true,
-				t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
 
@@ -18165,7 +18311,7 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 
 
 // Это аналог VARIATION Plot из ANSYS Icepak.
-// С 16 января 2018 года мы передаём из интерфейса АЛИСМеш_v0_42 информацию о
+// С 16 января 2018 года мы передаём из интерфейса АЛИСMesh_v0.42 информацию о
 // линии на которой хотим отобразить температуру (передаётся опорная точка через
 // которую линия точно проходит и направление линии, которое должно совпадать с направлением одной
 // из осей декартовой прямоугольной системы координат.
@@ -18200,16 +18346,16 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 		integer ifi=0, iPf=0;
 		integer iplane=XZ; // плоскость перпендикулярная линии.
 		switch (idirectional_for_XY_Plot) {
-			case 0 : // X
+			case 0: // X
 			    iplane = YZ; // плоскость перпендикулярная линии.
 			    break;
-			case 1 : // Y
+			case 1: // Y
 			    iplane = XZ; // плоскость перпендикулярная линии.
 		    	break;
-			case 2 : // Z
+			case 2: // Z
 			    iplane = XY; // плоскость перпендикулярная линии.
 			    break;
-			default : // X
+			default: // X
 				iplane = YZ; // плоскость перпендикулярная линии.
 				break;
 		}
@@ -18228,60 +18374,60 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 		}
 		// перемотка в начало 
 		switch (iplane) {
-		case XY: while (fglobal[ifi].sosedi[BSIDE][iPf].iNODE1<fglobal[ifi].maxelm) iPf = fglobal[ifi].sosedi[BSIDE][iPf].iNODE1; break;
-		case XZ: while (fglobal[ifi].sosedi[SSIDE][iPf].iNODE1<fglobal[ifi].maxelm) iPf = fglobal[ifi].sosedi[SSIDE][iPf].iNODE1; break;
-		case YZ: while (fglobal[ifi].sosedi[WSIDE][iPf].iNODE1<fglobal[ifi].maxelm) iPf = fglobal[ifi].sosedi[WSIDE][iPf].iNODE1; break;
+		case XY: while (fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1<fglobal[ifi].maxelm) iPf = fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1; break;
+		case XZ: while (fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1<fglobal[ifi].maxelm) iPf = fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1; break;
+		case YZ: while (fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1<fglobal[ifi].maxelm) iPf = fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1; break;
 		}
 
 		integer G;
 		switch (iplane) {
-		  case XY : G=TSIDE;  break;
-		  case XZ : G=NSIDE;  break;
-		  case YZ : G=ESIDE;  break;
+		  case XY: G=TSIDE;  break;
+		  case XZ: G=NSIDE;  break;
+		  case YZ: G=ESIDE;  break;
 		}
 		
 		
 		fprintf(fp, "position,\tVx,\tVy,\tVz,\tPam,\tPress,\tFbuf,\tGRADPRESS,\tGRADPAM,\tmassfluxingran\n");
-		doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+		doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	    volume3D(iPf, fglobal[ifi].nvtx, fglobal[ifi].pa, dx, dy, dz);
         center_cord3D(iPf, fglobal[ifi].nvtx,fglobal[ifi].pa, p,100); // вычисление координат центра КО.
 		switch (iplane) {
-		  case XY : fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
-			  p.z - 0.5*dz, fglobal[ifi].potent[VX][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[VY][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[VZ][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[PAM][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[PRESS][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[FBUF][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[GRADZPRESS][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[GRADZPAM][fglobal[ifi].sosedi[BSIDE][iPf].iNODE1],
+		  case XY: fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
+			  p.z - 0.5*dz, fglobal[ifi].potent[VX][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[VY][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[VZ][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[PAM][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[PRESS][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[FBUF][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[GRADZPRESS][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[GRADZPAM][fglobal[ifi].neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
 						  fglobal[ifi].mf[iPf][G]);
 			              break;
-		  case XZ :  fprintf(fp,"%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
-			  p.y - 0.5*dy, fglobal[ifi].potent[VX][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[VY][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[VZ][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[PAM][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[PRESS][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[FBUF][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[GRADYPRESS][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[GRADYPAM][fglobal[ifi].sosedi[SSIDE][iPf].iNODE1],
+		  case XZ:  fprintf(fp,"%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
+			  p.y - 0.5*dy, fglobal[ifi].potent[VX][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[VY][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[VZ][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[PAM][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[PRESS][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[FBUF][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[GRADYPRESS][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[GRADYPAM][fglobal[ifi].neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
 						  fglobal[ifi].mf[iPf][G]);
 			              break;
-		  case YZ :  fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
-			  p.x - 0.5*dx, fglobal[ifi].potent[VX][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[VY][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[VZ][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[PAM][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[PRESS][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[FBUF][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[GRADXPRESS][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
-			  fglobal[ifi].potent[GRADXPAM][fglobal[ifi].sosedi[WSIDE][iPf].iNODE1],
+		  case YZ:  fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
+			  p.x - 0.5*dx, fglobal[ifi].potent[VX][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[VY][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[VZ][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[PAM][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[PRESS][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[FBUF][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[GRADXPRESS][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+			  fglobal[ifi].potent[GRADXPAM][fglobal[ifi].neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
 						  fglobal[ifi].mf[iPf][G]);
 			              break;
 		}
 		switch (iplane) {
-		  case XY : while (iPf<fglobal[ifi].maxelm) {
+		  case XY: while (iPf<fglobal[ifi].maxelm) {
 			        center_cord3D(iPf, fglobal[ifi].nvtx,fglobal[ifi].pa, p,100); 
 			        fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", 
 						  p.z, fglobal[ifi].potent[VX][iPf],
@@ -18293,22 +18439,22 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 						  fglobal[ifi].potent[GRADZPRESS][iPf],
 						  fglobal[ifi].potent[GRADZPAM][iPf],
 						  fglobal[ifi].mf[iPf][G]);
-					if (fglobal[ifi].sosedi[TSIDE][iPf].iNODE1 >= fglobal[ifi].maxelm) {
+					if (fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1 >= fglobal[ifi].maxelm) {
 						  volume3D(iPf, fglobal[ifi].nvtx, fglobal[ifi].pa, dx, dy, dz);
                           fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
-							  p.z + 0.5*dz, fglobal[ifi].potent[VX][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[VY][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[VZ][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[PAM][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[PRESS][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[FBUF][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[GRADZPRESS][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[GRADZPAM][fglobal[ifi].sosedi[TSIDE][iPf].iNODE1],
+							  p.z + 0.5*dz, fglobal[ifi].potent[VX][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[VY][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[VZ][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[PAM][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[PRESS][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[FBUF][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[GRADZPRESS][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[GRADZPAM][fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
 						  fglobal[ifi].mf[iPf][G]);
 					}
-					iPf = fglobal[ifi].sosedi[TSIDE][iPf].iNODE1;
+					iPf = fglobal[ifi].neighbors_for_the_internal_node[TSIDE][iPf].iNODE1;
 					} break;
-		  case XZ : while (iPf<fglobal[ifi].maxelm) {
+		  case XZ: while (iPf<fglobal[ifi].maxelm) {
 			        center_cord3D(iPf, fglobal[ifi].nvtx,fglobal[ifi].pa, p,100); 
 			        fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f  %+.16f %+.16f %+.16f\n", 
 						  p.y, fglobal[ifi].potent[VX][iPf],
@@ -18320,17 +18466,17 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 						  fglobal[ifi].potent[GRADYPRESS][iPf],
 						  fglobal[ifi].potent[GRADYPAM][iPf],
 						  fglobal[ifi].mf[iPf][G]);
-					if (fglobal[ifi].sosedi[NSIDE][iPf].iNODE1 >= fglobal[ifi].maxelm) {
+					if (fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1 >= fglobal[ifi].maxelm) {
 						  volume3D(iPf, fglobal[ifi].nvtx, fglobal[ifi].pa, dx, dy, dz);
                           fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
-							  p.y + 0.5*dy, fglobal[ifi].potent[VX][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[VY][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[VZ][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[PAM][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[PRESS][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[FBUF][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[GRADYPRESS][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[GRADYPAM][fglobal[ifi].sosedi[NSIDE][iPf].iNODE1],
+							  p.y + 0.5*dy, fglobal[ifi].potent[VX][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[VY][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[VZ][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[PAM][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[PRESS][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[FBUF][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[GRADYPRESS][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[GRADYPAM][fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
 						  fglobal[ifi].mf[iPf][G]);
 					}
 					/*
@@ -18338,24 +18484,24 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 					#if doubleintprecision == 1
 						// Узнаём последовательность узлов для отладки.
 						printf("iPf=%lld\n",iPf);
-						if (fglobal[ifi].sosedi[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
-						    printf("iPffinish=%lld\n",fglobal[ifi].sosedi[NSIDE][iPf].iNODE1);
+						if (fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
+						    printf("iPffinish=%lld\n",fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1);
 							getchar();
 						}
 					#else
 						// Узнаём последовательность узлов для отладки.
 						printf("iPf=%d\n",iPf);
-						if (fglobal[ifi].sosedi[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
-							printf("iPffinish=%d\n",fglobal[ifi].sosedi[NSIDE][iPf].iNODE1);
+						if (fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
+							printf("iPffinish=%d\n",fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1);
 							getchar();
 						}
 					#endif
 
 					
 					*/
-					iPf = fglobal[ifi].sosedi[NSIDE][iPf].iNODE1;
+					iPf = fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1;
 					} break;
-		  case YZ : while (iPf<fglobal[ifi].maxelm) {
+		  case YZ: while (iPf<fglobal[ifi].maxelm) {
 			        center_cord3D(iPf, fglobal[ifi].nvtx,fglobal[ifi].pa, p,100); 
 			        fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", 
 						  p.y, fglobal[ifi].potent[VX][iPf],
@@ -18367,20 +18513,20 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 						  fglobal[ifi].potent[GRADXPRESS][iPf],
 						  fglobal[ifi].potent[GRADXPAM][iPf],
 						  fglobal[ifi].mf[iPf][G]);
-					if (fglobal[ifi].sosedi[ESIDE][iPf].iNODE1 >= fglobal[ifi].maxelm) {
+					if (fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1 >= fglobal[ifi].maxelm) {
 						  volume3D(iPf, fglobal[ifi].nvtx, fglobal[ifi].pa, dx, dy, dz);
                           fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n",
-							  p.x + 0.5*dx, fglobal[ifi].potent[VX][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[VY][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[VZ][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[PAM][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[PRESS][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[FBUF][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[GRADXPRESS][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
-							  fglobal[ifi].potent[GRADXPAM][fglobal[ifi].sosedi[ESIDE][iPf].iNODE1],
+							  p.x + 0.5*dx, fglobal[ifi].potent[VX][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[VY][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[VZ][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[PAM][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[PRESS][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[FBUF][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[GRADXPRESS][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+							  fglobal[ifi].potent[GRADXPAM][fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
 						  fglobal[ifi].mf[iPf][G]);
 					}
-					iPf = fglobal[ifi].sosedi[ESIDE][iPf].iNODE1;
+					iPf = fglobal[ifi].neighbors_for_the_internal_node[ESIDE][iPf].iNODE1;
 					} break;
 		}
 		fclose(fp);
@@ -18454,9 +18600,9 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 			// перемотка в начало 
 			if (t.maxelm > 0) {
 				switch (iplane) {
-				case XY: while (t.sosedi[BSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[BSIDE][iPf].iNODE1; break;
-				case XZ: while (t.sosedi[SSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[SSIDE][iPf].iNODE1; break;
-				case YZ: while (t.sosedi[WSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[WSIDE][iPf].iNODE1; break;
+				case XY: while (t.neighbors_for_the_internal_node[BSIDE][iPf].iNODE1 < t.maxelm) iPf = t.neighbors_for_the_internal_node[BSIDE][iPf].iNODE1; break;
+				case XZ: while (t.neighbors_for_the_internal_node[SSIDE][iPf].iNODE1 < t.maxelm) iPf = t.neighbors_for_the_internal_node[SSIDE][iPf].iNODE1; break;
+				case YZ: while (t.neighbors_for_the_internal_node[WSIDE][iPf].iNODE1 < t.maxelm) iPf = t.neighbors_for_the_internal_node[WSIDE][iPf].iNODE1; break;
 				}
 			}
 
@@ -18469,23 +18615,23 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 
 
 			fprintf(fp, "position,\ttemperature,\ttemperature_avg\n");
-			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 			if (t.maxelm > 0) {
 				volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
 				center_cord3D(iPf, t.nvtx, t.pa, p, 100); // вычисление координат центра КО.
 			}
 			switch (iplane) {
 			case XY: fprintf(fp, "%+.16f %+.16f %+.16f\n",
-				p.z - 0.5*dz, t.potent[t.sosedi[BSIDE][iPf].iNODE1],
-				tempfiltr[t.sosedi[BSIDE][iPf].iNODE1]);
+				p.z - 0.5*dz, t.potent[t.neighbors_for_the_internal_node[BSIDE][iPf].iNODE1],
+				tempfiltr[t.neighbors_for_the_internal_node[BSIDE][iPf].iNODE1]);
 				break;
 			case XZ:  fprintf(fp, "%+.16f %+.16f %+.16f\n",
-				p.y - 0.5*dy, t.potent[t.sosedi[SSIDE][iPf].iNODE1],
-				tempfiltr[t.sosedi[SSIDE][iPf].iNODE1]);
+				p.y - 0.5*dy, t.potent[t.neighbors_for_the_internal_node[SSIDE][iPf].iNODE1],
+				tempfiltr[t.neighbors_for_the_internal_node[SSIDE][iPf].iNODE1]);
 				break;
 			case YZ:  fprintf(fp, "%+.16f %+.16f %+.16f\n",
-				p.x - 0.5*dx, t.potent[t.sosedi[WSIDE][iPf].iNODE1],
-				tempfiltr[t.sosedi[WSIDE][iPf].iNODE1]);
+				p.x - 0.5*dx, t.potent[t.neighbors_for_the_internal_node[WSIDE][iPf].iNODE1],
+				tempfiltr[t.neighbors_for_the_internal_node[WSIDE][iPf].iNODE1]);
 				break;
 			}
 			switch (iplane) {
@@ -18494,59 +18640,59 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 				fprintf(fp, "%+.16f %+.16f %+.16f\n",
 					p.z, t.potent[iPf],
 					tempfiltr[iPf]);
-				if (t.sosedi[TSIDE][iPf].iNODE1 >= t.maxelm) {
+				if (t.neighbors_for_the_internal_node[TSIDE][iPf].iNODE1 >= t.maxelm) {
 					volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
 					fprintf(fp, "%+.16f %+.16f %+.16f\n",
-						p.z + 0.5*dz, t.potent[t.sosedi[TSIDE][iPf].iNODE1],
-						tempfiltr[t.sosedi[TSIDE][iPf].iNODE1]);
+						p.z + 0.5*dz, t.potent[t.neighbors_for_the_internal_node[TSIDE][iPf].iNODE1],
+						tempfiltr[t.neighbors_for_the_internal_node[TSIDE][iPf].iNODE1]);
 				}
-				iPf = t.sosedi[TSIDE][iPf].iNODE1;
+				iPf = t.neighbors_for_the_internal_node[TSIDE][iPf].iNODE1;
 			} break;
 			case XZ: while (iPf < t.maxelm) {
 				center_cord3D(iPf, t.nvtx, t.pa, p,100);
 				fprintf(fp, "%+.16f %+.16f %+.16f\n",
 					p.y, t.potent[iPf],
 					tempfiltr[iPf]);
-				if (t.sosedi[NSIDE][iPf].iNODE1 >= t.maxelm) {
+				if (t.neighbors_for_the_internal_node[NSIDE][iPf].iNODE1 >= t.maxelm) {
 					volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
 					fprintf(fp, "%+.16f %+.16f %+.16f\n",
-						p.y + 0.5*dy, t.potent[t.sosedi[NSIDE][iPf].iNODE1],
-						tempfiltr[t.sosedi[NSIDE][iPf].iNODE1]);
+						p.y + 0.5*dy, t.potent[t.neighbors_for_the_internal_node[NSIDE][iPf].iNODE1],
+						tempfiltr[t.neighbors_for_the_internal_node[NSIDE][iPf].iNODE1]);
 				}
 				/*
 
 				#if doubleintprecision == 1
 					// Узнаём последовательность узлов для отладки.
 					printf("iPf=%lld\n",iPf);
-					if (fglobal[ifi].sosedi[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
-						printf("iPffinish=%lld\n",fglobal[ifi].sosedi[NSIDE][iPf].iNODE1);
+					if (fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
+						printf("iPffinish=%lld\n",fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1);
 						getchar();
 					}
 				#else
 					// Узнаём последовательность узлов для отладки.
 					printf("iPf=%d\n",iPf);
-					if (fglobal[ifi].sosedi[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
-						printf("iPffinish=%d\n",fglobal[ifi].sosedi[NSIDE][iPf].iNODE1);
+					if (fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1>=fglobal[ifi].maxelm) {
+						printf("iPffinish=%d\n",fglobal[ifi].neighbors_for_the_internal_node[NSIDE][iPf].iNODE1);
 						getchar();
 					}
 				#endif
 
 				
 				*/
-				iPf = t.sosedi[NSIDE][iPf].iNODE1;
+				iPf = t.neighbors_for_the_internal_node[NSIDE][iPf].iNODE1;
 			} break;
 			case YZ: while (iPf < t.maxelm) {
 				center_cord3D(iPf, t.nvtx, t.pa, p,100);
 				fprintf(fp, "%+.16f %+.16f %+.16f\n",
 					p.x, t.potent[iPf],
 					tempfiltr[iPf]);
-				if (t.sosedi[ESIDE][iPf].iNODE1 >= t.maxelm) {
+				if (t.neighbors_for_the_internal_node[ESIDE][iPf].iNODE1 >= t.maxelm) {
 					volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
 					fprintf(fp, "%+.16f %+.16f %+.16f\n",
-						p.x + 0.5*dx, t.potent[t.sosedi[ESIDE][iPf].iNODE1],
-						tempfiltr[t.sosedi[ESIDE][iPf].iNODE1]);
+						p.x + 0.5*dx, t.potent[t.neighbors_for_the_internal_node[ESIDE][iPf].iNODE1],
+						tempfiltr[t.neighbors_for_the_internal_node[ESIDE][iPf].iNODE1]);
 				}
-				iPf = t.sosedi[ESIDE][iPf].iNODE1;
+				iPf = t.neighbors_for_the_internal_node[ESIDE][iPf].iNODE1;
 			} break;
 			}
 			fclose(fp);
@@ -18663,7 +18809,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 		*/
 		{
 			// копирование первой части в итоговый файл
-			// Особенность : иногда необходимо изменить вторую строку в файле:
+			// Особенность: иногда необходимо изменить вторую строку в файле:
 			if (flow_interior_count>0) {
 				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
 				for (i=0; i<flow_interior_count; i++) if (f[i].bactive) {
@@ -18678,13 +18824,13 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 
 		         // запись имён переменных
 				switch (iVar) {
-	               case TEMP : fprintf(fp, "VARIABLES = x, y, z, Temp\n");  // печатается только поле температур
+	               case TEMP: fprintf(fp, "VARIABLES = x, y, z, Temp\n");  // печатается только поле температур
 		                       break;
-	               case SPEED :  fprintf(fp, "VARIABLES = x, y, z, Speed\n"); // печатается модуль скорости
+	               case SPEED:  fprintf(fp, "VARIABLES = x, y, z, Speed\n"); // печатается модуль скорости
 		                       break;
-	               case PRESS :  fprintf(fp, "VARIABLES = x, y, z, Press\n"); // печатается давление
+	               case PRESS:  fprintf(fp, "VARIABLES = x, y, z, Press\n"); // печатается давление
 		                       break;
-	               case PAM :   fprintf(fp, "VARIABLES = x, y, z, PAM\n"); // печатается поправка давления
+	               case PAM:   fprintf(fp, "VARIABLES = x, y, z, PAM\n"); // печатается поправка давления
 		                       break;
 	            }
 		         
@@ -18698,7 +18844,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 				
 		
 				if (bvery_big_memory) {
-					// extended printeger не предусмотрено.
+					// extended print integer не предусмотрено.
 
 					// запись x
 					for (i = 0; i < t.database.maxelm; i++) {
@@ -18719,7 +18865,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 					if (1 && 2 == steady_or_unsteady_global_determinant) {
 						// quolity
 						for (i = 0; i < t.database.maxelm; i++) {
-							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 							doublereal dmax = dx;
 							doublereal dmin = dx;
@@ -18734,7 +18880,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 
 						// log10(quolity)
 						for (i = 0; i < t.database.maxelm; i++) {
-							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 							doublereal dmax = dx;
 							doublereal dmin = dx;
@@ -18760,13 +18906,13 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 
      				// запись имён переменных
 				    switch (iVar) {
-	                   case TEMP : fprintf(fp, "\nVARIABLES = x, y, z, Temp\n");  // печатается только поле температур
+	                   case TEMP: fprintf(fp, "\nVARIABLES = x, y, z, Temp\n");  // печатается только поле температур
 		                           break;
-	                   case SPEED :  fprintf(fp, "\nVARIABLES = x, y, z, Speed\n"); // печатается модуль скорости
+	                   case SPEED:  fprintf(fp, "\nVARIABLES = x, y, z, Speed\n"); // печатается модуль скорости
 		                           break;
-	                   case PRESS :  fprintf(fp, "\nVARIABLES = x, y, z, Press\n"); // печатается давление
+	                   case PRESS:  fprintf(fp, "\nVARIABLES = x, y, z, Press\n"); // печатается давление
 		                           break;
-	                   case PAM :   fprintf(fp, "\nVARIABLES = x, y, z, PAM\n"); // печатается поправка давления
+	                   case PAM:   fprintf(fp, "\nVARIABLES = x, y, z, PAM\n"); // печатается поправка давления
 		                           break;
 	                }
 				}
@@ -18779,7 +18925,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 #endif
                 
 				if (bvery_big_memory) {
-					// extended printeger не предусмотрено.
+					// extended print integer не предусмотрено.
 
 					// запись x
 					for (i = 0; i < t.database.maxelm; i++) {
@@ -18800,7 +18946,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 					if (1 && 2 == steady_or_unsteady_global_determinant) {
 						// quolity
 						for (i = 0; i < t.database.maxelm; i++) {
-							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 							doublereal dmax = dx;
 							doublereal dmin = dx;
@@ -18815,7 +18961,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 
 						// log10(quolity)
 						for (i = 0; i < t.database.maxelm; i++) {
-							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
 							doublereal dmax = dx;
 							doublereal dmin = dx;
@@ -19101,23 +19247,23 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 						inode7 = t.database.nvtxcell[6][i] - 1;
 						inode8 = t.database.nvtxcell[7][i] - 1;
 
-						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
-						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
-						integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
-						integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+						integer inode2W = t.neighbors_for_the_internal_node[WSIDE][inode1].iNODE1;
+						integer inode3W = t.neighbors_for_the_internal_node[WSIDE][inode4].iNODE1;
+						integer inode6W = t.neighbors_for_the_internal_node[WSIDE][inode5].iNODE1;
+						integer inode7W = t.neighbors_for_the_internal_node[WSIDE][inode8].iNODE1;
 
 
-						integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
-						integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
-						integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
-						integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+						integer inode5B = t.neighbors_for_the_internal_node[BSIDE][inode1].iNODE1;
+						integer inode6B = t.neighbors_for_the_internal_node[BSIDE][inode2].iNODE1;
+						integer inode7B = t.neighbors_for_the_internal_node[BSIDE][inode3].iNODE1;
+						integer inode8B = t.neighbors_for_the_internal_node[BSIDE][inode4].iNODE1;
 
 
 
-						integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
-						integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
-						integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
-						integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+						integer inode3S = t.neighbors_for_the_internal_node[SSIDE][inode2].iNODE1;
+						integer inode4S = t.neighbors_for_the_internal_node[SSIDE][inode1].iNODE1;
+						integer inode7S = t.neighbors_for_the_internal_node[SSIDE][inode6].iNODE1;
+						integer inode8S = t.neighbors_for_the_internal_node[SSIDE][inode5].iNODE1;
 
 
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;

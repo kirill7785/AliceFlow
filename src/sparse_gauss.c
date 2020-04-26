@@ -56,7 +56,7 @@ void setValueIRow(IRow *xO, integer num, doublereal value) {
            //indexes.RemoveAt(i);
            //values.RemoveAt(i);
 
-		   deleteAt(xO->elm,num,xO->n,xO->POOL_SIZE); // удаление элемента с ключём i
+		   deleteAt(xO->elm,num,xO->n,xO->POOL_SIZE); // удаление элемента с ключом i
 
        }
       
@@ -133,11 +133,11 @@ integer getValuesIRow(IRow *xO, integer* &indexes, doublereal* &values)
 // выделение памяти под разреженную матрицу
 // n - количество уравнений.
 void initIMatrix(IMatrix *xO, integer n) {
-	if ((xO != NULL) && ((xO->dd != NULL) || (xO->jp != NULL) || (xO->jm != NULL))) {
+	if ((xO != nullptr) && ((xO->dd != nullptr) || (xO->jp != nullptr) || (xO->jm != nullptr))) {
 	//	freeIMatrix(&xO);
 	}
 
-	if (xO == NULL) xO=new IMatrix;
+	if (xO == nullptr) xO=new IMatrix;
 	xO->eps0=1e-100; // для отделения вещественного нуля
 	xO->n=n;
 	
@@ -149,8 +149,8 @@ void initIMatrix(IMatrix *xO, integer n) {
 		xO->dd[i1]=0.0;
 		xO->jp[i1].n=0;
 		xO->jm[i1].n=0;
-		xO->jp[i1].elm=NULL;
-		xO->jm[i1].elm=NULL;
+		xO->jp[i1].elm=nullptr;
+		xO->jm[i1].elm=nullptr;
 		xO->jp[i1].POOL_SIZE=0;
 		xO->jm[i1].POOL_SIZE=0;
 		xO->jp[i1].eps0=xO->eps0;
@@ -160,29 +160,32 @@ void initIMatrix(IMatrix *xO, integer n) {
 
 // освобождение памяти из под объекта
 void freeIMatrix(IMatrix* xO) {
-	// для того чтобы избежать ошибок при повтоном
-	// уделении одного и того же объекта здесь сделана
+	// для того чтобы избежать ошибок при повторном
+	// удалении одного и того же объекта здесь сделана
 	// проверка и если xO->n==0 то объект уже удалён.
-	if (xO->n!=0) 
+	
+	if (xO != nullptr) 
 	{
-		if (xO != NULL) {
-			if (xO->dd != NULL) delete[] xO->dd;
-			xO->dd = NULL;
+		if (xO->n!=0) 
+		{
+		
+			if (xO->dd != nullptr) delete[] xO->dd;
+			xO->dd = nullptr;
 			integer i = 0;
 			for (i = 0; i < xO->n; i++) {
-				if (xO->jp[i].elm != NULL) {
+				if (xO->jp[i].elm != nullptr) {
 					delete[] xO->jp[i].elm;
-					xO->jp[i].elm = NULL;
+					xO->jp[i].elm = nullptr;
 				}
-				if (xO->jm[i].elm != NULL) {
+				if (xO->jm[i].elm != nullptr) {
 					delete[] xO->jm[i].elm;
-					xO->jm[i].elm = NULL;
+					xO->jm[i].elm = nullptr;
 				}
 			}
-			if (xO->jp != NULL) delete[] xO->jp;
-			if (xO->jm != NULL) delete[] xO->jm;
-			xO->jp = NULL;
-			xO->jm = NULL;
+			if (xO->jp != nullptr) delete[] xO->jp;
+			if (xO->jm != nullptr) delete[] xO->jm;
+			xO->jp = nullptr;
+			xO->jm = nullptr;
 			xO->n = 0;
 		}
 	}
@@ -273,12 +276,12 @@ void calculateSPARSEgaussArray(IMatrix *xO, doublereal *x, doublereal *b) {
 	// col - столбец, row - строка
 
 	// Все ненулевые значения обнуляемого столбца
-	integer * colIndexes=NULL;
-	doublereal * colValues=NULL;
+	integer * colIndexes=nullptr;
+	doublereal * colValues=nullptr;
 
     // Ненулевые ячейки строки правее главной диагонали
-	integer * rowIndexes=NULL;
-	doublereal * rowValues=NULL;
+	integer * rowIndexes=nullptr;
+	doublereal * rowValues=nullptr;
     
     integer colIndexesLength, rowIndexesLength;
 
@@ -335,9 +338,8 @@ void convertCRStoIMatrix(integer n, doublereal* luval, integer* ja, integer* ia,
 
 	//printf("commin\n");
     
-	integer i=0, j=0;
-	for (i=0; i<n; i++) {
-		for (j=ia[i]; j<ia[i+1]; j++) {
+	for (integer i=0; i<n; i++) {
+		for (integer j=ia[i]; j<ia[i+1]; j++) {
 			//printf("%d %d\n",i,ja[j]);
 			setValueIMatrix(sparseS, i, ja[j], luval[j]);
 		}
@@ -368,8 +370,8 @@ void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_i
 	for (i=0; i<=n; i++) U_ptr[i]=nz;
 
     // Ненулевые ячейки строки правее главной диагонали
-	integer * rowIndexes=NULL;
-	doublereal * rowValues=NULL;
+	integer * rowIndexes=nullptr;
+	doublereal * rowValues=nullptr;
 
 	integer colIndexesLength, rowIndexesLength;
 
@@ -430,7 +432,7 @@ void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_i
 		U_ptr[n - 1] = min(ik, U_ptr[n - 1]);
 	}
 	else {
-		printf("error : convertIMatrixtoCSIR_ILU_ITL ik>=nz. \n");
+		printf("error: convertIMatrixtoCSIR_ILU_ITL ik>=nz. \n");
 		system("pause");
 		exit(1);
 	}
@@ -448,7 +450,7 @@ void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_i
 	L_ind = new integer[nz];
 	L_ptr = new integer[n+1];
 
-	if ((L_val != NULL) && (L_ind != NULL) && (L_ptr != NULL)) {
+	if ((L_val != nullptr) && (L_ind != nullptr) && (L_ptr != nullptr)) {
 
 		for (i = 0; i < nz; i++) {
 			L_val[i] = 0.0;
@@ -457,8 +459,8 @@ void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_i
 		for (i = 0; i <= n; i++) L_ptr[i] = nz;
 
 		// Все ненулевые значения в столбце ниже главной диагонали
-		integer * colIndexes = NULL;
-		doublereal * colValues = NULL;
+		integer * colIndexes = nullptr;
+		doublereal * colValues = nullptr;
 
 		ik = 0; // счётчик ненулевых наддиагональных элементов СЛАУ
 
@@ -486,7 +488,7 @@ void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_i
 					ik++;
 				}
 				else {
-					printf("error : ik>=nz in convertIMatrixtoCSIR_ILU_ITL\n");
+					printf("error: ik>=nz in convertIMatrixtoCSIR_ILU_ITL\n");
 					printf("see file sparse_gauss.c\n");
 					system("pause");
 					exit(1);

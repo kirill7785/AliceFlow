@@ -5,7 +5,7 @@
 #ifndef SPARSE_GAUSS_H
 #define SPARSE_GAUSS_H 1
 
-// ќбъ€вление модели вещественной арифметики содержитс€ в самом начале программы в главно модуле 
+// ќбъ€вление модели вещественной арифметики содержитс€ в самом начале программы в главном модуле 
 // AliceFlow_v0_27
 //#define doublereal double
 
@@ -15,7 +15,7 @@ typedef struct tagTERM {
 	doublereal val=0.0;
 	// специальные пол€ дл€
 	// ј¬Ћ дерева, при реализации
-	// интерфейса строк и стобцов
+	// интерфейса строк и столбцов
 	// на массиве они не используютс€.
 	// left и right убраны 10,10,2019
 	//struct tagTERM *left=NULL;
@@ -38,13 +38,13 @@ typedef struct tagIRow{
 } IRow;
 
 // разреженна€ матрица —Ћј”:
-//  вадратна€ nxn с диагональным преобладанием,
+//  вадратна€ n*n с диагональным преобладанием,
 // возможно несимметрична€. Ќумераци€ начинаетс€ 
 // с нул€.
 typedef struct tagIMatrix{
     doublereal eps0=1.0e-30; // дл€ определени€ вещественного нул€
 
-	integer n=0; // размерность матрицы nxn.
+	integer n=0; // размерность матрицы n*n.
     // jp - строки верхней полуматрицы
     // jm - столбцы нижней полуматрицы
     // dd - главна€ диагональ
@@ -55,10 +55,10 @@ typedef struct tagIMatrix{
 // поиск €чейки с индексом key  
 integer search_i(TERM* list, integer n, integer key);
 
-// удал€ет элемент с ключЄм равным key
+// удал€ет элемент с ключом равным key
 void deleteAt(TERM* &list, integer key, integer &n, integer &pool);
 
-// добал€ет элемент со значени€ми : num, val.
+// добавл€ет элемент со значени€ми: num, val.
 void add(TERM* &list, integer &n, integer &pool, integer num, doublereal val);
 
 // возвращает значение €чейки ключ
@@ -66,11 +66,11 @@ void add(TERM* &list, integer &n, integer &pool, integer num, doublereal val);
 doublereal get_val(TERM* list, integer n, integer key);
 
 // добавл€ет число value в €чейку
-// с ключЄм key
+// с ключом key
 void modify_add(TERM* &list, integer n, integer key, doublereal value);
 
 // устанавливает число value в €чейку
-// с ключЄм key
+// с ключом key
 void modify_set(TERM* &list, integer n, integer key, doublereal value);
 
 // зависит от внутреннего представлени€

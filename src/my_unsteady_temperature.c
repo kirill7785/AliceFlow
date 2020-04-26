@@ -17,7 +17,7 @@
 #include "Blasius.c"
 #include <ctime> // для замера времени выполнения.
 
-// Печатает репорт после вычисления в текстовый файл 
+// Печатает отчёт после вычисления в текстовый файл 
 // report_temperature.txt
 // Максимальная температура каждого блока,
 // максимальная температура каждого источника,
@@ -31,7 +31,7 @@ void report_temperature(integer flow_interior,
 		tmaxreportblock = new doublereal[lb];
 		if (tmaxreportblock == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for tmaxreportblock report_temperature...\n");
+			printf("Problem: not enough memory on your equipment for tmaxreportblock report_temperature...\n");
 			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
@@ -40,7 +40,7 @@ void report_temperature(integer flow_interior,
 		tmaxreportsource = new doublereal[ls];
 		if (tmaxreportsource == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for tmaxreportsource report_temperature...\n");
+			printf("Problem: not enough memory on your equipment for tmaxreportsource report_temperature...\n");
 			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
@@ -49,7 +49,7 @@ void report_temperature(integer flow_interior,
 		tmaxreportwall = new doublereal[lw];
 		if (tmaxreportwall == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for tmaxreportwall report_temperature...\n");
+			printf("Problem: not enough memory on your equipment for tmaxreportwall report_temperature...\n");
 			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
@@ -85,15 +85,15 @@ void report_temperature(integer flow_interior,
 	else {
 	// граничный узел.
 	integer inumber=i-t.maxelm;
-	if (t.sosedb[inumber].MCB<(ls+lw)) {
-	if (t.sosedb[inumber].MCB<ls) {
-	if (tmaxreportsource[t.sosedb[inumber].MCB]<t.potent[i]) {
-	tmaxreportsource[t.sosedb[inumber].MCB]=t.potent[i];
+	if (t.border_neighbor[inumber].MCB<(ls+lw)) {
+	if (t.border_neighbor[inumber].MCB<ls) {
+	if (tmaxreportsource[t.border_neighbor[inumber].MCB]<t.potent[i]) {
+	tmaxreportsource[t.border_neighbor[inumber].MCB]=t.potent[i];
 	}
 	}
 	else {
-	if (tmaxreportwall[t.sosedb[inumber].MCB-ls]<t.potent[i]) {
-	tmaxreportwall[t.sosedb[inumber].MCB-ls]=t.potent[i];
+	if (tmaxreportwall[t.border_neighbor[inumber].MCB-ls]<t.potent[i]) {
+	tmaxreportwall[t.border_neighbor[inumber].MCB-ls]=t.potent[i];
 	}
 	}
 	}
@@ -120,15 +120,15 @@ void report_temperature(integer flow_interior,
 		else {
 			// граничный узел.
 			integer inumber = i - t.maxelm;
-			if (t.sosedb[inumber].MCB<(ls + lw)) {
-				if (t.sosedb[inumber].MCB<ls) {
-					if (tmaxreportsource[t.sosedb[inumber].MCB]<t.potent[i]) {
-						tmaxreportsource[t.sosedb[inumber].MCB] = t.potent[i];
+			if (t.border_neighbor[inumber].MCB<(ls + lw)) {
+				if (t.border_neighbor[inumber].MCB<ls) {
+					if (tmaxreportsource[t.border_neighbor[inumber].MCB]<t.potent[i]) {
+						tmaxreportsource[t.border_neighbor[inumber].MCB] = t.potent[i];
 					}
 				}
 				else {
-					if (tmaxreportwall[t.sosedb[inumber].MCB - ls]<t.potent[i]) {
-						tmaxreportwall[t.sosedb[inumber].MCB - ls] = t.potent[i];
+					if (tmaxreportwall[t.border_neighbor[inumber].MCB - ls]<t.potent[i]) {
+						tmaxreportwall[t.border_neighbor[inumber].MCB - ls] = t.potent[i];
 					}
 				}
 			}
@@ -176,7 +176,7 @@ void report_temperature(integer flow_interior,
 		case 1: name = name2; break;
 		case 2: name = name3; break;
 		default:
-			printf("error in my_unsteady_temperature.c : report_temperature : name==nullptr\n");
+			printf("error in my_unsteady_temperature.c: report_temperature: name==nullptr\n");
 			system("pause");
 			exit(1);
 			break;
@@ -185,9 +185,9 @@ void report_temperature(integer flow_interior,
 		/*
 		char *name="report_temperature.txt";
 		switch(ipref) {
-		case 0 : name="report_temperature.txt"; break;
-		case 1 : name="solver/solid_static/report_temperature.txt"; break;
-		case 2 : name="solver/conjugate_heat_transfer_static/report_temperature.txt"; break;
+		case 0: name="report_temperature.txt"; break;
+		case 1: name="solver/solid_static/report_temperature.txt"; break;
+		case 2: name="solver/conjugate_heat_transfer_static/report_temperature.txt"; break;
 		}
 		*/
 
@@ -299,10 +299,10 @@ void debug_signal(TEMPER& t, doublereal operating_temperature) {
 
 // 2 ноября 2016 возникла необходимость при нестационарном расчёте после
 // окончания каждого шага по времени дописывать файл с отчётом.
-// Внимание : последовательность имён блоков из которых состоит программная 
+// Внимание: последовательность имён блоков из которых состоит программная 
 // модель определяется внутри интерфейса AliceMesh* поэтому для правильного формирования 
 // отчёта взаимодействие с интерфейсом строго необходимо.
-// Печатает репорт после вычисления в текстовый файл 
+// Печатает отчёт после вычисления в текстовый файл 
 // report_temperature.txt
 // Максимальная температура каждого блока, мощность тепловыделения в нем в данный момент времени,
 // максимальная температура каждого источника, мощность тепловыделения в нем в данный момент времени,
@@ -318,15 +318,15 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 
 	// При нестационарном расчёте переменная time_solution_now 
 	// показывает время (модельное) на текущий шаг по времени.
-	// Синтаксис вызова :
+	// Синтаксис вызова:
 	// report_temperature_for_unsteady_modeling(flow_interior, f, t, b, lb, s, ls, w, lw, 0, time_solution_now, poweron_multiplier_sequence);
-	// Вызывается только из функции : unsteady_temperature_calculation.
+	// Вызывается только из функции: unsteady_temperature_calculation.
 
 	doublereal* tmaxreportblock = nullptr;
 	tmaxreportblock = new doublereal[lb];
 	if (tmaxreportblock == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for tmaxreportblock report_temperature_for_unsteady_modeling...\n");
+		printf("Problem: not enough memory on your equipment for tmaxreportblock report_temperature_for_unsteady_modeling...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -336,7 +336,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 	tmaxreportsource = new doublereal[ls];
 	if (tmaxreportsource == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for tmaxreportsource report_temperature_for_unsteady_modeling...\n");
+		printf("Problem: not enough memory on your equipment for tmaxreportsource report_temperature_for_unsteady_modeling...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -346,7 +346,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 	tmaxreportwall = new doublereal[lw];
 	if (tmaxreportwall == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for tmaxreportwall report_temperature_for_unsteady_modeling...\n");
+		printf("Problem: not enough memory on your equipment for tmaxreportwall report_temperature_for_unsteady_modeling...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -383,15 +383,15 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 	else {
 	// граничный узел.
 	integer inumber=i-t.maxelm;
-	if (t.sosedb[inumber].MCB<(ls+lw)) {
-	if (t.sosedb[inumber].MCB<ls) {
-	if (tmaxreportsource[t.sosedb[inumber].MCB]<t.potent[i]) {
-	tmaxreportsource[t.sosedb[inumber].MCB]=t.potent[i];
+	if (t.border_neighbor[inumber].MCB<(ls+lw)) {
+	if (t.border_neighbor[inumber].MCB<ls) {
+	if (tmaxreportsource[t.border_neighbor[inumber].MCB]<t.potent[i]) {
+	tmaxreportsource[t.border_neighbor[inumber].MCB]=t.potent[i];
 	}
 	}
 	else {
-	if (tmaxreportwall[t.sosedb[inumber].MCB-ls]<t.potent[i]) {
-	tmaxreportwall[t.sosedb[inumber].MCB-ls]=t.potent[i];
+	if (tmaxreportwall[t.border_neighbor[inumber].MCB-ls]<t.potent[i]) {
+	tmaxreportwall[t.border_neighbor[inumber].MCB-ls]=t.potent[i];
 	}
 	}
 	}
@@ -432,15 +432,15 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 		else {
 			// граничный узел.
 			integer inumber = i - t.maxelm;
-			if (t.sosedb[inumber].MCB<(ls + lw)) {
-				if (t.sosedb[inumber].MCB<ls) {
-					if (tmaxreportsource[t.sosedb[inumber].MCB]<t.potent[i]) {
-						tmaxreportsource[t.sosedb[inumber].MCB] = t.potent[i];
+			if (t.border_neighbor[inumber].MCB<(ls + lw)) {
+				if (t.border_neighbor[inumber].MCB<ls) {
+					if (tmaxreportsource[t.border_neighbor[inumber].MCB]<t.potent[i]) {
+						tmaxreportsource[t.border_neighbor[inumber].MCB] = t.potent[i];
 					}
 				}
 				else {
-					if (tmaxreportwall[t.sosedb[inumber].MCB - ls]<t.potent[i]) {
-						tmaxreportwall[t.sosedb[inumber].MCB - ls] = t.potent[i];
+					if (tmaxreportwall[t.border_neighbor[inumber].MCB - ls]<t.potent[i]) {
+						tmaxreportwall[t.border_neighbor[inumber].MCB - ls] = t.potent[i];
 					}
 				}
 			}
@@ -489,7 +489,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 		case 1: name = name2; break;
 		case 2: name = name3; break;
 		default:
-		printf("error in my_unsteady_temperature.c : report_temperature : name==nullptr\n");
+		printf("error in my_unsteady_temperature.c: report_temperature: name==nullptr\n");
 		system("pause");
 		exit(1);
 		break;
@@ -500,9 +500,9 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 		/*
 		char *name="report_temperature.txt";
 		switch(ipref) {
-		case 0 : name="report_temperature.txt"; break;
-		case 1 : name="solver/solid_static/report_temperature.txt"; break;
-		case 2 : name="solver/conjugate_heat_transfer_static/report_temperature.txt"; break;
+		case 0: name="report_temperature.txt"; break;
+		case 1: name="solver/solid_static/report_temperature.txt"; break;
+		case 2: name="solver/conjugate_heat_transfer_static/report_temperature.txt"; break;
 		}
 		*/
 
@@ -657,7 +657,7 @@ void uniform_timestep_seq(doublereal StartTime, doublereal EndTime, doublereal t
 } // uniform_timestep_seq
 
 // линейное изменение шага по времени в соответствии
-// с формулой : Dt=Dt0+a*time;
+// с формулой: Dt=Dt0+a*time;
 // Этот закон реализован в ANSYS icepak и очень подходит
 // для расчёта кривой прогрева. Из этого режима можно вытащить
 // по формуле Синкевича кривые прогрева для разных скважностей.
@@ -690,7 +690,7 @@ void linear_timestep_seq(doublereal StartTime, doublereal EndTime, doublereal in
 } // linear_timestep_seq
 
 // линейное изменение шага по времени в соответствии
-// с формулой : Dt=Dt0+a*time;
+// с формулой: Dt=Dt0+a*time;
 // Этот закон реализован в ANSYS icepak и очень подходит
 // для расчёта кривой прогрева. Из этого режима можно вытащить
 // по формуле Синкевича кривые прогрева для разных скважностей.
@@ -728,7 +728,7 @@ void linear_timestep_seq2(doublereal StartTime, doublereal EndTime, doublereal i
 
 
 // линейное изменение шага по времени в соответствии
-// с формулой : Dt=Dt0+a*time;
+// с формулой: Dt=Dt0+a*time;
 // Этот закон реализован в ANSYS icepak и очень подходит
 // для расчёта кривой прогрева. Из этого режима можно вытащить
 // по формуле Синкевича кривые прогрева для разных скважностей.
@@ -812,7 +812,7 @@ void square_wave_seq(doublereal StartTime, doublereal EndTime, doublereal phase_
 	if (continuance>0.0) {
          integer i=0;
 		 doublereal time=StartTime; // начальное время
-		 // Разбиение задержки phase_delay_time :
+		 // Разбиение задержки phase_delay_time:
 		 if (phase_delay_time>continuance) phase_delay_time=continuance; // время задержки превысило всё время счёта.
 		 if (phase_delay_time>tmin_value_of_time_step) {
 			 while (time <= StartTime+phase_delay_time) {
@@ -929,10 +929,11 @@ void piecewise_const_timestep_law(doublereal &EndTime, integer &iN, doublereal* 
 	timestep_sequence = new doublereal[iN];
 	poweron_multiplier_sequence = new doublereal[iN];
 	integer iscan = 1;
-	integer iLen = 0;
+	 
 	time_now = 0.0;
 	for (integer i_35 = 0; i_35 < glTSL.n_string_PiecewiseConst; i_35++) {
-		iLen = (integer)((glTSL.table_law_piecewise_constant[i_35].time - time_now) / glTSL.table_law_piecewise_constant[i_35].timestep);
+		
+		integer iLen = (integer)((glTSL.table_law_piecewise_constant[i_35].time - time_now) / glTSL.table_law_piecewise_constant[i_35].timestep);
 		time_now = glTSL.table_law_piecewise_constant[i_35].time;
 		for (integer i_36 = iscan; i_36 <= iscan + iLen; i_36++) {
 			timestep_sequence[i_36 - 1] = glTSL.table_law_piecewise_constant[i_35].timestep;
@@ -1155,7 +1156,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 		for (integer i_1 = 0; i_1 < n; i_1++) color[i_1] = 0; // initialization
 															  // Делим по иксу.
 		doublereal max = -1.0e60;
-		doublereal min = 1.0e60;
+		//doublereal min = 1.0e60;
 		/*
 		for (integer i = 0; i < t.maxelm; i++) {
 			TOCHKA point0;
@@ -1167,7 +1168,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 		*/
 		doublereal avg = xpos[(integer)(0.5*inx)];
 
-		max = 1.0e60;
+		
 		doublereal dx = 0.0, dy = 0.0, dz = 0.0; // объём текущего контрольного объёма
 		integer iP = -1;
 		max = 1.0e60;
@@ -1176,7 +1177,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 			center_cord3D(i, t.nvtx, t.pa, point0, 100);
 			if (fabs(avg - point0.x) < max) {
 				max = fabs(avg - point0.x);
-				min = point0.x;
+				//min = point0.x;
 				iP = i;
 
 			}
@@ -1215,7 +1216,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 				}
 			}
 			for (integer iB = 0; iB < t.maxbound; iB++) {
-				integer i = t.sosedb[iB].iI;
+				integer i = t.border_neighbor[iB].iI;
 				TOCHKA point0;
 				center_cord3D(i, t.nvtx, t.pa, point0, 100);
 				if (point0.x < avg - 0.4 * dx) {
@@ -1235,8 +1236,8 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 
 			printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 			if (ir > il) {
-				// если узел t.sosedi[ESIDE][iP].iNODE1; существует.
-				integer icP = t.sosedi[ESIDE][iP].iNODE1;
+				// если узел t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
+				integer icP = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1245,8 +1246,8 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 				}
 			}
 			else if (ir < il) {
-				// если узел t.sosedi[WSIDE][iP].iNODE1; существует.
-				integer icP = t.sosedi[WSIDE][iP].iNODE1;
+				// если узел t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
+				integer icP = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1283,7 +1284,7 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 		}
 		doublereal avg = 0.5 * (min + max);
 
-		max = 1.0e60;
+		
 		doublereal dx = 0.0, dy = 0.0, dz = 0.0; // объём текущего контрольного объёма
 		integer iP = -1;
 		max = 1.0e60;
@@ -1331,7 +1332,7 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 				}
 			}
 			for (integer iB = 0; iB < t.maxbound; iB++) {
-				integer i = t.sosedb[iB].iI;
+				integer i = t.border_neighbor[iB].iI;
 				TOCHKA point0;
 				center_cord3D(i, t.nvtx, t.pa, point0, 100);
 				if (point0.x < avg - 0.4 * dx) {
@@ -1351,8 +1352,8 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 
 			printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 			if (ir > il) {
-				// если узел t.sosedi[ESIDE][iP].iNODE1; существует.
-				integer icP = t.sosedi[ESIDE][iP].iNODE1;
+				// если узел t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
+				integer icP = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1361,8 +1362,8 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 				}
 			}
 			else if (ir < il) {
-				// если узел t.sosedi[WSIDE][iP].iNODE1; существует.
-				integer icP = t.sosedi[WSIDE][iP].iNODE1;
+				// если узел t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
+				integer icP = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1404,8 +1405,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	calculation_start_time = clock(); // момент начала счёта.
 
 
-	integer* color = nullptr;
-	integer dist_max = 3;
+	integer* color = nullptr;	
 	calculate_color_for_temperature(color, t, inx, xpos);
 
 
@@ -1494,7 +1494,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 		// во второй модификации присутствует также и участок остывания.
 		//linear_timestep_seq2(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence);
 
-		// Кривые из статьи : Тепловой анализ полупроводниковых структур. Евдокимова Н.Л., Ежов В.С., Минин В.Ф.
+		// Кривые из статьи: Тепловой анализ полупроводниковых структур. Евдокимова Н.Л., Ежов В.С., Минин В.Ф.
 		evdokimova_report = new doublereal*[iN + 1];
 		for (integer i = 0; i < iN + 1; i++) {
 			// время, температура канала, тепловое сопротивление канала, теплоёмкость, отношения dC/dRt и C/Rt.
@@ -1692,7 +1692,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 			doublereal phisicaltime = StartTime;
 
-			// Формируем отчёт о температуре каждого объекта из которой состоит модель :
+			// Формируем отчёт о температуре каждого объекта из которой состоит модель:
 			// Начальное распределение поля температур.
 			if (!bsecond_T_solver) {
 				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, 1.0, operatingtemperature);
@@ -1763,9 +1763,11 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						// для нестационарного температурного моделирования 10.11.2018
 						btimedep, timestep_sequence[j],
 						toldtimestep, tnewtimestep, maxelm_global_ret,
-						poweron_multiplier_sequence[j]);
+						poweron_multiplier_sequence[j], bAVLrealesation);
 				}
 				else {
+					integer dist_max = 3;
+
 					solve_nonlinear_temp(f, fglobal,
 						t, rhie_chow,
 						b, lb, s, ls, w, lw,
@@ -1783,23 +1785,16 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						nullptr, lu, my_union, color, dist_max); // массовый поток через границу с предыдущего временного слоя.
 				}
 				
-				if (bsecond_T_solver) {
-					// Новый температурный солвер.
-					for (integer i = 0; i < maxelm_global_ret; i++) {
-						if (tnewtimestep[i] < -273.15) {
-							tnewtimestep[i] = -273.15; // Идентифицируем абсолютный ноль.
-						}
-					}
-				}
-				else {
+				
+
+				if (!bsecond_T_solver) {
+
 					for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 						if (t.potent[i] < -273.15) {
 							t.potent[i] = -273.15; // Идентифицируем абсолютный ноль.
 						}
 					}
-				}
 
-				if (!bsecond_T_solver) {
 					if ((glTSL.id_law == 2) && (j == 1039)) {
 						// 29_11_2017
 						// Достигнут момент конца 6 включения на четвёртые сутки.
@@ -1809,30 +1804,19 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						}
 						else {
 							// Экспорт в АЛИС
-							// Экспорт в программу техплот температуры.
+							// Экспорт в программу tecplot температуры.
 							//С АЛИС сетки.
 							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 1, b, lb);
 						}
 					}
-				}
-				
-
-				if (!bsecond_T_solver) {
 					for (integer i = 0; i < t.maxelm + t.maxbound; i++) toldtimestep[i] = t.potent[i]; // copy
-				}
-				else {
-					for (integer i = 0; i < maxelm_global_ret; i++) toldtimestep[i] = tnewtimestep[i]; // copy
-				}
-				doublereal tmaxi = -1.0e10; // максимальная температура для внутренних КО.
 
-
-				if (!bsecond_T_solver) {
 					if (!b_on_adaptive_local_refinement_mesh) {
 						if (bfirst_export && (phisicaltime > 287990)) {
 							bfirst_export = false;
 							// Достигнут момент конца 6 включения на четвёртые сутки.
 							bool bextendedprint_1 = false;
-							exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1,b,lb);
+							exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b, lb);
 						}
 					}
 
@@ -1845,15 +1829,30 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						}
 					}
 
-					// Формируем отчёт о температуре каждого объекта из которой состоит модель :
+					// Формируем отчёт о температуре каждого объекта из которой состоит модель:
 					report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
+
 				}
+				else {
+					// Новый температурный солвер.
+					for (integer i = 0; i < maxelm_global_ret; i++) {
+						if (tnewtimestep[i] < -273.15) {
+							tnewtimestep[i] = -273.15; // Идентифицируем абсолютный ноль.
+						}
+					}
+
+					for (integer i = 0; i < maxelm_global_ret; i++) toldtimestep[i] = tnewtimestep[i]; // copy
+				}
+				doublereal tmaxi = -1.0e10; // максимальная температура для внутренних КО.
+
+
+				
 				
 
 				doublereal tmaxavg = -273.15;
 				doublereal *nullpointer = nullptr;
 				if (!bsecond_T_solver) {
-					if (!b_on_adaptive_local_refinement_mesh) {
+					//if (!b_on_adaptive_local_refinement_mesh) {
 
 						// Фильтрация вызывает сбой, я отказываюсь от неё 9.01.2017.
 						// Фильтрация работает только на обычной прямоугольной 
@@ -1861,9 +1860,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						/*
 						doublereal* tempfiltr = new doublereal[t.maxelm + t.maxbound];
 						double_average_potent(t.potent, tempfiltr,
-							t.maxelm, t.maxbound, t.sosedi,
+							t.maxelm, t.maxbound, t.neighbors_for_the_internal_node,
 							t.nvtx, t.pa, nullpointer,
-							SIMPSON_FILTR, t.sosedb, 0); // VOLUME_AVERAGE_FILTR
+							SIMPSON_FILTR, t.border_neighbor, 0); // VOLUME_AVERAGE_FILTR
 
 						for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, tempfiltr[i]);
 						if (!b_on_adaptive_local_refinement_mesh) {
@@ -1874,11 +1873,11 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 							tempfiltr = nullptr;
 						}
 						*/
+						//for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
+					//}
+					//else {
 						for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
-					}
-					else {
-						for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
-					}
+					//}
 				}
 				else {
 					// Новый температурный солвер.
@@ -1917,7 +1916,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						integer ib = t.whot_is_block[i47];
 						t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 						// вычисление размеров текущего контрольного объёма:
-						doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+						doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 						volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
 						Pdiss += t.Sc[i47] * dx*dy*dz;
 					}
@@ -1933,7 +1932,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						integer ib = t.whot_is_block[i47];
 						t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, operatingtemperature);
 						// вычисление размеров текущего контрольного объёма:
-						doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+						doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 						volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
 						Pdiss += t.Sc[i47] * dx*dy*dz;
 					}
@@ -1984,7 +1983,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						}
 					}
 				}
-				printf("complete is : %3.0f %% \n", (doublereal)(100.0*(j + 1) / iN)); // показывает сколько процентов выполнено.
+				printf("complete is: %3.0f %% \n", (doublereal)(100.0*(j + 1) / iN)); // показывает сколько процентов выполнено.
 			}
 
 			fclose(fpcurvedata); // закрытие файла для записи кривой прогрева.
@@ -2008,7 +2007,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 	if (glTSL.id_law == 0) {
         // Linear.
-		// Формирование report евдокимова.
+		// Формирование отчёта Н.Л. Евдокимова.
 		// C dC/dRt C/Rt
 		evdokimova_report[0][3] = 0.0;  evdokimova_report[0][5] = 0.0;
 		evdokimova_report[0][9] = 0.0;  evdokimova_report[0][11] = 0.0;
@@ -2072,7 +2071,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			evdokimova_report[iN][16] = (evdokimova_report[iN][15] - evdokimova_report[iN - 1][15]) / (evdokimova_report[iN][14] - evdokimova_report[iN - 1][14]);
 		}
 
-		// Запись репорта в текстовый файл:
+		// Запись отчёта в текстовый файл:
 		FILE *fpevdokimova = NULL;
 #ifdef MINGW_COMPILLER
 		err = 0;
@@ -2125,7 +2124,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
 	ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
 
-	printf("time calculation is:  %d minute %d second %d 10*millisecond\n", im, is, ims);
+	printf("time calculation is:  %u minute %u second %u 10*millisecond\n", im, is, ims);
 
 
 } // unsteady_temperature_calculation
@@ -2202,7 +2201,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 
 	integer* color = nullptr;
-	integer dist_max_fluid = 3;
+	
 	if ((!b_on_adaptive_local_refinement_mesh) && (number_cores() == 2) && (my_amg_manager.lfil < 3)) {
 		// Работает только для структурированной сетки.
 		integer isize = 0;
@@ -2215,7 +2214,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			for (integer i_1 = 0; i_1 < n; i_1++) color[i_1] = 0; // initialization
 																  // Делим по иксу.
 			doublereal max = -1.0e60;
-			doublereal min = 1.0e60;
+			//doublereal min = 1.0e60;
 			/*
 			for (integer i = 0; i < fglobal[0].maxelm; i++) {
 				TOCHKA point0;
@@ -2227,7 +2226,6 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			*/
 			doublereal avg = xpos[(integer)(0.5*inx)];
 
-			max = 1.0e60;
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0; // объём текущего контрольного объёма
 			integer iP = -1;
 			max = 1.0e60;
@@ -2236,7 +2234,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				center_cord3D(i, fglobal[0].nvtx, fglobal[0].pa, point0, 100);
 				if (fabs(avg - point0.x) < max) {
 					max = fabs(avg - point0.x);
-					min = point0.x;
+					//min = point0.x;
 					iP = i;
 				}
 			}
@@ -2274,7 +2272,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 					}
 				}
 				for (integer iB = 0; iB < fglobal[0].maxbound; iB++) {
-					integer i = fglobal[0].sosedb[iB].iI;
+					integer i = fglobal[0].border_neighbor[iB].iI;
 					if ((i >= 0) && (i < fglobal[0].maxelm)) {
 						TOCHKA point0;
 						center_cord3D(i, fglobal[0].nvtx, fglobal[0].pa, point0, 100);
@@ -2300,8 +2298,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 				printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 				if (ir > il) {
-					// если узел fglobal[0].sosedi[ESIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].sosedi[ESIDE][iP].iNODE1;
+					// если узел fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
+					integer icP = fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -2310,8 +2308,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 					}
 				}
 				else if (ir < il) {
-					// если узел fglobal[0].sosedi[WSIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].sosedi[WSIDE][iP].iNODE1;
+					// если узел fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
+					integer icP = fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -2438,9 +2436,9 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				
 
 			      for (integer iflow=0; iflow<flow_interior; iflow++) {
-					  // если данную гидродинамическую подобласть требуется расчитать:
+					  // если данную гидродинамическую подобласть требуется рассчитать:
 					  if (eqin.fluidinfo[iflow].iflow == 1) {
-						  // расчитывается гидродинамическая подобласть с номером iflow.
+						  // рассчитывается гидродинамическая подобласть с номером iflow.
 
 						  if (fglobal[iflow].bLR1free) {
 							  // Для данной гидродинамической подобласти на всём периметре стоят однородные условия Неймана для
@@ -2451,7 +2449,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						  bool btimedep = false;
 
-						  // Выделение оперативной памяти под поправку Rhie-Chow
+						  // Выделение оперативной памяти под поправку Rhie-Chow 1983.
 						  my_malloc2(rhie_chow, fglobal[iflow].maxelm);
 
 #if doubleintprecision == 1
@@ -2518,18 +2516,18 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  smagconstolditer = new doublereal[fglobal[iflow].maxelm];
 							  if (smagconstolditer == nullptr) {
 								  // недостаточно памяти на данном оборудовании.
-								  printf("Problem : not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
+								  printf("Problem: not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
 								  printf("Please any key to exit...\n");
 								  exit(1);
 							  }
 						  }
 
-						  // Запоминаем скоректированную скорость с предыдущей итерации.
+						  // Запоминаем скорректированную скорость с предыдущей итерации.
 						  doublereal **SpeedCorOld = nullptr;
 						  SpeedCorOld = new doublereal*[3];
 						  if (SpeedCorOld == nullptr) {
 							  // недостаточно памяти на данном оборудовании.
-							  printf("Problem : not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
+							  printf("Problem: not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
 							  printf("Please any key to exit...\n");
 							  exit(1);
 						  }
@@ -2539,9 +2537,9 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  if (SpeedCorOld[i] == nullptr) {
 								  // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-								  printf("Problem : not enough memory on your equipment for SpeedCorOld[%lld] steady cfd calculation...\n", i);
+								  printf("Problem: not enough memory on your equipment for SpeedCorOld[%lld] steady cfd calculation...\n", i);
 #else
-								  printf("Problem : not enough memory on your equipment for SpeedCorOld[%d] steady cfd calculation...\n", i);
+								  printf("Problem: not enough memory on your equipment for SpeedCorOld[%d] steady cfd calculation...\n", i);
 #endif
 								  printf("Please any key to exit...\n");
 								  exit(1);
@@ -2587,7 +2585,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  fglobal[iflow].prop,
 								  fglobal[iflow].prop_b,
 								  fglobal[iflow].nvtx,
-								  fglobal[iflow].sosedi,
+								  fglobal[iflow].neighbors_for_the_internal_node,
 								  fglobal[iflow].maxelm,
 								  fglobal[iflow].diag_coef,
 								  fglobal[iflow].alpha,
@@ -2598,7 +2596,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  fglobal[iflow].mf[iP], // возвращаемое значение массового потока
 								  nullptr, bsimplelinearinterpol,
 								  SpeedCorOld, mfold[iP],
-								  fglobal[iflow].sosedb,
+								  fglobal[iflow].border_neighbor,
 								  t.ilevel_alice,
 								  fglobal[iflow].ptr);
 
@@ -2689,7 +2687,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  my_memory_bicgstab.tjw = nullptr;
 						  my_memory_bicgstab.icount_vel = 100000; // очень большое число.
 
-						  // Запоминаем скоректированную скорость с предыдущей итерации.
+						  // Запоминаем скорректированную скорость с предыдущей итерации.
 						  doublereal **SpeedCorOldinternal = new doublereal*[3];
 						  for (integer i = 0; i < 3; i++) {
 							  SpeedCorOldinternal[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
@@ -2725,7 +2723,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
 								  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
 								  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
-								  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
+								  // плавный переход с помощью интерполяции на реальное значение скорости и еще 700 итераций.
 								  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
 								  if (fabs(rGradual_changes - 1.0) > 1.0e-30) {
 									  for (integer i_96 = 0; i_96 < lw; i_96++) {
@@ -2777,7 +2775,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
 									  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
 									  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
-									  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
+									  // плавный переход с помощью интерполяции на реальное значение скорости и еще 700 итераций.
 									  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
 									  if (bseparate_SIMPLE && (i == iseparate_SIMPLE) && (fabs(rGradual_changes - 1.0) > 1.0e-30)) {
 										  bseparate_SIMPLE = false;
@@ -2862,7 +2860,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  if (i == (inumber_iteration_SIMPLE[iflow] + 1)) {
 								  // параметры нижней релаксации всегда должны
 								  // быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
-								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
+								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных: 0.7; 0.3; 
 								  // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
 								  if (!b_on_adaptive_local_refinement_mesh) {
 									  fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
@@ -2886,7 +2884,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  else {
 								  // Здесь не используются параметры релаксации предложенные 
 								  // в книге С. Патанкара.
-								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
+								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных: 0.7; 0.3; 
 								  // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
 								  if (!b_on_adaptive_local_refinement_mesh) {
 									  fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
@@ -2922,7 +2920,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 							  calculation_simple_start_time = clock(); // момент начала счёта.
 
-
+							  integer dist_max_fluid = 3;
 
 							  // стационарный солвер.
 							  my_version_SIMPLE_Algorithm3D(continity, i,
@@ -3411,7 +3409,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3436,7 +3434,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3460,7 +3458,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3482,7 +3480,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3511,7 +3509,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3536,7 +3534,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3558,7 +3556,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3579,7 +3577,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3612,7 +3610,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3637,7 +3635,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3660,7 +3658,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3682,7 +3680,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3700,7 +3698,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
-												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_std_ke, rfluentres.res_turb_epsilon, tmax,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy_std_ke, rfluentres.res_turb_epsilon, tmax,
 												  im, is, ims, iend - i);
 											  if (i % 10 == 0) {
 												  printf("  iter continity x-velocity y-velocity z-velocity temperature k      epsilon	Tmax\t time/iter\n");
@@ -3710,7 +3708,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3734,7 +3732,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3756,7 +3754,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3778,7 +3776,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
 											  if (fp_statistic_convergence == nullptr) err_stat = 1;
 #else
-											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
 												  if ((err_stat) == 0) {
 													  // 29 декабря 2015.
@@ -3920,7 +3918,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				 is=(unsigned int)((calculation_seach_time-60000*im)/1000); // секунды
 				 ims=(unsigned int)((calculation_seach_time-60000*im-1000*is)/10); // миллисекунды делённые на 10
 
-				  printf("time calculation is:  %d minute %d second %d 10*millisecond\n",im,is,ims);
+				  printf("time calculation is:  %u minute %u second %u 10*millisecond\n",im,is,ims);
 				  if (bwait) {
 				    // getchar();
 					  system("pause");
@@ -3943,7 +3941,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 		
 
-		// Включать или нет последующий расчёт температуры :
+		// Включать или нет последующий расчёт температуры:
 		bool bposttempsolve=false;
 		if (eqin.itemper==1) {
 			// только на структурированных сетках.
@@ -4098,7 +4096,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 } // steady_cfd_calculation
 
 
-// нестационарный cfd решатель :
+// нестационарный cfd решатель:
 void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin, 
 	                        doublereal dgx, doublereal dgy, doublereal dgz,
 							doublereal* continity_start, 
@@ -4113,7 +4111,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 
 	integer* color = nullptr;
-	integer dist_max_fluid = 3;
+	
 	if ((!b_on_adaptive_local_refinement_mesh) && (number_cores() == 2) && (my_amg_manager.lfil < 3)) {
 		// Работает только для структурированной сетки.
 		integer isize = 0;
@@ -4138,7 +4136,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			*/
 			doublereal avg = xpos[(integer)(0.5*inx)];
 
-			max = 1.0e60;
+			
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0; // объём текущего контрольного объёма
 			integer iP = -1;
 			max = 1.0e60;
@@ -4185,7 +4183,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 					}
 				}
 				for (integer iB = 0; iB < fglobal[0].maxbound; iB++) {
-					integer i = fglobal[0].sosedb[iB].iI;
+					integer i = fglobal[0].border_neighbor[iB].iI;
 					if ((i >= 0) && (i < fglobal[0].maxelm)) {
 						TOCHKA point0;
 						center_cord3D(i, fglobal[0].nvtx, fglobal[0].pa, point0, 100);
@@ -4211,8 +4209,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 				printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 				if (ir > il) {
-					// если узел fglobal[0].sosedi[ESIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].sosedi[ESIDE][iP].iNODE1;
+					// если узел fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
+					integer icP = fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -4221,8 +4219,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 					}
 				}
 				else if (ir < il) {
-					// если узел fglobal[0].sosedi[WSIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].sosedi[WSIDE][iP].iNODE1;
+					// если узел fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
+					integer icP = fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -4358,24 +4356,24 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						// файл сбора статистики о сходимости успешно открыт для добавления в него информации.
 
-						// расчёт всех жидких зон :
-						// С предыдущего временного слоя требуется хранить :
+						// расчёт всех жидких зон:
+						// С предыдущего временного слоя требуется хранить:
 						// a. поле температур; b. поле скоростей; c. монотонизирующую поправку Рхи-Чоу (одно значение для каждого КО, без граничных КО).
 
-						// температура :
+						// температура:
 						doublereal* toldtimestep = new doublereal[t.maxelm + t.maxbound]; // поле температур на предыдущем временном слое
 						for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
 							toldtimestep[i1] = t.potent[i1]; // copy инициализация
 						}
 
-						// поле скорости :
-						// выделение памяти :
+						// поле скорости:
+						// выделение памяти:
 						doublereal** speedoldtimestep = new doublereal*[3];							
 						for (integer i2 = 0; i2 < 3; i2++) {
 							speedoldtimestep[i2] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
 						}
 						
-						// инициализация :
+						// инициализация:
 						for (integer i2 = 0; i2 < 3; i2++) {
 							for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
 								// iflow - номер FLUID INTERIOR,
@@ -4406,7 +4404,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 																	 fglobal[iflow].prop,
 																	 fglobal[iflow].prop_b,
 																	 fglobal[iflow].nvtx,
-																	 fglobal[iflow].sosedi,
+																	 fglobal[iflow].neighbors_for_the_internal_node,
 																	 fglobal[iflow].maxelm,
 																	 fglobal[iflow].diag_coef,
 																	 fglobal[iflow].alpha,
@@ -4426,13 +4424,13 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								   // массовый поток через грань КО с предыдущей итерации.
 								   // При считывании из файла avtosave.txt эта величина также должна считываться.
 								   // пока здесь реализовано вычисление стартующее с нулевого значения (поле жидкости полностью неподвижно).
-								   // выделение памяти :
+								   // выделение памяти:
 						doublereal** mfoldtimestep = new doublereal*[fglobal[iflow].maxelm];							
 						for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
 							mfoldtimestep[i2] = new doublereal[6];
 						}
 						
-						// инициализация :
+						// инициализация:
 						for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
 							for (integer i3 = 0; i3 < 6; i3++) {
 								mfoldtimestep[i2][i3] = fglobal[iflow].mf[i2][i3]; // copy инициализация
@@ -4522,18 +4520,18 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							smagconstolditer = new doublereal[fglobal[iflow].maxelm];
 							if (smagconstolditer == nullptr) {
 								// недостаточно памяти на данном оборудовании.
-								printf("Problem : not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
+								printf("Problem: not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
 								printf("Please any key to exit...\n");
 								exit(1);
 							}
 						}
 
-						// Запоминаем скоректированную скорость с предыдущей итерации.
+						// Запоминаем скорректированную скорость с предыдущей итерации.
 						doublereal **SpeedCorOld = nullptr;
 						SpeedCorOld = new doublereal*[3];
 						if (SpeedCorOld == nullptr) {
 							// недостаточно памяти на данном оборудовании.
-							printf("Problem : not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
+							printf("Problem: not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
 							printf("Please any key to exit...\n");
 							exit(1);
 						}
@@ -4543,9 +4541,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							if (SpeedCorOld[i] == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-								printf("Problem : not enough memory on your equipment for SpeedCorOld[%lld] steady cfd calculation...\n", i);
+								printf("Problem: not enough memory on your equipment for SpeedCorOld[%lld] steady cfd calculation...\n", i);
 #else
-								printf("Problem : not enough memory on your equipment for SpeedCorOld[%d] steady cfd calculation...\n", i);
+								printf("Problem: not enough memory on your equipment for SpeedCorOld[%d] steady cfd calculation...\n", i);
 #endif
 								printf("Please any key to exit...\n");
 								exit(1);
@@ -4591,7 +4589,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								fglobal[iflow].prop,
 								fglobal[iflow].prop_b,
 								fglobal[iflow].nvtx,
-								fglobal[iflow].sosedi,
+								fglobal[iflow].neighbors_for_the_internal_node,
 								fglobal[iflow].maxelm,
 								fglobal[iflow].diag_coef,
 								fglobal[iflow].alpha,
@@ -4602,7 +4600,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								fglobal[iflow].mf[iP], // возвращаемое значение массового потока
 								nullptr, bsimplelinearinterpol,
 								SpeedCorOld, mfold[iP],
-								fglobal[iflow].sosedb,
+								fglobal[iflow].border_neighbor,
 								t.ilevel_alice,
 								fglobal[iflow].ptr);
 
@@ -4666,6 +4664,20 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						doublereal phisicaltime = StartTime;
 						bool btimedep = true; // нестационарный солвер
 						integer i_gl = 0;
+
+
+						// Запоминаем скорректированную скорость с предыдущей итерации.
+						doublereal** SpeedCorOldinternal = new doublereal * [3];
+						for (integer i = 0; i < 3; i++) {
+							SpeedCorOldinternal[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						}
+						doublereal* xb = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						doublereal* rthdsd = nullptr; // правая часть системы уравнений.
+						doublereal* rthdsdt = nullptr;
+						rthdsd = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						rthdsdt = new doublereal[t.maxelm + t.maxbound];
+
+
 						// нестационарный расчёт:
 						for (integer j = 0; j < iN; j++) {
 
@@ -4685,7 +4697,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									
 									printf("phisical time = %e\n", phisicaltime);
 
-									// стационарный решатель на данном шаге по времени :
+									// стационарный решатель на данном шаге по времени:
 									bool bfirst = true;
 									integer iend = 40; // число итераций.
 									QuickMemVorst my_memory_bicgstab;
@@ -4750,16 +4762,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									my_memory_bicgstab.tjw = nullptr;
 									my_memory_bicgstab.icount_vel = 100000; // очень большое число.
 
-									// Запоминаем скоректированную скорость с предыдущей итерации.
-									doublereal **SpeedCorOldinternal = new doublereal*[3];
-									for (integer i = 0; i < 3; i++) {
-										SpeedCorOldinternal[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
-									}
-									doublereal* xb = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
-									doublereal* rthdsd = nullptr; // правая часть системы уравнений.
-									doublereal* rthdsdt = nullptr;
-									rthdsd = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
-									rthdsdt = new doublereal[t.maxelm + t.maxbound];
+									
 
 									/*
 									for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
@@ -4792,7 +4795,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										
 										// параметры нижней релаксации всегда должны
 										// быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
-										// В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
+										// В книге Ferczinger and Peric обосновывается применение параметров релаксации равных: 0.7; 0.3; 
 										// для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
 										if (!b_on_adaptive_local_refinement_mesh) {
 											fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
@@ -4831,6 +4834,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										if (j > 0) {
 											dtimestepold = timestep_sequence[j - 1];
 										}
+
+										integer dist_max_fluid = 3;
 
 										// нестационарный алгоритм SIMPLE Патанкар и Сполдинг 1972 год.
 										my_version_SIMPLE_Algorithm3D(continity, i,
@@ -4875,7 +4880,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													// Считаем чистую гидродинамику без уравнения теплопроводности
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 														//printf("%lld 1.0\n",i+1);
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -4900,7 +4905,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
 														//printf("%lld 1.0\n",i+1);
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -4924,7 +4929,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%lld 1.0\n",i+1);
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -4946,7 +4951,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else {
 														//printf("%lld 1.0\n",i+1);
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -4970,7 +4975,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
 															rfluentres.res_turb_kinetik_energy_std_ke, rfluentres.res_turb_epsilon,
@@ -4996,7 +5001,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
 															rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
@@ -5020,7 +5025,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5041,7 +5046,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5073,7 +5078,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													// Считаем чистую гидродинамику без уравнения теплопроводности
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -5098,7 +5103,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
 														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -5122,7 +5127,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5144,7 +5149,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else {
 														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5168,7 +5173,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -5192,7 +5197,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -5215,7 +5220,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5236,7 +5241,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else {
-														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5268,7 +5273,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													// Считаем чистую гидродинамику без уравнения теплопроводности
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 														//printf("%d 1.0\n",i+1);
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -5293,7 +5298,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
 														//printf("%d 1.0\n",i+1);
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -5317,7 +5322,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%d 1.0\n",i+1);
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5339,7 +5344,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else {
 														//printf("%d 1.0\n",i+1);
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5363,7 +5368,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -5388,7 +5393,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -5411,7 +5416,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5432,7 +5437,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5464,7 +5469,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													// Считаем чистую гидродинамику без уравнения теплопроводности
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -5489,7 +5494,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
 														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -5513,7 +5518,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5535,7 +5540,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else {
 														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5559,7 +5564,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
 													if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy_std_ke,
 															rfluentres.res_turb_epsilon, im, is, ims, iend - i);
@@ -5583,7 +5588,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 													}
 													else
 													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
 															rfluentres.res_turb_omega, im, is, ims, iend - i);
@@ -5606,7 +5611,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5627,7 +5632,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 														}
 													}
 													else {
-														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1u:%2u:%2u  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
 														if (i % 10 == 0) {
@@ -5737,28 +5742,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 									} // конец одной итерации алгоритма SIMPLE
 
-									for (integer i = 0; i < 3; i++) {
-										if (SpeedCorOldinternal[i] != nullptr) {
-											delete[] SpeedCorOldinternal[i];
-											SpeedCorOldinternal[i] = nullptr;
-										}
-									}
-									delete[] SpeedCorOldinternal;
-									SpeedCorOldinternal = nullptr;
-
-									if (xb != nullptr) {
-										delete[] xb; // не забываем освобождать память.
-										xb = nullptr;
-									}
-									if (rthdsd != nullptr) {
-										delete[] rthdsd;
-										rthdsd = nullptr;
-									}
-									if (rthdsdt != nullptr) {
-										delete[] rthdsdt;
-										rthdsdt = nullptr;
-									}
-
+									
 									for (integer i = 0; i < 3; i++) {
 										if (rhie_chow[i] != nullptr) {
 											delete[] rhie_chow[i];
@@ -5770,9 +5754,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							
 
 
-							// закончился шаг по времени :
+							// закончился шаг по времени:
 
-							/* //закоментировано 14.05.2019
+							/* //закомментировано 14.05.2019
 							//Печать анимации.
 							char* buffer = nullptr;
 							buffer = new char[10];
@@ -5798,12 +5782,12 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							}
 							*/
 
-							// запоминаем поле температур :
+							// запоминаем поле температур:
 							for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
 								toldtimestep[i1] = t.potent[i1]; // copy end time step
 							}
 
-							// запоминаем поле скорости :
+							// запоминаем поле скорости:
 							
 								for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
 									// i1 - номер FLUID INTERIOR,
@@ -5815,7 +5799,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								}
 							
 
-							// запоминаем конвективный поток через границы КО :
+							// запоминаем конвективный поток через границы КО:
 							for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
 									for (integer i3 = 0; i3 < 6; i3++) {
 										mfoldtimestep[i2][i3] = fglobal[iflow].mf[i2][i3]; // copy end time step
@@ -5845,6 +5829,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							for (integer i = 0; i < flow_interior; i++) inumber_iteration_SIMPLE[i] = 0; // начальная итерация алгоритма SIMPLE для каждой FLUID зоны.
 
 						}  // конец одного шага по времени.
+
+
+						for (integer i = 0; i < 3; i++) {
+							if (SpeedCorOldinternal[i] != nullptr) {
+								delete[] SpeedCorOldinternal[i];
+								SpeedCorOldinternal[i] = nullptr;
+							}
+						}
+						delete[] SpeedCorOldinternal;
+						SpeedCorOldinternal = nullptr;
+
+						if (xb != nullptr) {
+							delete[] xb; // не забываем освобождать память.
+							xb = nullptr;
+						}
+						if (rthdsd != nullptr) {
+							delete[] rthdsd;
+							rthdsd = nullptr;
+						}
+						if (rthdsdt != nullptr) {
+							delete[] rthdsdt;
+							rthdsdt = nullptr;
+						}
+
+
 
 						// Освобождение оперативной памяти.
 						for (integer i = 0; i < fglobal[iflow].maxelm; i++) {

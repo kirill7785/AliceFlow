@@ -1,24 +1,26 @@
 /* 19 08 2016 начало разработки АЛИС (пятница Monte Negro).
 файл adaptive_local_refinement_mesh.cpp
 АЛИС - Адаптивная Локально Измельченная Сетка.
+или неструктурированная расчётная сетка локального дробления.
 Adaptive Local Refinement Grid.
 30.08.2016 - версия 0.01 полностью неработоспособная 17 454 строк кода.
-для сравнения :
+для сравнения:
 constr_struct.cpp 5775 строк кода.
 my_agregat_amg.c 57054 строк кода.
 31.08.2016 - версия 0.01 полностью неработоспособная 19 876 строк кода.
 сделан первоначальный учёт возможности четырёх соседей по face грани.
 С 31.08 по 2.09 2016 не мог понять в чём ошибка, оказалось нужно сделать  
-// двухуровневость(двувариантность ) в count sosed.
-2.09.2016 - версия 0.02 сделан учёт многоуровневости (двухуровности ) в update_max_count_sosed.
+// двухуровневость(двувариантность ) в count neighbour.
+2.09.2016 - версия 0.02 сделан учёт многоуровневости (двухуровности ) в update_max_count_neighbour.
 22 054 строки кода.
 6.09.2016 работоспособная версия. Пред релиз. Приступаем к упаковке и тестированию. Версия 0.03. 34117 строк кода.
-7.09.2016 Версия 0.03. Работоспособная версия. Пройдена проверка построения сетки для tgf2023_01 и Alqska1.
+7.09.2016 Версия 0.03. Работоспособная версия. Пройдена проверка построения сетки для tgf2023_01 и
+// радиатора водяного охлаждения модуля ВУМ.
 Исправлена ошибка.
 Пройдена проверка построения сетки для tgf2023_05 и tgf2023_20. Сеточный генератор содержит 34445 строк кода.
 Поддерживаются призматические блоки и плоские прямоугольные источники и стенки в качестве геометрических объектов
 меширования.
-10.08.2019 Наконец правильное освобождение оперативной памяти из под octTree дерева 42663 строк.
+10.08.2019 Наконец правильное освобождение оперативной памяти из под octree дерева 42663 строк.
 */
 
 #pragma once
@@ -45,16 +47,16 @@ bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doub
 	doublereal* &hi, integer iPlane_obj2, integer &k, integer ib);
 
 
-// Если просто кубикпо размеру кабинета и вообще никаких перегородок внутри.
+// Если просто кубик по размеру кабинета и вообще никаких перегородок внутри.
 bool bVerySimpleGeometryforALICE = true;
 
 // стороны света.
 #define ESIDE 0 // (east) восток
-#define NSIDE 1 // север
-#define TSIDE 2 // верх
-#define WSIDE 3 // запад
-#define SSIDE 4 // юг
-#define BSIDE 5 // низ
+#define NSIDE 1 // (north) север
+#define TSIDE 2 // (top) верх
+#define WSIDE 3 // (west) запад
+#define SSIDE 4 // (south) юг
+#define BSIDE 5 // (bottom) низ
 #define EE 6
 #define NN 7
 #define TTSIDE 8
@@ -64,23 +66,23 @@ bool bVerySimpleGeometryforALICE = true;
 
 const integer MAX_NEIGHBOUR_COUNT = 2147483646;
 
-// для хеш таблицы.
+// для хеш-таблицы.
 typedef struct THASH_POLE {
 	bool flag=false;
 	integer inum=-1;
 } HASH_POLE;
 
-// Узел octTree дерева.
-typedef struct ToctTree {
+// Узел octree дерева.
+typedef struct Toctree {
 	// 0-7 как вершины в nvtx
-	ToctTree* link0 = nullptr;
-	ToctTree* link1 = nullptr;
-	ToctTree* link2 = nullptr;
-	ToctTree* link3 = nullptr;
-	ToctTree* link4 = nullptr;
-	ToctTree* link5 = nullptr;
-	ToctTree* link6 = nullptr;
-	ToctTree* link7 = nullptr;
+	Toctree* link0 = nullptr;
+	Toctree* link1 = nullptr;
+	Toctree* link2 = nullptr;
+	Toctree* link3 = nullptr;
+	Toctree* link4 = nullptr;
+	Toctree* link5 = nullptr;
+	Toctree* link6 = nullptr;
+	Toctree* link7 = nullptr;
 	TOCHKA p0;
 	TOCHKA p1;
 	TOCHKA p2;
@@ -90,24 +92,24 @@ typedef struct ToctTree {
 	TOCHKA p6;
 	TOCHKA p7;
 	bool dlist=false;// true если дробление закончилось.
-	// если maxGsosed больше 4 то дробление.
-	integer maxWsosed = MAX_NEIGHBOUR_COUNT;
-	integer maxEsosed = MAX_NEIGHBOUR_COUNT;
-	integer maxSsosed = MAX_NEIGHBOUR_COUNT;
-	integer maxNsosed = MAX_NEIGHBOUR_COUNT;
-	integer maxTsosed = MAX_NEIGHBOUR_COUNT;
-	integer maxBsosed = MAX_NEIGHBOUR_COUNT;
+	// если maxGneighbour больше 4 то дробление.
+	integer maxWneighbour = MAX_NEIGHBOUR_COUNT;
+	integer maxEneighbour = MAX_NEIGHBOUR_COUNT;
+	integer maxSneighbour = MAX_NEIGHBOUR_COUNT;
+	integer maxNneighbour = MAX_NEIGHBOUR_COUNT;
+	integer maxTneighbour = MAX_NEIGHBOUR_COUNT;
+	integer maxBneighbour = MAX_NEIGHBOUR_COUNT;
 	// Линки на 6 соседей.
 	// Истина если face ячейки имеет четырёх соседей и 
 	// false если face ячейки имеет только одного соседа.
 	bool b4W=false, b4E = false, b4S = false, b4N = false, b4B = false, b4T = false;
 	// Если сосед лишь один.
-	ToctTree* linkW = nullptr;
-	ToctTree* linkE = nullptr;
-	ToctTree* linkS = nullptr;
-	ToctTree* linkN = nullptr;
-	ToctTree* linkB = nullptr;
-	ToctTree* linkT = nullptr;
+	Toctree* linkW = nullptr;
+	Toctree* linkE = nullptr;
+	Toctree* linkS = nullptr;
+	Toctree* linkN = nullptr;
+	Toctree* linkB = nullptr;
+	Toctree* linkT = nullptr;
     // Если соседа 4 штуки.
 	// 3 2 B
 	// 0 1
@@ -126,30 +128,30 @@ typedef struct ToctTree {
 	//******
 	// 4 5 T
 	// 6 7
-	ToctTree* linkW0 = nullptr;
-	ToctTree* linkW3 = nullptr;
-	ToctTree* linkW4 = nullptr;
-	ToctTree* linkW7 = nullptr;
-	ToctTree* linkE1 = nullptr;
-	ToctTree* linkE2 = nullptr;
-	ToctTree* linkE5 = nullptr;
-	ToctTree* linkE6 = nullptr;
-	ToctTree* linkS0 = nullptr;
-	ToctTree* linkS1 = nullptr;
-	ToctTree* linkS4 = nullptr;
-	ToctTree* linkS5 = nullptr;
-	ToctTree* linkN2 = nullptr;
-	ToctTree* linkN3 = nullptr;
-	ToctTree* linkN6 = nullptr;
-	ToctTree* linkN7 = nullptr;
-	ToctTree* linkB0 = nullptr;
-	ToctTree* linkB1 = nullptr;
-	ToctTree* linkB2 = nullptr;
-	ToctTree* linkB3 = nullptr;
-	ToctTree* linkT4 = nullptr;
-	ToctTree* linkT5 = nullptr;
-	ToctTree* linkT6 = nullptr;
-	ToctTree* linkT7 = nullptr;
+	Toctree* linkW0 = nullptr;
+	Toctree* linkW3 = nullptr;
+	Toctree* linkW4 = nullptr;
+	Toctree* linkW7 = nullptr;
+	Toctree* linkE1 = nullptr;
+	Toctree* linkE2 = nullptr;
+	Toctree* linkE5 = nullptr;
+	Toctree* linkE6 = nullptr;
+	Toctree* linkS0 = nullptr;
+	Toctree* linkS1 = nullptr;
+	Toctree* linkS4 = nullptr;
+	Toctree* linkS5 = nullptr;
+	Toctree* linkN2 = nullptr;
+	Toctree* linkN3 = nullptr;
+	Toctree* linkN6 = nullptr;
+	Toctree* linkN7 = nullptr;
+	Toctree* linkB0 = nullptr;
+	Toctree* linkB1 = nullptr;
+	Toctree* linkB2 = nullptr;
+	Toctree* linkB3 = nullptr;
+	Toctree* linkT4 = nullptr;
+	Toctree* linkT5 = nullptr;
+	Toctree* linkT6 = nullptr;
+	Toctree* linkT7 = nullptr;
 	// Целочисленные координаты октанта.
 	integer minx = -1;
 	integer maxx = -2;
@@ -162,9 +164,9 @@ typedef struct ToctTree {
 	integer root=-1; // (0,link0) (1,link1) ...(7,link7)
 	bool brootSituationX = false, brootSituationY = false, brootSituationZ = false;
 	bool brootSituationX_virtual = false, brootSituationY_virtual = false, brootSituationZ_virtual = false;
-	integer ilevel=-1; // номер уровня в octTree дереве.
-	ToctTree* parent=nullptr; // ссылка на родителя.
-	// updaтить ли линки now
+	integer ilevel=-1; // номер уровня в octree дереве.
+	Toctree* parent=nullptr; // ссылка на родителя.
+	// обновлять ли ссылки сейчас
 	bool b_the_geometric_fragmentation=false;
 	bool bcrushing_when_balancing = false;
 	bool disbalance_now = false;
@@ -173,12 +175,12 @@ typedef struct ToctTree {
 	// Уникальный номер внутреннего КО температурной области и 0 если не принадлежит области.
 	integer inum_TD=-1; // inumber Temperature Domain.
 	integer inum_FD=-1; // inumber Fluid Domain.
-} octTree;
+} octree;
 
 // Ссылки на каждый узел octree дерева для его полной очистки.
 integer iMAX_Length_vector_octree = 100000000; // 100 млн
 integer icount_Length_vector_octree = 0;
-octTree** rootClear_octTree = nullptr;
+octree** rootClear_octree = nullptr;
 
 typedef struct TSTACK_ALICE {
 	integer minx = -1;
@@ -187,18 +189,18 @@ typedef struct TSTACK_ALICE {
 	integer maxy = -2;
 	integer minz = -1;
 	integer maxz = -2;
-	octTree* link=nullptr;
+	octree* link=nullptr;
 } STACK_ALICE;
 
 STACK_ALICE* my_ALICE_STACK=nullptr;
 integer top_ALICE_STACK = 0;
 
-octTree* oc_global = nullptr;
+octree* oc_global = nullptr;
 
 // Для алгоритма сканирующих отрезков требуется дробить ячейку если отрезок внутри
 // ячейки прошел чрез границу раздела двух блоков, т.е. номера блоков в соседних ячейках стали различны.
-// Для детектирования данной особенности нужна хеш таблица сопоставляющая номер ячейки сетки из (inx+1)*(iny+1)*(inz+1) с номерами блоков.
-// Данный метод абсолютно универсалн и подходит для любой формы блоков.
+// Для детектирования данной особенности нужна хеш-таблица сопоставляющая номер ячейки сетки из (inx+1)*(iny+1)*(inz+1) с номерами блоков.
+// Данный метод абсолютно универсален и подходит для любой формы блоков.
 integer*** hash_for_droblenie_xyz = nullptr;
 
 #if _CUDA_IS_ACTIVE_ == 0
@@ -299,7 +301,7 @@ integer binary_search_hash_key_alice33v1(integer istart, integer iend, doublerea
 } // binary_search_hash_key_alice33v1
 
 
-// целочисленный ключ который используется в хеш таблице для ускорения поиска при экспорте в программу tecplot.
+// целочисленный ключ который используется в хеш-таблице для ускорения поиска при экспорте в программу tecplot.
 // Сигнатура вызова:
 // hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, p, epsTolx, epsToly, epsTolz);
 integer hash_key_alice33(integer inx7, integer iny7, integer inz7, doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
@@ -372,7 +374,7 @@ integer hash_key_alice33(integer inx7, integer iny7, integer inz7, doublereal* &
 
 } // hash_key_alice33
 
-// целочисленный ключ который используется в хеш таблице для ускорения поиска при экспорте в программу tecplot.
+// целочисленный ключ который используется в хеш-таблице для ускорения поиска при экспорте в программу tecplot.
 // Сигнатура вызова:
 // hash_key_alice33Q(inx, iny, inz, xpos, ypos, zpos, p, epsTolx, epsToly, epsTolz);
 integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7, doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
@@ -448,7 +450,7 @@ integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7, doublereal* 
 
 } // hash_key_alice33Q
 
-bool is_null(ToctTree* &oc) {
+bool is_null(Toctree* &oc) {
 	bool b1 = false;
 	if (oc != nullptr) {
 		if ((oc->link0 == nullptr) && (oc->link1 == nullptr) && (oc->link2 == nullptr) && (oc->link3 == nullptr) && (oc->link4 == nullptr) && (oc->link5 == nullptr) && (oc->link6 == nullptr) && (oc->link7 == nullptr)) {
@@ -459,7 +461,7 @@ bool is_null(ToctTree* &oc) {
 } // is_null
 
 // print_link
-integer print_link(octTree* &oc2) {
+integer print_link(octree* &oc2) {
 	if (oc2 == nullptr) {
 		//printf("N");
 		return 9; // nullptr
@@ -476,7 +478,7 @@ integer print_link(octTree* &oc2) {
 } // print_link
 
 // 30.03.2019
-bool CHECK_LINK_is_nullptr(ToctTree* &oc, bool is_no_descendants)
+bool CHECK_LINK_is_nullptr(Toctree* &oc, bool is_no_descendants)
 {
 	// соседи пусты ?
 	if (oc != nullptr) {
@@ -495,7 +497,7 @@ bool CHECK_LINK_is_nullptr(ToctTree* &oc, bool is_no_descendants)
 
 // Правильная версия is_null1 6 сентября 2016. // 30.03.2019
 // Ячейка делённая на наследников у неё потомков нет.
-bool is_null1_new(ToctTree* &oc) {
+bool is_null1_new(Toctree* &oc) {
 	// потомков нет ?
 	bool is_no_descendants = false;
 	if (oc != nullptr) {
@@ -512,8 +514,8 @@ bool is_null1_new(ToctTree* &oc) {
 	return is_no_descendants;
 }// is_null1_new
 
-// истина только в случае деления ячейки на 8 подъячеек причем каждая подъячейка это лист.
-bool is_null1(ToctTree* &oc)
+// истина только в случае деления ячейки на 8 дочерних ячеек причем каждая дочерняя ячейка это лист.
+bool is_null1(Toctree* &oc)
 {
 	// direct WSIDE, SSIDE, B:
 	//integer dir = direct;
@@ -610,7 +612,7 @@ bool is_null1(ToctTree* &oc)
 	return b1;
 } // is_null1
 
-bool is_null1_(ToctTree* &oc, integer direct)
+bool is_null1_(Toctree* &oc, integer direct)
 {
 	// direct WSIDE, SSIDE, B:
 	integer dir = direct;
@@ -703,7 +705,7 @@ bool is_null1_(ToctTree* &oc, integer direct)
 	return b1;
 } // is_null1_
 
-bool is_null2(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &c2, integer &c3, integer &c4, integer &c5, integer &c6, integer &c7)
+bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c2, integer &c3, integer &c4, integer &c5, integer &c6, integer &c7)
 {
 	// cface - это количество соседей по face грани.
 
@@ -1048,7 +1050,7 @@ bool is_null2(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 	return b1;
 } // is_null2
 
-bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &c2, integer &c3, integer &c4, integer &c5, integer &c6, integer &c7)
+bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c2, integer &c3, integer &c4, integer &c5, integer &c6, integer &c7)
 {
 	// cface - это количество соседей по face грани.
 
@@ -1421,7 +1423,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 				c5 = 0;
 
 				break;
-			default: printf("error : is_null3 if ((bSituationZ) && (!bSituationY) && (!bSituationX)) \n");
+			default: printf("error: is_null3 if ((bSituationZ) && (!bSituationY) && (!bSituationX)) \n");
 				//system("PAUSE");
 				system("PAUSE");
 				break;
@@ -1778,7 +1780,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 				c7 = 0;
 				break;
 
-			default: printf("error : is_null3 if ((bSituationY) && (!bSituationZ) && (!bSituationX))  \n");
+			default: printf("error: is_null3 if ((bSituationY) && (!bSituationZ) && (!bSituationX))  \n");
 				//system("PAUSE");
 				system("PAUSE");
 				break;
@@ -2133,7 +2135,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 
 				break;
 
-			default: printf("error : is_null3  if ((bSituationX) && (!bSituationZ) && (!bSituationY)) \n");
+			default: printf("error: is_null3  if ((bSituationX) && (!bSituationZ) && (!bSituationY)) \n");
 				//system("PAUSE");
 				system("PAUSE");
 				break;
@@ -3204,10 +3206,10 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 
 
 
-void patch_sosed_count(integer &isosed, octTree* &oc_info, integer iside_info) {
+void patch_neighbour_count(integer &ineighbour, octree* &oc_info, integer iside_info) {
 
-	switch (isosed) {
-	case 0: printf("error!!! patch_sosed_count increment  isosed=0\n");
+	switch (ineighbour) {
+	case 0: printf("error!!! patch_neighbour_count increment  ineighbour=0\n");
 #if doubleintprecision == 1
 		printf("root=%lld\n", oc_info->root);
 		if (oc_info->parent != nullptr) {
@@ -3237,50 +3239,50 @@ void patch_sosed_count(integer &isosed, octTree* &oc_info, integer iside_info) {
 		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
-		//isosed = 4;
+		//ineighbour = 4;
 		break;
-	case 1: isosed = 4;
+	case 1: ineighbour = 4;
 		break;
-	case 4: isosed = 7;
+	case 4: ineighbour = 7;
 		break;
-	case 7: isosed = 10;
+	case 7: ineighbour = 10;
 		break;
-	case 10: isosed = 13; break;
-	case 13: isosed = 16; break;
+	case 10: ineighbour = 13; break;
+	case 13: ineighbour = 16; break;
 	default: // Это признак того что ячейка должна дробиться очень сильно.
-		isosed += 4 - 1;
+		ineighbour += 4 - 1;
 		break;
 	}
-} // patch_sosed_count
+} // patch_neighbour_count
 
-void patch_sosed_count2(integer &isosed) {
+void patch_neighbour_count2(integer &ineighbour) {
 	// При вырождениии в направлении одной из осей.
-	switch (isosed) {
-	case 0: printf("error!!! patch_sosed_count2 increment  isosed=0\n");
+	switch (ineighbour) {
+	case 0: printf("error!!! patch_neighbour_count2 increment  ineighbour=0\n");
 		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
-		//isosed = 2;
+		//ineighbour = 2;
 		break;
-	case 1: isosed = 2;
+	case 1: ineighbour = 2;
 		break;
-	case 2: isosed = 3;
+	case 2: ineighbour = 3;
 		break;
-	case 3: isosed = 4;
+	case 3: ineighbour = 4;
 		break;
-	case 4: isosed = 5; break;
-	case 5: isosed = 6; break;
+	case 4: ineighbour = 5; break;
+	case 5: ineighbour = 6; break;
 	default: // Это признак того что ячейка должна дробиться очень сильно.
-		isosed += 2 - 1;
+		ineighbour += 2 - 1;
 		break;
 	}
-} // patch_sosed_count
+} // patch_neighbour_count
 
 
 
 
 // Алгоритм дробления листа на 8 частей с учётом вырождений.
-void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, 
+void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, 
 	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &ret, bool dodroblenie,
 	bool bdrobimX, bool bdrobimY, bool bdrobimZ, BLOCK*& b, TOCHKA &GSep) {
 
@@ -3622,9 +3624,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link0!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link0 = new octTree;
+			oc->link0 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link0;
+			rootClear_octree[icount_Length_vector_octree] = oc->link0;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -3636,7 +3638,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link0 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link0 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link0 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -3749,12 +3751,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			}
 
 
-			oc->link0->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 
 
@@ -3823,12 +3825,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link1!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link1 = new octTree;
+			oc->link1 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link1;
+			rootClear_octree[icount_Length_vector_octree] = oc->link1;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree > iMAX_Length_vector_octree - 1) {
-				printf("rootClear_octTree stack overflow\n");
+				printf("rootClear_octree stack overflow\n");
 				printf("You mast increesable variable iMAX_Length_vector_octree = 1.4*inx*iny*inz\n");
 				system("pause");
 				exit(1);
@@ -3839,7 +3841,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		    // После применения оператора new не требуется делать проверку на null.
 			//if (oc->link1 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link1 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link1 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -3949,12 +3951,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link1->bcrushing_when_balancing = false;
 			}
-			oc->link1->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 
 
@@ -4022,9 +4024,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link2!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link2 = new octTree;
+			oc->link2 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link2;
+			rootClear_octree[icount_Length_vector_octree] = oc->link2;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -4036,7 +4038,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link2 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link2 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link2 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -4147,12 +4149,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link2->bcrushing_when_balancing = false;
 			}
-			oc->link2->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link2;
@@ -4219,9 +4221,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link3!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link3 = new octTree;
+			oc->link3 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link3;
+			rootClear_octree[icount_Length_vector_octree] = oc->link3;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -4233,7 +4235,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link3 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link3 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link3 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -4345,12 +4347,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link3->bcrushing_when_balancing = false;
 			}
-			oc->link3->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link3;
@@ -4388,9 +4390,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 
-			oc->link4 = new octTree;
+			oc->link4 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link4;
+			rootClear_octree[icount_Length_vector_octree] = oc->link4;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -4402,7 +4404,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link4 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link4 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link4 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -4514,13 +4516,13 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link4->bcrushing_when_balancing = false;
 			}
-			oc->link4->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxEsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxBsosed = 1;
+			oc->link4->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxEneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxBneighbour = 1;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link4;
@@ -4557,9 +4559,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link5!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link5 = new octTree;
+			oc->link5 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link5;
+			rootClear_octree[icount_Length_vector_octree] = oc->link5;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -4571,7 +4573,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link5 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link5 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link5 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -4683,12 +4685,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link5->bcrushing_when_balancing = false;
 			}
-			oc->link5->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link5;
 			top_ALICE_STACK++;
@@ -4724,9 +4726,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link6!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link6 = new octTree;
+			oc->link6 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link6;
+			rootClear_octree[icount_Length_vector_octree] = oc->link6;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -4738,7 +4740,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link6 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link6 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link6 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -4849,12 +4851,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link6->bcrushing_when_balancing = false;
 			}
-			oc->link6->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link6;
@@ -4890,9 +4892,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link7!=nullptr.\n");
 				system("PAUSE");
 			}
-			oc->link7 = new octTree;
+			oc->link7 = new octree;
 			// Ссылки на каждый узел octree дерева для его полной очистки.
-			rootClear_octTree[icount_Length_vector_octree] = oc->link7;
+			rootClear_octree[icount_Length_vector_octree] = oc->link7;
 			icount_Length_vector_octree++;
 			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
 				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
@@ -4904,7 +4906,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// После применения оператора new не требуется делать проверку на null.
 			//if (oc->link7 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				//printf("Problem : not enough memory on your equipment for oc->link7 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Problem: not enough memory on your equipment for oc->link7 in adaptive_local_refinement_mesh generator...\n");
 				//printf("Please any key to exit...\n");
 				//exit(1);
 			//}
@@ -5018,12 +5020,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link7->bcrushing_when_balancing = false;
 			}
-			oc->link7->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link7;
@@ -5358,28 +5360,28 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		// Вырождение по Z
 		if (oc->linkB != nullptr) {
 		if (is_null(oc->linkB)) {
-		//oc->linkB->maxTsosed += 4 - 1;
-		patch_sosed_count2(oc->linkB->maxTsosed);
+		//oc->linkB->maxTneighbour += 4 - 1;
+		patch_neighbour_count2(oc->linkB->maxTneighbour);
 		}
 		if (is_null1(oc->linkB)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkB->link4->maxTsosed = 1; //
-		oc->linkB->link5->maxTsosed = 1;
-		oc->linkB->link6->maxTsosed = 1;
-		oc->linkB->link7->maxTsosed = 1;
+		oc->linkB->link4->maxTneighbour = 1; //
+		oc->linkB->link5->maxTneighbour = 1;
+		oc->linkB->link6->maxTneighbour = 1;
+		oc->linkB->link7->maxTneighbour = 1;
 		}
 		}
 		if (oc->linkT != nullptr) {
 		if (is_null(oc->linkT)) {
-		//oc->linkT->maxBsosed += 4 - 1;
-		patch_sosed_count2(oc->linkT->maxBsosed);
+		//oc->linkT->maxBneighbour += 4 - 1;
+		patch_neighbour_count2(oc->linkT->maxBneighbour);
 		}
 		if (is_null1(oc->linkT)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkT->link0->maxBsosed = 1; //
-		oc->linkT->link1->maxBsosed = 1;
-		oc->linkT->link2->maxBsosed = 1;
-		oc->linkT->link3->maxBsosed = 1;
+		oc->linkT->link0->maxBneighbour = 1; //
+		oc->linkT->link1->maxBneighbour = 1;
+		oc->linkT->link2->maxBneighbour = 1;
+		oc->linkT->link3->maxBneighbour = 1;
 		}
 		}
 		}
@@ -5388,30 +5390,30 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (b0|| b1 || b2 || b3) {
 		if (oc->linkB != nullptr) {
 		if (is_null(oc->linkB)) {
-		//oc->linkB->maxTsosed += 4 - 1;
-		patch_sosed_count(oc->linkB->maxTsosed, oc->linkB,T);
+		//oc->linkB->maxTneighbour += 4 - 1;
+		patch_neighbour_count(oc->linkB->maxTneighbour, oc->linkB,T);
 		}
 		if (is_null1(oc->linkB)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkB->link4->maxTsosed = 1; //
-		oc->linkB->link5->maxTsosed = 1;
-		oc->linkB->link6->maxTsosed = 1;
-		oc->linkB->link7->maxTsosed = 1;
+		oc->linkB->link4->maxTneighbour = 1; //
+		oc->linkB->link5->maxTneighbour = 1;
+		oc->linkB->link6->maxTneighbour = 1;
+		oc->linkB->link7->maxTneighbour = 1;
 		}
 		}
 		}
 		if (b4 || b5 || b6 || b7) {
 		if (oc->linkT != nullptr) {
 		if (is_null(oc->linkT)) {
-		//oc->linkT->maxBsosed += 4 - 1;
-		patch_sosed_count(oc->linkT->maxBsosed, oc->linkT,B);
+		//oc->linkT->maxBneighbour += 4 - 1;
+		patch_neighbour_count(oc->linkT->maxBneighbour, oc->linkT,B);
 		}
 		if (is_null1(oc->linkT)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkT->link0->maxBsosed = 1; //
-		oc->linkT->link1->maxBsosed = 1;
-		oc->linkT->link2->maxBsosed = 1;
-		oc->linkT->link3->maxBsosed = 1;
+		oc->linkT->link0->maxBneighbour = 1; //
+		oc->linkT->link1->maxBneighbour = 1;
+		oc->linkT->link2->maxBneighbour = 1;
+		oc->linkT->link3->maxBneighbour = 1;
 		}
 		}
 		}
@@ -5421,15 +5423,15 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (bSituationY) {
 		if (oc->linkN != nullptr) {
 		if (is_null(oc->linkN)) {
-		//oc->linkN->maxSsosed += 4 - 1;
-		patch_sosed_count2(oc->linkN->maxSsosed);
+		//oc->linkN->maxSneighbour += 4 - 1;
+		patch_neighbour_count2(oc->linkN->maxSneighbour);
 		}
 		else if (is_null1(oc->linkN)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkN->link0->maxSsosed = 1; //
-		oc->linkN->link1->maxSsosed = 1;
-		oc->linkN->link4->maxSsosed = 1;
-		oc->linkN->link5->maxSsosed = 1;
+		oc->linkN->link0->maxSneighbour = 1; //
+		oc->linkN->link1->maxSneighbour = 1;
+		oc->linkN->link4->maxSneighbour = 1;
+		oc->linkN->link5->maxSneighbour = 1;
 		}
 		else {
 		// других вариантов быть не может, здесь только 4.
@@ -5439,31 +5441,31 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkN != nullptr) {
 		if (oc->linkN->link0 != nullptr) {
-		oc->linkN->link0->maxSsosed = 1; //
+		oc->linkN->link0->maxSneighbour = 1; //
 		}
 		if (oc->linkN->link1 != nullptr) {
-		oc->linkN->link1->maxSsosed = 1;
+		oc->linkN->link1->maxSneighbour = 1;
 		}
 		if (oc->linkN->link4 != nullptr) {
-		oc->linkN->link4->maxSsosed = 1;
+		oc->linkN->link4->maxSneighbour = 1;
 		}
 		if (oc->linkN->link5 != nullptr) {
-		oc->linkN->link5->maxSsosed = 1;
+		oc->linkN->link5->maxSneighbour = 1;
 		}
 		}
 		}
 		}
 		if (oc->linkS != nullptr) {
 		if (is_null(oc->linkS)) {
-		//oc->linkS->maxNsosed += 4 - 1;
-		patch_sosed_count2(oc->linkS->maxNsosed);
+		//oc->linkS->maxNneighbour += 4 - 1;
+		patch_neighbour_count2(oc->linkS->maxNneighbour);
 		}
 		else if (is_null1(oc->linkS)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkS->link2->maxNsosed = 1; //
-		oc->linkS->link3->maxNsosed = 1;
-		oc->linkS->link6->maxNsosed = 1;
-		oc->linkS->link7->maxNsosed = 1;
+		oc->linkS->link2->maxNneighbour = 1; //
+		oc->linkS->link3->maxNneighbour = 1;
+		oc->linkS->link6->maxNneighbour = 1;
+		oc->linkS->link7->maxNneighbour = 1;
 		}
 		else {
 		// других вариантов быть не может, здесь только 4.
@@ -5473,16 +5475,16 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkS != nullptr) {
 		if (oc->linkS->link2 != nullptr) {
-		oc->linkS->link2->maxNsosed = 1; //
+		oc->linkS->link2->maxNneighbour = 1; //
 		}
 		if (oc->linkS->link3 != nullptr) {
-		oc->linkS->link3->maxNsosed = 1;
+		oc->linkS->link3->maxNneighbour = 1;
 		}
 		if (oc->linkS->link6 != nullptr) {
-		oc->linkS->link6->maxNsosed = 1;
+		oc->linkS->link6->maxNneighbour = 1;
 		}
 		if (oc->linkS->link7 != nullptr) {
-		oc->linkS->link7->maxNsosed = 1;
+		oc->linkS->link7->maxNneighbour = 1;
 		}
 		}
 		}
@@ -5493,16 +5495,16 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (b2 || b3 || b6 || b7) {
 		if (oc->linkN != nullptr) {
 		if (is_null(oc->linkN)) {
-		//oc->linkN->maxSsosed += 4 - 1;
-		patch_sosed_count(oc->linkN->maxSsosed, oc->linkN,S);
+		//oc->linkN->maxSneighbour += 4 - 1;
+		patch_neighbour_count(oc->linkN->maxSneighbour, oc->linkN,S);
 		}
 		}
 		else if (is_null1(oc->linkN)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkN->link0->maxSsosed = 1; //
-		oc->linkN->link1->maxSsosed = 1;
-		oc->linkN->link4->maxSsosed = 1;
-		oc->linkN->link5->maxSsosed = 1;
+		oc->linkN->link0->maxSneighbour = 1; //
+		oc->linkN->link1->maxSneighbour = 1;
+		oc->linkN->link4->maxSneighbour = 1;
+		oc->linkN->link5->maxSneighbour = 1;
 		}
 		else {
 		// других вариантов быть не может, здесь только 4.
@@ -5512,16 +5514,16 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkN != nullptr) {
 		if (oc->linkN->link0 != nullptr) {
-		oc->linkN->link0->maxSsosed = 1; //
+		oc->linkN->link0->maxSneighbour = 1; //
 		}
 		if (oc->linkN->link1 != nullptr) {
-		oc->linkN->link1->maxSsosed = 1;
+		oc->linkN->link1->maxSneighbour = 1;
 		}
 		if (oc->linkN->link4 != nullptr) {
-		oc->linkN->link4->maxSsosed = 1;
+		oc->linkN->link4->maxSneighbour = 1;
 		}
 		if (oc->linkN->link5 != nullptr) {
-		oc->linkN->link5->maxSsosed = 1;
+		oc->linkN->link5->maxSneighbour = 1;
 		}
 		}
 		}
@@ -5529,15 +5531,15 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (b0 || b1 || b4 || b5) {
 		if (oc->linkS != nullptr) {
 		if (is_null(oc->linkS)) {
-		//oc->linkS->maxNsosed += 4 - 1;
-		patch_sosed_count(oc->linkS->maxNsosed, oc->linkS,N);
+		//oc->linkS->maxNneighbour += 4 - 1;
+		patch_neighbour_count(oc->linkS->maxNneighbour, oc->linkS,N);
 		}
 		else if (is_null1(oc->linkS)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkS->link2->maxNsosed = 1; //
-		oc->linkS->link3->maxNsosed = 1;
-		oc->linkS->link6->maxNsosed = 1;
-		oc->linkS->link7->maxNsosed = 1;
+		oc->linkS->link2->maxNneighbour = 1; //
+		oc->linkS->link3->maxNneighbour = 1;
+		oc->linkS->link6->maxNneighbour = 1;
+		oc->linkS->link7->maxNneighbour = 1;
 		}
 		else {
 		// других вариантов быть не может, здесь только 4.
@@ -5547,16 +5549,16 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 		if (oc->linkS != nullptr) {
 		if (oc->linkS->link2 != nullptr) {
-		oc->linkS->link2->maxNsosed = 1; //
+		oc->linkS->link2->maxNneighbour = 1; //
 		}
 		if (oc->linkS->link3 != nullptr) {
-		oc->linkS->link3->maxNsosed = 1;
+		oc->linkS->link3->maxNneighbour = 1;
 		}
 		if (oc->linkS->link6 != nullptr) {
-		oc->linkS->link6->maxNsosed = 1;
+		oc->linkS->link6->maxNneighbour = 1;
 		}
 		if (oc->linkS->link7 != nullptr) {
-		oc->linkS->link7->maxNsosed = 1;
+		oc->linkS->link7->maxNneighbour = 1;
 		}
 		}
 		}
@@ -5567,28 +5569,28 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (bSituationX) {
 		if (oc->linkW != nullptr) {
 		if (is_null(oc->linkW)) {
-		//oc->linkW->maxEsosed += 4 - 1;
-		patch_sosed_count2(oc->linkW->maxEsosed);
+		//oc->linkW->maxEneighbour += 4 - 1;
+		patch_neighbour_count2(oc->linkW->maxEneighbour);
 		}
 		if (is_null1(oc->linkW)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkW->link1->maxEsosed = 1; //
-		oc->linkW->link2->maxEsosed = 1;
-		oc->linkW->link5->maxEsosed = 1;
-		oc->linkW->link6->maxEsosed = 1;
+		oc->linkW->link1->maxEneighbour = 1; //
+		oc->linkW->link2->maxEneighbour = 1;
+		oc->linkW->link5->maxEneighbour = 1;
+		oc->linkW->link6->maxEneighbour = 1;
 		}
 		}
 		if (oc->linkE != nullptr) {
 		if (is_null(oc->linkE)) {
-		//oc->linkE->maxWsosed += 4 - 1;
-		patch_sosed_count2(oc->linkE->maxWsosed);
+		//oc->linkE->maxWneighbour += 4 - 1;
+		patch_neighbour_count2(oc->linkE->maxWneighbour);
 		}
 		if (is_null1(oc->linkE)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkE->link0->maxWsosed = 1; //
-		oc->linkE->link3->maxWsosed = 1;
-		oc->linkE->link4->maxWsosed = 1;
-		oc->linkE->link7->maxWsosed = 1;
+		oc->linkE->link0->maxWneighbour = 1; //
+		oc->linkE->link3->maxWneighbour = 1;
+		oc->linkE->link4->maxWneighbour = 1;
+		oc->linkE->link7->maxWneighbour = 1;
 		}
 		}
 		}
@@ -5597,30 +5599,30 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (b0 || b3 || b4 || b7) {
 		if (oc->linkW != nullptr) {
 		if (is_null(oc->linkW)) {
-		//oc->linkW->maxEsosed += 4 - 1;
-		patch_sosed_count(oc->linkW->maxEsosed, oc->linkW,E);
+		//oc->linkW->maxEneighbour += 4 - 1;
+		patch_neighbour_count(oc->linkW->maxEneighbour, oc->linkW,E);
 		}
 		if (is_null1(oc->linkW)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkW->link1->maxEsosed = 1; //
-		oc->linkW->link2->maxEsosed = 1;
-		oc->linkW->link5->maxEsosed = 1;
-		oc->linkW->link6->maxEsosed = 1;
+		oc->linkW->link1->maxEneighbour = 1; //
+		oc->linkW->link2->maxEneighbour = 1;
+		oc->linkW->link5->maxEneighbour = 1;
+		oc->linkW->link6->maxEneighbour = 1;
 		}
 		}
 		}
 		if (b1 || b2 || b5 || b6) {
 		if (oc->linkE != nullptr) {
 		if (is_null(oc->linkE)) {
-		//oc->linkE->maxWsosed += 4 - 1;
-		patch_sosed_count(oc->linkE->maxWsosed, oc->linkE,WSIDE);
+		//oc->linkE->maxWneighbour += 4 - 1;
+		patch_neighbour_count(oc->linkE->maxWneighbour, oc->linkE,WSIDE);
 		}
 		if (is_null1(oc->linkE)) {
 		// он представляет собой ячейку делённую на 8 частей.
-		oc->linkE->link0->maxWsosed = 1; //
-		oc->linkE->link3->maxWsosed = 1;
-		oc->linkE->link4->maxWsosed = 1;
-		oc->linkE->link7->maxWsosed = 1;
+		oc->linkE->link0->maxWneighbour = 1; //
+		oc->linkE->link3->maxWneighbour = 1;
+		oc->linkE->link4->maxWneighbour = 1;
+		oc->linkE->link7->maxWneighbour = 1;
 		}
 		}
 		}
@@ -5634,7 +5636,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 //  droblenie_internal_old завершена в 15:35 27.08.2016. надо делать delenie_internal.
 // данный код устарел 30 августа 2016 и больше не поддерживается,
 // поэтому см. реализацию droblenie internal.
-void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &ret) {
+void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &ret) {
 	bool b0 = true;
 	bool b1 = true;
 	bool b2 = true;
@@ -5782,10 +5784,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz0;
 
 
-			oc->link0 = new octTree;
+			oc->link0 = new octree;
 			if (oc->link0 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link0 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link0 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -5875,28 +5877,28 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link0->dlist = true;
 			oc->link0->b_the_geometric_fragmentation = true;
 
-			oc->link0->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link0->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
 				if (oc->linkT != nullptr) {
 					if (is_null(oc->linkT)) {
 						// 1 остаётся 1.
-						oc->link0->maxTsosed = 1; // oc->maxTsosed;
+						oc->link0->maxTneighbour = 1; // oc->maxTneighbour;
 					}
 					else if (is_null1(oc->linkT)) {
 
 						if ((bonly_dir_X) || (bonly_dir_Y)) {
-							oc->link0->maxTsosed = 2;
+							oc->link0->maxTneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link0->maxTsosed = 1;
+							oc->link0->maxTneighbour = 1;
 						}
 					}
 					else {
@@ -5908,42 +5910,42 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_X) || (bonly_dir_Y)) {
 							if (bonly_dir_X) {
 								// дробим только по оси Ох.
-								oc->link0->maxTsosed = c0 + c3;
+								oc->link0->maxTneighbour = c0 + c3;
 							}
 							if (bonly_dir_Y) {
 								// дробим только по оси Oy.
-								oc->link0->maxTsosed = c0 + c1;
+								oc->link0->maxTneighbour = c0 + c1;
 							}
 						}
 						else {
-							//oc->link0->maxTsosed = 4;
-							oc->link0->maxTsosed = c0;
+							//oc->link0->maxTneighbour = 4;
+							oc->link0->maxTneighbour = c0;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link0->maxTsosed = 0;// oc->maxTsosed;
+					oc->link0->maxTneighbour = 0;// oc->maxTneighbour;
 				}
 			}
 			else {
 				// это была внутренняя ячейка.
-				oc->link0->maxTsosed = 1;
+				oc->link0->maxTneighbour = 1;
 
 			}
 			if (bSituationY) {
 				if (oc->linkN != nullptr) {
 					if (is_null(oc->linkN)) {
 						// 1 остаётся 1.
-						oc->link0->maxNsosed = 1; // oc->maxNsosed;
+						oc->link0->maxNneighbour = 1; // oc->maxNneighbour;
 					}
 					else if (is_null1(oc->linkN)) {
 						if ((bonly_dir_X) || (bonly_dir_Z)) {
-							oc->link0->maxNsosed = 2;
+							oc->link0->maxNneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link0->maxNsosed = 1;
+							oc->link0->maxNneighbour = 1;
 						}
 					}
 					else {
@@ -5954,42 +5956,42 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X) || (bonly_dir_Z)) {
 							if (bonly_dir_X) {
-								oc->link0->maxNsosed = c0 + c4;
+								oc->link0->maxNneighbour = c0 + c4;
 							}
 							if (bonly_dir_Z) {
-								oc->link0->maxNsosed = c0 + c1;
+								oc->link0->maxNneighbour = c0 + c1;
 							}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link0->maxNsosed = 4;
-							oc->link0->maxNsosed = c0;
+							//oc->link0->maxNneighbour = 4;
+							oc->link0->maxNneighbour = c0;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link0->maxNsosed = 0; // oc->maxNsosed;
+					oc->link0->maxNneighbour = 0; // oc->maxNneighbour;
 				}
 			}
 			else {
 
-				oc->link0->maxNsosed = 1;
+				oc->link0->maxNneighbour = 1;
 
 			}
 			if (bSituationX) {
 				if (oc->linkE != nullptr) {
 					if (is_null(oc->linkE)) {
 						// 1 остаётся 1.
-						oc->link0->maxEsosed = 1; // oc->maxEsosed;
+						oc->link0->maxEneighbour = 1; // oc->maxEneighbour;
 					}
 					else if (is_null1(oc->linkE)) {
 						if ((bonly_dir_Z) || (bonly_dir_Y)) {
-							oc->link0->maxEsosed = 2;
+							oc->link0->maxEneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link0->maxEsosed = 1;
+							oc->link0->maxEneighbour = 1;
 						}
 					}
 					else {
@@ -6001,38 +6003,38 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_Y) || (bonly_dir_Z)) {
 							if (bonly_dir_Y) {
 								// дробим только по оси Oy.
-								oc->link0->maxEsosed = c0 + c4;
+								oc->link0->maxEneighbour = c0 + c4;
 							}
 							if (bonly_dir_Z) {
 								// дробим только по оси Oz.
-								oc->link0->maxEsosed = c0 + c3;
+								oc->link0->maxEneighbour = c0 + c3;
 							}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link0->maxEsosed = 4;
-							oc->link0->maxEsosed = c0;
+							//oc->link0->maxEneighbour = 4;
+							oc->link0->maxEneighbour = c0;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link0->maxEsosed = 0; // oc->maxEsosed;
+					oc->link0->maxEneighbour = 0; // oc->maxEneighbour;
 				}
 			}
 			else {
-				oc->link0->maxEsosed = 1;
+				oc->link0->maxEneighbour = 1;
 			}
 			// Должно быть уменьшение при дроблении:
 			if (oc->linkW != nullptr) {
 				if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link0->maxWsosed = 1;// oc->maxBsosed;
+						oc->link0->maxWneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						// двойная прилегает к четверной.
-						oc->link0->maxWsosed = 2;
+						oc->link0->maxWneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6040,17 +6042,17 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link0->maxWsosed = c1 + c2;
+						oc->link0->maxWneighbour = c1 + c2;
 					}
 				}
 				else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link0->maxWsosed = 1;// oc->maxBsosed;
+						oc->link0->maxWneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						// двойная прилегает к четверной.
-						oc->link0->maxWsosed = 2;
+						oc->link0->maxWneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6058,24 +6060,24 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link0->maxWsosed = c1 + c5;
+						oc->link0->maxWneighbour = c1 + c5;
 					}
 				}
 				else {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link0->maxWsosed = 1;// oc->maxWsosed;
+						oc->link0->maxWneighbour = 1;// oc->maxWneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						if (bonly_dir_Y){
-							oc->link0->maxWsosed = 2;
+							oc->link0->maxWneighbour = 2;
 						}
 						else if (bonly_dir_Z) {
-							oc->link0->maxWsosed = 2;
+							oc->link0->maxWneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link0->maxWsosed = 1;
+							oc->link0->maxWneighbour = 1;
 						}
 					}
 					else {
@@ -6085,15 +6087,15 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link0->maxWsosed = 4;
+						//oc->link0->maxWneighbour = 4;
 						if (bonly_dir_Y) {
-							oc->link0->maxWsosed = c1 + c5;
+							oc->link0->maxWneighbour = c1 + c5;
 						}
 						else if (bonly_dir_Z) {
-							oc->link0->maxWsosed = c1 + c2;
+							oc->link0->maxWneighbour = c1 + c2;
 						}
 						else {
-							oc->link0->maxWsosed = c1;
+							oc->link0->maxWneighbour = c1;
 						}
 
 					}
@@ -6101,17 +6103,17 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link0->maxWsosed = 0; // oc->maxWsosed;
+				oc->link0->maxWneighbour = 0; // oc->maxWneighbour;
 			}
 			if (oc->linkS != nullptr) {
 				if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link0->maxSsosed = 1;// oc->maxBsosed;
+						oc->link0->maxSneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						// двойная прилегает к четверной.
-						oc->link0->maxSsosed = 2;
+						oc->link0->maxSneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6119,17 +6121,17 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link0->maxSsosed = c3 + c2;
+						oc->link0->maxSneighbour = c3 + c2;
 					}
 				}
 				else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link0->maxSsosed = 1;// oc->maxBsosed;
+						oc->link0->maxSneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						// двойная прилегает к четверной.
-						oc->link0->maxSsosed = 2;
+						oc->link0->maxSneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6137,24 +6139,24 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link0->maxSsosed = c3 + c7;
+						oc->link0->maxSneighbour = c3 + c7;
 					}
 				}
 				else {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link0->maxSsosed = 1;// oc->maxSsosed;
+						oc->link0->maxSneighbour = 1;// oc->maxSneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						if (bonly_dir_Z) {
-							oc->link0->maxSsosed = 2;
+							oc->link0->maxSneighbour = 2;
 						}
 						else if (bonly_dir_X) {
-							oc->link0->maxSsosed = 2;
+							oc->link0->maxSneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link0->maxSsosed = 1;
+							oc->link0->maxSneighbour = 1;
 						}
 					}
 					else {
@@ -6165,31 +6167,31 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						if (bonly_dir_Z) {
-							oc->link0->maxSsosed = c3 + c2;
+							oc->link0->maxSneighbour = c3 + c2;
 						}
 						else if (bonly_dir_X) {
-							oc->link0->maxSsosed = c3 + c7;
+							oc->link0->maxSneighbour = c3 + c7;
 						}
 						else {
-							//oc->link0->maxSsosed = 4;
-							oc->link0->maxSsosed = c3;
+							//oc->link0->maxSneighbour = 4;
+							oc->link0->maxSneighbour = c3;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link0->maxSsosed = 0;// oc->maxSsosed;
+				oc->link0->maxSneighbour = 0;// oc->maxSneighbour;
 			}
 			if (oc->linkB != nullptr) {
 				if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 					if (is_null(oc->linkB)) {
 						// 1 остаётся 1.
-						oc->link0->maxBsosed = 1;// oc->maxBsosed;
+						oc->link0->maxBneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkB)) {
 						// двойная прилегает к четверной.
-						oc->link0->maxBsosed = 2;
+						oc->link0->maxBneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6197,17 +6199,17 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link0->maxBsosed = c4 + c7;
+						oc->link0->maxBneighbour = c4 + c7;
 					}
 				}
 				else if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 					if (is_null(oc->linkB)) {
 						// 1 остаётся 1.
-						oc->link0->maxBsosed = 1;// oc->maxBsosed;
+						oc->link0->maxBneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkB)) {
 						// двойная прилегает к четверной.
-						oc->link0->maxBsosed = 2;
+						oc->link0->maxBneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6215,24 +6217,24 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link0->maxBsosed = c4 + c5;
+						oc->link0->maxBneighbour = c4 + c5;
 					}
 				}
 				else {
 					if (is_null(oc->linkB)) {
 						// 1 остаётся 1.
-						oc->link0->maxBsosed = 1;// oc->maxBsosed;
+						oc->link0->maxBneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkB)) {
 						if (bonly_dir_Y) {
-							oc->link0->maxBsosed = 2;
+							oc->link0->maxBneighbour = 2;
 						}
 						else if (bonly_dir_X) {
-							oc->link0->maxBsosed = 2;
+							oc->link0->maxBneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link0->maxBsosed = 1;
+							oc->link0->maxBneighbour = 1;
 						}
 					}
 					else {
@@ -6242,22 +6244,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_Y) {
-							oc->link0->maxBsosed = c4 + c5;
+							oc->link0->maxBneighbour = c4 + c5;
 						}
 						else if (bonly_dir_X) {
-							oc->link0->maxBsosed = c4 + c7;
+							oc->link0->maxBneighbour = c4 + c7;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link0->maxBsosed = 4;
-							oc->link0->maxBsosed = c4;
+							//oc->link0->maxBneighbour = 4;
+							oc->link0->maxBneighbour = c4;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link0->maxBsosed = 0;// oc->maxBsosed;
+				oc->link0->maxBneighbour = 0;// oc->maxBneighbour;
 			}
 
 
@@ -6266,13 +6268,13 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			// для этого нужна ссылка вврх на шести соседей oc ячейки 
 			/*.
 			if (oc->linkB != nullptr) {
-			oc->linkB->maxTsosed += 4 - 1;
+			oc->linkB->maxTneighbour += 4 - 1;
 			}
 			if (oc->linkS != nullptr) {
-			oc->linkS->maxNsosed += 4 - 1;
+			oc->linkS->maxNneighbour += 4 - 1;
 			}
 			if (oc->linkW != nullptr) {
-			oc->linkW->maxEsosed += 4 - 1;
+			oc->linkW->maxEneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link0;
@@ -6304,7 +6306,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz1;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz1;
 
-			oc->link1 = new octTree;
+			oc->link1 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link1' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -6313,7 +6315,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link1 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link1 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link1 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -6401,27 +6403,27 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link1->linkT7 = nullptr;
 			oc->link1->dlist = true;
 			oc->link1->b_the_geometric_fragmentation = true;
-			oc->link1->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link1->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
 				if (oc->linkT != nullptr) {
 					if (is_null(oc->linkT)) {
 						// 1 остаётся 1.
-						oc->link1->maxTsosed = 1;// oc->maxTsosed;
+						oc->link1->maxTneighbour = 1;// oc->maxTneighbour;
 					}
 					else if (is_null1(oc->linkT)) {
 						if (bonly_dir_X) {
-							oc->link1->maxTsosed = 2;
+							oc->link1->maxTneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link1->maxTsosed = 1;
+							oc->link1->maxTneighbour = 1;
 						}
 					}
 					else {
@@ -6433,38 +6435,38 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_X)) {
 							//if (bonly_dir_X) {
 								// дробим только по оси Oy.
-								oc->link1->maxTsosed = c1 + c2;
+								oc->link1->maxTneighbour = c1 + c2;
 							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
 							// может быть  2, 4, 5, 8
-							//oc->link1->maxTsosed = 4;
-							oc->link1->maxTsosed = c1;
+							//oc->link1->maxTneighbour = 4;
+							oc->link1->maxTneighbour = c1;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link1->maxTsosed = 0;// oc->maxTsosed;
+					oc->link1->maxTneighbour = 0;// oc->maxTneighbour;
 				}
 			}
 			else {
-				oc->link1->maxTsosed = 1;
+				oc->link1->maxTneighbour = 1;
 			}
 			if (bSituationY) {
 				if (oc->linkN != nullptr) {
 					if (is_null(oc->linkN)) {
 						// 1 остаётся 1.
-						oc->link1->maxNsosed = 1;// oc->maxNsosed;
+						oc->link1->maxNneighbour = 1;// oc->maxNneighbour;
 					}
 					else if (is_null1(oc->linkN)) {
 						if (bonly_dir_X) {
-							oc->link1->maxNsosed = 2;
+							oc->link1->maxNneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link1->maxNsosed = 1;
+							oc->link1->maxNneighbour = 1;
 						}
 					}
 					else {
@@ -6476,27 +6478,27 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_X)) {
 							//if (bonly_dir_X) {
 								// дробим только по оси Oy.
-								oc->link1->maxNsosed = c1 + c5;
+								oc->link1->maxNneighbour = c1 + c5;
 							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link1->maxNsosed = 4;
-							oc->link1->maxNsosed = c1;
+							//oc->link1->maxNneighbour = 4;
+							oc->link1->maxNneighbour = c1;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link1->maxNsosed = 0;// oc->maxNsosed;
+					oc->link1->maxNneighbour = 0;// oc->maxNneighbour;
 				}
 			}
 			else {
-				oc->link1->maxNsosed = 1;
+				oc->link1->maxNneighbour = 1;
 			}
 
 
-			oc->link1->maxWsosed = 1;
+			oc->link1->maxWneighbour = 1;
 
 
 
@@ -6504,11 +6506,11 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			if (oc->linkE != nullptr) {
 				if (is_null(oc->linkE)) {
 					// 1 остаётся 1.
-					oc->link1->maxEsosed = 1;// oc->maxEsosed;
+					oc->link1->maxEneighbour = 1;// oc->maxEneighbour;
 				}
 				else if (is_null1(oc->linkE)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link1->maxEsosed = 1;
+					oc->link1->maxEneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -6517,23 +6519,23 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link1->maxEsosed = 4;
-					oc->link1->maxEsosed = c0;
+					//oc->link1->maxEneighbour = 4;
+					oc->link1->maxEneighbour = c0;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link1->maxEsosed = 0;// oc->maxEsosed;
+				oc->link1->maxEneighbour = 0;// oc->maxEneighbour;
 			}
 			if (oc->linkS != nullptr) {
 				if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link1->maxSsosed = 1;// oc->maxBsosed;
+						oc->link1->maxSneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						// двойная прилегает к четверной.
-						oc->link1->maxSsosed = 2;
+						oc->link1->maxSneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6541,21 +6543,21 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link1->maxSsosed = c2 + c6;
+						oc->link1->maxSneighbour = c2 + c6;
 					}
 				}
 				else {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link1->maxSsosed = 1;// oc->maxSsosed;
+						oc->link1->maxSneighbour = 1;// oc->maxSneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						if (bonly_dir_X) {
-							oc->link1->maxSsosed = 2;
+							oc->link1->maxSneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link1->maxSsosed = 1;
+							oc->link1->maxSneighbour = 1;
 						}
 					}
 					else {
@@ -6565,29 +6567,29 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_X) {
-							oc->link1->maxSsosed = c2 + c6;
+							oc->link1->maxSneighbour = c2 + c6;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link1->maxSsosed = 4;
-							oc->link1->maxSsosed = c2;
+							//oc->link1->maxSneighbour = 4;
+							oc->link1->maxSneighbour = c2;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link1->maxSsosed = 0;// oc->maxSsosed;
+				oc->link1->maxSneighbour = 0;// oc->maxSneighbour;
 			}
 			if (oc->linkB != nullptr) {
 				if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 					if (is_null(oc->linkB)) {
 						// 1 остаётся 1.
-						oc->link1->maxBsosed = 1;// oc->maxBsosed;
+						oc->link1->maxBneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkB)) {
 						// двойная прилегает к четверной.
-						oc->link1->maxBsosed = 2;
+						oc->link1->maxBneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6595,21 +6597,21 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link1->maxBsosed = c5 + c6;
+						oc->link1->maxBneighbour = c5 + c6;
 					}
 				}
 				else {
 					if (is_null(oc->linkB)) {
 						// 1 остаётся 1.
-						oc->link1->maxBsosed = 1;// oc->maxBsosed;
+						oc->link1->maxBneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkB)) {
 						if (bonly_dir_X) {
-							oc->link1->maxBsosed = 2;
+							oc->link1->maxBneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link1->maxBsosed = 1;
+							oc->link1->maxBneighbour = 1;
 						}
 					}
 					else {
@@ -6619,32 +6621,32 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_X) {
-							oc->link1->maxBsosed = c5 + c6;
+							oc->link1->maxBneighbour = c5 + c6;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link1->maxBsosed = 4;
-							oc->link1->maxBsosed = c5;
+							//oc->link1->maxBneighbour = 4;
+							oc->link1->maxBneighbour = c5;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link1->maxBsosed = 0;// oc->maxBsosed;
+				oc->link1->maxBneighbour = 0;// oc->maxBneighbour;
 			}
 			/*
 			// А вот у соседей B, SSIDE, E количество соседей стало уже 4.
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkB != nullptr) {
-			oc->linkB->maxTsosed += 4 - 1;
+			oc->linkB->maxTneighbour += 4 - 1;
 			}
 			if (oc->linkS != nullptr) {
-			oc->linkS->maxNsosed += 4 - 1;
+			oc->linkS->maxNneighbour += 4 - 1;
 			}
 			if (oc->linkE != nullptr) {
-			oc->linkE->maxWsosed += 4 - 1;
+			oc->linkE->maxWneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link1;
@@ -6676,7 +6678,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz2;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz2;
 
-			oc->link2 = new octTree;
+			oc->link2 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link2' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -6685,7 +6687,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link2 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link2 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link2 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -6773,23 +6775,23 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link2->linkT7 = nullptr;
 			oc->link2->dlist = true;
 			oc->link2->b_the_geometric_fragmentation = true;
-			oc->link2->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link2->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
 				if (oc->linkT != nullptr) {
 					if (is_null(oc->linkT)) {
 						// 1 остаётся 1.
-						oc->link2->maxTsosed = 1;// oc->maxTsosed;
+						oc->link2->maxTneighbour = 1;// oc->maxTneighbour;
 					}
 					else if (is_null1(oc->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						oc->link2->maxTsosed = 1;
+						oc->link2->maxTneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -6798,20 +6800,20 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link2->maxTsosed = 4;
-						oc->link2->maxTsosed = c2;
+						//oc->link2->maxTneighbour = 4;
+						oc->link2->maxTneighbour = c2;
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link2->maxTsosed = 0;// oc->maxTsosed;
+					oc->link2->maxTneighbour = 0;// oc->maxTneighbour;
 				}
 			}
 			else {
-				oc->link2->maxTsosed = 1;
+				oc->link2->maxTneighbour = 1;
 			}
-			oc->link2->maxSsosed = 1;
-			oc->link2->maxWsosed = 1;
+			oc->link2->maxSneighbour = 1;
+			oc->link2->maxWneighbour = 1;
 
 
 
@@ -6819,11 +6821,11 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			if (oc->linkE != nullptr) {
 				if (is_null(oc->linkE)) {
 					// 1 остаётся 1.
-					oc->link2->maxEsosed = 1;// oc->maxEsosed;
+					oc->link2->maxEneighbour = 1;// oc->maxEneighbour;
 				}
 				else if (is_null1(oc->linkE)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link2->maxEsosed = 1;
+					oc->link2->maxEneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -6832,22 +6834,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link2->maxEsosed = 4;
-					oc->link2->maxEsosed = c3;
+					//oc->link2->maxEneighbour = 4;
+					oc->link2->maxEneighbour = c3;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link2->maxEsosed = 0;// oc->maxEsosed;
+				oc->link2->maxEneighbour = 0;// oc->maxEneighbour;
 			}
 			if (oc->linkN != nullptr) {
 				if (is_null(oc->linkN)) {
 					// 1 остаётся 1.
-					oc->link2->maxNsosed = 1;// oc->maxNsosed;
+					oc->link2->maxNneighbour = 1;// oc->maxNneighbour;
 				}
 				else if (is_null1(oc->linkN)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link2->maxNsosed = 1;
+					oc->link2->maxNneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -6857,22 +6859,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 					// других вариантов быть не может, здесь только 4.
-					//oc->link2->maxNsosed = 4;
-					oc->link2->maxNsosed = c1;
+					//oc->link2->maxNneighbour = 4;
+					oc->link2->maxNneighbour = c1;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link2->maxNsosed = 0;// oc->maxNsosed;
+				oc->link2->maxNneighbour = 0;// oc->maxNneighbour;
 			}
 			if (oc->linkB != nullptr) {
 				if (is_null(oc->linkB)) {
 					// 1 остаётся 1.
-					oc->link2->maxBsosed = 1;// oc->maxBsosed;
+					oc->link2->maxBneighbour = 1;// oc->maxBneighbour;
 				}
 				else if (is_null1(oc->linkB)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link2->maxBsosed = 1;
+					oc->link2->maxBneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -6881,26 +6883,26 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link2->maxBsosed = 4;
-					oc->link2->maxBsosed = c6;
+					//oc->link2->maxBneighbour = 4;
+					oc->link2->maxBneighbour = c6;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link2->maxBsosed = 0;// oc->maxBsosed;
+				oc->link2->maxBneighbour = 0;// oc->maxBneighbour;
 			}
 			/*
 			// А вот у соседей B, N, E количество соседей стало уже 4.
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkB != nullptr) {
-			oc->linkB->maxTsosed += 4 - 1;
+			oc->linkB->maxTneighbour += 4 - 1;
 			}
 			if (oc->linkN != nullptr) {
-			oc->linkN->maxSsosed += 4 - 1;
+			oc->linkN->maxSneighbour += 4 - 1;
 			}
 			if (oc->linkE != nullptr) {
-			oc->linkE->maxWsosed += 4 - 1;
+			oc->linkE->maxWneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link2;
@@ -6933,7 +6935,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz3;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz3;
 
-			oc->link3 = new octTree;
+			oc->link3 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link3' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -6942,7 +6944,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link3 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link3 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link3 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -7030,27 +7032,27 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link3->linkT7 = nullptr;
 			oc->link3->dlist = true;
 			oc->link3->b_the_geometric_fragmentation = true;
-			oc->link3->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link3->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
 				if (oc->linkT != nullptr) {
 					if (is_null(oc->linkT)) {
 						// 1 остаётся 1.
-						oc->link3->maxTsosed = 1;// oc->maxTsosed;
+						oc->link3->maxTneighbour = 1;// oc->maxTneighbour;
 					}
 					else if (is_null1(oc->linkT)) {
 						if (bonly_dir_Y) {
-							oc->link3->maxTsosed = 2;
+							oc->link3->maxTneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link3->maxTsosed = 1;
+							oc->link3->maxTneighbour = 1;
 						}
 					}
 					else {
@@ -7062,26 +7064,26 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_Y)) {
 							//if (bonly_dir_Y) {
 								// дробим только по оси Oy.
-								oc->link3->maxTsosed = c3 + c2;
+								oc->link3->maxTneighbour = c3 + c2;
 							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
 							// может быть 2, 4, 5, 8.
-							//oc->link3->maxTsosed = 4;
-							oc->link3->maxTsosed = c3;
+							//oc->link3->maxTneighbour = 4;
+							oc->link3->maxTneighbour = c3;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link3->maxTsosed = 0;// oc->maxTsosed;
+					oc->link3->maxTneighbour = 0;// oc->maxTneighbour;
 				}
 			}
 			else {
-				oc->link3->maxTsosed = 1;
+				oc->link3->maxTneighbour = 1;
 			}
-			oc->link3->maxSsosed = 1;
+			oc->link3->maxSneighbour = 1;
 
 
 
@@ -7089,15 +7091,15 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 				if (oc->linkE != nullptr) {
 					if (is_null(oc->linkE)) {
 						// 1 остаётся 1.
-						oc->link3->maxEsosed = 1;// oc->maxEsosed;
+						oc->link3->maxEneighbour = 1;// oc->maxEneighbour;
 					}
 					else if (is_null1(oc->linkE)) {
 						if (bonly_dir_Y) {
-							oc->link3->maxEsosed = 2;
+							oc->link3->maxEneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link3->maxEsosed = 1;
+							oc->link3->maxEneighbour = 1;
 						}
 					}
 					else {
@@ -7109,24 +7111,24 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_Y)) {
 							//if (bonly_dir_Y) {
 								// дробим только по оси Oy.
-								oc->link3->maxEsosed = c3 + c7;
+								oc->link3->maxEneighbour = c3 + c7;
 							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
 							// Может быть 2, 4, 5, 8
-							//oc->link3->maxEsosed = 4;
-							oc->link3->maxEsosed = c3;
+							//oc->link3->maxEneighbour = 4;
+							oc->link3->maxEneighbour = c3;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link3->maxEsosed = 0;// oc->maxEsosed;
+					oc->link3->maxEneighbour = 0;// oc->maxEneighbour;
 				}
 			}
 			else {
-				oc->link3->maxEsosed = 1;
+				oc->link3->maxEneighbour = 1;
 			}
 
 
@@ -7134,11 +7136,11 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 				if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link3->maxWsosed = 1;// oc->maxBsosed;
+						oc->link3->maxWneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						// двойная прилегает к четверной.
-						oc->link3->maxWsosed = 2;
+						oc->link3->maxWneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -7146,21 +7148,21 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link3->maxWsosed = c2 + c6;
+						oc->link3->maxWneighbour = c2 + c6;
 					}
 				}
 				else {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link3->maxWsosed = 1;// oc->maxWsosed;
+						oc->link3->maxWneighbour = 1;// oc->maxWneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						if (bonly_dir_Y) {
-							oc->link3->maxWsosed = 2;
+							oc->link3->maxWneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link3->maxWsosed = 1;
+							oc->link3->maxWneighbour = 1;
 						}
 					}
 					else {
@@ -7170,29 +7172,29 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link3->maxWsosed = 4;
+						//oc->link3->maxWneighbour = 4;
 						if (bonly_dir_Y) {
-							oc->link3->maxWsosed = c2 + c6;
+							oc->link3->maxWneighbour = c2 + c6;
 						}
 						else {
-							oc->link3->maxWsosed = c2;
+							oc->link3->maxWneighbour = c2;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link3->maxWsosed = 0;// oc->maxWsosed;
+				oc->link3->maxWneighbour = 0;// oc->maxWneighbour;
 			}
 
 			if (oc->linkN != nullptr) {
 				if (is_null(oc->linkN)) {
 					// 1 остаётся 1.
-					oc->link3->maxNsosed = 1;// oc->maxNsosed;
+					oc->link3->maxNneighbour = 1;// oc->maxNneighbour;
 				}
 				else if (is_null1(oc->linkN)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link3->maxNsosed = 1;
+					oc->link3->maxNneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -7201,23 +7203,23 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link3->maxNsosed = 4;
-					oc->link3->maxNsosed = c0;
+					//oc->link3->maxNneighbour = 4;
+					oc->link3->maxNneighbour = c0;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link3->maxNsosed = 0;// oc->maxNsosed;
+				oc->link3->maxNneighbour = 0;// oc->maxNneighbour;
 			}
 			if (oc->linkB != nullptr) {
 				if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 					if (is_null(oc->linkB)) {
 						// 1 остаётся 1.
-						oc->link3->maxBsosed = 1;// oc->maxBsosed;
+						oc->link3->maxBneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkB)) {
 						// двойная прилегает к четверной.
-						oc->link3->maxBsosed = 2;
+						oc->link3->maxBneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -7225,20 +7227,20 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link3->maxBsosed = c7 + c6;
+						oc->link3->maxBneighbour = c7 + c6;
 					}
 				}
 				else if (is_null(oc->linkB)) {
 					// 1 остаётся 1.
-					oc->link3->maxBsosed = 1;// oc->maxBsosed;
+					oc->link3->maxBneighbour = 1;// oc->maxBneighbour;
 				}
 				else if (is_null1(oc->linkB)) {
 					if (bonly_dir_Y) {
-						oc->link3->maxBsosed = 2;
+						oc->link3->maxBneighbour = 2;
 					}
 					else {
 						// две четверные стороны прилегают друг к дружке.
-						oc->link3->maxBsosed = 1;
+						oc->link3->maxBneighbour = 1;
 					}
 				}
 				else {
@@ -7248,18 +7250,18 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (bonly_dir_Y) {
-						oc->link3->maxBsosed = c7 + c6;
+						oc->link3->maxBneighbour = c7 + c6;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
-						//oc->link3->maxBsosed = 4;
-						oc->link3->maxBsosed = c7;
+						//oc->link3->maxBneighbour = 4;
+						oc->link3->maxBneighbour = c7;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link3->maxBsosed = 0;// oc->maxBsosed;
+				oc->link3->maxBneighbour = 0;// oc->maxBneighbour;
 			}
 
 			/*
@@ -7267,13 +7269,13 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkB != nullptr) {
-			oc->linkB->maxTsosed += 4 - 1;
+			oc->linkB->maxTneighbour += 4 - 1;
 			}
 			if (oc->linkN != nullptr) {
-			oc->linkN->maxSsosed += 4 - 1;
+			oc->linkN->maxSneighbour += 4 - 1;
 			}
 			if (oc->linkW != nullptr) {
-			oc->linkW->maxEsosed += 4 - 1;
+			oc->linkW->maxEneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link3;
@@ -7306,7 +7308,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz4;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz4;
 
-			oc->link4 = new octTree;
+			oc->link4 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link4' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -7315,7 +7317,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link4 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link4 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link4 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -7403,27 +7405,27 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link4->linkT7 = nullptr;
 			oc->link4->dlist = true;
 			oc->link4->b_the_geometric_fragmentation = true;
-			oc->link4->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxEsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link4->maxBsosed = 1;
+			oc->link4->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxEneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxBneighbour = 1;
 
 			if (bSituationY) {
 				if (oc->linkN != nullptr) {
 					if (is_null(oc->linkN)) {
 						// 1 остаётся 1.
-						oc->link4->maxNsosed = 1;// oc->maxNsosed;
+						oc->link4->maxNneighbour = 1;// oc->maxNneighbour;
 					}
 					else if (is_null1(oc->linkN)) {
 						if (bonly_dir_Z) {
-							oc->link4->maxNsosed = 2;
+							oc->link4->maxNneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link4->maxNsosed = 1;
+							oc->link4->maxNneighbour = 1;
 						}
 					}
 					else {
@@ -7435,38 +7437,38 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_Z)) {
 							//if (bonly_dir_Z) {
 								// дробим только по оси Oy.
-								oc->link4->maxNsosed = c4 + c5;
+								oc->link4->maxNneighbour = c4 + c5;
 							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
 							// Здесь может быть 2, 4, 5, 8
-							//oc->link4->maxNsosed = 4;
-							oc->link4->maxNsosed = c4;
+							//oc->link4->maxNneighbour = 4;
+							oc->link4->maxNneighbour = c4;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link4->maxNsosed = 0;// oc->maxNsosed;
+					oc->link4->maxNneighbour = 0;// oc->maxNneighbour;
 				}
 			}
 			else {
-				oc->link4->maxNsosed = 1;
+				oc->link4->maxNneighbour = 1;
 			}
 			if (bSituationX) {
 				if (oc->linkE != nullptr) {
 					if (is_null(oc->linkE)) {
 						// 1 остаётся 1.
-						oc->link4->maxEsosed = 1;// oc->maxEsosed;
+						oc->link4->maxEneighbour = 1;// oc->maxEneighbour;
 					}
 					else if (is_null1(oc->linkE)) {
 						if (bonly_dir_Z) {
-							oc->link4->maxEsosed = 2;
+							oc->link4->maxEneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link4->maxEsosed = 1;
+							oc->link4->maxEneighbour = 1;
 						}
 					}
 					else {
@@ -7478,34 +7480,34 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						if ((bonly_dir_Z)) {
 							//if (bonly_dir_Z) {
 								// дробим только по оси Oy.
-								oc->link4->maxEsosed = c4 + c7;
+								oc->link4->maxEneighbour = c4 + c7;
 							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
-							//oc->link4->maxEsosed = 4;
-							oc->link4->maxEsosed = c4;
+							//oc->link4->maxEneighbour = 4;
+							oc->link4->maxEneighbour = c4;
 						}
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link4->maxEsosed = 0;// oc->maxEsosed;
+					oc->link4->maxEneighbour = 0;// oc->maxEneighbour;
 				}
 			}
 			else {
-				oc->link4->maxEsosed = 1;
+				oc->link4->maxEneighbour = 1;
 			}
 
 			if (oc->linkW != nullptr) {
 				if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link4->maxWsosed = 1;// oc->maxBsosed;
+						oc->link4->maxWneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						// двойная прилегает к четверной.
-						oc->link4->maxWsosed = 2;
+						oc->link4->maxWneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -7513,21 +7515,21 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link4->maxWsosed = c5 + c6;
+						oc->link4->maxWneighbour = c5 + c6;
 					}
 				}
 				else {
 					if (is_null(oc->linkW)) {
 						// 1 остаётся 1.
-						oc->link4->maxWsosed = 1;// oc->maxWsosed;
+						oc->link4->maxWneighbour = 1;// oc->maxWneighbour;
 					}
 					else if (is_null1(oc->linkW)) {
 						if (bonly_dir_Z) {
-							oc->link4->maxWsosed = 2;
+							oc->link4->maxWneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link4->maxWsosed = 1;
+							oc->link4->maxWneighbour = 1;
 						}
 					}
 					else {
@@ -7537,30 +7539,30 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link4->maxWsosed = 4;
+						//oc->link4->maxWneighbour = 4;
 						if (bonly_dir_Z) {
-							oc->link4->maxWsosed = c5 + c6;
+							oc->link4->maxWneighbour = c5 + c6;
 						}
 						else {
-							oc->link4->maxWsosed = c5;
+							oc->link4->maxWneighbour = c5;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link4->maxWsosed = 0;// oc->maxWsosed;
+				oc->link4->maxWneighbour = 0;// oc->maxWneighbour;
 			}
 
 			if (oc->linkS != nullptr) {
 				if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link4->maxSsosed = 1;// oc->maxBsosed;
+						oc->link4->maxSneighbour = 1;// oc->maxBneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						// двойная прилегает к четверной.
-						oc->link4->maxSsosed = 2;
+						oc->link4->maxSneighbour = 2;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -7568,21 +7570,21 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-						oc->link4->maxSsosed = c7 + c6;
+						oc->link4->maxSneighbour = c7 + c6;
 					}
 				}
 				else {
 					if (is_null(oc->linkS)) {
 						// 1 остаётся 1.
-						oc->link4->maxSsosed = 1;// oc->maxSsosed;
+						oc->link4->maxSneighbour = 1;// oc->maxSneighbour;
 					}
 					else if (is_null1(oc->linkS)) {
 						if (bonly_dir_Z) {
-							oc->link4->maxSsosed = 2;
+							oc->link4->maxSneighbour = 2;
 						}
 						else {
 							// две четверные стороны прилегают друг к дружке.
-							oc->link4->maxSsosed = 1;
+							oc->link4->maxSneighbour = 1;
 						}
 					}
 					else {
@@ -7592,28 +7594,28 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link4->maxSsosed = 4;
+						//oc->link4->maxSneighbour = 4;
 						if (bonly_dir_Z) {
-							oc->link4->maxSsosed = c7 + c6;
+							oc->link4->maxSneighbour = c7 + c6;
 						}
 						else {
-							oc->link4->maxSsosed = c7;
+							oc->link4->maxSneighbour = c7;
 						}
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link4->maxSsosed = 0;// oc->maxSsosed;
+				oc->link4->maxSneighbour = 0;// oc->maxSneighbour;
 			}
 			if (oc->linkT != nullptr) {
 				if (is_null(oc->linkT)) {
 					// 1 остаётся 1.
-					oc->link4->maxTsosed = 1;// oc->maxTsosed;
+					oc->link4->maxTneighbour = 1;// oc->maxTneighbour;
 				}
 				else if (is_null1(oc->linkT)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link4->maxTsosed = 1;
+					oc->link4->maxTneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -7622,13 +7624,13 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link4->maxTsosed = 4;
-					oc->link4->maxTsosed = c0;
+					//oc->link4->maxTneighbour = 4;
+					oc->link4->maxTneighbour = c0;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link4->maxTsosed = 0;// oc->maxTsosed;
+				oc->link4->maxTneighbour = 0;// oc->maxTneighbour;
 			}
 
 
@@ -7638,13 +7640,13 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkT != nullptr) {
-			oc->linkT->maxBsosed += 4 - 1;
+			oc->linkT->maxBneighbour += 4 - 1;
 			}
 			if (oc->linkS != nullptr) {
-			oc->linkS->maxNsosed += 4 - 1;
+			oc->linkS->maxNneighbour += 4 - 1;
 			}
 			if (oc->linkW != nullptr) {
-			oc->linkW->maxEsosed += 4 - 1;
+			oc->linkW->maxEneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link4;
@@ -7676,7 +7678,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz5;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz5;
 
-			oc->link5 = new octTree;
+			oc->link5 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link5' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -7686,7 +7688,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link5 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link5 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link5 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -7774,23 +7776,23 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link5->linkT7 = nullptr;
 			oc->link5->dlist = true;
 			oc->link5->b_the_geometric_fragmentation = true;
-			oc->link5->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxEsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link5->maxBsosed = 1;
+			oc->link5->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxEneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxBneighbour = 1;
 
 			if (bSituationY) {
 				if (oc->linkN != nullptr) {
 					if (is_null(oc->linkN)) {
 						// 1 остаётся 1.
-						oc->link5->maxNsosed = 1;// oc->maxNsosed;
+						oc->link5->maxNneighbour = 1;// oc->maxNneighbour;
 					}
 					else if (is_null1(oc->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						oc->link5->maxNsosed = 1;
+						oc->link5->maxNneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -7799,29 +7801,29 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link5->maxNsosed = 4;
-						oc->link5->maxNsosed = c5;
+						//oc->link5->maxNneighbour = 4;
+						oc->link5->maxNneighbour = c5;
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link5->maxNsosed = 0;// oc->maxNsosed;
+					oc->link5->maxNneighbour = 0;// oc->maxNneighbour;
 				}
 			}
 			else {
-				oc->link5->maxNsosed = 1;
+				oc->link5->maxNneighbour = 1;
 			}
-			oc->link5->maxWsosed = 1;
+			oc->link5->maxWneighbour = 1;
 
 
 			if (oc->linkE != nullptr) {
 				if (is_null(oc->linkE)) {
 					// 1 остаётся 1.
-					oc->link5->maxEsosed = 1;// oc->maxEsosed;
+					oc->link5->maxEneighbour = 1;// oc->maxEneighbour;
 				}
 				else if (is_null1(oc->linkE)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link5->maxEsosed = 1;
+					oc->link5->maxEneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -7830,22 +7832,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link5->maxEsosed = 4;
-					oc->link5->maxEsosed = c4;
+					//oc->link5->maxEneighbour = 4;
+					oc->link5->maxEneighbour = c4;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link5->maxEsosed = 0;// oc->maxEsosed;
+				oc->link5->maxEneighbour = 0;// oc->maxEneighbour;
 			}
 			if (oc->linkS != nullptr) {
 				if (is_null(oc->linkS)) {
 					// 1 остаётся 1.
-					oc->link5->maxSsosed = 1;// oc->maxSsosed;
+					oc->link5->maxSneighbour = 1;// oc->maxSneighbour;
 				}
 				else if (is_null1(oc->linkS)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link5->maxSsosed = 1;
+					oc->link5->maxSneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -7854,22 +7856,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link5->maxSsosed = 4;
-					oc->link5->maxSsosed = c6;
+					//oc->link5->maxSneighbour = 4;
+					oc->link5->maxSneighbour = c6;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link5->maxSsosed = 0;// oc->maxSsosed;
+				oc->link5->maxSneighbour = 0;// oc->maxSneighbour;
 			}
 			if (oc->linkT != nullptr) {
 				if (is_null(oc->linkT)) {
 					// 1 остаётся 1.
-					oc->link5->maxTsosed = 1; // oc->maxTsosed;
+					oc->link5->maxTneighbour = 1; // oc->maxTneighbour;
 				}
 				else if (is_null1(oc->linkT)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link5->maxTsosed = 1;
+					oc->link5->maxTneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -7878,26 +7880,26 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link5->maxTsosed = 4;
-					oc->link5->maxTsosed = c1;
+					//oc->link5->maxTneighbour = 4;
+					oc->link5->maxTneighbour = c1;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link5->maxTsosed = 0;// oc->maxTsosed;
+				oc->link5->maxTneighbour = 0;// oc->maxTneighbour;
 			}
 			/*
 			// А вот у соседей TSIDE, SSIDE, E количество соседей стало уже 4.
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkT != nullptr) {
-			oc->linkB->maxBsosed += 4 - 1;
+			oc->linkB->maxBneighbour += 4 - 1;
 			}
 			if (oc->linkS != nullptr) {
-			oc->linkS->maxNsosed += 4 - 1;
+			oc->linkS->maxNneighbour += 4 - 1;
 			}
 			if (oc->linkE != nullptr) {
-			oc->linkE->maxWsosed += 4 - 1;
+			oc->linkE->maxWneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link5;
@@ -7929,7 +7931,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz6;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz6;
 
-			oc->link6 = new octTree;
+			oc->link6 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link6' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -7939,7 +7941,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link6 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link6 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link6 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -8027,26 +8029,26 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link6->linkT7 = nullptr;
 			oc->link6->dlist = true;
 			oc->link6->b_the_geometric_fragmentation = true;
-			oc->link6->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link6->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
-			oc->link6->maxBsosed = 1;
-			oc->link6->maxSsosed = 1;
-			oc->link6->maxWsosed = 1;
+			oc->link6->maxBneighbour = 1;
+			oc->link6->maxSneighbour = 1;
+			oc->link6->maxWneighbour = 1;
 
 
 			if (oc->linkE != nullptr) {
 				if (is_null(oc->linkE)) {
 					// 1 остаётся 1.
-					oc->link6->maxEsosed = 1;// oc->maxEsosed;
+					oc->link6->maxEneighbour = 1;// oc->maxEneighbour;
 				}
 				else if (is_null1(oc->linkE)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link6->maxEsosed = 1;
+					oc->link6->maxEneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8055,22 +8057,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link6->maxEsosed = 4;
-					oc->link6->maxEsosed = c7;
+					//oc->link6->maxEneighbour = 4;
+					oc->link6->maxEneighbour = c7;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link6->maxEsosed = 0;// oc->maxEsosed;
+				oc->link6->maxEneighbour = 0;// oc->maxEneighbour;
 			}
 			if (oc->linkN != nullptr) {
 				if (is_null(oc->linkN)) {
 					// 1 остаётся 1.
-					oc->link6->maxNsosed = oc->maxNsosed;
+					oc->link6->maxNneighbour = oc->maxNneighbour;
 				}
 				else if (is_null1(oc->linkN)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link6->maxNsosed = 1;
+					oc->link6->maxNneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8079,22 +8081,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link6->maxNsosed = 4;
-					oc->link6->maxNsosed = c5;
+					//oc->link6->maxNneighbour = 4;
+					oc->link6->maxNneighbour = c5;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link6->maxNsosed = 0;// oc->maxNsosed;
+				oc->link6->maxNneighbour = 0;// oc->maxNneighbour;
 			}
 			if (oc->linkT != nullptr) {
 				if (is_null(oc->linkT)) {
 					// 1 остаётся 1.
-					oc->link6->maxTsosed = 1;// oc->maxTsosed;
+					oc->link6->maxTneighbour = 1;// oc->maxTneighbour;
 				}
 				else if (is_null1(oc->linkT)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link6->maxTsosed = 1;
+					oc->link6->maxTneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8103,26 +8105,26 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link6->maxTsosed = 4;
-					oc->link6->maxTsosed = c2;
+					//oc->link6->maxTneighbour = 4;
+					oc->link6->maxTneighbour = c2;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link6->maxTsosed = 0;// oc->maxTsosed;
+				oc->link6->maxTneighbour = 0;// oc->maxTneighbour;
 			}
 			/*
 			// А вот у соседей TSIDE, N, E количество соседей стало уже 4.
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkT != nullptr) {
-			oc->linkT->maxBsosed += 4 - 1;
+			oc->linkT->maxBneighbour += 4 - 1;
 			}
 			if (oc->linkN != nullptr) {
-			oc->linkN->maxSsosed += 4 - 1;
+			oc->linkN->maxSneighbour += 4 - 1;
 			}
 			if (oc->linkE != nullptr) {
-			oc->linkE->maxWsosed += 4 - 1;
+			oc->linkE->maxWneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link6;
@@ -8154,7 +8156,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz7;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz7;
 
-			oc->link7 = new octTree;
+			oc->link7 = new octree;
 			/*
 			V668 Нет смысла проверять указатель 'oc-> link7' на ноль,
 			так как память была выделена с помощью оператора 'new'.
@@ -8163,7 +8165,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 
 			if (oc->link7 == nullptr) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link7 in adaptive_local_refinement_mesh generator...\n");
+				printf("Problem: not enough memory on your equipment for oc->link7 in adaptive_local_refinement_mesh generator...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -8253,24 +8255,24 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link7->linkT7 = nullptr;
 			oc->link7->dlist = true;
 			oc->link7->b_the_geometric_fragmentation = true;
-			oc->link7->maxBsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxTsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxSsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxNsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxWsosed = MAX_NEIGHBOUR_COUNT;
-			oc->link7->maxEsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxBneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxTneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxSneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxNneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxWneighbour = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxEneighbour = MAX_NEIGHBOUR_COUNT;
 
-			oc->link7->maxBsosed = 1;
-			oc->link7->maxSsosed = 1;
+			oc->link7->maxBneighbour = 1;
+			oc->link7->maxSneighbour = 1;
 			if (bSituationX) {
 				if (oc->linkE != nullptr) {
 					if (is_null(oc->linkE)) {
 						// 1 остаётся 1.
-						oc->link7->maxEsosed = 1;// oc->maxEsosed;
+						oc->link7->maxEneighbour = 1;// oc->maxEneighbour;
 					}
 					else if (is_null1(oc->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						oc->link7->maxEsosed = 1;
+						oc->link7->maxEneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -8279,27 +8281,27 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//oc->link7->maxEsosed = 4;
-						oc->link7->maxEsosed = c7;
+						//oc->link7->maxEneighbour = 4;
+						oc->link7->maxEneighbour = c7;
 					}
 				}
 				else {
 					// 0 остаётся 0.
-					oc->link7->maxEsosed = 0;// oc->maxEsosed;
+					oc->link7->maxEneighbour = 0;// oc->maxEneighbour;
 				}
 			}
 			else {
-				oc->link7->maxEsosed = 1;
+				oc->link7->maxEneighbour = 1;
 			}
 
 			if (oc->linkW != nullptr) {
 				if (is_null(oc->linkW)) {
 					// 1 остаётся 1.
-					oc->link7->maxWsosed = 1;// oc->maxWsosed;
+					oc->link7->maxWneighbour = 1;// oc->maxWneighbour;
 				}
 				else if (is_null1(oc->linkW)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link7->maxWsosed = 1;
+					oc->link7->maxWneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8308,23 +8310,23 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link7->maxWsosed = 4;
-					oc->link7->maxWsosed = c6;
+					//oc->link7->maxWneighbour = 4;
+					oc->link7->maxWneighbour = c6;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link7->maxWsosed = 0;// oc->maxWsosed;
+				oc->link7->maxWneighbour = 0;// oc->maxWneighbour;
 			}
 
 			if (oc->linkN != nullptr) {
 				if (is_null(oc->linkN)) {
 					// 1 остаётся 1.
-					oc->link7->maxNsosed = 1;// oc->maxNsosed;
+					oc->link7->maxNneighbour = 1;// oc->maxNneighbour;
 				}
 				else if (is_null1(oc->linkN)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link7->maxNsosed = 1;
+					oc->link7->maxNneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8333,22 +8335,22 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link7->maxNsosed = 4;
-					oc->link7->maxNsosed = c4;
+					//oc->link7->maxNneighbour = 4;
+					oc->link7->maxNneighbour = c4;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link7->maxNsosed = 0;// oc->maxNsosed;
+				oc->link7->maxNneighbour = 0;// oc->maxNneighbour;
 			}
 			if (oc->linkT != nullptr) {
 				if (is_null(oc->linkT)) {
 					// 1 остаётся 1.
-					oc->link7->maxTsosed = 1;// oc->maxTsosed;
+					oc->link7->maxTneighbour = 1;// oc->maxTneighbour;
 				}
 				else if (is_null1(oc->linkT)) {
 					// две четверные стороны прилегают друг к дружке.
-					oc->link7->maxTsosed = 1;
+					oc->link7->maxTneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8357,13 +8359,13 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
-					//oc->link7->maxTsosed = 4;
-					oc->link7->maxTsosed = c3;
+					//oc->link7->maxTneighbour = 4;
+					oc->link7->maxTneighbour = c3;
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				oc->link7->maxTsosed = 0;// oc->maxTsosed;
+				oc->link7->maxTneighbour = 0;// oc->maxTneighbour;
 			}
 
 			/*
@@ -8371,13 +8373,13 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			// чтобы к ним обратится нужна ссылка на эти ячейки.
 			// для этого нужна ссылка вврх на шести соседей oc ячейки .
 			if (oc->linkT != nullptr) {
-			oc->linkT->maxBsosed += 4 - 1;
+			oc->linkT->maxBneighbour += 4 - 1;
 			}
 			if (oc->linkN != nullptr) {
-			oc->linkN->maxSsosed += 4 - 1;
+			oc->linkN->maxSneighbour += 4 - 1;
 			}
 			if (oc->linkW != nullptr) {
-			oc->linkW->maxEsosed += 4 - 1;
+			oc->linkW->maxEneighbour += 4 - 1;
 			}
 			*/
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link7;
@@ -8706,28 +8708,28 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			// Вырождение по Z
 			if (oc->linkB != nullptr) {
 				if (is_null(oc->linkB)) {
-					//oc->linkB->maxTsosed += 4 - 1;
-					patch_sosed_count2(oc->linkB->maxTsosed);
+					//oc->linkB->maxTneighbour += 4 - 1;
+					patch_neighbour_count2(oc->linkB->maxTneighbour);
 				}
 				if (is_null1(oc->linkB)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkB->link4->maxTsosed = 1; // 
-					oc->linkB->link5->maxTsosed = 1;
-					oc->linkB->link6->maxTsosed = 1;
-					oc->linkB->link7->maxTsosed = 1;
+					oc->linkB->link4->maxTneighbour = 1; // 
+					oc->linkB->link5->maxTneighbour = 1;
+					oc->linkB->link6->maxTneighbour = 1;
+					oc->linkB->link7->maxTneighbour = 1;
 				}
 			}
 			if (oc->linkT != nullptr) {
 				if (is_null(oc->linkT)) {
-					//oc->linkT->maxBsosed += 4 - 1;
-					patch_sosed_count2(oc->linkT->maxBsosed);
+					//oc->linkT->maxBneighbour += 4 - 1;
+					patch_neighbour_count2(oc->linkT->maxBneighbour);
 				}
 				if (is_null1(oc->linkT)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkT->link0->maxBsosed = 1; // 
-					oc->linkT->link1->maxBsosed = 1;
-					oc->linkT->link2->maxBsosed = 1;
-					oc->linkT->link3->maxBsosed = 1;
+					oc->linkT->link0->maxBneighbour = 1; // 
+					oc->linkT->link1->maxBneighbour = 1;
+					oc->linkT->link2->maxBneighbour = 1;
+					oc->linkT->link3->maxBneighbour = 1;
 				}
 			}
 		}
@@ -8736,30 +8738,30 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			if (b0 || b1 || b2 || b3) {
 				if (oc->linkB != nullptr) {
 					if (is_null(oc->linkB)) {
-						//oc->linkB->maxTsosed += 4 - 1;
-						patch_sosed_count(oc->linkB->maxTsosed, oc->linkB, TSIDE);
+						//oc->linkB->maxTneighbour += 4 - 1;
+						patch_neighbour_count(oc->linkB->maxTneighbour, oc->linkB, TSIDE);
 					}
 					if (is_null1(oc->linkB)) {
 						// он представляет собой ячейку делённую на 8 частей.
-						oc->linkB->link4->maxTsosed = 1; // 
-						oc->linkB->link5->maxTsosed = 1;
-						oc->linkB->link6->maxTsosed = 1;
-						oc->linkB->link7->maxTsosed = 1;
+						oc->linkB->link4->maxTneighbour = 1; // 
+						oc->linkB->link5->maxTneighbour = 1;
+						oc->linkB->link6->maxTneighbour = 1;
+						oc->linkB->link7->maxTneighbour = 1;
 					}
 				}
 			}
 			if (b4 || b5 || b6 || b7) {
 				if (oc->linkT != nullptr) {
 					if (is_null(oc->linkT)) {
-						//oc->linkT->maxBsosed += 4 - 1;
-						patch_sosed_count(oc->linkT->maxBsosed, oc->linkT, BSIDE);
+						//oc->linkT->maxBneighbour += 4 - 1;
+						patch_neighbour_count(oc->linkT->maxBneighbour, oc->linkT, BSIDE);
 					}
 					if (is_null1(oc->linkT)) {
 						// он представляет собой ячейку делённую на 8 частей.
-						oc->linkT->link0->maxBsosed = 1; // 
-						oc->linkT->link1->maxBsosed = 1;
-						oc->linkT->link2->maxBsosed = 1;
-						oc->linkT->link3->maxBsosed = 1;
+						oc->linkT->link0->maxBneighbour = 1; // 
+						oc->linkT->link1->maxBneighbour = 1;
+						oc->linkT->link2->maxBneighbour = 1;
+						oc->linkT->link3->maxBneighbour = 1;
 					}
 				}
 			}
@@ -8769,15 +8771,15 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 		if (bSituationY) {
 			if (oc->linkN != nullptr) {
 				if (is_null(oc->linkN)) {
-					//oc->linkN->maxSsosed += 4 - 1;
-					patch_sosed_count2(oc->linkN->maxSsosed);
+					//oc->linkN->maxSneighbour += 4 - 1;
+					patch_neighbour_count2(oc->linkN->maxSneighbour);
 				}
 				else if (is_null1(oc->linkN)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkN->link0->maxSsosed = 1; // 
-					oc->linkN->link1->maxSsosed = 1;
-					oc->linkN->link4->maxSsosed = 1;
-					oc->linkN->link5->maxSsosed = 1;
+					oc->linkN->link0->maxSneighbour = 1; // 
+					oc->linkN->link1->maxSneighbour = 1;
+					oc->linkN->link4->maxSneighbour = 1;
+					oc->linkN->link5->maxSneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8787,31 +8789,31 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkN != nullptr) {
 						if (oc->linkN->link0 != nullptr) {
-							oc->linkN->link0->maxSsosed = 1; // 
+							oc->linkN->link0->maxSneighbour = 1; // 
 						}
 						if (oc->linkN->link1 != nullptr) {
-							oc->linkN->link1->maxSsosed = 1;
+							oc->linkN->link1->maxSneighbour = 1;
 						}
 						if (oc->linkN->link4 != nullptr) {
-							oc->linkN->link4->maxSsosed = 1;
+							oc->linkN->link4->maxSneighbour = 1;
 						}
 						if (oc->linkN->link5 != nullptr) {
-							oc->linkN->link5->maxSsosed = 1;
+							oc->linkN->link5->maxSneighbour = 1;
 						}
 					}
 				}
 			}
 			if (oc->linkS != nullptr) {
 				if (is_null(oc->linkS)) {
-					//oc->linkS->maxNsosed += 4 - 1;
-					patch_sosed_count2(oc->linkS->maxNsosed);
+					//oc->linkS->maxNneighbour += 4 - 1;
+					patch_neighbour_count2(oc->linkS->maxNneighbour);
 				}
 				else if (is_null1(oc->linkS)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkS->link2->maxNsosed = 1; // 
-					oc->linkS->link3->maxNsosed = 1;
-					oc->linkS->link6->maxNsosed = 1;
-					oc->linkS->link7->maxNsosed = 1;
+					oc->linkS->link2->maxNneighbour = 1; // 
+					oc->linkS->link3->maxNneighbour = 1;
+					oc->linkS->link6->maxNneighbour = 1;
+					oc->linkS->link7->maxNneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8821,16 +8823,16 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkS != nullptr) {
 						if (oc->linkS->link2 != nullptr) {
-							oc->linkS->link2->maxNsosed = 1; //
+							oc->linkS->link2->maxNneighbour = 1; //
 						}
 						if (oc->linkS->link3 != nullptr) {
-							oc->linkS->link3->maxNsosed = 1;
+							oc->linkS->link3->maxNneighbour = 1;
 						}
 						if (oc->linkS->link6 != nullptr) {
-							oc->linkS->link6->maxNsosed = 1;
+							oc->linkS->link6->maxNneighbour = 1;
 						}
 						if (oc->linkS->link7 != nullptr) {
-							oc->linkS->link7->maxNsosed = 1;
+							oc->linkS->link7->maxNneighbour = 1;
 						}
 					}
 				}
@@ -8841,16 +8843,16 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			if (b2 || b3 || b6 || b7) {
 				if (oc->linkN != nullptr) {
 					if (is_null(oc->linkN)) {
-						//oc->linkN->maxSsosed += 4 - 1;
-						patch_sosed_count(oc->linkN->maxSsosed, oc->linkN, SSIDE);
+						//oc->linkN->maxSneighbour += 4 - 1;
+						patch_neighbour_count(oc->linkN->maxSneighbour, oc->linkN, SSIDE);
 					}
 				}
 				else if (is_null1(oc->linkN)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkN->link0->maxSsosed = 1; // 
-					oc->linkN->link1->maxSsosed = 1;
-					oc->linkN->link4->maxSsosed = 1;
-					oc->linkN->link5->maxSsosed = 1;
+					oc->linkN->link0->maxSneighbour = 1; // 
+					oc->linkN->link1->maxSneighbour = 1;
+					oc->linkN->link4->maxSneighbour = 1;
+					oc->linkN->link5->maxSneighbour = 1;
 				}
 				else {
 					// других вариантов быть не может, здесь только 4.
@@ -8860,16 +8862,16 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 					is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkN != nullptr) {
 						if (oc->linkN->link0 != nullptr) {
-							oc->linkN->link0->maxSsosed = 1; // 
+							oc->linkN->link0->maxSneighbour = 1; // 
 						}
 						if (oc->linkN->link1 != nullptr) {
-							oc->linkN->link1->maxSsosed = 1;
+							oc->linkN->link1->maxSneighbour = 1;
 						}
 						if (oc->linkN->link4 != nullptr) {
-							oc->linkN->link4->maxSsosed = 1;
+							oc->linkN->link4->maxSneighbour = 1;
 						}
 						if (oc->linkN->link5 != nullptr) {
-							oc->linkN->link5->maxSsosed = 1;
+							oc->linkN->link5->maxSneighbour = 1;
 						}
 					}
 				}
@@ -8877,15 +8879,15 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			if (b0 || b1 || b4 || b5) {
 				if (oc->linkS != nullptr) {
 					if (is_null(oc->linkS)) {
-						//oc->linkS->maxNsosed += 4 - 1;
-						patch_sosed_count(oc->linkS->maxNsosed, oc->linkS, NSIDE);
+						//oc->linkS->maxNneighbour += 4 - 1;
+						patch_neighbour_count(oc->linkS->maxNneighbour, oc->linkS, NSIDE);
 					}
 					else if (is_null1(oc->linkS)) {
 						// он представляет собой ячейку делённую на 8 частей.
-						oc->linkS->link2->maxNsosed = 1; // 
-						oc->linkS->link3->maxNsosed = 1;
-						oc->linkS->link6->maxNsosed = 1;
-						oc->linkS->link7->maxNsosed = 1;
+						oc->linkS->link2->maxNneighbour = 1; // 
+						oc->linkS->link3->maxNneighbour = 1;
+						oc->linkS->link6->maxNneighbour = 1;
+						oc->linkS->link7->maxNneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -8895,16 +8897,16 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (oc->linkS != nullptr) {
 							if (oc->linkS->link2 != nullptr) {
-								oc->linkS->link2->maxNsosed = 1; //
+								oc->linkS->link2->maxNneighbour = 1; //
 							}
 							if (oc->linkS->link3 != nullptr) {
-								oc->linkS->link3->maxNsosed = 1;
+								oc->linkS->link3->maxNneighbour = 1;
 							}
 							if (oc->linkS->link6 != nullptr) {
-								oc->linkS->link6->maxNsosed = 1;
+								oc->linkS->link6->maxNneighbour = 1;
 							}
 							if (oc->linkS->link7 != nullptr) {
-								oc->linkS->link7->maxNsosed = 1;
+								oc->linkS->link7->maxNneighbour = 1;
 							}
 						}
 					}
@@ -8915,28 +8917,28 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 		if (bSituationX) {
 			if (oc->linkW != nullptr) {
 				if (is_null(oc->linkW)) {
-					//oc->linkW->maxEsosed += 4 - 1;
-					patch_sosed_count2(oc->linkW->maxEsosed);
+					//oc->linkW->maxEneighbour += 4 - 1;
+					patch_neighbour_count2(oc->linkW->maxEneighbour);
 				}
 				if (is_null1(oc->linkW)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkW->link1->maxEsosed = 1; // 
-					oc->linkW->link2->maxEsosed = 1;
-					oc->linkW->link5->maxEsosed = 1;
-					oc->linkW->link6->maxEsosed = 1;
+					oc->linkW->link1->maxEneighbour = 1; // 
+					oc->linkW->link2->maxEneighbour = 1;
+					oc->linkW->link5->maxEneighbour = 1;
+					oc->linkW->link6->maxEneighbour = 1;
 				}
 			}
 			if (oc->linkE != nullptr) {
 				if (is_null(oc->linkE)) {
-					//oc->linkE->maxWsosed += 4 - 1;
-					patch_sosed_count2(oc->linkE->maxWsosed);
+					//oc->linkE->maxWneighbour += 4 - 1;
+					patch_neighbour_count2(oc->linkE->maxWneighbour);
 				}
 				if (is_null1(oc->linkE)) {
 					// он представляет собой ячейку делённую на 8 частей.
-					oc->linkE->link0->maxWsosed = 1; // 
-					oc->linkE->link3->maxWsosed = 1;
-					oc->linkE->link4->maxWsosed = 1;
-					oc->linkE->link7->maxWsosed = 1;
+					oc->linkE->link0->maxWneighbour = 1; // 
+					oc->linkE->link3->maxWneighbour = 1;
+					oc->linkE->link4->maxWneighbour = 1;
+					oc->linkE->link7->maxWneighbour = 1;
 				}
 			}
 		}
@@ -8945,30 +8947,30 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			if (b0 || b3 || b4 || b7) {
 				if (oc->linkW != nullptr) {
 					if (is_null(oc->linkW)) {
-						//oc->linkW->maxEsosed += 4 - 1;
-						patch_sosed_count(oc->linkW->maxEsosed, oc->linkW, ESIDE);
+						//oc->linkW->maxEneighbour += 4 - 1;
+						patch_neighbour_count(oc->linkW->maxEneighbour, oc->linkW, ESIDE);
 					}
 					if (is_null1(oc->linkW)) {
 						// он представляет собой ячейку делённую на 8 частей.
-						oc->linkW->link1->maxEsosed = 1; // 
-						oc->linkW->link2->maxEsosed = 1;
-						oc->linkW->link5->maxEsosed = 1;
-						oc->linkW->link6->maxEsosed = 1;
+						oc->linkW->link1->maxEneighbour = 1; // 
+						oc->linkW->link2->maxEneighbour = 1;
+						oc->linkW->link5->maxEneighbour = 1;
+						oc->linkW->link6->maxEneighbour = 1;
 					}
 				}
 			}
 			if (b1 || b2 || b5 || b6) {
 				if (oc->linkE != nullptr) {
 					if (is_null(oc->linkE)) {
-						//oc->linkE->maxWsosed += 4 - 1;
-						patch_sosed_count(oc->linkE->maxWsosed, oc->linkE, WSIDE);
+						//oc->linkE->maxWneighbour += 4 - 1;
+						patch_neighbour_count(oc->linkE->maxWneighbour, oc->linkE, WSIDE);
 					}
 					if (is_null1(oc->linkE)) {
 						// он представляет собой ячейку делённую на 8 частей.
-						oc->linkE->link0->maxWsosed = 1; // 
-						oc->linkE->link3->maxWsosed = 1;
-						oc->linkE->link4->maxWsosed = 1;
-						oc->linkE->link7->maxWsosed = 1;
+						oc->linkE->link0->maxWneighbour = 1; // 
+						oc->linkE->link3->maxWneighbour = 1;
+						oc->linkE->link4->maxWneighbour = 1;
+						oc->linkE->link7->maxWneighbour = 1;
 					}
 				}
 			}
@@ -9142,7 +9144,7 @@ bool split_near_the_entrance_or_exit(doublereal* xpos, doublereal* ypos, doubler
 // а модифицируя лишь эту функцию.
 // 28.02.2017 Цилиндры не работоспособны.
 integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
-	integer inx, integer iny, integer inz, octTree* &oc,
+	integer inx, integer iny, integer inz, octree* &oc,
 	integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz,
 	BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls, 
 	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
@@ -9157,7 +9159,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	bool bold_stable_version = true;
 
 	TOCHKA GSep;
-	//oc = new octTree;
+	//oc = new octree;
 	/*
 	my_ALICE_STACK[top_ALICE_STACK - 1].minx = minx;
 	my_ALICE_STACK[top_ALICE_STACK - 1].maxx = maxx;
@@ -9249,19 +9251,19 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// на блоках.
 		if (1) {
 			// Новый алгоритм сканирующих отрезков в части блоков, работающий для любых форм 
-			// блоков : прямоугольная призма, цилиндр, полигон. Использует хеш таблицу
+			// блоков: прямоугольная призма, цилиндр, полигон. Использует хеш-таблицу
 			// hash_for_droblenie_xyz[i][j][k]. 17 august 2017.
 			// Если внутри ячейки дробления встретилась ситуация смены блоков (граница блоков) то данная 
 			// ячейка дробится.
 			// Это чрезвычайно простой и эффективный код, в частности за счёт использования заранеее 
-			// табулированной хеш таблицы hash_for_droblenie_xyz[i][j][k].
+			// табулированной хеш-таблицы hash_for_droblenie_xyz[i][j][k].
 			
 
 			if (bold_stable_version) {
 				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
 				if (1 && ((ib83 <= -1) || (ib83 >= lb))) {
 					    printf("*** FATAL ERROR!!! ***\n");
-                        printf("hash table : hash_for_droblenie_xyz is INCORRUPT.\n");
+                        printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
 						printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
 						printf("minx==%lld miny=%lld minz=%lld\n", minx, miny, minz);
 						printf("maxx==%lld maxy=%lld maxz=%lld\n", maxx, maxy, maxz);
@@ -9294,7 +9296,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									integer ib84 = hash_for_droblenie_xyz[i][j][k];
 									if (1&&((ib84 <= -1)||(ib84>=lb))) {
 										printf("*** FATAL ERROR!!! ***\n");
-										printf("hash table : hash_for_droblenie_xyz is INCORRUPT.\n");
+										printf("hash table: hash_for_droblenie_xyz is INCORRUPT.\n");
 										printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
 										printf("i==%lld j=%lld k=%lld\n",i,j,k);
 										printf("minx==%lld miny=%lld minz=%lld\n", minx, miny, minz);
@@ -9309,12 +9311,12 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										  && (b[ib83].imatid==b[ib84].imatid)))) {
 										// Ничего не делаем, продолжаем сканирование.
 										// Если два блока типа FLUID то у нас по определению 
-										// корректности постановки задачи не может соприкосаться 
+										// корректности постановки задачи не может соприкасаться 
 										// двух разных жидкостей поэтому мельчить сетку на этой 
-										// границе безсмыслено (граница двух одинаковых жидкостей).
+										// границе бессмысленно (граница двух одинаковых жидкостей).
 										// Аналогично мельчить сетку на границе двух HOLLOW блоков
-										// тоже бесмысленно. Мы как бы объединяем эти блоки одинаковых
-										// типов и создаём однородной тело сложной пространсвенной формы.
+										// тоже бессмысленно. Мы как бы объединяем эти блоки одинаковых
+										// типов и создаём однородной тело сложной пространственной формы.
 
 										// На границе двух SOLID блоков с одинаковым материалом мы тоже 
 										// не создаём дополнительного измельчения сетки. Считаем что SOLID
@@ -9325,14 +9327,14 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 										// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
 										// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
-										// Вывод в том что вблизи вхоной и выходной границ желательно мельчить
+										// Вывод в том что вблизи входной и выходной границ желательно мельчить
 										// АЛИС сетку чтобы не пропустить эти границы.
 
 										if ((b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)&&
 											((fabs(b[ib83].arr_Sc[0])>1.0e-30)||(fabs(b[ib84].arr_Sc[0])>1.0e-30))) 
 										{
 											// 11.12.2019
-											// Если два solid блока одинакового материала и хотябы один из этих блоков
+											// Если два solid блока одинакового материала и хотя бы один из этих блоков
 											// тепловыделяющий то границу блоков нужно разбить улучшенной сеткой.
 											oc->dlist = false; // будем дробить
 											goto DROBIM_NOW;
@@ -9371,10 +9373,11 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 				}
 
-
-				bdrobimX = true;
-				bdrobimY = true;
-				bdrobimZ = true;
+				// Переменным bdrobim присвоено тоже значение что
+				// и в самом начале функции при инициализации.
+				//bdrobimX = true;
+				//bdrobimY = true;
+				//bdrobimZ = true;
 			}
 			else {
 				// Добавляем избирательности при дроблении.
@@ -9386,13 +9389,13 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				// Моя цель - небывалая экономичность АЛИС сетки.
 				// Экономичности присуща геометрическая (визуальная) эстетическая привлекательность.
 				// Сетка должна выглядеть мелкой только там где это действительно необходимо.
-				// Эконоичность - расщепление на три признака дробления. По одному на каждую ось координат.
+				// Экономичность - расщепление на три признака дробления. По одному на каждую ось координат.
 
 				bdrobimX = false;
 				bdrobimY = false;
 				bdrobimZ = false;
 
-				// Мы расщепляем информацию о дроблении на три независимых координатных направляния для лучшей управляемости процесса дробления,
+				// Мы расщепляем информацию о дроблении на три независимых координатных направления для лучшей управляемости процесса дробления,
 				// с целью достижения его более высокой экономичности.
 				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
 				for (integer i = minx; i < maxx; i++) {
@@ -9872,9 +9875,11 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	else {
 
 		if (bold_stable_version) {
-			bdrobimX = true;
-			bdrobimY = true;
-			bdrobimZ = true;
+			// Переменным bdrobim присвоено тоже значение что
+			// и в самом начале функции при инициализации.
+			//bdrobimX = true;
+			//bdrobimY = true;
+			//bdrobimZ = true;
 
 			if (ls > 0) {
 				// проверяем есть ли дробление
@@ -10012,7 +10017,7 @@ DROBIM_NOW:
 		// 21.01.2018.
 		// Исключительная ситуация: расчётная область состоит из кубика по размерам Cabinet и не содержит внутри внутренних перегородок.
 		// Мы принимаем решение дробить такую ситуацию до достижения структурированной сетки.
-		// Структурированная сетка чвляется частным случаем АЛИС сетки.
+		// Структурированная сетка является частным случаем АЛИС сетки.
 
 		if ((minx == maxx - 1) && (miny == maxy - 1) && (minz == maxz - 1)) {
 			// Достигнут уровень первоначальной расчётной сетки.
@@ -10133,11 +10138,11 @@ DROBIM_NOW:
 			*/
 #if doubleintprecision == 1
 			//printf("root=%lld ilevel=%lld\n",oc->root,oc->ilevel);
-			//printf("E=%lld W=%lld N=%lld S=%lld T=%lld B=%lld\n", oc->maxEsosed, oc->maxWsosed, oc->maxNsosed, oc->maxSsosed, oc->maxTsosed, oc->maxBsosed);
+			//printf("E=%lld W=%lld N=%lld S=%lld T=%lld B=%lld\n", oc->maxEneighbour, oc->maxWneighbour, oc->maxNneighbour, oc->maxSneighbour, oc->maxTneighbour, oc->maxBneighbour);
 			//printf("X=%lld Y=%lld Z=%lld %lld %lld %lld \n", i_X, i_Y, i_Z, i_X1, i_Y1, i_Z1);
 #else
 			//printf("root=%d ilevel=%d\n",oc->root,oc->ilevel);
-			//printf("E=%d W=%d N=%d S=%d T=%d B=%d\n", oc->maxEsosed, oc->maxWsosed, oc->maxNsosed, oc->maxSsosed, oc->maxTsosed, oc->maxBsosed);
+			//printf("E=%d W=%d N=%d S=%d T=%d B=%d\n", oc->maxEneighbour, oc->maxWneighbour, oc->maxNneighbour, oc->maxSneighbour, oc->maxTneighbour, oc->maxBneighbour);
 			//printf("X=%d Y=%d Z=%d %d %d %d \n", i_X, i_Y, i_Z, i_X1, i_Y1, i_Z1);
 #endif
 		//system("PAUSE");
@@ -10190,7 +10195,7 @@ DROBIM_NOW:
 
 
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
-void Emultisosed_patch(octTree* &octree1) {
+void Emultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
 	integer icsos = 0;
 	if (octree1->linkE1 != nullptr) {
@@ -10245,11 +10250,11 @@ void Emultisosed_patch(octTree* &octree1) {
 			icsos += c0 + c3 + c4 + c7;
 		}
 	}
-	octree1->maxEsosed = icsos;
-} // Emultisosed_patch
+	octree1->maxEneighbour = icsos;
+} // Emultineighbour_patch
 
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
-void Wmultisosed_patch(octTree* &octree1) {
+void Wmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
 	integer icsos = 0;
 	if (octree1->linkW0 != nullptr) {
@@ -10304,11 +10309,11 @@ void Wmultisosed_patch(octTree* &octree1) {
 			icsos += c1 + c2 + c5 + c6;
 		}
 	}
-	octree1->maxWsosed = icsos;
-} // Wmultisosed_patch
+	octree1->maxWneighbour = icsos;
+} // Wmultineighbour_patch
 
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
-void Nmultisosed_patch(octTree* &octree1) {
+void Nmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
 	integer icsos = 0;
 	if (octree1->linkN2 != nullptr) {
@@ -10371,17 +10376,17 @@ void Nmultisosed_patch(octTree* &octree1) {
 	//if (octree1->brootSituationY) i_Y = 1;
 	//if (octree1->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
-	//printf("WARNING !!! incomming Nmultisosed_patch %lld X=%lld Y=%lld Z=%lld\n",icsos,i_X,i_Y,i_Z);
+	//printf("WARNING !!! incomming Nmultineighbour_patch %lld X=%lld Y=%lld Z=%lld\n",icsos,i_X,i_Y,i_Z);
 #else
-	//printf("WARNING !!! incomming Nmultisosed_patch %d X=%d Y=%d Z=%d\n",icsos,i_X,i_Y,i_Z);
+	//printf("WARNING !!! incomming Nmultineighbour_patch %d X=%d Y=%d Z=%d\n",icsos,i_X,i_Y,i_Z);
 #endif
 	//system("PAUSE");
-	octree1->maxNsosed = icsos;
+	octree1->maxNneighbour = icsos;
 
-} //  Nmultisosed_patch
+} //  Nmultineighbour_patch
 
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
-void Smultisosed_patch(octTree* &octree1) {
+void Smultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
 	integer icsos = 0;
 	if (octree1->linkS0 != nullptr) {
@@ -10436,13 +10441,13 @@ void Smultisosed_patch(octTree* &octree1) {
 			icsos += c2 + c3 + c6 + c7;
 		}
 	}
-	octree1->maxSsosed = icsos;
+	octree1->maxSneighbour = icsos;
 
-} //  Smultisosed_patch
+} //  Smultineighbour_patch
 
 
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
-void Bmultisosed_patch(octTree* &octree1) {
+void Bmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
 	integer icsos = 0;
 	if (octree1->linkB0 != nullptr) {
@@ -10497,11 +10502,11 @@ void Bmultisosed_patch(octTree* &octree1) {
 			icsos += c4 + c5 + c6 + c7;
 		}
 	}
-	octree1->maxBsosed = icsos;
-} // Bmultisosed_patch
+	octree1->maxBneighbour = icsos;
+} // Bmultineighbour_patch
 
 // Подсчёт вторичных соседей в случае четырёх первичных соседей.
-void Tmultisosed_patch(octTree* &octree1) {
+void Tmultineighbour_patch(octree* &octree1) {
 	// 4 соседа.
 	integer icsos = 0;
 	if (octree1->linkT4 != nullptr) {
@@ -10556,12 +10561,12 @@ void Tmultisosed_patch(octTree* &octree1) {
 			icsos += c0 + c1 + c2 + c3;
 		}
 	}
-	octree1->maxTsosed = icsos;
+	octree1->maxTneighbour = icsos;
 
-} //Tmultisosed_patch
+} //Tmultineighbour_patch
 
 
-void log_cs(octTree* &octree1) {
+void log_cs(octree* &octree1) {
 	printf("logcs incomming brootSituationX");
 	system("PAUSE");
 	// octree1 это лист. Situation это ситуация в octree1->parent.
@@ -10586,7 +10591,7 @@ void log_cs(octTree* &octree1) {
 	case 0:
 
 		if (octree1->b4T) { // + 2.09.2016 12.30
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -10600,18 +10605,18 @@ void log_cs(octTree* &octree1) {
 							if (is_null(octree1->linkT)) {
 								// 1 остаётся 1.
 								printf("T root 0 is_null _1");
-								octree1->maxTsosed = 1;
+								octree1->maxTneighbour = 1;
 							}
 							else if (is_null1(octree1->linkT)) {
 
 								if ((bonly_dir_X) || (bonly_dir_Y)) {
 									printf("T root 0 is_null1 dirX || dirY _2 ");
-									octree1->maxTsosed = 2;
+									octree1->maxTneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
 									printf("T root 0 is_null1 _1");
-									octree1->maxTsosed = 1;
+									octree1->maxTneighbour = 1;
 								}
 							}
 							else {
@@ -10624,32 +10629,32 @@ void log_cs(octTree* &octree1) {
 									if (bonly_dir_X) {
 										// дробим только по оси Ох.
 										printf("TSIDE root 0 is_null3 _c0+c3");
-										octree1->maxTsosed = c0 + c3;
+										octree1->maxTneighbour = c0 + c3;
 									}
 									if (bonly_dir_Y) {
 										// дробим только по оси Oy.
 										printf("TSIDE root 0 is_null3 _c0+c1");
-										octree1->maxTsosed = c0 + c1;
+										octree1->maxTneighbour = c0 + c1;
 									}
 								}
 								else {
-									//octree1->maxTsosed = 4;
+									//octree1->maxTneighbour = 4;
 									printf("TSIDE root 0 is_null3 _c0");
-									octree1->maxTsosed = c0;
+									octree1->maxTneighbour = c0;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
 							printf("TSIDE root 0 nullptr 0");
-							octree1->maxTsosed = 0;
+							octree1->maxTneighbour = 0;
 						}
 
 					}
 					else {
 						// это была внутренняя ячейка.
 						printf("TSIDE root 0 not bSituation Z.");
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 
 					}
 				}
@@ -10659,11 +10664,11 @@ void log_cs(octTree* &octree1) {
 						if (is_null(octree1->linkT)) {
 							// 1 остаётся 1.
 							printf("TSIDE root 0 root na odnom urovne is_null _1");
-							octree1->maxTsosed = 1;
+							octree1->maxTneighbour = 1;
 						}
 						else if (is_null1(octree1->linkT)) {
 							printf("TSIDE root 0 root na odnom urovne is_null1 _4");
-							octree1->maxTsosed = 4;
+							octree1->maxTneighbour = 4;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -10672,28 +10677,28 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
-							//octree1->maxTsosed = 4;
+							//octree1->maxTneighbour = 4;
 							printf("TSIDE root 0 na odnom urovne is_null3 _c0+c1+c2+c3");
-							octree1->maxTsosed = c0 + c1 + c2 + c3;
+							octree1->maxTneighbour = c0 + c1 + c2 + c3;
 						}
 					}
 					else {
 						// 0 остаётся 0.
 						printf("TSIDE root 0 nullptr _0");
-						octree1->maxTsosed = 0;
+						octree1->maxTneighbour = 0;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
 				printf("TSIDE root 0 nullptr _0");
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 
 		// root==0	
 		if (octree1->b4N) {// + 2.09.2016 12.30
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -10706,17 +10711,17 @@ void log_cs(octTree* &octree1) {
 							if (is_null(octree1->linkN)) {
 								// 1 остаётся 1.
 								printf("N root 0 is_null _1");
-								octree1->maxNsosed = 1;
+								octree1->maxNneighbour = 1;
 							}
 							else if (is_null1(octree1->linkN)) {
 								if ((bonly_dir_X) || (bonly_dir_Z)) {
 									printf("N root 0 dirX or dir Z is_null1 _2");
-									octree1->maxNsosed = 2;
+									octree1->maxNneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
 									printf("N root 0  is_null1 _1");
-									octree1->maxNsosed = 1;
+									octree1->maxNneighbour = 1;
 								}
 							}
 							else {
@@ -10728,16 +10733,16 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_X) || (bonly_dir_Z)) {
 									if (bonly_dir_X) {
 										printf("NSIDE root 0  dir X is_null3 _c0+c4");
-										octree1->maxNsosed = c0 + c4;
+										octree1->maxNneighbour = c0 + c4;
 									}
 									if (bonly_dir_Z) {
 										printf("NSIDE root 0  dir Z is_null3 _c0+c1");
-										octree1->maxNsosed = c0 + c1;
+										octree1->maxNneighbour = c0 + c1;
 									}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
-									//octree1->maxNsosed = 4;
+									//octree1->maxNneighbour = 4;
 									// 4_2
 									printf("N root 0 is_null3 _c0\n");
 #if doubleintprecision == 1
@@ -10745,20 +10750,20 @@ void log_cs(octTree* &octree1) {
 #else
 									printf("octree1->ilevel=%d octree1->linkN->ilevel=%d c0=%d\n", octree1->ilevel, octree1->linkN->ilevel, c0);
 #endif
-										octree1->maxNsosed = c0;
+										octree1->maxNneighbour = c0;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
 							printf("nullptr 0");
-							octree1->maxNsosed = 0;
+							octree1->maxNneighbour = 0;
 						}
 
 					}
 					else {
 						printf("not bSituation Y");
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 
 				}
@@ -10769,12 +10774,12 @@ void log_cs(octTree* &octree1) {
 						if (is_null(octree1->linkN)) {
 							// 1 остаётся 1.
 							printf("N root 0 na odnom urovne is_null _1");
-							octree1->maxNsosed = 1;
+							octree1->maxNneighbour = 1;
 						}
 						else if (is_null1(octree1->linkN)) {
 							printf("N root 0 na odnom urovne is_null1 _4");
 							// две четверные стороны прилегают друг к дружке.
-							octree1->maxNsosed = 4;
+							octree1->maxNneighbour = 4;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -10784,15 +10789,15 @@ void log_cs(octTree* &octree1) {
 							is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							printf("N root 0 na odnom urovne is_null3 _c0+c1+c4+c5");
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxNsosed = 4;
-							octree1->maxNsosed = c0 + c1 + c4 + c5;
+							//octree1->maxNneighbour = 4;
+							octree1->maxNneighbour = c0 + c1 + c4 + c5;
 
 						}
 					}
 					else {
 						printf("NSIDE root 0 nullptr na odnom urovne\n");
 						// 0 остаётся 0.
-						octree1->maxNsosed = 0;
+						octree1->maxNneighbour = 0;
 					}
 
 				}
@@ -10800,14 +10805,14 @@ void log_cs(octTree* &octree1) {
 			else {
 				// 0 остаётся 0.
 				printf("N root 0 nullptr na odnom urovne\n");
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4E) {
 			// 4 соседа.
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkE != nullptr) {
@@ -10820,15 +10825,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkE != nullptr) {
 							if (is_null(octree1->linkE)) {
 								// 1 остаётся 1.
-								octree1->maxEsosed = 1;
+								octree1->maxEneighbour = 1;
 							}
 							else if (is_null1(octree1->linkE)) {
 								if ((bonly_dir_Z) || (bonly_dir_Y)) {
-									octree1->maxEsosed = 2;
+									octree1->maxEneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxEsosed = 1;
+									octree1->maxEneighbour = 1;
 								}
 							}
 							else {
@@ -10840,28 +10845,28 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_Y) || (bonly_dir_Z)) {
 									if (bonly_dir_Y) {
 										// дробим только по оси Oy.
-										octree1->maxEsosed = c0 + c4;
+										octree1->maxEneighbour = c0 + c4;
 									}
 									if (bonly_dir_Z) {
 										// дробим только по оси Oz.
-										octree1->maxEsosed = c0 + c3;
+										octree1->maxEneighbour = c0 + c3;
 									}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
-									//octree1->maxEsosed = 4;
-									octree1->maxEsosed = c0;
+									//octree1->maxEneighbour = 4;
+									octree1->maxEneighbour = c0;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxEsosed = 0;
+							octree1->maxEneighbour = 0;
 						}
 
 					}
 					else {
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
@@ -10869,11 +10874,11 @@ void log_cs(octTree* &octree1) {
 					if (octree1->linkE != nullptr) {
 						if (is_null(octree1->linkE)) {
 							// 1 остаётся 1.
-							octree1->maxEsosed = 1;
+							octree1->maxEneighbour = 1;
 						}
 						else if (is_null1(octree1->linkE)) {
 							// две четверные стороны прилегают друг к дружке.
-							octree1->maxEsosed = 4;
+							octree1->maxEneighbour = 4;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -10883,27 +10888,27 @@ void log_cs(octTree* &octree1) {
 							is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxEsosed = 4;
-							octree1->maxEsosed = c0 + c3 + c4 + c7;
+							//octree1->maxEneighbour = 4;
+							octree1->maxEneighbour = c0 + c3 + c4 + c7;
 
 						}
 					}
 					else {
 						// 0 остаётся 0.
-						octree1->maxEsosed = 0;
+						octree1->maxEneighbour = 0;
 					}
 				}
 			}
 			else {
 				// nullptr 
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 		if (octree1->b4W) {
 			// 4 соседа.
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			// Должно быть уменьшение при дроблении:
@@ -10915,11 +10920,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							// двойная прилегает к четверной.
-							octree1->maxWsosed = 2;
+							octree1->maxWneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -10927,17 +10932,17 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxWsosed = c1 + c2;
+							octree1->maxWneighbour = c1 + c2;
 						}
 					}
 					else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							// двойная прилегает к четверной.
-							octree1->maxWsosed = 2;
+							octree1->maxWneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -10945,24 +10950,24 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxWsosed = c1 + c5;
+							octree1->maxWneighbour = c1 + c5;
 						}
 					}
 					else {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							if (bonly_dir_Y){
-								octree1->maxWsosed = 2;
+								octree1->maxWneighbour = 2;
 							}
 							else if (bonly_dir_Z) {
-								octree1->maxWsosed = 2;
+								octree1->maxWneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxWsosed = 1;
+								octree1->maxWneighbour = 1;
 							}
 						}
 						else {
@@ -10972,15 +10977,15 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxWsosed = 4;
+							//octree1->maxWneighbour = 4;
 							if (bonly_dir_Y) {
-								octree1->maxWsosed = c1 + c5;
+								octree1->maxWneighbour = c1 + c5;
 							}
 							else if (bonly_dir_Z) {
-								octree1->maxWsosed = c1 + c2;
+								octree1->maxWneighbour = c1 + c2;
 							}
 							else {
-								octree1->maxWsosed = c1;
+								octree1->maxWneighbour = c1;
 							}
 
 						}
@@ -10990,11 +10995,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkW)) {
 						// 1 остаётся 1.
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11003,22 +11008,22 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxWsosed = 4;
-						octree1->maxWsosed = c1 + c2 + c5 + c6;
+						//octree1->maxWneighbour = 4;
+						octree1->maxWneighbour = c1 + c2 + c5 + c6;
 
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4S) {
 			// 4 соседа.
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
@@ -11030,11 +11035,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							// двойная прилегает к четверной.
-							octree1->maxSsosed = 2;
+							octree1->maxSneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -11042,17 +11047,17 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxSsosed = c3 + c2;
+							octree1->maxSneighbour = c3 + c2;
 						}
 					}
 					else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							// двойная прилегает к четверной.
-							octree1->maxSsosed = 2;
+							octree1->maxSneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -11060,24 +11065,24 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxSsosed = c3 + c7;
+							octree1->maxSneighbour = c3 + c7;
 						}
 					}
 					else {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							if (bonly_dir_Z) {
-								octree1->maxSsosed = 2;
+								octree1->maxSneighbour = 2;
 							}
 							else if (bonly_dir_X) {
-								octree1->maxSsosed = 2;
+								octree1->maxSneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxSsosed = 1;
+								octree1->maxSneighbour = 1;
 							}
 						}
 						else {
@@ -11088,14 +11093,14 @@ void log_cs(octTree* &octree1) {
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							if (bonly_dir_Z) {
-								octree1->maxSsosed = c3 + c2;
+								octree1->maxSneighbour = c3 + c2;
 							}
 							else if (bonly_dir_X) {
-								octree1->maxSsosed = c3 + c7;
+								octree1->maxSneighbour = c3 + c7;
 							}
 							else {
-								//octree1->maxSsosed = 4;
-								octree1->maxSsosed = c3;
+								//octree1->maxSneighbour = 4;
+								octree1->maxSneighbour = c3;
 							}
 						}
 					}
@@ -11104,11 +11109,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остаётся 1.
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// Один контачит с четырьмя.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11118,20 +11123,20 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 
-						//octree1->maxSsosed = 4;
-						octree1->maxSsosed = c3 + c2 + c6 + c7;
+						//octree1->maxSneighbour = 4;
+						octree1->maxSneighbour = c3 + c2 + c6 + c7;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 		if (octree1->b4B) {
 			// 4 соседа.
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
@@ -11143,11 +11148,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							// двойная прилегает к четверной.
-							octree1->maxBsosed = 2;
+							octree1->maxBneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -11155,17 +11160,17 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxBsosed = c4 + c7;
+							octree1->maxBneighbour = c4 + c7;
 						}
 					}
 					else if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							// двойная прилегает к четверной.
-							octree1->maxBsosed = 2;
+							octree1->maxBneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -11173,24 +11178,24 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxBsosed = c4 + c5;
+							octree1->maxBneighbour = c4 + c5;
 						}
 					}
 					else {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							if (bonly_dir_Y) {
-								octree1->maxBsosed = 2;
+								octree1->maxBneighbour = 2;
 							}
 							else if (bonly_dir_X) {
-								octree1->maxBsosed = 2;
+								octree1->maxBneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxBsosed = 1;
+								octree1->maxBneighbour = 1;
 							}
 						}
 						else {
@@ -11200,15 +11205,15 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_Y) {
-								octree1->maxBsosed = c4 + c5;
+								octree1->maxBneighbour = c4 + c5;
 							}
 							else if (bonly_dir_X) {
-								octree1->maxBsosed = c4 + c7;
+								octree1->maxBneighbour = c4 + c7;
 							}
 							else {
 								// других вариантов быть не может, здесь только 4.
-								//octree1->maxBsosed = 4;
-								octree1->maxBsosed = c4;
+								//octree1->maxBneighbour = 4;
+								octree1->maxBneighbour = c4;
 							}
 						}
 					}
@@ -11216,11 +11221,11 @@ void log_cs(octTree* &octree1) {
 				else if (octree1->ilevel == octree1->linkB->ilevel) {
 					if (is_null(octree1->linkB)) {
 						// 1 остаётся 1.
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// однушка прилегает к четырём четвертинкам.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 
 					}
 					else {
@@ -11231,15 +11236,15 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxBsosed = 4;
-						octree1->maxBsosed = c4 + c5 + c6 + c7;
+						//octree1->maxBneighbour = 4;
+						octree1->maxBneighbour = c4 + c5 + c6 + c7;
 
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 		break;
@@ -11247,7 +11252,7 @@ void log_cs(octTree* &octree1) {
 
 		if (octree1->b4T) { // +
 			// 4 соседа.
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -11262,15 +11267,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkT != nullptr) {
 							if (is_null(octree1->linkT)) {
 								// 1 остаётся 1.
-								octree1->maxTsosed = 1;
+								octree1->maxTneighbour = 1;
 							}
 							else if (is_null1(octree1->linkT)) {
 								if (bonly_dir_X) {
-									octree1->maxTsosed = 2;
+									octree1->maxTneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxTsosed = 1;
+									octree1->maxTneighbour = 1;
 								}
 							}
 							else {
@@ -11282,35 +11287,35 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_X)) {
 									//if (bonly_dir_X) {
 										// дробим только по оси Oy.
-										octree1->maxTsosed = c1 + c2;
+										octree1->maxTneighbour = c1 + c2;
 									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
 									// может быть  2, 4, 5, 8
-									//octree1->maxTsosed = 4;
-									octree1->maxTsosed = c1;
+									//octree1->maxTneighbour = 4;
+									octree1->maxTneighbour = c1;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxTsosed = 0;
+							octree1->maxTneighbour = 0;
 						}
 					}
 					else {
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11321,8 +11326,8 @@ void log_cs(octTree* &octree1) {
 
 						// других вариантов быть не может, здесь только 4.
 						// может быть  2, 4, 5, 8
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c1 + c0 + c2 + c3;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c1 + c0 + c2 + c3;
 
 					}
 				}
@@ -11330,13 +11335,13 @@ void log_cs(octTree* &octree1) {
 			else {
 				// nullptr
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 
 		if (octree1->b4N) { // + 2.sept.2016 13.59
 			// 4 соседа.
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -11349,15 +11354,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkN != nullptr) {
 							if (is_null(octree1->linkN)) {
 								// 1 остаётся 1.
-								octree1->maxNsosed = 1;
+								octree1->maxNneighbour = 1;
 							}
 							else if (is_null1(octree1->linkN)) {
 								if (bonly_dir_X) {
-									octree1->maxNsosed = 2;
+									octree1->maxNneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxNsosed = 1;
+									octree1->maxNneighbour = 1;
 								}
 							}
 							else {
@@ -11369,24 +11374,24 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_X)) {
 									//if (bonly_dir_X) {
 										// дробим только по оси Oy.
-										octree1->maxNsosed = c1 + c5;
+										octree1->maxNneighbour = c1 + c5;
 									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
-									//octree1->maxNsosed = 4;
-									octree1->maxNsosed = c1;
+									//octree1->maxNneighbour = 4;
+									octree1->maxNneighbour = c1;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxNsosed = 0;
+							octree1->maxNneighbour = 0;
 						}
 
 					}
 					else {
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
@@ -11394,11 +11399,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11408,8 +11413,8 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c1 + c0 + c4 + c5;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c1 + c0 + c4 + c5;
 
 					}
 				}
@@ -11417,29 +11422,29 @@ void log_cs(octTree* &octree1) {
 			else {
 				// nullptr.
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 		if (octree1->b4W) { // + 2.sept.2016 13.30
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
 				//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkW->ilevel) {
 					// на разных уровнях.
-					octree1->maxWsosed = 1;
+					octree1->maxWneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkW->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkW)) {
 						// 1 остается 1
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11448,14 +11453,14 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxWsosed = c1 + c2 + c5 + c6;
+						//octree1->maxEneighbour = 4;
+						octree1->maxWneighbour = c1 + c2 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
@@ -11463,7 +11468,7 @@ void log_cs(octTree* &octree1) {
 
 		if (octree1->b4E) {// +
 			// 4 соседа.
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			// Должно быть уменьшение при дроблении:
@@ -11474,11 +11479,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11487,19 +11492,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c0;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c0;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11508,21 +11513,21 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c0 + c3 + c4 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c0 + c3 + c4 + c7;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4S) {// +
 			// 4 соседа.
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
@@ -11534,11 +11539,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							// двойная прилегает к четверной.
-							octree1->maxSsosed = 2;
+							octree1->maxSneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -11546,21 +11551,21 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxSsosed = c2 + c6;
+							octree1->maxSneighbour = c2 + c6;
 						}
 					}
 					else {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							if (bonly_dir_X) {
-								octree1->maxSsosed = 2;
+								octree1->maxSneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxSsosed = 1;
+								octree1->maxSneighbour = 1;
 							}
 						}
 						else {
@@ -11570,12 +11575,12 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_X) {
-								octree1->maxSsosed = c2 + c6;
+								octree1->maxSneighbour = c2 + c6;
 							}
 							else {
 								// других вариантов быть не может, здесь только 4.
-								//octree1->maxSsosed = 4;
-								octree1->maxSsosed = c2;
+								//octree1->maxSneighbour = 4;
+								octree1->maxSneighbour = c2;
 							}
 						}
 					}
@@ -11584,11 +11589,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остаётся 1.
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11598,21 +11603,21 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxSsosed = 4;
-						octree1->maxSsosed = c2 + c3 + c6 + c7;
+						//octree1->maxSneighbour = 4;
+						octree1->maxSneighbour = c2 + c3 + c6 + c7;
 
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 		if (octree1->b4B) {// +
 			// 4 соседа.
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
@@ -11624,11 +11629,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							// двойная прилегает к четверной.
-							octree1->maxBsosed = 2;
+							octree1->maxBneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -11636,21 +11641,21 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxBsosed = c5 + c6;
+							octree1->maxBneighbour = c5 + c6;
 						}
 					}
 					else {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							if (bonly_dir_X) {
-								octree1->maxBsosed = 2;
+								octree1->maxBneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxBsosed = 1;
+								octree1->maxBneighbour = 1;
 							}
 						}
 						else {
@@ -11660,12 +11665,12 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_X) {
-								octree1->maxBsosed = c5 + c6;
+								octree1->maxBneighbour = c5 + c6;
 							}
 							else {
 								// других вариантов быть не может, здесь только 4.
-								//octree1->maxBsosed = 4;
-								octree1->maxBsosed = c5;
+								//octree1->maxBneighbour = 4;
+								octree1->maxBneighbour = c5;
 							}
 						}
 					}
@@ -11674,11 +11679,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остаётся 1.
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// однушка прилегает к четветушке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11688,15 +11693,15 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxBsosed = 4;
-						octree1->maxBsosed = c5 + c4 + c6 + c7;
+						//octree1->maxBneighbour = 4;
+						octree1->maxBneighbour = c5 + c4 + c6 + c7;
 
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 		break;
@@ -11705,7 +11710,7 @@ void log_cs(octTree* &octree1) {
 
 		if (octree1->b4T) { // +
 			// 4 соседа.
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 
@@ -11722,11 +11727,11 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkT != nullptr) {
 							if (is_null(octree1->linkT)) {
 								// 1 остаётся 1.
-								octree1->maxTsosed = 1;
+								octree1->maxTneighbour = 1;
 							}
 							else if (is_null1(octree1->linkT)) {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxTsosed = 1;
+								octree1->maxTneighbour = 1;
 							}
 							else {
 								// других вариантов быть не может, здесь только 4.
@@ -11735,18 +11740,18 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								// других вариантов быть не может, здесь только 4.
-								//octree1->maxTsosed = 4;
-								octree1->maxTsosed = c2;
+								//octree1->maxTneighbour = 4;
+								octree1->maxTneighbour = c2;
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxTsosed = 0;
+							octree1->maxTneighbour = 0;
 						}
 
 					}
 					else {
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
@@ -11754,11 +11759,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11767,8 +11772,8 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c2 + c0 + c1 + c3;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c2 + c0 + c1 + c3;
 					}
 				}
 
@@ -11776,31 +11781,31 @@ void log_cs(octTree* &octree1) {
 			else {
 				// nullptr
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 
 
 
 		if (octree1->b4S) { // + 2.sept.2016 13.30
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
 				//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkS->ilevel) {
 					// на разных уровнях.
-					octree1->maxSsosed = 1;
+					octree1->maxSneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkS->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остается 1
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11809,37 +11814,37 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxSsosed = c6 + c7 + c2 + c3;
+						//octree1->maxEneighbour = 4;
+						octree1->maxSneighbour = c6 + c7 + c2 + c3;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4W) { // + 2.sept.2016 13.30
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
 				//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkW->ilevel) {
 					// на разных уровнях.
-					octree1->maxWsosed = 1;
+					octree1->maxWneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkW->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkW)) {
 						// 1 остается 1
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11848,21 +11853,21 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxWsosed = c1 + c2 + c5 + c6;
+						//octree1->maxEneighbour = 4;
+						octree1->maxWneighbour = c1 + c2 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4E) { // + 2.sept.2016 14:27
 			// 4 соседа.
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			// Должно быть уменьшение при дроблении:
@@ -11873,11 +11878,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11886,19 +11891,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c3;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c3;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11907,21 +11912,21 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c3 + c0 + c4 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c3 + c0 + c4 + c7;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4N) {// + 
 			// 4 соседа.
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -11931,11 +11936,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11945,19 +11950,19 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c1;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -11967,21 +11972,21 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c1 + c0 + c4 + c5;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c1 + c0 + c4 + c5;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4B) {
 			// 4 соседа.
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
@@ -11990,11 +11995,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkB)) {
 						// 1 остаётся 1.
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12003,19 +12008,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxBsosed = 4;
-						octree1->maxBsosed = c6;
+						//octree1->maxBneighbour = 4;
+						octree1->maxBneighbour = c6;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkB->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остаётся 1.
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12024,15 +12029,15 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxBsosed = 4;
-						octree1->maxBsosed = c6 + c5 + c7 + c4;
+						//octree1->maxBneighbour = 4;
+						octree1->maxBneighbour = c6 + c5 + c7 + c4;
 					}
 
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 
@@ -12041,7 +12046,7 @@ void log_cs(octTree* &octree1) {
 	case 3:
 
 		if (octree1->b4T) {  // + 2.september 2016 17:47
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -12056,15 +12061,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkT != nullptr) {
 							if (is_null(octree1->linkT)) {
 								// 1 остаётся 1.
-								octree1->maxTsosed = 1;
+								octree1->maxTneighbour = 1;
 							}
 							else if (is_null1(octree1->linkT)) {
 								if (bonly_dir_Y) {
-									octree1->maxTsosed = 2;
+									octree1->maxTneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxTsosed = 1;
+									octree1->maxTneighbour = 1;
 								}
 							}
 							else {
@@ -12076,37 +12081,37 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_Y)) {
 									//if (bonly_dir_Y) {
 										// дробим только по оси Oy.
-										octree1->maxTsosed = c3 + c2;
+										octree1->maxTneighbour = c3 + c2;
 									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
 									// может быть 2, 4, 5, 8.
-									//octree1->maxTsosed = 4;
-									octree1->maxTsosed = c3;
+									//octree1->maxTneighbour = 4;
+									octree1->maxTneighbour = c3;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxTsosed = 0;
+							octree1->maxTneighbour = 0;
 						}
 
 					}
 					else {
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 
 						// Целая прилегает к четырём четвертинкам.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12117,38 +12122,38 @@ void log_cs(octTree* &octree1) {
 
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c3 + c0 + c1 + c2;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c3 + c0 + c1 + c2;
 					}
 				}
 			}
 			else {
 				// nullptr:
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4S) { // + 2.sept.2016 13.30
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
 				//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkS->ilevel) {
 					// на разных уровнях.
-					octree1->maxSsosed = 1;
+					octree1->maxSneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkS->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остается 1
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12157,20 +12162,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxSsosed = c2 + c3 + c6 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxSneighbour = c2 + c3 + c6 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4E) { // + 2.september.2016 17:41
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkE != nullptr) {
@@ -12184,15 +12189,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkE != nullptr) {
 							if (is_null(octree1->linkE)) {
 								// 1 остаётся 1.
-								octree1->maxEsosed = 1;
+								octree1->maxEneighbour = 1;
 							}
 							else if (is_null1(octree1->linkE)) {
 								if (bonly_dir_Y) {
-									octree1->maxEsosed = 2;
+									octree1->maxEneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxEsosed = 1;
+									octree1->maxEneighbour = 1;
 								}
 							}
 							else {
@@ -12204,37 +12209,37 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_Y)) {
 									//if (bonly_dir_Y) {
 										// дробим только по оси Oy.
-										octree1->maxEsosed = c3 + c7;
+										octree1->maxEneighbour = c3 + c7;
 									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
 									// Может быть 2, 4, 5, 8
-									//octree1->maxEsosed = 4;
-									octree1->maxEsosed = c3;
+									//octree1->maxEneighbour = 4;
+									octree1->maxEneighbour = c3;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxEsosed = 0;
+							octree1->maxEneighbour = 0;
 						}
 
 					}
 					else {
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 
 						// однушка примыкает к четырем четвертинкам.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12245,20 +12250,20 @@ void log_cs(octTree* &octree1) {
 
 						// других вариантов быть не может, здесь только 4.
 						// Может быть 2, 4, 5, 8
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c3 + c0 + c4 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c3 + c0 + c4 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr;
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 		if (octree1->b4W) { // + 2.sept.2016 17:24
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
@@ -12270,11 +12275,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							// двойная прилегает к четверной.
-							octree1->maxWsosed = 2;
+							octree1->maxWneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -12282,21 +12287,21 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxWsosed = c2 + c6;
+							octree1->maxWneighbour = c2 + c6;
 						}
 					}
 					else {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							if (bonly_dir_Y) {
-								octree1->maxWsosed = 2;
+								octree1->maxWneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxWsosed = 1;
+								octree1->maxWneighbour = 1;
 							}
 						}
 						else {
@@ -12306,12 +12311,12 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxWsosed = 4;
+							//octree1->maxWneighbour = 4;
 							if (bonly_dir_Y) {
-								octree1->maxWsosed = c2 + c6;
+								octree1->maxWneighbour = c2 + c6;
 							}
 							else {
-								octree1->maxWsosed = c2;
+								octree1->maxWneighbour = c2;
 							}
 						}
 					}
@@ -12320,11 +12325,11 @@ void log_cs(octTree* &octree1) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkW)) {
 						// 1 остаётся 1.
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// однушка примыкает к четырём четвертинкам.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12333,20 +12338,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxWsosed = 4;
+						//octree1->maxWneighbour = 4;
 
-						octree1->maxWsosed = c2 + c1 + c5 + c6;
+						octree1->maxWneighbour = c2 + c1 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 		if (octree1->b4N) { // +
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -12357,11 +12362,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12370,19 +12375,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c0;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c0;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// однушка примыкает к четвертинке.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12391,20 +12396,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c0 + c1 + c4 + c5;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c0 + c1 + c4 + c5;
 					}
 
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 		if (octree1->b4B) { // +
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
@@ -12414,11 +12419,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							// двойная прилегает к четверной.
-							octree1->maxBsosed = 2;
+							octree1->maxBneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -12426,21 +12431,21 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxBsosed = c7 + c6;
+							octree1->maxBneighbour = c7 + c6;
 						}
 					}
 					else {
 						if (is_null(octree1->linkB)) {
 							// 1 остаётся 1.
-							octree1->maxBsosed = 1;
+							octree1->maxBneighbour = 1;
 						}
 						else if (is_null1(octree1->linkB)) {
 							if (bonly_dir_Y) {
-								octree1->maxBsosed = 2;
+								octree1->maxBneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxBsosed = 1;
+								octree1->maxBneighbour = 1;
 							}
 						}
 						else {
@@ -12450,12 +12455,12 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_Y) {
-								octree1->maxBsosed = c7 + c6;
+								octree1->maxBneighbour = c7 + c6;
 							}
 							else {
 								// других вариантов быть не может, здесь только 4.
-								//octree1->maxBsosed = 4;
-								octree1->maxBsosed = c7;
+								//octree1->maxBneighbour = 4;
+								octree1->maxBneighbour = c7;
 							}
 						}
 					}
@@ -12464,11 +12469,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остаётся 1.
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12478,15 +12483,15 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxBsosed = 4;
-						octree1->maxBsosed = c7 + c6 + c5 + c4;
+						//octree1->maxBneighbour = 4;
+						octree1->maxBneighbour = c7 + c6 + c5 + c4;
 
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 
@@ -12494,7 +12499,7 @@ void log_cs(octTree* &octree1) {
 	case 4:
 
 		if (octree1->b4N) { // + 2.september.2016 17:10
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -12508,15 +12513,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkN != nullptr) {
 							if (is_null(octree1->linkN)) {
 								// 1 остаётся 1.
-								octree1->maxNsosed = 1;
+								octree1->maxNneighbour = 1;
 							}
 							else if (is_null1(octree1->linkN)) {
 								if (bonly_dir_Z) {
-									octree1->maxNsosed = 2;
+									octree1->maxNneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxNsosed = 1;
+									octree1->maxNneighbour = 1;
 								}
 							}
 							else {
@@ -12528,36 +12533,36 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_Z)) {
 									//if (bonly_dir_Z) {
 										// дробим только по оси Oy.
-										octree1->maxNsosed = c4 + c5;
+										octree1->maxNneighbour = c4 + c5;
 									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
 									// Здесь может быть 2, 4, 5, 8
-									//octree1->maxNsosed = 4;
-									octree1->maxNsosed = c4;
+									//octree1->maxNneighbour = 4;
+									octree1->maxNneighbour = c4;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxNsosed = 0;
+							octree1->maxNneighbour = 0;
 						}
 
 					}
 					else {
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// однушка примыкает к четырём четвертинкам.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12568,18 +12573,18 @@ void log_cs(octTree* &octree1) {
 
 						// других вариантов быть не может, здесь только 4.
 						// Здесь может быть 2, 4, 5, 8
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c4 + c0 + c1 + c5;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c4 + c0 + c1 + c5;
 
 					}
 				}
 				/*else {
 				#if doubleintprecision == 1
 					printf("FATAL ERROR! octree1->ilevel=%lld octree1->linkN->ilevel=%lld\n", octree1->ilevel, octree1->linkN->ilevel);
-					printf("octree1->maxNsosed=%lld\n", octree1->maxNsosed);
+					printf("octree1->maxNneighbour=%lld\n", octree1->maxNneighbour);
 				#else
 					printf("FATAL ERROR! octree1->ilevel=%d octree1->linkN->ilevel=%d\n", octree1->ilevel, octree1->linkN->ilevel);
-					printf("octree1->maxNsosed=%d\n", octree1->maxNsosed);
+					printf("octree1->maxNneighbour=%d\n", octree1->maxNneighbour);
 				#endif
 				
 				system("PAUSE");
@@ -12588,12 +12593,12 @@ void log_cs(octTree* &octree1) {
 			else {
 				// nullptr
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 		if (octree1->b4E) { // + 2 sept 2016 16:49
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkE != nullptr) {
@@ -12606,15 +12611,15 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkE != nullptr) {
 							if (is_null(octree1->linkE)) {
 								// 1 остаётся 1.
-								octree1->maxEsosed = 1;
+								octree1->maxEneighbour = 1;
 							}
 							else if (is_null1(octree1->linkE)) {
 								if (bonly_dir_Z) {
-									octree1->maxEsosed = 2;
+									octree1->maxEneighbour = 2;
 								}
 								else {
 									// две четверные стороны прилегают друг к дружке.
-									octree1->maxEsosed = 1;
+									octree1->maxEneighbour = 1;
 								}
 							}
 							else {
@@ -12626,33 +12631,33 @@ void log_cs(octTree* &octree1) {
 								if ((bonly_dir_Z)) {
 									//if (bonly_dir_Z) {
 										// дробим только по оси Oy.
-										octree1->maxEsosed = c4 + c7;
+										octree1->maxEneighbour = c4 + c7;
 									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
-									//octree1->maxEsosed = 4;
-									octree1->maxEsosed = c4;
+									//octree1->maxEneighbour = 4;
+									octree1->maxEneighbour = c4;
 								}
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxEsosed = 0;
+							octree1->maxEneighbour = 0;
 						}
 					}
 					else {
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12662,21 +12667,21 @@ void log_cs(octTree* &octree1) {
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c4 + c0 + c3 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c4 + c0 + c3 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4W) { // +
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
@@ -12687,11 +12692,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							// двойная прилегает к четверной.
-							octree1->maxWsosed = 2;
+							octree1->maxWneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -12699,21 +12704,21 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxWsosed = c5 + c6;
+							octree1->maxWneighbour = c5 + c6;
 						}
 					}
 					else {
 						if (is_null(octree1->linkW)) {
 							// 1 остаётся 1.
-							octree1->maxWsosed = 1;
+							octree1->maxWneighbour = 1;
 						}
 						else if (is_null1(octree1->linkW)) {
 							if (bonly_dir_Z) {
-								octree1->maxWsosed = 2;
+								octree1->maxWneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxWsosed = 1;
+								octree1->maxWneighbour = 1;
 							}
 						}
 						else {
@@ -12723,12 +12728,12 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxWsosed = 4;
+							//octree1->maxWneighbour = 4;
 							if (bonly_dir_Z) {
-								octree1->maxWsosed = c5 + c6;
+								octree1->maxWneighbour = c5 + c6;
 							}
 							else {
-								octree1->maxWsosed = c5;
+								octree1->maxWneighbour = c5;
 							}
 						}
 					}
@@ -12737,11 +12742,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkW)) {
 						// 1 остаётся 1.
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// однушка примыкает к четвертинкам.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12750,20 +12755,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxWsosed = 4;
+						//octree1->maxWneighbour = 4;
 
-						octree1->maxWsosed = c5 + c1 + c2 + c6;
+						octree1->maxWneighbour = c5 + c1 + c2 + c6;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 		if (octree1->b4S) { // + 2.september. 2016 16:59
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
@@ -12775,11 +12780,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							// двойная прилегает к четверной.
-							octree1->maxSsosed = 2;
+							octree1->maxSneighbour = 2;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -12787,21 +12792,21 @@ void log_cs(octTree* &octree1) {
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-							octree1->maxSsosed = c7 + c6;
+							octree1->maxSneighbour = c7 + c6;
 						}
 					}
 					else {
 						if (is_null(octree1->linkS)) {
 							// 1 остаётся 1.
-							octree1->maxSsosed = 1;
+							octree1->maxSneighbour = 1;
 						}
 						else if (is_null1(octree1->linkS)) {
 							if (bonly_dir_Z) {
-								octree1->maxSsosed = 2;
+								octree1->maxSneighbour = 2;
 							}
 							else {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxSsosed = 1;
+								octree1->maxSneighbour = 1;
 							}
 						}
 						else {
@@ -12811,12 +12816,12 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxSsosed = 4;
+							//octree1->maxSneighbour = 4;
 							if (bonly_dir_Z) {
-								octree1->maxSsosed = c7 + c6;
+								octree1->maxSneighbour = c7 + c6;
 							}
 							else {
-								octree1->maxSsosed = c7;
+								octree1->maxSneighbour = c7;
 							}
 						}
 					}
@@ -12825,11 +12830,11 @@ void log_cs(octTree* &octree1) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остаётся 1.
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однушка примыкает к четырем четвертинкам.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12838,22 +12843,22 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxSsosed = 4;
+						//octree1->maxSneighbour = 4;
 
-						octree1->maxSsosed = c7 + c2 + c3 + c6;
+						octree1->maxSneighbour = c7 + c2 + c3 + c6;
 
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4T) { // +
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -12863,11 +12868,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12876,19 +12881,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c0;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c0;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// однушка примыкает к четырём четвертинкам.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12897,36 +12902,36 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c0 + c1 + c2 + c3;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c0 + c1 + c2 + c3;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 
 		if (octree1->b4B) { // + 2.sept.2016 13.30
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
 				//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkB->ilevel) {
 					// на разных уровнях.
-					octree1->maxBsosed = 1;
+					octree1->maxBneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkB->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остается 1
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12935,14 +12940,14 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxBsosed = c4 + c5 + c6 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxBneighbour = c4 + c5 + c6 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 
@@ -12950,24 +12955,24 @@ void log_cs(octTree* &octree1) {
 	case 5:
 
 		if (octree1->b4B) { // + 2.sept.2016 13.30
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
 				//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkB->ilevel) {
 					// на разных уровнях.
-					octree1->maxBsosed = 1;
+					octree1->maxBneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkB->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остается 1
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -12976,20 +12981,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxBsosed = c4 + c5 + c6 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxBneighbour = c4 + c5 + c6 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4N) {// + 2.sept.2016 16:18
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -13000,11 +13005,11 @@ void log_cs(octTree* &octree1) {
 					if (bSituationY) {
 						if (is_null(octree1->linkN)) {
 							// 1 остаётся 1.
-							octree1->maxNsosed = 1;
+							octree1->maxNneighbour = 1;
 						}
 						else if (is_null1(octree1->linkN)) {
 							// две четверные стороны прилегают друг к дружке.
-							octree1->maxNsosed = 1;
+							octree1->maxNneighbour = 1;
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -13013,23 +13018,23 @@ void log_cs(octTree* &octree1) {
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 							is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
-							//octree1->maxNsosed = 4;
-							octree1->maxNsosed = c5;
+							//octree1->maxNneighbour = 4;
+							octree1->maxNneighbour = c5;
 						}
 					}
 					else {
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// одна ячейка прилегает к четверной.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13038,15 +13043,15 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c5 + c0 + c1 + c4;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c5 + c0 + c1 + c4;
 					}
 
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
@@ -13054,24 +13059,24 @@ void log_cs(octTree* &octree1) {
 
 
 		if (octree1->b4W) { // + 2.sept.2016 13.30
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
 				//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkW->ilevel) {
 					// на разных уровнях.
-					octree1->maxWsosed = 1;
+					octree1->maxWneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkW->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkW)) {
 						// 1 остается 1
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13080,21 +13085,21 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxWsosed = c1 + c2 + c5 + c6;
+						//octree1->maxEneighbour = 4;
+						octree1->maxWneighbour = c1 + c2 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 
 
 		if (octree1->b4E) { // +
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkE != nullptr) {
@@ -13104,11 +13109,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13117,18 +13122,18 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c4;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c4;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// одинарная ячейка прилегает к четверной.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13137,19 +13142,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c4 + c0 + c3 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c4 + c0 + c3 + c7;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 		if (octree1->b4S) { // +
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
@@ -13158,11 +13163,11 @@ void log_cs(octTree* &octree1) {
 					// На разных уровнях.
 					if (is_null(octree1->linkS)) {
 						// 1 остаётся 1.
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13171,19 +13176,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxSsosed = 4;
-						octree1->maxSsosed = c6;
+						//octree1->maxSneighbour = 4;
+						octree1->maxSneighbour = c6;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkS->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkS)) {
 						// 1 остаётся 1.
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однва ячейка прилегает к четыврём.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13192,19 +13197,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxSsosed = 4;
-						octree1->maxSsosed = c6 + c2 + c3 + c7;
+						//octree1->maxSneighbour = 4;
+						octree1->maxSneighbour = c6 + c2 + c3 + c7;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 		if (octree1->b4T) { // + 2 september 2016 16:14
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -13215,11 +13220,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1; // octree1->maxTsosed;
+						octree1->maxTneighbour = 1; // octree1->maxTneighbour;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13228,19 +13233,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c1;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1; // octree1->maxTsosed;
+						octree1->maxTneighbour = 1; // octree1->maxTneighbour;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// одинарная ячейка прилегает к четверной.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13249,14 +13254,14 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c1 + c0 + c2 + c3;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c1 + c0 + c2 + c3;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 
@@ -13264,24 +13269,24 @@ void log_cs(octTree* &octree1) {
 	case 6:
 
 		if (octree1->b4B) { // + 2.sept.2016 13.30
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
 				//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkB->ilevel) {
 					// на разных уровнях.
-					octree1->maxBsosed = 1;
+					octree1->maxBneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkB->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остается 1
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13290,37 +13295,37 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxBsosed = c4 + c5 + c6 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxBneighbour = c4 + c5 + c6 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4S) { // + 2.sept.2016 13.30
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
 				//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkS->ilevel) {
 					// на разных уровнях.
-					octree1->maxSsosed = 1;
+					octree1->maxSneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkS->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остается 1
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13329,37 +13334,37 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxSsosed = c2 + c3 + c6 + c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxSneighbour = c2 + c3 + c6 + c7;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4W) { // + 2.sept.2016 13.30
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
 				//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkW->ilevel) {
 					// на разных уровнях.
-					octree1->maxWsosed = 1;
+					octree1->maxWneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkW->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkW)) {
 						// 1 остается 1
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13368,20 +13373,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxWsosed = c1 + c2 + c5 + c6;
+						//octree1->maxEneighbour = 4;
+						octree1->maxWneighbour = c1 + c2 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4E) { // +
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkE != nullptr) {
@@ -13391,11 +13396,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13404,19 +13409,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c7;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c7;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					// На одном уровнене.
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13425,20 +13430,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c7 + c0 + c3 + c4;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c7 + c0 + c3 + c4;
 					}
 
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 		if (octree1->b4N) {  // +
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -13448,11 +13453,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13461,8 +13466,8 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c5;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c5;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
@@ -13470,11 +13475,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13483,19 +13488,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c5 + c0 + c1 + c4;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c5 + c0 + c1 + c4;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 		if (octree1->b4T) { // + 2 sept 2016 15:33
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -13505,11 +13510,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13518,19 +13523,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c2;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c2;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13539,15 +13544,15 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c2 + c0 + c1 + c3;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c2 + c0 + c1 + c3;
 					}
 
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 		break;
@@ -13555,24 +13560,24 @@ void log_cs(octTree* &octree1) {
 
 
 		if (octree1->b4B) { // + 2.sept.2016 13.30
-			Bmultisosed_patch(octree1);
+			Bmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkB != nullptr) {
 				//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkB->ilevel) {
 					// на разных уровнях.
-					octree1->maxBsosed = 1;
+					octree1->maxBneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkB->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkB)) {
 						// 1 остается 1
-						octree1->maxBsosed = 1;
+						octree1->maxBneighbour = 1;
 					}
 					else if (is_null1(octree1->linkB)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxBsosed = 4;
+						octree1->maxBneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13581,37 +13586,37 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxBsosed = c1 + c2 + c5 + c6;
+						//octree1->maxEneighbour = 4;
+						octree1->maxBneighbour = c1 + c2 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxBsosed = 0;
+				octree1->maxBneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4S) { // + 2.sept.2016 13.30
-			Smultisosed_patch(octree1);
+			Smultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkS != nullptr) {
 				//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 				if (octree1->ilevel != octree1->linkS->ilevel) {
 					// на разных уровнях.
-					octree1->maxSsosed = 1;
+					octree1->maxSneighbour = 1;
 				}
 				else if (octree1->ilevel == octree1->linkS->ilevel) {
 					// На одном уровне.
 					if (is_null(octree1->linkS)) {
 						// 1 остается 1
-						octree1->maxSsosed = 1;
+						octree1->maxSneighbour = 1;
 					}
 					else if (is_null1(octree1->linkS)) {
 						// однушка прилегает к четвертушке.
-						octree1->maxSsosed = 4;
+						octree1->maxSneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13620,19 +13625,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxSsosed = c1 + c2 + c5 + c6;
+						//octree1->maxEneighbour = 4;
+						octree1->maxSneighbour = c1 + c2 + c5 + c6;
 					}
 				}
 			}
 			else {
 				// nullptr 0 остаётся нулём.
-				octree1->maxSsosed = 0;
+				octree1->maxSneighbour = 0;
 			}
 		}
 
 		if (octree1->b4E) { // +
-			Emultisosed_patch(octree1);
+			Emultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkE != nullptr) {
@@ -13644,11 +13649,11 @@ void log_cs(octTree* &octree1) {
 						if (octree1->linkE != nullptr) {
 							if (is_null(octree1->linkE)) {
 								// 1 остаётся 1.
-								octree1->maxEsosed = 1;
+								octree1->maxEneighbour = 1;
 							}
 							else if (is_null1(octree1->linkE)) {
 								// две четверные стороны прилегают друг к дружке.
-								octree1->maxEsosed = 1;
+								octree1->maxEneighbour = 1;
 							}
 							else {
 								// других вариантов быть не может, здесь только 4.
@@ -13657,28 +13662,28 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								// других вариантов быть не может, здесь только 4.
-								//octree1->maxEsosed = 4;
-								octree1->maxEsosed = c7;
+								//octree1->maxEneighbour = 4;
+								octree1->maxEneighbour = c7;
 							}
 						}
 						else {
 							// 0 остаётся 0.
-							octree1->maxEsosed = 0;
+							octree1->maxEneighbour = 0;
 						}
 					}
 					else {
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkE->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkE)) {
 						// 1 остаётся 1.
-						octree1->maxEsosed = 1;
+						octree1->maxEneighbour = 1;
 					}
 					else if (is_null1(octree1->linkE)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxEsosed = 4;
+						octree1->maxEneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13687,20 +13692,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxEsosed = 4;
-						octree1->maxEsosed = c7 + c0 + c4 + c3;
+						//octree1->maxEneighbour = 4;
+						octree1->maxEneighbour = c7 + c0 + c4 + c3;
 					}
 				}
 			}
 			else {
 				// nullptr
 				// 0 остаётся 0.
-				octree1->maxEsosed = 0;
+				octree1->maxEneighbour = 0;
 			}
 		}
 
 		if (octree1->b4W) { // +
-			Wmultisosed_patch(octree1);
+			Wmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkW != nullptr) {
@@ -13711,11 +13716,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkW)) {
 						// 1 остаётся 1.
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13724,19 +13729,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxWsosed = 4;
-						octree1->maxWsosed = c6;
+						//octree1->maxWneighbour = 4;
+						octree1->maxWneighbour = c6;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkW->ilevel) {
 					// На одинаковых уровнях
 					if (is_null(octree1->linkW)) {
 						// 1 остаётся 1.
-						octree1->maxWsosed = 1;
+						octree1->maxWneighbour = 1;
 					}
 					else if (is_null1(octree1->linkW)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxWsosed = 4;
+						octree1->maxWneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13745,20 +13750,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxWsosed = 4;
-						octree1->maxWsosed = c6 + c1 + c5 + c2;
+						//octree1->maxWneighbour = 4;
+						octree1->maxWneighbour = c6 + c1 + c5 + c2;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxWsosed = 0;
+				octree1->maxWneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4N) { // +
-			Nmultisosed_patch(octree1);
+			Nmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkN != nullptr) {
@@ -13768,11 +13773,11 @@ void log_cs(octTree* &octree1) {
 
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13781,19 +13786,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c4;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c4;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkN->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkN)) {
 						// 1 остаётся 1.
-						octree1->maxNsosed = 1;
+						octree1->maxNneighbour = 1;
 					}
 					else if (is_null1(octree1->linkN)) {
 						// Единичка прилегает к четвертушке.
-						octree1->maxNsosed = 4;
+						octree1->maxNneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13802,20 +13807,20 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxNsosed = 4;
-						octree1->maxNsosed = c4 + c0 + c1 + c5;
+						//octree1->maxNneighbour = 4;
+						octree1->maxNneighbour = c4 + c0 + c1 + c5;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxNsosed = 0;
+				octree1->maxNneighbour = 0;
 			}
 		}
 
 
 		if (octree1->b4T) { // + 2.sept.2016 15:57
-			Tmultisosed_patch(octree1);
+			Tmultineighbour_patch(octree1);
 		}
 		else {
 			if (octree1->linkT != nullptr) {
@@ -13824,11 +13829,11 @@ void log_cs(octTree* &octree1) {
 					// На разных уровнях.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// две четверные стороны прилегают друг к дружке.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13837,19 +13842,19 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c3;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c3;
 					}
 				}
 				else if (octree1->ilevel == octree1->linkT->ilevel) {
 					// На одинаковых уровнях.
 					if (is_null(octree1->linkT)) {
 						// 1 остаётся 1.
-						octree1->maxTsosed = 1;
+						octree1->maxTneighbour = 1;
 					}
 					else if (is_null1(octree1->linkT)) {
 						// Единичка примыкает к четырём соседяим.
-						octree1->maxTsosed = 4;
+						octree1->maxTneighbour = 4;
 					}
 					else {
 						// других вариантов быть не может, здесь только 4.
@@ -13858,22 +13863,22 @@ void log_cs(octTree* &octree1) {
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
-						//octree1->maxTsosed = 4;
-						octree1->maxTsosed = c3 + c0 + c1 + c2;
+						//octree1->maxTneighbour = 4;
+						octree1->maxTneighbour = c3 + c0 + c1 + c2;
 					}
 				}
 			}
 			else {
 				// 0 остаётся 0.
-				octree1->maxTsosed = 0;
+				octree1->maxTneighbour = 0;
 			}
 		}
 		break;
 	default: 
 #if doubleintprecision == 1
-		printf("error : root=%lld\n", octree1->root);
+		printf("error: root=%lld\n", octree1->root);
 #else
-		printf("error : root=%d\n", octree1->root);
+		printf("error: root=%d\n", octree1->root);
 #endif
 		
 		//system("PAUSE");
@@ -13886,8 +13891,8 @@ void log_cs(octTree* &octree1) {
 }
 
 // После каждого сканирования листьев всего дерева мы должны 
-// восстановить соседвенные связи т.к. они  изменились после дробления.
-void update_max_count_sosed(octTree* &oc) {
+// восстановить соседственные связи т.к. они  изменились после дробления.
+void update_max_count_neighbour(octree* &oc) {
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -13975,7 +13980,7 @@ void update_max_count_sosed(octTree* &oc) {
 				//if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation == true) {
 
 
-					octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+					octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 					// разбиение на 8.
 					//integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
@@ -13990,7 +13995,7 @@ void update_max_count_sosed(octTree* &oc) {
 					top_ALICE_STACK--;
 
 					// octree1 это лист. Situation это ситуация в octree1->parent.
-					//printf("incomming update_max_count_sosed");
+					//printf("incomming update_max_count_neighbour");
 					//system("PAUSE");
 					bool bSituationX = octree1->brootSituationX;
 					bool bSituationY = octree1->brootSituationY;
@@ -14017,19 +14022,19 @@ void update_max_count_sosed(octTree* &oc) {
 
 					// 0 остаётся 0.
 					// Если что-то неопределённое то соседа просто нет
-					octree1->maxTsosed = 0;
-					octree1->maxBsosed = 0;
-					octree1->maxNsosed = 0;
-					octree1->maxSsosed = 0;
-					octree1->maxEsosed = 0;
-					octree1->maxWsosed = 0;
+					octree1->maxTneighbour = 0;
+					octree1->maxBneighbour = 0;
+					octree1->maxNneighbour = 0;
+					octree1->maxSneighbour = 0;
+					octree1->maxEneighbour = 0;
+					octree1->maxWneighbour = 0;
 
 					// работаем с octree1
 					switch (octree1->root) {
 					case 0: 
 
 						if (octree1->b4T) { // + 2.09.2016 12.30
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -14042,16 +14047,16 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkT != nullptr) {
 											if (is_null(octree1->linkT)) {
 												// 1 остаётся 1.
-												octree1->maxTsosed = 1;
+												octree1->maxTneighbour = 1;
 											}
 											else if (is_null1(octree1->linkT)) {
 
 												if ((bonly_dir_X) || (bonly_dir_Y)) {
-													octree1->maxTsosed = 2;
+													octree1->maxTneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxTsosed = 1;
+													octree1->maxTneighbour = 1;
 												}
 											}
 											else {
@@ -14063,28 +14068,28 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_X) || (bonly_dir_Y)) {
 													if (bonly_dir_X) {
 														// дробим только по оси Ох.
-														octree1->maxTsosed = c0 + c3;
+														octree1->maxTneighbour = c0 + c3;
 													}
 													if (bonly_dir_Y) {
 														// дробим только по оси Oy.
-														octree1->maxTsosed = c0 + c1;
+														octree1->maxTneighbour = c0 + c1;
 													}
 												}
 												else {
-													//octree1->maxTsosed = 4;
-													octree1->maxTsosed = c0;
+													//octree1->maxTneighbour = 4;
+													octree1->maxTneighbour = c0;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxTsosed = 0;
+											octree1->maxTneighbour = 0;
 										}
 
 									}
 									else {
 										// это была внутренняя ячейка.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 
 									}
 								}
@@ -14093,10 +14098,10 @@ void update_max_count_sosed(octTree* &oc) {
 									if (octree1->linkT != nullptr) {
 										if (is_null(octree1->linkT)) {
 											// 1 остаётся 1.
-											octree1->maxTsosed = 1;
+											octree1->maxTneighbour = 1;
 										}
 										else if (is_null1(octree1->linkT)) {
-												octree1->maxTsosed = 4;
+												octree1->maxTneighbour = 4;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -14105,25 +14110,25 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											
-												//octree1->maxTsosed = 4;
-												octree1->maxTsosed = c0+c1+c2+c3;
+												//octree1->maxTneighbour = 4;
+												octree1->maxTneighbour = c0+c1+c2+c3;
 										}
 									}
 									else {
 										// 0 остаётся 0.
-										octree1->maxTsosed = 0;
+										octree1->maxTneighbour = 0;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 
 							// root==0	
 							if (octree1->b4N) {// + 2.09.2016 12.30
-								Nmultisosed_patch(octree1);
+								Nmultineighbour_patch(octree1);
 							}
 							else {
 								if (octree1->linkN != nullptr) {
@@ -14135,15 +14140,15 @@ void update_max_count_sosed(octTree* &oc) {
 											if (octree1->linkN != nullptr) {
 												if (is_null(octree1->linkN)) {
 													// 1 остаётся 1.
-													octree1->maxNsosed = 1;
+													octree1->maxNneighbour = 1;
 												}
 												else if (is_null1(octree1->linkN)) {
 													if ((bonly_dir_X) || (bonly_dir_Z)) {
-														octree1->maxNsosed = 2;
+														octree1->maxNneighbour = 2;
 													}
 													else {
 														// две четверные стороны прилегают друг к дружке.
-														octree1->maxNsosed = 1;
+														octree1->maxNneighbour = 1;
 													}
 												}
 												else {
@@ -14154,27 +14159,27 @@ void update_max_count_sosed(octTree* &oc) {
 													is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 													if ((bonly_dir_X) || (bonly_dir_Z)) {
 														if (bonly_dir_X) {
-															octree1->maxNsosed = c0 + c4;
+															octree1->maxNneighbour = c0 + c4;
 														}
 														if (bonly_dir_Z) {
-															octree1->maxNsosed = c0 + c1;
+															octree1->maxNneighbour = c0 + c1;
 														}
 													}
 													else {
 														// других вариантов быть не может, здесь только 4.
-														//octree1->maxNsosed = 4;
-														octree1->maxNsosed = c0;
+														//octree1->maxNneighbour = 4;
+														octree1->maxNneighbour = c0;
 													}
 												}
 											}
 											else {
 												// 0 остаётся 0.
-												octree1->maxNsosed = 0;
+												octree1->maxNneighbour = 0;
 											}
 
 										}
 										else {
-											octree1->maxNsosed = 1;
+											octree1->maxNneighbour = 1;
 										}
 
 									}
@@ -14184,12 +14189,12 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkN != nullptr) {
 											if (is_null(octree1->linkN)) {
 												// 1 остаётся 1.
-												octree1->maxNsosed = 1;
+												octree1->maxNneighbour = 1;
 											}
 											else if (is_null1(octree1->linkN)) {
 
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxNsosed = 4;
+												octree1->maxNneighbour = 4;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14199,28 +14204,28 @@ void update_max_count_sosed(octTree* &oc) {
 												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxNsosed = 4;
-												octree1->maxNsosed = c0 + c1 + c4 + c5;
+												//octree1->maxNneighbour = 4;
+												octree1->maxNneighbour = c0 + c1 + c4 + c5;
 
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxNsosed = 0;
+											octree1->maxNneighbour = 0;
 										}
 
 									}
 								}
 								else {
 									// 0 остаётся 0.
-									octree1->maxNsosed = 0;
+									octree1->maxNneighbour = 0;
 								}
 							}
 
 
 							if (octree1->b4E) {
 								// 4 соседа.
-								Emultisosed_patch(octree1);
+								Emultineighbour_patch(octree1);
 							}
 							else {
 								if (octree1->linkE != nullptr) {
@@ -14233,15 +14238,15 @@ void update_max_count_sosed(octTree* &oc) {
 											if (octree1->linkE != nullptr) {
 												if (is_null(octree1->linkE)) {
 													// 1 остаётся 1.
-													octree1->maxEsosed = 1;
+													octree1->maxEneighbour = 1;
 												}
 												else if (is_null1(octree1->linkE)) {
 													if ((bonly_dir_Z) || (bonly_dir_Y)) {
-														octree1->maxEsosed = 2;
+														octree1->maxEneighbour = 2;
 													}
 													else {
 														// две четверные стороны прилегают друг к дружке.
-														octree1->maxEsosed = 1;
+														octree1->maxEneighbour = 1;
 													}
 												}
 												else {
@@ -14253,28 +14258,28 @@ void update_max_count_sosed(octTree* &oc) {
 													if ((bonly_dir_Y) || (bonly_dir_Z)) {
 														if (bonly_dir_Y) {
 															// дробим только по оси Oy.
-															octree1->maxEsosed = c0 + c4;
+															octree1->maxEneighbour = c0 + c4;
 														}
 														if (bonly_dir_Z) {
 															// дробим только по оси Oz.
-															octree1->maxEsosed = c0 + c3;
+															octree1->maxEneighbour = c0 + c3;
 														}
 													}
 													else {
 														// других вариантов быть не может, здесь только 4.
-														//octree1->maxEsosed = 4;
-														octree1->maxEsosed = c0;
+														//octree1->maxEneighbour = 4;
+														octree1->maxEneighbour = c0;
 													}
 												}
 											}
 											else {
 												// 0 остаётся 0.
-												octree1->maxEsosed = 0;
+												octree1->maxEneighbour = 0;
 											}
 
 										}
 										else {
-											octree1->maxEsosed = 1;
+											octree1->maxEneighbour = 1;
 										}
 									}
 									else if (octree1->ilevel == octree1->linkE->ilevel) {
@@ -14282,11 +14287,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkE != nullptr) {
 											if (is_null(octree1->linkE)) {
 												// 1 остаётся 1.
-												octree1->maxEsosed = 1;
+												octree1->maxEneighbour = 1;
 											}
 											else if (is_null1(octree1->linkE)) {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxEsosed = 4;
+													octree1->maxEneighbour = 4;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14296,27 +14301,27 @@ void update_max_count_sosed(octTree* &oc) {
 												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												
 													// других вариантов быть не может, здесь только 4.
-													//octree1->maxEsosed = 4;
-													octree1->maxEsosed = c0+c3+c4+c7;
+													//octree1->maxEneighbour = 4;
+													octree1->maxEneighbour = c0+c3+c4+c7;
 												
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxEsosed = 0;
+											octree1->maxEneighbour = 0;
 										}
 									}
 								}
 								else {
 									// nullptr 
 									// 0 остаётся 0.
-									octree1->maxEsosed = 0;
+									octree1->maxEneighbour = 0;
 								}
 							}
 
 							if (octree1->b4W) {
 								// 4 соседа.
-								Wmultisosed_patch(octree1);
+								Wmultineighbour_patch(octree1);
 							}
 							else {
 								// Должно быть уменьшение при дроблении:
@@ -14328,11 +14333,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 											if (is_null(octree1->linkW)) {
 												// 1 остаётся 1.
-												octree1->maxWsosed = 1;
+												octree1->maxWneighbour = 1;
 											}
 											else if (is_null1(octree1->linkW)) {
 												// двойная прилегает к четверной.
-												octree1->maxWsosed = 2;
+												octree1->maxWneighbour = 2;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14340,17 +14345,17 @@ void update_max_count_sosed(octTree* &oc) {
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-												octree1->maxWsosed = c1 + c2;
+												octree1->maxWneighbour = c1 + c2;
 											}
 										}
 										else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 											if (is_null(octree1->linkW)) {
 												// 1 остаётся 1.
-												octree1->maxWsosed = 1;
+												octree1->maxWneighbour = 1;
 											}
 											else if (is_null1(octree1->linkW)) {
 												// двойная прилегает к четверной.
-												octree1->maxWsosed = 2;
+												octree1->maxWneighbour = 2;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14358,24 +14363,24 @@ void update_max_count_sosed(octTree* &oc) {
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-												octree1->maxWsosed = c1 + c5;
+												octree1->maxWneighbour = c1 + c5;
 											}
 										}
 										else {
 											if (is_null(octree1->linkW)) {
 												// 1 остаётся 1.
-												octree1->maxWsosed = 1;
+												octree1->maxWneighbour = 1;
 											}
 											else if (is_null1(octree1->linkW)) {
 												if (bonly_dir_Y){
-													octree1->maxWsosed = 2;
+													octree1->maxWneighbour = 2;
 												}
 												else if (bonly_dir_Z) {
-													octree1->maxWsosed = 2;
+													octree1->maxWneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxWsosed = 1;
+													octree1->maxWneighbour = 1;
 												}
 											}
 											else {
@@ -14385,15 +14390,15 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxWsosed = 4;
+												//octree1->maxWneighbour = 4;
 												if (bonly_dir_Y) {
-													octree1->maxWsosed = c1 + c5;
+													octree1->maxWneighbour = c1 + c5;
 												}
 												else if (bonly_dir_Z) {
-													octree1->maxWsosed = c1 + c2;
+													octree1->maxWneighbour = c1 + c2;
 												}
 												else {
-													octree1->maxWsosed = c1;
+													octree1->maxWneighbour = c1;
 												}
 
 											}
@@ -14403,11 +14408,11 @@ void update_max_count_sosed(octTree* &oc) {
 										// На одном уровне.
 										if (is_null(octree1->linkW)) {
 											// 1 остаётся 1.
-											octree1->maxWsosed = 1;
+											octree1->maxWneighbour = 1;
 										}
 										else if (is_null1(octree1->linkW)) {
 											// две четверные стороны прилегают друг к дружке.
-											octree1->maxWsosed = 4;
+											octree1->maxWneighbour = 4;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -14416,22 +14421,22 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxWsosed = 4;
-											octree1->maxWsosed = c1+c2+c5+c6;
+											//octree1->maxWneighbour = 4;
+											octree1->maxWneighbour = c1+c2+c5+c6;
 
 										}
 									}
 								}
 								else {
 									// 0 остаётся 0.
-									octree1->maxWsosed = 0; 
+									octree1->maxWneighbour = 0; 
 								}
 							}
 
 
 							if (octree1->b4S) {
 								// 4 соседа.
-								Smultisosed_patch(octree1);
+								Smultineighbour_patch(octree1);
 							}
 							else {
 								if (octree1->linkS != nullptr) {
@@ -14443,11 +14448,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 											if (is_null(octree1->linkS)) {
 												// 1 остаётся 1.
-												octree1->maxSsosed = 1;
+												octree1->maxSneighbour = 1;
 											}
 											else if (is_null1(octree1->linkS)) {
 												// двойная прилегает к четверной.
-												octree1->maxSsosed = 2;
+												octree1->maxSneighbour = 2;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14455,17 +14460,17 @@ void update_max_count_sosed(octTree* &oc) {
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-												octree1->maxSsosed = c3 + c2;
+												octree1->maxSneighbour = c3 + c2;
 											}
 										}
 										else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 											if (is_null(octree1->linkS)) {
 												// 1 остаётся 1.
-												octree1->maxSsosed = 1;
+												octree1->maxSneighbour = 1;
 											}
 											else if (is_null1(octree1->linkS)) {
 												// двойная прилегает к четверной.
-												octree1->maxSsosed = 2;
+												octree1->maxSneighbour = 2;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14473,24 +14478,24 @@ void update_max_count_sosed(octTree* &oc) {
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-												octree1->maxSsosed = c3 + c7;
+												octree1->maxSneighbour = c3 + c7;
 											}
 										}
 										else {
 											if (is_null(octree1->linkS)) {
 												// 1 остаётся 1.
-												octree1->maxSsosed = 1;
+												octree1->maxSneighbour = 1;
 											}
 											else if (is_null1(octree1->linkS)) {
 												if (bonly_dir_Z) {
-													octree1->maxSsosed = 2;
+													octree1->maxSneighbour = 2;
 												}
 												else if (bonly_dir_X) {
-													octree1->maxSsosed = 2;
+													octree1->maxSneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxSsosed = 1;
+													octree1->maxSneighbour = 1;
 												}
 											}
 											else {
@@ -14501,14 +14506,14 @@ void update_max_count_sosed(octTree* &oc) {
 												is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												if (bonly_dir_Z) {
-													octree1->maxSsosed = c3 + c2;
+													octree1->maxSneighbour = c3 + c2;
 												}
 												else if (bonly_dir_X) {
-													octree1->maxSsosed = c3 + c7;
+													octree1->maxSneighbour = c3 + c7;
 												}
 												else {
-													//octree1->maxSsosed = 4;
-													octree1->maxSsosed = c3;
+													//octree1->maxSneighbour = 4;
+													octree1->maxSneighbour = c3;
 												}
 											}
 										}
@@ -14517,11 +14522,11 @@ void update_max_count_sosed(octTree* &oc) {
 										// На одном уровне.
 										if (is_null(octree1->linkS)) {
 											// 1 остаётся 1.
-											octree1->maxSsosed = 1;
+											octree1->maxSneighbour = 1;
 										}
 										else if (is_null1(octree1->linkS)) {
 											// Один контачит с четырьмя.
-												octree1->maxSsosed = 4;
+												octree1->maxSneighbour = 4;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -14531,20 +14536,20 @@ void update_max_count_sosed(octTree* &oc) {
 											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											
-											//octree1->maxSsosed = 4;
-											octree1->maxSsosed = c3+c2+c6+c7;
+											//octree1->maxSneighbour = 4;
+											octree1->maxSneighbour = c3+c2+c6+c7;
 										}
 									}
 								}
 								else {
 									// 0 остаётся 0.
-									octree1->maxSsosed = 0;
+									octree1->maxSneighbour = 0;
 								}
 							}
 
 							if (octree1->b4B) {
 								// 4 соседа.
-								Bmultisosed_patch(octree1);
+								Bmultineighbour_patch(octree1);
 							}
 							else {
 								if (octree1->linkB != nullptr) {
@@ -14556,11 +14561,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 											if (is_null(octree1->linkB)) {
 												// 1 остаётся 1.
-												octree1->maxBsosed = 1;
+												octree1->maxBneighbour = 1;
 											}
 											else if (is_null1(octree1->linkB)) {
 												// двойная прилегает к четверной.
-												octree1->maxBsosed = 2;
+												octree1->maxBneighbour = 2;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14568,17 +14573,17 @@ void update_max_count_sosed(octTree* &oc) {
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-												octree1->maxBsosed = c4 + c7;
+												octree1->maxBneighbour = c4 + c7;
 											}
 										}
 										else if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 											if (is_null(octree1->linkB)) {
 												// 1 остаётся 1.
-												octree1->maxBsosed = 1;
+												octree1->maxBneighbour = 1;
 											}
 											else if (is_null1(octree1->linkB)) {
 												// двойная прилегает к четверной.
-												octree1->maxBsosed = 2;
+												octree1->maxBneighbour = 2;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -14586,24 +14591,24 @@ void update_max_count_sosed(octTree* &oc) {
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-												octree1->maxBsosed = c4 + c5;
+												octree1->maxBneighbour = c4 + c5;
 											}
 										}
 										else {
 											if (is_null(octree1->linkB)) {
 												// 1 остаётся 1.
-												octree1->maxBsosed = 1;
+												octree1->maxBneighbour = 1;
 											}
 											else if (is_null1(octree1->linkB)) {
 												if (bonly_dir_Y) {
-													octree1->maxBsosed = 2;
+													octree1->maxBneighbour = 2;
 												}
 												else if (bonly_dir_X) {
-													octree1->maxBsosed = 2;
+													octree1->maxBneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxBsosed = 1;
+													octree1->maxBneighbour = 1;
 												}
 											}
 											else {
@@ -14613,15 +14618,15 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if (bonly_dir_Y) {
-													octree1->maxBsosed = c4 + c5;
+													octree1->maxBneighbour = c4 + c5;
 												}
 												else if (bonly_dir_X) {
-													octree1->maxBsosed = c4 + c7;
+													octree1->maxBneighbour = c4 + c7;
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
-													//octree1->maxBsosed = 4;
-													octree1->maxBsosed = c4;
+													//octree1->maxBneighbour = 4;
+													octree1->maxBneighbour = c4;
 												}
 											}
 										}
@@ -14629,11 +14634,11 @@ void update_max_count_sosed(octTree* &oc) {
 									else if (octree1->ilevel == octree1->linkB->ilevel) {
 										if (is_null(octree1->linkB)) {
 											// 1 остаётся 1.
-											octree1->maxBsosed = 1;
+											octree1->maxBneighbour = 1;
 										}
 										else if (is_null1(octree1->linkB)) {
 												// однушка прилегает к четырём четвертинкам.
-												octree1->maxBsosed = 4;
+												octree1->maxBneighbour = 4;
 											
 										}
 										else {
@@ -14644,15 +14649,15 @@ void update_max_count_sosed(octTree* &oc) {
 											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxBsosed = 4;
-												octree1->maxBsosed = c4+c5+c6+c7;
+												//octree1->maxBneighbour = 4;
+												octree1->maxBneighbour = c4+c5+c6+c7;
 											
 										}
 									}
 								}
 								else {
 									// 0 остаётся 0.
-									octree1->maxBsosed = 0;
+									octree1->maxBneighbour = 0;
 								}
 							}
 							break;
@@ -14660,7 +14665,7 @@ void update_max_count_sosed(octTree* &oc) {
 
 						if (octree1->b4T) { // +
 							// 4 соседа.
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -14675,15 +14680,15 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkT != nullptr) {
 											if (is_null(octree1->linkT)) {
 												// 1 остаётся 1.
-												octree1->maxTsosed = 1;
+												octree1->maxTneighbour = 1;
 											}
 											else if (is_null1(octree1->linkT)) {
 												if (bonly_dir_X) {
-													octree1->maxTsosed = 2;
+													octree1->maxTneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxTsosed = 1;
+													octree1->maxTneighbour = 1;
 												}
 											}
 											else {
@@ -14695,35 +14700,35 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_X)) {
 													//if (bonly_dir_X) {
 														// дробим только по оси Oy.
-														octree1->maxTsosed = c1 + c2;
+														octree1->maxTneighbour = c1 + c2;
 													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
 													// может быть  2, 4, 5, 8
-													//octree1->maxTsosed = 4;
-													octree1->maxTsosed = c1;
+													//octree1->maxTneighbour = 4;
+													octree1->maxTneighbour = c1;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxTsosed = 0;
+											octree1->maxTneighbour = 0;
 										}
 									}
 									else {
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkT->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 											// однушка прилегает к четвертушке.
-											octree1->maxTsosed = 4;
+											octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -14734,8 +14739,8 @@ void update_max_count_sosed(octTree* &oc) {
 										
 											// других вариантов быть не может, здесь только 4.
 											// может быть  2, 4, 5, 8
-											//octree1->maxTsosed = 4;
-											octree1->maxTsosed = c1+c0+c2+c3;
+											//octree1->maxTneighbour = 4;
+											octree1->maxTneighbour = c1+c0+c2+c3;
 										
 									}
 								}
@@ -14743,13 +14748,13 @@ void update_max_count_sosed(octTree* &oc) {
 							else {
 								// nullptr
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 
 						if (octree1->b4N) { // + 2.sept.2016 13.59
 							// 4 соседа.
-							Nmultisosed_patch(octree1);
+							Nmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkN != nullptr) {
@@ -14762,15 +14767,15 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkN != nullptr) {
 											if (is_null(octree1->linkN)) {
 												// 1 остаётся 1.
-												octree1->maxNsosed = 1;
+												octree1->maxNneighbour = 1;
 											}
 											else if (is_null1(octree1->linkN)) {
 												if (bonly_dir_X) {
-													octree1->maxNsosed = 2;
+													octree1->maxNneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxNsosed = 1;
+													octree1->maxNneighbour = 1;
 												}
 											}
 											else {
@@ -14782,24 +14787,24 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_X)) {
 													//if (bonly_dir_X) {
 														// дробим только по оси Oy.
-														octree1->maxNsosed = c1 + c5;
+														octree1->maxNneighbour = c1 + c5;
 													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
-													//octree1->maxNsosed = 4;
-													octree1->maxNsosed = c1;
+													//octree1->maxNneighbour = 4;
+													octree1->maxNneighbour = c1;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxNsosed = 0;
+											octree1->maxNneighbour = 0;
 										}
 
 									}
 									else {
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkN->ilevel) {
@@ -14807,11 +14812,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 4;
+										octree1->maxNneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -14821,8 +14826,8 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c1+c0+c4+c5;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c1+c0+c4+c5;
 										
 									}
 								}
@@ -14830,29 +14835,29 @@ void update_max_count_sosed(octTree* &oc) {
 							else {
 								// nullptr.
 								// 0 остаётся 0.
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 						}
 
 						if (octree1->b4W) { // + 2.sept.2016 13.30
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
 								//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkW->ilevel) {
 									// на разных уровнях.
-									octree1->maxWsosed = 1;
+									octree1->maxWneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkW->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkW)) {
 										// 1 остается 1
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxWsosed = 4;
+										octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -14861,14 +14866,14 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxWsosed = c1+c2+c5+c6;
+										//octree1->maxEneighbour = 4;
+										octree1->maxWneighbour = c1+c2+c5+c6;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 						
@@ -14876,7 +14881,7 @@ void update_max_count_sosed(octTree* &oc) {
 
 						if (octree1->b4E) {// +
 							// 4 соседа.
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							// Должно быть уменьшение при дроблении:
@@ -14887,11 +14892,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -14900,19 +14905,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c0;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c0;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 4;
+										octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -14921,21 +14926,21 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c0+c3+c4+c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c0+c3+c4+c7;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4S) {// +
 							// 4 соседа.
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
@@ -14947,11 +14952,11 @@ void update_max_count_sosed(octTree* &oc) {
 									if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 										if (is_null(octree1->linkS)) {
 											// 1 остаётся 1.
-											octree1->maxSsosed = 1;
+											octree1->maxSneighbour = 1;
 										}
 										else if (is_null1(octree1->linkS)) {
 											// двойная прилегает к четверной.
-											octree1->maxSsosed = 2;
+											octree1->maxSneighbour = 2;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -14959,21 +14964,21 @@ void update_max_count_sosed(octTree* &oc) {
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-											octree1->maxSsosed = c2 + c6;
+											octree1->maxSneighbour = c2 + c6;
 										}
 									}
 									else {
 										if (is_null(octree1->linkS)) {
 											// 1 остаётся 1.
-											octree1->maxSsosed = 1;
+											octree1->maxSneighbour = 1;
 										}
 										else if (is_null1(octree1->linkS)) {
 											if (bonly_dir_X) {
-												octree1->maxSsosed = 2;
+												octree1->maxSneighbour = 2;
 											}
 											else {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxSsosed = 1;
+												octree1->maxSneighbour = 1;
 											}
 										}
 										else {
@@ -14983,12 +14988,12 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_X) {
-												octree1->maxSsosed = c2 + c6;
+												octree1->maxSneighbour = c2 + c6;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxSsosed = 4;
-												octree1->maxSsosed = c2;
+												//octree1->maxSneighbour = 4;
+												octree1->maxSneighbour = c2;
 											}
 										}
 									}
@@ -14997,11 +15002,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На одном уровне.
 									if (is_null(octree1->linkS)) {
 										// 1 остаётся 1.
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 											// однушка прилегает к четвертушке.
-											octree1->maxSsosed = 4;
+											octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15011,21 +15016,21 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxSsosed = 4;
-										octree1->maxSsosed = c2+c3+c6+c7;
+										//octree1->maxSneighbour = 4;
+										octree1->maxSneighbour = c2+c3+c6+c7;
 										
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 						if (octree1->b4B) {// +
 							// 4 соседа.
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
@@ -15037,11 +15042,11 @@ void update_max_count_sosed(octTree* &oc) {
 									if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 										if (is_null(octree1->linkB)) {
 											// 1 остаётся 1.
-											octree1->maxBsosed = 1;
+											octree1->maxBneighbour = 1;
 										}
 										else if (is_null1(octree1->linkB)) {
 											// двойная прилегает к четверной.
-											octree1->maxBsosed = 2;
+											octree1->maxBneighbour = 2;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -15049,21 +15054,21 @@ void update_max_count_sosed(octTree* &oc) {
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-											octree1->maxBsosed = c5 + c6;
+											octree1->maxBneighbour = c5 + c6;
 										}
 									}
 									else {
 										if (is_null(octree1->linkB)) {
 											// 1 остаётся 1.
-											octree1->maxBsosed = 1;
+											octree1->maxBneighbour = 1;
 										}
 										else if (is_null1(octree1->linkB)) {
 											if (bonly_dir_X) {
-												octree1->maxBsosed = 2;
+												octree1->maxBneighbour = 2;
 											}
 											else {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxBsosed = 1;
+												octree1->maxBneighbour = 1;
 											}
 										}
 										else {
@@ -15073,12 +15078,12 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_X) {
-												octree1->maxBsosed = c5 + c6;
+												octree1->maxBneighbour = c5 + c6;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxBsosed = 4;
-												octree1->maxBsosed = c5;
+												//octree1->maxBneighbour = 4;
+												octree1->maxBneighbour = c5;
 											}
 										}
 									}
@@ -15087,11 +15092,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остаётся 1.
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 											// однушка прилегает к четветушке.
-											octree1->maxBsosed = 4;
+											octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15101,15 +15106,15 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxBsosed = 4;
-											octree1->maxBsosed = c5+c4+c6+c7;
+											//octree1->maxBneighbour = 4;
+											octree1->maxBneighbour = c5+c4+c6+c7;
 										
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 						break;
@@ -15118,7 +15123,7 @@ void update_max_count_sosed(octTree* &oc) {
 
 						if (octree1->b4T) { // +
 							// 4 соседа.
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 
@@ -15135,11 +15140,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkT != nullptr) {
 											if (is_null(octree1->linkT)) {
 												// 1 остаётся 1.
-												octree1->maxTsosed = 1;
+												octree1->maxTneighbour = 1;
 											}
 											else if (is_null1(octree1->linkT)) {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxTsosed = 1;
+												octree1->maxTneighbour = 1;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -15148,18 +15153,18 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxTsosed = 4;
-												octree1->maxTsosed = c2;
+												//octree1->maxTneighbour = 4;
+												octree1->maxTneighbour = c2;
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxTsosed = 0;
+											octree1->maxTneighbour = 0;
 										}
 
 									}
 									else {
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkT->ilevel) {
@@ -15167,11 +15172,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxTsosed = 4;
+										octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15180,8 +15185,8 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c2 + c0 + c1 + c3;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c2 + c0 + c1 + c3;
 									}
 								}
 
@@ -15189,31 +15194,31 @@ void update_max_count_sosed(octTree* &oc) {
 							else {
 								// nullptr
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 
 
 						
 						if (octree1->b4S) { // + 2.sept.2016 13.30
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
 								//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkS->ilevel) {
 									// на разных уровнях.
-									octree1->maxSsosed = 1;
+									octree1->maxSneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkS->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkS)) {
 										// 1 остается 1
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxSsosed = 4;
+										octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15222,37 +15227,37 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxSsosed = c6 + c7 + c2 + c3;
+										//octree1->maxEneighbour = 4;
+										octree1->maxSneighbour = c6 + c7 + c2 + c3;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4W) { // + 2.sept.2016 13.30
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
 								//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkW->ilevel) {
 								    // на разных уровнях.
-									octree1->maxWsosed = 1;
+									octree1->maxWneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkW->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkW)) {
 										// 1 остается 1
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxWsosed = 4;
+										octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15261,21 +15266,21 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxWsosed = c1 + c2 + c5 + c6;
+										//octree1->maxEneighbour = 4;
+										octree1->maxWneighbour = c1 + c2 + c5 + c6;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4E) { // + 2.sept.2016 14:27
 							// 4 соседа.
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							// Должно быть уменьшение при дроблении:
@@ -15286,11 +15291,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15299,19 +15304,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c3;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c3;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 4;
+										octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15320,21 +15325,21 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c3 + c0 + c4 + c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c3 + c0 + c4 + c7;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4N) {// + 
 							// 4 соседа.
-							Nmultisosed_patch(octree1);
+							Nmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkN != nullptr) {
@@ -15344,11 +15349,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15358,19 +15363,19 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c1;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkN->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 4;
+										octree1->maxNneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15380,21 +15385,21 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c1 + c0 + c4 + c5;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c1 + c0 + c4 + c5;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4B) {
 							// 4 соседа.
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
@@ -15403,11 +15408,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkB)) {
 										// 1 остаётся 1.
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15416,19 +15421,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxBsosed = 4;
-										octree1->maxBsosed = c6;
+										//octree1->maxBneighbour = 4;
+										octree1->maxBneighbour = c6;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkB->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остаётся 1.
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxBsosed = 4;
+										octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15437,15 +15442,15 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxBsosed = 4;
-										octree1->maxBsosed = c6+c5+c7+c4;
+										//octree1->maxBneighbour = 4;
+										octree1->maxBneighbour = c6+c5+c7+c4;
 									}
 
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 
@@ -15454,7 +15459,7 @@ void update_max_count_sosed(octTree* &oc) {
 					case 3:
 
 						if (octree1->b4T) {  // + 2.september 2016 17:47
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -15469,15 +15474,15 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkT != nullptr) {
 											if (is_null(octree1->linkT)) {
 												// 1 остаётся 1.
-												octree1->maxTsosed = 1;
+												octree1->maxTneighbour = 1;
 											}
 											else if (is_null1(octree1->linkT)) {
 												if (bonly_dir_Y) {
-													octree1->maxTsosed = 2;
+													octree1->maxTneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxTsosed = 1;
+													octree1->maxTneighbour = 1;
 												}
 											}
 											else {
@@ -15489,37 +15494,37 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_Y)) {
 													//if (bonly_dir_Y) {
 														// дробим только по оси Oy.
-														octree1->maxTsosed = c3 + c2;
+														octree1->maxTneighbour = c3 + c2;
 													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
 													// может быть 2, 4, 5, 8.
-													//octree1->maxTsosed = 4;
-													octree1->maxTsosed = c3;
+													//octree1->maxTneighbour = 4;
+													octree1->maxTneighbour = c3;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxTsosed = 0;
+											octree1->maxTneighbour = 0;
 										}
 
 									}
 									else {
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkT->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										
 											// Целая прилегает к четырём четвертинкам.
-											octree1->maxTsosed = 4;
+											octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15530,38 +15535,38 @@ void update_max_count_sosed(octTree* &oc) {
 										
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8.
-											//octree1->maxTsosed = 4;
-											octree1->maxTsosed = c3 + c0 + c1 + c2;
+											//octree1->maxTneighbour = 4;
+											octree1->maxTneighbour = c3 + c0 + c1 + c2;
 									}
 								}
 							}
 							else {
 								// nullptr:
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 						
 
 						if (octree1->b4S) { // + 2.sept.2016 13.30
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
 								//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkS->ilevel) {
 								    // на разных уровнях.
-									octree1->maxSsosed = 1;
+									octree1->maxSneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkS->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkS)) {
 										// 1 остается 1
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxSsosed = 4;
+										octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15570,20 +15575,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxSsosed = c2 + c3 + c6 + c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxSneighbour = c2 + c3 + c6 + c7;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4E) { // + 2.september.2016 17:41
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkE != nullptr) {
@@ -15597,15 +15602,15 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkE != nullptr) {
 											if (is_null(octree1->linkE)) {
 												// 1 остаётся 1.
-												octree1->maxEsosed = 1;
+												octree1->maxEneighbour = 1;
 											}
 											else if (is_null1(octree1->linkE)) {
 												if (bonly_dir_Y) {
-													octree1->maxEsosed = 2;
+													octree1->maxEneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxEsosed = 1;
+													octree1->maxEneighbour = 1;
 												}
 											}
 											else {
@@ -15617,37 +15622,37 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_Y)) {
 													//if (bonly_dir_Y) {
 														// дробим только по оси Oy.
-														octree1->maxEsosed = c3 + c7;
+														octree1->maxEneighbour = c3 + c7;
 													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
 													// Может быть 2, 4, 5, 8
-													//octree1->maxEsosed = 4;
-													octree1->maxEsosed = c3;
+													//octree1->maxEneighbour = 4;
+													octree1->maxEneighbour = c3;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxEsosed = 0;
+											octree1->maxEneighbour = 0;
 										}
 
 									}
 									else {
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										
 											// однушка примыкает к четырем четвертинкам.
-											octree1->maxEsosed = 4;
+											octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15658,20 +15663,20 @@ void update_max_count_sosed(octTree* &oc) {
 										
 											// других вариантов быть не может, здесь только 4.
 											// Может быть 2, 4, 5, 8
-											//octree1->maxEsosed = 4;
-											octree1->maxEsosed = c3 + c0 + c4 + c7;
+											//octree1->maxEneighbour = 4;
+											octree1->maxEneighbour = c3 + c0 + c4 + c7;
 									}
 								}
 							}
 							else {
 								// nullptr;
 								// 0 остаётся 0.
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 						}
 
 						if (octree1->b4W) { // + 2.sept.2016 17:24
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
@@ -15683,11 +15688,11 @@ void update_max_count_sosed(octTree* &oc) {
 									if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 										if (is_null(octree1->linkW)) {
 											// 1 остаётся 1.
-											octree1->maxWsosed = 1;
+											octree1->maxWneighbour = 1;
 										}
 										else if (is_null1(octree1->linkW)) {
 											// двойная прилегает к четверной.
-											octree1->maxWsosed = 2;
+											octree1->maxWneighbour = 2;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -15695,21 +15700,21 @@ void update_max_count_sosed(octTree* &oc) {
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-											octree1->maxWsosed = c2 + c6;
+											octree1->maxWneighbour = c2 + c6;
 										}
 									}
 									else {
 										if (is_null(octree1->linkW)) {
 											// 1 остаётся 1.
-											octree1->maxWsosed = 1;
+											octree1->maxWneighbour = 1;
 										}
 										else if (is_null1(octree1->linkW)) {
 											if (bonly_dir_Y) {
-												octree1->maxWsosed = 2;
+												octree1->maxWneighbour = 2;
 											}
 											else {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxWsosed = 1;
+												octree1->maxWneighbour = 1;
 											}
 										}
 										else {
@@ -15719,12 +15724,12 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxWsosed = 4;
+											//octree1->maxWneighbour = 4;
 											if (bonly_dir_Y) {
-												octree1->maxWsosed = c2 + c6;
+												octree1->maxWneighbour = c2 + c6;
 											}
 											else {
-												octree1->maxWsosed = c2;
+												octree1->maxWneighbour = c2;
 											}
 										}
 									}
@@ -15733,11 +15738,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkW)) {
 										// 1 остаётся 1.
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// однушка примыкает к четырём четвертинкам.
-										octree1->maxWsosed = 4;
+										octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15746,20 +15751,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxWsosed = 4;
+										//octree1->maxWneighbour = 4;
 										
-										octree1->maxWsosed = c2 + c1 + c5 + c6;
+										octree1->maxWneighbour = c2 + c1 + c5 + c6;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 
 						if (octree1->b4N) { // +
-							Nmultisosed_patch(octree1);
+							Nmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkN != nullptr) {
@@ -15770,11 +15775,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15783,19 +15788,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c0;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c0;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkN->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// однушка примыкает к четвертинке.
-										octree1->maxNsosed = 4;
+										octree1->maxNneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15804,20 +15809,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c0 + c1 + c4 + c5;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c0 + c1 + c4 + c5;
 									}
 
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 						}
 
 						if (octree1->b4B) { // +
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
@@ -15827,11 +15832,11 @@ void update_max_count_sosed(octTree* &oc) {
 									if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 										if (is_null(octree1->linkB)) {
 											// 1 остаётся 1.
-											octree1->maxBsosed = 1;
+											octree1->maxBneighbour = 1;
 										}
 										else if (is_null1(octree1->linkB)) {
 											// двойная прилегает к четверной.
-											octree1->maxBsosed = 2;
+											octree1->maxBneighbour = 2;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -15839,21 +15844,21 @@ void update_max_count_sosed(octTree* &oc) {
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-											octree1->maxBsosed = c7 + c6;
+											octree1->maxBneighbour = c7 + c6;
 										}
 									}
 									else {
 										if (is_null(octree1->linkB)) {
 											// 1 остаётся 1.
-											octree1->maxBsosed = 1;
+											octree1->maxBneighbour = 1;
 										}
 										else if (is_null1(octree1->linkB)) {
 											if (bonly_dir_Y) {
-												octree1->maxBsosed = 2;
+												octree1->maxBneighbour = 2;
 											}
 											else {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxBsosed = 1;
+												octree1->maxBneighbour = 1;
 											}
 										}
 										else {
@@ -15863,12 +15868,12 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_Y) {
-												octree1->maxBsosed = c7 + c6;
+												octree1->maxBneighbour = c7 + c6;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxBsosed = 4;
-												octree1->maxBsosed = c7;
+												//octree1->maxBneighbour = 4;
+												octree1->maxBneighbour = c7;
 											}
 										}
 									}
@@ -15877,11 +15882,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остаётся 1.
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxBsosed = 4;
+										octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15891,15 +15896,15 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxBsosed = 4;
-											octree1->maxBsosed = c7+c6+c5+c4;
+											//octree1->maxBneighbour = 4;
+											octree1->maxBneighbour = c7+c6+c5+c4;
 										
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 
@@ -15907,7 +15912,7 @@ void update_max_count_sosed(octTree* &oc) {
 					case 4:
 
 						if (octree1->b4N) { // + 2.september.2016 17:10
-							Nmultisosed_patch(octree1);
+							Nmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkN != nullptr) {
@@ -15921,15 +15926,15 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkN != nullptr) {
 											if (is_null(octree1->linkN)) {
 												// 1 остаётся 1.
-												octree1->maxNsosed = 1;
+												octree1->maxNneighbour = 1;
 											}
 											else if (is_null1(octree1->linkN)) {
 												if (bonly_dir_Z) {
-													octree1->maxNsosed = 2;
+													octree1->maxNneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxNsosed = 1;
+													octree1->maxNneighbour = 1;
 												}
 											}
 											else {
@@ -15941,36 +15946,36 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_Z)) {
 													//if (bonly_dir_Z) {
 														// дробим только по оси Oy.
-														octree1->maxNsosed = c4 + c5;
+														octree1->maxNneighbour = c4 + c5;
 													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
 													// Здесь может быть 2, 4, 5, 8
-													//octree1->maxNsosed = 4;
-													octree1->maxNsosed = c4;
+													//octree1->maxNneighbour = 4;
+													octree1->maxNneighbour = c4;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxNsosed = 0;
+											octree1->maxNneighbour = 0;
 										}
 
 									}
 									else {
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkN->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 											// однушка примыкает к четырём четвертинкам.
-											octree1->maxNsosed = 4;
+											octree1->maxNneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -15981,18 +15986,18 @@ void update_max_count_sosed(octTree* &oc) {
 										
 											// других вариантов быть не может, здесь только 4.
 											// Здесь может быть 2, 4, 5, 8
-											//octree1->maxNsosed = 4;
-											octree1->maxNsosed = c4 + c0 + c1 + c5;
+											//octree1->maxNneighbour = 4;
+											octree1->maxNneighbour = c4 + c0 + c1 + c5;
 										
 									}
 								}
 								/*else {
 								#if doubleintprecision == 1
 									printf("FATAL ERROR! octree1->ilevel=%lld octree1->linkN->ilevel=%lld\n", octree1->ilevel, octree1->linkN->ilevel);
-									printf("octree1->maxNsosed=%lld\n", octree1->maxNsosed);
+									printf("octree1->maxNneighbour=%lld\n", octree1->maxNneighbour);
 								#else
 									printf("FATAL ERROR! octree1->ilevel=%d octree1->linkN->ilevel=%d\n", octree1->ilevel, octree1->linkN->ilevel);
-									printf("octree1->maxNsosed=%d\n", octree1->maxNsosed);
+									printf("octree1->maxNneighbour=%d\n", octree1->maxNneighbour);
 								#endif
 									
 									system("PAUSE");
@@ -16001,12 +16006,12 @@ void update_max_count_sosed(octTree* &oc) {
 							else {
 								// nullptr
 								// 0 остаётся 0.
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 						}
 
 						if (octree1->b4E) { // + 2 sept 2016 16:49
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkE!=nullptr) {
@@ -16019,15 +16024,15 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkE != nullptr) {
 											if (is_null(octree1->linkE)) {
 												// 1 остаётся 1.
-												octree1->maxEsosed = 1;
+												octree1->maxEneighbour = 1;
 											}
 											else if (is_null1(octree1->linkE)) {
 												if (bonly_dir_Z) {
-													octree1->maxEsosed = 2;
+													octree1->maxEneighbour = 2;
 												}
 												else {
 													// две четверные стороны прилегают друг к дружке.
-													octree1->maxEsosed = 1;
+													octree1->maxEneighbour = 1;
 												}
 											}
 											else {
@@ -16039,33 +16044,33 @@ void update_max_count_sosed(octTree* &oc) {
 												if ((bonly_dir_Z)) {
 													//if (bonly_dir_Z) {
 														// дробим только по оси Oy.
-														octree1->maxEsosed = c4 + c7;
+														octree1->maxEneighbour = c4 + c7;
 													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
-													//octree1->maxEsosed = 4;
-													octree1->maxEsosed = c4;
+													//octree1->maxEneighbour = 4;
+													octree1->maxEneighbour = c4;
 												}
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxEsosed = 0;
+											octree1->maxEneighbour = 0;
 										}
 									}
 									else {
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 											// две четверные стороны прилегают друг к дружке.
-											octree1->maxEsosed = 4;
+											octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16075,21 +16080,21 @@ void update_max_count_sosed(octTree* &oc) {
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxEsosed = 4;
-											octree1->maxEsosed = c4+c0+c3+c7;
+											//octree1->maxEneighbour = 4;
+											octree1->maxEneighbour = c4+c0+c3+c7;
 									}
 								}
 								}
 								else {
 									// nullptr
 									// 0 остаётся 0.
-									octree1->maxEsosed = 0;
+									octree1->maxEneighbour = 0;
 								}
 						}
 						
 
 						if (octree1->b4W) { // +
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
@@ -16100,11 +16105,11 @@ void update_max_count_sosed(octTree* &oc) {
 									if (bSituationY && (!bSituationX) && (!bSituationZ)) {
 										if (is_null(octree1->linkW)) {
 											// 1 остаётся 1.
-											octree1->maxWsosed = 1;
+											octree1->maxWneighbour = 1;
 										}
 										else if (is_null1(octree1->linkW)) {
 											// двойная прилегает к четверной.
-											octree1->maxWsosed = 2;
+											octree1->maxWneighbour = 2;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -16112,21 +16117,21 @@ void update_max_count_sosed(octTree* &oc) {
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-											octree1->maxWsosed = c5 + c6;
+											octree1->maxWneighbour = c5 + c6;
 										}
 									}
 									else {
 										if (is_null(octree1->linkW)) {
 											// 1 остаётся 1.
-											octree1->maxWsosed = 1;
+											octree1->maxWneighbour = 1;
 										}
 										else if (is_null1(octree1->linkW)) {
 											if (bonly_dir_Z) {
-												octree1->maxWsosed = 2;
+												octree1->maxWneighbour = 2;
 											}
 											else {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxWsosed = 1;
+												octree1->maxWneighbour = 1;
 											}
 										}
 										else {
@@ -16136,12 +16141,12 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxWsosed = 4;
+											//octree1->maxWneighbour = 4;
 											if (bonly_dir_Z) {
-												octree1->maxWsosed = c5 + c6;
+												octree1->maxWneighbour = c5 + c6;
 											}
 											else {
-												octree1->maxWsosed = c5;
+												octree1->maxWneighbour = c5;
 											}
 										}
 									}
@@ -16150,11 +16155,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На одном уровне.
 									if (is_null(octree1->linkW)) {
 										// 1 остаётся 1.
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 											// однушка примыкает к четвертинкам.
-											octree1->maxWsosed = 4;
+											octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16163,20 +16168,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxWsosed = 4;
+										//octree1->maxWneighbour = 4;
 										
-											octree1->maxWsosed = c5+c1+c2+c6;
+											octree1->maxWneighbour = c5+c1+c2+c6;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 
 						if (octree1->b4S) { // + 2.september. 2016 16:59
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
@@ -16188,11 +16193,11 @@ void update_max_count_sosed(octTree* &oc) {
 									if (bSituationX && (!bSituationY) && (!bSituationZ)) {
 										if (is_null(octree1->linkS)) {
 											// 1 остаётся 1.
-											octree1->maxSsosed = 1;
+											octree1->maxSneighbour = 1;
 										}
 										else if (is_null1(octree1->linkS)) {
 											// двойная прилегает к четверной.
-											octree1->maxSsosed = 2;
+											octree1->maxSneighbour = 2;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -16200,21 +16205,21 @@ void update_max_count_sosed(octTree* &oc) {
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
-											octree1->maxSsosed = c7 + c6;
+											octree1->maxSneighbour = c7 + c6;
 										}
 									}
 									else {
 										if (is_null(octree1->linkS)) {
 											// 1 остаётся 1.
-											octree1->maxSsosed = 1;
+											octree1->maxSneighbour = 1;
 										}
 										else if (is_null1(octree1->linkS)) {
 											if (bonly_dir_Z) {
-												octree1->maxSsosed = 2;
+												octree1->maxSneighbour = 2;
 											}
 											else {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxSsosed = 1;
+												octree1->maxSneighbour = 1;
 											}
 										}
 										else {
@@ -16224,12 +16229,12 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxSsosed = 4;
+											//octree1->maxSneighbour = 4;
 											if (bonly_dir_Z) {
-												octree1->maxSsosed = c7 + c6;
+												octree1->maxSneighbour = c7 + c6;
 											}
 											else {
-												octree1->maxSsosed = c7;
+												octree1->maxSneighbour = c7;
 											}
 										}
 									}
@@ -16238,11 +16243,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На одном уровне.
 									if (is_null(octree1->linkS)) {
 										// 1 остаётся 1.
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 											// однушка примыкает к четырем четвертинкам.
-											octree1->maxSsosed = 4;
+											octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16251,22 +16256,22 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxSsosed = 4;
+										//octree1->maxSneighbour = 4;
 										
-											octree1->maxSsosed = c7+c2+c3+c6;
+											octree1->maxSneighbour = c7+c2+c3+c6;
 										
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4T) { // +
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -16276,11 +16281,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16289,19 +16294,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c0;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c0;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkT->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// однушка примыкает к четырём четвертинкам.
-										octree1->maxTsosed = 4;
+										octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16310,36 +16315,36 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c0 + c1 + c2 + c3;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c0 + c1 + c2 + c3;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 
 						if (octree1->b4B) { // + 2.sept.2016 13.30
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
 								//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkB->ilevel) {
 								    // на разных уровнях.
-									octree1->maxBsosed = 1;
+									octree1->maxBneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkB->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остается 1
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxBsosed = 4;
+										octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16348,14 +16353,14 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxBsosed = c4 + c5 + c6 + c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxBneighbour = c4 + c5 + c6 + c7;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 
@@ -16363,24 +16368,24 @@ void update_max_count_sosed(octTree* &oc) {
 					case 5:
 						
 						if (octree1->b4B) { // + 2.sept.2016 13.30
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
 								//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkB->ilevel) {
 								    // на разных уровнях.
-									octree1->maxBsosed = 1;
+									octree1->maxBneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkB->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остается 1
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxBsosed = 4;
+										octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16389,20 +16394,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxBsosed = c4 + c5 + c6 + c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxBneighbour = c4 + c5 + c6 + c7;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 
 						 
 							if (octree1->b4N) {// + 2.sept.2016 16:18
-								Nmultisosed_patch(octree1);
+								Nmultineighbour_patch(octree1);
 							}
 							else {
 								if (octree1->linkN != nullptr) {
@@ -16413,11 +16418,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (bSituationY) {
 											if (is_null(octree1->linkN)) {
 												// 1 остаётся 1.
-												octree1->maxNsosed = 1;
+												octree1->maxNneighbour = 1;
 											}
 											else if (is_null1(octree1->linkN)) {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxNsosed = 1;
+												octree1->maxNneighbour = 1;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -16426,23 +16431,23 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxNsosed = 4;
-												octree1->maxNsosed = c5;
+												//octree1->maxNneighbour = 4;
+												octree1->maxNneighbour = c5;
 											}
 										}
 										else {
-											octree1->maxNsosed = 1;
+											octree1->maxNneighbour = 1;
 										}
 									}
 									else if (octree1->ilevel == octree1->linkN->ilevel) {
 										// На одинаковых уровнях.
 										if (is_null(octree1->linkN)) {
 											// 1 остаётся 1.
-											octree1->maxNsosed = 1;
+											octree1->maxNneighbour = 1;
 										}
 										else if (is_null1(octree1->linkN)) {
 											// одна ячейка прилегает к четверной.
-											octree1->maxNsosed = 4;
+											octree1->maxNneighbour = 4;
 										}
 										else {
 											// других вариантов быть не может, здесь только 4.
@@ -16451,15 +16456,15 @@ void update_max_count_sosed(octTree* &oc) {
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 											is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
-											//octree1->maxNsosed = 4;
-											octree1->maxNsosed = c5 + c0 + c1 + c4;
+											//octree1->maxNneighbour = 4;
+											octree1->maxNneighbour = c5 + c0 + c1 + c4;
 										}
 
 									}
 								}
 								else {
 									// 0 остаётся 0.
-									octree1->maxNsosed = 0;
+									octree1->maxNneighbour = 0;
 								}
 							}
 						
@@ -16467,24 +16472,24 @@ void update_max_count_sosed(octTree* &oc) {
 
 						
 						if (octree1->b4W) { // + 2.sept.2016 13.30
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
 								//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkW->ilevel) {
 									// на разных уровнях.
-									octree1->maxWsosed = 1;
+									octree1->maxWneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkW->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkW)) {
 										// 1 остается 1
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxWsosed = 4;
+										octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16493,21 +16498,21 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxWsosed = c1 + c2 + c5 + c6;
+										//octree1->maxEneighbour = 4;
+										octree1->maxWneighbour = c1 + c2 + c5 + c6;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 
 
 
 						if (octree1->b4E) { // +
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkE != nullptr) {
@@ -16517,11 +16522,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16530,18 +16535,18 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c4;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c4;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// одинарная ячейка прилегает к четверной.
-										octree1->maxEsosed = 4;
+										octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16550,19 +16555,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c4+c0+c3+c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c4+c0+c3+c7;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 						}
 
 						if (octree1->b4S) { // +
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
@@ -16571,11 +16576,11 @@ void update_max_count_sosed(octTree* &oc) {
 								    // На разных уровнях.
 									if (is_null(octree1->linkS)) {
 										// 1 остаётся 1.
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16584,19 +16589,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxSsosed = 4;
-										octree1->maxSsosed = c6;
+										//octree1->maxSneighbour = 4;
+										octree1->maxSneighbour = c6;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkS->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkS)) {
 										// 1 остаётся 1.
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 										// однва ячейка прилегает к четыврём.
-										octree1->maxSsosed = 4;
+										octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16605,19 +16610,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxSsosed = 4;
-										octree1->maxSsosed = c6 + c2 + c3 + c7;
+										//octree1->maxSneighbour = 4;
+										octree1->maxSneighbour = c6 + c2 + c3 + c7;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 						if (octree1->b4T) { // + 2 september 2016 16:14
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -16628,11 +16633,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1; // octree1->maxTsosed;
+										octree1->maxTneighbour = 1; // octree1->maxTneighbour;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16641,19 +16646,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c1;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkT->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1; // octree1->maxTsosed;
+										octree1->maxTneighbour = 1; // octree1->maxTneighbour;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// одинарная ячейка прилегает к четверной.
-										octree1->maxTsosed = 4;
+										octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16662,14 +16667,14 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c1 + c0 + c2 + c3;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c1 + c0 + c2 + c3;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 
@@ -16677,24 +16682,24 @@ void update_max_count_sosed(octTree* &oc) {
 					case 6:
 						
 						if (octree1->b4B) { // + 2.sept.2016 13.30
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
 								//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkB->ilevel) {
 									// на разных уровнях.
-									octree1->maxBsosed = 1;
+									octree1->maxBneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkB->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остается 1
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxBsosed = 4;
+										octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16703,37 +16708,37 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxBsosed = c4 + c5 + c6 + c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxBneighbour = c4 + c5 + c6 + c7;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4S) { // + 2.sept.2016 13.30
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
 								//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkS->ilevel) {
 								    // на разных уровнях.
-									octree1->maxSsosed = 1;
+									octree1->maxSneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkS->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkS)) {
 										// 1 остается 1
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxSsosed = 4;
+										octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16742,37 +16747,37 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxSsosed = c2 + c3 + c6 + c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxSneighbour = c2 + c3 + c6 + c7;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4W) { // + 2.sept.2016 13.30
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
 								//if (octree1->ilevel - octree1->linkW->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkW->ilevel) {
 								    // на разных уровнях.
-									octree1->maxWsosed = 1;
+									octree1->maxWneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkW->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkW)) {
 										// 1 остается 1
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxWsosed = 4;
+										octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16781,20 +16786,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxWsosed = c1 + c2 + c5 + c6;
+										//octree1->maxEneighbour = 4;
+										octree1->maxWneighbour = c1 + c2 + c5 + c6;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4E) { // +
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkE != nullptr) {
@@ -16804,11 +16809,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16817,19 +16822,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c7;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c7;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									// На одном уровнене.
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 4;
+										octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16838,20 +16843,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c7+c0+c3+c4;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c7+c0+c3+c4;
 									}
 
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 						}
 
 						if (octree1->b4N) {  // +
-							Nmultisosed_patch(octree1);
+							Nmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkN != nullptr) {
@@ -16861,11 +16866,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16874,8 +16879,8 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c5;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c5;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkN->ilevel) {
@@ -16883,11 +16888,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 4;
+										octree1->maxNneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16896,19 +16901,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c5+c0+c1+c4;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c5+c0+c1+c4;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 						}
 
 						if (octree1->b4T) { // + 2 sept 2016 15:33
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -16918,11 +16923,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16931,19 +16936,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c2;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c2;
 									}
 								}
 								else if (octree1->ilevel==octree1->linkT->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxTsosed = 4;
+										octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16952,15 +16957,15 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c2 + c0 + c1 + c3;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c2 + c0 + c1 + c3;
 									}
 
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 						break;
@@ -16968,24 +16973,24 @@ void update_max_count_sosed(octTree* &oc) {
 
 					
 						if (octree1->b4B) { // + 2.sept.2016 13.30
-							Bmultisosed_patch(octree1);
+							Bmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkB != nullptr) {
 								//if (octree1->ilevel - octree1->linkB->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkB->ilevel) {
 								    // на разных уровнях.
-									octree1->maxBsosed = 1;
+									octree1->maxBneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkB->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkB)) {
 										// 1 остается 1
-										octree1->maxBsosed = 1;
+										octree1->maxBneighbour = 1;
 									}
 									else if (is_null1(octree1->linkB)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxBsosed = 4;
+										octree1->maxBneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -16994,37 +16999,37 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxBsosed = c1 + c2 + c5 + c6;
+										//octree1->maxEneighbour = 4;
+										octree1->maxBneighbour = c1 + c2 + c5 + c6;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4S) { // + 2.sept.2016 13.30
-							Smultisosed_patch(octree1);
+							Smultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkS != nullptr) {
 								//if (octree1->ilevel - octree1->linkS->ilevel == 1) {
 								if (octree1->ilevel != octree1->linkS->ilevel) {
 								    // на разных уровнях.
-									octree1->maxSsosed = 1;
+									octree1->maxSneighbour = 1;
 								}
 								else if (octree1->ilevel == octree1->linkS->ilevel) {
 									// На одном уровне.
 									if (is_null(octree1->linkS)) {
 										// 1 остается 1
-										octree1->maxSsosed = 1;
+										octree1->maxSneighbour = 1;
 									}
 									else if (is_null1(octree1->linkS)) {
 										// однушка прилегает к четвертушке.
-										octree1->maxSsosed = 4;
+										octree1->maxSneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17033,19 +17038,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxSsosed = c1 + c2 + c5 + c6;
+										//octree1->maxEneighbour = 4;
+										octree1->maxSneighbour = c1 + c2 + c5 + c6;
 									}
 								}
 							}
 							else {
 								// nullptr 0 остаётся нулём.
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 						}
 
 						if (octree1->b4E) { // +
-							Emultisosed_patch(octree1);
+							Emultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkE != nullptr) {
@@ -17057,11 +17062,11 @@ void update_max_count_sosed(octTree* &oc) {
 										if (octree1->linkE != nullptr) {
 											if (is_null(octree1->linkE)) {
 												// 1 остаётся 1.
-												octree1->maxEsosed = 1;
+												octree1->maxEneighbour = 1;
 											}
 											else if (is_null1(octree1->linkE)) {
 												// две четверные стороны прилегают друг к дружке.
-												octree1->maxEsosed = 1;
+												octree1->maxEneighbour = 1;
 											}
 											else {
 												// других вариантов быть не может, здесь только 4.
@@ -17070,28 +17075,28 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
-												//octree1->maxEsosed = 4;
-												octree1->maxEsosed = c7;
+												//octree1->maxEneighbour = 4;
+												octree1->maxEneighbour = c7;
 											}
 										}
 										else {
 											// 0 остаётся 0.
-											octree1->maxEsosed = 0;
+											octree1->maxEneighbour = 0;
 										}
 									}
 									else {
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkE->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkE)) {
 										// 1 остаётся 1.
-										octree1->maxEsosed = 1;
+										octree1->maxEneighbour = 1;
 									}
 									else if (is_null1(octree1->linkE)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxEsosed = 4;
+										octree1->maxEneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17100,20 +17105,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxEsosed = 4;
-										octree1->maxEsosed = c7+c0+c4+c3;
+										//octree1->maxEneighbour = 4;
+										octree1->maxEneighbour = c7+c0+c4+c3;
 									}
 								}
 						    }
 							else {
 								// nullptr
 								// 0 остаётся 0.
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 						}
 
 						if (octree1->b4W) { // +
-							Wmultisosed_patch(octree1);
+							Wmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkW != nullptr) {
@@ -17124,11 +17129,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkW)) {
 										// 1 остаётся 1.
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17137,19 +17142,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxWsosed = 4;
-										octree1->maxWsosed = c6;
+										//octree1->maxWneighbour = 4;
+										octree1->maxWneighbour = c6;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkW->ilevel) {
 									// На одинаковых уровнях
 									if (is_null(octree1->linkW)) {
 										// 1 остаётся 1.
-										octree1->maxWsosed = 1;
+										octree1->maxWneighbour = 1;
 									}
 									else if (is_null1(octree1->linkW)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxWsosed = 4;
+										octree1->maxWneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17158,20 +17163,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxWsosed = 4;
-										octree1->maxWsosed = c6+c1+c5+c2;
+										//octree1->maxWneighbour = 4;
+										octree1->maxWneighbour = c6+c1+c5+c2;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4N) { // +
-							Nmultisosed_patch(octree1);
+							Nmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkN != nullptr) {
@@ -17181,11 +17186,11 @@ void update_max_count_sosed(octTree* &oc) {
 
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17194,19 +17199,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c4;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c4;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkN->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkN)) {
 										// 1 остаётся 1.
-										octree1->maxNsosed = 1;
+										octree1->maxNneighbour = 1;
 									}
 									else if (is_null1(octree1->linkN)) {
 										// Единичка прилегает к четвертушке.
-										octree1->maxNsosed = 4;
+										octree1->maxNneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17215,20 +17220,20 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxNsosed = 4;
-										octree1->maxNsosed = c4+c0+c1+c5;
+										//octree1->maxNneighbour = 4;
+										octree1->maxNneighbour = c4+c0+c1+c5;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 						}
 
 
 						if (octree1->b4T) { // + 2.sept.2016 15:57
-							Tmultisosed_patch(octree1);
+							Tmultineighbour_patch(octree1);
 						}
 						else {
 							if (octree1->linkT != nullptr) {
@@ -17237,11 +17242,11 @@ void update_max_count_sosed(octTree* &oc) {
 									// На разных уровнях.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// две четверные стороны прилегают друг к дружке.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17250,19 +17255,19 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c3;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c3;
 									}
 								}
 								else if (octree1->ilevel == octree1->linkT->ilevel) {
 									// На одинаковых уровнях.
 									if (is_null(octree1->linkT)) {
 										// 1 остаётся 1.
-										octree1->maxTsosed = 1;
+										octree1->maxTneighbour = 1;
 									}
 									else if (is_null1(octree1->linkT)) {
 										// Единичка примыкает к четырём соседяим.
-										octree1->maxTsosed = 4;
+										octree1->maxTneighbour = 4;
 									}
 									else {
 										// других вариантов быть не может, здесь только 4.
@@ -17271,22 +17276,22 @@ void update_max_count_sosed(octTree* &oc) {
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
-										//octree1->maxTsosed = 4;
-										octree1->maxTsosed = c3 + c0 + c1 + c2;
+										//octree1->maxTneighbour = 4;
+										octree1->maxTneighbour = c3 + c0 + c1 + c2;
 									}
 								}
 							}
 							else {
 								// 0 остаётся 0.
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 						}
 						break;
 					default: 
 #if doubleintprecision == 1
-						printf("error : root=%lld\n", octree1->root);
+						printf("error: root=%lld\n", octree1->root);
 #else
-						printf("error : root=%d\n", octree1->root);
+						printf("error: root=%d\n", octree1->root);
 #endif
 						
 						//system("PAUSE");
@@ -17298,7 +17303,7 @@ void update_max_count_sosed(octTree* &oc) {
 					octree1 = nullptr;
 				//}
 				//else {
-					// Закоментировано 30.08.2016.
+					// закомментировано 30.08.2016.
 					//my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
 					//top_ALICE_STACK--;
 				//}
@@ -17394,12 +17399,12 @@ void update_max_count_sosed(octTree* &oc) {
 		//}
 		//system("PAUSE");
 	}
-} // update_max_count_sosed
+} // update_max_count_neighbour
 
 
 // После каждого сканирования листьев всего дерева мы должны 
-// восстановить соседвенные связи т.к. они  изменились после дробления.
-void update_link_neighbor(octTree* &oc) {
+// восстановить соседственные связи т.к. они  изменились после дробления.
+void update_link_neighbor(octree* &oc) {
 
 	bool bold_stable_version = true;
 
@@ -17487,14 +17492,14 @@ void update_link_neighbor(octTree* &oc) {
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				// Внимание обязательно нужно оставить закоментированным 30.08.2016.
+				// Внимание обязательно нужно оставить закомментированным 30.08.2016.
 				//if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation) 
 				//{
 
-					// Внимание обязательно нужно оставить закоментированным 30.08.2016.
+					// Внимание обязательно нужно оставить закомментированным 30.08.2016.
 					//my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation = false;
 
-					octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+					octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 					// разбиение на 8.
 					//integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
@@ -17517,7 +17522,7 @@ void update_link_neighbor(octTree* &oc) {
 
 						if (octree1->linkE->link0 != nullptr) {
 							if ((octree1->linkE->link1 == nullptr) && (octree1->linkE->link2 == nullptr) && (octree1->linkE->link3 == nullptr) && (octree1->linkE->link4 == nullptr) && (octree1->linkE->link5 == nullptr) && (octree1->linkE->link6 == nullptr) && (octree1->linkE->link7 == nullptr)) {
-								printf("error : octree1->linkE->link0!=nullptr a na samom dele ==nullptr\n");
+								printf("error: octree1->linkE->link0!=nullptr a na samom dele ==nullptr\n");
 								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
@@ -17655,7 +17660,7 @@ void update_link_neighbor(octTree* &oc) {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
-											// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 1,2,5,6
 											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
@@ -18808,7 +18813,7 @@ void update_link_neighbor(octTree* &oc) {
 
 								}
 								else {
-									printf("error : linkE nepravilnje urovni.\n");
+									printf("error: linkE nepravilnje urovni.\n");
 									integer c0 = 0;
 									integer c1 = 0;
 									integer c2 = 0;
@@ -19011,7 +19016,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 							// вырождение по Х
 							// 0,3,4,7 
-							// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 							// Разбита на 8 равных частей:
 							// 1,2,5,6
 							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
@@ -20156,7 +20161,7 @@ void update_link_neighbor(octTree* &oc) {
 					if (octree1->linkW != nullptr) {
 						if (octree1->linkW->link0!=nullptr) {
 							if ((octree1->linkW->link1 == nullptr) && (octree1->linkW->link2 == nullptr) && (octree1->linkW->link3 == nullptr) && (octree1->linkW->link4 == nullptr) && (octree1->linkW->link5 == nullptr) && (octree1->linkW->link6 == nullptr) && (octree1->linkW->link7 == nullptr)) {
-								printf("error : octree1->linkW->link0!=nullptr a na samom dele ==nullptr\n");
+								printf("error: octree1->linkW->link0!=nullptr a na samom dele ==nullptr\n");
 								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
@@ -20288,7 +20293,7 @@ void update_link_neighbor(octTree* &oc) {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
-											// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 0,3,4,7
 											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
@@ -21420,7 +21425,7 @@ void update_link_neighbor(octTree* &oc) {
 								    }
 								}
 								else {
-									printf("error : linkW nepravilnje urovni.\n");
+									printf("error: linkW nepravilnje urovni.\n");
 									integer c0 = 0;
 									integer c1 = 0;
 									integer c2 = 0;
@@ -21624,7 +21629,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 							// вырождение по Х
 							// 0,3,4,7 
-							// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 							// Разбита на 8 равных частей:
 							// 0,3,4,7
 							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
@@ -22761,7 +22766,7 @@ void update_link_neighbor(octTree* &oc) {
 						// если одна содержит дробление.
 						if (octree1->linkN->link0!=nullptr) {
 							if ((octree1->linkN->link1 == nullptr) && (octree1->linkN->link2 == nullptr) && (octree1->linkN->link3 == nullptr) && (octree1->linkN->link4 == nullptr) && (octree1->linkN->link5 == nullptr) && (octree1->linkN->link6 == nullptr) && (octree1->linkN->link7 == nullptr)) {
-								printf("error : octree1->linkN->link0!=nullptr a na samom dele ==nullptr\n");
+								printf("error: octree1->linkN->link0!=nullptr a na samom dele ==nullptr\n");
 								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
@@ -22915,7 +22920,7 @@ void update_link_neighbor(octTree* &oc) {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
-											// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 3,2,6,7
 											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
@@ -24055,7 +24060,7 @@ void update_link_neighbor(octTree* &oc) {
 
 								}
 								else {
-									printf("error : linkN nepravilnje urovni.\n");
+									printf("error: linkN nepravilnje urovni.\n");
 #if doubleintprecision == 1
 									printf("octree1->ilevel=%lld octree1->linkN->ilevel=%lld\n", octree1->ilevel, octree1->linkN->ilevel);
 #else
@@ -24264,7 +24269,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 							// вырождение по Х
 							// 0,3,4,7 
-							// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 							// Разбита на 8 равных частей:
 							// 3,2,6,7
 							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
@@ -25405,7 +25410,7 @@ void update_link_neighbor(octTree* &oc) {
 					if (octree1->linkS != nullptr) {
 						if (octree1->linkS->link0!=nullptr) {
 							if ((octree1->linkS->link1 == nullptr) && (octree1->linkS->link2 == nullptr) && (octree1->linkS->link3 == nullptr) && (octree1->linkS->link4 == nullptr) && (octree1->linkS->link5 == nullptr) && (octree1->linkS->link6 == nullptr) && (octree1->linkS->link7 == nullptr)) {
-								printf("error : octree1->linkS->link0!=nullptr a na samom dele ==nullptr\n");
+								printf("error: octree1->linkS->link0!=nullptr a na samom dele ==nullptr\n");
 								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
@@ -25539,7 +25544,7 @@ void update_link_neighbor(octTree* &oc) {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
-											// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 0,1,4,5
 											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
@@ -26689,7 +26694,7 @@ void update_link_neighbor(octTree* &oc) {
 
 								}
 								else {
-									printf("error : linkS nepravilnje urovni.\n");
+									printf("error: linkS nepravilnje urovni.\n");
 
 									integer c0 = 0;
 									integer c1 = 0;
@@ -26892,7 +26897,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 							// вырождение по Х
 							// 0,3,4,7 
-							// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 							// Разбита на 8 равных частей:
 							// 0,1,4,5
 							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
@@ -28043,7 +28048,7 @@ void update_link_neighbor(octTree* &oc) {
 					if (octree1->linkT != nullptr) {
 						if (octree1->linkT->link0!=nullptr) {
 							if ((octree1->linkT->link1 == nullptr) && (octree1->linkT->link2 == nullptr) && (octree1->linkT->link3 == nullptr) && (octree1->linkT->link4 == nullptr) && (octree1->linkT->link5 == nullptr) && (octree1->linkT->link6 == nullptr) && (octree1->linkT->link7 == nullptr)) {
-								printf("error : octree1->linkT->link0!=nullptr a na samom dele ==nullptr\n");
+								printf("error: octree1->linkT->link0!=nullptr a na samom dele ==nullptr\n");
 								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
@@ -28177,7 +28182,7 @@ void update_link_neighbor(octTree* &oc) {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
-											// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 4,5,6,7
 											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
@@ -29341,7 +29346,7 @@ void update_link_neighbor(octTree* &oc) {
 
 								}
 								else {
-									printf("error : linkT nepravilnje urovni.\n");
+									printf("error: linkT nepravilnje urovni.\n");
 
 									integer c0 = 0;
 									integer c1 = 0;
@@ -29548,7 +29553,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 							// вырождение по Х
 							// 0,3,4,7 
-							// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 							// Разбита на 8 равных частей:
 							// 4,5,6,7
 							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
@@ -30712,7 +30717,7 @@ void update_link_neighbor(octTree* &oc) {
 					if (octree1->linkB != nullptr) {
 						if (octree1->linkB->link0!=nullptr) {
 							if ((octree1->linkB->link1 == nullptr) && (octree1->linkB->link2 == nullptr) && (octree1->linkB->link3 == nullptr) && (octree1->linkB->link4 == nullptr) && (octree1->linkB->link5 == nullptr) && (octree1->linkB->link6 == nullptr) && (octree1->linkB->link7 == nullptr)) {
-								printf("error : octree1->linkB->link0!=nullptr a na samom dele ==nullptr\n");
+								printf("error: octree1->linkB->link0!=nullptr a na samom dele ==nullptr\n");
 								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
@@ -30849,7 +30854,7 @@ void update_link_neighbor(octTree* &oc) {
 										if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 											// вырождение по Х
 											// 0,3,4,7 
-											// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+											// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 											// Разбита на 8 равных частей:
 											// 0,1,2,3
 											if ((!octree1->parent->brootSituationX) && (!octree1->parent->brootSituationY) && (!octree1->parent->brootSituationZ)) {
@@ -32015,7 +32020,7 @@ void update_link_neighbor(octTree* &oc) {
 									}
 								}
 								else {
-									printf("error : linkB nepravilnje urovni.\n");
+									printf("error: linkB nepravilnje urovni.\n");
 
 									integer c0 = 0;
 									integer c1 = 0;
@@ -32218,7 +32223,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
 							// вырождение по Х
 							// 0,3,4,7 
-							// Эквивалентность : (0,1) (3,2) (4,5) (7,6)
+							// Эквивалентность: (0,1) (3,2) (4,5) (7,6)
 							// Разбита на 8 равных частей:
 							// 0,1,2,3
 							if ((!octree1->brootSituationX) && (!octree1->brootSituationY) && (!octree1->brootSituationZ)) {
@@ -33488,7 +33493,7 @@ void update_link_neighbor(octTree* &oc) {
 
 
 
-void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool, BLOCK*& b) {
+void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool, BLOCK*& b) {
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
@@ -33594,7 +33599,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation = true;
 						ikount_list++;
 
-						octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+						octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 						integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
 						integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
 						integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
@@ -33664,7 +33669,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 
 
 						if (bonly_dir_Z) {
-							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxSsosed > 2) || (octree1->maxNsosed > 2)) {
+							if ((octree1->maxWneighbour > 2) || (octree1->maxEneighbour > 2) || (octree1->maxSneighbour > 2) || (octree1->maxNneighbour > 2)) {
 								//printf("bonly_dir_Z\n");
 								//system("PAUSE");
 #if doubleintprecision == 1
@@ -33710,7 +33715,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							top_ALICE_STACK--;
 						}
 						else if (bonly_dir_X) {
-							if ((octree1->maxBsosed > 2) || (octree1->maxTsosed > 2) || (octree1->maxSsosed > 2) || (octree1->maxNsosed > 2)) {
+							if ((octree1->maxBneighbour > 2) || (octree1->maxTneighbour > 2) || (octree1->maxSneighbour > 2) || (octree1->maxNneighbour > 2)) {
 								//	printf("bonly_dir_X\n");
 								//system("PAUSE");
 								integer i_X = 0;
@@ -33721,10 +33726,10 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								if (octree1->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld parent=%lld parent>parent=%lld bonly_dir_X  \n", ikount_dir_X++, octree1->root, octree1->parent->root, octree1->parent->parent->root);
-								printf("sitx=%lld sity=%lld sitz=%lld S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed, octree1->maxEsosed, octree1->maxWsosed, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+								printf("sitx=%lld sity=%lld sitz=%lld S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxEneighbour, octree1->maxWneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 #else
 								printf("%d octree1->root=%d parent=%d parent>parent=%d bonly_dir_X  \n", ikount_dir_X++, octree1->root, octree1->parent->root, octree1->parent->parent->root);
-								printf("sitx=%d sity=%d sitz=%d S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed, octree1->maxEsosed, octree1->maxWsosed, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+								printf("sitx=%d sity=%d sitz=%d S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxEneighbour, octree1->maxWneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 #endif
 								i_X = 0;
 								i_Y = 0;
@@ -33733,9 +33738,9 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								if (octree1->parent->brootSituationY) i_Y = 1;
 								if (octree1->parent->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
-								printf("->parent sitx=%lld sity=%lld sitz=%lld  S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->maxSsosed, octree1->parent->maxNsosed, octree1->parent->maxBsosed, octree1->parent->maxTsosed, octree1->parent->maxEsosed, octree1->parent->maxWsosed, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
+								printf("->parent sitx=%lld sity=%lld sitz=%lld  S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour, octree1->parent->maxEneighbour, octree1->parent->maxWneighbour, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
 #else
-								printf("->parent sitx=%d sity=%d sitz=%d  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->parent->maxSsosed, octree1->parent->maxNsosed, octree1->parent->maxBsosed, octree1->parent->maxTsosed, octree1->parent->maxEsosed, octree1->parent->maxWsosed, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
+								printf("->parent sitx=%d sity=%d sitz=%d  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour, octree1->parent->maxEneighbour, octree1->parent->maxWneighbour, print_link(octree1->parent->linkW), print_link(octree1->parent->linkE), print_link(octree1->parent->linkS), print_link(octree1->parent->linkN), print_link(octree1->parent->linkB), print_link(octree1->parent->linkT));
 #endif
 								i_X = 0;
 								i_Y = 0;
@@ -33744,9 +33749,9 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								if (octree1->parent->parent->brootSituationY) i_Y = 1;
 								if (octree1->parent->parent->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
-								printf("->parent->parent sitx=%lld sity=%lld sitz=%lld  S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSsosed, octree1->parent->parent->maxNsosed, octree1->parent->parent->maxBsosed, octree1->parent->parent->maxTsosed, octree1->parent->parent->maxEsosed, octree1->parent->parent->maxWsosed, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
+								printf("->parent->parent sitx=%lld sity=%lld sitz=%lld  S=%lld N=%lld B=%lld T=%lld E=%lld W=%lld linkW=%lld linkE=%lld linkS=%lld linkN=%lld linkB=%lld linkT=%lld\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxWneighbour, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
 #else
-								printf("->parent->parent sitx=%d sity=%d sitz=%d  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSsosed, octree1->parent->parent->maxNsosed, octree1->parent->parent->maxBsosed, octree1->parent->parent->maxTsosed, octree1->parent->parent->maxEsosed, octree1->parent->parent->maxWsosed, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
+								printf("->parent->parent sitx=%d sity=%d sitz=%d  S=%d N=%d B=%d T=%d E=%d W=%d linkW=%d linkE=%d linkS=%d linkN=%d linkB=%d linkT=%d\n", i_X, i_Y, i_Z, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxWneighbour, print_link(octree1->parent->parent->linkW), print_link(octree1->parent->parent->linkE), print_link(octree1->parent->parent->linkS), print_link(octree1->parent->parent->linkN), print_link(octree1->parent->parent->linkB), print_link(octree1->parent->parent->linkT));
 #endif
 								
 
@@ -33903,7 +33908,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							top_ALICE_STACK--;
 						}
 						else if (bonly_dir_Y) {
-							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxBsosed > 2) || (octree1->maxTsosed > 2)) {
+							if ((octree1->maxWneighbour > 2) || (octree1->maxEneighbour > 2) || (octree1->maxBneighbour > 2) || (octree1->maxTneighbour > 2)) {
 								//printf("bonly_dir_Y\n");
 								//system("PAUSE");
 #if doubleintprecision == 1
@@ -33949,7 +33954,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							top_ALICE_STACK--;
 						}
 						else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
-							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxSsosed > 2) || (octree1->maxNsosed > 2) || (octree1->maxBsosed > 4) || (octree1->maxTsosed > 4)) {
+							if ((octree1->maxWneighbour > 2) || (octree1->maxEneighbour > 2) || (octree1->maxSneighbour > 2) || (octree1->maxNneighbour > 2) || (octree1->maxBneighbour > 4) || (octree1->maxTneighbour > 4)) {
 								//printf("bSituationZ\n");
 								//system("PAUSE");
 #if doubleintprecision == 1
@@ -34011,18 +34016,18 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							top_ALICE_STACK--;
 						}
 						else if (bSituationY && (!bSituationX) && (!bSituationZ)) {
-							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxBsosed > 2) || (octree1->maxTsosed > 2) || (octree1->maxNsosed > 4) || (octree1->maxSsosed > 4)) {
+							if ((octree1->maxWneighbour > 2) || (octree1->maxEneighbour > 2) || (octree1->maxBneighbour > 2) || (octree1->maxTneighbour > 2) || (octree1->maxNneighbour > 4) || (octree1->maxSneighbour > 4)) {
 #if doubleintprecision == 1
-								//	printf("bSituationY: W =%lld E=%lld B=%lld T=%lld\n", octree1->maxWsosed, octree1->maxEsosed, octree1->maxBsosed, octree1->maxTsosed);
+								//	printf("bSituationY: W =%lld E=%lld B=%lld T=%lld\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
 #else
-								//	printf("bSituationY: W =%d E=%d B=%d T=%d\n", octree1->maxWsosed, octree1->maxEsosed, octree1->maxBsosed, octree1->maxTsosed);
+								//	printf("bSituationY: W =%d E=%d B=%d T=%d\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
 #endif
 								//system("PAUSE");
 								// move STACK
 #if doubleintprecision == 1
-								printf("%lld octree1->root=%lld SituationY W=%lld E=%lld B=%lld T=%lld N=%lld S=%lld octree1->parent->root=%lld %lld\n", ikount_sit_Y++, octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxBsosed, octree1->maxTsosed, octree1->maxNsosed, octree1->maxSsosed, octree1->parent->root, octree1->parent->parent->root);
+								printf("%lld octree1->root=%lld SituationY W=%lld E=%lld B=%lld T=%lld N=%lld S=%lld octree1->parent->root=%lld %lld\n", ikount_sit_Y++, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxNneighbour, octree1->maxSneighbour, octree1->parent->root, octree1->parent->parent->root);
 #else
-								printf("%d octree1->root=%d SituationY W=%d E=%d B=%d T=%d N=%d S=%d octree1->parent->root=%d %d\n", ikount_sit_Y++, octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxBsosed, octree1->maxTsosed, octree1->maxNsosed, octree1->maxSsosed, octree1->parent->root, octree1->parent->parent->root);
+								printf("%d octree1->root=%d SituationY W=%d E=%d B=%d T=%d N=%d S=%d octree1->parent->root=%d %d\n", ikount_sit_Y++, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxBneighbour, octree1->maxTneighbour, octree1->maxNneighbour, octree1->maxSneighbour, octree1->parent->root, octree1->parent->parent->root);
 #endif
 								my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
 								top_ALICE_STACK--;
@@ -34076,7 +34081,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							top_ALICE_STACK--;
 						}
 						else if (bSituationX && (!bSituationZ) && (!bSituationY)) {
-							if ((octree1->maxSsosed > 2) || (octree1->maxNsosed > 2) || (octree1->maxBsosed > 2) || (octree1->maxTsosed > 2) || (octree1->maxWsosed > 4) || (octree1->maxEsosed > 4)) {
+							if ((octree1->maxSneighbour > 2) || (octree1->maxNneighbour > 2) || (octree1->maxBneighbour > 2) || (octree1->maxTneighbour > 2) || (octree1->maxWneighbour > 4) || (octree1->maxEneighbour > 4)) {
 								//printf("bSituationX\n");
 								//system("PAUSE");
 								// move STACK
@@ -34135,18 +34140,18 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
 							top_ALICE_STACK--;
 						}
-						else if ((octree1->maxBsosed > 4) || (octree1->maxTsosed > 4) || (octree1->maxWsosed > 4) || (octree1->maxEsosed > 4) || (octree1->maxSsosed > 4) || (octree1->maxNsosed > 4)) {
+						else if ((octree1->maxBneighbour > 4) || (octree1->maxTneighbour > 4) || (octree1->maxWneighbour > 4) || (octree1->maxEneighbour > 4) || (octree1->maxSneighbour > 4) || (octree1->maxNneighbour > 4)) {
 
 							// разбиение на 8.
 
 							if ((minx + 1 == maxx) && (miny + 1 == maxy) && (minz + 1 == maxz)) {
-								printf("fatal error : atomarnaq\n");
+								printf("fatal error: atomarnaq\n");
 #if doubleintprecision == 1
 								printf("root=%lld\n", octree1->root);
-								printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->maxWsosed, octree1->maxEsosed, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed);
+								printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
 #else
 								printf("root=%d\n", octree1->root);
-								printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->maxWsosed, octree1->maxEsosed, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed);
+								printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour);
 #endif
 								integer i_X = 0;
 								integer i_Y = 0;
@@ -34178,10 +34183,10 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								if (octree1->parent != nullptr) {
 #if doubleintprecision == 1
 									printf("parent->root=%lld\n", octree1->parent->root);
-									printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->maxWsosed, octree1->parent->maxEsosed, octree1->parent->maxSsosed, octree1->parent->maxNsosed, octree1->parent->maxBsosed, octree1->parent->maxTsosed);
+									printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->maxWneighbour, octree1->parent->maxEneighbour, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour);
 #else
 									printf("parent->root=%d\n", octree1->parent->root);
-									printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->maxWsosed, octree1->parent->maxEsosed, octree1->parent->maxSsosed, octree1->parent->maxNsosed, octree1->parent->maxBsosed, octree1->parent->maxTsosed);
+									printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->maxWneighbour, octree1->parent->maxEneighbour, octree1->parent->maxSneighbour, octree1->parent->maxNneighbour, octree1->parent->maxBneighbour, octree1->parent->maxTneighbour);
 #endif
 									if (octree1->parent->brootSituationX) {
 										i_X = 1;
@@ -34210,10 +34215,10 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									if (octree1->parent->parent != nullptr) {
 #if doubleintprecision == 1
 										printf("parent->parent->root=%lld\n", octree1->parent->parent->root);
-										printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->parent->maxWsosed, octree1->parent->parent->maxEsosed, octree1->parent->parent->maxSsosed, octree1->parent->parent->maxNsosed, octree1->parent->parent->maxBsosed, octree1->parent->parent->maxTsosed);
+										printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->parent->maxWneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour);
 #else
 										printf("parent->parent->root=%d\n", octree1->parent->parent->root);
-										printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->maxWsosed, octree1->parent->parent->maxEsosed, octree1->parent->parent->maxSsosed, octree1->parent->parent->maxNsosed, octree1->parent->parent->maxBsosed, octree1->parent->parent->maxTsosed);
+										printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->maxWneighbour, octree1->parent->parent->maxEneighbour, octree1->parent->parent->maxSneighbour, octree1->parent->parent->maxNneighbour, octree1->parent->parent->maxBneighbour, octree1->parent->parent->maxTneighbour);
 #endif
 										if (octree1->parent->parent->brootSituationX) {
 											i_X = 1;
@@ -34242,10 +34247,10 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 										if (octree1->parent->parent->parent != nullptr) {
 #if doubleintprecision == 1
 											printf("parent->parent->parent->root=%lld\n", octree1->parent->parent->parent->root);
-											printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->parent->parent->maxWsosed, octree1->parent->parent->parent->maxEsosed, octree1->parent->parent->parent->maxSsosed, octree1->parent->parent->parent->maxNsosed, octree1->parent->parent->parent->maxBsosed, octree1->parent->parent->parent->maxTsosed);
+											printf("W=%lld E=%lld S=%lld N=%lld B=%lld T=%lld\n", octree1->parent->parent->parent->maxWneighbour, octree1->parent->parent->parent->maxEneighbour, octree1->parent->parent->parent->maxSneighbour, octree1->parent->parent->parent->maxNneighbour, octree1->parent->parent->parent->maxBneighbour, octree1->parent->parent->parent->maxTneighbour);
 #else
 											printf("parent->parent->parent->root=%d\n", octree1->parent->parent->parent->root);
-											printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->parent->maxWsosed, octree1->parent->parent->parent->maxEsosed, octree1->parent->parent->parent->maxSsosed, octree1->parent->parent->parent->maxNsosed, octree1->parent->parent->parent->maxBsosed, octree1->parent->parent->parent->maxTsosed);
+											printf("W=%d E=%d S=%d N=%d B=%d T=%d\n", octree1->parent->parent->parent->maxWneighbour, octree1->parent->parent->parent->maxEneighbour, octree1->parent->parent->parent->maxSneighbour, octree1->parent->parent->parent->maxNneighbour, octree1->parent->parent->parent->maxBneighbour, octree1->parent->parent->parent->maxTneighbour);
 #endif
 											if (octree1->parent->parent->parent->brootSituationX) {
 												i_X = 1;
@@ -34280,41 +34285,41 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								// Количество соседей атомарной ячейки по определению 1. 
 								// Или даже ноль если соответсвующая связь nullptr.
 								if (octree1->linkB == nullptr) {
-									octree1->maxBsosed = 0;
+									octree1->maxBneighbour = 0;
 								}
 								else {
-									octree1->maxBsosed = 1;
+									octree1->maxBneighbour = 1;
 								}
 								if (octree1->linkT == nullptr) {
-									octree1->maxTsosed = 0;
+									octree1->maxTneighbour = 0;
 								}
 								else {
-									octree1->maxTsosed = 1;
+									octree1->maxTneighbour = 1;
 								}
 
 								if (octree1->linkS == nullptr) {
-									octree1->maxSsosed = 0;
+									octree1->maxSneighbour = 0;
 								}
 								else {
-									octree1->maxSsosed = 1;
+									octree1->maxSneighbour = 1;
 								}
 								if (octree1->linkN == nullptr) {
-									octree1->maxNsosed = 0;
+									octree1->maxNneighbour = 0;
 								}
 								else {
-									octree1->maxNsosed = 1;
+									octree1->maxNneighbour = 1;
 								}
 								if (octree1->linkW == nullptr) {
-									octree1->maxWsosed = 0;
+									octree1->maxWneighbour = 0;
 								}
 								else {
-									octree1->maxWsosed = 1;
+									octree1->maxWneighbour = 1;
 								}
 								if (octree1->linkE == nullptr) {
-									octree1->maxEsosed = 0;
+									octree1->maxEneighbour = 0;
 								}
 								else {
-									octree1->maxEsosed = 1;
+									octree1->maxEneighbour = 1;
 								}
 
 								printf("atomarnaq\n");
@@ -34488,9 +34493,9 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 		}
 
 	}
-} // balance_octTree2
+} // balance_octree2
 
-void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, BLOCK*& b) {
+void droblenie_disbalance(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, BLOCK*& b) {
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
@@ -34591,7 +34596,7 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 						//my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation = true;
 						ikount_list++;
 
-						octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+						octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 						integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
 						integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
 						integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
@@ -34734,9 +34739,9 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 			}
 		}
 #if doubleintprecision == 1
-		printf("droblenie disbalance : all number of lists=%lld\t", ikount_list);
+		printf("droblenie disbalance: all number of lists=%lld\t", ikount_list);
 #else
-		printf("droblenie disbalance : all number of lists=%d\t", ikount_list);
+		printf("droblenie disbalance: all number of lists=%d\t", ikount_list);
 #endif
 		
 		if (DEBUG_ALICE_MESH) {
@@ -34748,8 +34753,8 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 } // droblenie_disbalance
 
 // Устаревная неиспользуемая версия кода.
-// см. balance_octTree2.
-void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool, BLOCK*& b) {
+// см. balance_octree2.
+void balance_octree3(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool, BLOCK*& b) {
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
@@ -34843,7 +34848,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 
-					octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+					octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 					integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
 					integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
 					integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
@@ -34891,52 +34896,52 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						//bonly_dir_X = true;
 					}
 
-					if ((octree1->maxBsosed > 4) || (octree1->maxTsosed > 4) || (octree1->maxWsosed > 4) || (octree1->maxEsosed > 4) || (octree1->maxSsosed > 4) || (octree1->maxNsosed > 4)) {
+					if ((octree1->maxBneighbour > 4) || (octree1->maxTneighbour > 4) || (octree1->maxWneighbour > 4) || (octree1->maxEneighbour > 4) || (octree1->maxSneighbour > 4) || (octree1->maxNneighbour > 4)) {
 
 						// разбиение на 8.
 
 						if ((minx + 1 == maxx) && (miny + 1 == maxy) && (minz + 1 == maxz)) {
-							printf("fatal error : atomarnaq\n");
+							printf("fatal error: atomarnaq\n");
 							//system("PAUSE");
 							// Это атомарная ячейка и она не может быть раздроблена.
 							// Количество соседей атомарной ячейки по определению 1. 
 							// Или даже ноль если соответсвующая связь nullptr.
 							if (octree1->linkB == nullptr) {
-								octree1->maxBsosed = 0;
+								octree1->maxBneighbour = 0;
 							}
 							else {
-								octree1->maxBsosed = 1;
+								octree1->maxBneighbour = 1;
 							}
 							if (octree1->linkT == nullptr) {
-								octree1->maxTsosed = 0;
+								octree1->maxTneighbour = 0;
 							}
 							else {
-								octree1->maxTsosed = 1;
+								octree1->maxTneighbour = 1;
 							}
 
 							if (octree1->linkS == nullptr) {
-								octree1->maxSsosed = 0;
+								octree1->maxSneighbour = 0;
 							}
 							else {
-								octree1->maxSsosed = 1;
+								octree1->maxSneighbour = 1;
 							}
 							if (octree1->linkN == nullptr) {
-								octree1->maxNsosed = 0;
+								octree1->maxNneighbour = 0;
 							}
 							else {
-								octree1->maxNsosed = 1;
+								octree1->maxNneighbour = 1;
 							}
 							if (octree1->linkW == nullptr) {
-								octree1->maxWsosed = 0;
+								octree1->maxWneighbour = 0;
 							}
 							else {
-								octree1->maxWsosed = 1;
+								octree1->maxWneighbour = 1;
 							}
 							if (octree1->linkE == nullptr) {
-								octree1->maxEsosed = 0;
+								octree1->maxEneighbour = 0;
 							}
 							else {
-								octree1->maxEsosed = 1;
+								octree1->maxEneighbour = 1;
 							}
 
 							//printf("atomarnaq\n");
@@ -35093,11 +35098,11 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 		
 		//system("PAUSE");
 	}
-} // balance_octTree3
+} // balance_octree3
 
 
 
-void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret,
+void droblenie_list_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret,
 	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer &ls,
 	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
 
@@ -35198,7 +35203,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 
 
 
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// разбиение на 8.
 				integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
@@ -35360,13 +35365,13 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 		//}
 		//system("PAUSE");
 	}
-} // droblenie_list_octTree2
+} // droblenie_list_octree2
 
 
 
 // визуализация.
 // визуализация в tecplot 360 с учётом hollow блоков в программной модели.
-void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
+void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 
 	// Вычисление допуска.
 	doublereal epsTolx = 1.0e40;
@@ -35497,7 +35502,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
 				//integer i0, i1, i2, i3, i4, i5, i6, i7;
@@ -35720,7 +35725,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 	// Оператор new не требует проверки.
 	//if (pa_alice == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -35731,7 +35736,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 	// Оператор new не требует проверки.
 	//if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -35744,9 +35749,9 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 		//if (nvtx[k_1] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 //#if doubleintprecision == 1
-	//		printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
+	//		printf("Problem: not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#else
-	//		printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
+	//		printf("Problem: not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#endif
 			
 			//printf("Please any key to exit...\n");
@@ -35851,7 +35856,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
 				integer i0, i1, i2, i3, i4, i5, i6, i7;
@@ -36137,7 +36142,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 
 
 
-void shutdown_visit(octTree* &oc) {
+void shutdown_visit(octree* &oc) {
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -36321,7 +36326,7 @@ void shutdown_visit(octTree* &oc) {
 } // shutdown_visit
 
 // Выключает дисбаланс (сброс).
-void shutdown_disbalance(octTree* &oc) {
+void shutdown_disbalance(octree* &oc) {
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -36504,7 +36509,7 @@ void shutdown_disbalance(octTree* &oc) {
 } // shutdown_disbalance
 
 // Для полного контроля линковки.
-void log_message(octTree* &oc) {
+void log_message(octree* &oc) {
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -36590,24 +36595,24 @@ void log_message(octTree* &oc) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 #if doubleintprecision == 1
 				if (octree1->parent != nullptr) {
 					printf("parent root csW csE csS csN csB csT linkW linkE linkS linkN linkB linkT\n");
-					printf("%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n", octree1->parent->root, octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+					printf("%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n", octree1->parent->root, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 				}
 				else {
 					printf("root csW csE csS csN csB csT linkW linkE linkS linkN linkB linkT\n");
-					printf("%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n", octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+					printf("%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld %lld\n", octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 				}
 #else
 				if (octree1->parent != nullptr) {
 					printf("parent root csW csE csS csN csB csT linkW linkE linkS linkN linkB linkT\n");
-					printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", octree1->parent->root, octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+					printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n", octree1->parent->root, octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 				}
 				else {
 					printf("root csW csE csS csN csB csT linkW linkE linkS linkN linkB linkT\n");
-					printf("%d %d %d %d %d %d %d %d %d %d %d %d %d\n", octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxSsosed, octree1->maxNsosed, octree1->maxBsosed, octree1->maxTsosed, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
+					printf("%d %d %d %d %d %d %d %d %d %d %d %d %d\n", octree1->root, octree1->maxWneighbour, octree1->maxEneighbour, octree1->maxSneighbour, octree1->maxNneighbour, octree1->maxBneighbour, octree1->maxTneighbour, print_link(octree1->linkW), print_link(octree1->linkE), print_link(octree1->linkS), print_link(octree1->linkN), print_link(octree1->linkB), print_link(octree1->linkT));
 				}
 #endif
 				
@@ -36710,7 +36715,7 @@ void log_message(octTree* &oc) {
 } // log_message
 
   // Для полного контроля линковки.
-void if_disbalnce_marker(octTree* &oc)
+void if_disbalnce_marker(octree* &oc)
 {
 	printf("if disbalance control.\n");
 	top_ALICE_STACK = 0;
@@ -36797,7 +36802,7 @@ void if_disbalnce_marker(octTree* &oc)
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
@@ -36950,7 +36955,7 @@ void if_disbalnce_marker(octTree* &oc)
 }
 
 // Для полного контроля линковки.
-integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, 
+integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz, 
 	integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd, BLOCK* b, integer lb,
@@ -37043,7 +37048,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz,
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
@@ -37338,9 +37343,9 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz,
 	}
 
 	// 30.09.2018
-	printf("add boundary x: E=%lld, W=%lld : %lld. inx=%lld iny=%lld inz=%lld\n", iE, iW,iE+iW, inx, iny, inz);
-	printf("add boundary y: N=%lld, S=%lld : %lld. inx=%lld iny=%lld inz=%lld\n", iN, iS,iN+iS, inx, iny, inz);
-	printf("add boundary z: T=%lld, B=%lld : %lld. inx=%lld iny=%lld inz=%lld\n", iT, iB,iB+iT, inx, iny, inz);
+	printf("add boundary x: E=%lld, W=%lld: %lld. inx=%lld iny=%lld inz=%lld\n", iE, iW,iE+iW, inx, iny, inz);
+	printf("add boundary y: N=%lld, S=%lld: %lld. inx=%lld iny=%lld inz=%lld\n", iN, iS,iN+iS, inx, iny, inz);
+	printf("add boundary z: T=%lld, B=%lld: %lld. inx=%lld iny=%lld inz=%lld\n", iT, iB,iB+iT, inx, iny, inz);
 
 	return iOk;
 } // if_disbalance.
@@ -37349,7 +37354,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz,
 
 
 // Для полного контроля линковки.
-void marker_disbalnce_year2016(octTree* &oc) {
+void marker_disbalnce_year2016(octree* &oc) {
 	printf("marker disbalance control.\n");
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
@@ -37435,7 +37440,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
@@ -37629,7 +37634,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 } // marker_disbalance_year2016.
 
   // Для полного контроля линковки.
-void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
+void marker_disbalnce_year2017_2(octree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 	const doublereal critical_volume_ratio = 36.0;
 
 	printf("marker disbalance control.\n");
@@ -37717,7 +37722,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
@@ -37746,7 +37751,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 							}
-							octTree* oc2 = octree1->linkN;
+							octree* oc2 = octree1->linkN;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -38056,7 +38061,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 								viml = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 							}
 
-							octTree* oc2 = octree1->linkS;
+							octree* oc2 = octree1->linkS;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -38377,7 +38382,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 							}
-							octTree* oc2 = octree1->linkE;
+							octree* oc2 = octree1->linkE;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -38698,7 +38703,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 							}
-							octTree* oc2 = octree1->linkW;
+							octree* oc2 = octree1->linkW;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -39020,7 +39025,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 								viml = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 							}
 
-							octTree* oc2 = octree1->linkT;
+							octree* oc2 = octree1->linkT;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -39342,7 +39347,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 								viml = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 							}
 
-							octTree* oc2 = octree1->linkB;
+							octree* oc2 = octree1->linkB;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -39733,7 +39738,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 } // marker_disbalance_year2017_2.
 
   // Для полного контроля линковки.
-void marker_disbalnce_year2017(octTree* &oc) {
+void marker_disbalnce_year2017(octree* &oc) {
 	printf("marker disbalance control.\n");
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
@@ -39819,7 +39824,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
@@ -39841,7 +39846,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 								iml = octree1->linkN->ilevel;
 								biml = false;
 							}
-							octTree* oc2 = octree1->linkN;
+							octree* oc2 = octree1->linkN;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -39993,7 +39998,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 								iml = octree1->linkS->ilevel;
 								biml = false;
 							}
-							octTree* oc2 = octree1->linkS;
+							octree* oc2 = octree1->linkS;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -40145,7 +40150,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 								iml = octree1->linkE->ilevel;
 								biml = false;
 							}
-							octTree* oc2 = octree1->linkE;
+							octree* oc2 = octree1->linkE;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -40297,7 +40302,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 								iml = octree1->linkW->ilevel;
 								biml = false;
 							}
-							octTree* oc2 = octree1->linkW;
+							octree* oc2 = octree1->linkW;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -40449,7 +40454,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 								iml = octree1->linkT->ilevel;
 								biml = false;
 							}
-							octTree* oc2 = octree1->linkT;
+							octree* oc2 = octree1->linkT;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -40601,7 +40606,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 								iml = octree1->linkB->ilevel;
 								biml = false;
 							}
-							octTree* oc2 = octree1->linkB;
+							octree* oc2 = octree1->linkB;
 							if (!oc2->b4N) {
 								if (oc2->linkN != nullptr) {
 									if (abs(iml - oc2->linkN->ilevel) > 1) {
@@ -40834,7 +40839,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
   // Для полного контроля линковки.
   // Если соседние ячейки имеют разницу уровней больше единицы,
   // то происходит дробление наибольшей по размеру ячейки.
-void marker_disbalnce(octTree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
+void marker_disbalnce(octree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 	// Первоначальная базовая версия.
 	// написана в 2016 году.
 	if (itype_ALICE_Mesh == 1/*1*/) {
@@ -40843,8 +40848,8 @@ void marker_disbalnce(octTree* &oc, doublereal* &xpos, doublereal* &ypos, double
 		// по ряду причин. В частности он допускает ячейки соседствующие по вершине, разность уровней у которых равна 2.
 		// Эту ситуацию исправляет версия той-же функции, но 2017 года. Теперь нет ячеек соседствующих по вершине разница уровней у
 		// которых достигает 2.
-		//marker_disbalnce_year2017(oc); //17 augut 2017.
-		marker_disbalnce_year2017_2(oc, xpos, ypos, zpos); //17 augut 2017.
+		//marker_disbalnce_year2017(oc); //17 august 2017.
+		marker_disbalnce_year2017_2(oc, xpos, ypos, zpos); //17 august 2017.
 	}
 	else {		
 		// Рабочий вариант 2016 года.
@@ -40853,7 +40858,7 @@ void marker_disbalnce(octTree* &oc, doublereal* &xpos, doublereal* &ypos, double
 }
 
 // Для полного контроля линковки.
-void is_b4N_found(octTree* &oc) {
+void is_b4N_found(octree* &oc) {
 	top_ALICE_STACK = 0;
 	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -40939,7 +40944,7 @@ void is_b4N_found(octTree* &oc) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (octree1->b4N) {
 					printf("b4N is found now in list");
 					if (octree1->brootSituationY) {
@@ -41067,7 +41072,7 @@ void is_b4N_found(octTree* &oc) {
 
 
 // defa_nullptr(oc);
-void defa_nullptr(octTree* &oc) {
+void defa_nullptr(octree* &oc) {
 	oc->linkB = nullptr;
 	oc->linkB0 = nullptr;
 	oc->linkB1 = nullptr;
@@ -41103,7 +41108,7 @@ void defa_nullptr(octTree* &oc) {
 
 // 10.08.2019
 // defa_nullptr_additional(oc);
-void defa_nullptr_additional(octTree* &oc) {
+void defa_nullptr_additional(octree* &oc) {
 	oc->parent = nullptr;
 	oc->link0 = nullptr;
 	oc->link1 = nullptr;
@@ -41116,9 +41121,9 @@ void defa_nullptr_additional(octTree* &oc) {
 }
 
 // Освобождение оперативной памяти из под octree.
-// Новый метод освобождения оперативной памяти из под octTree дерева 10.08.2019. 
+// Новый метод освобождения оперативной памяти из под octree дерева 10.08.2019. 
 // Проверено работает корректно в отличие от предыдущей реализации.
-void free_octree(octTree* &oc, integer maxelm) {
+void free_octree(octree* &oc, integer maxelm) {
 	printf("FREE OCTREE MEMORY...Pool Size=%lld %e%%\n", icount_Length_vector_octree,100.0*icount_Length_vector_octree/ iMAX_Length_vector_octree);
 
 	if (oc == nullptr) {
@@ -41130,15 +41135,15 @@ void free_octree(octTree* &oc, integer maxelm) {
 		oc = nullptr;
 		for (integer jclear = icount_Length_vector_octree - 1; jclear >= 0; jclear--) {
 			
-			defa_nullptr(rootClear_octTree[jclear]);
-			defa_nullptr_additional(rootClear_octTree[jclear]);			
+			defa_nullptr(rootClear_octree[jclear]);
+			defa_nullptr_additional(rootClear_octree[jclear]);			
 		}
 		for (integer jclear = icount_Length_vector_octree - 1; jclear >= 0; jclear--) {
-			delete rootClear_octTree[jclear]; // освобождение оперативной памяти.
-			rootClear_octTree[jclear] = nullptr;
+			delete rootClear_octree[jclear]; // освобождение оперативной памяти.
+			rootClear_octree[jclear] = nullptr;
 		}
-		delete[] rootClear_octTree;
-		rootClear_octTree = nullptr;
+		delete[] rootClear_octree;
+		rootClear_octree = nullptr;
 		icount_Length_vector_octree = 0;
 
 	}
@@ -41147,7 +41152,7 @@ void free_octree(octTree* &oc, integer maxelm) {
 // Освобождение оперативной памяти из под octree.
 // alicemesh +637126 // 03.05.2019
 // устарело 10.08.2019 
-void free_octree_old(octTree* &oc, integer maxelm) {
+void free_octree_old(octree* &oc, integer maxelm) {
 	if (oc == nullptr) {
 		printf("error oc==nullptr in free_octree function\n");
 		system("pause");
@@ -41294,7 +41299,7 @@ void free_octree_old(octTree* &oc, integer maxelm) {
 				(my_ALICE_STACK[top_ALICE_STACK - 1].link->link7 == nullptr))
 			{
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				/*
 				switch (octree1->parent->root) {
 				case 0: octree1->parent->link0 = nullptr; break;
@@ -41538,7 +41543,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	// Ссылки на каждый узел octree дерева для его полной очистки.
 	// Мы хотим сэкономить оперативную память.
 	iMAX_Length_vector_octree = (integer)(1.4*inx*iny*inz);//6.5% 8% 14% (ПИОНЕР х64 34%)
-	rootClear_octTree = new octTree*[iMAX_Length_vector_octree];
+	rootClear_octree = new octree*[iMAX_Length_vector_octree];
 	icount_Length_vector_octree = 0;
 
 	bool bsimpledefine = true;
@@ -41674,7 +41679,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Оператор new не требует проверки.
 		//if (bvisit == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
+			//printf("Problem: not enough memory on your equipment for bvisit constr struct...\n");
 			//printf("Please any key to exit...\n");
 			//exit(1);
 		//}
@@ -42496,9 +42501,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	}
 
 
-	oc_global = new octTree;
+	oc_global = new octree;
 	// Ссылки на каждый узел octree дерева для его полной очистки.
-	rootClear_octTree[icount_Length_vector_octree] = oc_global;
+	rootClear_octree[icount_Length_vector_octree] = oc_global;
 	icount_Length_vector_octree++;
 
 	oc_global->inum_TD = 0; // Не принадлежит расчётной области.
@@ -42506,7 +42511,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	// Оператор new не требует проверки.
 	//if (oc_global == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for oc in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for oc in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -42522,12 +42527,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc_global->brootSituationY_virtual = false;
 	oc_global->brootSituationZ_virtual = false;
 	// вообще нет соседей.
-	oc_global->maxWsosed = 0;
-	oc_global->maxEsosed = 0;
-	oc_global->maxSsosed = 0;
-	oc_global->maxNsosed = 0;
-	oc_global->maxBsosed = 0;
-	oc_global->maxTsosed = 0;
+	oc_global->maxWneighbour = 0;
+	oc_global->maxEneighbour = 0;
+	oc_global->maxSneighbour = 0;
+	oc_global->maxNneighbour = 0;
+	oc_global->maxBneighbour = 0;
+	oc_global->maxTneighbour = 0;
 	// пока соседей просто нету.
 	oc_global->linkW = nullptr;
 	oc_global->linkE = nullptr;
@@ -42580,7 +42585,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	// Оператор new не требует проверки.
 	//if (my_ALICE_STACK == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for my_ALICE_STACK in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for my_ALICE_STACK in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -42608,9 +42613,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	}
 	top_ALICE_STACK = 0;
 	// 2. (первый проход) обновление подсчёта количества соседей.
-	update_max_count_sosed(oc_global);
+	update_max_count_neighbour(oc_global);
 	top_ALICE_STACK = 0;
-	// 3. Один проход дробления для блансировки (ликвидация большого числа соседей).
+	// 3. Один проход дробления для балансировки (ликвидация большого числа соседей).
 	// 4. (завершающий проход) обновление подсчёта количества соседей.
 	// 5. Восстановление линковки.
 	update_link_neighbor(oc_global);
@@ -42644,7 +42649,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 		
 		printf("update max count neighbour is start...\n");
-		update_max_count_sosed(oc_global);
+		update_max_count_neighbour(oc_global);
 		printf("update max count neighbour is finished.\n");
 
 		
@@ -42667,12 +42672,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 #endif
 		// 1. Дробление листьев по геометрическому признаку.
 		printf("fragmentation list po geometricheskomu prisnaku. begin.\n");
-		droblenie_list_octTree2(oc_global, xpos, ypos, zpos, iret34, inx, iny, inz, b, lb, lw, w, s, ls, epsToolx,epsTooly,epsToolz, bsimpledefine);
+		droblenie_list_octree2(oc_global, xpos, ypos, zpos, iret34, inx, iny, inz, b, lb, lw, w, s, ls, epsToolx,epsTooly,epsToolz, bsimpledefine);
 		printf("fragmentation list po geometricheskomu prisnaku. end.\n");
 		//system("PAUSE");
 		iret_one_scan += iret34;
 		
-		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
+		if (DEBUG_ALICE_MESH) printf("function: shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
 		// 5. Восстановление линковки.
@@ -42681,17 +42686,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		update_link_neighbor(oc_global);
 		top_ALICE_STACK = 0;
 
-		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+		if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
-		if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+		if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 		marker_disbalnce(oc_global, xpos, ypos, zpos);
 		integer iret_95 = 0;
-		if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+		if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 		
 		iret_one_scan += iret_95;
 		//if_disbalnce_marker(oc_global);
-		if (DEBUG_ALICE_MESH)  printf("function : shutdown_disbalance\n");
+		if (DEBUG_ALICE_MESH)  printf("function: shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
 		top_ALICE_STACK = 0;
 #if doubleintprecision == 1
@@ -42712,24 +42717,24 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			system("PAUSE");
 		}
 		// 2. (первый проход) обновление подсчёта количества соседей.
-		//printf("est li b4N pered sosedv count?\n");
+		//printf("whether there is a b4N front neighbour count?\n");
 		//system("PAUSE");
 		//is_b4N_found(oc_global); // находит , но почемуто печатает ситуацию dir Х далее.
 		//integer iret_97 = 1;
 		integer iscan_balance = 0;
-		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
+		if (DEBUG_ALICE_MESH) printf("function: shutdown_visit\n");
 		shutdown_visit(oc_global);
 		/*
 		while (iret_97 > 0) {
 			iret_97 = 0;
-			//printf("est li b4N pered sosed count is finished.\n");
+			//printf("whether there is a b4N front neighbour count is finished.\n");
 			top_ALICE_STACK = 0;
 			printf("update max count start\n");
-			update_max_count_sosed(oc_global);
+			update_max_count_neighbour(oc_global);
 			top_ALICE_STACK = 0;
 			//printf("export tecplot geometry droblenie.");
 			//expt(oc_global, inx, iny, inz, maxelm, xpos,ypos,zpos);
-			//printf("post geometry droblenie sosed count is construct.\n");
+			//printf("post geometry droblenie neighbour count is construct.\n");
 			//system("PAUSE");
 			//printf("geomtric crushing is succsefull\n");
 			//system("PAUSE");
@@ -42740,7 +42745,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			// 3. Один проход дробления для блансировки (ликвидация большого числа соседей).
 			// Возможно это надо корректировать сразу на лету в момент генерации дробления.
 			printf("balance Tree 2 start\n");
-			balance_octTree2(oc_global, xpos, ypos, zpos, iret_97, epsTol);
+			balance_octree2(oc_global, xpos, ypos, zpos, iret_97, epsTol);
 			iret34 += iret_97;
 			printf("expt start\n");
 			expt(oc_global, inx, iny, inz, maxelm, xpos,ypos,zpos);
@@ -42756,28 +42761,28 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			
 			system("PAUSE");
 		}
-		printf("zaversheno balansing. balance crushing is succsefull\n");
+		printf("completed balansing. balance crushing is succsefull\n");
 		//system("PAUSE");
 		iret_one_scan += iret34;
 		top_ALICE_STACK = 0;
 		// 4. (завершающий проход) обновление подсчёта количества соседей.
-		update_max_count_sosed(oc);
+		update_max_count_neighbour(oc);
 		top_ALICE_STACK = 0;
 		integer iret35 = 0;
 		// А может он должен работать вообще на копии дерева oc!!!.
 		// Это только проверочный код который должен возвращать iret 35=0.
-		//balance_octTree2(oc_global, xpos, ypos, zpos, iret35, epsTol);
+		//balance_octree2(oc_global, xpos, ypos, zpos, iret35, epsTol);
 		if (iret35 != 0) {
-			printf("error !: problem max count sosed vse eshe ochenj veliko. second prohod.\n");
+			printf("error !: problem max count neighbour still very large. second scan.\n");
 			system("PAUSE");
 			exit(1);
 		}
 		*/
-		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
+		if (DEBUG_ALICE_MESH) printf("function: shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
-		if (DEBUG_ALICE_MESH) printf("function : update_max_count_sosed\n");
-		update_max_count_sosed(oc_global);
+		if (DEBUG_ALICE_MESH) printf("function: update_max_count_neighbour\n");
+		update_max_count_neighbour(oc_global);
 		top_ALICE_STACK = 0;
 		// 5. Восстановление линковки.
 		if (DEBUG_ALICE_MESH) printf("fragmentation linking.\n");
@@ -42785,20 +42790,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			//system("PAUSE");
 			system("PAUSE");
 		}
-		if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+		if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 		update_link_neighbor(oc_global);
 		top_ALICE_STACK = 0;
 		// 5.5 Если с дроблением были проблемы (повторно).
-		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+		if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
-		if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+		if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 		marker_disbalnce(oc_global, xpos, ypos, zpos);
 		iret_95 = 0;
-		if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+		if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 		iret_one_scan += iret_95;
 		//if_disbalnce_marker(oc_global);
-		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+		if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
 		integer iret_95_memo = iret_95;
 		if (iret_95 > 0) {
@@ -42811,20 +42816,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				//system("PAUSE");
 				system("PAUSE");
 			}
-			if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+			if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 			update_link_neighbor(oc_global);
 			top_ALICE_STACK = 0;
 			// 5.5 Если с дроблением были проблемы (повторно).
-			if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+			if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 			shutdown_disbalance(oc_global);
-			if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+			if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 			marker_disbalnce(oc_global, xpos, ypos, zpos);
 			iret_95 = 0;
-			if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+			if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 			droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 			iret_one_scan += iret_95;
 			//if_disbalnce_marker(oc_global);
-			if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+			if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 			shutdown_disbalance(oc_global);
 			integer iret_95_memo1 = iret_95;
 			if (iret_95 > 0) {
@@ -42837,20 +42842,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					//system("PAUSE");
 					system("PAUSE");
 				}
-				if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+				if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 				update_link_neighbor(oc_global);
 				top_ALICE_STACK = 0;
 				// 5.5 Если с дроблением были проблемы (повторно).
-				if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+				if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 				shutdown_disbalance(oc_global);
-				if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+				if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 				marker_disbalnce(oc_global, xpos, ypos, zpos);
 				iret_95 = 0;
-				if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+				if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 				droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 				iret_one_scan += iret_95;
 				//if_disbalnce_marker(oc_global);
-				if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+				if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 				shutdown_disbalance(oc_global);
 				integer iret_95_memo2 = iret_95;
 				if (iret_95 > 0) {
@@ -42863,20 +42868,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						//system("PAUSE");
 						system("PAUSE");
 					}
-					if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+					if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 					update_link_neighbor(oc_global);
 					top_ALICE_STACK = 0;
 					// 5.5 Если с дроблением были проблемы (повторно).
-					if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+					if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 					shutdown_disbalance(oc_global);
-					if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+					if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 					marker_disbalnce(oc_global, xpos, ypos, zpos);
 					iret_95 = 0;
-					if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+					if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 					droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 					iret_one_scan += iret_95;
 					//if_disbalnce_marker(oc_global);
-					if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+					if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 					shutdown_disbalance(oc_global);
 					integer iret_95_memo3 = iret_95;
 					if (iret_95 > 0) {
@@ -42889,20 +42894,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							//system("PAUSE");
 							system("PAUSE");
 						}
-						if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+						if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 						update_link_neighbor(oc_global);
 						top_ALICE_STACK = 0;
 						// 5.5 Если с дроблением были проблемы (повторно).
-						if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+						if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 						shutdown_disbalance(oc_global);
-						if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+						if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 						marker_disbalnce(oc_global, xpos, ypos, zpos);
 						iret_95 = 0;
-						if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+						if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 						droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 						iret_one_scan += iret_95;
 						//if_disbalnce_marker(oc_global);
-						if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+						if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 						shutdown_disbalance(oc_global);
 
 						integer iret_95_memo4 = iret_95;
@@ -42916,20 +42921,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 								//system("PAUSE");
 								system("PAUSE");
 							}
-							if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+							if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 							update_link_neighbor(oc_global);
 							top_ALICE_STACK = 0;
 							// 5.5 Если с дроблением были проблемы (повторно).
-							if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+							if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 							shutdown_disbalance(oc_global);
-							if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+							if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 							marker_disbalnce(oc_global, xpos, ypos, zpos);
 							iret_95 = 0;
-							if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+							if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 							droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 							iret_one_scan += iret_95;
 							//if_disbalnce_marker(oc_global);
-							if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+							if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 							shutdown_disbalance(oc_global);
 
 							integer iret_95_memo5 = iret_95;
@@ -42943,20 +42948,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									//system("PAUSE");
 									system("PAUSE");
 								}
-								if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+								if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 								update_link_neighbor(oc_global);
 								top_ALICE_STACK = 0;
 								// 5.5 Если с дроблением были проблемы (повторно).
-								if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+								if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 								shutdown_disbalance(oc_global);
-								if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+								if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 								marker_disbalnce(oc_global, xpos, ypos, zpos);
 								iret_95 = 0;
-								if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+								if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 								droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 								iret_one_scan += iret_95;
 								//if_disbalnce_marker(oc_global);
-								if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+								if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 								shutdown_disbalance(oc_global);
 
 								integer id_sc = 1;
@@ -42974,29 +42979,29 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										//system("PAUSE");
 										system("PAUSE");
 									}
-									if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
+									if (DEBUG_ALICE_MESH) printf("function: update_link_neighbor\n");
 									update_link_neighbor(oc_global);
 									top_ALICE_STACK = 0;
 									// 5.5 Если с дроблением были проблемы (повторно).
-									if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+									if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 									shutdown_disbalance(oc_global);
-									if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
+									if (DEBUG_ALICE_MESH) printf("function: marker_disbalnce\n");
 									marker_disbalnce(oc_global, xpos, ypos, zpos);
 									iret_95 = 0;
-									if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
+									if (DEBUG_ALICE_MESH) printf("function: droblenie_disbalance\n");
 									droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 									iret_one_scan += iret_95;
 									//if_disbalnce_marker(oc_global);
-									if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
+									if (DEBUG_ALICE_MESH) printf("\nfunction: shutdown_disbalance\n");
 									shutdown_disbalance(oc_global);
 									id_sc++; // увеличиваем номер прогона для вывода на консоль
 								}
 
 								if (iret_95 > 0) {
 #if doubleintprecision == 1
-									printf("POLNOE FATAL ERROR : 1007-time balancing NE DALO RESULTATOV iret_95 lists=%lld %lld %lld %lld %lld %lld %lld \n", iret_95, iret_95_memo5, iret_95_memo4, iret_95_memo3, iret_95_memo2, iret_95_memo1, iret_95_memo);
+									printf("POLNOE FATAL ERROR: 1007-time balancing NE DALO RESULTATOV iret_95 lists=%lld %lld %lld %lld %lld %lld %lld \n", iret_95, iret_95_memo5, iret_95_memo4, iret_95_memo3, iret_95_memo2, iret_95_memo1, iret_95_memo);
 #else
-									printf("POLNOE FATAL ERROR : 1007-time balancing NE DALO RESULTATOV iret_95 lists=%d %d %d %d %d %d %d \n", iret_95, iret_95_memo5, iret_95_memo4, iret_95_memo3, iret_95_memo2, iret_95_memo1, iret_95_memo);
+									printf("POLNOE FATAL ERROR: 1007-time balancing NE DALO RESULTATOV iret_95 lists=%d %d %d %d %d %d %d \n", iret_95, iret_95_memo5, iret_95_memo4, iret_95_memo3, iret_95_memo2, iret_95_memo1, iret_95_memo);
 #endif
 									// Эта ситуация исправляется если включить еще одну дополнительную балансировку. Можно попробовать так.
 									//system("PAUSE");
@@ -43015,7 +43020,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		
 
 		// 6. Гасим информацию о посещениях.
-		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
+		if (DEBUG_ALICE_MESH) printf("function: shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
 		if (iret_one_scan>0) bcont34 = true;
@@ -43058,9 +43063,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Я перенес глобальный рестарт на момент окончания построения.
 		// Мы накапливаем позиции недостающих сеточных линий в течении всего процесса построения,
 		// а не только на текущем уровне построения.
-		// Надеюсь это позволит сократить число глобальных рестартов и существенно уменьшить  время построения неструктурированной
+		// Надеюсь это позволит сократить число глобальных повторных запусков и существенно уменьшить  время построения неструктурированной
 		// сетки локального дробления на очень больших моделях.
-		// На примере задачи меширования ПТБШ Шз=20мм
+		// На примере задачи построения расчётной сетки для ПТБШ Шз=20мм
 		// было: 6min 30s maxelm=125779, maxp=174313.  89 прогонов, 15 глубина дробления, 12 глубина фрагментации на уровне.
 		// стало: 3min 44s maxelm=143760, maxp=199424. 13 прогонов, 16 глубина дробления, 11 глубина фрагментации на уровне.
 		// На примере задачи подробнейшего ПТБШ Шз=5мм
@@ -43070,7 +43075,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 
 		// Не забываем освобождать оперативную память.
-		// Освобождение оперативной памяти из под хеш таблицы.
+		// Освобождение оперативной памяти из под хеш-таблицы.
 		for (integer i_54 = 0; i_54 < inx; i_54++) {
 			for (integer i_55 = 0; i_55 < iny; i_55++) {
 				delete[] hash_for_droblenie_xyz[i_54][i_55];
@@ -43093,7 +43098,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		return false;
 	}
 	printf("update max count neighbour is start...\n");
-	update_max_count_sosed(oc_global);
+	update_max_count_neighbour(oc_global);
 	printf("update max count neighbour is finished.\n");
 	printf("FINISHING export in visualisation paraview 5.5 start now.\n");
 	expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
@@ -43101,13 +43106,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	printf("\n");
 
 	top_ALICE_STACK = 0;
-	// Если нужно контролироваать АЛИС сетку то надо включить паузу.
+	// Если нужно контролировать АЛИС сетку то надо включить паузу.
 	//system("PAUSE");
 	// Он нам еще очень понадобится поэтому ни в коем случае не удаляем.
 	//delete[] my_ALICE_STACK;
 
 
-	// Освобождение оперативной памяти из под хеш таблицы.
+	// Освобождение оперативной памяти из под хеш-таблицы.
 	for (integer i_54 = 0; i_54 < inx; i_54++) {
 		for (integer i_55 = 0; i_55 < iny; i_55++) {
 			delete[] hash_for_droblenie_xyz[i_54][i_55];

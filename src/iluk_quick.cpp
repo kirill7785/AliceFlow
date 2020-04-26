@@ -35,7 +35,7 @@ struct node_AVL_for_Saad
 // Обёртка поля height
 unsigned char height(node_AVL_for_Saad* p)
 {
-	return p ? p->height : 0;
+	return p ? p->height: 0;
 };
 
 // Вычисляет balance factor заданного узла
@@ -52,7 +52,7 @@ void fixheight(node_AVL_for_Saad* p)
 {
 	unsigned char hl = height(p->left);
 	unsigned char hr = height(p->right);
-	p->height = (hl > hr ? hl : hr) + 1;
+	p->height = (hl > hr ? hl: hr) + 1;
 };
 
 // Балансировка узлов.
@@ -67,7 +67,7 @@ node_AVL_for_Saad* rotateright(node_AVL_for_Saad* p)
 	return q;
 };
 
-// Левый поворот является симметричной копией правого :
+// Левый поворот является симметричной копией правого:
 node_AVL_for_Saad* rotateleft(node_AVL_for_Saad* q)
 {
 	// левый поворот вокруг q
@@ -108,7 +108,7 @@ node_AVL_for_Saad* insert(node_AVL_for_Saad* &p, data_BalTree_for_Saad k)
 		r1 = new node_AVL_for_Saad(k);
 		if (r1 == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for r1 in insert my_agregat_amg...\n");
+			printf("Problem: not enough memory on your equipment for r1 in insert my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -162,9 +162,9 @@ void clear_AVL(node_AVL_for_Saad* p)
   // Удаление узла с занными свойства с сохранением сбалансированности.
 node_AVL_for_Saad* findmin(node_AVL_for_Saad* p)
 {
-	// поиск узла с минимальным ключём в дереве p
+	// поиск узла с минимальным ключом в дереве p
 	if (p!=NULL) {
-		return p->left ? findmin(p->left) : p;
+		return p->left ? findmin(p->left): p;
 	}
 	else {
 		// на поиск минимума подан нулевой указатель.
@@ -187,9 +187,9 @@ node_AVL_for_Saad* findmin(node_AVL_for_Saad* p)
 
 node_AVL_for_Saad* findmax(node_AVL_for_Saad* p)
 {
-	// поиск узла с минимальным ключём в дереве p
+	// поиск узла с минимальным ключом в дереве p
 	if (p != NULL) {
-		return p->right ? findmax(p->right) : p;
+		return p->right ? findmax(p->right): p;
 		/*
 		#if doubleintprecision == 1
 		if (p->right == 0) {
@@ -224,7 +224,7 @@ node_AVL_for_Saad* findmax(node_AVL_for_Saad* p)
 data_BalTree_for_Saad get_max_AVL(node_AVL_for_Saad* p)
 {
 	// возвращение максимального узла в дереве.
-	return p->right ? get_max_AVL(p->right) : p->key;
+	return p->right ? get_max_AVL(p->right): p->key;
 }
 
 node_AVL_for_Saad* removemin(node_AVL_for_Saad* p)
@@ -381,12 +381,12 @@ void test_AVL_for_Saad()
 // Очередь по приоритетам в соединении с хеш таблицей.
 //PQ(integer maxN, integer max_key_size); // конструктор
 //~PQ(); // деструктор
-// Есть ли элемент с данным ключём в таблице ?
+// Есть ли элемент с данным ключом в таблице ?
 //bool isfound(integer key);
 //bool empty() const; // проверка на пустоту.
 // Очищаем содержимое и она снова готова к использованию.
 //void clear();
-// Вернуть элемент с заданным ключём:
+// Вернуть элемент с заданным ключом:
 // Обязательно предполагается что ключ существует внутри таблицы.
 //Item get(integer key);
 // прочитать максимальный элемент.
@@ -400,7 +400,7 @@ void test_AVL_for_Saad()
 // Возвратить максимальный элемент
 // и удалить его.
 //Item getmax();
-// Заменяет элемент с ключём key на элемент val с тем же ключём key.
+// Заменяет элемент с ключом key на элемент val с тем же ключом key.
 // При этом ключ key должен быть уникальным.
 //void modify(integer key, Item val);
 // Удаление элемента с заданным значением ключа.

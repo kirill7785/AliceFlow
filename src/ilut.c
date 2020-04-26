@@ -5,6 +5,11 @@
 // Здесь производится попытка интеграции его библиотеки SPARSKIT2 в код AliceFlowv0_07
 // с помощью замечательной программы f2c.exe скачанной в интернете.
 
+
+#pragma once
+#ifndef MY_ILU_THRESHOLD_C
+#define MY_ILU_THRESHOLD_C 1
+
 #include "iluk.c" // ILUK decomposition
 
 // quick-sort split
@@ -45,9 +50,9 @@ void qsplit(doublereal* a, integer* ind, integer n, integer ncut) {
 
 
     // Следующих трёх строк не было в моём коде, они появились после применения f2c.exe.
-    /* В языке СИ указатель массива указывает на первый элемент индексация которого начинаетсясо значения ноль.
+    /* В языке СИ указатель массива указывает на первый элемент индексация которого начинается со значения ноль.
     Таким образом если мы сдвинем указатель начала на одну позицию влево то первый элемент, который раньше имел индекс ноль
-    теперь будет иметь индекс 1 и следовательно последний элемент будет иметь индес n. Значит можно один в один применять код Ю. Саада.
+    теперь будет иметь индекс 1 и следовательно последний элемент будет иметь индекс n. Значит можно один в один применять код Ю. Саада.
     В конце тока надо вернуть всё на свои места, т.е. опять чтобы индексация начиналась с нуля. Для этого есть обратная операция ++ind; ++a;
     */
     /* Parameter adjustments */
@@ -107,7 +112,7 @@ void qsplit(doublereal* a, integer* ind, integer n, integer ncut) {
 
 // Эта версия ilut вручную переведена с фортрана на язык СИ.
 // Проблема в том, что я не уверен в правильности перевода.
-// Причина сложностей в том, что у Саада всё начинается с единицы в то время как в Си все массивы начинаются с нуля.
+// Причина сложностей в том, что у Юсефа Саада всё начинается с единицы в то время как в Си все массивы начинаются с нуля.
 // 31 марта 2013 года было принято руководствоваться машинным переводом с помощью утилиты f2c.exe.
 void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia, 
 		  integer lfil, doublereal droptol, integer &iwk, 
@@ -134,7 +139,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 	* ierr - целочисленный код ошибки. Возвращает 0 при успешном завершении.
 	*
 	* Модифицированная строчная схема (Modified Sparse Row, MSR) использует 
-	* только два массива : массив alu - значений элементов матрицы LU (на 
+	* только два массива: массив alu - значений элементов матрицы LU (на 
 	* диагонали L стоят единицы) и целочисленный массив jlu. В первых n 
 	* позициях alu содержит диагональные элементы матрицы U по порядку. 
 	* Элемент alu[n+1] не заполняется или несёт дополнительную информацию о матрице.
@@ -165,7 +170,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 	* получить стратегии основанные на хранении
 	* наибольших элементов в каждой строке L && U.
 	* принимая же droptol!=0.0 но lfil==n получаем обычную
-	* стратегию пороовога для отсева элементов.
+	* стратегию порога для отсева элементов.
 	*/
 
 	// локальные переменные:
@@ -439,7 +444,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 
 } // ilut
 
-// msrcsr  : converts modified sparse row format to compressed sparse   
+// msrcsr : converts modified sparse row format to compressed sparse   
 //           row format.   
 // ilut выдаёт матрицу в msr формате, а рабочий формат crs.
 /* ----------------------------------------------------------------------- */
@@ -464,13 +469,13 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 /* does not check for zero elements in the diagonal. */
 
 
-/* on entry : */
+/* on entry: */
 /* --------- */
 /* n          = row dimension of matrix */
 /* a, ja      = sparse matrix in msr sparse storage format */
 /*              see routine csrmsr for details on data structure */
 
-/* on return : */
+/* on return: */
 /* ----------- */
 
 /* ao,jao,iao = output matrix in csr format. */
@@ -557,7 +562,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 } /* msrcsr_ */
 
 // Неполное LU разложение. Возвращает код ошибки или признак успешного завершения.
-// На входе матрица в CRS формате : a, ja, ia. 
+// На входе матрица в CRS формате: a, ja, ia. 
 // На выходе матрица ILU0 разложения в MSR формате alu, jlu.
 // ju - указатель на диагональные элементы в MSR.
 // ierr - возвращаемый код ошибки. 
@@ -693,7 +698,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 /*     invert  and store diagonal element. */
 
 	if (fabs(alu[ii]) < 1.0e-30) {
-	    /*     zero pivot : */
+	    /*     zero pivot: */
         // Нулевой диагональный элемент в строке ii-1
         ierr = ii;
 #if doubleintprecision == 1
@@ -751,7 +756,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 } /* ilu0_ */
 
 // Решает ILU систему. (LU)x=y; 
-// Матрица ILU декомпозиции подаётся в MSR формате :
+// Матрица ILU декомпозиции подаётся в MSR формате:
 // alu, jlu, ju; n - это размерность вектора и размер квадратной матрицы СЛАУ.
 /* ----------------------------------------------------------------------- */
 /* Subroutine */ integer lusol_1(integer n, doublereal* &y, doublereal* &x, 
@@ -907,7 +912,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 			}
 	else {
 		// Function Body 
-		// L : z=L^(-1)*y;
+		// L: z=L^(-1)*y;
 		i__1 = n;
 		for (i__ = 1; i__ <= i__1; ++i__) {
 			x[i__] = y[i__];
@@ -928,7 +933,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 #else
 
     // Function Body 
-	// L : z=L^(-1)*y;
+	// L: z=L^(-1)*y;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	    x[i__] = y[i__];
@@ -1031,7 +1036,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 			else {
 
 			//   backward solve. 
-	// U : x=U^(-1)*z;
+	// U: x=U^(-1)*z;
 	for (i__ = n; i__ >= 1; --i__) {
 		i__1 = jlu[i__ + 1] - 1;
 		//#pragma loop(hint_parallel(8))
@@ -1048,7 +1053,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 #else
 
 //   backward solve. 
-	// U : x=U^(-1)*z;
+	// U: x=U^(-1)*z;
     for (i__ = n; i__ >= 1; --i__) {
 	     i__1 = jlu[i__ + 1] - 1;
 //#pragma loop(hint_parallel(8))
@@ -1086,7 +1091,7 @@ typedef struct TLEVEL_ADDITIONAL_DATA_BUFER {
 	integer* ju_copy = nullptr;
 } LEVEL_ADDITIONAL_DATA_BUFER;
 
-// Централизованное хранилище вспомогательных даных,
+// Централизованное хранилище вспомогательных данных,
 // эта вещь используется на всех уровнях как временное хранилище.
 // Раньше хранение производилось в каждом уровне индивидуально, 
 // что было неприемлемо по памяти на больших задачах.
@@ -1103,8 +1108,8 @@ typedef struct TLEVEL_ADDITIONAL_DATA {
 	integer* row_ptr = nullptr;
 	// для хранения ilu2 декомпозиции.
 	static const integer lfil = 2;
-	integer maxelm_plus_maxbound;
-	integer iwk;
+	integer maxelm_plus_maxbound=-1;
+	integer iwk=-1;
 	doublereal* alu = nullptr;
 	integer* jlu = nullptr;
 	integer* ju = nullptr;
@@ -1141,7 +1146,7 @@ typedef struct TLEVEL_ADDITIONAL_DATA0 {
 	integer* iw = nullptr;
 	
 	// for lusol_1patchforRUMBA
-	integer iwk;
+	integer iwk=-1;
 	
 	// lusol_ портит матрицы и вектор правой части
 	// поэтому будем работать только на копиях объектов
@@ -1254,7 +1259,7 @@ integer lusol_1patchforRUMBA(integer n, doublereal* &y, doublereal* &x,
 } // lusol_1patchforRUMBA
 
 // Решает ILU систему. (LU)x=y; 
-// Матрица ILU декомпозиции подаётся в MSR формате :
+// Матрица ILU декомпозиции подаётся в MSR формате:
 // alu, jlu, ju; n - это размерность вектора и размер квадратной матрицы СЛАУ.
 /* ----------------------------------------------------------------------- */
 /* Subroutine */ integer lusol_2(integer n, doublereal* &y, doublereal* &x, 
@@ -1396,7 +1401,7 @@ integer lusol_1patchforRUMBA(integer n, doublereal* &y, doublereal* &x,
 #else
 
     /* Function Body */
-	// L : z=L^(-1)*y;
+	// L: z=L^(-1)*y;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	    x[i__] = y[i__];
@@ -1492,7 +1497,7 @@ integer lusol_1patchforRUMBA(integer n, doublereal* &y, doublereal* &x,
 #else
 
 /*     backward solve. */
-	// U : x=U^(-1)*z;
+	// U: x=U^(-1)*z;
     for (i__ = n; i__ >= 1; --i__) {
 	     i__1 = jlu[i__ + 1] - 1;
 	     for (k = ju[i__]; k <= i__1; ++k) {
@@ -1520,7 +1525,7 @@ integer lusol_1patchforRUMBA(integer n, doublereal* &y, doublereal* &x,
 
 
 // Решает ILU систему. (LU)x=y; 
-// Матрица ILU декомпозиции подаётся в MSR формате :
+// Матрица ILU декомпозиции подаётся в MSR формате:
 // alu, jlu, ju; n - это размерность вектора и размер квадратной матрицы СЛАУ.
 /* ----------------------------------------------------------------------- */
 /* Subroutine */ integer lusol_3(integer n, doublereal* &y, doublereal* &x, 
@@ -1662,7 +1667,7 @@ integer lusol_1patchforRUMBA(integer n, doublereal* &y, doublereal* &x,
 #else
 
     /* Function Body */
-	// L : z=L^(-1)*y;
+	// L: z=L^(-1)*y;
     i__1 = n;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	    x[i__] = y[i__];
@@ -1754,7 +1759,7 @@ integer lusol_1patchforRUMBA(integer n, doublereal* &y, doublereal* &x,
 #else
 
 /*     backward solve. */
-	// U : x=U^(-1)*z;
+	// U: x=U^(-1)*z;
     for (i__ = n; i__ >= 1; --i__) {
 	     i__1 = jlu[i__ + 1] - 1;
 	     for (k = ju[i__]; k <= i__1; ++k) {
@@ -1800,3 +1805,5 @@ integer lusol_(integer n, doublereal* &y, doublereal* &x,
 
 	return 0;
 }
+
+#endif

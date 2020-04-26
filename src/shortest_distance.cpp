@@ -1,7 +1,7 @@
 // Файл shortest_distance.cpp содержит код для вычисления
 // кратчайшего расстояния до ближайшей стенки.
 
-// Суть модуля : в приложении 2 книги А.Ю.Снегирёва
+// Суть модуля: в приложении 2 книги А.Ю.Снегирёва
 // Высокопроизводительные вычисления в технической физике.
 // Численное моделирование турбулентных течений. 
 // Санкт-Петербург, Издательство Политехнического университета 2009.
@@ -28,9 +28,9 @@
 #define GRADZFI 3
 
 // Вычисление градиентов потенциала FI в центрах внутренних КО
-// и на границах с помощью линейной интерполляции.
+// и на границах с помощью линейной интерполяции.
 void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa,
-	ALICE_PARTITION** sosedi, integer maxelm, bool bbond) {
+	ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
 	// если bbond == true то будут вычислены значения в граничных КО, иначе только во внутренних.
@@ -40,7 +40,7 @@ void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1; iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -54,7 +54,7 @@ void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa
 	if (iB>=maxelm) bB=true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
@@ -105,7 +105,7 @@ void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa
 	}
 	else {
 		// граничные узлы.
-		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 		if (bE) {
 			potent[GRADXFI][iE]=potent[GRADXFI][iP]+(dxe/dxw)*(potent[GRADXFI][iP]-potent[GRADXFI][iW]);
@@ -149,7 +149,7 @@ void green_gauss_FI(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* pa
 // учёт граничных условий для вычисления расстояния до ближайшей
 // твёрдой неподвижной поверхности.
 void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm, 
-							  bool bDirichlet, BOUND* sosedb, integer ls, integer lw,
+							  bool bDirichlet, BOUND* border_neighbor, integer ls, integer lw,
 							  WALL* w, equation3D_bon* &slb, doublereal dbeta,
 							  TOCHKA* pa, integer** nvtx, doublereal* potent
 							  ) 
@@ -170,14 +170,14 @@ void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm,
 
 
      // Сначала запишем граничные условия Дирихле
-	 if ((sosedb[inumber].MCB<(ls+lw)) && (sosedb[inumber].MCB>=ls) && (!w[sosedb[inumber].MCB-ls].bsymmetry) && (!w[sosedb[inumber].MCB-ls].bpressure)&&(!w[sosedb[inumber].MCB-ls].bopening)) {
+	 if ((border_neighbor[inumber].MCB<(ls+lw)) && (border_neighbor[inumber].MCB>=ls) && (!w[border_neighbor[inumber].MCB-ls].bsymmetry) && (!w[border_neighbor[inumber].MCB-ls].bpressure)&&(!w[border_neighbor[inumber].MCB-ls].bopening)) {
 		// граничное условие Дирихле
 		// Задана скорость на границе
         // Это не граница симметрии и не выходная граница.
 
-		 doublereal vel_mag=sqrt(w[sosedb[inumber].MCB-ls].Vx*w[sosedb[inumber].MCB-ls].Vx+
-			          w[sosedb[inumber].MCB-ls].Vy*w[sosedb[inumber].MCB-ls].Vy+
-					  w[sosedb[inumber].MCB-ls].Vz*w[sosedb[inumber].MCB-ls].Vz);
+		 doublereal vel_mag=sqrt(w[border_neighbor[inumber].MCB-ls].Vx*w[border_neighbor[inumber].MCB-ls].Vx+
+			          w[border_neighbor[inumber].MCB-ls].Vy*w[border_neighbor[inumber].MCB-ls].Vy+
+					  w[border_neighbor[inumber].MCB-ls].Vz*w[border_neighbor[inumber].MCB-ls].Vz);
 
 		 doublereal epsilon0=1e-32;
 
@@ -189,7 +189,7 @@ void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm,
 		 } else bDirichleti=false;
         
 	}
-	else if (( (sosedb[inumber].MCB==(ls+lw)) ||(sosedb[inumber].MCB<ls)) ) { // 
+	else if (( (border_neighbor[inumber].MCB==(ls+lw)) ||(border_neighbor[inumber].MCB<ls)) ) { // 
 		// источник тоже является твёрдой неподвижной стенкой.
 
         // граничное условие Дирихле
@@ -208,95 +208,95 @@ void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm,
 		     slb[inumber].ai=0.0;
 			 slb[inumber].b=0.0; // на твёрдой неподвижной стенке функция принимает значение 0.
 			 slb[inumber].iI=-1; // не присутствует в матрице
-		     slb[inumber].iW=sosedb[inumber].iB;
+		     slb[inumber].iW=border_neighbor[inumber].iB;
 	}
 	if ((!bDirichlet)&&(!bDirichleti)) {
 		// однородное условие Неймана.
 		doublereal dl, dS, deltal, fiplus;
 
-		switch (sosedb[inumber].Norm) {
-		case ESIDE : dl=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x;
-                 dS=pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[1][sosedb[inumber].iI]-1].y; 
-				 dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
+		switch (border_neighbor[inumber].Norm) {
+		case ESIDE: dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
+                 dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
+				 dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
                  slb[inumber].ai=2.0*dbeta*dS/dl;
-				 slb[inumber].iI=sosedb[inumber].iI;
+				 slb[inumber].iI=border_neighbor[inumber].iI;
 				 slb[inumber].aw=slb[inumber].ai;
-				 slb[inumber].iW=sosedb[inumber].iB;
-                 deltal=0.5*(pa[nvtx[1][sosedb[inumber].iII]-1].x+pa[nvtx[0][sosedb[inumber].iII]-1].x);
-				 deltal-=0.5*(pa[nvtx[1][sosedb[inumber].iI]-1].x+pa[nvtx[0][sosedb[inumber].iI]-1].x);
+				 slb[inumber].iW=border_neighbor[inumber].iB;
+                 deltal=0.5*(pa[nvtx[1][border_neighbor[inumber].iII]-1].x+pa[nvtx[0][border_neighbor[inumber].iII]-1].x);
+				 deltal-=0.5*(pa[nvtx[1][border_neighbor[inumber].iI]-1].x+pa[nvtx[0][border_neighbor[inumber].iI]-1].x);
                  fiplus=0.5*dl/deltal;
 				 // правая часть
-				 slb[inumber].b=(dbeta-1.0)*dS*(potent[sosedb[inumber].iI]-potent[sosedb[inumber].iII])/deltal;
+				 slb[inumber].b=(dbeta-1.0)*dS*(potent[border_neighbor[inumber].iI]-potent[border_neighbor[inumber].iII])/deltal;
 			    break;
-		case NSIDE : 
-			     dl = pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y;
-                 dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
-				 dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
+		case NSIDE: 
+			     dl = pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
+                 dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
+				 dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 				 slb[inumber].ai=2.0*dbeta*dS/dl;
-				 slb[inumber].iI=sosedb[inumber].iI;
+				 slb[inumber].iI=border_neighbor[inumber].iI;
 				 slb[inumber].aw=slb[inumber].ai;
-				 slb[inumber].iW=sosedb[inumber].iB;
-				 deltal=0.5*(pa[nvtx[2][sosedb[inumber].iII]-1].y+pa[nvtx[0][sosedb[inumber].iII]-1].y);
-				 deltal-=0.5*(pa[nvtx[2][sosedb[inumber].iI]-1].y+pa[nvtx[0][sosedb[inumber].iI]-1].y);
+				 slb[inumber].iW=border_neighbor[inumber].iB;
+				 deltal=0.5*(pa[nvtx[2][border_neighbor[inumber].iII]-1].y+pa[nvtx[0][border_neighbor[inumber].iII]-1].y);
+				 deltal-=0.5*(pa[nvtx[2][border_neighbor[inumber].iI]-1].y+pa[nvtx[0][border_neighbor[inumber].iI]-1].y);
                  fiplus=0.5*dl/deltal;
 				 // правая часть
-				 slb[inumber].b=(dbeta-1.0)*dS*(potent[sosedb[inumber].iI]-potent[sosedb[inumber].iII])/deltal;
+				 slb[inumber].b=(dbeta-1.0)*dS*(potent[border_neighbor[inumber].iI]-potent[border_neighbor[inumber].iII])/deltal;
 				 break;
        case TSIDE:  
-			     dl = pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z;
-                 dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
-				 dS*=(pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y); // площадь грани
+			     dl = pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
+                 dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
+				 dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
 				 slb[inumber].ai=2.0*dbeta*dS/dl;
-				 slb[inumber].iI=sosedb[inumber].iI;
+				 slb[inumber].iI=border_neighbor[inumber].iI;
 				 slb[inumber].aw=slb[inumber].ai;
-				 slb[inumber].iW=sosedb[inumber].iB;
-				 deltal=0.5*(pa[nvtx[4][sosedb[inumber].iII]-1].z+pa[nvtx[0][sosedb[inumber].iII]-1].z);
-				 deltal-=0.5*(pa[nvtx[4][sosedb[inumber].iI]-1].z+pa[nvtx[0][sosedb[inumber].iI]-1].z);
+				 slb[inumber].iW=border_neighbor[inumber].iB;
+				 deltal=0.5*(pa[nvtx[4][border_neighbor[inumber].iII]-1].z+pa[nvtx[0][border_neighbor[inumber].iII]-1].z);
+				 deltal-=0.5*(pa[nvtx[4][border_neighbor[inumber].iI]-1].z+pa[nvtx[0][border_neighbor[inumber].iI]-1].z);
                  fiplus=0.5*dl/deltal;
 				 // правая часть
-				 slb[inumber].b=(dbeta-1.0)*dS*(potent[sosedb[inumber].iI]-potent[sosedb[inumber].iII])/deltal;
+				 slb[inumber].b=(dbeta-1.0)*dS*(potent[border_neighbor[inumber].iI]-potent[border_neighbor[inumber].iII])/deltal;
                  break;
-		case WSIDE : 
-			     dl = pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x;
-                 dS=pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[1][sosedb[inumber].iI]-1].y; 
-				 dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
+		case WSIDE: 
+			     dl = pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
+                 dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
+				 dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
     			 slb[inumber].ai=2.0*dbeta*dS/dl;
-				 slb[inumber].iI=sosedb[inumber].iI;
+				 slb[inumber].iI=border_neighbor[inumber].iI;
 				 slb[inumber].aw=slb[inumber].ai;
-				 slb[inumber].iW=sosedb[inumber].iB;
-				 deltal=-0.5*(pa[nvtx[1][sosedb[inumber].iII]-1].x+pa[nvtx[0][sosedb[inumber].iII]-1].x);
-				 deltal+=0.5*(pa[nvtx[1][sosedb[inumber].iI]-1].x+pa[nvtx[0][sosedb[inumber].iI]-1].x);
+				 slb[inumber].iW=border_neighbor[inumber].iB;
+				 deltal=-0.5*(pa[nvtx[1][border_neighbor[inumber].iII]-1].x+pa[nvtx[0][border_neighbor[inumber].iII]-1].x);
+				 deltal+=0.5*(pa[nvtx[1][border_neighbor[inumber].iI]-1].x+pa[nvtx[0][border_neighbor[inumber].iI]-1].x);
                  fiplus=0.5*dl/deltal;
      			 // правая часть
-				 slb[inumber].b=(dbeta-1.0)*dS*(potent[sosedb[inumber].iI]-potent[sosedb[inumber].iII])/deltal;
+				 slb[inumber].b=(dbeta-1.0)*dS*(potent[border_neighbor[inumber].iI]-potent[border_neighbor[inumber].iII])/deltal;
     			 break;
-         case SSIDE :
-			     dl = pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y;
-                 dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
-				 dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
+         case SSIDE:
+			     dl = pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
+                 dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
+				 dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 				 slb[inumber].ai=2.0*dbeta*dS/dl;
-				 slb[inumber].iI=sosedb[inumber].iI;
+				 slb[inumber].iI=border_neighbor[inumber].iI;
 				 slb[inumber].aw=slb[inumber].ai;
-				 slb[inumber].iW=sosedb[inumber].iB;
-				 deltal=-0.5*(pa[nvtx[2][sosedb[inumber].iII]-1].y+pa[nvtx[0][sosedb[inumber].iII]-1].y);
-				 deltal+=0.5*(pa[nvtx[2][sosedb[inumber].iI]-1].y+pa[nvtx[0][sosedb[inumber].iI]-1].y);
+				 slb[inumber].iW=border_neighbor[inumber].iB;
+				 deltal=-0.5*(pa[nvtx[2][border_neighbor[inumber].iII]-1].y+pa[nvtx[0][border_neighbor[inumber].iII]-1].y);
+				 deltal+=0.5*(pa[nvtx[2][border_neighbor[inumber].iI]-1].y+pa[nvtx[0][border_neighbor[inumber].iI]-1].y);
                  fiplus=0.5*dl/deltal;
 				 // правая часть
-				 slb[inumber].b=(dbeta-1.0)*dS*(potent[sosedb[inumber].iI]-potent[sosedb[inumber].iII])/deltal;
+				 slb[inumber].b=(dbeta-1.0)*dS*(potent[border_neighbor[inumber].iI]-potent[border_neighbor[inumber].iII])/deltal;
 				 break;
-		 case BSIDE :  
-			     dl = pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z;
-                 dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
-				 dS*=(pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y); // площадь грани
+		 case BSIDE:  
+			     dl = pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
+                 dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
+				 dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
 				 slb[inumber].ai=2.0*dbeta*dS/dl;
-				 slb[inumber].iI=sosedb[inumber].iI;
+				 slb[inumber].iI=border_neighbor[inumber].iI;
 				 slb[inumber].aw=slb[inumber].ai;
-				 slb[inumber].iW=sosedb[inumber].iB;
-                 deltal=-0.5*(pa[nvtx[4][sosedb[inumber].iII]-1].z+pa[nvtx[0][sosedb[inumber].iII]-1].z);
-    			 deltal+=0.5*(pa[nvtx[4][sosedb[inumber].iI]-1].z+pa[nvtx[0][sosedb[inumber].iI]-1].z);
+				 slb[inumber].iW=border_neighbor[inumber].iB;
+                 deltal=-0.5*(pa[nvtx[4][border_neighbor[inumber].iII]-1].z+pa[nvtx[0][border_neighbor[inumber].iII]-1].z);
+    			 deltal+=0.5*(pa[nvtx[4][border_neighbor[inumber].iI]-1].z+pa[nvtx[0][border_neighbor[inumber].iI]-1].z);
                  fiplus=0.5*dl/deltal;
 				 // правая часть
-				 slb[inumber].b=(dbeta-1.0)*dS*(potent[sosedb[inumber].iI]-potent[sosedb[inumber].iII])/deltal;
+				 slb[inumber].b=(dbeta-1.0)*dS*(potent[border_neighbor[inumber].iI]-potent[border_neighbor[inumber].iII])/deltal;
 				break;
 		} // end switch
 	}
@@ -306,7 +306,7 @@ void my_elmatr_quad_short_dist_bound(integer inumber, integer maxelm,
 // Составляет матрицу для уравнения 
 // поправки давления
 void my_elmatr_quad_short_dist(integer iP, equation3D* &sl, equation3D_bon* &slb,  
-	TOCHKA* pa, integer** nvtx, ALICE_PARTITION** sosedi, integer maxelm, doublereal dbeta) {
+	TOCHKA* pa, integer** nvtx, ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, doublereal dbeta) {
 
    
 	doublereal eps=1e-37; // для отделения вещественного нуля.
@@ -316,8 +316,8 @@ void my_elmatr_quad_short_dist(integer iP, equation3D* &sl, equation3D_bon* &slb
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 	sl[iP].iP=iP;
 	sl[iP].iE=iE; sl[iP].iN=iN; 
 	sl[iP].iS=iS; sl[iP].iW=iW;
@@ -415,7 +415,7 @@ void my_elmatr_quad_short_dist(integer iP, equation3D* &sl, equation3D_bon* &slb
 
 	sl[iP].b=dSc*dx*dy*dz;
 
-	// Симметризация СЛАУ :
+	// Симметризация СЛАУ:
 
 	// для потенциала FI получается эллиптическое уравнение с SPD матрицей.
 	
@@ -481,7 +481,7 @@ void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w) {
 	doublereal dbeta=1.0; // первый порядок точности.
     for (integer i=0; i<f.maxbound; i++) {
 		my_elmatr_quad_short_dist_bound(i, f.maxelm, 
-			              true, f.sosedb, ls, lw, w,
+			              true, f.border_neighbor, ls, lw, w,
 						  slb, dbeta, f.pa, f.nvtx,
 						  potent[FIDISTW]);
 	}
@@ -490,7 +490,7 @@ void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w) {
     // последний параметр bool bDirichlet равен false.
     for (integer i=0; i<f.maxbound; i++) {
 		my_elmatr_quad_short_dist_bound(i, f.maxelm, 
-			              false, f.sosedb, ls, lw, w,
+			              false, f.border_neighbor, ls, lw, w,
 						  slb, dbeta, f.pa, f.nvtx,
 						  potent[FIDISTW]);
 	}
@@ -498,7 +498,7 @@ void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w) {
 	// Собираем матрицу для внутренних контрольных объёмов.
     for (integer iP=0; iP<f.maxelm; iP++) {
 		my_elmatr_quad_short_dist(iP, sl, slb,  
-						f.pa, f.nvtx, f.sosedi,
+						f.pa, f.nvtx, f.neighbors_for_the_internal_node,
 						f.maxelm, dbeta);
 	}
 
@@ -580,19 +580,19 @@ void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w) {
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты потенциала FI для внутренних КО.
 	    green_gauss_FI(i, potent, f.nvtx, f.pa,
-	                   f.sosedi, f.maxelm, false);
+	                   f.neighbors_for_the_internal_node, f.maxelm, false);
 	}
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты потенциала FI для граничных КО.
 	    green_gauss_FI(i, potent, f.nvtx, f.pa,
-	                   f.sosedi, f.maxelm, true);
+	                   f.neighbors_for_the_internal_node, f.maxelm, true);
     }
 
 	// Вычисление расстояния до ближайшей стенки.
 	f.rdistWall=new doublereal[f.maxelm+f.maxbound];
 	for (integer iP=0; iP<f.maxelm+f.maxbound; iP++) {
 		// формула (223) из приложения 2 в книге Снегирёва.
-		// А также смотри : Transport equation based wall distance calculation
+		// А также смотри: Transport equation based wall distance calculation
 		// www.cfd-online.com/Wiki/
 		// В обоих источниках этой формулы содержится неточность.
 		// Так как мы берём отрицательный источниковый член -1.0*dx*dy*dz

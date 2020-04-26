@@ -9,19 +9,52 @@
 #ifndef  MY_MATERIAL_PROPERTIES_C
 #define  MY_MATERIAL_PROPERTIES_C 1
 
-// Объявление модели вещественной арифметики содержится в самом начале программы в главно модуле 
-// AliceFlow_v0_27
+// Объявление модели вещественной арифметики содержится в самом начале программы в главном модуле 
+// AliceFlow_v0_48
 //#define doublereal double
 #include <math.h>
+#include <time.h>
 
 // Осуществляет выход из программы в случае превышения 
 // критической температуры определённой в паспортных данных
-// на мощный 110Вт-ый транзистор TGF2023-20: TEMPERATURE_FAILURE_DC.
-void diagnostic_critical_temperature(doublereal TiP) {
+// на мощный 110 ватный транзистор TGF2023-20: TEMPERATURE_FAILURE_DC.
+void diagnostic_critical_temperature(doublereal TiP,  FLOW* &fglobal, TEMPER &t, 
+	BLOCK* b, integer lb) 
+{
 	 if (TiP > TEMPERATURE_FAILURE_DC) {
 		   printf("Attantion! unit burned...\n");
 		   printf("temperature exceeds a critical TEMPERATURE_FAILURE_DC==%3.2f",TEMPERATURE_FAILURE_DC);
-		 //  getchar();
+
+
+
+		   if (1) {
+			   if (!b_on_adaptive_local_refinement_mesh) {
+
+				   bool bextendedprint = false;
+				   integer flow_interior = 0;
+				   // экспорт результата вычисления в программу tecplot360:
+				   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0, b, lb);
+			   }
+			   else {
+				   
+				   // Экспорт в программу tecplot температуры.
+				   //С АЛИС сетки.
+				   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+			   }
+		   }
+
+
+		   unsigned int calculation_main_end_time = clock();
+		   unsigned int calculation_main_seach_time = calculation_main_end_time - calculation_main_start_time_global_Depend;
+		   
+		   // Общее время вычисления до возникновения критического сообщения.
+		   int im = 0, is = 0, ims = 0;
+		   im = (int)(calculation_main_seach_time / 60000); // минуты
+		   is = (int)((calculation_main_seach_time - 60000 * im) / 1000); // секунды
+		   ims = (int)((calculation_main_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
+
+		   printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+		   //  getchar();
 		   system("pause");
 		   char ch;
 		   printf("please enter c)ontinue h)alt.\n");
@@ -47,7 +80,7 @@ void my_air_properties(doublereal TiP, doublereal PiP,
 	// возвращает реальные свойства воздуха !
 	// Входные параметры: 
     // TiP - температура в градусах цельсия в центре контрольного объёма.
-	// PiP - давление в избыточных (отсчитывемое от нуля, 0 - опорное значение). 
+	// PiP - давление в избыточных (отсчитываемое от нуля, 0 - опорное значение). 
 
 	// Данная приближённая аппроксимация справедлива в диапазоне
 	// температур 273-473K.
@@ -55,7 +88,7 @@ void my_air_properties(doublereal TiP, doublereal PiP,
 	// www.engineeringtoolbox.com.
 
     doublereal TK=TiP+273.15; // K
-	doublereal Pair=101325+PiP; // Па
+	//doublereal Pair=101325+PiP; // Па
 
 	// скорость звука в воздухе:
 	/* temp grad C  Vel m/s  Vel km/h
@@ -118,7 +151,7 @@ void my_water_properties(doublereal TiP,
 
     doublereal TK=TiP+273.15;
 
-	// Скорость звука в воде :
+	// Скорость звука в воде:
 	/* temp grad C  Vel Mag m/s
 	*		 0		1.403
 	*		 5		1.427
@@ -155,7 +188,7 @@ void my_water_properties(doublereal TiP,
 } // my_water_properties
 
 // SOLID твёрдые тела:
-// Главный принцип : приводить только проверенные данные.
+// Главный принцип: приводить только проверенные данные.
 
 // Значение 100 для материала заданного пользователем.
 //#define MY_AUSN 101    // Припой золото 80% станум 20%
@@ -183,13 +216,13 @@ void my_ausn_properties(doublereal TiP,
 	                    doublereal &rho, doublereal &cp,
 						doublereal &lam) {
        // AuSn 80 золота/20 олова
-       doublereal TK=TiP+273.15;
+       //doublereal TK=TiP+273.15;
 	   rho=14510; // kg/m^3
 	   // cp=150 по данным программы SYMMIC
 	   cp=143; // J/(kg*K) по данным TDIM - Master
 	  
 	   // Теплопроводность в литературе известна только 
-	   // для двух точек : 68 при 300К и 57 при 85 град. С.
+	   // для двух точек: 68 при 300К и 57 при 85 град. С.
 	   lam=57; // т.к. нигде не нашёл достоверное значение показателя степени.
 	   // формула на основе показателя степени верна по-видимости в основном для 
 	   // полупроводников т.е. она не универсальна. Есть металлы и сплавы теплопроводность
@@ -199,7 +232,7 @@ void my_ausn_properties(doublereal TiP,
 
 	   // Теплопроводность и теплоёмкость золото-оловянного припоя нельзя 
 	   // вычислять на основе свойств его компонентов в отдельности зная 
-	   // процентный состав сплава, т.к. структура соединения сильно неупорядочена
+	   // процентный состав сплава, т.к. структура соединения сильно не упорядочена
 	   // имеются большие случайные вкрапления олова в золото,  поэтому теплопроводность и
 	   // теплоёмкость данного соединения хуже чем каждая из  компонент сплава в отдельности.
 	   // Данные величины являются экспериментальными данными, теоретически рассчитать которые невозможно.
@@ -214,7 +247,7 @@ void my_si_properties(doublereal TiP,
        doublereal TK=TiP+273.15;
 	   rho=2330; // kg/m^3
 	   //cp=711; // J/(kg*K)
-	   // Формула для теплоёмкости справедлива в диапазоне температур : 77K-773K.
+	   // Формула для теплоёмкости справедлива в диапазоне температур: 77K-773K.
 	   // TK  77 173 273 373 573 773
 	   // cp 180 490 680 770 850 880
 	   if (TK < 800.0) {
@@ -241,7 +274,7 @@ void my_alumina_properties(doublereal TiP,
 	rho = 2330; // kg/m^3
 
 	//cp=753; // J/(kg*K)
-	// Формула для теплоёмкости справедлива в диапазоне температур : 200K-800K.
+	// Формула для теплоёмкости справедлива в диапазоне температур: 200K-800K.
 	// TK  200 298 400 500 600 800
 	// cp 502 753 920 1046 1088 1172
 	if (TK < 800.0) {
@@ -283,8 +316,7 @@ void my_gaas_properties(doublereal TiP,
 	   //lam=47; // данные В.Д. Красильникова
 	   lam=54*exp(-1.25*log(TK/300)); // 54 W/(m*K)
 
-	   // проверка на допустимость температур.
-	   diagnostic_critical_temperature(TiP);
+	   
 } // GaAs
 
 // Нитрид Галия GaN
@@ -295,7 +327,7 @@ void my_gan_properties(doublereal TiP,
        doublereal TK=TiP+273.15;
 	   rho=6150; // kg/m^3
 	   cp=491; // J/(kg*K)
-	   // Формула для теплоёмкости справедлива в диапазоне температур : 200K-1300K.
+	   // Формула для теплоёмкости справедлива в диапазоне температур: 200K-1300K.
 	   // TK  200 300 400 500 600 700 800 900 1000 1100 1200 1300
 	   // cp 322.3 431.3 501.2 543.8 572.17 592.8 608.9 622.2 633.7 643.99 653.4 662.22
 	   if ((TK > 200) && (TK < 1300)) {
@@ -305,9 +337,6 @@ void my_gan_properties(doublereal TiP,
 	   // книги Р. Квэя Электроника нитрида галия.
 	   //lam=130; // данные В.Д. Красильникова
 	   lam=130*exp(-0.43*log(TK/300)); // 130 W/(m*K)
-
-	   // проверка на допустимость температур.
-	   diagnostic_critical_temperature(TiP);
 } // GaN
 
 // Карбид Кремния SiC4H
@@ -355,8 +384,6 @@ void my_sapphire_properties(doublereal TiP,
 	   // По данным программы SYMMIC.
 	   lam=42*exp((-1.134821)*log(TK/298)); // 42 W/(m*K) при 298К
 
-	   // проверка на допустимость температур.
-	   diagnostic_critical_temperature(TiP);
 } // Sapphire
 
 // Алмаз Diamond
@@ -383,7 +410,7 @@ void my_diamond_properties(doublereal TiP,
 	   // По данным Р. Квэя теплопроводность алмаза при 300К лежит между 2000 и 2500.
 } // Diamond
 
-// Псевдосплав CuMo с 40% содержанием меди : МД40
+// Псевдосплав CuMo с 40% содержанием меди: МД40
 void my_md40_properties(doublereal TiP,
 	                    doublereal &rho, doublereal &cp,
 						doublereal &lam) {
@@ -432,7 +459,7 @@ void my_au_properties(doublereal TiP,
 	   else cp=140;
 
 	   //lam=293; // W/(m*K)
-	   // Вид зависимости, предложеннный в книге Р. Квэя не годится для
+	   // Вид зависимости, предложенный в книге Р. Квэя не годится для
 	   // теплопроводности золота.
 	   // Поэтому была получена своя оригинальная формула с помощью МНК.
 	   if (TK<974) {
@@ -440,8 +467,6 @@ void my_au_properties(doublereal TiP,
 	   }
 	   else lam=272;
 
-	   // проверка на допустимость температур.
-	   diagnostic_critical_temperature(TiP);
 } // Au
 
 // SiO2
@@ -576,7 +601,7 @@ void my_glueeches_properties(doublereal TiP,
 					  doublereal &lam) {
        // glue ECHES
 	   // По данным В.Д. Красильникова.
-       doublereal TK=TiP+273.15;
+       //doublereal TK=TiP+273.15;
 	   rho=1000; // kg/m^3
 	   cp=100; // J/(kg*K)
 	   lam=4; // W/(m*K)
@@ -616,9 +641,9 @@ void my_fluid_properties(doublereal TiP, doublereal PiP,
 					   doublereal &lam, doublereal &mu,
 					   doublereal &beta, integer ilibident) {
 	switch (ilibident) {
-	  case MY_AIR : my_air_properties(TiP, PiP, rho, cp, lam, mu, beta); break;
-	  case MY_WATER : my_water_properties(TiP, rho, cp,lam, mu, beta); break;
-	  default : my_air_properties(TiP, PiP, rho, cp, lam, mu, beta);  break;
+	  case MY_AIR: my_air_properties(TiP, PiP, rho, cp, lam, mu, beta); break;
+	  case MY_WATER: my_water_properties(TiP, rho, cp,lam, mu, beta); break;
+	  default: my_air_properties(TiP, PiP, rho, cp, lam, mu, beta);  break;
 	} // end switch
 } // my_fluid_properties
 
@@ -628,24 +653,24 @@ doublereal dsic=1.0e30, dgan=1.0e30, dcu=1.0e30;
 void my_solid_properties(doublereal TiP, doublereal &rho, doublereal &cp,
 	                     doublereal &lam, integer ilibident) {
 	switch (ilibident) {
-	  //case MY_AUSN : my_ausn_properties(TiP,rho,cp,lam); break; // припой золото станум
+	  //case MY_AUSN: my_ausn_properties(TiP,rho,cp,lam); break; // припой золото станум
 	  case MY_ALUMINA:  my_alumina_properties(TiP, rho, cp, lam); break; // поликор Al2O3.
-	  case MY_SI : my_si_properties(TiP,rho,cp,lam); break; // кремний
-	  case MY_GAAS : my_gaas_properties(TiP,rho,cp,lam); break; // арсенид галия
+	  case MY_SI: my_si_properties(TiP,rho,cp,lam); break; // кремний
+	  case MY_GAAS: my_gaas_properties(TiP,rho,cp,lam); break; // арсенид галия
 	  case MY_GAN: my_gan_properties(TiP, rho, cp, lam); if (lam < dgan) { dgan = lam; }  break; // нитрид галия
 	  case MY_SIC4H: my_sic4h_properties(TiP, rho, cp, lam); if (lam < dsic) { dsic = lam; } break; // карбид кремния
-	  case MY_SAPPHIRE : my_sapphire_properties(TiP,rho,cp,lam); break; // сапфир
-	  case MY_DIAMOND : my_diamond_properties(TiP,rho,cp,lam); break; // алмаз
-	  case MY_MD40 : my_md40_properties(TiP,rho,cp,lam); break; // Псевдосплав МД40
-	  case MY_AU : my_au_properties(TiP,rho,cp,lam); break; // Золото
-	  case MY_SIO2 : my_sio2_properties(TiP,rho,cp,lam); break; // SiO2
+	  case MY_SAPPHIRE: my_sapphire_properties(TiP,rho,cp,lam); break; // сапфир
+	  case MY_DIAMOND: my_diamond_properties(TiP,rho,cp,lam); break; // алмаз
+	  case MY_MD40: my_md40_properties(TiP,rho,cp,lam); break; // Псевдосплав МД40
+	  case MY_AU: my_au_properties(TiP,rho,cp,lam); break; // Золото
+	  case MY_SIO2: my_sio2_properties(TiP,rho,cp,lam); break; // SiO2
 	  case MY_COPPER: my_copper_properties(TiP, rho, cp, lam); if (lam < dcu) { dcu = lam; }  break; // Медь
-	  case MY_KOVAR : my_kovar_properties(TiP,rho,cp,lam); break; // Ковар
-	  case MY_BRASS : my_brass_properties(TiP,rho,cp,lam); break; // Латунь ЛС-59-1-Л Brass
-	  case MY_DURALUMIN : my_duralumin_properties(TiP,rho,cp,lam); break; // дюралюминий
+	  case MY_KOVAR: my_kovar_properties(TiP,rho,cp,lam); break; // Ковар
+	  case MY_BRASS: my_brass_properties(TiP,rho,cp,lam); break; // Латунь ЛС-59-1-Л Brass
+	  case MY_DURALUMIN: my_duralumin_properties(TiP,rho,cp,lam); break; // дюралюминий
 	  case MY_ALUMINIUM_NITRIDE: my_aluminium_nitride_properties(TiP, rho, cp, lam); break; // aluminium nitride
 	  case MY_GLUE_ECHES: my_glueeches_properties(TiP, rho, cp, lam); break; // клей ЭЧЭС
-	  default : my_duralumin_properties(TiP,rho,cp,lam); break; // дюралюминий - библиотечный материал по умолчанию
+	  default: my_duralumin_properties(TiP,rho,cp,lam); break; // дюралюминий - библиотечный материал по умолчанию
 	} // end switch
 } // my_solid_properties
 
@@ -656,13 +681,15 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 
 	doublereal rho, cp, lam;
 	integer iG; // номер соседа который может оказаться граничным узлом.
-	iG=t.sosedi[G][iP].iNODE1;
+	iG=t.neighbors_for_the_internal_node[G][iP].iNODE1;
 	if (iG>=t.maxelm) {
 		// это граничный узел
         rho=1.1614; cp=1005; lam=0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat==1) {
 			if (b[ib].itype==SOLID) {
 		        my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 		    } // SOLID
 		    else if (b[ib].itype==FLUID) {
 		       doublereal mu, beta_t; // значения не используются но требуются.
@@ -671,8 +698,8 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 			       pressure=0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 		       }
 			   else {
-				   if (f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE1 > -1) {
-					   pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE1];
+				   if (f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE1 > -1) {
+					   pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE1];
 				   }
 				   else {
 					   // STUB 15.09.2018
@@ -712,13 +739,15 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 	} // G Side
 
 
-	iG = t.sosedi[G][iP].iNODE2;
+	iG = t.neighbors_for_the_internal_node[G][iP].iNODE2;
 	if (iG >= t.maxelm) {
 		// это граничный узел
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
 			if (b[ib].itype == SOLID) {
 				my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
 			else if (b[ib].itype == FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
@@ -727,8 +756,8 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 					pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 				}
 				else {
-					if (f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE2 > -1) {
-						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE2];
+					if (f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE2 > -1) {
+						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE2];
 					}
 					else {
 						// STUB 15.09.2018
@@ -766,13 +795,15 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		t.prop_b[LAM][iG - t.maxelm] = lam;
 	} // G Side
 
-	iG = t.sosedi[G][iP].iNODE3;
+	iG = t.neighbors_for_the_internal_node[G][iP].iNODE3;
 	if (iG >= t.maxelm) {
 		// это граничный узел
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
 			if (b[ib].itype == SOLID) {
 				my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
 			else if (b[ib].itype == FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
@@ -781,8 +812,8 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 					pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 				}
 				else {
-					if (f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE3 > -1) {
-						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE3];
+					if (f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE3 > -1) {
+						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE3];
 					}
 					else {
 						// STUB 15.09.2018
@@ -821,13 +852,15 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 	} // G Side
 
 
-	iG = t.sosedi[G][iP].iNODE4;
+	iG = t.neighbors_for_the_internal_node[G][iP].iNODE4;
 	if (iG >= t.maxelm) {
 		// это граничный узел
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
 			if (b[ib].itype == SOLID) {
 				my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
 			else if (b[ib].itype == FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
@@ -836,8 +869,8 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 					pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 				}
 				else {
-					if (f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE4 > -1) {
-						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE4];
+					if (f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE4 > -1) {
+						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].neighbors_for_the_internal_node[G][t.ptr[0][iP]].iNODE4];
 					}
 					else {
 						// STUB 15.09.2018
@@ -889,17 +922,16 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 	// с положительной обратной связью в которой расчётная максимальная температура 
 	// может быть намного выше чем соответствующая расчётная температура в линейной 
 	// системе с постоянными свойствами.
-    integer iP=0;
-	//TOCHKA p; // точка - центр рассматриваемого КО.
-	integer ib; // номер блока которому принадлежит контрольный объём.
-	doublereal rho, cp, lam;
+
+	//TOCHKA p; // точка - центр рассматриваемого КО.	
+	
 	doublereal dmin = 1.0e30;
 	doublereal dmax = -1.0e30;
 	dgan = 1.0e30;
 	dsic = 1.0e30;
 	dcu = 1.0e30;
 
-	for (iP=0; iP<t.maxelm; iP++) {
+	for (integer iP=0; iP<t.maxelm; iP++) {
 		// проход по всем внутренним контрольным объёмам расчётной области.
 
 		//center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
@@ -907,18 +939,22 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 		// 8 января 2016 Ускорение вычисления ib
 		
 
+		integer ib; // номер блока которому принадлежит контрольный объём.
+		doublereal rho, cp, lam;
 
 		ib = t.whot_is_block[iP];
 		rho=1.1614; cp=1005; lam=0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat==1) {
-			// библиотечный, внутрипрограммный материал.
+			// библиотечный, находящийся внутри программы AliceFlow материал.
 			if (b[ib].itype==SOLID) {
 			    my_solid_properties(t.potent[iP], rho, cp, lam, matlist[b[ib].imatid].ilibident);
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 		    } // SOLID
 		    if (b[ib].itype==FLUID) {
 			   doublereal mu, beta_t; // значения не используются но требуются.
 		       doublereal pressure;
-			   if ((t.ptr==nullptr)||((t.ptr!=nullptr)&&(t.ptr[1][iP]==-1))) {
+			   if ((t.ptr==nullptr)||(t.ptr[1][iP]==-1)) {
 				   pressure=0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 			   }
 			   else pressure=f[t.ptr[1][iP]].potent[PRESS][t.ptr[0][iP]];
@@ -1002,17 +1038,19 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 	// с положительной обратной связью в которой расчётная максимальная температура 
 	// может быть намного выше чем соответствующая расчётная температура в линейной 
 	// системе с постоянными свойствами.
-	integer iP = 0;
+	 
 	//TOCHKA p; // точка - центр рассматриваемого КО.
-	integer ib; // номер блока которому принадлежит контрольный объём.
-	doublereal rho, cp, lam;
+	
 	doublereal dmin = 1.0e30;
 	doublereal dmax = -1.0e30;
-	for (iP = iadd; iP<iadd+t.maxelm; iP++) {
+	for (integer iP = iadd; iP<iadd+t.maxelm; iP++) {
 		// проход по всем внутренним контрольным объёмам расчётной области.
 
 		
 		doublereal Temperature_in_cell = 0.125*(temperature[nvtx_global[0][iP]-1]+ temperature[nvtx_global[1][iP] - 1] + temperature[nvtx_global[2][iP] - 1] + temperature[nvtx_global[3][iP] - 1] + temperature[nvtx_global[4][iP] - 1] + temperature[nvtx_global[5][iP] - 1] + temperature[nvtx_global[6][iP] - 1] + temperature[nvtx_global[7][iP] - 1]);
+
+		integer ib; // номер блока которому принадлежит контрольный объём.
+		doublereal rho, cp, lam;
 
 		if (iu == -1) {
 			//center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
@@ -1027,14 +1065,16 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 		}
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
-			// библиотечный, внутрипрограммный материал.
+			// библиотечный, находящийся внутри программы AliceFlow материал.
 			if (b[ib].itype == SOLID) {
 				my_solid_properties(Temperature_in_cell, rho, cp, lam, matlist[b[ib].imatid].ilibident);
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
 			if (b[ib].itype == FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
-				if ((t.ptr==nullptr)||((t.ptr!=nullptr)&&(t.ptr[1][iP-iadd] == -1))) {
+				if ((t.ptr==nullptr)||(t.ptr[1][iP-iadd] == -1)) {
 					pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 				}
 				else pressure = f[t.ptr[1][iP-iadd]].potent[PRESS][t.ptr[0][iP-iadd]];
@@ -1102,10 +1142,10 @@ doublereal return_dynamic_viscosity(TPROP* matlist, integer imatid,
 
 	// Вычисление динамической вязкости:
 	switch (matlist[imatid].ilawmu) {
-	case 0 : // постоянное значение
+	case 0: // постоянное значение
 		mu=matlist[imatid].mu;
 		break;
-	case 1 : // power-law fluid
+	case 1: // power-law fluid
 		// Закон Оствальда-де Вела (Ostwald de Vel)
 		if ((!bfirst_start)&&(SInvariantStrainRateTensor>0.0)) {
 		   mu=fmax(matlist[imatid].mumin,fmin(2.0*matlist[imatid].Amu*exp((matlist[imatid].degreennmu-1.0)*log(SInvariantStrainRateTensor)),matlist[imatid].mumax));
@@ -1119,7 +1159,7 @@ doublereal return_dynamic_viscosity(TPROP* matlist, integer imatid,
 			} else mu=matlist[imatid].mu;
 		}
 		break;
-	case 2 : // закон Кессона Caisson
+	case 2: // закон Кессона Caisson
 		// Согласно закону Кессона вязкость убывает с возрастанием напряжения сдвига.
 		if ((!bfirst_start)&&(SInvariantStrainRateTensor>0.0)) {
 			if (matlist[imatid].Amu>=0.0) {
@@ -1134,7 +1174,7 @@ doublereal return_dynamic_viscosity(TPROP* matlist, integer imatid,
 		}
 		else mu=matlist[imatid].mumax;
 		break;
-	case 3 : // закон Прандтля
+	case 3: // закон Прандтля
 		// согласно закону Прандтля при B>0 вязкость возрастает с увеличением напряжения сдвига,
 		// а при B<0 динамическая вязкость убывает с ростом напряжения сдвига.
 		if ((!bfirst_start)&&(SInvariantStrainRateTensor>0.0)) {
@@ -1155,10 +1195,10 @@ doublereal return_dynamic_viscosity(TPROP* matlist, integer imatid,
 			else mu=matlist[imatid].mumax;
 		}
 		break;
-	case 4 : // Carreau fluid
+	case 4: // Carreau fluid
 		mu=fmax(matlist[imatid].mumin,fmin(matlist[imatid].mumax,matlist[imatid].Amu+(matlist[imatid].Bmu-matlist[imatid].Amu)*exp(0.5*(matlist[imatid].degreennmu-1.0)*log(1.0+(matlist[imatid].Cmu*SInvariantStrainRateTensor)*(matlist[imatid].Cmu*SInvariantStrainRateTensor)))));
 		break;
-	case 5 : // Пауэлл-Эйринг
+	case 5: // Пауэлл-Эйринг
 		// Если B*C>0.0 то динамическая вязкость убывает с ростом напряжения сдвига,
 		// если B*C<0.0 то динамическая вязкость возрастает с ростом напряжения сдвига.
 		if ((!bfirst_start)&&(SInvariantStrainRateTensor>0.0)) {
@@ -1171,11 +1211,11 @@ doublereal return_dynamic_viscosity(TPROP* matlist, integer imatid,
 			} else mu=matlist[imatid].mumin;
 		}
 		break;
-	case 6 : // Williamson non-Newtonian fluid
+	case 6: // Williamson non-Newtonian fluid
 		// Здесь априори предполагается что параметры формулы заданы правильно (ответственность целиком и полностью ложится на пользователя).
 		mu=fmax(matlist[imatid].mumin,fmin(matlist[imatid].mumax,matlist[imatid].Amu/(matlist[imatid].Bmu+SInvariantStrainRateTensor)+matlist[imatid].Cmu));
 		break;
-	default : // постоянное значение
+	default: // постоянное значение
 		mu=matlist[imatid].mu;
 		break;
 	}
@@ -1191,24 +1231,24 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 
        doublereal rho=0.0, mu=0.0, beta_t=0.0;
 	   integer iG=0; // номер соседа который может оказаться граничным узлом.
-	   iG=f[iflow].sosedi[G][iP].iNODE1;
+	   iG=f[iflow].neighbors_for_the_internal_node[G][iP].iNODE1;
 	   if (iG>=f[iflow].maxelm) {
 		   // это граничный узел
            rho=1.1614; mu=1.84e-5; beta_t=0.003331; // инициализация default dry air 300K 1atm properties
 		   if (matlist[b[ib].imatid].blibmat==1) {
 				doublereal cp, lam;
 				cp=1005; lam=0.025;
-				// библиотечный внутрипрограммный материал
+				// библиотечный находящийся внутри программы AliceFlow материал
 				doublereal temperature=20.0;
-				if (t.sosedi[G][f[iflow].ptr[iP]].iNODE1>=t.maxelm) {
+				if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE1>=t.maxelm) {
 					// граничная для температуры точка
-                    temperature=t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE1];
+                    temperature=t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE1];
 				} else {
-					if (t.sosedi[G][f[iflow].ptr[iP]].iNODE1 > -1) {
+					if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE1 > -1) {
 						// температура на грани восстанавливается линейной интерполяцией:
 						TOCHKA p1, p2;
 						center_cord3D(f[iflow].ptr[iP], t.nvtx, t.pa, p1,100); // вычисление координат центра КО.
-						center_cord3D(t.sosedi[G][f[iflow].ptr[iP]].iNODE1, t.nvtx, t.pa, p2, G);
+						center_cord3D(t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE1, t.nvtx, t.pa, p2, G);
 						doublereal fgplus = 0.0;
 						doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 						volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
@@ -1218,7 +1258,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 						case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 						}
 
-						temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE1];
+						temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE1];
 					}
 					else {
 						temperature = t.potent[iP];
@@ -1233,7 +1273,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 						//exit(1);
 					}
 				}
-                // библиотечный внутрипрограммный материал
+                // библиотечный находящийся внутри программы AliceFlow материал
 				if (b[ib].itype==FLUID) {
 					my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 				}
@@ -1258,25 +1298,25 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 
 	   } // G Side
 
-	   iG = f[iflow].sosedi[G][iP].iNODE2;
+	   iG = f[iflow].neighbors_for_the_internal_node[G][iP].iNODE2;
 	   if (iG >= f[iflow].maxelm) {
 		   // это граничный узел
 		   rho = 1.1614; mu = 1.84e-5; beta_t = 0.003331; // инициализация default dry air 300K 1atm properties
 		   if (matlist[b[ib].imatid].blibmat == 1) {
 			   doublereal cp, lam;
 			   cp = 1005; lam = 0.025;
-			   // библиотечный внутрипрограммный материал
+			   // библиотечный находящийся внутри программы AliceFlow материал
 			   doublereal temperature = 20.0;
-			   if (t.sosedi[G][f[iflow].ptr[iP]].iNODE2 >= t.maxelm) {
+			   if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE2 >= t.maxelm) {
 				   // граничная для температуры точка
-				   temperature = t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE2];
+				   temperature = t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE2];
 			   }
 			   else {
-				   if (t.sosedi[G][f[iflow].ptr[iP]].iNODE2>-1) {
+				   if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE2>-1) {
 					   // температура на грани восстанавливается линейной интерполяцией:
 					   TOCHKA p1, p2;
 					   center_cord3D(f[iflow].ptr[iP], t.nvtx, t.pa, p1,100); // вычисление координат центра КО.
-					   center_cord3D(t.sosedi[G][f[iflow].ptr[iP]].iNODE2, t.nvtx, t.pa, p2,G);
+					   center_cord3D(t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE2, t.nvtx, t.pa, p2,G);
 					   doublereal fgplus = 0.0;
 					   doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 					   volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
@@ -1286,7 +1326,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 					   }
 
-					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE2];
+					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE2];
 				   }
 				   else {
 					   temperature = t.potent[iP];
@@ -1301,7 +1341,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   //exit(1);
 				   }
 			   }
-			   // библиотечный внутрипрограммный материал
+			   // библиотечный находящийся внутри программы AliceFlow материал
 			   if (b[ib].itype == FLUID) {
 				   my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 			   }
@@ -1326,25 +1366,25 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 
 	   } // G Side
 
-	   iG = f[iflow].sosedi[G][iP].iNODE3;
+	   iG = f[iflow].neighbors_for_the_internal_node[G][iP].iNODE3;
 	   if (iG >= f[iflow].maxelm) {
 		   // это граничный узел
 		   rho = 1.1614; mu = 1.84e-5; beta_t = 0.003331; // инициализация default dry air 300K 1atm properties
 		   if (matlist[b[ib].imatid].blibmat == 1) {
 			   doublereal cp, lam;
 			   cp = 1005; lam = 0.025;
-			   // библиотечный внутрипрограммный материал
+			   // библиотечный находящийся внутри программы AliceFlow материал
 			   doublereal temperature = 20.0;
-			   if (t.sosedi[G][f[iflow].ptr[iP]].iNODE3 >= t.maxelm) {
+			   if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE3 >= t.maxelm) {
 				   // граничная для температуры точка
-				   temperature = t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE3];
+				   temperature = t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE3];
 			   }
 			   else {
-				   if (t.sosedi[G][f[iflow].ptr[iP]].iNODE3>-1) {
+				   if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE3>-1) {
 					   // температура на грани восстанавливается линейной интерполяцией:
 					   TOCHKA p1, p2;
 					   center_cord3D(f[iflow].ptr[iP], t.nvtx, t.pa, p1,100); // вычисление координат центра КО.
-					   center_cord3D(t.sosedi[G][f[iflow].ptr[iP]].iNODE3, t.nvtx, t.pa, p2,G);
+					   center_cord3D(t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE3, t.nvtx, t.pa, p2,G);
 					   doublereal fgplus = 0.0;
 					   doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 					   volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
@@ -1354,7 +1394,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 					   }
 
-					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE3];
+					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE3];
 				   }
 				   else {
 					   temperature = t.potent[iP];
@@ -1370,7 +1410,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   //exit(1);
 				   }
 			   }
-			   // библиотечный внутрипрограммный материал
+			   // библиотечный находящийся внутри программы AliceFlow материал
 			   if (b[ib].itype == FLUID) {
 				   my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 			   }
@@ -1396,25 +1436,25 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 	   } // G Side
 
 
-	   iG = f[iflow].sosedi[G][iP].iNODE4;
+	   iG = f[iflow].neighbors_for_the_internal_node[G][iP].iNODE4;
 	   if (iG >= f[iflow].maxelm) {
 		   // это граничный узел
 		   rho = 1.1614; mu = 1.84e-5; beta_t = 0.003331; // инициализация default dry air 300K 1atm properties
 		   if (matlist[b[ib].imatid].blibmat == 1) {
 			   doublereal cp, lam;
 			   cp = 1005; lam = 0.025;
-			   // библиотечный внутрипрограммный материал
+			   // библиотечный находящийся внутри программы AliceFlow материал
 			   doublereal temperature = 20.0;
-			   if (t.sosedi[G][f[iflow].ptr[iP]].iNODE4 >= t.maxelm) {
+			   if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE4 >= t.maxelm) {
 				   // граничная для температуры точка
-				   temperature = t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE4];
+				   temperature = t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE4];
 			   }
 			   else {
-				   if (t.sosedi[G][f[iflow].ptr[iP]].iNODE4 > -1) {
+				   if (t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE4 > -1) {
 					   // температура на грани восстанавливается линейной интерполяцией:
 					   TOCHKA p1, p2;
 					   center_cord3D(f[iflow].ptr[iP], t.nvtx, t.pa, p1,100); // вычисление координат центра КО.
-					   center_cord3D(t.sosedi[G][f[iflow].ptr[iP]].iNODE4, t.nvtx, t.pa, p2,G);
+					   center_cord3D(t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE4, t.nvtx, t.pa, p2,G);
 					   doublereal fgplus = 0.0;
 					   doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 					   volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
@@ -1424,7 +1464,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 					   }
 
-					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE4];
+					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE4];
 				   }
 				   else {
 					   temperature = t.potent[iP];
@@ -1439,7 +1479,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   //exit(1);
 				   }
 			   }
-			   // библиотечный внутрипрограммный материал
+			   // библиотечный находящийся внутри программы AliceFlow материал
 			   if (b[ib].itype == FLUID) {
 				   my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 			   }
@@ -1471,18 +1511,22 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 	// если жидких зон нет то никакого обновления свойств материалов происходить не будет.
 	for (integer ifi=0; ifi<flow_interior; ifi++) {
 		// проход по всем жидким зонам.
-		integer iP=0;
+		
 		//TOCHKA p; // точка центр рассматриваемого КО.
-		integer ib; // номер блока которому принадлежит рассматриваемый контрольный объём.
-		doublereal rho, mu, beta_t;
+		
 		doublereal dmin = 1.0e30;
 		doublereal dmax = -1.0e30;
 
-		for (iP=0; iP<f[ifi].maxelm; iP++) {
+		for (integer iP=0; iP<f[ifi].maxelm; iP++) {
+
+
+			integer ib; // номер блока которому принадлежит рассматриваемый контрольный объём.
+			doublereal rho, mu, beta_t;
+
 			// проход по всем внутренним контрольным объёмам
 			//center_cord3D(iP, f[ifi].nvtx, f[ifi].pa, p,100); // вычисление координат центра КО.
 			//in_model_flow(p, ib, b, lb); // возвращает номер блока ib которому принадлежит контрольный объём с номером iP.
-			// Более быстрая операция - индесирование в hash таблице.
+			// Более быстрая операция - индексирование в hash таблице.
 			ib=t.whot_is_block[f[ifi].ptr[iP]];
 
 			rho=1.1614; mu=1.84e-5; beta_t=0.003331; // инициализация default dry air 300K 1atm properties
@@ -1491,7 +1535,7 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 				if (matlist[b[ib].imatid].blibmat == 1) {
 					doublereal cp, lam;
 					cp = 1005; lam = 0.025;
-					// библиотечный внутрипрограммный материал
+					// библиотечный находящийся внутри программы AliceFlow материал
 					if (b[ib].itype == FLUID) {
 						//printf("rho=%e, mu=%e",rho,mu); // debug
 						//getchar();
@@ -1564,7 +1608,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 		fprintf(fp,"solid user_geom.stl\n");
 
 		for (integer iP = 0; iP < t.maxelm; iP++) {
-			if (t.sosedi[TSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1 >= t.maxelm) {
 				// По часовой стрелке
 
 				// Пишем две треугольных грани
@@ -1593,7 +1637,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.sosedi[BSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1 >= t.maxelm) {
 				// Против часовой стрелки.
 
 				// Пишем две треугольных грани
@@ -1622,7 +1666,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.sosedi[ESIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение по часовой стрелке.
 
 				// Пишем две треугольных грани
@@ -1651,7 +1695,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.sosedi[WSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение против часовой стрелки.
 
 				// Пишем две треугольных грани
@@ -1681,7 +1725,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 			}
 
 
-			if (t.sosedi[NSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение по часовой стрелке.
 
 				// Пишем две треугольных грани
@@ -1710,7 +1754,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.sosedi[SSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение против часовой стрелки.
 
 				// Пишем две треугольных грани
@@ -1757,15 +1801,17 @@ doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, intege
 
 	for (integer iP = 0; iP < t.maxelm; iP++) {
 		// вычисление размеров текущего контрольного объёма:
-		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 		volume3D(iP, t.nvtx, t.pa, dx, dy, dz);
 		integer ib = t.whot_is_block[iP];
 		doublereal rho, cp, lam;
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
-			// библиотечный, внутрипрограммный материал.
+			// библиотечный, находящийся внутри программы AliceFlow материал.
 			if (b[ib].itype == SOLID) {
 				my_solid_properties(t.potent[iP], rho, cp, lam, matlist[b[ib].imatid].ilibident);
+				// проверка на допустимость температур.
+				diagnostic_critical_temperature(t.potent[iP],f,t,b,lb);
 			} // SOLID
 			if (b[ib].itype == FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
@@ -1841,14 +1887,14 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 			doublereal rashod = 0.0; // m!3/s
 			doublereal rashod2 = 0.0; // kg/s
 									  // Мощность в Вт которая уносится через выходную границу потока.
-									  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосьема
+									  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосъёма
 									  // если внутри области заданы только условия Дирихле по температуре.
 			doublereal Qout = 0.0; // Вт
 			for (integer j = 0; j < f.maxbound; j++) {
 
-				if (f.sosedb[j].MCB == (ls + iwall_scan)) {
+				if (f.border_neighbor[j].MCB == (ls + iwall_scan)) {
 
-				integer iP = f.sosedb[j].iI;// f.maxelm + j;
+				integer iP = f.border_neighbor[j].iI;// f.maxelm + j;
 
 				TOCHKA p;
 				center_cord3D(iP, f.nvtx, f.pa, p, 100);
@@ -1867,51 +1913,51 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 					case XY:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.sosedb[j].Norm == TSIDE) {
-							rashod += -f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
-							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
-							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						if (f.border_neighbor[j].Norm == TSIDE) {
+							rashod += -f.border_neighbor[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 
 						}
 						else {
-							rashod += f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
-							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
-							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+							rashod += f.border_neighbor[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
 					case XZ:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.sosedb[j].Norm == NSIDE) {
-							rashod += -f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
-							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
-							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						if (f.border_neighbor[j].Norm == NSIDE) {
+							rashod += -f.border_neighbor[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						else {
-							rashod += f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
-							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
-							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+							rashod += f.border_neighbor[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
 					case YZ:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.sosedb[j].Norm == ESIDE) {
-							rashod += -f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						if (f.border_neighbor[j].Norm == ESIDE) {
+							rashod += -f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 
 						}
 						else {
-							rashod += f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+							rashod += f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
 					}
@@ -1931,14 +1977,14 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 			doublereal rashod = 0.0; // m!3/s
 			doublereal rashod2 = 0.0; // kg/s
 									  // Мощность в Вт которая уносится через выходную границу потока.
-									  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосьема
+									  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосъёма
 									  // если внутри области заданы только условия Дирихле по температуре.
 			doublereal Qout = 0.0; // Вт
 			for (integer j = 0; j < f.maxbound; j++) {
 
-				if (f.sosedb[j].MCB == (ls + iwall_scan)) {
+				if (f.border_neighbor[j].MCB == (ls + iwall_scan)) {
 
-				integer iP = f.sosedb[j].iI;// f.maxelm + j;
+				integer iP = f.border_neighbor[j].iI;// f.maxelm + j;
 
 				
 
@@ -1954,7 +2000,7 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 
 				// 1 - minx, 2-maxx; 3 - miny, 4-maxy; 5 - minz, 6-maxz;
 				//if ((iwall_scan == 2)||(iwall_scan == 5)) {
-					//printf("iP=%ld rho=%e cp=%e ptr=%d T=%e iPlane=%d Norm=%d\n", iP,rho,cp, f.ptr[iP], t.potent[f.ptr[iP]], w[iwall_scan].iPlane, f.sosedb[j].Norm);
+					//printf("iP=%ld rho=%e cp=%e ptr=%d T=%e iPlane=%d Norm=%d\n", iP,rho,cp, f.ptr[iP], t.potent[f.ptr[iP]], w[iwall_scan].iPlane, f.border_neighbor[j].Norm);
 					//printf("xE=%e xS=%e\n", w[iwall_scan].g.xE, w[iwall_scan].g.xS);
 					//getchar();
 				//}
@@ -1968,53 +2014,53 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 					case XY:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.sosedb[j].Norm == TSIDE) {
-							rashod += -f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
-							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
-							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						if (f.border_neighbor[j].Norm == TSIDE) {
+							rashod += -f.border_neighbor[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 
 						}
 						else {
-							//printf("VZ=%e dS=%e BSIDE internal normal TOP boundary\n", f.potent[VZCOR][f.maxelm + j], f.sosedb[j].dS);
+							//printf("VZ=%e dS=%e BSIDE internal normal TOP boundary\n", f.potent[VZCOR][f.maxelm + j], f.border_neighbor[j].dS);
 							//if (j % 10 == 0) system("pause");
-							rashod += f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
-							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
-							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+							rashod += f.border_neighbor[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
 					case XZ:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.sosedb[j].Norm == NSIDE) {
-							rashod += -f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
-							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
-							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
-								cp * (t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						if (f.border_neighbor[j].Norm == NSIDE) {
+							rashod += -f.border_neighbor[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * (t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						else {
-							rashod += f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
-							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
-							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+							rashod += f.border_neighbor[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
 					case YZ:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.sosedb[j].Norm == ESIDE) {
-							rashod += -f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						if (f.border_neighbor[j].Norm == ESIDE) {
+							rashod += -f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 
 						}
 						else {
-							rashod += f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
-							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
-								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+							rashod += f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
 					}

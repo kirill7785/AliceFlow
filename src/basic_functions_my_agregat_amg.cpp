@@ -3,2103 +3,7 @@
 #ifndef BASIC_FUNCTIONS_MY_AGREGAT_AMG_CPP
 #define BASIC_FUNCTIONS_MY_AGREGAT_AMG_CPP 1
 
-
-void swap(Ak2 &Amat, integer i, integer j)
-{
-	Ak1 A_temp;
-
-	// change Amat[i] <-> Amat[j]
-	A_temp.i = Amat.i[i];
-	Amat.i[i] = Amat.i[j];
-	Amat.i[j] = A_temp.i;
-
-	A_temp.j = Amat.j[i];
-	Amat.j[i] = Amat.j[j];
-	Amat.j[j] = A_temp.j;
-
-	A_temp.aij = Amat.aij[i];
-	Amat.aij[i] = Amat.aij[j];
-	Amat.aij[j] = A_temp.aij;
-
-} // swap
-
-
-// PivotList содержит ошибку.Обнаружено 12 декабря 2015.
-// Вот алгоритм PivotList
-integer PivotList(Ak2 &Amat, integer first, integer last) {
-	// list==jptr and altr обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	integer PivotValue_j = Amat.j[first];
-	integer PivotValue_i = Amat.i[first];
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (Amat.i[index] < PivotValue_i) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-		else if ((Amat.i[index] == PivotValue_i) && (Amat.j[index] < PivotValue_j)) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-	}
-
-	swap(Amat, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotList
-
-// Вот алгоритм PivotList
-integer PivotList_j(Ak2 &Amat, integer first, integer last) {
-	// list==jptr and altr обрабатываемый список
-	// first номер первого элемента
-	// last номер последнего элемента
-
-	integer PivotValue_j = Amat.j[first];
-	integer PivotValue_i = Amat.i[first];
-	integer PivotPoint = first;
-
-	for (integer index = (first + 1); index <= last; index++) {
-		if (Amat.j[index] < PivotValue_j) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-		else if ((Amat.j[index] == PivotValue_j) && (Amat.i[index] < PivotValue_i)) {
-			PivotPoint++;
-			swap(Amat, PivotPoint, index);
-		}
-	}
-
-	swap(Amat, first, PivotPoint);
-
-	return PivotPoint;
-} // PivotListamg_j
-
-
-// Сортировка Тима (Тим Петерсон).
-// см. файл uniformsimplemeshgen.cpp
-//const integer RUN = 32;
-
-// this function sorts array from left index to
-// to right index which is of size atmost RUN
-void insertionSortTim_amg(Ak2 &Amat, integer left, integer right)
-{
-	for (integer i = left + 1; i <= right; i++)
-	{
-		Ak1 temp;
-		temp.i= Amat.i[i];
-		temp.j = Amat.j[i];
-		temp.aij = Amat.aij[i];
-
-		integer j = i - 1;
-		while ((j >= left)&&(Amat.i[j] > temp.i))
-		{
-			Amat.i[j + 1] = Amat.i[j];
-			Amat.j[j + 1] = Amat.j[j];
-			Amat.aij[j + 1] = Amat.aij[j];
-			j--;
-		}
-		Amat.i[j + 1] = temp.i;
-		Amat.j[j + 1] = temp.j;
-		Amat.aij[j + 1] = temp.aij;
-	}
-}// insertion sort по i.
-
-// this function sorts array from left index to
-// to right index which is of size atmost RUN
-void insertionSortTim_amg_j(Ak2 &Amat, integer left, integer right)
-{
-	for (integer i = left + 1; i <= right; i++)
-	{
-		Ak1 temp;
-		temp.i = Amat.i[i];
-		temp.j = Amat.j[i];
-		temp.aij = Amat.aij[i];
-
-		integer j = i - 1;
-		while ((j >= left)&&(Amat.j[j] > temp.j))
-		{
-			Amat.i[j + 1] = Amat.i[j];
-			Amat.j[j + 1] = Amat.j[j];
-			Amat.aij[j + 1] = Amat.aij[j];
-			j--;
-		}
-		Amat.i[j + 1] = temp.i;
-		Amat.j[j + 1] = temp.j;
-		Amat.aij[j + 1] = temp.aij;
-	}
-} // insertion sort по j.
-
-// this function sorts array from left index to
-// to right index which is of size atmost RUN
-void insertionSortTim_amg(Ak1* &Amat, integer left, integer right)
-{
-	for (integer i = left + 1; i <= right; i++)
-	{
-		Ak1 temp;
-		temp = Amat[i];
-		
-
-		integer j = i - 1;
-		while ((j >= left)&&(Amat[j].i> temp.i))
-		{
-			Amat[j + 1] = Amat[j];
-			j--;
-		}
-		Amat[j + 1] = temp;
-	}
-}// insertion sort по i.
-
-// this function sorts array from left index to
-// to right index which is of size atmost RUN
-void insertionSortTim_amg_j(Ak1* &Amat, integer left, integer right)
-{
-	for (integer i = left + 1; i <= right; i++)
-	{
-		Ak1 temp;
-		temp = Amat[i];
-		
-
-		integer j = i - 1;
-		while ((j >= left)&&(Amat[j].j > temp.j))
-		{
-			Amat[j + 1] = Amat[j];
-			j--;
-		}
-		Amat[j + 1] = temp;
-	}
-} // insertion sort по j.
-
-// merge function merges the sorted runs
-void mergeTim_amg(Ak2 &Amat, integer l, integer m, integer r)
-{
-	// original array is broken in two parts
-	// left and right array
-	integer len1 = m - l + 1, len2 = r - m;
-
-	//myARRT left[len1], right[len2];
-	Ak2 left;
-	left.i = nullptr;
-	left.j = nullptr;
-	left.aij = nullptr;
-	if (len1 >= 0) {
-		left.i = new integer[len1 + 1];
-		left.j = new integer[len1 + 1];
-		left.aij = new doublereal[len1 + 1];
-	}
-	Ak2 right;
-	right.i = nullptr;
-	right.j = nullptr;
-	right.aij = nullptr;
-	if (len2 >= 0) {
-		right.i = new integer[len2 + 1];
-		right.j = new integer[len2 + 1];
-		right.aij = new doublereal[len2 + 1];
-	}
-
-	for (integer i = 0; i < len1; i++) {
-		left.i[i] = Amat.i[l + i];
-		left.j[i] = Amat.j[l + i];
-		left.aij[i] = Amat.aij[l + i];
-
-	}
-	for (integer i = 0; i < len2; i++) {
-		right.i[i] = Amat.i[m + 1 + i];
-		right.j[i] = Amat.j[m + 1 + i];
-		right.aij[i] = Amat.aij[m + 1 + i];
-	}
-
-	integer i = 0;
-	integer j = 0;
-	integer k = l;
-
-	// after comparing, we merge those two array
-	// in larger sub array
-	while (i < len1 && j < len2)
-	{
-		if (left.i[i] <= right.i[j])
-		{
-			Amat.i[k] = left.i[i];
-			Amat.j[k] = left.j[i];
-			Amat.aij[k] = left.aij[i];
-			i++;
-		}
-		else
-		{
-			Amat.i[k] = right.i[j];
-			Amat.j[k] = right.j[j];
-			Amat.aij[k] = right.aij[j];
-			j++;
-		}
-		k++;
-	}
-
-	// copy remaining elements of left, if any
-	while (i < len1)
-	{
-		Amat.i[k] = left.i[i];
-		Amat.j[k] = left.j[i];
-		Amat.aij[k] = left.aij[i];
-		k++;
-		i++;
-	}
-
-	// copy remaining element of right, if any
-	while (j < len2)
-	{
-		Amat.i[k] = right.i[j];
-		Amat.j[k] = right.j[j];
-		Amat.aij[k] = right.aij[j];
-		k++;
-		j++;
-	}
-
-	if (left.i != nullptr) {
-		delete[] left.i;
-	}
-	if (left.j != nullptr) {
-		delete[] left.j;
-	}
-	if (left.aij != nullptr) {
-		delete[] left.aij;
-	}
-	if (right.i != nullptr) {
-		delete[] right.i;
-	}
-	if (right.j != nullptr) {
-		delete[] right.j;
-	}
-	if (right.aij != nullptr) {
-		delete[] right.aij;
-	}
-}
-
-
-// merge function merges the sorted runs
-void mergeTim_amg_j(Ak2 &Amat, integer l, integer m, integer r)
-{
-	// original array is broken in two parts
-	// left and right array
-	integer len1 = m - l + 1, len2 = r - m;
-
-	//myARRT left[len1], right[len2];
-	Ak2 left;
-	left.i = nullptr;
-	left.j = nullptr;
-	left.aij = nullptr;
-	if (len1 >= 0) {
-		left.i = new integer[len1 + 1];
-		left.j = new integer[len1 + 1];
-		left.aij = new doublereal[len1 + 1];
-	}
-	Ak2 right;
-	right.i = nullptr;
-	right.j = nullptr;
-	right.aij = nullptr;
-	if (len2 >= 0) {
-		right.i = new integer[len2 + 1];
-		right.j = new integer[len2 + 1];
-		right.aij = new doublereal[len2 + 1];
-	}
-
-	for (integer i = 0; i < len1; i++) {
-		left.i[i] = Amat.i[l + i];
-		left.j[i] = Amat.j[l + i];
-		left.aij[i] = Amat.aij[l + i];
-
-	}
-	for (integer i = 0; i < len2; i++) {
-		right.i[i] = Amat.i[m + 1 + i];
-		right.j[i] = Amat.j[m + 1 + i];
-		right.aij[i] = Amat.aij[m + 1 + i];
-	}
-
-	integer i = 0;
-	integer j = 0;
-	integer k = l;
-
-	// after comparing, we merge those two array
-	// in larger sub array
-	while (i < len1 && j < len2)
-	{
-		if (left.j[i] <= right.j[j])
-		{
-			Amat.i[k] = left.i[i];
-			Amat.j[k] = left.j[i];
-			Amat.aij[k] = left.aij[i];
-			i++;
-		}
-		else
-		{
-			Amat.i[k] = right.i[j];
-			Amat.j[k] = right.j[j];
-			Amat.aij[k] = right.aij[j];
-			j++;
-		}
-		k++;
-	}
-
-	// copy remaining elements of left, if any
-	while (i < len1)
-	{
-		Amat.i[k] = left.i[i];
-		Amat.j[k] = left.j[i];
-		Amat.aij[k] = left.aij[i];
-		k++;
-		i++;
-	}
-
-	// copy remaining element of right, if any
-	while (j < len2)
-	{
-		Amat.i[k] = right.i[j];
-		Amat.j[k] = right.j[j];
-		Amat.aij[k] = right.aij[j];
-		k++;
-		j++;
-	}
-
-	if (left.i != nullptr) {
-		delete[] left.i;
-	}
-	if (left.j != nullptr) {
-		delete[] left.j;
-	}
-	if (left.aij != nullptr) {
-		delete[] left.aij;
-	}
-	if (right.i != nullptr) {
-		delete[] right.i;
-	}
-	if (right.j != nullptr) {
-		delete[] right.j;
-	}
-	if (right.aij != nullptr) {
-		delete[] right.aij;
-	}
-}
-
-// merge function merges the sorted runs
-void mergeTim_amg(Ak1* &Amat, integer l, integer m, integer r)
-{
-	// original array is broken in two parts
-	// left and right array
-	integer len1 = m - l + 1, len2 = r - m;
-
-	//myARRT left[len1], right[len2];
-	Ak1* left=nullptr;
-	if (len1 >= 0) {
-		left = new Ak1[len1 + 1];
-	}
-	Ak1* right=nullptr;
-	if (len2 >= 0) {
-		right = new Ak1[len2 + 1];
-	}
-
-	for (integer i = 0; i < len1; i++) {
-		left[i] = Amat[l + i];
-	}
-	for (integer i = 0; i < len2; i++) {
-		right[i] = Amat[m + 1 + i];
-	}
-
-	integer i = 0;
-	integer j = 0;
-	integer k = l;
-
-	// after comparing, we merge those two array
-	// in larger sub array
-	while (i < len1 && j < len2)
-	{
-		if (left[i].i <= right[j].i)
-		{
-			Amat[k] = left[i];
-			i++;
-		}
-		else
-		{
-			Amat[k] = right[j];
-			j++;
-		}
-		k++;
-	}
-
-	// copy remaining elements of left, if any
-	while (i < len1)
-	{
-		Amat[k] = left[i];
-		k++;
-		i++;
-	}
-
-	// copy remaining element of right, if any
-	while (j < len2)
-	{
-		Amat[k] = right[j];
-		k++;
-		j++;
-	}
-
-	if (left != nullptr) {
-		delete[] left;
-	}
-	if (right != nullptr) {
-		delete[] right;
-	}
-	
-}
-
-// merge function merges the sorted runs
-void mergeTim_amg_j(Ak1* &Amat, integer l, integer m, integer r)
-{
-	// original array is broken in two parts
-	// left and right array
-	integer len1 = m - l + 1, len2 = r - m;
-
-	//myARRT left[len1], right[len2];
-	Ak1* left = nullptr;
-	if (len1 >= 0) {
-		left = new Ak1[len1 + 1];
-	}
-	Ak1* right = nullptr;
-	if (len2 >= 0) {
-		right = new Ak1[len2 + 1];
-	}
-
-	for (integer i = 0; i < len1; i++) {
-		left[i] = Amat[l + i];
-	}
-	for (integer i = 0; i < len2; i++) {
-		right[i] = Amat[m + 1 + i];
-	}
-
-	integer i = 0;
-	integer j = 0;
-	integer k = l;
-
-	// after comparing, we merge those two array
-	// in larger sub array
-	while (i < len1 && j < len2)
-	{
-		if (left[i].j <= right[j].j)
-		{
-			Amat[k] = left[i];
-			i++;
-		}
-		else
-		{
-			Amat[k] = right[j];
-			j++;
-		}
-		k++;
-	}
-
-	// copy remaining elements of left, if any
-	while (i < len1)
-	{
-		Amat[k] = left[i];
-		k++;
-		i++;
-	}
-
-	// copy remaining element of right, if any
-	while (j < len2)
-	{
-		Amat[k] = right[j];
-		k++;
-		j++;
-	}
-
-	if (left != nullptr) {
-		delete[] left;
-	}
-	if (right != nullptr) {
-		delete[] right;
-	}
-
-}
-
-//С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
-//крупные элементы закидываем поближе к концу массива 
-void reheap_i(Ak1* &a, integer length, integer i) {
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp = a[i];
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков влево) //Цикл продолжается пока не выпадем за пределы массива
-	 //или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done)) {
-		//Если правый потомок в пределах массива 
-		if (child < length - 1) {
-			//То из левого и правого потомка выбираем наименьшего 
-			if (a[child].i >= a[child + 1].i) { child += 1; }
-		}
-		//Родитель меньше потомков? 
-		if (Temp.i < a[child].i) {
-			//Тогда с этим родителем и его потомками разобрались
-			done = true;
-			//Родитель НЕ меньше чем наименьший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-		}
-		else
-		{
-			a[parent] = a[child];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к концу массива 
-	//(или остаётся на месте если не повезло) 
-	a[parent] = Temp;
-}
-
-//С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
-//крупные элементы закидываем поближе к концу массива 
-void reheap_i(Ak2 &a, integer length, integer i) {
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp;
-	Temp.i= a.i[i];
-	Temp.j = a.j[i];
-	Temp.aij = a.aij[i];
-
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков влево) //Цикл продолжается пока не выпадем за пределы массива
-	 //или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done)) {
-		//Если правый потомок в пределах массива 
-		if (child < length - 1) {
-			//То из левого и правого потомка выбираем наименьшего 
-			if (a.i[child] >= a.i[child + 1]) { child += 1; }
-		}
-		//Родитель меньше потомков? 
-		if (Temp.i < a.i[child]) {
-			//Тогда с этим родителем и его потомками разобрались
-			done = true;
-			//Родитель НЕ меньше чем наименьший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-		}
-		else
-		{
-			a.i[parent] = a.i[child];
-			a.j[parent] = a.j[child];
-			a.aij[parent] = a.aij[child];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к концу массива 
-	//(или остаётся на месте если не повезло) 
-	a.i[parent] = Temp.i;
-	a.j[parent] = Temp.j;
-	a.aij[parent] = Temp.aij;
-}
-
-//С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
-//крупные элементы закидываем поближе к концу массива 
-void reheap_j(Ak1* &a, integer length, integer i) {
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp = a[i];
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков влево) //Цикл продолжается пока не выпадем за пределы массива
-	 //или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done)) {
-		//Если правый потомок в пределах массива 
-		if (child < length - 1) {
-			//То из левого и правого потомка выбираем наименьшего 
-			if (a[child].j >= a[child + 1].j) { child += 1; }
-		}
-		//Родитель меньше потомков? 
-		if (Temp.j < a[child].j) {
-			//Тогда с этим родителем и его потомками разобрались
-			done = true;
-			//Родитель НЕ меньше чем наименьший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-		}
-		else
-		{
-			a[parent] = a[child];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к концу массива 
-	//(или остаётся на месте если не повезло) 
-	a[parent] = Temp;
-}
-
-//С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
-//крупные элементы закидываем поближе к концу массива 
-void reheap_j(Ak2 &a, integer length, integer i) {
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp;
-	Temp.i = a.i[i];
-	Temp.j = a.j[i];
-	Temp.aij = a.aij[i];
-
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков влево) //Цикл продолжается пока не выпадем за пределы массива
-	 //или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done)) {
-		//Если правый потомок в пределах массива 
-		if (child < length - 1) {
-			//То из левого и правого потомка выбираем наименьшего 
-			if (a.j[child] >= a.j[child + 1]) { child += 1; }
-		}
-		//Родитель меньше потомков? 
-		if (Temp.j < a.j[child]) {
-			//Тогда с этим родителем и его потомками разобрались
-			done = true;
-			//Родитель НЕ меньше чем наименьший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-		}
-		else
-		{
-			a.i[parent] = a.i[child];
-			a.j[parent] = a.j[child];
-			a.aij[parent] = a.aij[child];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к концу массива 
-	//(или остаётся на месте если не повезло) 
-	a.i[parent] = Temp.i;
-	a.j[parent] = Temp.j;
-	a.aij[parent] = Temp.aij;
-}
-
-//С помошью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
-//мелкие элементы закидываем поближе к началу массива 
-void invreheap_i(Ak1* &a, integer length, integer i)
-{
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-    Ak1 Temp = a[length - 1 - i];
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков) 
-	//Цикл продолжается пока не выпадем за пределы массива 
-	//или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done))
-	{
-		//Если левый потомок в пределах массива 
-		if (child < length - 1)
-		{
-			//То из левого и правого потомка выбираем наибольшего 
-			if (a[length - 1 - child].i <= a[length - 1 - (child + 1)].i)
-			{
-				child += 1;
-			}
-		}
-		//Родитель больше потомков? 
-		if (Temp.i > a[length - 1 - child].i)
-		{
-			//Тогда с этим родителем и его потомками разобрались 
-			done = true;
-		}
-		else
-		{
-			//Родитель НЕ больше чем наибольший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-			a[length - 1 - parent] = a[length - 1 - child];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к началу массива 
-	//(или остаётся на месте если не повезло) 
-	a[length - 1 - parent] = Temp;
-}
-
-//С помошью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
-//мелкие элементы закидываем поближе к началу массива 
-void invreheap_i(Ak2 &a, integer length, integer i)
-{
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp;
-	Temp.i= a.i[length - 1 - i];
-	Temp.j = a.j[length - 1 - i];
-	Temp.aij = a.aij[length - 1 - i];
-
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков) 
-	//Цикл продолжается пока не выпадем за пределы массива 
-	//или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done))
-	{
-		//Если левый потомок в пределах массива 
-		if (child < length - 1)
-		{
-			//То из левого и правого потомка выбираем наибольшего 
-			if (a.i[length - 1 - child] <= a.i[length - 1 - (child + 1)])
-			{
-				child += 1;
-			}
-		}
-		//Родитель больше потомков? 
-		if (Temp.i > a.i[length - 1 - child])
-		{
-			//Тогда с этим родителем и его потомками разобрались 
-			done = true;
-		}
-		else
-		{
-			//Родитель НЕ больше чем наибольший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-			integer itemp = length - 1 - parent;
-			integer jtemp = length - 1 - child;
-			a.i[itemp] = a.i[jtemp];
-			a.j[itemp] = a.j[jtemp];
-			a.aij[itemp] = a.aij[jtemp];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к началу массива 
-	//(или остаётся на месте если не повезло)
-	integer itemp = length - 1 - parent;
-	a.i[itemp] = Temp.i;
-	a.j[itemp] = Temp.j;
-	a.aij[itemp] = Temp.aij;
-}
-
-
-//С помошью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
-//мелкие элементы закидываем поближе к началу массива 
-void invreheap_j(Ak1* &a, integer length, integer i)
-{
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp = a[length - 1 - i];
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков) 
-	//Цикл продолжается пока не выпадем за пределы массива 
-	//или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done))
-	{
-		//Если левый потомок в пределах массива 
-		if (child < length - 1)
-		{
-			//То из левого и правого потомка выбираем наибольшего 
-			if (a[length - 1 - child].j <= a[length - 1 - (child + 1)].j)
-			{
-				child += 1;
-			}
-		}
-		//Родитель больше потомков? 
-		if (Temp.j > a[length - 1 - child].j)
-		{
-			//Тогда с этим родителем и его потомками разобрались 
-			done = true;
-		}
-		else
-		{
-			//Родитель НЕ больше чем наибольший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-			a[length - 1 - parent] = a[length - 1 - child];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к началу массива 
-	//(или остаётся на месте если не повезло) 
-	a[length - 1 - parent] = Temp;
-}
-
-// С помошью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
-// мелкие элементы закидываем поближе к началу массива 
-void invreheap_j(Ak2 &a, integer length, integer i)
-{
-	//С этим родителем ещё не разобрались 
-	bool done = false;
-	//Запоминаем отдельно родителя 
-	//и смотрим на его потомка слева 
-	Ak1 Temp;
-	Temp.i= a.i[length - 1 - i];
-	Temp.j = a.j[length - 1 - i];
-	Temp.aij = a.aij[length - 1 - i];
-
-	integer parent = i;
-	integer child = 2 * (i + 1) - 1;
-	//Просматриваем потомков, а также потомков потомков 
-	//и сравниваем их с родителем (если что - передвигаем потомков) 
-	//Цикл продолжается пока не выпадем за пределы массива 
-	//или пока не обменяем какого-нибудь потомка на родителя. 
-	while ((child < length) && (!done))
-	{
-		//Если левый потомок в пределах массива 
-		if (child < length - 1)
-		{
-			//То из левого и правого потомка выбираем наибольшего 
-			if (a.j[length - 1 - child] <= a.j[length - 1 - (child + 1)])
-			{
-				child += 1;
-			}
-		}
-		//Родитель больше потомков? 
-		if (Temp.j > a.j[length - 1 - child])
-		{
-			//Тогда с этим родителем и его потомками разобрались 
-			done = true;
-		}
-		else
-		{
-			//Родитель НЕ больше чем наибольший из его потомков. 
-			//Перемещаем потомка на место родителя 
-			//и с родителем в цикле сравниваем уже потомков этого потомка 
-			integer itemp = length - 1 - parent;
-			integer jtemp = length - 1 - child;
-			a.i[itemp] = a.i[jtemp];
-			a.j[itemp] = a.j[jtemp];
-			a.aij[itemp] = a.aij[jtemp];
-			parent = child;
-			child = 2 * (parent + 1) - 1;
-		}
-	}
-	//Родитель, с которого всё начиналось 
-	//передвигается ближе к началу массива 
-	//(или остаётся на месте если не повезло)
-	integer itemp = length - 1 - parent;
-	a.i[itemp] = Temp.i;
-	a.j[itemp] = Temp.j;
-	a.aij[itemp] = Temp.aij;
-}
-
-
-/** * Демонстраицонный алгоритм для J-сортировки (JSort).
-* Автор алгоритма - Джейсон Моррисон (Jason Morrison)
-* <http://www.scs.carleton.ca/~morrison>
-* * JSortAlgorithm.java
-* * Автор реализации - Патрик Морин
-* @author Patrick Morin */
-
-//Основная процедура сортировки 
-void sortJ_amg(Ak1* &a, integer first, integer last)
-{
-	//Строим неубывающую кучу 
-	//Большие элементы из начала массива 
-	//закидываем поближе к концу 
-	for (integer i = last; i >= first; i--) reheap_i(a, last + 1, i);
-	//Строим невозрастающую кучу
-	//Меньшие элементы из конца массива 
-	//закидываем поближе к началу 
-	for (integer i = last; i >= first; i--) invreheap_i(a, last + 1, i);
-	//Массив ПОЧТИ упорядочен 
-	//Досортировываем вставками 
-	for (integer j = first+1; j <= last; j++)
-	{
-		Ak1 Temp = a[j];
-		integer i = j - 1;
-		while (i >= first && a[i].i > Temp.i)
-		{
-			a[i + 1] = a[i];
-			i -= 1;
-		}
-		a[i + 1] = Temp;
-	}
-} // sortJ_amg
-
-
-void sortJ_amg_j(Ak1* &a, integer first, integer last)
-{
-	//Строим неубывающую кучу 
-	//Большие элементы из начала массива 
-	//закидываем поближе к концу 
-	for (integer i = last; i >= first; i--) reheap_j(a, last + 1, i);
-	//Строим невозрастающую кучу
-	//Меньшие элементы из конца массива 
-	//закидываем поближе к началу 
-	for (integer i = last; i >= first; i--) invreheap_j(a, last + 1, i);
-	//Массив ПОЧТИ упорядочен 
-	//Досортировываем вставками 
-	for (integer j = first + 1; j <= last; j++)
-	{
-		Ak1 Temp = a[j];
-		integer i = j - 1;
-		while (i >= first && a[i].j > Temp.j)
-		{
-			a[i + 1] = a[i];
-			i -= 1;
-		}
-		a[i + 1] = Temp;
-	}
-} // sortJ_amg_j
-
-//Основная процедура сортировки 
-void sortJ_amg(Ak2 &a, integer first, integer last)
-{
-	//Строим неубывающую кучу 
-	//Большие элементы из начала массива 
-	//закидываем поближе к концу 
-	for (integer i = last; i >= first; i--) reheap_i(a, last + 1, i);
-	//Строим невозрастающую кучу
-	//Меньшие элементы из конца массива 
-	//закидываем поближе к началу 
-	for (integer i = last; i >= first; i--) invreheap_i(a, last + 1, i);
-	//Массив ПОЧТИ упорядочен 
-	//Досортировываем вставками 
-	for (integer j = first + 1; j <= last; j++)
-	{
-		Ak1 Temp;
-		Temp.i= a.i[j];
-		Temp.j = a.j[j];
-		Temp.aij = a.aij[j];
-
-		integer i = j - 1;
-		while (i >= first && a.i[i] > Temp.i)
-		{
-			a.i[i + 1] = a.i[i];
-			a.j[i + 1] = a.j[i];
-			a.aij[i + 1] = a.aij[i];
-			i -= 1;
-		}
-		a.i[i + 1] = Temp.i;
-		a.j[i + 1] = Temp.j;
-		a.aij[i + 1] = Temp.aij;
-	}
-} // sortJ_amg
-
-
-void sortJ_amg_j(Ak2 &a, integer first, integer last)
-{
-	//Строим неубывающую кучу 
-	//Большие элементы из начала массива 
-	//закидываем поближе к концу 
-	for (integer i = last; i >= first; i--) reheap_j(a, last + 1, i);
-	//Строим невозрастающую кучу
-	//Меньшие элементы из конца массива 
-	//закидываем поближе к началу 
-	for (integer i = last; i >= first; i--) invreheap_j(a, last + 1, i);
-	//Массив ПОЧТИ упорядочен 
-	//Досортировываем вставками 
-	for (integer j = first + 1; j <= last; j++)
-	{
-		Ak1 Temp;
-		Temp.i = a.i[j];
-		Temp.j = a.j[j];
-		Temp.aij = a.aij[j];
-
-		integer i = j - 1;
-		while (i >= first && a.j[i] > Temp.j)
-		{
-			a.i[i + 1] = a.i[i];
-			a.j[i + 1] = a.j[i];
-			a.aij[i + 1] = a.aij[i];
-			i -= 1;
-		}
-		a.i[i + 1] = Temp.i;
-		a.j[i + 1] = Temp.j;
-		a.aij[i + 1] = Temp.aij;
-	}
-} // sortJ_amg_j
-
-//Очень коротко суть алгоритма TimSort можно объяснить так :
-// 1. По специальному алгоритму разделяем входной массив на подмассивы.
-// 2. Сортируем каждый подмассив обычной сортировкой вставками.
-// 3. Собираем отсортированные подмассивы в единый массив с помощью модифицированной сортировки слиянием.
-// Дьявол, как всегда, скрывается в деталях, а именно в алгоритме 
-// из пункта 1 и модификации сортировки слиянием из пункта 3.
-
-// Требует дополнительной памяти O(n).
-// iterative Timsort function to sort the
-// Amat[first...last] (similar to merge sort)
-void timSort_amg(Ak2 &Amat, integer first, integer last)
-{
-	// Sort individual subarrays of size RUN
-	for (integer i = first; i <= last; i += RUN)
-		insertionSortTim_amg(Amat, i, min(i + RUN - 1, last));
-
-	// start merging from size RUN (or 32). It will merge
-	// to form size 64, then 128, 256 and so on ....
-	for (integer size = RUN; size < last-first+1; size = 2 * size)
-	{
-		// pick starting point of left sub array. We
-		// are going to merge arr[left..left+size-1]
-		// and arr[left+size, left+2*size-1]
-		// After every merge, we increase left by 2*size
-		for (integer left = first; left <= last; left += 2 * size)
-		{
-			// find ending point of left sub array
-			// mid+1 is starting point of right sub array
-			integer mid = left + size - 1;
-			integer right = min(left + 2 * size - 1, last);
-
-			// merge sub array arr[left.....mid] &
-			// arr[mid+1....right]
-			if ((mid < right) && (mid >= left)) {
-				mergeTim_amg(Amat, left, mid, right);
-			}
-		}
-	}
-} //  timSort_amg
-
-// Требует дополнительной памяти O(n).
-// iterative Timsort function to sort the
-// Amat[first...last] (similar to merge sort)
-void timSort_amg_j(Ak2 &Amat, integer first, integer last)
-{
-	// Sort individual subarrays of size RUN
-	for (integer i = first; i <= last; i += RUN)
-		insertionSortTim_amg_j(Amat, i, min(i + RUN - 1, last));
-
-	// start merging from size RUN (or 32). It will merge
-	// to form size 64, then 128, 256 and so on ....
-	for (integer size = RUN; size < last - first + 1; size = 2 * size)
-	{
-		// pick starting point of left sub array. We
-		// are going to merge arr[left..left+size-1]
-		// and arr[left+size, left+2*size-1]
-		// After every merge, we increase left by 2*size
-		for (integer left = first; left <= last; left += 2 * size)
-		{
-			// find ending point of left sub array
-			// mid+1 is starting point of right sub array
-			integer mid = left + size - 1;
-			integer right = min(left + 2 * size - 1, last);
-
-			// merge sub array arr[left.....mid] &
-			// arr[mid+1....right]
-			if ((mid < right) && (mid >= left)) {
-				mergeTim_amg_j(Amat, left, mid, right);
-			}
-		}
-	}
-} //  timSort_amg_j
-
-
-// Требует дополнительной памяти O(n).
-// iterative Timsort function to sort the
-// Amat[first...last] (similar to merge sort)
-void timSort_amg(Ak1* &Amat, integer first, integer last)
-{
-	// Sort individual subarrays of size RUN
-	for (integer i = first; i <= last; i += RUN) {
-	//	insertionSortTim_amg(Amat, i, min((i + RUN-1), (last)));
-		sortJ_amg(Amat, i, min(i + RUN - 1, last));
-	}
-
-	// start merging from size RUN (or 32). It will merge
-	// to form size 64, then 128, 256 and so on ....
-	for (integer size = RUN; size < last - first + 1; size = 2 * size)
-	{
-		// pick starting point of left sub array. We
-		// are going to merge arr[left..left+size-1]
-		// and arr[left+size, left+2*size-1]
-		// After every merge, we increase left by 2*size
-		for (integer left = first; left <= last; left += 2 * size)
-		{
-			// find ending point of left sub array
-			// mid+1 is starting point of right sub array
-			integer mid = left + size - 1;
-			integer right = min(left + 2 * size - 1, last);
-
-			// merge sub array arr[left.....mid] &
-			// arr[mid+1....right]
-			if ((mid < right) && (mid >= left)) {
-				mergeTim_amg(Amat, left, mid, right);
-			}
-		}
-	}
-} //  timSort_amg
-
-// Требует дополнительной памяти O(n).
-// iterative Timsort function to sort the
-// Amat[first...last] (similar to merge sort)
-void timSort_amg_j(Ak1* &Amat, integer first, integer last)
-{
-	// Sort individual subarrays of size RUN
-	for (integer i = first; i <= last; i += RUN) {
-		//insertionSortTim_amg_j(Amat, i, min((i + RUN-1), (last)));
-		sortJ_amg_j(Amat, i, min(i + RUN - 1, last));
-	}
-
-	// start merging from size RUN (or 32). It will merge
-	// to form size 64, then 128, 256 and so on ....
-	for (integer size = RUN; size < last - first + 1; size = 2 * size)
-	{
-		// pick starting point of left sub array. We
-		// are going to merge arr[left..left+size-1]
-		// and arr[left+size, left+2*size-1]
-		// After every merge, we increase left by 2*size
-		for (integer left = first; left <= last; left += 2 * size)
-		{
-			// find ending point of left sub array
-			// mid+1 is starting point of right sub array
-			integer mid = left + size - 1;
-			integer right = min(left + 2 * size - 1, last);
-
-			// merge sub array arr[left.....mid] &
-			// arr[mid+1....right]
-			if ((mid < right) && (mid >= left)) {
-				mergeTim_amg_j(Amat, left, mid, right);
-			}
-		}
-	}
-} //  timSort_amg_j
-
-// Переформировать пирамиду
-void FixHeap_j(Ak2 &Amat,
-	integer root,
-	Ak1 m,
-	integer bound,
-	/*integer n,*/ integer iadd)
-{
-	integer vacant;
-	integer largerChild;
-
-	// list сортируемый список пирамида
-	// root номер корня пирамиды
-	// m ключевое значение вставляемое в пирамиду
-	// bound правая граница (номер) в пирамиде
-	vacant = root;
-	while (2 * vacant <= bound)
-	{
-		largerChild = 2 * vacant;
-		integer lCadd = largerChild + iadd;
-		integer lCadd1 = lCadd + 1;
-
-		// поиск наибольшего из двух непосредственных потомков
-		bool compare_result = false;
-		if (Amat.j[lCadd1] > Amat.j[lCadd]) {
-			compare_result = true;
-		}
-		else if (Amat.j[lCadd1] == Amat.j[lCadd]) {
-			if (Amat.i[lCadd1] > Amat.i[lCadd]) {
-				compare_result = true;
-			}
-		}
-		if ((largerChild < bound) && (compare_result /*Amat.j[largerChild + 1+iadd]*n+ Amat.i[largerChild + 1 + iadd]> Amat.j[largerChild + iadd]*n+ Amat.i[largerChild + iadd]*/))
-		{
-			largerChild = largerChild + 1;
-		}
-
-		lCadd = largerChild + iadd;
-		// находится ли ключ выше текущего потомка ?
-		compare_result = false;
-		if (m.j > Amat.j[lCadd]) {
-			compare_result = true;
-		}
-		else if (m.j == Amat.j[lCadd]) {
-			if (m.i > Amat.i[lCadd]) {
-				compare_result = true;
-			}
-		}
-		if (compare_result /*m.j*n+m.i >  Amat.j[largerChild + iadd]*n+ Amat.i[largerChild + iadd]*/)
-		{
-			// да, цикл завершается
-			break;
-		}
-		else
-		{
-			// нет, большего непосредственного потомка
-			// следует поднять
-			Amat.i[vacant + iadd] = Amat.i[lCadd];
-			Amat.j[vacant + iadd] = Amat.j[lCadd];
-			Amat.aij[vacant + iadd] = Amat.aij[lCadd];
-			vacant = largerChild;
-		}
-	}
-	Amat.i[vacant + iadd] = m.i;
-	Amat.j[vacant + iadd] = m.j;
-	Amat.aij[vacant + iadd] = m.aij;
-} // FixHeap_j
-
-// Переформировать пирамиду
-void FixHeap(Ak2 &Amat,
-	integer root,
-	Ak1 m,
-	integer bound,
-	integer iadd)
-{
-	integer vacant;
-	integer largerChild;
-
-	// list сортируемый список пирамида
-	// root номер корня пирамиды
-	// m ключевое значение вставляемое в пирамиду
-	// bound правая граница (номер) в пирамиде
-	vacant = root;
-	while (2 * vacant <= bound)
-	{
-		largerChild = 2 * vacant;
-		integer lCadd = largerChild + iadd;
-		integer lCadd1 = lCadd + 1;
-
-		// поиск наибольшего из двух непосредственных потомков
-		//integer key1 = Amat.i[largerChild + 1 + iadd]*n + Amat.j[largerChild + 1 + iadd];
-		//integer key2 = Amat.i[largerChild + iadd]*n + Amat.j[largerChild + iadd];
-		bool compare_result = false;
-		if (Amat.i[lCadd1] > Amat.i[lCadd]) {
-			compare_result = true;
-		}
-		else if (Amat.i[lCadd1] == Amat.i[lCadd]) {
-			if (Amat.j[lCadd1] > Amat.j[lCadd]) {
-				compare_result = true;
-			}
-		}
-		if ((largerChild < bound) && compare_result/*(key1>key2)*/)
-		{
-			largerChild = largerChild + 1;
-		}
-
-		lCadd = largerChild + iadd;
-		// находится ли ключ выше текущего потомка ?
-		//integer key5 = m.i*n + m.j;
-		//integer key6 = Amat.i[largerChild + iadd]*n + Amat.j[largerChild + iadd];
-		compare_result = false;
-		if (m.i > Amat.i[lCadd]) {
-			compare_result = true;
-		}
-		else if (m.i == Amat.i[lCadd]) {
-			if (m.j > Amat.j[lCadd]) {
-				compare_result = true;
-			}
-		}
-		if (compare_result/*key5 > key6*/)
-		{
-			// да, цикл завершается
-			break;
-		}
-		else
-		{
-			// нет, большего непосредственного потомка
-			// следует поднять
-			Amat.i[vacant + iadd] = Amat.i[lCadd];
-			Amat.j[vacant + iadd] = Amat.j[lCadd];
-			Amat.aij[vacant + iadd] = Amat.aij[lCadd];
-			vacant = largerChild;
-		}
-	}
-	Amat.i[vacant + iadd] = m.i;
-	Amat.j[vacant + iadd] = m.j;
-	Amat.aij[vacant + iadd] = m.aij;
-} // FixHeap
-
-// Пирамидальная сортировка оптимальна как
-// по памяти, так и по быстродействию, к тому же её алгоритм
-// очень интересен.
-// Ограничение состоит в том, что нумерация массива должна начинаться с 1.
-void HeapSort(Ak2 &Amat, integer first, integer last)
-{
-
-	Ak1 maxelm; // элемент с наибольшим значением ключа
-
-	// конструирование пирамиды
-	for (integer i = ((last - first + 1) / 2); i >= 1; i--)
-	{
-		Ak1 temp;
-		temp.i = Amat.i[i + first - 1];
-		temp.j = Amat.j[i + first - 1];
-		temp.aij = Amat.aij[i + first - 1];
-		FixHeap(Amat, i, temp, last - first + 1, first - 1);
-	}
-	for (integer i = last - first + 1; i >= 2; i--)
-	{
-		// скопировать корень пирамиды в список
-		// переформировать пирамиду
-		maxelm.i = Amat.i[first];
-		maxelm.j= Amat.j[first];
-		maxelm.aij = Amat.aij[first];
-		Ak1 temp;
-		temp.i = Amat.i[i + first - 1];
-		temp.j = Amat.j[i + first - 1];
-		temp.aij = Amat.aij[i + first - 1];
-		FixHeap(Amat, 1, temp, i - 1, first - 1);
-		Amat.i[i + first - 1] = maxelm.i;
-		Amat.j[i + first - 1] = maxelm.j;
-		Amat.aij[i + first - 1] = maxelm.aij;
-	}
-} // HeapSort
-
-// Пирамидальная сортировка оптимальна как
-// по памяти, так и по быстродействию, к тому же её алгоритм
-// очень интересен.
-// Ограничение состоит в том, что нумерация массива должна начинаться с 1.
-void HeapSort_j(Ak2 &Amat, integer first, integer last)
-{
-
-	Ak1 maxelm; // элемент с наибольшим значением ключа
-
-	integer iadd = first - 1;
-	// конструирование пирамиды
-	for (integer i = ((last - first + 1) / 2); i >= 1; i--)
-	{
-		Ak1 temp;
-		temp.i = Amat.i[i + iadd];
-		temp.j = Amat.j[i + iadd];
-		temp.aij = Amat.aij[i + iadd];
-		FixHeap_j(Amat, i, temp, last - first + 1, iadd);
-	}
-	for (integer i = last - first + 1; i >= 2; i--)
-	{
-		// скопировать корень пирамиды в список
-		// переформировать пирамиду
-		maxelm.i = Amat.i[1 + iadd];
-		maxelm.j = Amat.j[1 + iadd];
-		maxelm.aij = Amat.aij[1 + iadd];
-		Ak1 temp;
-		temp.i = Amat.i[i + iadd];
-		temp.j = Amat.j[i + iadd];
-		temp.aij = Amat.aij[i + iadd];
-		FixHeap_j(Amat, 1, temp, i - 1, iadd);
-		Amat.i[i + iadd] = maxelm.i;
-		Amat.j[i + iadd] = maxelm.j;
-		Amat.aij[i + iadd] = maxelm.aij;
-	}
-} // HeapSort_j
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo)
-{
-	// смена на malloc и calloc 7 января 2016.
-	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = nullptr;
-
-	integer k = -1;
-	for (integer j = first; j <= last; j++) {
-		if (Amat.i[j] > k) k = Amat.i[j];
-	}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((k + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error(C, c1, c2, (k + 1));
-
-	the_original_order_of_values_buf = (integer*)malloc((last + 1) * sizeof(integer));
-	char c7[34] = "the_original_order_of_values_buf";
-	char c6[14] = "Counting_Sort";
-	handle_error(the_original_order_of_values_buf, c7, c6, (last + 1));
-
-	if (bmemo) {
-		the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
-		char c5[29] = "the_original_order_of_values";
-
-		handle_error(the_original_order_of_values, c5, c6, (last + 1));
-
-		the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
-		char c8[38] = "the_original_order_of_values_reverse";
-		handle_error(the_original_order_of_values_reverse, c8, c6, (last + 1));
-
-	}
-
-#pragma omp parallel for
-	for (integer i = 0; i <= k; i++) {
-		C[i] = 0; // инициализация.
-	}
-	for (integer j = first; j <= last; j++) {
-		C[Amat.i[j]]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-//НИ в коем случае !!! #pragma omp parallel for
-	for (integer i = 1; i <= k; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat.i[j];
-		Bm[C[ind]].i = Amat.i[j];
-		Bm[C[ind]].j = Amat.j[j];
-		Bm[C[ind]].aij = Amat.aij[j];
-		if (bmemo) {
-			// j стал C[ind]
-			if (the_original_order_of_values_buf != nullptr) {
-				the_original_order_of_values_buf[C[ind]] = j;
-			}
-		}
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
-		//Amat.i[jnew] = B[jnew - first + 1].i;
-		//Amat.j[jnew] = B[jnew - first + 1].j;
-		//Amat.aij[jnew] = B[jnew - first + 1].aij;
-		// i стал jnew. i ассоциируется с C[ind].
-		Amat.i[jnew] = Bm[i].i;
-		Amat.j[jnew] = Bm[i].j;
-		Amat.aij[jnew] = Bm[i].aij;
-		if (bmemo) {
-			if (the_original_order_of_values != nullptr) {
-				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
-				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
-			}
-		}
-	}
-	//delete[] Bm;
-	if (Bm != nullptr) {
-		free(Bm);
-		Bm = nullptr;
-	}
-	//delete[] C;
-	if (C != nullptr) {
-		free(C);
-		C = nullptr;
-	}
-
-	if (the_original_order_of_values_buf != nullptr) {
-		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = nullptr;
-	}
-
-
-} // Counting_Sort
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo, integer bucket_len)
-{
-	// смена на malloc и calloc 7 января 2016.
-	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = nullptr;
-
-	//integer bucket_len = -1;
-	//for (integer j = first; j <= last; j++) {
-		//if (Amat.i[j] > bucket_len) bucket_len = Amat.i[j];
-	//}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((bucket_len + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (bucket_len + 1));
-
-	the_original_order_of_values_buf = (integer*)malloc((last + 1) * sizeof(integer));
-	char c7[34] = "the_original_order_of_values_buf";
-	char c6[14] = "Counting_Sort";
-	handle_error<integer>(the_original_order_of_values_buf, c7, c6, (last + 1));
-
-	if (bmemo) {
-		the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
-		char c5[29] = "the_original_order_of_values";
-
-		handle_error<integer>(the_original_order_of_values, c5, c6, (last + 1));
-
-		the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
-		char c8[38] = "the_original_order_of_values_reverse";
-		handle_error<integer>(the_original_order_of_values_reverse, c8, c6, (last + 1));
-
-	}
-
-#pragma omp parallel for
-	for (integer i = 0; i <= bucket_len; i++) {
-		C[i] = 0; // инициализация.
-	}
-	//memset(C,0,sizeof(integer)*(bucket_len + 1));
-
-
-	for (integer j = first; j <= last; j++) {
-		C[Amat.i[j]]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-//НИ в коем случае !!! #pragma omp parallel for
-	for (integer i = 1; i <= bucket_len; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat.i[j];
-		Bm[C[ind]].i = Amat.i[j];
-		Bm[C[ind]].j = Amat.j[j];
-		Bm[C[ind]].aij = Amat.aij[j];
-		if (bmemo) {
-			// j стал C[ind]
-			if (the_original_order_of_values_buf != nullptr) {
-				the_original_order_of_values_buf[C[ind]] = j;
-			}
-		}
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
-		//Amat.i[jnew] = B[jnew - first + 1].i;
-		//Amat.j[jnew] = B[jnew - first + 1].j;
-		//Amat.aij[jnew] = B[jnew - first + 1].aij;
-		// i стал jnew. i ассоциируется с C[ind].
-		Amat.i[jnew] = Bm[i].i;
-		Amat.j[jnew] = Bm[i].j;
-		Amat.aij[jnew] = Bm[i].aij;
-		if (bmemo) {
-			if (the_original_order_of_values != nullptr) {
-				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
-				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
-			}
-		}
-	}
-	//delete[] Bm;
-	if (Bm != nullptr) {
-		free(Bm);
-		Bm = nullptr;
-	}
-	//delete[] C;
-	if (C != nullptr) {
-		free(C);
-		C = nullptr;
-	}
-
-	if (the_original_order_of_values_buf != nullptr) {
-		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = nullptr;
-	}
-
-
-} // Counting_Sort
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sortj(Ak2 &Amat, integer first, integer last)
-{
-
-	integer k = -1;
-	for (integer j = first; j <= last; j++) {
-		if (Amat.j[j] > k) k = Amat.j[j];
-	}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((k + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error(C, c1, c2, (k + 1));
-
-#pragma omp parallel for
-	for (integer i = 0; i <= k; i++) {
-		C[i] = 0; // инициализация.
-	}
-	for (integer j = first; j <= last; j++) {
-		C[Amat.j[j]]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-	for (integer i = 1; i <= k; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat.j[j];
-		Bm[C[ind]].i = Amat.i[j];
-		Bm[C[ind]].j = Amat.j[j];
-		Bm[C[ind]].aij = Amat.aij[j];
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer j = first, i = 1; j <= last; j++, i++) {
-		//Amat.i[j] = B[j - first + 1].i;
-		//Amat.j[j] = B[j - first + 1].j;
-		//Amat.aij[j] = B[j - first + 1].aij;
-		Amat.i[j] = Bm[i].i;
-		Amat.j[j] = Bm[i].j;
-		Amat.aij[j] = Bm[i].aij;
-	}
-	//delete[] Bm;
-	free(Bm);
-	//delete[] C;
-	free(C);
-
-}// Counting_Sortj
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sortj(Ak2 &Amat, integer first, integer last, integer bucket_len)
-{
-
-	//integer bucket_len = -1;
-	//for (integer j = first; j <= last; j++) {
-		//if (Amat.j[j] > bucket_len) bucket_len = Amat.j[j];
-	//}
-	//integer* C = new integer[k + 1];
-	integer* C = (integer*)malloc((bucket_len + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (bucket_len + 1));
-
-#pragma omp parallel for
-	for (integer i = 0; i <= bucket_len; i++) {
-		C[i] = 0; // инициализация.
-	}
-	//memset(C, 0, sizeof(integer)*(bucket_len + 1));
-	for (integer j = first; j <= last; j++) {
-		C[Amat.j[j]]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-	for (integer i = 1; i <= bucket_len; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat.j[j];
-		Bm[C[ind]].i = Amat.i[j];
-		Bm[C[ind]].j = Amat.j[j];
-		Bm[C[ind]].aij = Amat.aij[j];
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer j = first, i = 1; j <= last; j++, i++) {
-		//Amat.i[j] = B[j - first + 1].i;
-		//Amat.j[j] = B[j - first + 1].j;
-		//Amat.aij[j] = B[j - first + 1].aij;
-		Amat.i[j] = Bm[i].i;
-		Amat.j[j] = Bm[i].j;
-		Amat.aij[j] = Bm[i].aij;
-	}
-	//delete[] Bm;
-	free(Bm);
-	//delete[] C;
-	free(C);
-
-}// Counting_Sortj
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo, integer bucket_len)
-{
-	// смена на malloc и calloc 7 января 2016.
-	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = nullptr;
-
-	//integer bucket_len = -1;
-	//for (integer j = first; j <= last; j++) {
-		//if (Amat[j].i > bucket_len) bucket_len = Amat[j].i;
-	//}
-	//integer* C = new integer[bucket_len + 1];
-	integer* C = (integer*)malloc((bucket_len + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (bucket_len + 1));
-
-	the_original_order_of_values_buf = (integer*)malloc((last + 1) * sizeof(integer));
-	char c7[34] = "the_original_order_of_values_buf";
-	char c6[14] = "Counting_Sort";
-	handle_error<integer>(the_original_order_of_values_buf, c7, c6, (last + 1));
-
-	if (bmemo) {
-		the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
-		char c5[29] = "the_original_order_of_values";
-
-		handle_error<integer>(the_original_order_of_values, c5, c6, (last + 1));
-
-		the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
-		char c8[38] = "the_original_order_of_values_reverse";
-		handle_error<integer>(the_original_order_of_values_reverse, c8, c6, (last + 1));
-
-	}
-
-#pragma omp parallel for
-	for (integer i = 0; i <= bucket_len; i++) {
-		C[i] = 0; // инициализация.
-	}
-	//memset(C, 0, sizeof(integer)*(bucket_len + 1));
-	for (integer j = first; j <= last; j++) {
-		C[Amat[j].i]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-//НИ в коем случае !!! #pragma omp parallel for
-	for (integer i = 1; i <= bucket_len; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat[j].i;
-		Bm[C[ind]] = Amat[j];
-		if (bmemo) {
-			// j стал C[ind]
-			if (the_original_order_of_values_buf != nullptr) {
-				the_original_order_of_values_buf[C[ind]] = j;
-			}
-		}
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
-		//Amat[jnew] = B[jnew - first + 1];
-		// i стал jnew. i ассоциируется с C[ind].
-		Amat[jnew] = Bm[i];
-		if (bmemo) {
-			if (the_original_order_of_values != nullptr) {
-				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
-				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
-			}
-		}
-	}
-	//delete[] Bm;
-	if (Bm != nullptr) {
-		free(Bm);
-		Bm = nullptr;
-	}
-	//delete[] C;
-	if (C != nullptr) {
-		free(C);
-		C = nullptr;
-	}
-
-	if (the_original_order_of_values_buf != nullptr) {
-		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = nullptr;
-	}
-
-
-}
-
-// Сортировка подсчётом.
-// За время O(n)
-// Томас Кормен стр. 224.
-// Внимание : Алгоритм жрёт очень много оперативной памяти.
-// Впервые предложена Севардом (H.H.Seward) в 1954 году.
-void Counting_Sortj(Ak1* &Amat, integer first, integer last, integer bucket_len)
-{
-
-	//integer bucket_len = -1;
-	//for (integer j = first; j <= last; j++) {
-		//if (Amat[j].j > bucket_len) bucket_len = Amat[j].j;
-	//}
-	//integer* C = new integer[bucket_len + 1];
-	integer* C = (integer*)malloc((bucket_len + 1) * sizeof(integer));
-	char c1[2] = "C";
-	char c2[14] = "Counting_Sort";
-	handle_error<integer>(C, c1, c2, (bucket_len + 1));
-
-#pragma omp parallel for
-	for (integer i = 0; i <= bucket_len; i++) {
-		C[i] = 0; // инициализация.
-	}
-	//memset(C, 0, sizeof(integer)*(bucket_len + 1));
-	for (integer j = first; j <= last; j++) {
-		C[Amat[j].j]++;
-	}
-	// В C[i] хранится количество элементов равных i.
-	for (integer i = 1; i <= bucket_len; i++) {
-		C[i] += C[i - 1];
-	}
-	// В C[i] количество элементов не превышающих i
-	//Ak1* Bm = new Ak1[last - first + 2];
-	Ak1* Bm = (Ak1*)malloc((last - first + 2) * sizeof(Ak1));
-	char c3[3] = "Bm";
-	char c4[14] = "Counting_Sort";
-	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
-
-	integer ind;
-	for (integer j = last; j >= first; j--) {
-		ind = Amat[j].j;
-		Bm[C[ind]] = Amat[j];
-		C[ind]--;
-	}
-	// Обратное копирование.
-	for (integer j = first, i = 1; j <= last; j++, i++) {
-		//Amat[j] = B[j - first + 1];
-		Amat[j] = Bm[i];
-	}
-	//delete[] Bm;
-	free(Bm);
-	//delete[] C;
-	free(C);
-
-}
-
-
-integer compAi(integer a, integer b) {
-	if (a > b) return (1);
-	if (a < b) return (-1);
-	return (0);
-}// compAi
-
-integer compAj(integer a, integer b) {
-	if (a > b) return (1);
-	if (a < b) return (-1);
-	return (0);
-}// compAj
-
-// Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
-// пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
-void qs(Ak2 &Amat, integer first, integer last) {
-	integer i = first, j = last;
-	Ak1 tmp;
-
-	const integer INSERTION_SIZE = 64;//my_amg_manager.memory_size_Stress;
-	if (last - first < INSERTION_SIZE) {
-		//insertionSortTim_amg(Amat, first, last);
-		sortJ_amg(Amat, first, last);
-	}
-	else {
-		/*
-		В случае явной рекурсии, как в программе выше, в стеке сохраняются не только границы подмассивов, но и ряд совершенно ненужных параметров, таких как локальные переменные. Если эмулировать стек программно, его размер можно уменьшить в несколько раз.
-		Чем на более равные части будет делиться массив - тем лучше. Потому в качестве опорного целесообразно брать средний из трех, а если массив достаточно велик - то из девяти произвольных элементов.
-		Пусть входные последовательности очень плохи для алгоритма. Например, их специально подбирают, чтобы средний элемент оказывался каждый раз минимумом. Как сделать QuickSort устойчивой к такому "саботажу" ? Очень просто - выбирать в качестве опорного случайный элемент входного массива. Тогда любые неприятные закономерности во входном потоке будут нейтрализованы. Другой вариант - переставить перед сортировкой элементы массива случайным образом.
-		Быструю сортировку можно использовать и для двусвязных списков. Единственная проблема при этом - отсутствие непосредственного доступа к случайному элементу. Так что в качестве опорного приходится выбирать первый элемент, и либо надеяться на хорошие исходные данные, либо случайным образом переставить элементы перед сортировкой.
-		*/
-		integer pivot;
-		/*
-		if (1) {
-			if (last - first < 3000) {
-				pivot = Amat.i[(integer)((first + last) / 2)];
-			}
-			else if (last - first < 800000) {
-				pivot = (integer)((Amat.i[first + 100] + Amat.i[(first + last) / 2] + Amat.i[last - 100]) / 3.0);
-			}
-			else {
-				pivot = 0;
-				pivot = (integer)((Amat.i[first] + Amat.i[first + 100000] + Amat.i[first + 200000] + Amat.i[first + 300000] + Amat.i[first + 400000] + Amat.i[first + 500000] + Amat.i[first + 600000] + Amat.i[first + 700000] + Amat.i[last]) / 9.0);
-			}
-
-		}
-		else {
-		*/
-			pivot = Amat.i[(first + last) / 2];
-		//}
-
-		// partition
-		while (i <= j) {
-			//while ((Amat.i[i] < pivot) || ((Amat.i[i] == pivot) && (Amat.j[i] < pivot.j)))
-			//i++;
-			//while ((Amat.i[j] > pivot) || ((Amat.i[j] == pivot) && (Amat.j[j] > pivot.j)))
-			//j--;
-			while (Amat.i[i] < pivot)
-				i++;
-			while (Amat.i[j] > pivot)
-				j--;
-			if (i <= j) {
-				tmp.i = Amat.i[i];
-				tmp.j = Amat.j[i];
-				tmp.aij = Amat.aij[i];
-				Amat.i[i] = Amat.i[j];
-				Amat.j[i] = Amat.j[j];
-				Amat.aij[i] = Amat.aij[j];
-				Amat.i[j] = tmp.i;
-				Amat.j[j] = tmp.j;
-				Amat.aij[j] = tmp.aij;
-				i++;
-				j--;
-			}
-		}
-
-		// recursion
-		/*
-		if (1) {
-			if (first < j) {
-				if (j - first <= INSERTION_SIZE)
-				{
-					insertionSortTim_amg(Amat, first, j);
-				}
-				else {
-					qs(Amat, first, j);
-				}
-			}
-			if (i < last) {
-				if (last - i <= INSERTION_SIZE)
-				{
-					insertionSortTim_amg(Amat, i, last);
-				}
-				else {
-					qs(Amat, i, last);
-				}
-			}
-		}
-		else {
-			*/
-		if (first < j)
-			qs(Amat, first, j);
-		if (i < last)
-			qs(Amat, i, last);
-		//}
-	}
-
-} //qs
-
-// Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
-// пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
-void qsj(Ak2 &Amat, integer first, integer last) {
-
-	const integer INSERTION_SIZE = 64;// my_amg_manager.memory_size_Stress;
-
-	if (last - first < INSERTION_SIZE) {
-		//insertionSortTim_amg_j(Amat, first, last);
-		sortJ_amg_j(Amat, first, last);
-	}
-	else {
-
-		integer i = first, j = last;
-		Ak1 tmp;
-		//Ak1 pivot = Amat[(first + last) / 2];
-		/*
-		В случае явной рекурсии, как в программе выше, в стеке сохраняются не только границы подмассивов, но и ряд совершенно ненужных параметров, таких как локальные переменные. Если эмулировать стек программно, его размер можно уменьшить в несколько раз.
-		Чем на более равные части будет делиться массив - тем лучше. Потому в качестве опорного целесообразно брать средний из трех, а если массив достаточно велик - то из девяти произвольных элементов.
-		Пусть входные последовательности очень плохи для алгоритма. Например, их специально подбирают, чтобы средний элемент оказывался каждый раз минимумом. Как сделать QuickSort устойчивой к такому "саботажу" ? Очень просто - выбирать в качестве опорного случайный элемент входного массива. Тогда любые неприятные закономерности во входном потоке будут нейтрализованы. Другой вариант - переставить перед сортировкой элементы массива случайным образом.
-		Быструю сортировку можно использовать и для двусвязных списков. Единственная проблема при этом - отсутствие непосредственного доступа к случайному элементу. Так что в качестве опорного приходится выбирать первый элемент, и либо надеяться на хорошие исходные данные, либо случайным образом переставить элементы перед сортировкой.
-		*/
-		integer pivot;
-		/*
-		if (1) {
-			if (last - first < 3000) {
-				pivot = Amat.j[(integer)((first + last) / 2)];
-			}
-			else if (last - first < 800000) {
-				pivot = (integer)((Amat.j[first + 100] + Amat.j[(first + last) / 2] + Amat.j[last - 100]) / 3.0);
-			}
-			else {
-				pivot = 0;
-				pivot = (integer)((Amat.j[first] + Amat.j[first + 100000] + Amat.j[first + 200000] + Amat.j[first + 300000] + Amat.j[first + 400000] + Amat.j[first + 500000] + Amat.j[first + 600000] + Amat.j[first + 700000] + Amat.j[last]) / 9.0);
-			}
-
-		}
-		else {
-		*/
-			pivot = Amat.j[(first + last) / 2];
-		//}
-
-
-
-		// partition
-		while (i <= j) {
-			//while ((Amat.j[i] < pivot.j) || ((Amat.j[i] == pivot.j) && (Amat.i[i] < pivot.i)))
-			//i++;
-			//while ((Amat.j[j] > pivot.j) || ((Amat.j[j] == pivot.j) && (Amat.i[j] > pivot.i)))
-			//j--;
-
-			while (Amat.j[i] < pivot)
-				i++;
-			while (Amat.j[j] > pivot)
-				j--;
-			if (i <= j) {
-				tmp.i = Amat.i[i];
-				tmp.j = Amat.j[i];
-				tmp.aij = Amat.aij[i];
-				Amat.i[i] = Amat.i[j];
-				Amat.j[i] = Amat.j[j];
-				Amat.aij[i] = Amat.aij[j];
-				Amat.i[j] = tmp.i;
-				Amat.j[j] = tmp.j;
-				Amat.aij[j] = tmp.aij;
-				i++;
-				j--;
-			}
-		}
-
-		// recursion
-		/*
-		if (0) {
-			if (first < j) {
-				if (j - first <= INSERTION_SIZE)
-				{
-					insertionSortTim_amg_j(Amat, first, j);
-				}
-				else {
-					qsj(Amat, first, j);
-				}
-			}
-			if (i < last) {
-				if (last - i <= INSERTION_SIZE)
-				{
-					insertionSortTim_amg_j(Amat, i, last);
-				}
-				else {
-					qsj(Amat, i, last);
-				}
-			}
-		}
-		else {
-		*/
-			if (first < j)
-				qsj(Amat, first, j);
-			if (i < last)
-				qsj(Amat, i, last);
-		//}
-	}
-
-}
-
-
-
+#include "my_sort_algorithm2.cpp"
 
 // 15 11 2016 метод полностью на malloc с контролем через handle_error.
 // Мы усилим РУМБА0.14 алгоритм ILU2 предобуславливанием на каждом уровне вложенности.
@@ -2182,7 +86,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		// Это сделано для кода BICGSTAB_internal3. дата изменения 12 апреля 2013.
 		// Другой код, использующий equation3dtoCRS может оказаться неработоспособным после этого изменения.
 		if (ballocmemory) {
-			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для попрапвки давления.
+			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для поправки давления.
 			//val = new doublereal[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			//col_ind = new integer[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 
@@ -2203,7 +107,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 			if ((milu2.val == nullptr) || (milu2.col_ind == nullptr) || (milu2.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment...\n");
+				printf("Problem: not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -2478,13 +382,13 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		}
 		if ((milu2.alu == nullptr) || (milu2.jlu == nullptr) || (milu2.levs == nullptr) || (milu2.ju == nullptr) || (milu2.w == nullptr) || (milu2.jw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
 
 		// копии объектов
-		// 9 ноября 2016 Копии объектов теперь хранятся централизованно :
+		// 9 ноября 2016 Копии объектов теперь хранятся централизованно:
 		// см. LEVEL_ADDITIONAL_DATA_BUFER milu_gl_buffer; in ilut.c module.
 		//milu2.alu_copy = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
 		//milu2.jlu_copy = new integer[milu2.iwk + 2];
@@ -2512,7 +416,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		//if ((milu2.alu_copy == nullptr) || (milu2.jlu_copy == nullptr) || (milu2.ju_copy == nullptr) || (milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf==nullptr)||(milu2.zbuf2==nullptr)) {
 		if ((milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf == nullptr) || (milu2.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -2620,7 +524,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				else {
 					// недостаточно памяти на данном оборудовании.
 					ipassage = 4;
-					printf("Problem : not enough memory on your equipment...\n");
+					printf("Problem: not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
@@ -2741,7 +645,8 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 		printf("apply ilu%lld smoother for number ", my_amg_manager.lfil);
 		printf("%2lld level %3d ", ilevel, (int)(n/(maxelm_plus_maxbound)));
 
-		// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для попрапвки давления.
+		// Важно выделить память с запасом, т.к. одна и таже память используется 
+		// и для компонент скорости и для поправки давления.
 		//val = new doublereal[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 		//col_ind = new integer[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 		
@@ -2762,7 +667,7 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 
 		if ((milu2.val == nullptr) || (milu2.col_ind == nullptr) || (milu2.row_ptr == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -2934,15 +839,17 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 				handle_error(milu2.jw, c7, c1, (12 * maxelm_plus_maxbound + 2));
 			}
 		}
-		if ((milu2.alu == nullptr) || (milu2.jlu == nullptr) || (milu2.levs == nullptr) || (milu2.ju == nullptr) || (milu2.w == nullptr) || (milu2.jw == nullptr)) {
+		if ((milu2.alu == nullptr) || (milu2.jlu == nullptr) ||
+			(milu2.levs == nullptr) || (milu2.ju == nullptr) ||
+			(milu2.w == nullptr) || (milu2.jw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
 
 		// копии объектов
-		// 9 ноября 2016 Копии объектов теперь хранятся централизованно :
+		// 9 ноября 2016 Копии объектов теперь хранятся централизованно:
 		// см. LEVEL_ADDITIONAL_DATA_BUFER milu_gl_buffer; in ilut.c module.
 		//milu2.alu_copy = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
 		//milu2.jlu_copy = new integer[milu2.iwk + 2];
@@ -2983,10 +890,13 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 			milu2.zbuf2[i_63] = 0.0;
 		}
 
-		//if ((milu2.alu_copy == nullptr) || (milu2.jlu_copy == nullptr) || (milu2.ju_copy == nullptr) || (milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf==nullptr)||(milu2.zbuf2==nullptr)) {
-		if ((milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf == nullptr) || (milu2.zbuf2 == nullptr)) {
+		//if ((milu2.alu_copy == nullptr) || (milu2.jlu_copy == nullptr) ||
+		//  (milu2.ju_copy == nullptr) || (milu2.b_copy == nullptr) || 
+		//  (milu2.x_copy == nullptr) || (milu2.zbuf==nullptr)||(milu2.zbuf2==nullptr)) {
+		if ((milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || 
+			(milu2.zbuf == nullptr) || (milu2.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment...\n");
+			printf("Problem: not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -3077,7 +987,7 @@ void equation3DtoCRSRUMBA1_amg1r5(LEVEL_ADDITIONAL_DATA& milu2,
 				else {
 					// недостаточно памяти на данном оборудовании.
 					ipassage = 4;
-					printf("Problem : not enough memory on your equipment...\n");
+					printf("Problem: not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
@@ -3248,7 +1158,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 		// Это сделано для кода BICGSTAB_internal3. дата изменения 12 апреля 2013.
 		// Другой код, использующий equation3dtoCRS может оказаться неработоспособным после этого изменения.
 		if (ballocmemory) {
-			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для попрапвки давления.
+			// Важно выделить память с запасом, т.к. одна и таже память используется и для компонент скорости и для поправки давления.
 			//val = new doublereal[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			//col_ind = new integer[7 * (maxelm + maxbound) + 2 * maxbound + 2];
 			milu0.val = new doublereal[n + 2];
@@ -3257,7 +1167,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 			milu0.row_ptr = new integer[maxelm_plus_maxbound + 1];
 			if ((milu0.val == nullptr) || (milu0.col_ind == nullptr) || (milu0.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for ILU0 decomposition...\n");
+				printf("Problem: not enough memory on your equipment for ILU0 decomposition...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
@@ -3275,7 +1185,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 			milu0.row_ptr[k] = n; // присваиваем количество ненулевых элементов плюс 1 с учётом того что нумерация массива начинается с 0
 		}
 
-		// Быстрая Сортировка Хоара.
+		// Быстрая Сортировка Ч. Хоара.
 		// упорядочивание по строкам
 		//QuickSort(...); не требуется,
 		// т.к. сама структура хранения 
@@ -3417,7 +1327,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 
 		if ((milu0.alu == nullptr) || (milu0.jlu == nullptr) || (milu0.ju == nullptr) || (milu0.iw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu, jlu, ju, iw...\n");
+			printf("Problem: not enough memory on your equipment for ILU0 decomposition: alu, jlu, ju, iw...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -3438,7 +1348,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 
 		if ((milu0.alu_copy == nullptr) || (milu0.jlu_copy == nullptr) || (milu0.ju_copy == nullptr) || (milu0.b_copy == nullptr) || (milu0.x_copy == nullptr) || (milu0.zbuf == nullptr) || (milu0.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu_copy, jlu_copy, ju_copy etc...\n");
+			printf("Problem: not enough memory on your equipment for ILU0 decomposition: alu_copy, jlu_copy, ju_copy etc...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -3490,7 +1400,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				else {
 					// недостаточно памяти на данном оборудовании.
 					ipassage = 4;
-					printf("Problem : not enough memory on your equipment...\n");
+					printf("Problem: not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
@@ -3555,7 +1465,7 @@ void nested_desection_patch(Ak2 &Amat, integer isize_na, bool* &nested_desection
 
 	// Данный метод самописный и очень хреновый. Его не рекомендуется использовать в частности из-за граничных узлов.
 	// Лучше производить разбиения по геометрическому признаку. Т.е. если есть координаты узлов, то слева выделить всё с координатами меньше
-	// чем центральная координата, а справа всё что больше. Помоему так делают в Open Foam X.
+	// чем центральная координата, а справа всё что больше. По моему так делают в Open Foam X.
 
 	// Описание способа работы.
 	// Метод требует подачи на вход матрицы в Ak1 формате.
@@ -3622,7 +1532,7 @@ void nested_desection_patch(Ak2 &Amat, integer isize_na, bool* &nested_desection
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT1, typename doublerealT2>
-void residualq2(Ak2 &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
+void residualq2(Ak2 &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -3692,7 +1602,10 @@ void residualq2(Ak2& Amat, integer istartq, integer iendq, doublerealT1*& x, dou
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT1, typename doublerealT2>
-void residualq2_analysys(Ak2 &Amat, integer istartq, integer iendq, doublerealT1* &x, doublerealT1* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
+void residualq2_analysys(Ak2 &Amat, integer istartq, integer iendq,
+	doublerealT1* &x, doublerealT1* &b, 
+	integer* &row_ptr_start, integer* &row_ptr_end,
+	integer iadd, doublerealT2* &residual, doublerealT2* &my_diag)
 {
 	// Анализ структуры невязки.
 	// Мы делим вектор невязки на 20 равных частей и смотрим где невязка наиболее велика.
@@ -3746,7 +1659,11 @@ void residualq2_analysys(Ak2 &Amat, integer istartq, integer iendq, doublerealT1
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT1, typename doublerealT2>
-void residualq2_analysys(Ak2& Amat, integer istartq, integer iendq, doublerealT1*& x, doublerealT1*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT2*& residual, doublerealT2*& my_diag, doublerealT2*& diag_minus_one)
+void residualq2_analysys(Ak2& Amat, integer istartq, integer iendq, 
+	doublerealT1*& x, doublerealT1*& b, 
+	integer*& row_ptr_start, integer*& row_ptr_end, 
+	integer iadd, doublerealT2*& residual,
+	doublerealT2*& my_diag, doublerealT2*& diag_minus_one)
 {
 	// Анализ структуры невязки.
 	// Мы делим вектор невязки на 20 равных частей и смотрим где невязка наиболее велика.
@@ -3798,7 +1715,9 @@ void residualq2_analysys(Ak2& Amat, integer istartq, integer iendq, doublerealT1
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, 
+	doublerealT* &x, doublerealT* &b, 
+	integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -3851,7 +1770,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 		// copy
 
 		if (x_jacoby_buffer == nullptr) {
-			printf("ERROR : x_jacoby_buffer == nullptr.\n");
+			printf("ERROR: x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -3946,7 +1865,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 						//}
 					}
 					else {
-						// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+						// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 						// игнорирование positive connections.
 						if ((Amat.aij[ii1] < 0.0)) {
@@ -4085,7 +2004,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq,
 		// copy
 
 		if (x_jacoby_buffer == nullptr) {
-			printf("ERROR : x_jacoby_buffer == nullptr.\n");
+			printf("ERROR: x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -4180,7 +2099,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq,
 						//}
 					}
 					else {
-						// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+						// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 						// игнорирование positive connections.
 						if ((Amat.aij[ii1] < 0.0)) {
@@ -4263,7 +2182,9 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq,
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelq(Ak2 &Amat, integer istartq, integer iendq,
+	doublerealT* &x, doublerealT* &b, 
+	integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 
 	//seidelqstable<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -4324,7 +2245,7 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doubler
 // Этот код (данная функция) больше не используется. Это одна из ранних
 // наивных попыток написать метод релаксации.
 template <typename doublerealT>
-void early_naive_relaxation_method2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void early_naive_relaxation_method2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -4354,7 +2275,7 @@ void early_naive_relaxation_method2(Ak2 &Amat, integer istartq, integer iendq, d
 	diagonal = new doublerealT[iendq - istartq + 2];
 	if (diagonal == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for diagonal in classical_ilu2...\n");
+		printf("Problem: not enough memory on your equipment for diagonal in classical_ilu2...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -4443,13 +2364,13 @@ void early_naive_relaxation_method2(Ak2 &Amat, integer istartq, integer iendq, d
 
   // smoother.
   // 14 января 2015 каждый раз осуществляется смена направления сканирования.
-  // Работает только с ноой логикой : nFinestSweeps=2, nPreSweeps=0, nPostSweeps=2.
+  // Работает только с ноой логикой: nFinestSweeps=2, nPreSweeps=0, nPostSweeps=2.
   // Смена направлений оказалась значительно хуже по быстродействию.
   // 5 января 2016 с использованием формулы из книги Патрика Роуча.
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor3(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor3(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -4546,7 +2467,7 @@ void seidelqsor3(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -4577,9 +2498,10 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 	integer startpos = istartq + iadd;
 	integer endpos = iendq + iadd;
 
-	integer inumcore_loc = 2;
+	const integer inumcore_loc = 2;
 
-	if (inumcore_loc == 1) {
+#if (inumcore_loc == 1)
+	{
 
 		for (integer ii = startpos; ii <= endpos; ii++) {
 			integer istr = ii - iadd;
@@ -4607,8 +2529,10 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		}
 
 	}
+#endif
 
-	if (inumcore_loc == 2) {
+#if (inumcore_loc == 2)
+	{
 
 		// Здесь отсутствует информация о nested_desection
 		// поэтому куча времени тратится на барьерную синхронизацию.
@@ -4684,7 +2608,7 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		}
 
 	}
-
+#endif
 
 } // seidelqsor2Pcpu
 
@@ -4696,7 +2620,7 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -4727,9 +2651,10 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 	integer startpos = istartq + iadd;
 	integer endpos = iendq + iadd;
 
-	integer inumcore_loc = 1;
+	const integer inumcore_loc = 1;
 
-	if (inumcore_loc == 1) {
+#if (inumcore_loc == 1)
+	{
 
 		// Однопоточный вариант программы.
 		for (integer ii = startpos; ii <= endpos; ii++) {
@@ -4758,8 +2683,10 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		}
 
 	}
+#endif
 
-	if (inumcore_loc == 2) {
+#if (inumcore_loc == 2) 
+	{
 
 		integer middle = (integer)(0.5*(startpos + endpos));
 		doublerealT omega1 = omega;
@@ -4928,7 +2855,7 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		}
 
 	}
-
+#endif
 
 } // seidelqsor2Pcpu+nested desection
 
@@ -4970,9 +2897,10 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 	integer startpos = istartq + iadd;
 	integer endpos = iendq + iadd;
 
-	integer inumcore_loc = 2;
+	const integer inumcore_loc = 2;
 
-	if (inumcore_loc == 1) {
+#if (inumcore_loc == 1)
+	{
 
 		for (integer ii = startpos; ii <= endpos; ii++) {
 			integer istr = ii - iadd;
@@ -5000,8 +2928,10 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		}
 
 	}
+#endif
 
-	if (inumcore_loc == 2) {
+#if (inumcore_loc == 2) 
+	{
 
 		// Здесь отсутствует информация о nested_desection
 		// поэтому куча времени тратится на барьерную синхронизацию.
@@ -5077,7 +3007,7 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		}
 
 	}
-
+#endif
 
 } // seidelqsor2Pcpu
 
@@ -5120,9 +3050,10 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 	integer startpos = istartq + iadd;
 	integer endpos = iendq + iadd;
 
-	integer inumcore_loc = 1;
+	const integer inumcore_loc = 1;
 
-	if (inumcore_loc == 1) {
+#if (inumcore_loc == 1) 
+	{
 
 		// Однопоточный вариант программы.
 		for (integer ii = startpos; ii <= endpos; ii++) {
@@ -5151,8 +3082,10 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		}
 
 	}
+#endif
 
-	if (inumcore_loc == 2) {
+#if (inumcore_loc == 2)
+	{
 
 		integer middle = (integer)(0.5 * (startpos + endpos));
 		doublerealT omega1 = omega;
@@ -5321,7 +3254,7 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		}
 
 	}
-
+#endif
 
 } // seidelqsor2Pcpu+nested desection
 
@@ -5493,6 +3426,7 @@ void early_naive_relaxation_method(Ak2 &Amat, integer istart, integer iend,
 											aji = Amat.aij[ic1];
 										}
 									}
+									ic1++;
 								}
 								break;
 							}
@@ -5572,7 +3506,7 @@ void seidel(Ak2 &Amat, integer istart, integer iend, doublerealT* &x, doublereal
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqstable(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqstable(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -5594,7 +3528,7 @@ void seidelqstable(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, d
 
 
 template <typename doublerealT>
-void seidelqsor(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelqsor(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -5661,7 +3595,7 @@ void seidelqsor(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doub
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, integer iorder)
+void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, integer iorder)
 {
 	// iorder == 3 or 5. Трёхшаговый или пятишаговый методы Рунге - Кутты.
 
@@ -5743,7 +3677,7 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 
 
 		if (x_jacoby_buffer == nullptr) {
-			printf("ERROR : x_jacoby_buffer == nullptr.\n");
+			printf("ERROR: x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -5829,8 +3763,8 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start,
-	integer * &row_ptr_end, integer iadd, integer iorder, bool* &F_false_C_true, integer idirect)
+void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start,
+	integer* &row_ptr_end, integer iadd, integer iorder, bool* &F_false_C_true, integer idirect)
 {
 	// iorder == 3 or 5. Трёхшаговый или пятишаговый методы Рунге - Кутты.
 
@@ -5918,7 +3852,7 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 
 			if (idirect == 1) {
 
-				// Восходящая ветвь : сначала F потом C.
+				// Восходящая ветвь: сначала F потом C.
 
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
@@ -6034,7 +3968,7 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 
 			}
 			else {
-				// Нисходящая ветвь : сначала C потом F.
+				// Нисходящая ветвь: сначала C потом F.
 
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
@@ -6397,7 +4331,7 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 
 
 		if (x_jacoby_buffer == nullptr) {
-			printf("ERROR : x_jacoby_buffer == nullptr.\n");
+			printf("ERROR: x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -6572,7 +4506,7 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 
 			if (idirect == 1) {
 
-				// Восходящая ветвь : сначала F потом C.
+				// Восходящая ветвь: сначала F потом C.
 
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
@@ -6688,7 +4622,7 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 
 			}
 			else {
-				// Нисходящая ветвь : сначала C потом F.
+				// Нисходящая ветвь: сначала C потом F.
 
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
@@ -6832,7 +4766,7 @@ DATA_BASE_GMRES* dbgmres_smoother = nullptr;
 template <typename doublerealT>
 void gmres_smoother(Ak2 &Amat, integer istartq, integer iendq, 
 	doublerealT* &x, doublerealT* &b, 
-	integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, integer ilevel)
+	integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, integer ilevel)
 {
 	integer n = iendq - istartq + 1;
 
@@ -6945,7 +4879,7 @@ void gmres_smoother(Ak2 &Amat, integer istartq, integer iendq,
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
+void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
 {
 	// F_false_C_true - нумерация начинается с 1.
 	// idirect==0 douwn
@@ -7283,7 +5217,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -7351,7 +5285,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -7425,7 +5359,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -7493,7 +5427,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -8080,7 +6014,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -8148,7 +6082,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -8222,7 +6156,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -8290,7 +6224,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 								//}
 							}
 							else {
-								// Здесь я перемудрил. По видимому нужен Крукиер : TKM, TKM1, TKM2.
+								// Здесь я перемудрил. По видимому нужен Крукиер: TKM, TKM1, TKM2.
 
 								// игнорирование positive connections.
 								if ((Amat.aij[ii1] < 0.0)) {
@@ -8539,7 +6473,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 template <typename doublerealT>
 void seidelq(Ak2 &Amat, integer istartq, integer iendq,
 	doublerealT* &x, doublerealT* &b, 
-	integer * &row_ptr_start, integer * &row_ptr_end,
+	integer* &row_ptr_start, integer* &row_ptr_end,
 	integer iadd, bool* &F_false_C_true, integer idirect, integer ilevel)
 {
 	
@@ -8642,7 +6576,7 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq,
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd)
+void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd)
 {
 	seidelqsor2Pcpu<doublerealT>(Amat, istartq, iendq, x, b, bnested_desection, row_ptr_start, row_ptr_end, iadd);
 	//seidelqsor2Pcpu(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -8666,7 +6600,7 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doubler
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
+void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, bool* &bnested_desection, integer* &row_ptr_start, integer* &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
 {
 	// , bool* &F_false_C_true, integer idirect Заглушка, параметры не используются.
 	// Внимание обратная совместимость.
@@ -8722,7 +6656,7 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 		if (process_flow_logic) {
 			// calculate initial residual.
 			//residualq(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
-			residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+			residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, (integer)(0), residual_fine[0], diag[0]);
 			R0_0 = norma(residual_fine[0], n_a[0]);
 			Rprev_0 = R0_0;
 
@@ -8731,13 +6665,13 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 			for (iter = 0; iter < nu1; iter++) {
 				//quick seidel
 				if (bonly_serial) {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, 0);
+					seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0, 0);
 				}
 				else {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 0);
+					seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 0);
 				}
 				//residualq(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
-				residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+				residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 				Rnext_0 = norma(residual_fine[0], n_a[0]);
 				// this is process flow logic
 				if (Rnext_0 > process_flow_beta*Rprev_0) {
@@ -8761,8 +6695,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 				if (bonly_serial) {
 					if (bILU2smoother == 1) {
 						// ILU0
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0,0);
-						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+						seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0,0);
+						residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
 							milu0[0].zbuf[i43 + 1] = residual_fine[0][i43 + 1];
@@ -8774,8 +6708,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 						}
 					}
 					else if ((bILU2smoother == 2) || (my_amg_manager.iFinnest_ilu == 1)) {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0,0);
-						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+						seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0,0);
+						residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
 							milu2[0].zbuf[i43 + 1] = residual_fine[0][i43 + 1];
@@ -8787,11 +6721,11 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 						}
 					}
 					else {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0,0);
+						seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0,0);
 					}
 				}
 				else {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 0);
+					seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 0);
 				}
 			}
 		}
@@ -8803,9 +6737,9 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 		if (!process_flow_logic) {
 			// residual_r
 			//doublerealT *residual_fine[0] = new doublerealT[n_a[0] + 1];
-			//residual<doublereal>(Amat, 1, nnz_a[0], z76, s76, flag, n_a[0], residual_fine[0]);
-			//residualq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
-			residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+			//residual<doublereal>(Amat, (integer)(1), nnz_a[0], z76, s76, flag, n_a[0], residual_fine[0]);
+			//residualq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
+			residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 		}
 
 
@@ -8820,7 +6754,7 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 			}
 
 			// restriction
-			restriction(P, 1, nnz_aRP[0],  residual_fine[0], residual_coarse[0],  n_a[1]);
+			restriction(P, (integer)(1), nnz_aRP[0],  residual_fine[0], residual_coarse[0],  n_a[1]);
 
 
 			// Amat*e=r;
@@ -8846,8 +6780,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 				doublerealT Rprev_1 = 0.0, Rnext_1 = 0.0;
 				if (process_flow_logic) {
 					// calculate initial residual.
-					//residualq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1]);
-					residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+					//residualq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1]);
+					residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 
 					R0_1 = norma(residual_fine[1], n_a[1]);
 					Rprev_1 = R0_1;
@@ -8857,14 +6791,14 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 					for (iter = 0; iter < nu1; iter++) {
 						//quick seidel
 						if (bonly_serial) {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0,1);
+							seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0,1);
 						}
 						else {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0);
+							seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0);
 						}
 
-						//residualq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1]);
-						residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+						//residualq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1]);
+						residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 
 						Rnext_1 = norma(residual_fine[1], n_a[1]);
 						// this is process flow logic
@@ -8889,8 +6823,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 						//seidel(Amat, 1 + 2 * nnz_a[0], 2 * nnz_a[0] + nnz_a[1], error_approx_coarse, residual_coarse, flag, n_a[1]);
 						if (bonly_serial) {
 							if (bILU2smoother == 1) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0,1);
-								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+								seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, (integer)(1));
+								residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
 									milu0[1].zbuf[i43 + 1] = residual_fine[1][i43 + 1];
@@ -8904,8 +6838,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 
 							}
 							else if (1 && bILU2smoother == 2) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0,1);
-								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+								seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, (integer)(1));
+								residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
 									milu2[1].zbuf[i43 + 1] = residual_fine[1][i43 + 1];
@@ -8919,11 +6853,11 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 
 							}
 							else {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0,1);
+								seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0, (integer)(1));
 							}
 						}
 						else {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0);
+							seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 0);
 						}
 					}
 				}
@@ -8957,9 +6891,9 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 							}
 							//doublerealT *residual_fine[i_id_level_local-1] = new doublerealT[n_a[i_id_level_local-1] + 1];
 							//residual(Amat, 1 + nnz_a[0] + nnz_a[1] + nnz_a[2] + nnz_a[3] + nnz_a[4] + nnz_a[5] + nnz_a[6]+ nnz_a[7]+ nnz_a[8]+ nnz_a[9]+ nnz_a[10]+ nnz_a[11]+ nnz_a[12]+ nnz_a[13]+ nnz_a[14]+ nnz_a[15]+ nnz_a[16]+nnz_a[17]+nnz_a[18]+nnz_a[19], nnz_a[0] + nnz_a[1] + nnz_a[2] + nnz_a[3] + nnz_a[4] + nnz_a[5] + nnz_a[6] + nnz_a[7]+ nnz_a[8]+ nnz_a[9]+ nnz_a[10]+ nnz_a[11]+ nnz_a[12]+ nnz_a[13]+ nnz_a[14]+ nnz_a[15]+ nnz_a[16]+ nnz_a[17]+nnz_a[18]+nnz_a[19]+nnz_a[20], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], flag, n_a[i_id_level_local - 1], residual_fine[i_id_level_local - 1]);
-							//residualq(Amat, 1, n_a[i_id_level_local-1], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], row_ptr_start, row_ptr_end,  in_a_loc , residual_fine[i_id_level_local - 1]);
-							//residualq2(Amat, 1, n_a[i_id_level_local-1], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], row_ptr_start, row_ptr_end, in_a_loc, residual_fine[i_id_level_local - 1], diag[i_id_level_local - 1]);
-							residualq2(Amat, 1, n_a[i_id_level_local - 1], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], row_ptr_start, row_ptr_end, in_a_loc, residual_fine[i_id_level_local - 1], diag[i_id_level_local - 1]);
+							//residualq(Amat, (integer)(1), n_a[i_id_level_local-1], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], row_ptr_start, row_ptr_end,  in_a_loc , residual_fine[i_id_level_local - 1]);
+							//residualq2(Amat, (integer)(1), n_a[i_id_level_local-1], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], row_ptr_start, row_ptr_end, in_a_loc, residual_fine[i_id_level_local - 1], diag[i_id_level_local - 1]);
+							residualq2(Amat, (integer)(1), n_a[i_id_level_local - 1], error_approx_coarse[i_id_level_local - 2], residual_coarse[i_id_level_local - 2], row_ptr_start, row_ptr_end, in_a_loc, residual_fine[i_id_level_local - 1], diag[i_id_level_local - 1]);
 
 						}
 
@@ -9031,8 +6965,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 								}
 
 								// calculate initial residual.
-								//residualq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local-1], residual_coarse[i_id_level_local-1], row_ptr_start, row_ptr_end,in_a_loc + n_a[i_id_level_local-1] , residual_fine[i_id_level_local]);
-								residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+								//residualq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local-1], residual_coarse[i_id_level_local-1], row_ptr_start, row_ptr_end,in_a_loc + n_a[i_id_level_local-1] , residual_fine[i_id_level_local]);
+								residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 
 
 
@@ -9104,8 +7038,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 
 									freeIMatrix(&sparseS);
 
-									//residualq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local-1], residual_coarse[i_id_level_local-1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local]);
-									residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+									//residualq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local-1], residual_coarse[i_id_level_local-1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local]);
+									residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 
 
 									Rnext_21[i_id_level_local] = norma(residual_fine[i_id_level_local], n_a[i_id_level_local]);
@@ -9122,14 +7056,14 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 									for (iter = 0; iter < nu1_count; iter++) {
 										//quick seidel
 										if (bonly_serial) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
 										}
 										else {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0);
 										}
 
-										//residualq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local-1], residual_coarse[i_id_level_local-1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local]);
-										residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+										//residualq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local-1], residual_coarse[i_id_level_local-1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local]);
+										residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 
 
 										Rnext_21[i_id_level_local] = norma(residual_fine[i_id_level_local], n_a[i_id_level_local]);
@@ -9182,8 +7116,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 										}
 
 										if (bILU2smoother == 1) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
-											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
+											residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
 												milu0[i_id_level_local].zbuf[i43 + 1] = residual_fine[i_id_level_local][i43 + 1];
@@ -9196,8 +7130,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 
 										}
 										else if (1 && ((bILU2smoother == 2) || bflag56)) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
-											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
+											residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
 												milu2[i_id_level_local].zbuf[i43 + 1] = residual_fine[i_id_level_local][i43 + 1];
@@ -9210,11 +7144,11 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 
 										}
 										else {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0, i_id_level_local);
 										}
 									}
 									else {
-										seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0);
+										seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 0);
 									}
 								}
 							}
@@ -9272,14 +7206,14 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 									for (iter = 0; iter < nu2_count; iter++) {
 										//quick seidel
 										if (bonly_serial) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, (integer)(1), i_id_level_local);
 										}
 										else {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, (integer)(1));
 										}
 
 										//residualq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local-1], residual_fine[i_id_level_local]);
-										residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+										residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 
 
 										Rnext_21[i_id_level_local] = norma(residual_fine[i_id_level_local], n_a[i_id_level_local]);
@@ -9325,8 +7259,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 										}
 
 										if (bILU2smoother == 1) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1);
-											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, (integer)(1), i_id_level_local);
+											residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
 												milu0[i_id_level_local].zbuf[i43 + 1] = residual_fine[i_id_level_local][i43 + 1];
@@ -9338,8 +7272,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 											}
 										}
 										else if (1 && ((bILU2smoother == 2) || bflag56)) {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1);
-											residualq2(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, (integer)(1), i_id_level_local);
+											residualq2(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], residual_fine[i_id_level_local], diag[i_id_level_local]);
 #pragma omp parallel for
 											for (integer i43 = 0; i43 < n_a[i_id_level_local]; i43++) {
 												milu2[i_id_level_local].zbuf[i43 + 1] = residual_fine[i_id_level_local][i43 + 1];
@@ -9351,11 +7285,11 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 											}
 										}
 										else {
-											seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1);
+											seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, (integer)(1), i_id_level_local);
 										}
 									}
 									else {
-										seidelq(Amat, 1, n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, 1);
+										seidelq(Amat, (integer)(1), n_a[i_id_level_local], error_approx_coarse[i_id_level_local - 1], residual_coarse[i_id_level_local - 1], nested_desection[i_id_level_local], row_ptr_start, row_ptr_end, in_a_loc + n_a[i_id_level_local - 1], F_false_C_true, (integer)(1));
 									}
 								}
 							}
@@ -9408,14 +7342,14 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 					for (iter = 0; iter < nu2; iter++) {
 						//quick seidel
 						if (bonly_serial) {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1);
+							seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, (integer)(1),1);
 						}
 						else {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1);
+							seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, (integer)(1));
 						}
 
-						//residualq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0] , residual_fine[1]);
-						residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+						//residualq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0] , residual_fine[1]);
+						residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 
 
 						Rnext_1 = norma(residual_fine[1], n_a[1]);
@@ -9438,8 +7372,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 					for (integer iter = 0; iter < nu2; iter++) {
 						if (bonly_serial) {
 							if (bILU2smoother == 1) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1);
-								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+								seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, (integer)(1),1);
+								residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
 									milu0[1].zbuf[i43 + 1] = residual_fine[1][i43 + 1];
@@ -9451,8 +7385,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 								}
 							}
 							else if (1 && bILU2smoother == 2) {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1);
-								residualq2(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
+								seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, (integer)(1),1);
+								residualq2(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], residual_fine[1], diag[1]);
 #pragma omp parallel for
 								for (integer i43 = 0; i43 < n_a[1]; i43++) {
 									milu2[1].zbuf[i43 + 1] = residual_fine[1][i43 + 1];
@@ -9464,11 +7398,11 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 								}
 							}
 							else {
-								seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1);
+								seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, (integer)(1),1);
 							}
 						}
 						else {
-							seidelq(Amat, 1, n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, 1);
+							seidelq(Amat, (integer)(1), n_a[1], error_approx_coarse[0], residual_coarse[0], nested_desection[1], row_ptr_start, row_ptr_end, n_a[0], F_false_C_true, (integer)(1));
 						}
 					}
 				}
@@ -9493,7 +7427,7 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 				error_approx_fine[0][ii] = 0.0;
 			}
 
-			prolongation(P, 1, nnz_aRP[0],  error_approx_fine[0], error_approx_coarse[0], n_a[0]);
+			prolongation(P, (integer)(1), nnz_aRP[0],  error_approx_fine[0], error_approx_coarse[0], n_a[0]);
 
 			// correction
 #pragma omp parallel for
@@ -9518,22 +7452,23 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 		// post smothing
 		if (process_flow_logic) {
 			// calculate initial residual.
-			//residualq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
-			residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+			//residualq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
+			residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 			Rprev_0 = norma(residual_fine[0], n_a[0]);
 
 			// smother
 			integer iter = 0;
 			for (iter = 0; iter < nFinestSweeps; iter++) {
 				//quick seidel
+				integer i_end_n0 = n_a[0];
 				if (bonly_serial) {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1);
+					seidelq<doublereal>(Amat, (integer)(1), i_end_n0, z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, (integer)(1),0);
 				}
 				else {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 1);
+					seidelq<doublereal>(Amat, (integer)(1), i_end_n0, z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, (integer)(1));
 				}
-				//residualq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
-				residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+				//residualq<doublereal>(Amat, (integer)(1), i_end_n0, z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0]);
+				residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 				Rnext_0 = norma(residual_fine[0], n_a[0]);
 				// this is process flow logic
 				if (Rnext_0 < process_flow_alpha*Rprev_0) {
@@ -9557,8 +7492,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 				//quick seidel
 				if (bonly_serial) {
 					if (bILU2smoother == 1) {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1);
-						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
+						seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, (integer)(1),0);
+						residualq2(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
 							milu0[0].zbuf[i43 + 1] = residual_fine[0][i43 + 1];
@@ -9570,7 +7505,7 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 						}
 					}
 					else if ((bILU2smoother == 2) || (my_amg_manager.iFinnest_ilu == 1)) {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1);
+						seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, (integer)(1),0);
 						residualq2(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 #pragma omp parallel for
 						for (integer i43 = 0; i43 < n_a[0]; i43++) {
@@ -9583,11 +7518,11 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 						}
 					}
 					else {
-						seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, 1);
+						seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, row_ptr_start, row_ptr_end, 0, F_false_C_true, (integer)(1),0);
 					}
 				}
 				else {
-					seidelq<doublereal>(Amat, 1, n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, 0, F_false_C_true, 1);
+					seidelq<doublereal>(Amat, (integer)(1), n_a[0], z76, s76, nested_desection[0], row_ptr_start, row_ptr_end, (integer)(0), F_false_C_true, (integer)(1));
 				}
 			}
 		}

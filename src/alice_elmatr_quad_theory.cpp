@@ -15,7 +15,7 @@
 if (iE > -1) {
 	if (bE) {
 		// ãğàíè÷íûé óçåë.
-		sl[iP].ae += Ge*sosedb[iE - maxelm].dS / dxe;
+		sl[iP].ae += Ge*border_neighbor[iE - maxelm].dS / dxe;
 	}
 	else {
 		// iE âíóòğåííèé óçåë.
@@ -34,7 +34,7 @@ if (iE > -1) {
 			// Ñîñåä ëåæèò íà óğîâíå âûøå:
 			// äğîáëåíèå.
 			// âû÷èñëåíèå ğàçìåğîâ ñîñåäíåãî êîíòğîëüíîãî îáú¸ìà:
-			doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+			doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 			volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 			// Ïëîùàäü ñîñåäà ïî îáùåé ğàíè ìåíüøå ÷åì ïëîùàäü ãğàíè âñåé ÿ÷åéêè iP.
 			sl[iP].ae += Ge*dy_loc*dz_loc / dxe;
@@ -45,11 +45,11 @@ if (iE > -1) {
 			// ñàìûé ñëîæíûé ñëó÷àé. (24 ñëó÷àÿ äëÿ ãğàíè iE).
 			//sl[iP].ae += Ge*dy*dz / dxe;
 			// âû÷èñëåíèå ğàçìåğîâ ñîñåäíåãî êîíòğîëüíîãî îáú¸ìà:
-			doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+			doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 			volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 			sl[iP].ae += Ge*dy_loc*dz_loc / dxe;
 			// Îïğåäåëåíèå èñòèííûõ iN, iB, iS è iT.
-			// Êîììåíòàğèé : èñòèííîå iN2 ıòî iN2>-1 ïğè iN==iN3==iN4==-1.
+			// Êîììåíòàğèé: èñòèííîå iN2 ıòî iN2>-1 ïğè iN==iN3==iN4==-1.
 			// Ò.å. íåîáõîäèìî îïğåäåëèòü èñòèííîå iN èç (iN,iN2,iN3,iN4).
 			// àíàëîãè÷íî ñ iB, iT, iS.
 			int iN_now = -1, iS_now = -1, iB_now = -1, iT_now = -1;
@@ -107,18 +107,18 @@ if (iE > -1) {
 			// Íóæíî ïğåäóñìîòğåòü ñëó÷àé íåğàâåíñòâà -1.
 
 			// Íóæíî íàéòè êòî èç óçëîâ åñòü êòî.
-			if (sosedi[W][iE].iNODE1 == iP) {
+			if (neighbors_for_the_internal_node[W][iE].iNODE1 == iP) {
 				// Ñ iN è iS òîëüêî 6 âàğèàíòîâ.
-				if ((sosedi[W][iE].iNODE2>-1) && (sosedi[W][iE].iNODE3 > -1) && (sosedi[W][iE].iNODE4 > -1)) {
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE2 == iN_now)) {
+				if ((neighbors_for_the_internal_node[W][iE].iNODE2>-1) && (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 > -1)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iN_now)) {
 						// Îñòàşòñÿ óçëû iNODE3 && iNODE4
 
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -135,7 +135,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -152,27 +152,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -189,7 +189,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -207,27 +207,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -244,7 +244,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -261,27 +261,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -298,7 +298,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -316,16 +316,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -333,15 +333,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE3 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -358,7 +358,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -375,27 +375,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -412,7 +412,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -430,27 +430,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -467,7 +467,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -485,27 +485,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -522,7 +522,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -540,16 +540,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -557,15 +557,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE4 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE3
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -582,7 +582,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -599,27 +599,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -636,7 +636,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -653,28 +653,28 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -691,7 +691,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -708,27 +708,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -745,7 +745,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -763,16 +763,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -780,15 +780,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE2 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE3 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -805,7 +805,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -822,28 +822,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -860,7 +860,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -877,27 +877,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -915,7 +915,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -932,28 +932,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -970,7 +970,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -987,16 +987,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -1004,16 +1004,16 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE3 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iS_now)) {
 
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1030,7 +1030,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1048,27 +1048,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1085,7 +1085,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1102,27 +1102,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1139,7 +1139,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1156,27 +1156,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1193,7 +1193,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1210,16 +1210,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -1227,15 +1227,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE4 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE3
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1253,7 +1253,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1270,27 +1270,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1307,7 +1307,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1324,27 +1324,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1361,7 +1361,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1378,27 +1378,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1415,7 +1415,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1432,16 +1432,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -1450,13 +1450,13 @@ if (iE > -1) {
 
 					}
 				} // NODE1==iP
-				else if ((sosedi[W][iE].iNODE3 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE3 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE2. // Âûğîæäåíèå.
 					// NODE3 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE2 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1474,10 +1474,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE2 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1494,10 +1494,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1514,10 +1514,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1535,13 +1535,13 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE3. // Âûğîæäåíèå.
 					// NODE2 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE3 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1559,10 +1559,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE3 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1579,10 +1579,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1599,10 +1599,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1622,13 +1622,13 @@ if (iE > -1) {
 
 
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE3 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE4. // Âûğîæäåíèå.
 					// NODE2 && NODE3 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE4 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1646,10 +1646,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE4 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1666,10 +1666,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1686,10 +1686,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -1707,7 +1707,7 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE3 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1  // Âûğîæäåíèå.
 					// NODE2 && NODE3 && NODE4 íå ñóùåñòâóşò.
 
@@ -1719,18 +1719,18 @@ if (iE > -1) {
 					exit(1);
 				}
 			} // NODE1 == iP
-			else if (sosedi[W][iE].iNODE2 == iP) {
+			else if (neighbors_for_the_internal_node[W][iE].iNODE2 == iP) {
 				// Ñ iN è iS òîëüêî 6 âàğèàíòîâ.
-				if ((sosedi[W][iE].iNODE1>-1) && (sosedi[W][iE].iNODE3 > -1) && (sosedi[W][iE].iNODE4 > -1)) {
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE1 == iN_now)) {
+				if ((neighbors_for_the_internal_node[W][iE].iNODE1>-1) && (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 > -1)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iN_now)) {
 						// Îñòàşòñÿ óçëû iNODE3 && iNODE4
 
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1747,7 +1747,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1764,27 +1764,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1801,7 +1801,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1819,27 +1819,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1856,7 +1856,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1873,27 +1873,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1910,7 +1910,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1928,16 +1928,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -1945,15 +1945,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE3 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE1 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1970,7 +1970,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -1987,27 +1987,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2024,7 +2024,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2042,27 +2042,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2079,7 +2079,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2097,27 +2097,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2134,7 +2134,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2152,16 +2152,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -2169,15 +2169,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE4 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE1 && iNODE3
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2194,7 +2194,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2211,27 +2211,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2248,7 +2248,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2265,28 +2265,28 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2303,7 +2303,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2320,27 +2320,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2357,7 +2357,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2375,16 +2375,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -2392,15 +2392,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE1 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE3 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2417,7 +2417,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2434,28 +2434,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2472,7 +2472,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2489,27 +2489,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2527,7 +2527,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2544,28 +2544,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2582,7 +2582,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2599,16 +2599,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -2616,16 +2616,16 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE3 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iS_now)) {
 
 
 						// Îñòàşòñÿ óçëû iNODE1 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2642,7 +2642,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2660,27 +2660,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2697,7 +2697,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2714,27 +2714,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2751,7 +2751,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2768,27 +2768,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2805,7 +2805,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2822,16 +2822,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -2839,15 +2839,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE4 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE1 && iNODE3
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2865,7 +2865,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2882,27 +2882,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2919,7 +2919,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2936,27 +2936,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2973,7 +2973,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -2990,27 +2990,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3027,7 +3027,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3044,16 +3044,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -3062,13 +3062,13 @@ if (iE > -1) {
 
 					}
 				} // NODE1==iP
-				else if ((sosedi[W][iE].iNODE3 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE3 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE2. // Âûğîæäåíèå.
 					// NODE3 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE1 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3086,10 +3086,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE1 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3106,10 +3106,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3126,10 +3126,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3147,13 +3147,13 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE1 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE1 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE3. // Âûğîæäåíèå.
 					// NODE2 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE3 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3171,10 +3171,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE3 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3191,10 +3191,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3211,10 +3211,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3234,13 +3234,13 @@ if (iE > -1) {
 
 
 				}
-				else if ((sosedi[W][iE].iNODE1 == -1) && (sosedi[W][iE].iNODE3 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE1 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE4. // Âûğîæäåíèå.
 					// NODE2 && NODE3 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE4 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3258,10 +3258,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE4 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3278,10 +3278,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3298,10 +3298,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -3319,7 +3319,7 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE1 == -1) && (sosedi[W][iE].iNODE3 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE1 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1  // Âûğîæäåíèå.
 					// NODE2 && NODE3 && NODE4 íå ñóùåñòâóşò.
 
@@ -3331,18 +3331,18 @@ if (iE > -1) {
 					exit(1);
 				}
 			} // NODE1 == iP
-			else if (sosedi[W][iE].iNODE3 == iP) {
+			else if (neighbors_for_the_internal_node[W][iE].iNODE3 == iP) {
 				// Ñ iN è iS òîëüêî 6 âàğèàíòîâ.
-				if ((sosedi[W][iE].iNODE2>-1) && (sosedi[W][iE].iNODE1 > -1) && (sosedi[W][iE].iNODE4 > -1)) {
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE2 == iN_now)) {
+				if ((neighbors_for_the_internal_node[W][iE].iNODE2>-1) && (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 > -1)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iN_now)) {
 						// Îñòàşòñÿ óçëû iNODE1 && iNODE4
 
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3359,7 +3359,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3376,27 +3376,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3413,7 +3413,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3431,27 +3431,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3468,7 +3468,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3485,27 +3485,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3522,7 +3522,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3540,16 +3540,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -3557,15 +3557,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE1 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3582,7 +3582,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3599,27 +3599,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3636,7 +3636,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3654,27 +3654,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3691,7 +3691,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3709,27 +3709,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3746,7 +3746,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3764,16 +3764,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -3781,15 +3781,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE4 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE1
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3806,7 +3806,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3823,27 +3823,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3860,7 +3860,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3877,28 +3877,28 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3915,7 +3915,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3932,27 +3932,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3969,7 +3969,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -3987,16 +3987,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -4004,15 +4004,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE2 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE1 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4029,7 +4029,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4046,28 +4046,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4084,7 +4084,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4101,27 +4101,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4139,7 +4139,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4156,28 +4156,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4194,7 +4194,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4211,16 +4211,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -4228,16 +4228,16 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE1 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iS_now)) {
 
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE4
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4254,7 +4254,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4272,27 +4272,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE4
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE4]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE4]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4309,7 +4309,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4326,27 +4326,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE4 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE4 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE4, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE4;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE4;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4363,7 +4363,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4380,27 +4380,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4417,7 +4417,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4434,16 +4434,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -4451,15 +4451,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE4 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE1
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4477,7 +4477,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4494,27 +4494,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4531,7 +4531,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4548,27 +4548,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4585,7 +4585,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4602,27 +4602,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4639,7 +4639,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4656,16 +4656,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -4674,13 +4674,13 @@ if (iE > -1) {
 
 					}
 				} // NODE1==iP
-				else if ((sosedi[W][iE].iNODE1 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE1 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE2. // Âûğîæäåíèå.
 					// NODE3 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE2 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4698,10 +4698,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE2 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4718,10 +4718,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4738,10 +4738,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4759,13 +4759,13 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE3. // Âûğîæäåíèå.
 					// NODE2 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE1 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4783,10 +4783,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE1 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4803,10 +4803,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4823,10 +4823,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4846,13 +4846,13 @@ if (iE > -1) {
 
 
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE1 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE4. // Âûğîæäåíèå.
 					// NODE2 && NODE3 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE4 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4870,10 +4870,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE4 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4890,10 +4890,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE4 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4910,10 +4910,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE4 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -4931,7 +4931,7 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE1 == -1) && (sosedi[W][iE].iNODE4 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE4 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1  // Âûğîæäåíèå.
 					// NODE2 && NODE3 && NODE4 íå ñóùåñòâóşò.
 
@@ -4943,18 +4943,18 @@ if (iE > -1) {
 					exit(1);
 				}
 			} // NODE1 == iP
-			else if (sosedi[W][iE].iNODE4 == iP) {
+			else if (neighbors_for_the_internal_node[W][iE].iNODE4 == iP) {
 				// Ñ iN è iS òîëüêî 6 âàğèàíòîâ.
-				if ((sosedi[W][iE].iNODE2>-1) && (sosedi[W][iE].iNODE3 > -1) && (sosedi[W][iE].iNODE1 > -1)) {
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE2 == iN_now)) {
+				if ((neighbors_for_the_internal_node[W][iE].iNODE2>-1) && (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 > -1)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iN_now)) {
 						// Îñòàşòñÿ óçëû iNODE3 && iNODE1
 
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4971,7 +4971,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -4988,27 +4988,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5025,7 +5025,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5043,27 +5043,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5080,7 +5080,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5097,27 +5097,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5134,7 +5134,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5152,16 +5152,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -5169,15 +5169,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE3 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE1
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5194,7 +5194,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5211,27 +5211,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5248,7 +5248,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5266,27 +5266,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5303,7 +5303,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5321,27 +5321,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5358,7 +5358,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5376,16 +5376,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -5393,15 +5393,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iN_now > -1) && (sosedi[W][iE].iNODE1 == iN_now)) {
+					else if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iN_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE3
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5418,7 +5418,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5435,27 +5435,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5472,7 +5472,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5489,28 +5489,28 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5527,7 +5527,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5544,27 +5544,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5581,7 +5581,7 @@ if (iE > -1) {
 								sl[iP].an4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5599,16 +5599,16 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -5616,15 +5616,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE2 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE3 && iNODE1
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5641,7 +5641,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5658,28 +5658,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5696,7 +5696,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5713,27 +5713,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5751,7 +5751,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5768,28 +5768,28 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5806,7 +5806,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5823,16 +5823,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -5840,16 +5840,16 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE3 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iS_now)) {
 
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE1
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5866,7 +5866,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5884,27 +5884,27 @@ if (iE > -1) {
 							}
 
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE4==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE1
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE1]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE1]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5921,7 +5921,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5938,27 +5938,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE1 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE1 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE1, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE1;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE1;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5975,7 +5975,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -5992,27 +5992,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6029,7 +6029,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6046,16 +6046,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -6063,15 +6063,15 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE1 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iS_now)) {
 
 						// Îñòàşòñÿ óçëû iNODE2 && iNODE3
-						if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+						if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6089,7 +6089,7 @@ if (iE > -1) {
 							}
 
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6106,27 +6106,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 							// Âûïàë óçåë iNODE3
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE3]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE3]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6143,7 +6143,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6160,27 +6160,27 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE3 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE3 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE3, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE3;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE3;
 							}
 							else {
-								printf("E : N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE3==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+						else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iB_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è B:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6197,7 +6197,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iB_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6214,27 +6214,27 @@ if (iE > -1) {
 								sl[iP].ab4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,B NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
 							// 27.09.2016 äàòà íàïèñàíèÿ.
 						}
-						else if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+						else if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 							// Âûïàë óçåë iNODE2
 							// Âàæíî ÷òîáû íà ãğàíè ÿ÷åéêè òåïëîïğîâîäíîñòü áûëà îäíîé è òîé-æå ïğè îáğàáîòêå ğàçíûõ ÊÎ.
-							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][sosedi[W][iE].iNODE2]) / 5.0;
+							doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now] + prop[LAM][iT_now] + prop[LAM][neighbors_for_the_internal_node[W][iE].iNODE2]) / 5.0;
 							// Ñîñåäè N è T:
-							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 							doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6251,7 +6251,7 @@ if (iE > -1) {
 								sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 							}
 
-							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+							doublereal dx_loc2 = 0.0, dy_loc2 = 0.0, dz_loc2 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 							volume3D(iT_now, nvtx, pa, dx_loc2, dy_loc2, dz_loc2);
 							doublereal dxe_loc2 = 0.5*(dx_loc2 + dx_loc);
 							// Íåèçâåñòíî Ge è dxe.
@@ -6268,16 +6268,16 @@ if (iE > -1) {
 								sl[iP].at4 -= Ge_loc*dy_loc2*dz_loc2 / dxe_loc2;
 							}
 
-							if (sosedi[W][iE].iNODE2 > -1) {
-								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
-								volume3D(sosedi[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
+							if (neighbors_for_the_internal_node[W][iE].iNODE2 > -1) {
+								doublereal dx_loc3 = 0.0, dy_loc3 = 0.0, dz_loc3 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
+								volume3D(neighbors_for_the_internal_node[W][iE].iNODE2, nvtx, pa, dx_loc3, dy_loc3, dz_loc3);
 								doublereal dxe_loc3 = 0.5*(dx_loc3 + dx_loc);
 								// Íåèçâåñòíî Ge è dxe.
 								sl[iP].ae_dop -= Ge_loc*dy_loc3*dz_loc3 / dxe_loc3;
-								sl[iP].iE_dop = sosedi[W][iE].iNODE2;
+								sl[iP].iE_dop = neighbors_for_the_internal_node[W][iE].iNODE2;
 							}
 							else {
-								printf("E : N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
+								printf("E: N,T NODE2==-1 in my_elmatr_quad_T3D.\n");
 								getchar();
 								exit(1);
 							}
@@ -6286,13 +6286,13 @@ if (iE > -1) {
 
 					}
 				} // NODE1==iP
-				else if ((sosedi[W][iE].iNODE3 == -1) && (sosedi[W][iE].iNODE1 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE3 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE2. // Âûğîæäåíèå.
 					// NODE3 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE2 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6310,10 +6310,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE2 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6330,10 +6330,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE2 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6350,10 +6350,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE2 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE2 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6371,13 +6371,13 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE1 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE3. // Âûğîæäåíèå.
 					// NODE2 && NODE4 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE3 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6395,10 +6395,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE3 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6415,10 +6415,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE3 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6435,10 +6435,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE3 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6458,13 +6458,13 @@ if (iE > -1) {
 
 
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE3 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1 && NODE4. // Âûğîæäåíèå.
 					// NODE2 && NODE3 íå ñóùåñòâóşò.
-					if ((iN_now > -1) && (sosedi[W][iE].iNODE1 == iN_now)) {
+					if ((iN_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iN_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iN_now]) / 3.0;
-						// Ñîñåä N :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä N:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iN_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6482,10 +6482,10 @@ if (iE > -1) {
 						}
 
 					}
-					else if ((iS_now > -1) && (sosedi[W][iE].iNODE1 == iS_now)) {
+					else if ((iS_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iS_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iS_now]) / 3.0;
-						// Ñîñåä S :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä S:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iS_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6502,10 +6502,10 @@ if (iE > -1) {
 							sl[iP].as4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					if ((iT_now > -1) && (sosedi[W][iE].iNODE1 == iT_now)) {
+					if ((iT_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iT_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iT_now]) / 3.0;
-						// Ñîñåä T :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä T:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iT_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6522,10 +6522,10 @@ if (iE > -1) {
 							sl[iP].at4 -= Ge_loc*dy_loc1*dz_loc1 / dxe_loc1;
 						}
 					}
-					else if ((iB_now > -1) && (sosedi[W][iE].iNODE1 == iB_now)) {
+					else if ((iB_now > -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == iB_now)) {
 						doublereal Ge_loc = (prop[LAM][iP] + prop[LAM][iE] + prop[LAM][iB_now]) / 3.0;
-						// Ñîñåä B :
-						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîîëüíîãî îáú¸ìà
+						// Ñîñåä B:
+						doublereal dx_loc1 = 0.0, dy_loc1 = 0.0, dz_loc1 = 0.0; // îáú¸ì òåêóùåãî êîíòğîëüíîãî îáú¸ìà
 						volume3D(iB_now, nvtx, pa, dx_loc1, dy_loc1, dz_loc1);
 						doublereal dxe_loc1 = 0.5*(dx_loc1 + dx_loc);
 						// Íåèçâåñòíî Ge è dxe.
@@ -6543,7 +6543,7 @@ if (iE > -1) {
 						}
 					}
 				}
-				else if ((sosedi[W][iE].iNODE2 == -1) && (sosedi[W][iE].iNODE3 == -1) && (sosedi[W][iE].iNODE1 == -1)) {
+				else if ((neighbors_for_the_internal_node[W][iE].iNODE2 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE3 == -1) && (neighbors_for_the_internal_node[W][iE].iNODE1 == -1)) {
 					// Çàäåéñòâîâàíû òîëüêî óçëû NODE1  // Âûğîæäåíèå.
 					// NODE2 && NODE3 && NODE4 íå ñóùåñòâóşò.
 

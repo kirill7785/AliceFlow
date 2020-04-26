@@ -61,16 +61,16 @@
 #define SIMPSON_FILTR 2
 
 // представляем метод flattener - сглаживатель который
-// проектируется с целью убрать нефизичный скачёк производной или 
+// проектируется с целью убрать не физичный скачок производной или 
 // полевой величины зависящей от производных при переходе через плоскость
 // смены шага сетки.
 // Неоспоримо что данный метод должен подлежать наибольшей критике из-за его необоснованности.
 // Внимание ! на полностью равномерной сетке данный метод не изменяет передаваемый вектор potent.
 // Априори предполагается что пользователь использует почти равномерную расчётную сетку.
-// В общем не обязательно прменять этот код. Данный код скорее служит для исследования того как он повлияет на алгоритм.
+// В общем не обязательно применять этот код. Данный код скорее служит для исследования того как он повлияет на алгоритм.
 // Предположительно этот метод требуется применить сразу после вычисления производных (или градиента величины).
-void flattener(doublereal* &potent, integer maxelm, integer maxbound, ALICE_PARTITION** sosedi,
-	           integer** nvtx, TOCHKA* pa, BOUND* sosedb) {
+void flattener(doublereal* &potent, integer maxelm, integer maxbound, ALICE_PARTITION** neighbors_for_the_internal_node,
+	           integer** nvtx, TOCHKA* pa, BOUND* border_neighbor) {
 
 	doublereal* potentcopy = nullptr;
 	potentcopy=new doublereal[maxelm + maxbound]; // рабочий вектор сохраняющий передаваемое поле.
@@ -100,7 +100,7 @@ void flattener(doublereal* &potent, integer maxelm, integer maxbound, ALICE_PART
 		  bE=false; bW=false; bN=false; bS=false; bT=false; bB=false;
 
 		  integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	      iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1; iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	      iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
           if (iE>=maxelm) bE=true; // если true то узел является граничным.
 	      if (iN>=maxelm) bN=true;
@@ -171,7 +171,7 @@ void flattener(doublereal* &potent, integer maxelm, integer maxbound, ALICE_PART
 		  bE=false; bW=false; bN=false; bS=false; bT=false; bB=false;
 
 		  integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	      iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1; iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	      iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
           if (iE>=maxelm) bE=true; // если true то узел является граничным.
 	      if (iN>=maxelm) bN=true;
@@ -268,82 +268,82 @@ void flattener(doublereal* &potent, integer maxelm, integer maxbound, ALICE_PART
 		}
 	}
 
-	// Для получения значений на границе нужно применить метод квадратичной интерполляции.
-	// нужно применить квадратичную интерполляцию для 
+	// Для получения значений на границе нужно применить метод квадратичной интерполяции.
+	// нужно применить квадратичную интерполяцию для 
 	// нахождения фильтрованной величины в граничных контрольных объёмах.
 	for (integer iG=0; iG<maxbound; iG++) {
 		// цикл по всем граничным контрольным объёмам.
 
 		doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 		// вычисление размеров текущего контрольного объёма:
-	    volume3D(sosedb[iG].iI, nvtx, pa, dx, dy, dz);
+	    volume3D(border_neighbor[iG].iI, nvtx, pa, dx, dy, dz);
 		TOCHKA pp,pb,pbb;
 
 		// сканируем внутреннюю нормаль
-		switch (sosedb[iG].Norm) {
-		  case ESIDE : // внешняя нормаль W
-			       // квадратичная интерполляция.
+		switch (border_neighbor[iG].Norm) {
+		  case ESIDE: // внешняя нормаль W
+			       // квадратичная интерполяция.
 			      
-				   center_cord3D(sosedb[iG].iI, nvtx, pa, pp,WSIDE);
-				   center_cord3D(sosedb[iG].iII, nvtx, pa, pb,WSIDE);
-			       center_cord3D(sosedi[ESIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb,ESIDE);
+				   center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp,WSIDE);
+				   center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,WSIDE);
+			       center_cord3D(neighbors_for_the_internal_node[ESIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb,ESIDE);
 
-				   potent[sosedb[iG].iB]=my_quadratic_interpolation('-', potent[sosedi[ESIDE][sosedb[iG].iII].iNODE1], potent[sosedb[iG].iII], potent[sosedb[iG].iI], pbb.x , pb.x, pp.x, pp.x-0.5*dx);
+				   potent[border_neighbor[iG].iB]=my_quadratic_interpolation('-', potent[neighbors_for_the_internal_node[ESIDE][border_neighbor[iG].iII].iNODE1], potent[border_neighbor[iG].iII], potent[border_neighbor[iG].iI], pbb.x , pb.x, pp.x, pp.x-0.5*dx);
 				   
 			       break;
-		  case WSIDE : // внешняя нормаль E
-			       // квадратичная интерполляция.
+		  case WSIDE: // внешняя нормаль E
+			       // квадратичная интерполяция.
 
 				   
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp,ESIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb,EE);
-			       center_cord3D(sosedi[WSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb,WSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp,ESIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,EE);
+			       center_cord3D(neighbors_for_the_internal_node[WSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb,WSIDE);
 					
-			       potent[sosedb[iG].iB]=my_quadratic_interpolation('+', potent[sosedi[WSIDE][sosedb[iG].iII].iNODE1], potent[sosedb[iG].iII], potent[sosedb[iG].iI], pbb.x , pb.x, pp.x, pp.x+0.5*dx);
+			       potent[border_neighbor[iG].iB]=my_quadratic_interpolation('+', potent[neighbors_for_the_internal_node[WSIDE][border_neighbor[iG].iII].iNODE1], potent[border_neighbor[iG].iII], potent[border_neighbor[iG].iI], pbb.x , pb.x, pp.x, pp.x+0.5*dx);
 
 			       break;
-		  case NSIDE : // внешняя нормаль S
-			       // квадратичная интерполляция.
+		  case NSIDE: // внешняя нормаль S
+			       // квадратичная интерполяция.
 			       
 			       
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp,SSIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb,SS);
-			       center_cord3D(sosedi[NSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb,NSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp,SSIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,SS);
+			       center_cord3D(neighbors_for_the_internal_node[NSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb,NSIDE);
 
-			       potent[sosedb[iG].iB]=my_quadratic_interpolation('-', potent[sosedi[NSIDE][sosedb[iG].iII].iNODE1], potent[sosedb[iG].iII], potent[sosedb[iG].iI], pbb.y , pb.y, pp.y, pp.y-0.5*dy);
+			       potent[border_neighbor[iG].iB]=my_quadratic_interpolation('-', potent[neighbors_for_the_internal_node[NSIDE][border_neighbor[iG].iII].iNODE1], potent[border_neighbor[iG].iII], potent[border_neighbor[iG].iI], pbb.y , pb.y, pp.y, pp.y-0.5*dy);
 			  
 			       break;
-		  case SSIDE :// внешняя нормаль N
-			       // квадратичная интерполляция.
+		  case SSIDE:// внешняя нормаль N
+			       // квадратичная интерполяция.
 
 			       
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp,NSIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb,NN);
-			       center_cord3D(sosedi[SSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb,SSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp,NSIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,NN);
+			       center_cord3D(neighbors_for_the_internal_node[SSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb,SSIDE);
 
-			       potent[sosedb[iG].iB]=my_quadratic_interpolation('+', potent[sosedi[SSIDE][sosedb[iG].iII].iNODE1], potent[sosedb[iG].iII], potent[sosedb[iG].iI], pbb.y , pb.y, pp.y, pp.y+0.5*dy);
+			       potent[border_neighbor[iG].iB]=my_quadratic_interpolation('+', potent[neighbors_for_the_internal_node[SSIDE][border_neighbor[iG].iII].iNODE1], potent[border_neighbor[iG].iII], potent[border_neighbor[iG].iI], pbb.y , pb.y, pp.y, pp.y+0.5*dy);
 			  
 			       break;
 		  case TSIDE: // внешняя нормаль B
-			       // квадратичная интерполляция.
+			       // квадратичная интерполяция.
 
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp,BSIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb,BB);
-			       center_cord3D(sosedi[TSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb,TSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp,BSIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,BB);
+			       center_cord3D(neighbors_for_the_internal_node[TSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb,TSIDE);
 
 
-			       potent[sosedb[iG].iB]=my_quadratic_interpolation('-', potent[sosedi[TSIDE][sosedb[iG].iII].iNODE1], potent[sosedb[iG].iII], potent[sosedb[iG].iI], pbb.z , pb.z, pp.z, pp.z-0.5*dz);
+			       potent[border_neighbor[iG].iB]=my_quadratic_interpolation('-', potent[neighbors_for_the_internal_node[TSIDE][border_neighbor[iG].iII].iNODE1], potent[border_neighbor[iG].iII], potent[border_neighbor[iG].iI], pbb.z , pb.z, pp.z, pp.z-0.5*dz);
 
 			       break;
-		  case BSIDE : // внешняя нормаль T
-			       // квадратичная интерполляция.
+		  case BSIDE: // внешняя нормаль T
+			       // квадратичная интерполяция.
 			  
 			      
-		          center_cord3D(sosedb[iG].iI, nvtx, pa, pp,TSIDE);
-		          center_cord3D(sosedb[iG].iII, nvtx, pa, pb,TTSIDE);
-			      center_cord3D(sosedi[BSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb,BSIDE);
+		          center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp,TSIDE);
+		          center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,TTSIDE);
+			      center_cord3D(neighbors_for_the_internal_node[BSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb,BSIDE);
 					
-			      potent[sosedb[iG].iB]=my_quadratic_interpolation('+', potent[sosedi[BSIDE][sosedb[iG].iII].iNODE1], potent[sosedb[iG].iII], potent[sosedb[iG].iI], pbb.z , pb.z, pp.z, pp.z+0.5*dz); 
+			      potent[border_neighbor[iG].iB]=my_quadratic_interpolation('+', potent[neighbors_for_the_internal_node[BSIDE][border_neighbor[iG].iII].iNODE1], potent[border_neighbor[iG].iII], potent[border_neighbor[iG].iI], pbb.z , pb.z, pp.z, pp.z+0.5*dz); 
 				  
 			       break;
 		}
@@ -361,7 +361,7 @@ void flattener(doublereal* &potent, integer maxelm, integer maxbound, ALICE_PART
 
 } // flattener
 
-// на основе 27 значений вокруг данного КО, с помощью квадратичной интерполляции
+// на основе 27 значений вокруг данного КО, с помощью квадратичной интерполяции
 // находится значение функции в точке с координатами pzvezda.
 /*
 doublereal rinterpolFinposition(TOCHKA* c27, doublereal* potent27, TOCHKA pzvezda) {
@@ -396,18 +396,18 @@ void my_additional_to_calc_average(bool bflag, integer iNODE, doublereal rmultip
 } // my_additional_to_calc_average
 
 // получение дважды фильтрованного поля potent_test_filtr=test_filtr(potent_in),
-// после применения тестового фильтра. Величиной potent_in может являтся любая величина :
+// после применения тестового фильтра. Величиной potent_in может являться любая величина:
 // компонента скорости, завихрённость и др.
-// 16 мая 2012 года сделана квадратичная интерполляция изнутри области на границу.
+// 16 мая 2012 года сделана квадратичная интерполяция изнутри области на границу.
 // Работает только на структурированной прямоугольной ортогональной сетке.
 // НЕ работает на АЛИС сетке.
 void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr, 
-	integer maxelm, integer maxbound, ALICE_PARTITION** sosedi,
+	integer maxelm, integer maxbound, ALICE_PARTITION** neighbors_for_the_internal_node,
 							 integer** nvtx, TOCHKA* pa, doublereal* &delta_test_filtr,
-							 integer itype_filtr, BOUND* sosedb, integer iquadraticinterpolboud) {
+							 integer itype_filtr, BOUND* border_neighbor, integer iquadraticinterpolboud) {
 
-	// iquadraticinterpolboud - порядок интерполляции доступной для продолжения фильтрованной величины изнутри области на границу.
-	// возможные значения 0 - просто снесение величины из ближайшего внутреннего КО  на границу. 2 - квадратичная интерполляция.
+	// iquadraticinterpolboud - порядок интерполяции доступной для продолжения фильтрованной величины изнутри области на границу.
+	// возможные значения 0 - просто снесение величины из ближайшего внутреннего КО  на границу. 2 - квадратичная интерполяция.
 
 	// potent_in - на вход подаётся компонента скорости которая получена в результате 
 	// решения уравнений Навье-Стокса. Это как бы один раз фильтрованная скорость
@@ -430,10 +430,10 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 	for (integer iP=0; iP<maxelm; iP++) {
 
 		 // Алгоритм. Для каждого внутреннего КО может существовать не более 27 (включая его самого) объёмных (не граничных) соседей.
-		 // Прежде чем вычислить средюю величину которая рассчитывается просто как среднее арефметическое взвешенное на объём КО среди
+		 // Прежде чем вычислить среднюю величину которая рассчитывается просто как среднее арифметическое взвешенное на объём КО среди
 		 // всех объёмных контрольных объёмов окружающих данный нужно определить какие из 26 возможных соседей действительно присутствуют.
 		 // Определение присутствия соседей в условиях "произвольной" геометрии объёмная по коду операция. Когда все соседи известны получение 
-		 // самой средней величины остаётся делом техники : вычисления суммы и деления её на общий объём. Т.е. это среднее по объёму значение.
+		 // самой средней величины остаётся делом техники: вычисления суммы и деления её на общий объём. Т.е. это среднее по объёму значение.
 		 // Вот смысл фильтрования - получение среднего. Сам метод контрольного объёма является фильтром - для величины хранящейся в центре КО 
 		 // подразумевается что её значение распространяется на весь контрольный объём.
 
@@ -441,7 +441,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  bE=false; bW=false; bN=false; bS=false; bT=false; bB=false;
 
 		  integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	      iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1; iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	      iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
           if (iE>=maxelm) bE=true; // если true то узел является граничным.
 	      if (iN>=maxelm) bN=true;
@@ -458,7 +458,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bE && !bN) {
 			  // внутренний КО.
-			  iEN=sosedi[NSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1;
+			  iEN=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1;
 			  if (iEN>=maxelm) bEN=true; // граничный ко.
 		  } else {
 			  bEN=true;
@@ -467,7 +467,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bE && !bS) {
 			  // внутренний КО.
-			  iES=sosedi[SSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1;
+			  iES=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1;
 			  if (iES>=maxelm) bES=true; // граничный ко.
 		  } else {
 			  bES=true;
@@ -476,7 +476,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bW && !bS) {
 			  // внутренний КО.
-			  iWS=sosedi[WSIDE][sosedi[SSIDE][iP].iNODE1].iNODE1;
+			  iWS=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[SSIDE][iP].iNODE1].iNODE1;
 			  if (iWS>=maxelm) bWS=true; // граничный ко.
 		  } else {
 			  bWS=true;
@@ -485,7 +485,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bW && !bN) {
 			  // внутренний КО.
-			  iWN=sosedi[WSIDE][sosedi[NSIDE][iP].iNODE1].iNODE1;
+			  iWN=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[NSIDE][iP].iNODE1].iNODE1;
 			  if (iWN>=maxelm) bWN=true; // граничный ко.
 		  } else {
 			  bWN=true;
@@ -494,7 +494,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bN && !bT) {
 			  // внутренний КО.
-			  iNT=sosedi[NSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1;
+			  iNT=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1;
 			  if (iNT>=maxelm) bNT=true; // граничный ко.
 		  } else {
 			  bNT=true;
@@ -503,7 +503,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bN && !bB) {
 			  // внутренний КО.
-			  iNB=sosedi[NSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1;
+			  iNB=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1;
 			  if (iNB>=maxelm) bNB=true; // граничный ко.
 		  } else {
 			  bNB=true;
@@ -512,7 +512,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bE && !bT) {
 			  // внутренний КО.
-			  iET=sosedi[ESIDE][sosedi[TSIDE][iP].iNODE1].iNODE1;
+			  iET=neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1;
 			  if (iET>=maxelm) bET=true; // граничный ко.
 		  } else {
 			  bET=true;
@@ -521,7 +521,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bE && !bB) {
 			  // внутренний КО.
-			  iEB=sosedi[ESIDE][sosedi[BSIDE][iP].iNODE1].iNODE1;
+			  iEB=neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1;
 			  if (iEB>=maxelm) bEB=true; // граничный ко.
 		  } else {
 			  bEB=true;
@@ -530,7 +530,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bS && !bT) {
 			  // внутренний КО.
-			  iST=sosedi[SSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1;
+			  iST=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1;
 			  if (iST>=maxelm) bST=true; // граничный ко.
 		  } else {
 			  bST=true;
@@ -539,7 +539,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bS && !bB) {
 			  // внутренний КО.
-			  iSB=sosedi[SSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1;
+			  iSB=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1;
 			  if (iSB>=maxelm) bSB=true; // граничный ко.
 		  } else {
 			  bSB=true;
@@ -548,7 +548,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bW && !bT) {
 			  // внутренний КО.
-			  iWT=sosedi[WSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1;
+			  iWT=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1;
 			  if (iWT>=maxelm) bWT=true; // граничный ко.
 		  } else {
 			  bWT=true;
@@ -557,7 +557,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 		  if (!bW && !bB) {
 			  // внутренний КО.
-			  iWB=sosedi[WSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1;
+			  iWB=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1;
 			  if (iWB>=maxelm) bWB=true; // граничный ко.
 		  } else {
 			  bWB=true;
@@ -572,13 +572,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bEN) {
 			  if (bTNE) {
 				  // последовательность вызовов очень важна.
-				  iTNE=sosedi[TSIDE][sosedi[NSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTNE=neighbors_for_the_internal_node[TSIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTNE=false;
 			      if (iTNE>=maxelm) bTNE=true;
 			  }
 			  if (bBNE) {
 				  // последовательность вызовов очень важна.
-				  iBNE=sosedi[BSIDE][sosedi[NSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBNE=neighbors_for_the_internal_node[BSIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBNE=false;
 			      if (iBNE>=maxelm) bBNE=true;
 			  }
@@ -587,13 +587,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
           if (!bES) {
 			  if (bTSE) {
 				  // последовательность вызовов очень важна.
-				  iTSE=sosedi[TSIDE][sosedi[SSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTSE=neighbors_for_the_internal_node[TSIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTSE=false;
 			      if (iTSE>=maxelm) bTSE=true;
 			  }
 			  if (bBSE) {
 				  // последовательность вызовов очень важна.
-				  iBSE=sosedi[BSIDE][sosedi[SSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBSE=neighbors_for_the_internal_node[BSIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBSE=false;
 			      if (iBSE>=maxelm) bBSE=true;
 			  }
@@ -602,13 +602,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bWN) {
 			  if (bTNW) {
 				  // последовательность вызовов очень важна.
-				  iTNW=sosedi[TSIDE][sosedi[NSIDE][sosedi[WSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTNW=neighbors_for_the_internal_node[TSIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[WSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTNW=false;
 			      if (iTNW>=maxelm) bTNW=true;
 			  }
 			  if (bBNW) {
 				  // последовательность вызовов очень важна.
-				  iBNW=sosedi[BSIDE][sosedi[NSIDE][sosedi[WSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBNW=neighbors_for_the_internal_node[BSIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[WSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBNW=false;
 			      if (iBNW>=maxelm) bBNW=true;
 			  }
@@ -617,13 +617,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
           if (!bWS) {
 			  if (bTSW) {
 				  // последовательность вызовов очень важна.
-				  iTSW=sosedi[TSIDE][sosedi[SSIDE][sosedi[WSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTSW=neighbors_for_the_internal_node[TSIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[WSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTSW=false;
 			      if (iTSW>=maxelm) bTSW=true;
 			  }
 			  if (bBSW) {
 				  // последовательность вызовов очень важна.
-				  iBSW=sosedi[BSIDE][sosedi[SSIDE][sosedi[WSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBSW=neighbors_for_the_internal_node[BSIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[WSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBSW=false;
 			      if (iBSW>=maxelm) bBSW=true;
 			  }
@@ -632,13 +632,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bNT) {
 			  if (bTNE) {
 				  // последовательность вызовов очень важна.
-				  iTNE=sosedi[ESIDE][sosedi[NSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTNE=neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTNE=false;
 			      if (iTNE>=maxelm) bTNE=true;
 			  }
 			  if (bTNW) {
 				  // последовательность вызовов очень важна.
-				  iTNW=sosedi[WSIDE][sosedi[NSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTNW=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bTNW=false;
 			      if (iTNW>=maxelm) bTNW=true;
 			  }
@@ -647,13 +647,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bNB) {
 			  if (bBNE) {
 				  // последовательность вызовов очень важна.
-				  iBNE=sosedi[ESIDE][sosedi[NSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBNE=neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bBNE=false;
 			      if (iBNE>=maxelm) bBNE=true;
 			  }
 			  if (bBNW) {
 				  // последовательность вызовов очень важна.
-				  iBNW=sosedi[WSIDE][sosedi[NSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBNW=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBNW=false;
 			      if (iBNW>=maxelm) bBNW=true;
 			  }
@@ -662,13 +662,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bET) {
 			  if (bTNE) {
 				  // последовательность вызовов очень важна.
-				  iTNE=sosedi[NSIDE][sosedi[TSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTNE=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[TSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTNE=false;
 			      if (iTNE>=maxelm) bTNE=true;
 			  }
 			  if (bTSE) {
 				  // последовательность вызовов очень важна.
-				  iTSE=sosedi[SSIDE][sosedi[TSIDE][sosedi[ESIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTSE=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[TSIDE][neighbors_for_the_internal_node[ESIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bTSE=false;
 			      if (iTSE>=maxelm) bTSE=true;
 			  }
@@ -677,13 +677,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bEB) {
 			  if (bBNE) {
 				  // последовательность вызовов очень важна.
-				  iBNE=sosedi[NSIDE][sosedi[ESIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBNE=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bBNE=false;
 			      if (iBNE>=maxelm) bBNE=true;
 			  }
 			  if (bBSE) {
 				  // последовательность вызовов очень важна.
-				  iBSE=sosedi[SSIDE][sosedi[ESIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBSE=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBSE=false;
 			      if (iBSE>=maxelm) bBSE=true;
 			  }
@@ -692,13 +692,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
           if (!bST) {
 			  if (bTSE) {
 				  // последовательность вызовов очень важна.
-				  iTSE=sosedi[ESIDE][sosedi[SSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTSE=neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTSE=false;
 			      if (iTSE>=maxelm) bTSE=true;
 			  }
 			  if (bTSW) {
 				  // последовательность вызовов очень важна.
-				  iTSW=sosedi[WSIDE][sosedi[SSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTSW=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bTSW=false;
 			      if (iTSW>=maxelm) bTSW=true;
 			  }
@@ -707,13 +707,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bSB) {
 			  if (bBSE) {
 				  // последовательность вызовов очень важна.
-				  iBSE=sosedi[ESIDE][sosedi[SSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBSE=neighbors_for_the_internal_node[ESIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bBSE=false;
 			      if (iBSE>=maxelm) bBSE=true;
 			  }
 			  if (bBSW) {
 				  // последовательность вызовов очень важна.
-				  iBSW=sosedi[WSIDE][sosedi[SSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBSW=neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBSW=false;
 			      if (iBSW>=maxelm) bBSW=true;
 			  }
@@ -722,13 +722,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bWT) {
 			  if (bTNW) {
 				  // последовательность вызовов очень важна.
-				  iTNW=sosedi[NSIDE][sosedi[WSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTNW=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bTNW=false;
 			      if (iTNW>=maxelm) bTNW=true;
 			  }
 			  if (bTSW) {
 				  // последовательность вызовов очень важна.
-				  iTSW=sosedi[SSIDE][sosedi[WSIDE][sosedi[TSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iTSW=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[TSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bTSW=false;
 			      if (iTSW>=maxelm) bTSW=true;
 			  }
@@ -737,13 +737,13 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  if (!bWB) {
 			  if (bBNW) {
 				  // последовательность вызовов очень важна.
-				  iBNW=sosedi[NSIDE][sosedi[WSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBNW=neighbors_for_the_internal_node[NSIDE][neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 			      bBNW=false;
 			      if (iBNW>=maxelm) bBNW=true;
 			  }
 			  if (bBSW) {
 				  // последовательность вызовов очень важна.
-				  iBSW=sosedi[SSIDE][sosedi[WSIDE][sosedi[BSIDE][iP].iNODE1].iNODE1].iNODE1;
+				  iBSW=neighbors_for_the_internal_node[SSIDE][neighbors_for_the_internal_node[WSIDE][neighbors_for_the_internal_node[BSIDE][iP].iNODE1].iNODE1].iNODE1;
 				  bBSW=false;
 			      if (iBSW>=maxelm) bBSW=true;
 			  }
@@ -760,17 +760,17 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  		  
 		  //rsvol+=dx*dy*dz;	
 		  switch (itype_filtr) {
-		     case VOLUME_AVERAGE_FILTR : rcol+=1.0; rsum+=1.0*potent_in[iP]*dx*dy*dz; rsvol+=dx*dy*dz; break;
-             case TRAPEZOIDAL_FILTR : rcol+=8.0; rsum+=8.0*potent_in[iP]*dx*dy*dz; rsvol+=8.0*dx*dy*dz; break;
-	         case SIMPSON_FILTR : rcol+=64.0; rsum+=64.0*potent_in[iP]*dx*dy*dz; rsvol+=64.0*dx*dy*dz; break;
+		     case VOLUME_AVERAGE_FILTR: rcol+=1.0; rsum+=1.0*potent_in[iP]*dx*dy*dz; rsvol+=dx*dy*dz; break;
+             case TRAPEZOIDAL_FILTR: rcol+=8.0; rsum+=8.0*potent_in[iP]*dx*dy*dz; rsvol+=8.0*dx*dy*dz; break;
+	         case SIMPSON_FILTR: rcol+=64.0; rsum+=64.0*potent_in[iP]*dx*dy*dz; rsvol+=64.0*dx*dy*dz; break;
 		  }
 		  
 		  /*
 		  rsvol=1.0;
 		  switch (itype_filtr) {
-		     case VOLUME_AVERAGE_FILTR : rcol+=1.0; rsum+=1.0*potent_in[iP]; break;
-             case TRAPEZOIDAL_FILTR : rcol+=8.0; rsum+=8.0*potent_in[iP]; break;
-	         case SIMPSON_FILTR : rcol+=64.0; rsum+=64.0*potent_in[iP]; break;
+		     case VOLUME_AVERAGE_FILTR: rcol+=1.0; rsum+=1.0*potent_in[iP]; break;
+             case TRAPEZOIDAL_FILTR: rcol+=8.0; rsum+=8.0*potent_in[iP]; break;
+	         case SIMPSON_FILTR: rcol+=64.0; rsum+=64.0*potent_in[iP]; break;
 		  }
 		  */
 		  rcolnumber+=1.0;
@@ -789,7 +789,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  */
 
 		  switch (itype_filtr) {
-			  case VOLUME_AVERAGE_FILTR :
+			  case VOLUME_AVERAGE_FILTR:
 
 				  // простое среднее по объёму.
 				  
@@ -825,7 +825,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 				   break;
 
-		      case TRAPEZOIDAL_FILTR : 
+		      case TRAPEZOIDAL_FILTR: 
 				  
 				   // трапецевидный фильтр основанный на формуле трапеций.
 				   // весовые коэффициенты получены для равномерной сетки.
@@ -862,7 +862,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 
 				   break;
 
-              case SIMPSON_FILTR :
+              case SIMPSON_FILTR:
 
 				   // фильтр основанный на формуле Симпсона.
 				   // весовые коэффициенты получены для равномерной сетки.
@@ -907,87 +907,87 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 		  // Ради этой строчки писался весь код данной функции.
 		  //potent_test_filtr[iP]=(rsum/rcol)*(rcolnumber/rsvol); // среднее по объёму значение.
           potent_test_filtr[iP]=(rsum/rsvol); // среднее по объёму значение.
-		  // но для такого среднего значения лучше применять квадратичную интерполляцию на равномерную сетку с неравномерной.
+		  // но для такого среднего значения лучше применять квадратичную интерполяцию на равномерную сетку с неравномерной.
 		  //potent_test_filtr[iP]=(rsum/rcol);//*(rcolnumber); // просто среднее без учёта объёма.
 	}
 
 	
 	if (iquadraticinterpolboud==2) {
-		// нужно применить квадратичную интерполляцию для 
+		// нужно применить квадратичную интерполяцию для 
 	// нахождения фильтрованной величины в граничных контрольных объёмах.
 	for (integer iG=0; iG<maxbound; iG++) {
 		// цикл по всем граничным контрольным объёмам.
 
 		doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 		// вычисление размеров текущего контрольного объёма:
-	    volume3D(sosedb[iG].iI, nvtx, pa, dx, dy, dz);
+	    volume3D(border_neighbor[iG].iI, nvtx, pa, dx, dy, dz);
 		TOCHKA pp,pb,pbb;
 
 		// сканируем внутреннюю нормаль
-		switch (sosedb[iG].Norm) {
-		  case ESIDE : // внешняя нормаль W
-			       // квадратичная интерполляция.
+		switch (border_neighbor[iG].Norm) {
+		  case ESIDE: // внешняя нормаль W
+			       // квадратичная интерполяция.
 			      
-				   center_cord3D(sosedb[iG].iI, nvtx, pa, pp, WSIDE);
-				   center_cord3D(sosedb[iG].iII, nvtx, pa, pb, WW);
-			       center_cord3D(sosedi[ESIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb, ESIDE);
+				   center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp, WSIDE);
+				   center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb, WW);
+			       center_cord3D(neighbors_for_the_internal_node[ESIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb, ESIDE);
 
-				   potent_test_filtr[sosedb[iG].iB]=my_quadratic_interpolation('-', potent_test_filtr[sosedi[ESIDE][sosedb[iG].iII].iNODE1], potent_test_filtr[sosedb[iG].iII], potent_test_filtr[sosedb[iG].iI], pbb.x , pb.x, pp.x, pp.x-0.5*dx);
+				   potent_test_filtr[border_neighbor[iG].iB]=my_quadratic_interpolation('-', potent_test_filtr[neighbors_for_the_internal_node[ESIDE][border_neighbor[iG].iII].iNODE1], potent_test_filtr[border_neighbor[iG].iII], potent_test_filtr[border_neighbor[iG].iI], pbb.x , pb.x, pp.x, pp.x-0.5*dx);
 				   
 			       break;
-		  case WSIDE : // внешняя нормаль E
-			       // квадратичная интерполляция.
+		  case WSIDE: // внешняя нормаль E
+			       // квадратичная интерполяция.
 
 				   
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp, ESIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb, EE);
-			       center_cord3D(sosedi[WSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb, WSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp, ESIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb, EE);
+			       center_cord3D(neighbors_for_the_internal_node[WSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb, WSIDE);
 					
-			       potent_test_filtr[sosedb[iG].iB]=my_quadratic_interpolation('+', potent_test_filtr[sosedi[WSIDE][sosedb[iG].iII].iNODE1], potent_test_filtr[sosedb[iG].iII], potent_test_filtr[sosedb[iG].iI], pbb.x , pb.x, pp.x, pp.x+0.5*dx);
+			       potent_test_filtr[border_neighbor[iG].iB]=my_quadratic_interpolation('+', potent_test_filtr[neighbors_for_the_internal_node[WSIDE][border_neighbor[iG].iII].iNODE1], potent_test_filtr[border_neighbor[iG].iII], potent_test_filtr[border_neighbor[iG].iI], pbb.x , pb.x, pp.x, pp.x+0.5*dx);
 
 			       break;
-		  case NSIDE : // внешняя нормаль S
-			       // квадратичная интерполляция.
+		  case NSIDE: // внешняя нормаль S
+			       // квадратичная интерполяция.
 			       
 			       
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp, SSIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb, SS);
-			       center_cord3D(sosedi[NSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb, NSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp, SSIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb, SS);
+			       center_cord3D(neighbors_for_the_internal_node[NSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb, NSIDE);
 
-			       potent_test_filtr[sosedb[iG].iB]=my_quadratic_interpolation('-', potent_test_filtr[sosedi[NSIDE][sosedb[iG].iII].iNODE1], potent_test_filtr[sosedb[iG].iII], potent_test_filtr[sosedb[iG].iI], pbb.y , pb.y, pp.y, pp.y-0.5*dy);
+			       potent_test_filtr[border_neighbor[iG].iB]=my_quadratic_interpolation('-', potent_test_filtr[neighbors_for_the_internal_node[NSIDE][border_neighbor[iG].iII].iNODE1], potent_test_filtr[border_neighbor[iG].iII], potent_test_filtr[border_neighbor[iG].iI], pbb.y , pb.y, pp.y, pp.y-0.5*dy);
 			  
 			       break;
-		  case SSIDE :// внешняя нормаль N
-			       // квадратичная интерполляция.
+		  case SSIDE:// внешняя нормаль N
+			       // квадратичная интерполяция.
 
 			       
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp, NSIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb,NN);
-			       center_cord3D(sosedi[SSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb, SSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp, NSIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb,NN);
+			       center_cord3D(neighbors_for_the_internal_node[SSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb, SSIDE);
 
-			       potent_test_filtr[sosedb[iG].iB]=my_quadratic_interpolation('+', potent_test_filtr[sosedi[SSIDE][sosedb[iG].iII].iNODE1], potent_test_filtr[sosedb[iG].iII], potent_test_filtr[sosedb[iG].iI], pbb.y , pb.y, pp.y, pp.y+0.5*dy);
+			       potent_test_filtr[border_neighbor[iG].iB]=my_quadratic_interpolation('+', potent_test_filtr[neighbors_for_the_internal_node[SSIDE][border_neighbor[iG].iII].iNODE1], potent_test_filtr[border_neighbor[iG].iII], potent_test_filtr[border_neighbor[iG].iI], pbb.y , pb.y, pp.y, pp.y+0.5*dy);
 			  
 			       break;
 		  case TSIDE: // внешняя нормаль B
-			       // квадратичная интерполляция.
+			       // квадратичная интерполяция.
 
-		           center_cord3D(sosedb[iG].iI, nvtx, pa, pp, BSIDE);
-		           center_cord3D(sosedb[iG].iII, nvtx, pa, pb, BB);
-			       center_cord3D(sosedi[TSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb, TSIDE);
+		           center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp, BSIDE);
+		           center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb, BB);
+			       center_cord3D(neighbors_for_the_internal_node[TSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb, TSIDE);
 
 
-			       potent_test_filtr[sosedb[iG].iB]=my_quadratic_interpolation('-', potent_test_filtr[sosedi[TSIDE][sosedb[iG].iII].iNODE1], potent_test_filtr[sosedb[iG].iII], potent_test_filtr[sosedb[iG].iI], pbb.z , pb.z, pp.z, pp.z-0.5*dz);
+			       potent_test_filtr[border_neighbor[iG].iB]=my_quadratic_interpolation('-', potent_test_filtr[neighbors_for_the_internal_node[TSIDE][border_neighbor[iG].iII].iNODE1], potent_test_filtr[border_neighbor[iG].iII], potent_test_filtr[border_neighbor[iG].iI], pbb.z , pb.z, pp.z, pp.z-0.5*dz);
 
 			       break;
-		  case BSIDE : // внешняя нормаль T
-			       // квадратичная интерполляция.
+		  case BSIDE: // внешняя нормаль T
+			       // квадратичная интерполяция.
 			  
 			      
-		          center_cord3D(sosedb[iG].iI, nvtx, pa, pp, TSIDE);
-		          center_cord3D(sosedb[iG].iII, nvtx, pa, pb, TTSIDE);
-			      center_cord3D(sosedi[BSIDE][sosedb[iG].iII].iNODE1, nvtx, pa, pbb, BSIDE);
+		          center_cord3D(border_neighbor[iG].iI, nvtx, pa, pp, TSIDE);
+		          center_cord3D(border_neighbor[iG].iII, nvtx, pa, pb, TTSIDE);
+			      center_cord3D(neighbors_for_the_internal_node[BSIDE][border_neighbor[iG].iII].iNODE1, nvtx, pa, pbb, BSIDE);
 					
-			      potent_test_filtr[sosedb[iG].iB]=my_quadratic_interpolation('+', potent_test_filtr[sosedi[BSIDE][sosedb[iG].iII].iNODE1], potent_test_filtr[sosedb[iG].iII], potent_test_filtr[sosedb[iG].iI], pbb.z , pb.z, pp.z, pp.z+0.5*dz); 
+			      potent_test_filtr[border_neighbor[iG].iB]=my_quadratic_interpolation('+', potent_test_filtr[neighbors_for_the_internal_node[BSIDE][border_neighbor[iG].iII].iNODE1], potent_test_filtr[border_neighbor[iG].iII], potent_test_filtr[border_neighbor[iG].iI], pbb.z , pb.z, pp.z, pp.z+0.5*dz); 
 				  
 			       break;
 		}
@@ -997,7 +997,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 	else {
 		for (integer iG=0; iG<maxbound; iG++) {
 		   // цикл по всем граничным контрольным объёмам.
-           potent_test_filtr[sosedb[iG].iB]=potent_test_filtr[sosedb[iG].iI];
+           potent_test_filtr[border_neighbor[iG].iB]=potent_test_filtr[border_neighbor[iG].iI];
 
 	    }
 	}
@@ -1010,7 +1010,7 @@ void double_average_potent(doublereal* potent_in, doublereal* &potent_test_filtr
 void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, doublereal beta0) {
 
 	// Описание данного кода такое.
-	// Модель турбулентности Selective Smagorinsky предлагает неучитывать вклад турбулентной динамической вязкости
+	// Модель турбулентности Selective Smagorinsky предлагает не учитывать вклад турбулентной динамической вязкости
 	// в том случае если угол между вихрем и осреднённым вихрем меньше порогового значения beta0. Значение beta0 установлено
 	// в эксперименте и примерно составляет около 15 градусов. Данный приём избирательного учёта вклада турбулентной динамической 
 	// вязкости позволяет избирательно уменьшить диссипативность модели Смагоринского.
@@ -1021,8 +1021,8 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 	// bfibeta - возвращаемое для всех строго внутренних контрольных объёмов булево значение, говорящее о том 
 	// нужно ли учитывать вклад турбулентной динамической вязкости или нет.
 
-	// Вспомогательный материал :
-	// Формула векторного прозведения :
+	// Вспомогательный материал:
+	// Формула векторного произведения:
 	// [vectora x vectorb]=(ay*bz-az*by, az*bx-ax*bz, ax*by-ay*bx);
 
 	// bfibeta - принимает значение true (турбулентную динамическую вязкость нужно учитывать) и значение false
@@ -1078,13 +1078,13 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 
 	// Вычисление фильтрованных компонент вихря:
 	// Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	// Для вычисления значений на границе области применяется квадратичная интерполляция изнутри области наружу.
-	double_average_potent(curl_component[iCURLX], curl_component_test_filtr[iCURLX], f.maxelm, f.maxbound, f.sosedi, 
-		                     f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
-	double_average_potent(curl_component[iCURLY], curl_component_test_filtr[iCURLY], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
-	double_average_potent(curl_component[iCURLZ], curl_component_test_filtr[iCURLZ], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
+	// Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+	double_average_potent(curl_component[iCURLX], curl_component_test_filtr[iCURLX], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+		                     f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
+	double_average_potent(curl_component[iCURLY], curl_component_test_filtr[iCURLY], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
+	double_average_potent(curl_component[iCURLZ], curl_component_test_filtr[iCURLZ], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
 
 	bfibeta=new bool[f.maxelm]; // выделение оперативной памяти под возвращаемое значение.
 	for (integer i=0; i<f.maxelm; i++) bfibeta[i]=true; // по умолчанию турбулентную вязкость нужно везде учитывать.
@@ -1092,7 +1092,7 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 
 	doublereal* curlxtest_curl = nullptr;
 	curlxtest_curl = new doublereal[3];
-	// вычисление значения возвращаемой булевой функции :
+	// вычисление значения возвращаемой булевой функции:
 	for (integer i=0; i<f.maxelm; i++) {
 		// для всех внутренних контрольных объёмов.
 		doublereal module_Curl=0.0;
@@ -1128,7 +1128,7 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 				// аргумент арксинуса должен лежать от -1.0 до +1.0.
 			    doublereal beta=180.0*fabs(asin(module_curlxcurl/(module_Curl*module_Curl_test_filtr)))/3.141;
 			    if (beta>=beta0) {
-				   // угол значителен и значит нужно учитывать тубулентную вязкость.
+				   // угол значителен и значит нужно учитывать турбулентную вязкость.
 				   bfibeta[i]=true;
 			    }
 			    else {
@@ -1230,13 +1230,13 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 
 	// Вычисление фильтрованных компонент скорости.
 	// Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	// Для вычисления значений на границе области применяется квадратичная интерполляция изнутри области наружу.
-	double_average_potent(f.potent[VX], speed_test_filtering[VX], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
-	double_average_potent(f.potent[VY], speed_test_filtering[VY], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
-	double_average_potent(f.potent[VZ], speed_test_filtering[VZ], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
+	// Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+	double_average_potent(f.potent[VX], speed_test_filtering[VX], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
+	double_average_potent(f.potent[VY], speed_test_filtering[VY], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
+	double_average_potent(f.potent[VZ], speed_test_filtering[VZ], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
 
 	
 
@@ -1272,7 +1272,7 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 		speedxspeed_buf[j]=0.0;
 	}
 
-	// Осреднение попарных произведений :
+	// Осреднение попарных произведений:
 	integer** imarker=new integer*[9];
 	for (integer i=0; i<9; i++) imarker[i]=new integer[2];
 	imarker[VXVX][0]=VX; imarker[VXVX][1]=VX;
@@ -1294,9 +1294,9 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 	    }
 		// Вычисление фильтрованных попарных произведений компонент скорости.
 	    // Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	    // Для вычисления значений на границе области применяется квадратичная интерполляция изнутри области наружу.
-	    double_average_potent(speedxspeed_buf, speedxspeed_test_filtering[i], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
+	    // Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+	    double_average_potent(speedxspeed_buf, speedxspeed_test_filtering[i], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
 	}
 
 	// Вычисление напряжений Леонарда.
@@ -1365,7 +1365,7 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 		StRT[VZVY][i]=0.5*(f.potent[GRADYVZ][i]+f.potent[GRADZVY][i]);
 		StRT[VZVZ][i]=f.potent[GRADZVZ][i];
 
-		// Модуль тензора скоростей деформаций :
+		// Модуль тензора скоростей деформаций:
 		StRT[MODULEStRt][i]=sqrt(2.0*(StRT[VXVX][i]*StRT[VXVX][i]+
 			                     StRT[VYVY][i]*StRT[VYVY][i]+
 								 StRT[VZVZ][i]*StRT[VZVZ][i])+
@@ -1398,9 +1398,9 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 
         // Вычисление фильтрованных попарных произведений записанных в Mij_buf.
 	    // Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	    // Для вычисления значений на границе области применяется квадратичная интерполляция изнутри области наружу.
-	    double_average_potent(Mij_buf, Mij[i], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
+	    // Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+	    double_average_potent(Mij_buf, Mij[i], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
 
 	}
 
@@ -1418,9 +1418,9 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 
 		// Вычисление дважды отфильтрованных компонент Strain Rate Tensor`а.
 	    // Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	    // Для вычисления значений на границе области применяется квадратичная интерполляция изнутри области наружу.
-	    double_average_potent(StRT[i], StRT_filtr[i], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
+	    // Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+	    double_average_potent(StRT[i], StRT_filtr[i], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
 	}
 
 	delta_test_filtr=new doublereal[f.maxelm]; // ширина тестового фильтра.
@@ -1428,9 +1428,9 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 
     // Вычисление дважды отфильтрованных компонент Strain Rate Tensor`а.
 	// Внимание ! фильтр от производной некоторой величины не равен производной от этой фильтрованной величины.
-	// Для вычисления значений на границе области применяется квадратичная интерполляция изнутри области наружу.
-	double_average_potent(StRT[MODULEStRt], StRT_filtr[MODULEStRt], f.maxelm, f.maxbound, f.sosedi, 
-							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.sosedb,2);
+	// Для вычисления значений на границе области применяется квадратичная интерполяция изнутри области наружу.
+	double_average_potent(StRT[MODULEStRt], StRT_filtr[MODULEStRt], f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, 
+							 f.nvtx, f.pa, delta_test_filtr, itype_filtr, f.border_neighbor,2);
 
 	if (StRT != nullptr) {
 		for (integer i = 0; i < 10; i++) {
@@ -1450,20 +1450,20 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 			doublereal delta2=exp((2.0/3.0)*log(rsvol));
 			// этот вариант даёт не соответствующее физическому смыслу решение на стыке двух равномерных сеток.
 			// для равномерной сетки тестовый фильтр ровно в три раза больше чем базовый фильтр.
-			//Mij[i][j]=(delta_test_filtr[j]*delta_test_filtr[j])*StRT_filtr[MODULEStRt][j]*StRT_filtr[i][j]-delta2*Mij[i][j];
+			// Mij[i][j]=(delta_test_filtr[j]*delta_test_filtr[j])*StRT_filtr[MODULEStRt][j]*StRT_filtr[i][j]-delta2*Mij[i][j];
 			// Квадрат ширины тестового фильтра в 9 раз больше ширины квадрата базового фильтра.
 			// Этот вариант в теории должен лучше себя вести на стыке двух равномерных сеток.
 			// По результатам численного моделирования не оказалось разницы между двумя вариантами.
 			// Опять на стыке двух равномерных сеток наблюдается не соответствующее физическому смыслу 
 			// распределение постоянной Смагоринского
             Mij[i][j]=delta2*(9.0*StRT_filtr[MODULEStRt][j]*StRT_filtr[i][j]-Mij[i][j]);
-			// Путь выхода из ситуации по видимому состои в написании более адекватной процедуры фильтрования.
+			// Путь выхода из ситуации по видимому состоит в написании более адекватной процедуры фильтрования.
 			// Суть более адекватной процедуры фильтрования состоит в том что нужно окружить фильтруемый объект
-			// (расматриваемый текущий контрольный объём) 26 одинаковыми с ним контрольными объёмами. Таким образом
+			// (рассматриваемый текущий контрольный объём) 26 одинаковыми с ним контрольными объёмами. Таким образом
 			// будет получено 26 дополнительных геометрических позиций в который нужно восстановить фильтруемую функцию
-			// Восстановление функции с неравномерной сетки на равномерную можно сделать с помощью квадратичной интерполляции.
+			// Восстановление функции с неравномерной сетки на равномерную можно сделать с помощью квадратичной интерполяции.
 			// Сделав всё это мы будем иметь как бы результат который полностью буде отвечать равномерной сетке и не соответствующего
-			// физическому смыслу поведения на стыке раномерных сеток наблюдаься не будет.
+			// физическому смыслу поведения на стыке равномерных сеток наблюдаться не будет.
 			// Резюме: требуется переписать операцию фильтрования.
 		}
 	}
@@ -1514,7 +1514,7 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 		// релаксацию. 
 		// В некоторых работах предлагается установить рамки для константы Смагоринского.
 		// В [3] предлагается взять 0.06 <= Cs <= 0.25. Это даёт для квадрата константы 
-		// Смагоринского значение : 0.0036 <= константа Германо <= 0.0625. Применение 
+		// Смагоринского значение: 0.0036 <= константа Германо <= 0.0625. Применение 
 		// данного ограничителя обеспечивает диссипативность модели турбулентности.
 		// [3]. У.С. Абдибеков, Н.Б. Усенбаев, О.Л.Каруна Численное моделирование турбулентного
 		// течения в канале. Казахский национальный университет им. аль-Фараби, Алматы.
@@ -1584,7 +1584,7 @@ void my_Germano_model(FLOW &f, doublereal* &Cs2, integer itype_filtr) {
 	}
 	// Применим сглаживатель применение которого необоснованно.
 	// Сглаживатель лучше применять до лимитирующих ограничений.
-	flattener(Cs_flat, f.maxelm, f.maxbound, f.sosedi, f.nvtx, f.pa, f.sosedb);
+	flattener(Cs_flat, f.maxelm, f.maxbound, f.neighbors_for_the_internal_node, f.nvtx, f.pa, f.border_neighbor);
 	for (integer i=0; i<f.maxelm; i++) Cs2[i]=Cs_flat[i];
 	delete Cs_flat;
 	*/

@@ -491,7 +491,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 
 void cudasafe(int error, char* message, char* file, int line) {
 	if (error != cudaSuccess) {
-		fprintf(stderr, "CUDA Error: %s : %i. In %s line %d\n", message, error, file, line);
+		fprintf(stderr, "CUDA Error: %s: %i. In %s line %d\n", message, error, file, line);
 		exit(-1);
 	}
 }

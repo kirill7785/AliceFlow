@@ -5,7 +5,7 @@
 #ifndef AVTO_SAVE_C
 #define AVTO_SAVE_C 1
 
-// Автосохранение расчитанных полевых величин в файл avtosave.txt
+// Автосохранение рассчитанных полевых величин в файл avtosave.txt
 // для возобновления счёта после прерывания.
 void avtosave(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber_iteration_SIMPLE, doublereal* &continity_start) {
 
@@ -131,7 +131,7 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
 		doublereal fin=0.0;
 		integer din=0;
 
-		// Сначала небольшая проверка соответствия файлов :
+		// Сначала небольшая проверка соответствия файлов:
 		// premeshin.txt и avtosave.txt
 		// bcontinue==true если проверка прошла успешно.
 #ifdef MINGW_COMPILLER
@@ -308,26 +308,26 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
 					f[i].potent[PRESS][j]=fin;
 				}
 
-				// Вычисление градиентов скорости :
+				// Вычисление градиентов скорости:
 				for (j=0; j<f[i].maxelm; j++) {
 					// градиенты скоростей для внутренних КО.
-				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false,f[i], f[i].sosedb, t.ilevel_alice);
+				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, false,f[i], f[i].border_neighbor, t.ilevel_alice);
 				}
 				for (j=0; j<f[i].maxelm; j++) {
 					// градиенты скоростей для граничных КО.
-				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i], f[i].sosedb, t.ilevel_alice);
+				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, true, f[i], f[i].border_neighbor, t.ilevel_alice);
 				}
 
-				// Вычисление градиентов давления :
+				// Вычисление градиентов давления:
 	            // на основе скорректированного поля давления.
-            	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу.
+            	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу 1983г.
 				for (integer j_1 = 0; j_1 < f[i].maxelm; j_1++) {
 					// градиенты давления для внутренних КО.
-					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, false, f[i].border_neighbor, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
 				}
 				for (integer j_1 = 0; j_1 < f[i].maxelm; j_1++) {
 					// градиенты давления для граничных КО.
-					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].neighbors_for_the_internal_node, f[i].maxelm, true, f[i].border_neighbor, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
 				}
 
 
@@ -351,7 +351,7 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
 			        f[i].SInvariantStrainRateTensor[j_1]=sqrt(fmax(0.0,sum));
 
                     // Вихрь (модуль ротора скорости).
-					// помоему это тоже самое что и модуль тензора вращения.
+					// по моему это тоже самое что и модуль тензора вращения.
 		            sum=0.0;
 		            sum+=(f[i].potent[GRADYVZ][j_1]-f[i].potent[GRADZVY][j_1])*(f[i].potent[GRADYVZ][j_1]-f[i].potent[GRADZVY][j_1]); // проверено !
 		            sum+=(f[i].potent[GRADZVX][j_1]-f[i].potent[GRADXVZ][j_1])*(f[i].potent[GRADZVX][j_1]-f[i].potent[GRADXVZ][j_1]);

@@ -9,17 +9,17 @@
 // дл€ ленточных матриц подходит значение 1.
 const integer CLUSTER_SIZE=20; // core 2 quad Q6600 2.4GGH 4cores nodes=2274: i - 10s, 5 - 9s, 10 - 8s.
 
-// поиск €чейки с ключЄм key  
+// поиск €чейки с ключом key  
 integer search_i(TERM* list, integer n, integer key) {
 	/*
-	// линейный поиск €чейки с ключЄм key
+	// линейный поиск €чейки с ключом key
 	integer i=-1;
 	integer i1; // счЄтчик цикла for
     // линейный поиск €чейки с индексом key
 	for (i1=0; i1<n; i1++) if (list[i1].key==key) i=i1;
 	return i;
 	*/
-	// двоичный поиск €чейки с ключЄм key
+	// двоичный поиск €чейки с ключом key
 	// массив list предполагаетс€ упор€доченным по полю key.
     integer iL=0, iR=n-1;
 	integer im;
@@ -37,7 +37,7 @@ integer search_i(TERM* list, integer n, integer key) {
 
 } // search_i
 
-// удал€ет элемент с ключЄм равным key
+// удал€ет элемент с ключом равным key
 // эта операци€ не нарушает упор€доченности массива list
 void deleteAt(TERM* &list, integer key, integer &n, integer &pool) {
 
@@ -107,7 +107,7 @@ void deleteAt(TERM* &list, integer key, integer &n, integer &pool) {
 
 } // deleteAt
 
-// добал€ет элемент со значени€ми : num, val.
+// добавл€ет элемент со значени€ми: num, val.
 // –еализаци€ с pool`ом предназначена дл€ уменьшени€
 // времени затрачиваемого на выделение пам€ти и копирование.
 // «начение константы CLUSTER_SIZE зависит от размерности матрицы —Ћј”
@@ -240,7 +240,7 @@ void add(TERM* &list, integer &n, integer &pool, integer num, doublereal val) {
 					}
 					else 
 					{
-						printf("error 2 : razmera pool nedostatochno\n");
+						printf("error 2: razmera pool nedostatochno\n");
 						printf("see function add\n");
 						system("pause");
 						exit(1);
@@ -294,7 +294,7 @@ doublereal get_val(TERM* list, integer n, integer key) {
 } // get_val
 
 // добавл€ет число value в €чейку
-// с ключЄм key
+// с ключом key
 void modify_add(TERM* &list, integer n, integer key, doublereal value) {
 	//integer i1; // счЄтчик цикла for
     // линейный поиск €чейки с индексом key
@@ -306,7 +306,7 @@ void modify_add(TERM* &list, integer n, integer key, doublereal value) {
 } // modify_add
 
 // устанавливает число value в €чейку
-// с ключЄм key
+// с ключом key
 void modify_set(TERM* &list, integer n, integer key, doublereal value) {
 	//integer i1; // счЄтчик цикла for
     // линейный поиск €чейки с индексом key

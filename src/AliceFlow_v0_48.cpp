@@ -1,4 +1,7 @@
 // AliceFlow_v0_48.cpp
+// 27 февраля 2020 PMIS aggregator, FF1 amg interpolation. Acomp=3.0;
+// Как в магистерской диссертации Джефри Баттлера 2006. 
+// Авторы агрегатора PMIS Янг и де Стерк 2004год.
 // 12 января 2020 iluk сглаживатель для amg1r5 алгоритма.
 // 10 октября 2019 запрограммировал модель турбулентности K-Omega SST Ментера (RANS). 
 // 2 октября 2019 запрограммировал модель турбулентности Спаларта Аллмареса (RANS).
@@ -6,14 +9,14 @@
 // Отлавливание nan, inf и прочих переполнений.
 // Перейдите к опции проекта и включите /FP:strict 
 // (C/C++ -> Code Generation ->> Floating Pint Model).
-// Включить С++ исключения : Да, с SEH исключениями (/EHa)
-// 7-8 мая 2019 присоеденил алгебраический многосеточный метод amgcl Дениса Демидова.
+// Включить С++ исключения: Да, с SEH исключениями (/EHa)
+// 7-8 мая 2019 присоединил алгебраический многосеточный метод amgcl Дениса Демидова.
 // 6 апреля 2019 откомпилирована в visual studio community edition 2019 (open source).
 // 25.03.2019 Начал использовать PVS-Studio 6.0
 // 19 марта(03) 2019 заработала гидродинамика на АЛИС сетках.
-// 6.05.2018 LINK : fatal error LNK1102: недостаточно памяти 2015 VS community.
+// 6.05.2018 LINK: fatal error LNK1102: недостаточно памяти 2015 VS community.
 // Выход с компиляция с опцией /bigobj
-// Подсветка синтаксиса для cuda :
+// Подсветка синтаксиса для cuda:
 // Tools->Options->Text Editor->File Extension Ввести cu и нажать кнопку add.
 // 9 июля 2017 переход на 64 битные целые int64_t.
 // 15 апреля 2017 откомпилирована в vs community edition 2017 (open source).
@@ -28,11 +31,11 @@
 // ilu2 decomposition на 2 потока.
 // 
 // AliceFlow_v0_07.cpp на основе  AliceFlow_v0_06.cpp, но теперь с LES моделью турбулентности.
-// Программа не прошла тестирование и содержит ошибки в модели турулентности Germano.
+// Программа не прошла тестирование и содержит ошибки в модели турбулентности Germano.
 // 17 апреля 2013 года. Правильное распараллеливание lusol_.
 // 1 апреля 2013. Теперь в Visual Studio 2012.
 //
-// AliceFlow_v0_06.cpp :
+// AliceFlow_v0_06.cpp:
 // 3D программа AliceFlow_v0_06.cpp наследует свойства AliceFlowv0_05.cpp
 // развивая их дальше, наращивая стабильность и функциональность.
 // 
@@ -49,7 +52,7 @@
 // осуществляет следующие операции:
 // 1. Генератор конечнообъёмной сетки.
 // 2. Создание и заполнение всех структур
-//    данных необходимых для сборки матрцы СЛАУ.
+//    данных необходимых для сборки матрицы СЛАУ.
 // 3. Сборка матрицы СЛАУ.
 // 4. Решатель СЛАУ.
 // 5. Экспорт в визуализатор tecplot360.
@@ -61,16 +64,18 @@
 // равны 0.2x120мкм толщиной 100 ангстрем (10-20нм).
  
 
-// Закоментировать в случае если сборка приложения 
+// закомментировать в случае если сборка приложения 
 //осуществляется компилятором gcc (g++ 9.1) от GNU.
 #include "stdafx.h"
 //#include "pch.h"
 
-// Раскоментировать в случае если сборка приложения 
-//осуществляется компилятором gcc (g++ 9.1) от GNU.
+// Раскомментировать в случае если сборка приложения 
+//осуществляется компилятором g++ (g++ 9.1) от GNU.
+// g++ AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt
+// gcc_log.txt - файл с диагностическими сообщениями компилятора.
 //#define MINGW_COMPILLER 1
 
-//#ifdef MINGW_COMPILLER
+#ifdef MINGW_COMPILLER
 
 // Типа float 32 бита не хватает - на больших моделях наблюдается расходимость вычислительного процесса.
 // Тип float (если сходимость вычислительного процесса имеет место быть) дает в двое большее число итераций
@@ -109,7 +114,7 @@ C:\AliceFlow_v0_48_GCC>g++ -o bin\Debug\AliceFlow_v0_48.exe obj\Debug\AliceFlow_
 //#include <stdlib.h>
 //#include <stdio.h>
 
-//#endif
+#endif
 
 
 
@@ -138,53 +143,31 @@ C:\AliceFlow_v0_48_GCC>g++ -o bin\Debug\AliceFlow_v0_48.exe obj\Debug\AliceFlow_
 #include <omp.h> // OpenMP
 //-Xcompiler "/openmp" 
 
-#define NOMINMAX // раскоментировать
+//#define NOMINMAX // раскомментировать
 //#include <stdio.h>
 //#include <stdlib.h>
-#include <windows.h> // раскоментировать
+//#include <windows.h> // раскомментировать
+
+// Раскоментировать в случае если ошибки NOT NUMBER отслеживаются.
+//#define MY_DEBUG_NOT_NUMBER
+
+unsigned int calculation_main_start_time_global_Depend = 0; // начало счёта мс.
 
 // Одна клетка по Oz
 bool b_one_cell_z = false;
 
+
 // Число потоков исполнения. 
 // Передаётся из интерфейса пользователя.
-// Шина памяти насыщяется после 4 потоков.
+// Шина памяти насыщается после 4 потоков.
 int number_processors_global_var = 1;
 
-int my_hardware_concurrency(void) {
-#ifdef MINGW_COMPILLER
-	return number_processors_global_var;// P;
-#else
-
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	//printf("%d\n", sysinfo.dwNumberOfProcessors);
-	//system("pause");
-	return sysinfo.dwNumberOfProcessors;
-
-#endif
-	
-}
-
-
-//#include <boost/thread.hpp>
 int number_cores() {
-	
-//#if __GNUC__ >= 5 || __GNUC_MINOR__ >= 8 // 4.8 for example
-#ifdef MINGW_COMPILLER
-	//const int P = std::thread::hardware_concurrency()-1;
-	//return P;
-	return number_processors_global_var;// P;
-#else
-	//const int P = boost::thread::hardware_concurrency();
-	const int P = my_hardware_concurrency()-1;
-	return number_processors_global_var;// P;
-#endif
+	return number_processors_global_var;
 
 	// 4 xeon 2630 v4.
-	// Шина памяти насыщяется после 4 потоков.
-	//return 4;
-}
+	// Шина памяти насыщается после 4 потоков.
+} 
 
 //using namespace System;
 
@@ -223,13 +206,32 @@ int number_cores() {
 #define integer int
 #endif
 
+
+//const integer parabola_MNK = 0; // производная от параболы построенная по способу наименьших квадратов.
+	// Внимание: line_MNK лучше не использовать, т.к. экспериментально установлено, на примере задачи
+	// статики tgf2023_01 что сходимости при таком задании производной не наступает, наблюдаются некие автоколебания на протяжении
+	// более чем 40 глобальных итераций и более. Возможна даже расходимость.
+//const integer line_MNK = 1; // тангенс угла наклона прямой, прямая построена по способу МНК по четырём точкам.
+// данный метод также не рекомендуется использовать ! ввиду отсутствия сходимости.
+//const integer cubic_parabola = 2; // кубическая парабола по 4 точкам и от неё производная.
+
+enum ORDER_INTERPOLATION { parabola_MNK, line_MNK, cubic_parabola};
+enum ORDER_DERIVATIVE { FIRST_ORDER=1, SECOND_ORDER=2};
+
+const integer ZERO_INIT = 0;
+const integer RANDOM_INIT = 1;
+
+// Для функции solve_Thermal(...);
+const integer bARRAYrealesation = 1; // На основе отсортированного массива, но вставка в отсортированный массив вызывает проблемы быстродействия.
+const integer bAVLrealesation = 2; // На основе АВЛ дерева.
+
 const integer iGLOBAL_RESTART_LIMIT = 6;
 bool bglobal_restart_06_10_2018 = false;
 // При стагнации мы всё равно продолжаем но мы признаём что могут быть проблемы при визуализации.
 bool bglobal_restart_06_10_2018_stagnation[iGLOBAL_RESTART_LIMIT+1] = {false,false,false, false,false,false, false};
 integer iPnodes_count_shadow_memo = 0;
 
-// Запоминаем полное тепловыделние в твердотельной модели, для проверок во время исполнения. 
+// Запоминаем полное тепловыделение в твердотельной модели, для проверок во время исполнения. 
 doublereal d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL = 0.0; // Вт
 doublereal d_my_optimetric1_6_12_2019 = 0.0;// Глобальная переменная для оптимизации.
 doublereal d_my_optimetric2_6_12_2019 = 0.0;// Глобальная переменная для оптимизации.
@@ -248,9 +250,9 @@ Patcher_for_print_in_report pfpir; // xyplot графики.
 // делать ли освобождения оперативной памяти и новые построения структур данных.
 // Полигоны вызывают проблемы при перестроении сетки, т.к. сетка каждый раз строится по новому, а поле температур 
 // остаётся старым. Другое решение данной проблемы состоит из перевыделения поля температур под новую сетку с 
-// последующей переинтерполляцией значений температур на новую сетку.
+// последующей переинтерполяцией значений температур на новую сетку.
 integer ireconstruction_free_construct_alloc = 1; // 0 - off, 1 - on.
-// Записывать ли ианимацию в текстовый файл
+// Записывать ли анимацию в текстовый файл
 // по окончанию каждого нового шага по времени.
 integer ianimation_write_on = 0; // 0 - off, 1 - on.
 
@@ -272,7 +274,8 @@ bool b_iluk_amg1r5_LABEL_D = false; // вниз
 bool b_iluk_amg1r5_LABEL_U = false; // вверх
 // stabilization_amg1r5_algorithm:
 // 0 - none(amg1r5); 1 - BiCGStab + amg1r5; 2 - FGMRes+amg1r5;
-integer stabilization_amg1r5_algorithm = 1; // BiCGStab + amg1r5.
+enum AMG1R5_OUT_ITERATOR {NONE_only_amg1r5,  BiCGStab_plus_amg1r5,  FGMRes_plus_amg1r5};
+AMG1R5_OUT_ITERATOR stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5; // BiCGStab + amg1r5.
 
 // инициализация компонент скорости константой.
 // Единые значения для всей расчётной области.
@@ -282,7 +285,7 @@ doublereal starting_speed_Vy = 0.0;
 doublereal starting_speed_Vz = 0.0;
 
 // Опорная линия для XY-Plot (variation Plot).
-// Мы сохраняем опорную точку, через которую проходит линия, и направлеие 
+// Мы сохраняем опорную точку, через которую проходит линия, и направление 
 // линии вдоль одной из осей декартовой прямоугольной системы координат.
 doublereal Tochka_position_X0_for_XY_Plot = 0.0;
 doublereal Tochka_position_Y0_for_XY_Plot = 0.0;
@@ -293,11 +296,12 @@ integer idirectional_for_XY_Plot = 0; // 0 - Ox axis.
 bool bPhysics_stop = false;
 // Особое выделение количества оперативной памяти для ПТБШ.
 bool bPhysics_PTBSH_memory = false;
-// Решаем только теплопередачу в твёрдом теле :
+// Решаем только теплопередачу в твёрдом теле:
 bool bonly_solid_calculation = false;
 
+// Схемы для аппроксимации конвективного потока на неравномерной сетке.
 // 3 августа 2015 схемы стали доступны через GUI пользователя
-// в связи с чем объявление дентификаторов вынесено в самое начало кода.
+// в связи с чем объявление идентификаторов вынесено в самое начало кода.
 // ограниченные схемы
 #define UNEVEN_MUSCL 1017  // van Leer (1977)
 #define UNEVEN_SOUCUP 1018 // MINMOD
@@ -326,7 +330,7 @@ bool bglobal_first_start_radiation = true;
 // Если мы решаем нестационарную задачу теплопередачи в твердом теле.
 bool bglobal_unsteady_temperature_determinant = false;
 
-// Выбор сеточного генератора :
+// Выбор сеточного генератора:
 // simplemeshgen == 0 или unevensimplemeshgen ==1.
 // По умолчанию используется simplemeshgen == 0.
 integer iswitchMeshGenerator = 0; // обычный сеточный генератор.
@@ -349,7 +353,7 @@ typedef struct TTimeStepLaw
 	// 1 - Square Wave,
 	// 2 - Square Wave 2, 
 	// 3 - Hot Cold (Евдокимова Н.Л.)
-	// 4 - Октава2 (один из возможных циклов) 20.12.2019
+	// 4 - Piecewise Constant 20.12.2019 - Закон изменения заданный пользователем.
 	integer id_law=0; 
 	doublereal Factor_a_for_Linear=0.2;
 	doublereal tau=60.0E-6; // длительность импульса для Square Wave
@@ -360,7 +364,7 @@ typedef struct TTimeStepLaw
 	integer n_cycle=20; // 20 Циклов.
 	// hot cold reshime (double linear)
 	doublereal on_time_double_linear=3.0; //3c включено.
-	// 4 закон измения шага по времени.
+	// 4 закон изменения шага по времени.
 	integer n_string_PiecewiseConst = 0;
 	PiecewiseConstantTimeStepLawTimeStepLaw* table_law_piecewise_constant = nullptr;
 
@@ -393,7 +397,7 @@ bool bSIMPLErun_now_for_temperature = false;
 // которые задаёт пользователь в интерфейсе.
 integer number_iteration_SIMPLE_algorithm = 0; // default - 0
 // Это нужно для более точной настройки невязки для уравнения теплопередачи
-// при расчёте amg1r5 алгоритмом задач с естественой конвекцией.
+// при расчёте amg1r5 алгоритмом задач с естественной конвекцией.
 bool bSIMPLErun_now_for_natural_convection = false;
 // Дополнительная нижняя релаксация для температуры.
 doublereal* told_temperature_global_for_HOrelax = nullptr;
@@ -401,7 +405,7 @@ doublereal* told_temperature_global_for_HOrelax = nullptr;
 /*
 для внутренних плоских источников тепла организуется виртуальная грань.
 эта грань общая для двух КО располагающихся по-бокам от источника.
-принцип едиственности должен приводить к тому что теплопроводность грани должна быть единственна
+принцип единственности должен приводить к тому что теплопроводность грани должна быть единственна
 при обработке обоих контрольных объемов примыкающих к данной грани. В качестве теплопроводности
 берётся среднее геометрическое.
 */
@@ -432,8 +436,6 @@ doublereal operating_temperature_for_film_coeff = 20.0; // Tamb for Newton-Richm
 // Вычислительного процесса. Чтобы этого избежать используется переменная blocker_Newton_Richman.
 bool blocker_Newton_Richman = true;
 
-FILE* fp_radiation_log = NULL;
-errno_t err_radiation_log;
 
 // 1 - визуализация только твёрдого тела.
 // 0 - визуализация и жидкости и твердого тела.
@@ -441,9 +443,9 @@ integer ionly_solid_visible = 0;
 
 // переключение между алгебраическим многосеточным методом и алгоритмом Ван дер Ворста BiCGStab+ILU2.
 // 0 - алгоритм BiCGStab + ILU2.
-// 1 - алгоритм Руге и Стубена алгебраического многосеточного метода amg1r5 (r6).
+// 1 - алгоритм Джона Руге и Клауса Штубена алгебраического многосеточного метода amg1r5 (r6).
 // 2 - BiCGStab + ADI (Lr1sk).
-// 3 - Gibrid : velocity bicgstab + ilu(lfil), Pressure - РУМБА v0.14.
+// 3 - Gibrid: velocity bicgstab + ilu(lfil), Pressure - РУМБА v0.14.
 // 4 - BiCGStab + AINV N.S.Bridson nvidia cusp 0.5.1 library.
 // 5 - AMGCL bicgstab+samg Денис Демидов.
 // 6 - Nvidia cusp 0.5.1 library BiCGStab +samg.
@@ -454,7 +456,7 @@ integer iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 0; // BiCGStab + ILU2.
 integer iswitchsolveramg_vs_BiCGstab_plus_ILU6 = 0; // BiCGStab + ILU6.
 
 bool bwait = false; // если false то мы игнорируем getchar().
-// Если задать нечно отличное от 1e-10 то прога уходит очень долгий цикл
+// Если задать нечто отличное от 1e-10 то программа уходит очень долгий цикл
 #define admission 1.0e-30 //1.0e-10 // для определения совпадения двух вещественных чисел.
 
 unsigned int calculation_vorst_seach_time = 0;
@@ -519,7 +521,7 @@ bool bsolid_static_only = false;
 const integer inumcore = 2; // число ядер процессора
 const bool bparallelizm_old = false;
 
-// Структура границ деления :
+// Структура границ деления:
 typedef struct TPARBOUND {
 	integer ileft_start = -1, ileft_finish = -2;
 	integer iright_start = -1, iright_finish = -2;
@@ -559,6 +561,25 @@ typedef struct TALICE_PARTITION {
 
 #include "my_LR.c" // полилинейный метод
 
+// 8 января 2016.
+const bool bvery_big_memory = true; // true нет записи в файл всё храним в оперативной памяти. Это существенно быстрее по скорости.
+
+// Данные определения пределов раньше находились в файле MenterSST.cpp.
+const doublereal K_limiter_min = 1.0e-14; // 1.0e-14 Fluent limits
+const doublereal Omega_limiter_min = 1.0; // 1.0; иначе будет расходимость. // 1.0e-20 Fluent limits
+const doublereal Epsilon_limiter_min = 1.0e-20; // 1.0e-14; TODO требует уточнения... 1.0e-20 Fluent limits
+
+UNION* my_union = nullptr; // для объединения.
+
+// Глобальное объявление
+TEMPER t;
+integer flow_interior = 0; // Суммарное число FLUID зон
+FLOW* f = nullptr;
+
+
+// экспорт картинки в программу tecplot360
+#include "my_export_tecplot3.c"
+
 #include "my_material_properties.c" // библиотека реальных свойств материалов
 
 
@@ -571,22 +592,8 @@ typedef struct TALICE_PARTITION {
 // на совмещённой сетке
 #include "pamendment3.c"
 
-
-
 #include "shortest_distance.cpp" // вычисление кратчайшего расстояния до стенки
 
-// 8 января 2016.
-const bool bvery_big_memory = true; // true нет записи в файл всё храним в оперативной памяти. Это существенно быстрее по скорости.
-
-UNION* my_union = nullptr; // для объединения.
-
-// Глобальное объявление
-TEMPER t;
-integer flow_interior=0; // Суммарное число FLUID зон
-FLOW* f=nullptr;
-
-// экспорт картинки в программу tecplot360
-#include "my_export_tecplot3.c"
 
 // Информация о формуле вычисления невязок заимствована из 
 // icepak user guide.
@@ -643,10 +650,12 @@ void check_data(TEMPER t) {
 
 
 
-int main_body(void) {
+int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 	//printLOGO();
 
 	//system("PAUSE");
+
+	
 
 	// количество блоков, источников и стенок, юнионов.
 	integer lb = 0, ls = 0, lw = 0, lu = 0;
@@ -656,10 +665,10 @@ int main_body(void) {
 
 	// Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 	// помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
-	// при повторном обращении идет обращение к ячейки хеш таблицы.
+	// при повторном обращении идет обращение к ячейки хеш-таблицы.
 	// 20mm ПТБШ ускорился с 1мин 9с до 53с за счет режима bFULL_AUTOMATIC.
-	// Хеш таблицы для automatic
-	// Аллокация оперативной памяти под хеш таблицы.
+	// Хеш-таблицы для automatic
+	// Аллокация оперативной памяти под хеш-таблицы.
 	shorter_hash_X = new doublereal[isize_shorter_hash];
 	shorter_hash_Y = new doublereal[isize_shorter_hash];
 	shorter_hash_Z = new doublereal[isize_shorter_hash];
@@ -681,7 +690,7 @@ int main_body(void) {
 	t.rootWE = nullptr;
 
 	// 29 10 2016.
-	// Инициализация общей памяти в ILU буффере.
+	// Инициализация общей памяти в ILU буфере.
 	milu_gl_buffer.alu_copy = nullptr;
 	milu_gl_buffer.jlu_copy = nullptr;
 	milu_gl_buffer.ju_copy = nullptr;
@@ -689,30 +698,14 @@ int main_body(void) {
 	my_amg_manager_init();
 
 	// Замер времени.
-	unsigned int calculation_main_start_time = 0; // начало счёта мс.
+	calculation_main_start_time_global_Depend = 0; // начало счёта мс.
 	unsigned int calculation_main_end_time = 0; // окончание счёта мс.
 	unsigned int calculation_main_seach_time = 0; // время выполнения участка кода в мс.
 
-	calculation_main_start_time = clock(); // момент начала счёта.
+	calculation_main_start_time_global_Depend = clock(); // момент начала счёта.
 
-	bool bextendedprint = false; // печать на граничных узлах расчитанных полей.
+	bool bextendedprint = false; // печать на граничных узлах рассчитанных полей.
 
-	// Диагностическая печать для двойного вакуумного промежутка.
-#ifdef MINGW_COMPILLER
-	err_radiation_log = 0;
-	fp_radiation_log = fopen64("log_radiation.txt", "a");
-	if (fp_radiation_log == NULL) err_radiation_log = 1;
-#else
-	err_radiation_log = fopen_s(&fp_radiation_log, "log_radiation.txt", "a");
-#endif
-
-	if (err_radiation_log != 0) {
-		printf("Error open file log.txt\n");
-		printf("Please, press any key to continue...\n");
-		//system("PAUSE");
-		system("pause");
-		exit(0);
-	}
 
 	//std::locale::global(std::locale("en_US.UTF-8"));
 	//system("mode con cols=166 lines=12000");
@@ -815,9 +808,9 @@ int main_body(void) {
 		}
 		else {
 #if doubleintprecision == 1
-			printf("error : yuor mesh generator is undefined %lld\n", iswitchMeshGenerator);
+			printf("error: yuor mesh generator is undefined %lld\n", iswitchMeshGenerator);
 #else
-			printf("error : yuor mesh generator is undefined %d\n", iswitchMeshGenerator);
+			printf("error: yuor mesh generator is undefined %d\n", iswitchMeshGenerator);
 #endif
 
 			system("pause");
@@ -861,25 +854,28 @@ int main_body(void) {
 					my_union[iu].inyadd, my_union[iu].inzadd, iup1);
 				break;
 			}
+			// Требуется использовать именно addboundary_rudiment а не addboundary, так как в асемблес нужно 
+			// добавить по возможности все подходящие линии кабинета. 14.03.2019.
+			// Температура чувствует такое добавление сеточных линий очень ощутимо. 
 			// Добавляем сеточный линии глобального кабинета для повышения точности аппроксимации.
 			for (integer i76 = 0; i76 <= inx; i76++) {
 				// Добавляем глобальные сеточные линии кабинета.
 				if ((xpos[i76] >= my_union[iu].xS) && (xpos[i76] <= my_union[iu].xE)) {
-					addboundary(my_union[iu].xpos, my_union[iu].inx, xpos[i76], YZ, b, lb, w, lw, s, ls);
+					addboundary_rudiment(my_union[iu].xpos, my_union[iu].inx, xpos[i76], YZ, b, lb, w, lw, s, ls);
 				}
 			}
 			Sort_method(my_union[iu].xpos, my_union[iu].inx);
 			for (integer i76 = 0; i76 <= iny; i76++) {
 				// Добавляем глобальные сеточные линии кабинета.
 				if ((ypos[i76] >= my_union[iu].yS) && (ypos[i76] <= my_union[iu].yE)) {
-					addboundary(my_union[iu].ypos, my_union[iu].iny, ypos[i76], XZ, b, lb, w, lw, s, ls);
+					addboundary_rudiment(my_union[iu].ypos, my_union[iu].iny, ypos[i76], XZ, b, lb, w, lw, s, ls);
 				}
 			}
 			Sort_method(my_union[iu].ypos, my_union[iu].iny);
 			for (integer i76 = 0; i76 <= inz; i76++) {
 				// Добавляем глобальные сеточные линии кабинета.
 				if ((zpos[i76] >= my_union[iu].zS) && (zpos[i76] <= my_union[iu].zE)) {
-					addboundary(my_union[iu].zpos, my_union[iu].inz, zpos[i76], XY, b, lb, w, lw, s, ls);
+					addboundary_rudiment(my_union[iu].zpos, my_union[iu].inz, zpos[i76], XY, b, lb, w, lw, s, ls);
 				}
 			}
 			Sort_method(my_union[iu].zpos, my_union[iu].inz);
@@ -977,7 +973,7 @@ int main_body(void) {
 				/*
 				Когда было введено ограничение на появление сеточных линий
 				при котором близкорасположенные сеточные линии игнорируются
-				мы не мжем удовлетворить всем критериям AliceMedium сетки
+				мы не можем удовлетворить всем критериям AliceMedium сетки
 				и она дробиться бесконечно а новые сеточные линии не появляются.
 				Для того чтобы избежать этого мы прерываем построение сетки
 				в тот момент когда сетка перестает меняться.
@@ -994,10 +990,10 @@ int main_body(void) {
 					АЛИС сетку лучше строить когда при дроблении ячейки соответствующая геометрическая длина делится
 					ровно пополам. Раньше делился пополам целочисленный индекс в результате чего на нашей существенно неравномерной
 					сетке АЛИС ячейки были очень сильно вытянутые. В результате точность аппроксимации чрезвычайно страдала. Теперь когда
-					дробиться пополам именно геометрическая длина может нехватать ячеек сетки для балансировки сетки (т.е. будет невозможно
+					дробиться пополам именно геометрическая длина может не хватать ячеек сетки для балансировки сетки (т.е. будет невозможно
 					без добавления новых сеточных линий сделать чтобы уровни соседних ячеек отличались не более чем на 1. Поэтому теперь
 					такие невозможные для дробления ячейки ищутся в функции if_disbalnce(...) и для каждой такой ячейки принимается решение
-					добавить соответствующую новую сеточную линию. Алгоритм освобождает память и возращается на исходные позиции и построение
+					добавить соответствующую новую сеточную линию. Алгоритм освобождает память и возвращается на исходные позиции и построение
 					АЛИС сетки начинается заново только теперь базовая сетка уже содержит недостающие сеточные линии.
 					*/
 
@@ -1050,9 +1046,9 @@ int main_body(void) {
 					}
 					else {
 #if doubleintprecision == 1
-						printf("error : yuor mesh generator is undefined %lld\n", iswitchMeshGenerator);
+						printf("error: yuor mesh generator is undefined %lld\n", iswitchMeshGenerator);
 #else
-						printf("error : yuor mesh generator is undefined %d\n", iswitchMeshGenerator);
+						printf("error: yuor mesh generator is undefined %d\n", iswitchMeshGenerator);
 #endif
 
 						system("pause");
@@ -1108,9 +1104,9 @@ int main_body(void) {
 		t.xpos_copy = new doublereal[inx + 1];
 		t.ypos_copy = new doublereal[iny + 1];
 		t.zpos_copy = new doublereal[inz + 1];
-		// Данная информармация нужна для экономии оперативной памяти,
+		// Данная информация нужна для экономии оперативной памяти,
 		// некоторые данные будут выгружены из озу а потом восстановлены 
-		// путём вычиления.
+		// путём вычисления.
 		for (integer i_7 = 0; i_7 < inx + 1; i_7++) {
 			t.xpos_copy[i_7] = xpos[i_7];
 		}
@@ -1130,9 +1126,9 @@ int main_body(void) {
 			my_union[iu].t.xpos_copy = new doublereal[my_union[iu].inx + 1];
 			my_union[iu].t.ypos_copy = new doublereal[my_union[iu].iny + 1];
 			my_union[iu].t.zpos_copy = new doublereal[my_union[iu].inz + 1];
-			// Данная информармация нужна для экономии оперативной памяти,
+			// Данная информация нужна для экономии оперативной памяти,
 			// некоторые данные будут выгружены из озу а потом восстановлены 
-			// путём вычиления.
+			// путём вычисления.
 			for (integer i_7 = 0; i_7 < my_union[iu].inx + 1; i_7++) {
 				my_union[iu].t.xpos_copy[i_7] = my_union[iu].xpos[i_7];
 			}
@@ -1259,7 +1255,7 @@ int main_body(void) {
 		std::cout << "minimum gap Z=" << minimum_gap << std::endl;
 		for (integer iP = 0; iP < t.maxelm; iP++) {
 			if ((t.nvtx[0][iP] == 0) || (t.nvtx[1][iP] == 0) || (t.nvtx[2][iP] == 0) || (t.nvtx[3][iP] == 0) || (t.nvtx[4][iP] == 0) || (t.nvtx[5][iP] == 0) || (t.nvtx[6][iP] == 0) || (t.nvtx[7][iP] == 0)) {
-				printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, t.nvtx[0][iP] - 1, t.nvtx[1][iP] - 1, t.nvtx[2][iP] - 1, t.nvtx[3][iP] - 1, t.nvtx[4][iP] - 1, t.nvtx[5][iP] - 1, t.nvtx[6][iP] - 1, t.nvtx[7][iP] - 1);
+				printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, t.nvtx[0][iP] - 1, t.nvtx[1][iP] - 1, t.nvtx[2][iP] - 1, t.nvtx[3][iP] - 1, t.nvtx[4][iP] - 1, t.nvtx[5][iP] - 1, t.nvtx[6][iP] - 1, t.nvtx[7][iP] - 1);
 			}
 		}
 #else
@@ -1298,7 +1294,7 @@ int main_body(void) {
 		std::cout << "minimum gap Z=" << minimum_gap << std::endl;
 		for (integer iP = 0; iP < t.maxelm; iP++) {
 			if ((t.nvtx[0][iP] == 0) || (t.nvtx[1][iP] == 0) || (t.nvtx[2][iP] == 0) || (t.nvtx[3][iP] == 0) || (t.nvtx[4][iP] == 0) || (t.nvtx[5][iP] == 0) || (t.nvtx[6][iP] == 0) || (t.nvtx[7][iP] == 0)) {
-				printf("nvtx[%d] : %d %d %d %d %d %d %d %d \n", iP, t.nvtx[0][iP] - 1, t.nvtx[1][iP] - 1, t.nvtx[2][iP] - 1, t.nvtx[3][iP] - 1, t.nvtx[4][iP] - 1, t.nvtx[5][iP] - 1, t.nvtx[6][iP] - 1, t.nvtx[7][iP] - 1);
+				printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, t.nvtx[0][iP] - 1, t.nvtx[1][iP] - 1, t.nvtx[2][iP] - 1, t.nvtx[3][iP] - 1, t.nvtx[4][iP] - 1, t.nvtx[5][iP] - 1, t.nvtx[6][iP] - 1, t.nvtx[7][iP] - 1);
 			}
 		}
 #endif
@@ -1334,7 +1330,7 @@ int main_body(void) {
 
 		sourse2Dproblem = new bool[t.maxbound];
 		conductivity2Dinsource = new doublereal[t.maxbound];
-		// Нижняя релаксация источникового члена при радиационых потоках.
+		// Нижняя релаксация источникового члена при радиационных потоках.
 		bsource_term_radiation_for_relax = new doublereal[t.maxelm];
 		for (integer i_init = 0; i_init < t.maxelm; i_init++) bsource_term_radiation_for_relax[i_init] = 0.0;
 		b_buffer_correct_source = new doublereal[t.maxelm];
@@ -1345,7 +1341,7 @@ int main_body(void) {
 		continity_start = new doublereal[flow_interior];
 		if (continity_start == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for continity start in main...\n");
+			printf("Problem: not enough memory on your equipment for continity start in main...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -1355,7 +1351,7 @@ int main_body(void) {
 		inumber_iteration_SIMPLE = new integer[flow_interior];
 		if (nullptr == inumber_iteration_SIMPLE) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for inumber_iteration_SIMPLE in main...\n");
+			printf("Problem: not enough memory on your equipment for inumber_iteration_SIMPLE in main...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
@@ -1364,7 +1360,7 @@ int main_body(void) {
 		// считывание состояния расчёта из файла для возобновления расчёта
 		bool breadOk = false;
 		avtoreadvalue(f, t, flow_interior, inumber_iteration_SIMPLE, continity_start, breadOk, b, lb, s, ls, w, lw);
-		// Если считывание прошло неуспешно то breadOk==false и это значит что счёт начнётся заново со значений заданных при инициализации.
+		// Если считывание прошло неуспешно, то breadOk==false и это значит что счёт начнётся заново со значений заданных при инициализации.
 
 		if (b_on_adaptive_local_refinement_mesh) {
 			// Инвариант корректности АЛИС сетки.
@@ -1419,7 +1415,7 @@ int main_body(void) {
 			is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
 			ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
 
-			printf("time export to tecplot360 is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+			printf("time export to tecplot360 is:  %u minute %u second %u millisecond\n", im, is, 10 * ims);
 
 			// Экспорт сетки в tecplot 360.
 			if (1) {
@@ -1435,7 +1431,7 @@ int main_body(void) {
 					}
 				}
 				else {
-					// Экспорт в программу техплот температуры.
+					// Экспорт в программу tecplot температуры.
 					//С АЛИС сетки.
 					//ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0,b,lb);
 				}
@@ -1444,7 +1440,7 @@ int main_body(void) {
 
 		}
 
-		char ch_EXPORT_ALICE_ONLY = 'y';
+		//char ch_EXPORT_ALICE_ONLY = 'y';
 
 		// steady Temperature Finite Volume Method
 		if (1 && (0 == steady_or_unsteady_global_determinant) && (1==eqin.itemper)) {
@@ -1465,7 +1461,7 @@ int main_body(void) {
 			if (1 == lw) {
 				bPhysics_stop = true;
 				if (lb < 11) {
-					// Это стандартная подложка :
+					// Это стандартная подложка:
 					// MD40, AuSn, Cu, AuSn, SiC, GaN. cabinet and hollow.
 					bPhysics_PTBSH_memory = true;
 				}
@@ -1483,8 +1479,7 @@ int main_body(void) {
 			//if (1 == eqin.itemper) 
 			{
 				bcleantemp = true;
-				integer i = 0; // счётчик цикла
-				for (i = 0; i < flow_interior; i++) {
+				for (integer i = 0; i < flow_interior; i++) {
 					if (1 == eqin.fluidinfo[i].iflow) bcleantemp = false;
 				}
 				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
@@ -1533,7 +1528,7 @@ int main_body(void) {
 
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
-				// конкретно для проверки подхода Рхи-Чоу
+				// конкретно для проверки подхода Рхи-Чоу 1983
 				doublereal** rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
@@ -1626,7 +1621,7 @@ int main_body(void) {
 							t.slau = new equation3D[t.maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
 							if (t.slau == nullptr) {
 								// недостаточно памяти на данном оборудовании.
-								printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
+								printf("Problem: not enough memory on your equipment for slau temperature constr struct...\n");
 								printf("Please any key to exit...\n");
 								//system("PAUSE");
 								system("pause");
@@ -1640,7 +1635,7 @@ int main_body(void) {
 							t.slau_bon = new equation3D_bon[t.maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
 							if (t.slau_bon == nullptr) {
 								// недостаточно памяти на данном оборудовании.
-								printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
+								printf("Problem: not enough memory on your equipment for slau boundary temperature constr struct...\n");
 								printf("Please any key to exit...\n");
 								//system("PAUSE");
 								system("pause");
@@ -1710,13 +1705,25 @@ int main_body(void) {
 					}
 					else {
 						if (b_on_adaptive_local_refinement_mesh) {
-							printf("Would you like to save the result on the ALICE grid ? y/n\n");
-							ch_EXPORT_ALICE_ONLY = getchar(); // Здесь именно getchar();
+							calculation_main_end_time = clock(); // момент окончания счёта.
+							unsigned int calculation_main_seach_time = calculation_main_end_time - calculation_main_start_time_global_Depend;
+
+							// Общее время вычисления до возникновения критического сообщения.
+							int im = 0, is = 0, ims = 0;
+							im = (int)(calculation_main_seach_time / 60000); // минуты
+							is = (int)((calculation_main_seach_time - 60000 * im) / 1000); // секунды
+							ims = (int)((calculation_main_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
+
+							printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+
+							//printf("Would you like to save the result on the ALICE grid ? y/n\n");
+							//ch_EXPORT_ALICE_ONLY = getchar(); // Здесь именно getchar();
+							//ch_EXPORT_ALICE_ONLY = 'y';
 						}
 						if (ch_EXPORT_ALICE_ONLY == 'y') {
-							// Экспорт в программу техплот температуры.
+							// Экспорт в программу tecplot температуры.
 							//С АЛИС сетки.
-							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
+						    ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
 						}
 
 					}
@@ -1754,11 +1761,11 @@ int main_body(void) {
 			// 1 - solver/solid_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
 			// Печатает расход жидкости через выходную границу потока.
-			// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28.10.2019
 			report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 
-
+			
 			if (ch_EXPORT_ALICE_ONLY != 'y') {
 
 				calculation_end_time = clock(); // момент окончания счёта.
@@ -1768,9 +1775,9 @@ int main_body(void) {
 				is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
 				ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
 
-				printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+				printf("time calculation is:  %u minute %u second %u millisecond\n", im, is, 10 * ims);
 
-				// На реальной большразмерной модели (11.4М ячеек на АЛИС Coarse )
+				// На реальной модели большой размерности (11.4М ячеек на АЛИС Coarse )
 				// преобразует неприемлемо долго. 
 
 				// 25.11.2017
@@ -1780,8 +1787,8 @@ int main_body(void) {
 				// 4. Построили обычную декартовую прямоугольную сетку.
 				// 5. Перенесли данные о температуре с АЛИС на обычную декартовую прямоугольную сетку.
 				// 6. Визуализировали температуру и построенные на структурированной сетке тепловые потоки.
-				// 7.1 Техплот идеально визуализирует то что есть на структурированной сетке и в сечении и в объёме. 
-				// 7.2 Визуализация на АЛИС сетке в объеме даже идеально точно найденного поля не удовлетворитьельна (глюк техплота).
+				// 7.1 Tecplot идеально визуализирует то что есть на структурированной сетке и в сечении и в объёме. 
+				// 7.2 Визуализация на АЛИС сетке в объеме даже идеально точно найденного поля не удовлетворительна (глюк tecplotа).
 
 
 				if (b_on_adaptive_local_refinement_mesh) {
@@ -1902,20 +1909,20 @@ int main_body(void) {
 					if (x_jacoby_buffer != nullptr) {
 						// 30 октября 2016. 
 						// В seidelsor2 сделан переключатель на метод нижней релаксации К.Г. Якоби.
-						// Освобождение памяти из под jacobi buffer.
+						// Освобождение памяти из под Jacobi buffer.
 						delete[] x_jacoby_buffer;
 					}
 
 
-					/*
+					
 					// Освобождение общей памяти в ILU буффере.
-					if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
-					if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
-					if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
-					milu_gl_buffer.alu_copy = nullptr;
-					milu_gl_buffer.jlu_copy = nullptr;
-					milu_gl_buffer.ju_copy = nullptr;
-					*/
+					//if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+					//if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+					//if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+					//milu_gl_buffer.alu_copy = nullptr;
+					//milu_gl_buffer.jlu_copy = nullptr;
+					//milu_gl_buffer.ju_copy = nullptr;
+					
 					flow_interior = 0;
 
 					// 3. Построение обычной сетки.
@@ -1937,9 +1944,9 @@ int main_body(void) {
 					t.xpos_copy = new doublereal[inx + 1];
 					t.ypos_copy = new doublereal[iny + 1];
 					t.zpos_copy = new doublereal[inz + 1];
-					// Данная информармация нужна для экономии оперативной памяти,
+					// Данная информация нужна для экономии оперативной памяти,
 					// некоторые данные будут выгружены из озу а потом восстановлены 
-					// путём вычиления.
+					// путём вычиcления.
 					for (integer i_7 = 0; i_7 < inx + 1; i_7++) {
 						t.xpos_copy[i_7] = xpos[i_7];
 					}
@@ -1954,7 +1961,7 @@ int main_body(void) {
 					t.free_temper_level2 = false; // освобождение памяти под хранение матрицы при перезаписи её в SIMPLESPARSE формат.	
 
 
-					// 4. Интерполляция для температуры.
+					// 4. Интерполяция для температуры.
 					ALICE_2_Structural(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx, t.operatingtemperature_copy);
 
 
@@ -1985,23 +1992,23 @@ int main_body(void) {
 						nvtx_buf = nullptr;
 					}
 					m_sizeT = 0, m_size_nvtx = 0;
-					// 5. Обычный экспорт в техплот.
+					// 5. Обычный экспорт в tecplot.
 					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0, b, lb);
 				}
 			}
 			else {
 				// Объёмная визуализация на АЛИС очень плохая даже с точным полем, поэтому
 				// для качественной объёмной визуализации нужен переход на структурированную сетку.
-				// В сечении на АЛИС сетке все хорошо по техплоту.
+				// В сечении на АЛИС сетке все хорошо по tecplotу.
 				// Точность на АЛИС очень плоха. Можно допиться хорошей картинки для поля температур, но
 				// плотности тепловых потоков никогда не будут найдены (представлены точно) только в случае
-				// патологического случая дико мелкой сетки когда АЛИС очень подробная (большеэлементные модели).
+				// патологического случая дико мелкой сетки когда АЛИС очень подробная (модели большой размерности).
 
-				// Экспорт в программу техплот температуры.
+				// Экспорт в программу tecplot температуры.
 				// С АЛИС сетки.
 				//ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0,b,lb);
 			}
-
+			
 
 
 		}
@@ -2025,7 +2032,7 @@ int main_body(void) {
 			if (lw == 1) {
 				bPhysics_stop = true;
 				if (lb < 11) {
-					// Это стандартная подложка :
+					// Это стандартная подложка:
 					// MD40, AuSn, Cu, AuSn, SiC, GaN. cabinet and hollow.
 					bPhysics_PTBSH_memory = true;
 				}
@@ -2044,8 +2051,7 @@ int main_body(void) {
 			//if (2 == eqin.itemper)
 			{
 				bcleantemp = true;
-				integer i = 0; // счётчик цикла
-				for (i = 0; i < flow_interior; i++) {
+				for (integer i = 0; i < flow_interior; i++) {
 					if (eqin.fluidinfo[i].iflow == 1) bcleantemp = false;
 				}
 				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
@@ -2091,7 +2097,7 @@ int main_body(void) {
 
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
-				// конкретно для проверки подхода Рхи-Чоу
+				// конкретно для проверки подхода Рхи-Чоу 1983
 				doublereal** rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
@@ -2129,7 +2135,9 @@ int main_body(void) {
 
 				doublereal* lstub = nullptr;
 				integer maxelm_global_ret = 0;
-				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature, false, 0.0, lstub, lstub, maxelm_global_ret, 1.0);
+				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, 
+					operatingtemperature, false, 0.0, lstub, lstub,
+					maxelm_global_ret, 1.0, bAVLrealesation);
 
 
 				/*
@@ -2161,7 +2169,7 @@ int main_body(void) {
 				is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
 				ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
 
-				printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+				printf("time calculation is:  %u minute %u second %u millisecond\n", im, is, 10 * ims);
 
 				if (1) {
 					if (!b_on_adaptive_local_refinement_mesh) {
@@ -2169,7 +2177,7 @@ int main_body(void) {
 						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0, b, lb);
 					}
 					else {
-						// Экспорт в программу техплот температуры.
+						// Экспорт в программу tecplot температуры.
 						//С АЛИС сетки.
 						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
 					}
@@ -2233,7 +2241,7 @@ int main_body(void) {
 			if (lw == 1) {
 				bPhysics_stop = true;
 				if (lb < 11) {
-					// Это стандартная подложка :
+					// Это стандартная подложка:
 					// MD40, AuSn, Cu, AuSn, SiC, GaN. cabinet and hollow.
 					bPhysics_PTBSH_memory = true;
 				}
@@ -2249,8 +2257,7 @@ int main_body(void) {
 			bool bcleantemp = false;
 			if (eqin.itemper == 1) {
 				bcleantemp = true;
-				integer i = 0; // счётчик цикла
-				for (i = 0; i < flow_interior; i++) {
+				for (integer i = 0; i < flow_interior; i++) {
 					if (eqin.fluidinfo[i].iflow == 1) bcleantemp = false;
 				}
 				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
@@ -2302,7 +2309,7 @@ int main_body(void) {
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
 
-										  // инициализация указателей.
+				// инициализация указателей.
 				m.tval = nullptr;
 				m.tcol_ind = nullptr;
 				m.trow_ptr = nullptr;
@@ -2369,7 +2376,7 @@ int main_body(void) {
 				is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
 				ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
 
-				printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+				printf("time calculation is:  %u minute %u second %u millisecond\n", im, is, 10 * ims);
 
 				if (1) {
 					if (!b_on_adaptive_local_refinement_mesh) {
@@ -2377,7 +2384,7 @@ int main_body(void) {
 						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0, b, lb);
 					}
 					else {
-						// Экспорт в программу техплот температуры.
+						// Экспорт в программу tecplot температуры.
 						//С АЛИС сетки.
 						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
 					}
@@ -2441,7 +2448,7 @@ int main_body(void) {
 			if (lw == 1) {
 				bPhysics_stop = true;
 				if (lb < 11) {
-					// Это стандартная подложка :
+					// Это стандартная подложка:
 					// MD40, AuSn, Cu, AuSn, SiC, GaN. cabinet and hollow.
 					bPhysics_PTBSH_memory = true;
 				}
@@ -2457,8 +2464,7 @@ int main_body(void) {
 			bool bcleantemp = false;
 			if (eqin.itemper == 1) {
 				bcleantemp = true;
-				integer i = 0; // счётчик цикла
-				for (i = 0; i < flow_interior; i++) {
+				for (integer i = 0; i < flow_interior; i++) {
 					if (eqin.fluidinfo[i].iflow == 1) bcleantemp = false;
 				}
 				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
@@ -2504,7 +2510,7 @@ int main_body(void) {
 
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
-				// конкретно для проверки подхода Рхи-Чоу
+				// конкретно для проверки подхода Рхи-Чоу 1983
 				doublereal** rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
@@ -2576,7 +2582,7 @@ int main_body(void) {
 				is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
 				ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
 
-				printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
+				printf("time calculation is:  %u minute %u second %u millisecond\n", im, is, 10 * ims);
 
 				if (1) {
 					if (!b_on_adaptive_local_refinement_mesh) {
@@ -2584,7 +2590,7 @@ int main_body(void) {
 						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0, b, lb);
 					}
 					else {
-						// Экспорт в программу техплот температуры.
+						// Экспорт в программу tecplot температуры.
 						//С АЛИС сетки.
 						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
 					}
@@ -2626,7 +2632,7 @@ int main_body(void) {
 			// 1 - solver/solid_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
 			// Печатает расход жидкости через выходную границу потока.
-			// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28,10,2019
 			report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 
@@ -2663,7 +2669,7 @@ int main_body(void) {
 			if (lw == 1) {
 				bPhysics_stop = true;
 				if (lb < 11) {
-					// Это стандартная подложка :
+					// Это стандартная подложка:
 					// MD40, AuSn, Cu, AuSn, SiC, GaN. cabinet and hollow.
 					bPhysics_PTBSH_memory = true;
 				}
@@ -2684,7 +2690,7 @@ int main_body(void) {
 			doublereal dbeta = 1.3333333;//1.0; // если 1.0 то первый порядок аппроксимации на границе.
 			dbeta = 1.0; // более стабильное значение.
 			// массив отладочной информации,
-			// конкретно для проверки подхода Рхи-Чоу
+			// конкретно для проверки подхода Рхи-Чоу 1983
 			doublereal** rhie_chow = nullptr;
 			//solve_nonlinear_temp(f[0], f, t, rhie_chow, b, lb, s, ls, w, lw, dbeta, flow_interior, false, nullptr, 0.001, false);
 			bool bsecond_T_solver = false;
@@ -2729,7 +2735,7 @@ int main_body(void) {
 					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0, b, lb);
 				}
 				else {
-					// Экспорт в программу техплот температуры.
+					// Экспорт в программу tecplot температуры.
 					//С АЛИС сетки.
 					ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
 				}
@@ -2760,7 +2766,7 @@ int main_body(void) {
 				// 1 - solver/solid_static/
 				report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
 				// Печатает расход жидкости через выходную границу потока.
-				// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+				// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 				// проходящий через выходную границу потока. 28,10,2019
 				report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 			}
@@ -2773,7 +2779,7 @@ int main_body(void) {
 			// system("PAUSE");
 		}
 
-		fclose(fp_radiation_log);
+		
 
 		// экспорт результата вычисления в программу tecplot360:
 		// можно использовать как проверку построенной сетки.
@@ -2857,7 +2863,7 @@ int main_body(void) {
 			// 2 - solver/conjugate_heat_transfer_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0/*2*/);
 			// Печатает расход жидкости через выходную границу потока.
-			// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28,10,2019
 			report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 
@@ -2950,7 +2956,7 @@ int main_body(void) {
 				system("pause");
 			}
 			else {
-				// нестационарный гидродинамический решатель :
+				// нестационарный гидродинамический решатель:
 				usteady_cfd_calculation(breadOk, eqin,
 					dgx, dgy, dgz,
 					continity_start,
@@ -3203,7 +3209,7 @@ int main_body(void) {
 	if (x_jacoby_buffer != nullptr) {
 		// 30 октября 2016. 
 		// В seidelsor2 сделан переключатель на метод нижней релаксации К.Г. Якоби.
-		// Освобождение памяти из под jacobi buffer.
+		// Освобождение памяти из под Jacobi buffer.
 		delete[] x_jacoby_buffer;
 		x_jacoby_buffer = nullptr;
 	}
@@ -3302,7 +3308,7 @@ int main_body(void) {
 		}
 	}
 
-	// Освобождение общей памяти в ILU буффере.
+	// Освобождение общей памяти в ILU буфере.
 	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
 	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
 	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
@@ -3338,10 +3344,10 @@ int main_body(void) {
 
 	// Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 	// помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
-	// при повторном обращении идет обращение к ячейки хеш таблицы.
+	// при повторном обращении идет обращение к ячейки хеш-таблицы.
 	// 20mm ПТБШ ускорился с 1мин 9с до 53с за счет режима bFULL_AUTOMATIC.
-	// Хеш таблицы для automatic
-	// Освобождение оперативной памяти из под хеш таблицы.
+	// Хеш-таблицы для automatic
+	// Освобождение оперативной памяти из под хеш-таблицы.
 	delete[] shorter_hash_X;
 	delete[] shorter_hash_Y;
 	delete[] shorter_hash_Z;
@@ -3353,7 +3359,7 @@ int main_body(void) {
 	//delete[] StringList;
 
 	calculation_main_end_time = clock();
-	calculation_main_seach_time = calculation_main_end_time - calculation_main_start_time;
+	calculation_main_seach_time = calculation_main_end_time - calculation_main_start_time_global_Depend;
 
 
 	/*printf("time=%d statistic vorst=%3.2f %% \n",calculation_main_seach_time,(float)(100.0*calculation_vorst_seach_time/calculation_main_seach_time));
@@ -3387,6 +3393,8 @@ int main(void)
 	//setlocale(LC_ALL, "");
 	system("mode con cols=166 lines=12000");
 
+	char ch_EXPORT_ALICE_ONLY = 'y';
+
 	if (0) {
 		// Оптимизация. Перебор на основе трёх переменных:
 		// d_my_optimetric1_6_12_2019;
@@ -3398,28 +3406,34 @@ int main(void)
 		// Три переменных
 		//int in_optimetric = 21;
 		int* time_optimetric = new int[1000];
+		doublereal* op_comp = new doublereal[1000];
 		int iscan_optimetric = 0;
-		for (d_my_optimetric1_6_12_2019 = 0.33; d_my_optimetric1_6_12_2019 < 0.38; d_my_optimetric1_6_12_2019 += 0.01) {
-			for (d_my_optimetric2_6_12_2019 = 0.09; d_my_optimetric2_6_12_2019 < 0.95; d_my_optimetric2_6_12_2019 += 0.005) {
-				for (d_my_optimetric3_6_12_2019 = 0.11; d_my_optimetric3_6_12_2019 < 0.12; d_my_optimetric3_6_12_2019 += 0.01) {
-					printf("%e %e %e %d\n", d_my_optimetric1_6_12_2019, d_my_optimetric2_6_12_2019, d_my_optimetric3_6_12_2019, time_optimetric[iscan_optimetric]);
-					time_optimetric[iscan_optimetric] = main_body();
+		for (d_my_optimetric1_6_12_2019 = 0.33; d_my_optimetric1_6_12_2019 < 0.7; d_my_optimetric1_6_12_2019 += 0.01) {
+			//for (d_my_optimetric2_6_12_2019 = 0.09; d_my_optimetric2_6_12_2019 < 0.95; d_my_optimetric2_6_12_2019 += 0.005) {
+				//for (d_my_optimetric3_6_12_2019 = 0.11; d_my_optimetric3_6_12_2019 < 0.12; d_my_optimetric3_6_12_2019 += 0.01) {
+					//printf("%e %e %e %d\n", d_my_optimetric1_6_12_2019, d_my_optimetric2_6_12_2019, d_my_optimetric3_6_12_2019, time_optimetric[iscan_optimetric]);
+					//printf("%e %d\n", d_my_optimetric1_6_12_2019, time_optimetric[iscan_optimetric]);
+					time_optimetric[iscan_optimetric] = main_body(ch_EXPORT_ALICE_ONLY);
+					op_comp[iscan_optimetric] = d_my_optimetric2_6_12_2019;
 					iscan_optimetric++;
-				}
-			}
+					
+				//}
+			//}
 		}
 
 		printf("\n\n\n");
 		iscan_optimetric = 0;
-		for (d_my_optimetric1_6_12_2019 = 0.33; d_my_optimetric1_6_12_2019 < 0.38; d_my_optimetric1_6_12_2019 += 0.01) {
-			for (d_my_optimetric2_6_12_2019 = 0.09; d_my_optimetric2_6_12_2019 < 0.95; d_my_optimetric2_6_12_2019 += 0.005) {
-				for (d_my_optimetric3_6_12_2019 = 0.11; d_my_optimetric3_6_12_2019 < 0.12; d_my_optimetric3_6_12_2019 += 0.01) {
-					printf("%e %e %e %d\n", d_my_optimetric1_6_12_2019, d_my_optimetric2_6_12_2019, d_my_optimetric3_6_12_2019, time_optimetric[iscan_optimetric]);
+		for (d_my_optimetric1_6_12_2019 = 0.33; d_my_optimetric1_6_12_2019 < 0.7; d_my_optimetric1_6_12_2019 += 0.01) {
+			//for (d_my_optimetric2_6_12_2019 = 0.09; d_my_optimetric2_6_12_2019 < 0.95; d_my_optimetric2_6_12_2019 += 0.005) {
+				//for (d_my_optimetric3_6_12_2019 = 0.11; d_my_optimetric3_6_12_2019 < 0.12; d_my_optimetric3_6_12_2019 += 0.01) {
+					//printf("%e %e %e %d\n", d_my_optimetric1_6_12_2019, d_my_optimetric2_6_12_2019, d_my_optimetric3_6_12_2019, time_optimetric[iscan_optimetric]);
+					printf("%e CA=%e %d\n", d_my_optimetric1_6_12_2019, op_comp[iscan_optimetric], time_optimetric[iscan_optimetric]);
 					iscan_optimetric++;
-				}
-			}
+				//}
+			//}
 		}
 		delete[] time_optimetric;
+		delete[] op_comp;
 	}
 	if (0) {
 		// Оптимизация. Перебор на основе одной переменной.
@@ -3433,7 +3447,7 @@ int main(void)
 		int iscan_optimetric = 0;
 		for (d_my_optimetric1_6_12_2019 = 0.0; d_my_optimetric1_6_12_2019 < 0.02; d_my_optimetric1_6_12_2019 += 0.002) {
 			printf("%e %d\n", d_my_optimetric1_6_12_2019, time_optimetric[iscan_optimetric]);
-			time_optimetric[iscan_optimetric] = main_body();
+			time_optimetric[iscan_optimetric] = main_body(ch_EXPORT_ALICE_ONLY);
 			iscan_optimetric++;
 		}
 
@@ -3446,7 +3460,7 @@ int main(void)
 		delete[] time_optimetric;
 	}
 	if (1) {
-		main_body();
+		main_body(ch_EXPORT_ALICE_ONLY);
 	}
 
 	// Освобождаем память из под массива строк.

@@ -11,18 +11,18 @@
 
 // 14.04.2019 Работает на АЛИС сетке.
 // Вычисление градиентов скоростей в центрах внутренних КО
-// и на границах с помощью линейной интерполляции.
-// Поскольку интерполляция линейная то точность данной формулы O(h). 
+// и на границах с помощью линейной интерполяции.
+// Поскольку интерполяция линейная то точность данной формулы O(h). 
 // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
 								 doublereal* &mf, doublereal* &prop, doublereal* &prop_b,
-	BOUND* &sosedb, integer *ilevel_alice) {
+	BOUND* &border_neighbor, integer *ilevel_alice) {
 
 
-	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу.
+	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу 1983г.
 	bool bRCh=false;
 
 	// maxelm - число внутренних КО.
@@ -34,20 +34,20 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -88,7 +88,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -302,7 +302,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -310,7 +310,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -328,7 +328,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -336,7 +336,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -353,7 +353,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -361,7 +361,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -378,7 +378,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -386,7 +386,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -403,7 +403,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -411,7 +411,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -428,7 +428,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -436,7 +436,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -456,7 +456,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -464,7 +464,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -480,7 +480,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -488,7 +488,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -505,7 +505,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -513,7 +513,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -530,7 +530,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -538,7 +538,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -555,7 +555,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -563,7 +563,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -580,7 +580,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -588,7 +588,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -609,7 +609,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -617,7 +617,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -634,7 +634,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -642,7 +642,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -659,7 +659,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -667,7 +667,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -684,7 +684,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -692,7 +692,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -709,7 +709,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -717,7 +717,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -734,7 +734,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -742,7 +742,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -762,7 +762,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -770,7 +770,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -787,7 +787,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -795,7 +795,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -812,7 +812,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -820,7 +820,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -837,7 +837,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -845,7 +845,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -862,7 +862,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -870,7 +870,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -887,7 +887,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -895,7 +895,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -910,7 +910,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -925,7 +925,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -940,7 +940,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -1126,14 +1126,14 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// VX
 		if (iE > -1) {
 			if (!bE) {
 				if (bRCh) {
-					fe = mf[ESIDE] / (rhoe*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					fe = mf[ESIDE] / (rhoe*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу 1983г.
 				}
 				else {
 					fe = feplus*potent[VXCOR][iE] + (1.0 - feplus)*potent[VXCOR][iP];
@@ -1144,7 +1144,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iW > -1) {
 			if (!bW) {
 				if (bRCh) {
-					fw = mf[WSIDE] / (rhow*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					fw = mf[WSIDE] / (rhow*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу 1983г.
 				}
 				else {
 					fw = fwplus*potent[VXCOR][iW] + (1.0 - fwplus)*potent[VXCOR][iP];
@@ -1222,7 +1222,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			else fw4 = potent[VXCOR][iW4];
 		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
-		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
+		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
 			if (!bN) fn = fnplus*potent[VXCOR][iN] + (1.0 - fnplus)*potent[VXCOR][iP]; else fn = potent[VXCOR][iN];
 		}
@@ -1592,7 +1592,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 			
 
-			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
 				if (bE) {
 
@@ -2468,7 +2468,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		{
 
 		// граничные узлы.
-		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 		if (bE) {
 			potent[GRADXVX][iE]=potent[GRADXVX][iP]+(dxe/dxw)*(potent[GRADXVX][iP]-potent[GRADXVX][iW]);
@@ -2562,18 +2562,18 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 // 14.04.2019; 29.09.2019. Работает на АЛИС сетке.
 // Вычисление градиентов модифицированной кинематической турбулентной вязкости
 // в центрах внутренних КО
-// и на границах с помощью линейной интерполляции.
-// Поскольку интерполляция линейная то точность данной формулы O(h). 
+// и на границах с помощью линейной интерполяции.
+// Поскольку интерполяция линейная то точность данной формулы O(h). 
 // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_SpallartAllmares(integer iP,
 	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-	BOUND* &sosedb, integer *ilevel_alice) {
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, integer *ilevel_alice) {
 
 
-	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу.
+	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу 1983г.
 	//bool bRCh = false;
 
 	// maxelm - число внутренних КО.
@@ -2585,20 +2585,20 @@ void green_gauss_SpallartAllmares(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -2639,7 +2639,7 @@ void green_gauss_SpallartAllmares(integer iP,
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -2853,7 +2853,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -2861,7 +2861,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -2879,7 +2879,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -2887,7 +2887,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -2904,7 +2904,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -2912,7 +2912,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -2929,7 +2929,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -2937,7 +2937,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -2954,7 +2954,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -2962,7 +2962,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -2979,7 +2979,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -2987,7 +2987,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -3007,7 +3007,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -3015,7 +3015,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -3031,7 +3031,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -3039,7 +3039,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -3056,7 +3056,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -3064,7 +3064,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -3081,7 +3081,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -3089,7 +3089,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -3106,7 +3106,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -3114,7 +3114,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -3131,7 +3131,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -3139,7 +3139,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -3160,7 +3160,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -3168,7 +3168,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -3185,7 +3185,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -3193,7 +3193,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -3210,7 +3210,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -3218,7 +3218,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -3235,7 +3235,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -3243,7 +3243,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -3260,7 +3260,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -3268,7 +3268,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -3285,7 +3285,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -3293,7 +3293,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -3313,7 +3313,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -3321,7 +3321,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -3338,7 +3338,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -3346,7 +3346,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -3363,7 +3363,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -3371,7 +3371,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -3388,7 +3388,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -3396,7 +3396,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -3413,7 +3413,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -3421,7 +3421,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -3438,7 +3438,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -3446,7 +3446,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -3461,7 +3461,7 @@ void green_gauss_SpallartAllmares(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -3476,7 +3476,7 @@ void green_gauss_SpallartAllmares(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -3491,7 +3491,7 @@ void green_gauss_SpallartAllmares(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -3514,7 +3514,7 @@ void green_gauss_SpallartAllmares(integer iP,
 	if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// VX
@@ -3570,7 +3570,7 @@ void green_gauss_SpallartAllmares(integer iP,
 			else fw4 = potent[NUSHA][iW4];
 		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
-		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
+		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
 			if (!bN) fn = fnplus * potent[NUSHA][iN] + (1.0 - fnplus)*potent[NUSHA][iP]; else fn = potent[NUSHA][iN];
 		}
@@ -3638,7 +3638,7 @@ void green_gauss_SpallartAllmares(integer iP,
 
 
 
-			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
 				if (bE) {
 
@@ -4211,7 +4211,7 @@ void green_gauss_SpallartAllmares(integer iP,
 		{
 
 			// граничные узлы.
-			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 			if (bE) {
 				potent[GRADXNUSHA][iE] = potent[GRADXNUSHA][iP] + (dxe / dxw)*(potent[GRADXNUSHA][iP] - potent[GRADXNUSHA][iW]);
@@ -4262,22 +4262,22 @@ void green_gauss_SpallartAllmares(integer iP,
 
 
 // Производные от k на твердой неподвижной стенке ?
-// Надо попрбовать оба варианта и остановиться на каком -то одном.
+// Надо попробовать оба варианта и остановиться на каком -то одном.
 // один вариант 0 другой вариант скопировать из ближайшего внутреннего узла.
 // Это касается всех моделей турбулентности RANS. 03.10.2019.
 
 // 14.04.2019; 03.10.2019. Работает на АЛИС сетке.
 // Вычисление градиентов кинетической энергии турбулентных пульсаций
 // в центрах внутренних КО
-// и на границах с помощью линейной интерполляции.
-// Поскольку интерполляция линейная то точность данной формулы O(h). 
+// и на границах с помощью линейной интерполяции.
+// Поскольку интерполяция линейная то точность данной формулы O(h). 
 // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-	BOUND* &sosedb, integer *ilevel_alice)
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, integer *ilevel_alice)
 {
 
 
@@ -4293,20 +4293,20 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -4347,7 +4347,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -4561,7 +4561,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -4569,7 +4569,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -4587,7 +4587,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -4595,7 +4595,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -4612,7 +4612,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -4620,7 +4620,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -4637,7 +4637,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -4645,7 +4645,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -4662,7 +4662,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -4670,7 +4670,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -4687,7 +4687,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -4695,7 +4695,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -4715,7 +4715,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -4723,7 +4723,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -4739,7 +4739,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -4747,7 +4747,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -4764,7 +4764,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -4772,7 +4772,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -4789,7 +4789,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -4797,7 +4797,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -4814,7 +4814,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -4822,7 +4822,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -4839,7 +4839,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -4847,7 +4847,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -4868,7 +4868,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -4876,7 +4876,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -4893,7 +4893,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -4901,7 +4901,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -4918,7 +4918,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -4926,7 +4926,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -4943,7 +4943,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -4951,7 +4951,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -4968,7 +4968,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -4976,7 +4976,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -4993,7 +4993,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -5001,7 +5001,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -5021,7 +5021,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -5029,7 +5029,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -5046,7 +5046,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -5054,7 +5054,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -5071,7 +5071,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -5079,7 +5079,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -5096,7 +5096,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -5104,7 +5104,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -5121,7 +5121,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -5129,7 +5129,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -5146,7 +5146,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -5154,7 +5154,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -5169,7 +5169,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -5184,7 +5184,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -5199,7 +5199,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -5222,7 +5222,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// TURBULENT_KINETIK_ENERGY
@@ -5278,7 +5278,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 			else fw4 = potent[TURBULENT_KINETIK_ENERGY][iW4];
 		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
-		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
+		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
 			if (!bN) fn = fnplus * potent[TURBULENT_KINETIK_ENERGY][iN] + (1.0 - fnplus)*potent[TURBULENT_KINETIK_ENERGY][iP]; else fn = potent[TURBULENT_KINETIK_ENERGY][iN];
 		}
@@ -5346,7 +5346,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 
 
 
-			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
 				if (bE) {
 
@@ -5919,7 +5919,7 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 		{
 
 			// граничные узлы.
-			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 			if (bE) {
 				potent[GRADXTURBULENT_KINETIK_ENERGY][iE] = potent[GRADXTURBULENT_KINETIK_ENERGY][iP] + (dxe / dxw)*(potent[GRADXTURBULENT_KINETIK_ENERGY][iP] - potent[GRADXTURBULENT_KINETIK_ENERGY][iW]);
@@ -5971,15 +5971,15 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
   // 14.04.2019; 03.10.2019; 24.10.2019. Работает на АЛИС сетке.
   // Вычисление градиентов кинетической энергии турбулентных пульсаций
   // в центрах внутренних КО
-  // и на границах с помощью линейной интерполляции.
-  // Поскольку интерполляция линейная то точность данной формулы O(h). 
+  // и на границах с помощью линейной интерполяции.
+  // Поскольку интерполяция линейная то точность данной формулы O(h). 
   // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
   // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
   // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-	BOUND* &sosedb, integer *ilevel_alice)
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, integer *ilevel_alice)
 {
 
 
@@ -5995,20 +5995,20 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -6049,7 +6049,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -6263,7 +6263,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -6271,7 +6271,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -6289,7 +6289,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -6297,7 +6297,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -6314,7 +6314,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -6322,7 +6322,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -6339,7 +6339,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -6347,7 +6347,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -6364,7 +6364,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -6372,7 +6372,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -6389,7 +6389,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -6397,7 +6397,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -6417,7 +6417,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -6425,7 +6425,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -6441,7 +6441,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -6449,7 +6449,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -6466,7 +6466,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -6474,7 +6474,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -6491,7 +6491,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -6499,7 +6499,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -6516,7 +6516,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -6524,7 +6524,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -6541,7 +6541,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -6549,7 +6549,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -6570,7 +6570,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -6578,7 +6578,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -6595,7 +6595,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -6603,7 +6603,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -6620,7 +6620,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -6628,7 +6628,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -6645,7 +6645,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -6653,7 +6653,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -6670,7 +6670,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -6678,7 +6678,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -6695,7 +6695,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -6703,7 +6703,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -6723,7 +6723,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -6731,7 +6731,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -6748,7 +6748,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -6756,7 +6756,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -6773,7 +6773,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -6781,7 +6781,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -6798,7 +6798,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -6806,7 +6806,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -6823,7 +6823,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -6831,7 +6831,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -6848,7 +6848,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -6856,7 +6856,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -6871,7 +6871,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -6886,7 +6886,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -6901,7 +6901,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -6924,7 +6924,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// TURBULENT_KINETIK_ENERGY
@@ -6980,7 +6980,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 			else fw4 = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iW4];
 		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
-		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
+		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
 			if (!bN) fn = fnplus * potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN] + (1.0 - fnplus)*potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]; else fn = potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iN];
 		}
@@ -7048,7 +7048,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 
 
 
-			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
 				if (bE) {
 
@@ -7621,7 +7621,7 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 		{
 
 			// граничные узлы.
-			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 			if (bE) {
 				potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iE] = potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] + (dxe / dxw)*(potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] - potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iW]);
@@ -7673,15 +7673,15 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
   // 14.04.2019; 03.10.2019; 24.10.2019. Работает на АЛИС сетке.
   // Вычисление градиентов скорости диссипации кинетической энергии турбулентных пульсаций
   // в центрах внутренних КО
-  // и на границах с помощью линейной интерполляции.
-  // Поскольку интерполляция линейная то точность данной формулы O(h). 
+  // и на границах с помощью линейной интерполяции.
+  // Поскольку интерполяция линейная то точность данной формулы O(h). 
   // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
   // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
   // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer iP,
 	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-	BOUND* &sosedb, integer *ilevel_alice)
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, integer *ilevel_alice)
 {
 
 
@@ -7697,20 +7697,20 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -7751,7 +7751,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -7965,7 +7965,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -7973,7 +7973,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -7991,7 +7991,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -7999,7 +7999,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -8016,7 +8016,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -8024,7 +8024,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -8041,7 +8041,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -8049,7 +8049,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -8066,7 +8066,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -8074,7 +8074,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -8091,7 +8091,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -8099,7 +8099,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -8119,7 +8119,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -8127,7 +8127,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -8143,7 +8143,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -8151,7 +8151,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -8168,7 +8168,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -8176,7 +8176,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -8193,7 +8193,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -8201,7 +8201,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -8218,7 +8218,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -8226,7 +8226,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -8243,7 +8243,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -8251,7 +8251,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -8272,7 +8272,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -8280,7 +8280,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -8297,7 +8297,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -8305,7 +8305,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -8322,7 +8322,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -8330,7 +8330,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -8347,7 +8347,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -8355,7 +8355,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -8372,7 +8372,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -8380,7 +8380,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -8397,7 +8397,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -8405,7 +8405,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -8425,7 +8425,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -8433,7 +8433,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -8450,7 +8450,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -8458,7 +8458,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -8475,7 +8475,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -8483,7 +8483,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -8500,7 +8500,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -8508,7 +8508,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -8525,7 +8525,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -8533,7 +8533,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -8550,7 +8550,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -8558,7 +8558,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -8573,7 +8573,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -8588,7 +8588,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -8603,7 +8603,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -8626,7 +8626,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// TURBULENT_KINETIK_ENERGY
@@ -8682,7 +8682,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 			else fw4 = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW4];
 		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
-		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
+		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
 			if (!bN) fn = fnplus * potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN] + (1.0 - fnplus)*potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]; else fn = potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iN];
 		}
@@ -8750,7 +8750,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 
 
 
-			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
 				if (bE) {
 
@@ -9323,7 +9323,7 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 		{
 
 			// граничные узлы.
-			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 			if (bE) {
 				potent[GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iE] = potent[GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] + (dxe / dxw)*(potent[GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] - potent[GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iW]);
@@ -9378,15 +9378,15 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 // модели Спаларта Аллмареса.
 // Вычисление градиентов удельной скорости диссипации кинетической энергии турбулентных пульсаций
 // в центрах внутренних КО в модели SST Ментера.
-// и на границах с помощью линейной интерполляции.
-// Поскольку интерполляция линейная то точность данной формулы O(h). 
+// и на границах с помощью линейной интерполяции.
+// Поскольку интерполяция линейная то точность данной формулы O(h). 
 // По поводу точности O(h) спорно, может быть и O(h^2). К тому же было выяснено
 // что данный способ вычисления градиентов, для обычной прямоугольной неравномерной сетки
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-	BOUND* &sosedb, integer *ilevel_alice) {
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, integer *ilevel_alice) {
 
 
 	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу.
@@ -9401,20 +9401,20 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -9455,7 +9455,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+	doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -9669,7 +9669,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -9677,7 +9677,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -9695,7 +9695,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -9703,7 +9703,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -9720,7 +9720,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -9728,7 +9728,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -9745,7 +9745,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -9753,7 +9753,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -9770,7 +9770,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -9778,7 +9778,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -9795,7 +9795,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -9803,7 +9803,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -9823,7 +9823,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -9831,7 +9831,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -9847,7 +9847,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -9855,7 +9855,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -9872,7 +9872,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -9880,7 +9880,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -9897,7 +9897,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -9905,7 +9905,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -9922,7 +9922,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -9930,7 +9930,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -9947,7 +9947,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -9955,7 +9955,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -9976,7 +9976,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -9984,7 +9984,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -10001,7 +10001,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -10009,7 +10009,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -10026,7 +10026,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -10034,7 +10034,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -10051,7 +10051,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -10059,7 +10059,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -10076,7 +10076,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -10084,7 +10084,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -10101,7 +10101,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -10109,7 +10109,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -10129,7 +10129,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -10137,7 +10137,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -10154,7 +10154,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -10162,7 +10162,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -10179,7 +10179,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -10187,7 +10187,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -10204,7 +10204,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -10212,7 +10212,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -10229,7 +10229,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -10237,7 +10237,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -10254,7 +10254,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -10262,7 +10262,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -10277,7 +10277,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -10292,7 +10292,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -10307,7 +10307,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -10330,7 +10330,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// VX
@@ -10386,7 +10386,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 			else fw4 = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW4];
 		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
-		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
+		// Вопрос о правомерности пока остаётся открытым. Дальнейшие компоненты скорости и производные аналогично для VX.
 		if (iN > -1) {
 			if (!bN) fn = fnplus * potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN] + (1.0 - fnplus)*potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]; else fn = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iN];
 		}
@@ -10454,7 +10454,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 
 
-			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			// По простому: градиент на границе наследуем из ближайшего внутреннего узла.
 			if (iE > -1) {
 				if (bE) {
 
@@ -11027,7 +11027,7 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 		{
 
 			// граничные узлы.
-			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+			// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 			if (bE) {
 				potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iE] = potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] + (dxe / dxw)*(potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] - potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW]);
@@ -11079,8 +11079,8 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 
 // вычисление градиентов поправки давления с помощью теоремы Грина-Гаусса. 
 void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	                ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-					BOUND* &sosedb, integer ls, integer lw, WALL* &w, bool bLRfree,
+	                ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+					BOUND* &border_neighbor, integer ls, integer lw, WALL* &w, bool bLRfree,
 	                integer *ilevel_alice, integer* ptr) {
 
 	// maxelm - число внутренних КО.
@@ -11092,20 +11092,20 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -11147,7 +11147,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -11362,7 +11362,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -11370,7 +11370,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -11388,7 +11388,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -11396,7 +11396,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -11413,7 +11413,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -11421,7 +11421,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -11438,7 +11438,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -11446,7 +11446,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -11463,7 +11463,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -11471,7 +11471,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -11488,7 +11488,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -11496,7 +11496,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -11516,7 +11516,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -11524,7 +11524,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -11540,7 +11540,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -11548,7 +11548,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -11565,7 +11565,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -11573,7 +11573,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -11590,7 +11590,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -11598,7 +11598,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -11615,7 +11615,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -11623,7 +11623,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -11640,7 +11640,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -11648,7 +11648,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -11669,7 +11669,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -11677,7 +11677,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -11694,7 +11694,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -11702,7 +11702,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -11719,7 +11719,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -11727,7 +11727,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -11744,7 +11744,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -11752,7 +11752,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -11769,7 +11769,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -11777,7 +11777,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -11794,7 +11794,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -11802,7 +11802,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -11822,7 +11822,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -11830,7 +11830,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -11847,7 +11847,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -11855,7 +11855,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -11872,7 +11872,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -11880,7 +11880,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -11897,7 +11897,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -11905,7 +11905,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -11922,7 +11922,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -11930,7 +11930,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -11947,7 +11947,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -11955,7 +11955,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -11970,7 +11970,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -11985,7 +11985,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -12000,7 +12000,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -12526,7 +12526,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		    // внутренние КО.
 
-		    // Линейно интерполлируем поправку давления на грань контрольного объёма,
+		    // Линейно интерполируем поправку давления на грань контрольного объёма,
 		    // а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 			if (iE > -1) {
 				if (!bE) PAMe = feplus * potent[PAM][iE] + (1.0 - feplus)*potent[PAM][iP]; else PAMe = potent[PAM][iE];
@@ -12616,9 +12616,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 	}
    else {
-	    integer interpol=0; // 0 или 1 при линейной интерполяции.
+	    const integer interpol=0; // 0 или 1 при линейной интерполяции.
 
-		if (interpol==0) {
+#if (interpol==0)
+		{
 
 			if (1) {
 
@@ -12837,7 +12838,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE > -1) {
 					if (bE) {
 						integer inumber = iE - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE] = 0.0;
 						}
 						else {
@@ -12853,7 +12854,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW > -1) {
 					if (bW) {
 						integer inumber = iW - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW] = 0.0;
 						}
 						else {
@@ -12869,7 +12870,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iN > -1) {
 					if (bN) {
 						integer inumber = iN - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN] = 0.0;
 						}
 						else {
@@ -12886,7 +12887,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS) {
 						integer inumber = iS - maxelm;
 
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS] = 0.0;
 						}
 						else {
@@ -12903,7 +12904,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iT > -1) {
 					if (bT) {
 						integer inumber = iT - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT] = 0.0;
 						}
 						else {
@@ -12919,7 +12920,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iB > -1) {
 					if (bB) {
 						integer inumber = iB - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB] = 0.0;
 						}
 						else {
@@ -12935,7 +12936,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE2 > -1) {
 					if (bE2) {
 						integer inumber = iE2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE2] = 0.0;
 						}
 						else {
@@ -12951,7 +12952,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW2 > -1) {
 					if (bW2) {
 						integer inumber = iW2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW2] = 0.0;
 						}
 						else {
@@ -12967,7 +12968,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iN2 > -1) {
 					if (bN2) {
 						integer inumber = iN2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN2] = 0.0;
 						}
 						else {
@@ -12984,7 +12985,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS2) {
 						integer inumber = iS2 - maxelm;
 
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS2] = 0.0;
 						}
 						else {
@@ -13001,7 +13002,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iT2 > -1) {
 					if (bT2) {
 						integer inumber = iT2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT2] = 0.0;
 						}
 						else {
@@ -13017,7 +13018,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iB2 > -1) {
 					if (bB2) {
 						integer inumber = iB2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB2] = 0.0;
 						}
 						else {
@@ -13033,7 +13034,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE3 > -1) {
 					if (bE3) {
 						integer inumber = iE3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE3] = 0.0;
 						}
 						else {
@@ -13049,7 +13050,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW3 > -1) {
 					if (bW3) {
 						integer inumber = iW3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW3] = 0.0;
 						}
 						else {
@@ -13065,7 +13066,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iN3 > -1) {
 					if (bN3) {
 						integer inumber = iN3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN3] = 0.0;
 						}
 						else {
@@ -13082,7 +13083,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS3) {
 						integer inumber = iS3 - maxelm;
 
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS3] = 0.0;
 						}
 						else {
@@ -13099,7 +13100,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iT3 > -1) {
 					if (bT3) {
 						integer inumber = iT3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT3] = 0.0;
 						}
 						else {
@@ -13115,7 +13116,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iB3 > -1) {
 					if (bB3) {
 						integer inumber = iB3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB3] = 0.0;
 						}
 						else {
@@ -13131,7 +13132,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE4 > -1) {
 					if (bE4) {
 						integer inumber = iE4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE4] = 0.0;
 						}
 						else {
@@ -13147,7 +13148,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW4 > -1) {
 					if (bW4) {
 						integer inumber = iW4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW4] = 0.0;
 						}
 						else {
@@ -13163,7 +13164,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iN4 > -1) {
 					if (bN4) {
 						integer inumber = iN4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN4] = 0.0;
 						}
 						else {
@@ -13180,7 +13181,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS4) {
 						integer inumber = iS4 - maxelm;
 
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS4] = 0.0;
 						}
 						else {
@@ -13197,7 +13198,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iT4 > -1) {
 					if (bT4) {
 						integer inumber = iT4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT4] = 0.0;
 						}
 						else {
@@ -13213,7 +13214,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iB4 > -1) {
 					if (bB4) {
 						integer inumber = iB4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB4] = 0.0;
 						}
 						else {
@@ -13233,10 +13234,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE > -1) {
 					if (bE) {
 						integer inumber = iE - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13253,10 +13254,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW > -1) {
 					if (bW) {
 						integer inumber = iW - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13275,10 +13276,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bN) {
 
 						integer inumber = iN - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13297,10 +13298,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS) {
 
 						integer inumber = iS - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13319,10 +13320,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bT) {
 
 						integer inumber = iT - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13341,10 +13342,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bB) {
 
 						integer inumber = iB - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13362,10 +13363,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE2 > -1) {
 					if (bE2) {
 						integer inumber = iE2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13382,10 +13383,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW2 > -1) {
 					if (bW2) {
 						integer inumber = iW2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13404,10 +13405,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bN2) {
 
 						integer inumber = iN2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13426,10 +13427,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS2) {
 
 						integer inumber = iS2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13448,10 +13449,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bT2) {
 
 						integer inumber = iT2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13470,10 +13471,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bB2) {
 
 						integer inumber = iB2 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13492,10 +13493,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE3 > -1) {
 					if (bE3) {
 						integer inumber = iE3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13512,10 +13513,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW3 > -1) {
 					if (bW3) {
 						integer inumber = iW3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13534,10 +13535,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bN3) {
 
 						integer inumber = iN3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13556,10 +13557,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS3) {
 
 						integer inumber = iS3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13578,10 +13579,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bT3) {
 
 						integer inumber = iT3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13600,10 +13601,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bB3) {
 
 						integer inumber = iB3 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13621,10 +13622,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iE4 > -1) {
 					if (bE4) {
 						integer inumber = iE4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13641,10 +13642,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				if (iW4 > -1) {
 					if (bW4) {
 						integer inumber = iW4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
 						}
 						else {
@@ -13663,10 +13664,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bN4) {
 
 						integer inumber = iN4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13685,10 +13686,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bS4) {
 
 						integer inumber = iS4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
 						}
 						else {
@@ -13707,10 +13708,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bT4) {
 
 						integer inumber = iT4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13729,10 +13730,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 					if (bB4) {
 
 						integer inumber = iB4 - maxelm;
-						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
 						}
-						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
 						}
 						else {
@@ -13750,7 +13751,10 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 
 		}
-		else if (interpol==1) {
+#endif
+
+#if (interpol==1) 
+{
 
 			// не работает на АЛИС.
 			if (b_on_adaptive_local_refinement_mesh) {
@@ -13760,19 +13764,19 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 
 		// граничные узлы.
-		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
-		// Если строка с пометкой <-- раскоментирована то градиент поправки давления линейно интерполлируется на границу 
+		// Если строка с пометкой <-- раскомментирована то градиент поправки давления линейно интерполируется на границу 
 		// расчётной области изнутри расчётной области.
 
 		if (bE) {
 
 			integer inumber=iE-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+			if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 				//potent[GRADXPAM][iE]=potent[GRADXPAM][iP]+(dxe/dxw)*(potent[GRADXPAM][iP]-potent[GRADXPAM][iW]);
 				potent[GRADXPAM][iE]=0.0;
 			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+			else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB<(ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 				//potent[GRADXPAM][iE]=potent[GRADXPAM][iP]+(dxe/dxw)*(potent[GRADXPAM][iP]-potent[GRADXPAM][iW]);
 				potent[GRADXPAM][iE] = 0.0;
 			}
@@ -13790,11 +13794,11 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		if (bW) {
 
 			integer inumber=iW-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+			if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 				//potent[GRADXPAM][iW]=potent[GRADXPAM][iP]+(dxw/dxe)*(potent[GRADXPAM][iP]-potent[GRADXPAM][iE]);
 				potent[GRADXPAM][iW]=0.0;
 			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+			else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB<(ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 				//potent[GRADXPAM][iW]=potent[GRADXPAM][iP]+(dxw/dxe)*(potent[GRADXPAM][iP]-potent[GRADXPAM][iE]);
 				potent[GRADXPAM][iW] = 0.0;
 			}
@@ -13812,11 +13816,11 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		if (bN) {
 
 			integer inumber=iN-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADYPAM][iN]=potent[GRADYPAM][iP]+(dyn/dys)*(potent[GRADYPAM][iP]-potent[GRADYPAM][iS]);
 					potent[GRADYPAM][iN]=0.0;
 				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB<(ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 					//potent[GRADYPAM][iN]=potent[GRADYPAM][iP]+(dyn/dys)*(potent[GRADYPAM][iP]-potent[GRADYPAM][iS]);
 					potent[GRADYPAM][iN] = 0.0;
 				}
@@ -13833,11 +13837,11 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		if (bS) {
 
 			integer inumber=iS-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+			if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 				//potent[GRADYPAM][iS]=potent[GRADYPAM][iP]+(dys/dyn)*(potent[GRADYPAM][iP]-potent[GRADYPAM][iN]);
 				potent[GRADYPAM][iS]=0.0;
 			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+			else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB<(ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 				//potent[GRADYPAM][iS]=potent[GRADYPAM][iP]+(dys/dyn)*(potent[GRADYPAM][iP]-potent[GRADYPAM][iN]);
 				potent[GRADYPAM][iS] = 0.0;
 			}
@@ -13856,11 +13860,11 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		if (bT) {
 
             integer inumber=iT-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+			if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 				//potent[GRADZPAM][iT]=potent[GRADZPAM][iP]+(dzt/dzb)*(potent[GRADZPAM][iP]-potent[GRADZPAM][iB]);
 				potent[GRADZPAM][iT]=0.0;
 			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+			else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB<(ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 				//potent[GRADZPAM][iT]=potent[GRADZPAM][iP]+(dzt/dzb)*(potent[GRADZPAM][iP]-potent[GRADZPAM][iB]);
 				potent[GRADZPAM][iT] = 0.0;
 			}
@@ -13877,11 +13881,11 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		if (bB) {
 
 			integer inumber=iB-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+			if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 				//potent[GRADZPAM][iB]=potent[GRADZPAM][iP]+(dzb/dzt)*(potent[GRADZPAM][iP]-potent[GRADZPAM][iT]);
 				potent[GRADZPAM][iB]=0.0;
 			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+			else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB<(ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 				//potent[GRADZPAM][iB]=potent[GRADZPAM][iP]+(dzb/dzt)*(potent[GRADZPAM][iP]-potent[GRADZPAM][iT]);
 				potent[GRADZPAM][iB] = 0.0;
 			}
@@ -13895,6 +13899,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			potent[GRADZPAM][iB]=potent[GRADZPAM][iP]+(dzb/dzt)*(potent[GRADZPAM][iP]-potent[GRADZPAM][iT]); // <--
 		}
 		}
+#endif
 	}
 
 
@@ -13903,8 +13908,8 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 // 13 апреля 2015 года.
 // вычисление градиентов Температуры с помощью теоремы Грина-Гаусса. 
 void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-					BOUND* &sosedb, doublereal* &Tx, doublereal* &Ty, doublereal* &Tz,
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+					BOUND* &border_neighbor, doublereal* &Tx, doublereal* &Ty, doublereal* &Tz,
 	integer *ilevel_alice) {
 
 	// maxelm - число внутренних КО.
@@ -13918,20 +13923,20 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1; 
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; 
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -13972,7 +13977,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -14185,7 +14190,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
@@ -14193,7 +14198,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -14211,7 +14216,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -14219,7 +14224,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -14236,7 +14241,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
@@ -14244,7 +14249,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -14261,7 +14266,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
@@ -14269,7 +14274,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -14286,7 +14291,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
@@ -14294,7 +14299,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -14311,7 +14316,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
@@ -14319,7 +14324,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -14339,7 +14344,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
@@ -14347,7 +14352,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -14363,7 +14368,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
@@ -14371,7 +14376,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -14388,7 +14393,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
@@ -14396,7 +14401,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -14413,7 +14418,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
@@ -14421,7 +14426,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -14438,7 +14443,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
@@ -14446,7 +14451,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -14463,7 +14468,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
@@ -14471,7 +14476,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -14492,7 +14497,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
@@ -14500,7 +14505,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -14517,7 +14522,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
@@ -14525,7 +14530,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -14542,7 +14547,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
@@ -14550,7 +14555,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -14567,7 +14572,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
@@ -14575,7 +14580,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -14592,7 +14597,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
@@ -14600,7 +14605,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -14617,7 +14622,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
@@ -14625,7 +14630,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -14645,7 +14650,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
@@ -14653,7 +14658,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -14670,7 +14675,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
@@ -14678,7 +14683,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -14695,7 +14700,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
@@ -14703,7 +14708,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -14720,7 +14725,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
@@ -14728,7 +14733,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -14745,7 +14750,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
@@ -14753,7 +14758,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -14770,7 +14775,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
@@ -14778,7 +14783,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -14793,7 +14798,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -14808,7 +14813,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -14823,7 +14828,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -14842,7 +14847,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
     if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем поправку давления на грань контрольного объёма,
+		// Линейно интерполируем поправку давления на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		if (iE > -1) {
@@ -14933,9 +14938,11 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
    }
    else {
 	   // На АЛИС сетках работает только значение interpol==0.
-	    integer interpol=0; // 0 для переноса из центра на грань или 1 при линейной интерполяции.
+	    const integer interpol=0; // 0 для переноса из центра на грань или 1 при линейной интерполяции.
 
-		if (interpol==0) {
+
+#if (interpol==0) 
+		{
 
 			if (iE > -1) {
 				if (bE) {
@@ -15131,7 +15138,10 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 
 		}
-		else if (interpol == 1) {
+#endif
+		
+#if (interpol == 1)
+ {
 			if (b_on_adaptive_local_refinement_mesh) {
 				printf("Linear interpolation not work on adaptive local refinement mesh. !!!\n");
 				printf("LOCATION: function green_gaussTemperature in module greengauss.c\n");
@@ -15140,9 +15150,9 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 			}
 			else {
 				// граничные узлы.
-				// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+				// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
-				// Если строка с пометкой <-- раскоментирована то градиент поправки давления линейно интерполлируется на границу 
+				// Если строка с пометкой <-- раскомментирована то градиент поправки давления линейно интерполлируется на границу 
 				// расчётной области изнутри расчётной области.
 
 				if (bE) {
@@ -15201,6 +15211,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 				}
 			}
 		}
+#endif
 	}
 
 
@@ -15208,9 +15219,9 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 
 
-// Минимакстное сглаживание градиента поправки давления.
-// помоему это весьма неудачная идея.
-void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &sosedi, integer maxelm, integer maxbound) {
+// Минимаксное сглаживание градиента поправки давления.
+// по моему это весьма неудачная идея.
+void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, integer maxbound) {
 	
 
 	doublereal** minmaxlimitergrad=new doublereal*[3];
@@ -15222,7 +15233,7 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &sosedi, integ
 	   // iP - номер внутреннего контрольного объёма
 	   // iP изменяется от 0 до maxelm-1.
 	   integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	   iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1; iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	   iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	   // минимаксное ограничение против появления ложных максимумов.
 	   minmaxlimitergrad[VX][iP]=fmax(fmin(fmax(potent[GRADXPAM][iE],potent[GRADXPAM][iW]),potent[GRADXPAM][iP]),fmin(potent[GRADXPAM][iE],potent[GRADXPAM][iW]));
@@ -15235,7 +15246,7 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &sosedi, integ
 		// iP - номер внутреннего контрольного объёма
 	    // iP изменяется от 0 до maxelm-1.
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1; iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 		// Если с одной из сторон стоит граница расчётной области
 	    // то соответствующая переменная равна true
@@ -15312,8 +15323,8 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &sosedi, integ
 // вычисление градиентов давления с помощью теоремы Грина-Гаусса. 
 // begin 21 июня 2012 года.
 void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-					BOUND* &sosedb, integer ls, integer lw, WALL* &w, bool bLRfree,
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+					BOUND* &border_neighbor, integer ls, integer lw, WALL* &w, bool bLRfree,
 	integer *ilevel_alice, integer* ptr) {
 
 	// maxelm - число внутренних КО.
@@ -15325,20 +15336,20 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
-	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
-	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
-	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
-	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -15379,7 +15390,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	if (iB4 >= maxelm) bB4 = true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 	dx = fabs(dx);
 	dy = fabs(dy);
@@ -15592,7 +15603,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bE) {
 			// граничный узел.
-			dSqe = sosedb[iE - maxelm].dS;
+			dSqe = border_neighbor[iE - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
@@ -15600,7 +15611,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe = dy_loc * dz_loc;
@@ -15618,7 +15629,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bW) {
 			// граничный узел.
-			dSqw = sosedb[iW - maxelm].dS;
+			dSqw = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -15626,7 +15637,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw = dy_loc * dz_loc;
@@ -15643,7 +15654,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bN) {
 			// граничный узел.
-			dSqn = sosedb[iN - maxelm].dS;
+			dSqn = border_neighbor[iN - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
@@ -15651,7 +15662,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn = dx_loc * dz_loc;
@@ -15668,7 +15679,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bS) {
 			// граничный узел.
-			dSqs = sosedb[iS - maxelm].dS;
+			dSqs = border_neighbor[iS - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
@@ -15676,7 +15687,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs = dx_loc * dz_loc;
@@ -15693,7 +15704,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bT) {
 			// граничный узел.
-			dSqt = sosedb[iT - maxelm].dS;
+			dSqt = border_neighbor[iT - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
@@ -15701,7 +15712,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt = dx_loc * dy_loc;
@@ -15718,7 +15729,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bB) {
 			// граничный узел.
-			dSqb = sosedb[iB - maxelm].dS;
+			dSqb = border_neighbor[iB - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
@@ -15726,7 +15737,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb = dx_loc * dy_loc;
@@ -15746,7 +15757,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bE2) {
 			// граничный узел.
-			dSqe2 = sosedb[iE2 - maxelm].dS;
+			dSqe2 = border_neighbor[iE2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
@@ -15754,7 +15765,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe2 = dy_loc * dz_loc;
@@ -15770,7 +15781,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bW) {
 			// граничный узел.
-			dSqw2 = sosedb[iW - maxelm].dS;
+			dSqw2 = border_neighbor[iW - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
@@ -15778,7 +15789,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw2 = dy_loc * dz_loc;
@@ -15795,7 +15806,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bN2) {
 			// граничный узел.
-			dSqn2 = sosedb[iN2 - maxelm].dS;
+			dSqn2 = border_neighbor[iN2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
@@ -15803,7 +15814,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn2 = dx_loc * dz_loc;
@@ -15820,7 +15831,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bS2) {
 			// граничный узел.
-			dSqs2 = sosedb[iS2 - maxelm].dS;
+			dSqs2 = border_neighbor[iS2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
@@ -15828,7 +15839,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs2 = dx_loc * dz_loc;
@@ -15845,7 +15856,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bT2) {
 			// граничный узел.
-			dSqt2 = sosedb[iT2 - maxelm].dS;
+			dSqt2 = border_neighbor[iT2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
@@ -15853,7 +15864,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt2 = dx_loc * dy_loc;
@@ -15870,7 +15881,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bB2) {
 			// граничный узел.
-			dSqb2 = sosedb[iB2 - maxelm].dS;
+			dSqb2 = border_neighbor[iB2 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
@@ -15878,7 +15889,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb2 = dx_loc * dy_loc;
@@ -15899,7 +15910,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bE3) {
 			// граничный узел.
-			dSqe3 = sosedb[iE3 - maxelm].dS;
+			dSqe3 = border_neighbor[iE3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
@@ -15907,7 +15918,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe3 = dy_loc * dz_loc;
@@ -15924,7 +15935,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bW3) {
 			// граничный узел.
-			dSqw3 = sosedb[iW3 - maxelm].dS;
+			dSqw3 = border_neighbor[iW3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
@@ -15932,7 +15943,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw3 = dy_loc * dz_loc;
@@ -15949,7 +15960,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bN3) {
 			// граничный узел.
-			dSqn3 = sosedb[iN3 - maxelm].dS;
+			dSqn3 = border_neighbor[iN3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
@@ -15957,7 +15968,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn3 = dx_loc * dz_loc;
@@ -15974,7 +15985,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bS3) {
 			// граничный узел.
-			dSqs3 = sosedb[iS3 - maxelm].dS;
+			dSqs3 = border_neighbor[iS3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
@@ -15982,7 +15993,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs3 = dx_loc * dz_loc;
@@ -15999,7 +16010,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bT3) {
 			// граничный узел.
-			dSqt3 = sosedb[iT3 - maxelm].dS;
+			dSqt3 = border_neighbor[iT3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
@@ -16007,7 +16018,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt3 = dx_loc * dy_loc;
@@ -16024,7 +16035,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bB3) {
 			// граничный узел.
-			dSqb3 = sosedb[iB3 - maxelm].dS;
+			dSqb3 = border_neighbor[iB3 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
@@ -16032,7 +16043,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb3 = dx_loc * dy_loc;
@@ -16052,7 +16063,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bE4) {
 			// граничный узел.
-			dSqe4 = sosedb[iE4 - maxelm].dS;
+			dSqe4 = border_neighbor[iE4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
@@ -16060,7 +16071,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqe4 = dy_loc * dz_loc;
@@ -16077,7 +16088,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bW4) {
 			// граничный узел.
-			dSqw4 = sosedb[iW4 - maxelm].dS;
+			dSqw4 = border_neighbor[iW4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
@@ -16085,7 +16096,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqw4 = dy_loc * dz_loc;
@@ -16102,7 +16113,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bN4) {
 			// граничный узел.
-			dSqn4 = sosedb[iN4 - maxelm].dS;
+			dSqn4 = border_neighbor[iN4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
@@ -16110,7 +16121,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqn4 = dx_loc * dz_loc;
@@ -16127,7 +16138,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bS4) {
 			// граничный узел.
-			dSqs4 = sosedb[iS4 - maxelm].dS;
+			dSqs4 = border_neighbor[iS4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
@@ -16135,7 +16146,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqs4 = dx_loc * dz_loc;
@@ -16152,7 +16163,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bT4) {
 			// граничный узел.
-			dSqt4 = sosedb[iT4 - maxelm].dS;
+			dSqt4 = border_neighbor[iT4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
@@ -16160,7 +16171,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqt4 = dx_loc * dy_loc;
@@ -16177,7 +16188,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		if (bB4) {
 			// граничный узел.
-			dSqb4 = sosedb[iB4 - maxelm].dS;
+			dSqb4 = border_neighbor[iB4 - maxelm].dS;
 		}
 		else {
 			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
@@ -16185,7 +16196,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 			}
 			else {
 				// вычисление размеров соседнего контрольного объёма:
-				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
 
 				dSqb4 = dx_loc * dy_loc;
@@ -16201,7 +16212,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
 		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
-		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//printf("disbalanse: %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
@@ -16216,7 +16227,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
 		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
-		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//printf("disbalanse: %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
@@ -16231,7 +16242,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		// Небольшой дисбаланс присутствует.
 		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
 		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
-		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//printf("disbalanse: %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
 		//system("PAUSE");
 		// Вводим корректирующую поправку.
 		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
@@ -16251,7 +16262,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
     if (!bbond) {
 		// внутренние КО.
 
-		// Линейно интерполлируем скорости на грань контрольного объёма,
+		// Линейно интерполируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		if (bLRfree&&((!b_on_adaptive_local_refinement_mesh))) {
@@ -16863,9 +16874,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	}
    else {
 
-	   integer interpol=0; // 0 или 1 при линейной интерполяции.
+	   const integer interpol=0; // 0 или 1 при линейной интерполяции.
 
-	   if (interpol==0) {
+#if (interpol==0)
+	   {
 
 		   if (1) {
 
@@ -17069,10 +17081,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bE) {
 
 					   integer inumber = iE - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iE] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iE] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17088,10 +17100,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bW) {
 
 					   integer inumber = iW - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iW] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iW] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17107,10 +17119,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bN) {
 
 					   integer inumber = iN - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iN] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iN] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17126,10 +17138,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bS) {
 
 					   integer inumber = iS - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iS] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iS] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17145,10 +17157,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bT) {
 
 					   integer inumber = iT - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iT] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iT] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17164,10 +17176,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bB) {
 
 					   integer inumber = iB - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iB] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iB] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17183,10 +17195,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bE2) {
 
 					   integer inumber = iE2 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iE2] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iE2] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17202,10 +17214,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bW2) {
 
 					   integer inumber = iW2 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iW2] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iW2] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17221,10 +17233,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bN2) {
 
 					   integer inumber = iN2 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iN2] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iN2] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17240,10 +17252,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bS2) {
 
 					   integer inumber = iS2 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iS2] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iS2] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17259,10 +17271,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bT2) {
 
 					   integer inumber = iT2 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iT2] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iT2] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17278,10 +17290,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bB2) {
 
 					   integer inumber = iB2 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iB2] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iB2] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17297,10 +17309,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bE3) {
 
 					   integer inumber = iE3 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iE3] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iE3] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17316,10 +17328,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bW3) {
 
 					   integer inumber = iW3 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iW3] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iW3] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17335,10 +17347,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bN3) {
 
 					   integer inumber = iN3 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iN3] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iN3] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17354,10 +17366,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bS3) {
 
 					   integer inumber = iS3 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iS3] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iS3] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17373,10 +17385,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bT3) {
 
 					   integer inumber = iT3 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iT3] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iT3] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17392,10 +17404,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bB3) {
 
 					   integer inumber = iB3 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iB3] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iB3] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17411,10 +17423,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bE4) {
 
 					   integer inumber = iE4 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iE4] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iE4] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17430,10 +17442,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bW4) {
 
 					   integer inumber = iW4 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADXPRESS][iW4] = potent[GRADXPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADXPRESS][iW4] = potent[GRADXPRESS][iP];
 					   }
 					   else {
@@ -17449,10 +17461,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bN4) {
 
 					   integer inumber = iN4 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iN4] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iN4] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17468,10 +17480,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bS4) {
 
 					   integer inumber = iS4 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADYPRESS][iS4] = potent[GRADYPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADYPRESS][iS4] = potent[GRADYPRESS][iP];
 					   }
 					   else {
@@ -17487,10 +17499,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bT4) {
 
 					   integer inumber = iT4 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iT4] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iT4] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17506,10 +17518,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 				   if (bB4) {
 
 					   integer inumber = iB4 - maxelm;
-					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+					   if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bpressure)) {
 						   potent[GRADZPRESS][iB4] = potent[GRADZPRESS][iP];
 					   }
-					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+					   else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bopening)) {
 						   potent[GRADZPRESS][iB4] = potent[GRADZPRESS][iP];
 					   }
 					   else {
@@ -17523,7 +17535,10 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		   }
 	   }
-	   else if (interpol==1) {
+	   
+#endif
+#if (interpol==1)
+	   {
 
         
 		   // не работает на АЛИС.
@@ -17534,12 +17549,12 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		   }
 
 		// граничные узлы.
-		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
+		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполяции.
 
 		if (bE) {
 
 			 integer inumber=iE-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADXPRESS][iE]=potent[GRADXPRESS][iP]+(dxe/dxw)*(potent[GRADXPRESS][iP]-potent[GRADXPRESS][iW]);
 					potent[GRADXPRESS][iE]=0.0;
 				}
@@ -17556,7 +17571,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		if (bW) {
 
                 integer inumber=iW-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADXPRESS][iW]=potent[GRADXPRESS][iP]+(dxw/dxe)*(potent[GRADXPRESS][iP]-potent[GRADXPRESS][iE]);
 					potent[GRADXPRESS][iW]=0.0;
 				}
@@ -17573,7 +17588,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		if (bN) {
 
                 integer inumber=iN-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADYPRESS][iN]=potent[GRADYPRESS][iP]+(dyn/dys)*(potent[GRADYPRESS][iP]-potent[GRADYPRESS][iS]);
 					potent[GRADYPRESS][iN]=0.0;
 				}
@@ -17589,7 +17604,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		if (bS) {
 
 			integer inumber=iS-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADYPRESS][iS]=potent[GRADYPRESS][iP]+(dys/dyn)*(potent[GRADYPRESS][iP]-potent[GRADYPRESS][iN]);
 					potent[GRADYPRESS][iS]=0.0;
 				}
@@ -17605,7 +17620,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		if (bT) {
 
 			integer inumber=iT-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADZPRESS][iT]=potent[GRADZPRESS][iP]+(dzt/dzb)*(potent[GRADZPRESS][iP]-potent[GRADZPRESS][iB]);
 					potent[GRADZPRESS][iT]=0.0;
 				}
@@ -17622,7 +17637,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		if (bB) {
 
                 integer inumber=iB-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
+				if (((border_neighbor[inumber].MCB>=ls) && (border_neighbor[inumber].MCB<(ls+lw)) && w[border_neighbor[inumber].MCB-ls].bpressure)) {
 					//potent[GRADZPRESS][iB]=potent[GRADZPRESS][iP]+(dzb/dzt)*(potent[GRADZPRESS][iP]-potent[GRADZPRESS][iT]);
 					potent[GRADZPRESS][iB]=0.0;
 				}
@@ -17637,17 +17652,18 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		}
 
 	   }
-	}
+#endif	
+}
 
 
 } // green_gaussPRESS
 
 // Вычисление градиентов скоростей в центрах внутренних КО
-// и на границах с помощью квадратичной интерполляции.
-// Поскольку интерполляция квадратичная то точность данной формулы O(h^2).
+// и на границах с помощью квадратичной интерполяции.
+// Поскольку интерполяция квадратичная то точность данной формулы O(h^2).
 // данная функция реализована 15 мая 2012 года.
 void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond) {
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
 	// если bbond == true то будут вычислены значения в граничных КО, иначе только во внутренних.
@@ -17657,7 +17673,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1; iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -17671,7 +17687,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	if (iB>=maxelm) bB=true;
 
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 
 
@@ -17682,7 +17698,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 
 		doublereal hxminus, hxplus, hyminus, hyplus, hzminus, hzplus;
-		// компоненты сорости.
+		// компоненты скорости.
 		doublereal VXP, VXW, VXE, VXN, VXS, VXT, VXB;
 		doublereal VYP, VYW, VYE, VYN, VYS, VYT, VYB;
 		doublereal VZP, VZW, VZE, VZN, VZS, VZT, VZB;
@@ -17766,139 +17782,139 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	}
 	else {
 		// граничные узлы.
-		// градиенты в граничных узлах восстанавливаются с помощью квадратичной интерполляции.
+		// градиенты в граничных узлах восстанавливаются с помощью квадратичной интерполяции.
 
 		if (bE) {
 
-			// квадратичная интерполляция.
+			// квадратичная интерполяция.
 
 			TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iW, nvtx, pa, pb,WSIDE);
-			center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
+			center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
 					
-			potent[GRADXVX][iE] = my_quadratic_interpolation('+', potent[GRADXVX][sosedi[WSIDE][iW].iNODE1], potent[GRADXVX][iW], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVX][iE] = my_quadratic_interpolation('+', potent[GRADYVX][sosedi[WSIDE][iW].iNODE1], potent[GRADYVX][iW], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVX][iE] = my_quadratic_interpolation('+', potent[GRADZVX][sosedi[WSIDE][iW].iNODE1], potent[GRADZVX][iW], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVX][iE] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADXVX][iW], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVX][iE] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADYVX][iW], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVX][iE] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADZVX][iW], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 
-			potent[GRADXVY][iE] = my_quadratic_interpolation('+', potent[GRADXVY][sosedi[WSIDE][iW].iNODE1], potent[GRADXVY][iW], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVY][iE] = my_quadratic_interpolation('+', potent[GRADYVY][sosedi[WSIDE][iW].iNODE1], potent[GRADYVY][iW], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVY][iE] = my_quadratic_interpolation('+', potent[GRADZVY][sosedi[WSIDE][iW].iNODE1], potent[GRADZVY][iW], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVY][iE] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADXVY][iW], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVY][iE] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADYVY][iW], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVY][iE] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADZVY][iW], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 
-			potent[GRADXVZ][iE] = my_quadratic_interpolation('+', potent[GRADXVZ][sosedi[WSIDE][iW].iNODE1], potent[GRADXVZ][iW], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVZ][iE] = my_quadratic_interpolation('+', potent[GRADYVZ][sosedi[WSIDE][iW].iNODE1], potent[GRADYVZ][iW], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVZ][iE] = my_quadratic_interpolation('+', potent[GRADZVZ][sosedi[WSIDE][iW].iNODE1], potent[GRADZVZ][iW], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVZ][iE] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADXVZ][iW], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVZ][iE] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADYVZ][iW], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVZ][iE] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADZVZ][iW], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 		}
 
 		if (bW) {
 
-			// квадратичная интерполляция.
+			// квадратичная интерполяция.
 
 			TOCHKA pp, pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iE, nvtx, pa, pb,ESIDE);
-			center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
+			center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
 
-			potent[GRADXVX][iW] = my_quadratic_interpolation('-', potent[GRADXVX][sosedi[ESIDE][iE].iNODE1], potent[GRADXVX][iE], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVX][iW] = my_quadratic_interpolation('-', potent[GRADYVX][sosedi[ESIDE][iE].iNODE1], potent[GRADYVX][iE], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVX][iW] = my_quadratic_interpolation('-', potent[GRADZVX][sosedi[ESIDE][iE].iNODE1], potent[GRADZVX][iE], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVX][iW] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADXVX][iE], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVX][iW] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADYVX][iE], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVX][iW] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADZVX][iE], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 
-			potent[GRADXVY][iW] = my_quadratic_interpolation('-', potent[GRADXVY][sosedi[ESIDE][iE].iNODE1], potent[GRADXVY][iE], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVY][iW] = my_quadratic_interpolation('-', potent[GRADYVY][sosedi[ESIDE][iE].iNODE1], potent[GRADYVY][iE], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVY][iW] = my_quadratic_interpolation('-', potent[GRADZVY][sosedi[ESIDE][iE].iNODE1], potent[GRADZVY][iE], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVY][iW] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADXVY][iE], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVY][iW] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADYVY][iE], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVY][iW] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADZVY][iE], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 
-			potent[GRADXVZ][iW] = my_quadratic_interpolation('-', potent[GRADXVZ][sosedi[ESIDE][iE].iNODE1], potent[GRADXVZ][iE], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVZ][iW] = my_quadratic_interpolation('-', potent[GRADYVZ][sosedi[ESIDE][iE].iNODE1], potent[GRADYVZ][iE], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVZ][iW] = my_quadratic_interpolation('-', potent[GRADZVZ][sosedi[ESIDE][iE].iNODE1], potent[GRADZVZ][iE], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVZ][iW] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADXVZ][iE], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVZ][iW] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADYVZ][iE], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVZ][iW] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADZVZ][iE], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 		}
 
 		if (bN) {
 
-			// квадратичная интерполляция.
+			// квадратичная интерполяция.
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iS, nvtx, pa, pb,SSIDE);
-			center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
+			center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
 
-			potent[GRADXVX][iN] = my_quadratic_interpolation('+', potent[GRADXVX][sosedi[SSIDE][iS].iNODE1], potent[GRADXVX][iS], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVX][iN] = my_quadratic_interpolation('+', potent[GRADYVX][sosedi[SSIDE][iS].iNODE1], potent[GRADYVX][iS], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVX][iN] = my_quadratic_interpolation('+', potent[GRADZVX][sosedi[SSIDE][iS].iNODE1], potent[GRADZVX][iS], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVX][iN] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADXVX][iS], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVX][iN] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADYVX][iS], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVX][iN] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADZVX][iS], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 
-			potent[GRADXVY][iN] = my_quadratic_interpolation('+', potent[GRADXVY][sosedi[SSIDE][iS].iNODE1], potent[GRADXVY][iS], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVY][iN] = my_quadratic_interpolation('+', potent[GRADYVY][sosedi[SSIDE][iS].iNODE1], potent[GRADYVY][iS], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVY][iN] = my_quadratic_interpolation('+', potent[GRADZVY][sosedi[SSIDE][iS].iNODE1], potent[GRADZVY][iS], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVY][iN] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADXVY][iS], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVY][iN] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADYVY][iS], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVY][iN] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADZVY][iS], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 
-			potent[GRADXVZ][iN] = my_quadratic_interpolation('+', potent[GRADXVZ][sosedi[SSIDE][iS].iNODE1], potent[GRADXVZ][iS], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVZ][iN] = my_quadratic_interpolation('+', potent[GRADYVZ][sosedi[SSIDE][iS].iNODE1], potent[GRADYVZ][iS], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVZ][iN] = my_quadratic_interpolation('+', potent[GRADZVZ][sosedi[SSIDE][iS].iNODE1], potent[GRADZVZ][iS], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVZ][iN] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADXVZ][iS], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVZ][iN] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADYVZ][iS], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVZ][iN] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADZVZ][iS], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 		}
 
 		if (bS) {
 
-            // квадратичная интерполляция.
+            // квадратичная интерполяция.
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp, 100);
 		    center_cord3D(iN, nvtx, pa, pb, NSIDE);
-			center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+			center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
 
-			potent[GRADXVX][iS] = my_quadratic_interpolation('-', potent[GRADXVX][sosedi[NSIDE][iN].iNODE1], potent[GRADXVX][iN], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVX][iS] = my_quadratic_interpolation('-', potent[GRADYVX][sosedi[NSIDE][iN].iNODE1], potent[GRADYVX][iN], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVX][iS] = my_quadratic_interpolation('-', potent[GRADZVX][sosedi[NSIDE][iN].iNODE1], potent[GRADZVX][iN], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVX][iS] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADXVX][iN], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVX][iS] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADYVX][iN], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVX][iS] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADZVX][iN], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
-			potent[GRADXVY][iS] = my_quadratic_interpolation('-', potent[GRADXVY][sosedi[NSIDE][iN].iNODE1], potent[GRADXVY][iN], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVY][iS] = my_quadratic_interpolation('-', potent[GRADYVY][sosedi[NSIDE][iN].iNODE1], potent[GRADYVY][iN], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVY][iS] = my_quadratic_interpolation('-', potent[GRADZVY][sosedi[NSIDE][iN].iNODE1], potent[GRADZVY][iN], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVY][iS] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADXVY][iN], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVY][iS] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADYVY][iN], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVY][iS] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADZVY][iN], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
-			potent[GRADXVZ][iS] = my_quadratic_interpolation('-', potent[GRADXVZ][sosedi[NSIDE][iN].iNODE1], potent[GRADXVZ][iN], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVZ][iS] = my_quadratic_interpolation('-', potent[GRADYVZ][sosedi[NSIDE][iN].iNODE1], potent[GRADYVZ][iN], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVZ][iS] = my_quadratic_interpolation('-', potent[GRADZVZ][sosedi[NSIDE][iN].iNODE1], potent[GRADZVZ][iN], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVZ][iS] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADXVZ][iN], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVZ][iS] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADYVZ][iN], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVZ][iS] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADZVZ][iN], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 		}
 
 		if (bT) {
 
-			// квадратичная интерполляция.
+			// квадратичная интерполяция.
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iB, nvtx, pa, pb,BSIDE);
-			center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
+			center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
 					
-			potent[GRADXVX][iT] = my_quadratic_interpolation('+', potent[GRADXVX][sosedi[BSIDE][iB].iNODE1], potent[GRADXVX][iB], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVX][iT] = my_quadratic_interpolation('+', potent[GRADYVX][sosedi[BSIDE][iB].iNODE1], potent[GRADYVX][iB], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVX][iT] = my_quadratic_interpolation('+', potent[GRADZVX][sosedi[BSIDE][iB].iNODE1], potent[GRADZVX][iB], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVX][iT] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADXVX][iB], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVX][iT] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADYVX][iB], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVX][iT] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADZVX][iB], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 
-			potent[GRADXVY][iT] = my_quadratic_interpolation('+', potent[GRADXVY][sosedi[BSIDE][iB].iNODE1], potent[GRADXVY][iB], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVY][iT] = my_quadratic_interpolation('+', potent[GRADYVY][sosedi[BSIDE][iB].iNODE1], potent[GRADYVY][iB], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVY][iT] = my_quadratic_interpolation('+', potent[GRADZVY][sosedi[BSIDE][iB].iNODE1], potent[GRADZVY][iB], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVY][iT] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADXVY][iB], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVY][iT] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADYVY][iB], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVY][iT] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADZVY][iB], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 
-			potent[GRADXVZ][iT] = my_quadratic_interpolation('+', potent[GRADXVZ][sosedi[BSIDE][iB].iNODE1], potent[GRADXVZ][iB], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVZ][iT] = my_quadratic_interpolation('+', potent[GRADYVZ][sosedi[BSIDE][iB].iNODE1], potent[GRADYVZ][iB], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVZ][iT] = my_quadratic_interpolation('+', potent[GRADZVZ][sosedi[BSIDE][iB].iNODE1], potent[GRADZVZ][iB], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVZ][iT] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADXVZ][iB], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVZ][iT] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADYVZ][iB], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVZ][iT] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADZVZ][iB], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 		}
 
 		if (bB) {
 
-			// квадратичная интерполляция.
+			// квадратичная интерполяция.
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
 		    center_cord3D(iT, nvtx, pa, pb,TSIDE);
-			center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+			center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
 
 
-			potent[GRADXVX][iB] = my_quadratic_interpolation('-', potent[GRADXVX][sosedi[TSIDE][iT].iNODE1], potent[GRADXVX][iT], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVX][iB] = my_quadratic_interpolation('-', potent[GRADYVX][sosedi[TSIDE][iT].iNODE1], potent[GRADYVX][iT], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVX][iB] = my_quadratic_interpolation('-', potent[GRADZVX][sosedi[TSIDE][iT].iNODE1], potent[GRADZVX][iT], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVX][iB] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADXVX][iT], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVX][iB] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADYVX][iT], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVX][iB] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADZVX][iT], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 
-			potent[GRADXVY][iB] = my_quadratic_interpolation('-', potent[GRADXVY][sosedi[TSIDE][iT].iNODE1], potent[GRADXVY][iT], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVY][iB] = my_quadratic_interpolation('-', potent[GRADYVY][sosedi[TSIDE][iT].iNODE1], potent[GRADYVY][iT], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVY][iB] = my_quadratic_interpolation('-', potent[GRADZVY][sosedi[TSIDE][iT].iNODE1], potent[GRADZVY][iT], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVY][iB] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADXVY][iT], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVY][iB] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADYVY][iT], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVY][iB] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADZVY][iT], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 
-			potent[GRADXVZ][iB] = my_quadratic_interpolation('-', potent[GRADXVZ][sosedi[TSIDE][iT].iNODE1], potent[GRADXVZ][iT], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVZ][iB] = my_quadratic_interpolation('-', potent[GRADYVZ][sosedi[TSIDE][iT].iNODE1], potent[GRADYVZ][iT], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVZ][iB] = my_quadratic_interpolation('-', potent[GRADZVZ][sosedi[TSIDE][iT].iNODE1], potent[GRADZVZ][iT], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVZ][iB] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADXVZ][iT], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVZ][iB] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADYVZ][iT], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVZ][iB] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADZVZ][iT], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 		}
 	}
 
@@ -17906,19 +17922,19 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 // нахождение производных от скорости первого или второго порядка точности.
 void green_gauss(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond, FLOW &f,
-	BOUND* &sosedb, integer *ilevel_alice) {
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond, FLOW &f,
+	BOUND* &border_neighbor, integer *ilevel_alice) {
 
 	// если bsecondorder==true то производные будут вычисляться со вторым порядком точности.
 	bool bsecondorder=false; // если false то внутри может применяться монотонизирующая поправка Рхи-Чоу.
 
 	if (bsecondorder) {
 		// второй порядок точности.
-		green_gaussO2(iP, potent, nvtx, pa, sosedi, maxelm, bbond);
+		green_gaussO2(iP, potent, nvtx, pa, neighbors_for_the_internal_node, maxelm, bbond);
 	}
 	else {
 		// первый порядок точности.
-		green_gaussO1(iP, potent, nvtx, pa, sosedi, maxelm, bbond, f.mf[iP], f.prop[RHO], f.prop_b[RHO], sosedb, ilevel_alice);
+		green_gaussO1(iP, potent, nvtx, pa, neighbors_for_the_internal_node, maxelm, bbond, f.mf[iP], f.prop[RHO], f.prop_b[RHO], border_neighbor, ilevel_alice);
 	}
 
 } // green_gauss

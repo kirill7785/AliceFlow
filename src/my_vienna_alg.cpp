@@ -237,7 +237,7 @@ void viennacl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 
 	// Для организации параллельных вычислений на центральном процессоре необходимо 
-	// прописатть #define VIENNACL_WITH_OPENMP 1 перед подключением заголовков VIENNACL.
+	// прописать #define VIENNACL_WITH_OPENMP 1 перед подключением заголовков VIENNACL.
 	// Добавить опцию /openmp в параметры visual Studio.
 	// использовать не ilu0 предобуславливание, а специальное распараллеленное chow_patel_ilu
 	// предобуславливание. Стандарт ilu0 не подразумевает распараллеливания.
@@ -635,7 +635,7 @@ void viennacl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	std::cout << "Reading matrix completed." << std::endl;
 
-	// Вектора :
+	// Вектора:
 	//viennacl::vector<ScalarType> vcl_vec(vcl_compressed_matrix.size1(), ctx);
 	//viennacl::vector<ScalarType> vcl_result(vcl_compressed_matrix.size1(), ctx);
 	viennacl::vector<ScalarType> vcl_vec(rows, ctx);
@@ -840,7 +840,7 @@ void viennacl_solver(equation3D* &sl, equation3D_bon* &slb,
 	**/
 	std::cout << "!!!! CALCULATION COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
-	// Обратное копирование :
+	// Обратное копирование:
 	viennacl::copy(vcl_result, std_result);
 
 	for (std::size_t i = 0; i < rows; ++i) {
@@ -1253,7 +1253,7 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 
 	std::cout << "Reading matrix completed." << std::endl;
 
-	// Вектора :
+	// Вектора:
 	//viennacl::vector<ScalarType> vcl_vec(vcl_compressed_matrix.size1(), ctx);
 	//viennacl::vector<ScalarType> vcl_result(vcl_compressed_matrix.size1(), ctx);
 	viennacl::vector<ScalarType> vcl_vec(rows, ctx);
@@ -1400,7 +1400,7 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 	
 	std::cout << "!!!! CALCULATION COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
-	// Обратное копирование :
+	// Обратное копирование:
 	viennacl::copy(vcl_result, std_result);
 
 	for (std::size_t i = 0; i < rows; ++i) {

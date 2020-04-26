@@ -1,4 +1,4 @@
-// veb_Dominik_Dragon.cpp : Defines the entry point for the console application.
+// veb_Dominik_Dragon.cpp: Defines the entry point for the console application.
 //
 
 #include "stdafx.h"

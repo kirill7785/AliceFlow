@@ -42,13 +42,13 @@ void SetLength(doublereal* &ra, integer isizeold, integer isize)
 {
 
 	// isize - новая длина динамического массива.
-	doublereal *temp=NULL;
+	doublereal *temp=nullptr;
 	temp = new doublereal[isize];
     integer i;
 	for (i=0; i<isize; i++) temp[i]=0.0; // инициализация
     /*
 	integer isizeold;
-	if (ra != NULL) {
+	if (ra != nullptr) {
        isizeold = sizeof(ra)/sizeof(ra[0]); // длина старого массива
 	   #if doubleintprecision == 1
 			printf("%lld  ",isizeold); // не хочет правильно определять размер массива
@@ -66,14 +66,14 @@ void SetLength(doublereal* &ra, integer isizeold, integer isize)
 	if (isize < isizeold) isizeold=isize;
 	for (i=0; i<isizeold; i++) temp[i]=ra[i];
 	
-	//if (ra != NULL) {
+	//if (ra != nullptr) {
 		delete[]  ra; // уничтожение объекта
-		ra = NULL;
+		//ra = nullptr;
 	//}
 	ra = new doublereal[isize]; // выделение памяти
 	for (i=0; i<isize; i++) ra[i]=temp[i]; // копирование
 	delete[] temp; // освобождение памяти
-	temp = NULL;
+	temp = nullptr;
 	
 } // SetLength
 
@@ -96,13 +96,13 @@ void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir,
 	doublereal eps = 1.0e-10;// shorter_length_for_simplificationX(g);
 	// Долгое время успешно работало для значения eps=1.0e-10 для всех направлений.
 	switch (iDir) {
-	case XY : eps = shorter_length_for_simplificationZ(g, b, lb, w, lw, s, ls);
+	case XY: eps = shorter_length_for_simplificationZ(g, b, lb, w, lw, s, ls);
 		break;
-	case XZ : eps = shorter_length_for_simplificationY(g, b, lb, w, lw, s, ls);
+	case XZ: eps = shorter_length_for_simplificationY(g, b, lb, w, lw, s, ls);
 		break;
-	case YZ : eps = shorter_length_for_simplificationX(g, b, lb, w, lw, s, ls);
+	case YZ: eps = shorter_length_for_simplificationX(g, b, lb, w, lw, s, ls);
 		break;
-	default :
+	default:
 		printf("fatal error!!! unknown directional on function addboundary(...) in module uniformsimplemeshgen.cpp\n");
 		system("pause");
 		exit(1);
@@ -117,6 +117,49 @@ void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir,
 		rb[in]=g; // запись добавляемой границы в конец динамического массива.
 	}
 } // addboundary
+
+// добавляет несуществующую границу к массиву
+// Теперь с учётом координатного направления 13.08.2019
+void addboundary_rudiment(doublereal*& rb, integer& in, doublereal g, integer iDir,
+	BLOCK*& b, integer& lb, WALL*& w, integer& lw, SOURCE*& s, integer& ls) {
+	// rb - модифицируемый массив границ,
+	// in - номер последней границы в массиве, нумерация начинается с нуля.
+	// g - граница, кандидат на добавление.
+	// iDir - координатное направление XY(Z directional), XZ(Y directional), YZ(X directional).
+
+	// Зачем расстояния менее одной десятой мкм. 
+	// Гипотеза в том что это не физично для обычных моделей.
+	// const doublereal eps = 0.1e-6;//1e-30; // для отделения вещественного нуля.
+	// Это наиважнейший параметр влияющий на быстродействие и точность. 
+	// Разумно подобрав его быстродействие возрастает более чем на порядок,
+	// а те задачи которые раньше невозможно было посчитать начинают сходиться.
+	// 13.08.2019
+	doublereal eps = 1.0e-10;// shorter_length_for_simplificationX(g);
+	// Долгое время успешно работало для значения eps=1.0e-10 для всех направлений.
+	/*switch (iDir) {
+	case XY: eps = shorter_length_for_simplificationZ(g, b, lb, w, lw, s, ls);
+		break;
+	case XZ: eps = shorter_length_for_simplificationY(g, b, lb, w, lw, s, ls);
+		break;
+	case YZ: eps = shorter_length_for_simplificationX(g, b, lb, w, lw, s, ls);
+		break;
+	default:
+		printf("fatal error!!! unknown directional on function addboundary(...) in module uniformsimplemeshgen.cpp\n");
+		system("pause");
+		exit(1);
+		break;
+	}
+	*/
+	// Отличие в том что данный метод добавляет почти всегда, а не добавляет лишь если расстояние между линиями менее 1.0Е-10.
+	bool bfind = false;
+	for (integer i = 0; i <= in; i++) if (fabs(rb[i] - g) < eps/*admission*/) bfind = true;
+	if (!bfind) {
+		SetLength(rb, in + 1, in + 2);
+		in++;
+		rb[in] = g; // запись добавляемой границы в конец динамического массива.
+	}
+} // addboundary_rudiment
+
 
 /*
   // добавляет несуществующую границу к массиву
@@ -145,7 +188,7 @@ void addboundary(doublereal* &rb, integer &in, doublereal g) {
 } // addboundary
 */
 
-//С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
+//С помощью неполной НЕУБЫВАЮЩЕЙ кучи 
 //крупные элементы закидываем поближе к концу массива 
 template <typename myARRT>
 void reheap(myARRT a[], int length, int i)  {
@@ -186,7 +229,7 @@ void reheap(myARRT a[], int length, int i)  {
 	a[parent] = Temp;
 }
 
-//С помошью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
+//С помощью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
 //мелкие элементы закидываем поближе к началу массива 
 template <typename myARRT>
 void invreheap(myARRT a[], int length, int i)
@@ -311,7 +354,11 @@ void ShellSort(myARRT* &rb, integer in) {
 	myARRT x;
 	integer h;
 
-	for (h = 1; h <= in / 9; h = 3 * h + 1);
+	//for (h = 1; h <= in / 9; h = 3 * h + 1);
+	h = 1;
+	while (h <= in / 9) {
+		h = 3 * h + 1;
+	}
 	for (; h > 0; h /= 3) {
 		for (i = h; i <= in; i++) {
 			j = i; 
@@ -328,6 +375,7 @@ void ShellSort(myARRT* &rb, integer in) {
 
 // Сортировка Тима (Тим Петерсон).
 const integer RUN = 32;
+const bool INS_Sort = true;
 
 // this function sorts array from left index to
 // to right index which is of size atmost RUN
@@ -356,11 +404,11 @@ void mergeTim(myARRT arr[], integer l, integer m, integer r)
 	integer len1 = m - l + 1, len2 = r - m;
 
 	//myARRT left[len1], right[len2];
-	myARRT *left = NULL; 
+	myARRT *left = nullptr; 
 	if (len1 >= 0) {
 		left = new myARRT[len1 + 1];
 	}
-	myARRT *right = NULL;
+	myARRT *right = nullptr;
 	if (len2 >= 0) {
 		right = new myARRT[len2 + 1];
 	}
@@ -968,9 +1016,9 @@ bool comparison_lam(TPROP* matlist, BLOCK* b, integer ib1, integer ib2, doublere
 void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 
 #if doubleintprecision == 1
-	printf("apriory mesh size : inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
+	printf("apriory mesh size: inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
 #else
-	printf("apriory mesh size : inx=%d iny=%d inz=%d\n", inx, iny, inz);
+	printf("apriory mesh size: inx=%d iny=%d inz=%d\n", inx, iny, inz);
 #endif
 
 	// check_mesh
@@ -1166,7 +1214,7 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 			//integer i_1 = 0, j_1 = 0, k_1 = 0;
 			integer ic9 = 0;
 			integer i_1[100], j_1[100], k_1[100];
-			bool *i_b=NULL, *j_b=NULL, *k_b=NULL;
+			bool *i_b=nullptr, *j_b=nullptr, *k_b=nullptr;
 			i_b = new bool[inx];
 			j_b = new bool[iny];
 			k_b = new bool[inz];
@@ -1563,7 +1611,7 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 					}
 				}
 				
-			END_LAB8 :
+			END_LAB8:
 				// Если убрать это пустое действие то возникнет ошибка компилятора С2059.
 				ic7++;
 				ic7--;
@@ -3348,7 +3396,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 
 	// Быстрый препроцессинг за линейное время.
 	Block_indexes* block_indexes = new Block_indexes[lb];
-	//if (block_indexes == NULL) {
+	//if (block_indexes == nullptr) {
 		//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
 		//system("pause");
 		//exit(1);
@@ -3559,13 +3607,17 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 				//p.x = xc;
 				//p.y = yc;
 				//p.z = zc;
-				if ((bincomming) && ((b[ib_marker[i9 + inumboundaryx*i7 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+				bool b_this_is_SOLID_block = false;
+				if (b[ib_marker[i9 + inumboundaryx * i7 + inumboundaryx * inumboundaryy * i8]].itype == SOLID) {
+					b_this_is_SOLID_block = true;
+				}
+				if ((bincomming) && ((b_this_is_SOLID_block))) {
 					bincomming = false;
 					if (fabs(rxboundary[i9] - startpos) < minimum_fluid_gap_x) {
 						minimum_fluid_gap_x = fabs(rxboundary[i9] - startpos);
 					}
 				}
-				if ((!bincomming) && (!(b[ib_marker[i9 + inumboundaryx*i7 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+				if ((!bincomming) && (!(b_this_is_SOLID_block))) {
 					startpos = rxboundary[i9];
 					bincomming = true;
 				}
@@ -3589,13 +3641,17 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 				//p.x = xc;
 				//p.y = yc;
 				//p.z = zc;
-				if ((bincomming) && ((b[ib_marker[i7 + inumboundaryx*i9 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+				bool b_this_is_SOLID_block = false;
+				if ((b[ib_marker[i7 + inumboundaryx * i9 + inumboundaryx * inumboundaryy * i8]].itype == SOLID)) {
+					b_this_is_SOLID_block = true;
+				}
+				if ((bincomming) && (b_this_is_SOLID_block)) {
 					bincomming = false;
 					if (fabs(ryboundary[i9] - startpos) < minimum_fluid_gap_y) {
 						minimum_fluid_gap_y = fabs(ryboundary[i9] - startpos);
 					}
 				}
-				if ((!bincomming) && (!(b[ib_marker[i7 + inumboundaryx*i9 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+				if ((!bincomming) && (!(b_this_is_SOLID_block))) {
 					startpos = ryboundary[i9];
 					bincomming = true;
 				}
@@ -3618,13 +3674,17 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 				//p.x = xc;
 				//p.y = yc;
 				//p.z = zc;
-				if ((bincomming) && (b[ib_marker[i7 + inumboundaryx*i8 + inumboundaryx*inumboundaryy*i9]].itype == SOLID)) {
+				bool b_this_is_SOLID_block = false;
+				if (b[ib_marker[i7 + inumboundaryx * i8 + inumboundaryx * inumboundaryy * i9]].itype == SOLID) {
+					b_this_is_SOLID_block = true;
+				}
+				if ((bincomming) && (b_this_is_SOLID_block)) {
 					bincomming = false;
 					if (fabs(rzboundary[i9] - startpos) < minimum_fluid_gap_z) {
 						minimum_fluid_gap_z = fabs(rzboundary[i9] - startpos);
 					}
 				}
-				if ((!bincomming) && (!(b[ib_marker[i7 + inumboundaryx*i8 + inumboundaryx*inumboundaryy*i9]].itype == SOLID))) {
+				if ((!bincomming) && (!(b_this_is_SOLID_block))) {
 					startpos = rzboundary[i9];
 					bincomming = true;
 				}
@@ -3669,13 +3729,13 @@ void snap_to_moving(bool* &source_indexpopadaniqnagranYZ,
 
 RESTARTX_SNAPTO:
 
-	if (source_indexpopadaniqnagranYZ != NULL) {
+	if (source_indexpopadaniqnagranYZ != nullptr) {
 		delete[] source_indexpopadaniqnagranYZ;
-		source_indexpopadaniqnagranYZ = NULL;
+		source_indexpopadaniqnagranYZ = nullptr;
 	}
-	if (rxboundary != NULL) {
+	if (rxboundary != nullptr) {
 		delete[] rxboundary;
-		rxboundary = NULL;
+		rxboundary = nullptr;
 	}
 
 	inumboundaryx = 1;
@@ -3967,13 +4027,13 @@ RESTARTX_SNAPTO:
 
 RESTARTY_SNAPTO:
 
-	if (source_indexpopadaniqnagranXZ != NULL) {
+	if (source_indexpopadaniqnagranXZ != nullptr) {
 		delete[] source_indexpopadaniqnagranXZ;
-		source_indexpopadaniqnagranXZ = NULL;
+		source_indexpopadaniqnagranXZ = nullptr;
 	}
-	if (ryboundary != NULL) {
+	if (ryboundary != nullptr) {
 		delete[] ryboundary;
-		ryboundary = NULL;
+		ryboundary = nullptr;
 	}
 
 
@@ -4244,13 +4304,13 @@ RESTARTY_SNAPTO:
 
 RESTARTZ_SNAPTO:
 
-	if (source_indexpopadaniqnagranXY != NULL) {
+	if (source_indexpopadaniqnagranXY != nullptr) {
 		delete[] source_indexpopadaniqnagranXY;
-		source_indexpopadaniqnagranXY = NULL;
+		source_indexpopadaniqnagranXY = nullptr;
 	}
-	if (rzboundary != NULL) {
+	if (rzboundary != nullptr) {
 		delete[] rzboundary;
-		rzboundary = NULL;
+		rzboundary = nullptr;
 	}
 
 
@@ -4548,13 +4608,13 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	//bool brepeat = true;
 
 	// По Оси Ox
-	doublereal *rxboundary = NULL; // массив обязательных границ
+	doublereal *rxboundary = nullptr; // массив обязательных границ
 	integer inumboundaryx = 1;
 	
-	doublereal *ryboundary = NULL; // массив обязательных границ
+	doublereal *ryboundary = nullptr; // массив обязательных границ
 	integer inumboundaryy = 1;
 
-	doublereal *rzboundary = NULL; // массив обязательных границ
+	doublereal *rzboundary = nullptr; // массив обязательных границ
 	integer inumboundaryz = 1;
 
 	// подготовка к вычислению зазоров minimum fluid gap.
@@ -4571,9 +4631,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		lb,  ls,  lw,  b, s, w, lu, my_union, iunion_id_p1);
 
 
-	bool *source_indexpopadaniqnagranYZ = NULL;
-	bool *source_indexpopadaniqnagranXY = NULL;
-	bool *source_indexpopadaniqnagranXZ = NULL;
+	bool *source_indexpopadaniqnagranYZ = nullptr;
+	bool *source_indexpopadaniqnagranXY = nullptr;
+	bool *source_indexpopadaniqnagranXZ = nullptr;
 
 	// 12.03.2017
 	// реализация snap to
@@ -5410,7 +5470,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 								}
 							}
 							else {
-								printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 								system("PAUSE");
 								exit(1);
 							}
@@ -5437,7 +5497,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					else {
-						printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 						system("PAUSE");
 						exit(1);
 					}
@@ -5569,7 +5629,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 								}
 							}
 							else {
-								printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 								system("PAUSE");
 								exit(1);
 							}
@@ -5596,7 +5656,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					else {
-						printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 						system("PAUSE");
 						exit(1);
 					}
@@ -5689,7 +5749,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 								}
 							}
 							else {
-								printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 								system("PAUSE");
 								exit(1);
 							}
@@ -5716,7 +5776,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					else {
-						printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 						system("PAUSE");
 						exit(1);
 					}
@@ -5778,10 +5838,10 @@ integer ibalancen2(integer n2param, doublereal qL, doublereal qR, doublereal *rb
         bool bcontinue=true;
 		integer n2=n2param;
 		doublereal qgold=fmax(qL,qR);
-		// Защита от зацикливания :
+		// Защита от зацикливания:
 		integer ibound=0, imax=1000; // ограничение на максимальное число проходов.
 
-		// итерационная балансировка :
+		// итерационная балансировка:
 		while ((ibound<imax) && (bcontinue)) 
 		{	    
 
@@ -5913,13 +5973,13 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	//bool brepeat = true;
 
 	// По Оси Ox
-	doublereal *rxboundary = NULL; // массив обязательных границ
+	doublereal *rxboundary = nullptr; // массив обязательных границ
 	integer inumboundaryx = 1;
 
-	doublereal *ryboundary = NULL; // массив обязательных границ
+	doublereal *ryboundary = nullptr; // массив обязательных границ
 	integer inumboundaryy = 1;
 
-	doublereal *rzboundary = NULL; // массив обязательных границ
+	doublereal *rzboundary = nullptr; // массив обязательных границ
 	integer inumboundaryz = 1;
 
 	// подготовка к вычислению зазоров minimum fluid gap.
@@ -5936,9 +5996,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 
-	bool *source_indexpopadaniqnagranYZ = NULL;
-	bool *source_indexpopadaniqnagranXY = NULL;
-	bool *source_indexpopadaniqnagranXZ = NULL;
+	bool *source_indexpopadaniqnagranYZ = nullptr;
+	bool *source_indexpopadaniqnagranXY = nullptr;
+	bool *source_indexpopadaniqnagranXZ = nullptr;
 
 	// 12.03.2017
 	// реализация snap to
@@ -6696,7 +6756,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 								}
 							}
 							else {
-								printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 								system("PAUSE");
 								exit(1);
 							}
@@ -6722,7 +6782,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						}
 					}
 					else {
-						printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 						system("PAUSE");
 						exit(1);
 					}
@@ -6851,7 +6911,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 								}
 							}
 							else {
-								printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 								system("PAUSE");
 								exit(1);
 							}
@@ -6877,7 +6937,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						}
 					}
 					else {
-						printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 						system("PAUSE");
 						exit(1);
 					}
@@ -6966,7 +7026,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 								}
 							}
 							else {
-								printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+								printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 								system("PAUSE");
 								exit(1);
 							}
@@ -6992,7 +7052,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						}
 					}
 					else {
-						printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+						printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 						system("PAUSE");
 						exit(1);
 					}
@@ -7086,13 +7146,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	
 	// По Оси Ox
-	doublereal *rxboundary=NULL; // массив обязательных границ
+	doublereal *rxboundary=nullptr; // массив обязательных границ
 	integer inumboundaryx = 1;
 	
-	doublereal *ryboundary = NULL; // массив обязательных границ
+	doublereal *ryboundary = nullptr; // массив обязательных границ
 	integer inumboundaryy = 1;
 
-	doublereal *rzboundary = NULL; // массив обязательных границ
+	doublereal *rzboundary = nullptr; // массив обязательных границ
 	integer inumboundaryz = 1;
 
 	// подготовка к вычислению зазоров minimum fluid gap.
@@ -7110,9 +7170,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 	
 
-	bool *source_indexpopadaniqnagranYZ = NULL;
-	bool *source_indexpopadaniqnagranXY = NULL;
-	bool *source_indexpopadaniqnagranXZ = NULL;
+	bool *source_indexpopadaniqnagranYZ = nullptr;
+	bool *source_indexpopadaniqnagranXY = nullptr;
+	bool *source_indexpopadaniqnagranXZ = nullptr;
 
 	// 0.	none
 	// 1.	Snap to grid
@@ -7168,7 +7228,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	// Быстрый препроцессинг за линейное время.
 	Block_indexes* block_indexes = new Block_indexes[lb];
-	if (block_indexes == NULL) {
+	if (block_indexes == nullptr) {
 		printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
 		system("pause");
 		exit(1);
@@ -7409,7 +7469,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				}
 
 				if (b[ibcur].itype == FLUID) {
-					// Делаем проверочку : Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
+					// Делаем проверочку: Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
 					if (i < inumboundaryx - 1) {
 						doublereal cpos_plus = 0.5*(rxboundary[i + 2] + rxboundary[i+1]);
@@ -7854,7 +7914,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				}
 
 				if (b[ibcur].itype == FLUID) {
-					// Делаем проверочку : Есть хоть один сосед (N,S) тоже FLUID с учётом геометрической прогрессии 10.0 ?
+					// Делаем проверочку: Есть хоть один сосед (N,S) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
 					if (i < inumboundaryy - 1) {
 						doublereal cpos_plus = 0.5*(ryboundary[i + 2] + ryboundary[i + 1]);
@@ -8301,7 +8361,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 
 				if (b[ibcur].itype == FLUID) {
-					// Делаем проверочку : Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
+					// Делаем проверочку: Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
 					if (i < inumboundaryz - 1) {
 						doublereal cpos_plus = 0.5*(rzboundary[i + 2] + rzboundary[i + 1]);
@@ -8594,7 +8654,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer inz_fix = inz;
 	// Корректировка источника XY
 	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXY!=NULL) {
+		if (source_indexpopadaniqnagranXY!=nullptr) {
 			if (source_indexpopadaniqnagranXY[i]) {
 				doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
 				doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
@@ -8709,7 +8769,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									}
 								}
 								else {
-									printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 									system("PAUSE");
 									exit(1);
 								}
@@ -8735,7 +8795,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							}
 						}
 						else {
-							printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 							system("PAUSE");
 							exit(1);
 						}
@@ -8750,7 +8810,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	//inz++;
 
 	/*
-	if (source_indexpopadaniqnagranYZ!=NULL) {
+	if (source_indexpopadaniqnagranYZ!=nullptr) {
 		for (i = 0; i < ls; i++) {
 			if (source_indexpopadaniqnagranYZ[i] == false) {
 				printf("error\n");
@@ -8763,7 +8823,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer inx_fix = inx;
 	// Корректировка источника YZ
 	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranYZ!=NULL) {
+		if (source_indexpopadaniqnagranYZ!=nullptr) {
 			if (source_indexpopadaniqnagranYZ[i]) {
 				doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
 				doublereal yc = 0.5*(s[i].g.yS + s[i].g.yE);
@@ -8881,7 +8941,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									}
 								}
 								else {
-									printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 									system("PAUSE");
 									exit(1);
 								}
@@ -8907,7 +8967,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							}
 						}
 						else {
-							printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 							system("PAUSE");
 							exit(1);
 						}
@@ -8931,7 +8991,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer iny_fix = iny;
 	// Корректировка источника XZ
 	for (i = 0; i < ls; i++) {
-		if (source_indexpopadaniqnagranXZ != NULL) {
+		if (source_indexpopadaniqnagranXZ != nullptr) {
 			if (source_indexpopadaniqnagranXZ[i]) {
 				doublereal xc = 0.5*(s[i].g.xS + s[i].g.xE);
 				doublereal zc = 0.5*(s[i].g.zS + s[i].g.zE);
@@ -9050,7 +9110,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									}
 								}
 								else {
-									printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+									printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 									system("PAUSE");
 									exit(1);
 								}
@@ -9077,7 +9137,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							}
 						}
 						else {
-							printf("ERROR : sourse na granice dvus hollow or fluid blockov.");
+							printf("ERROR: sourse na granice dvus hollow or fluid blockov.");
 							system("PAUSE");
 							exit(1);
 						}
@@ -9201,7 +9261,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	quolite_refinement(inx, iny, inz, xpos, ypos, zpos);
 
 	patch_mesh_refinement_21_11_2019(inx, iny, inz,
-		xpos, ypos, zpos, lb, b);	
+		xpos, ypos, zpos, lb, b);
+
+	
 
 
 	// Освобождение оперативной памяти.

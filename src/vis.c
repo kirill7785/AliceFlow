@@ -249,7 +249,7 @@ void GLVis_PrintSStructGrid(HYPRE_SStructGrid grid,
    char meshfile[255];
 
    int dim = ((hypre_SStructGrid *)grid)->ndim;
-   int cellNV = (dim == 2) ? 4 : 8;
+   int cellNV = (dim == 2) ? 4: 8;
    int elemid = 2*dim-1;
    int nvert, nelem;
 
@@ -570,7 +570,7 @@ void GLVis_PrintStructGrid(HYPRE_StructGrid Grid,
 
    hypre_StructGrid *grid = (hypre_StructGrid *)Grid;
    int dim = grid->ndim;
-   int cellNV = (dim == 2) ? 4 : 8;
+   int cellNV = (dim == 2) ? 4: 8;
    int elemid = 2*dim-1;
    int nvert, nelem;
 

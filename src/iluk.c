@@ -683,17 +683,17 @@ L160:
 
 	return 0;
 
-L995 :
+L995:
 	// ierr==-1
 	ierr_loc=-1;
 	return 0;
 
-L996 :
+L996:
 	// ierr==-2
 	ierr_loc=-2;
 	return 0;
 
-L999 :
+L999:
 	// ierr==-5
 	ierr_loc=-5;
 	return 0;
@@ -1145,18 +1145,20 @@ bool BiCGStab_internal3_incomming_now = false;
 	integer lfil, doublereal*& alu, integer*& jlu, integer*& ju,
 	integer*& levs, integer iwk, doublereal*& w, integer*& jw, doublereal*& w_dubl, integer*& jw_dubl, integer& ierr)
 {
+	integer ireturn_state = 0;
 	if (1) {
-		integer ir = 0;
-		//ir=iluk_Saad(n,a,ja,ia,lfil,alu,jlu,ju,levs,iwk,w,jw,ierr);
+		
+		//ireturn_state=iluk_Saad(n,a,ja,ia,lfil,alu,jlu,ju,levs,iwk,w,jw,ierr);
 
 		// на основе быстродействующей хеш таблицы и двоичной кучи.
-		ir = iluk_quick_stable(n, a, ja, ia, lfil, alu, jlu, ju, levs, iwk, w, jw, ierr);
+		ireturn_state = iluk_quick_stable(n, a, ja, ia, lfil, alu, jlu, ju, levs, iwk, w, jw, ierr);
 
-		return ir;
+		
 	}
 	else {
-		iluk_2_work( n,  a, ja, ia, lfil, alu, jlu, ju, levs, iwk, w, jw, w_dubl, jw_dubl, ierr);
+		ireturn_state =iluk_2_work( n,  a, ja, ia, lfil, alu, jlu, ju, levs, iwk, w, jw, w_dubl, jw_dubl, ierr);
 	}
+	return ireturn_state;
 }
 
 // 13 августа 2015 года распараллелил iluk алгоритм из библиотеки SPARSKIT2
@@ -2047,9 +2049,9 @@ integer ideb;  */
 #endif
 
 	switch (ierr_messag) {
-	   case -1 : goto L995; break;
-	   case -2 : goto L996; break;
-	   case -5 : goto L999; break;
+	   case -1: goto L995; break;
+	   case -2: goto L996; break;
+	   case -5: goto L999; break;
 	}
     
 	++jw;

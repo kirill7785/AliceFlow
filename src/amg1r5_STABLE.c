@@ -118,7 +118,7 @@ integer c__10 = 10;
 /*     AMG1R6                                        MAIN SUBROUTINE */
 
 /*     RELEASE 1.6, July 2002 */
-/* 1.  changed : value of ntrim in pcol */
+/* 1.  changed: value of ntrim in pcol */
 /* 2.  dimensioning (1) changed to (*) in some subroutines to avoid subscript */
 /*     range checks in sparse solvers */
 
@@ -321,7 +321,7 @@ NDRV СУЩЕСТВУЕТ ТАКЖЕ ПАРАМЕТР LRATIO.
 /*                  -- MOST OF THE OFF-DIAGONAL ENTRIES <= 0 ; */
 /*                  -- ROWSUMS SHOULD BE >= 0 . */
 
-// Матрица L положительно определённая : диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
+// Матрица L положительно определённая: диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
 // Сумма коэффициентов в строке больше либо равна нулю - диагональное преобладание.
 
 
@@ -997,7 +997,7 @@ L70:
 /*     AMG1R6                                        MAIN SUBROUTINE */
 
 /*     RELEASE 1.6, July 2002 */
-/* 1.  changed : value of ntrim in pcol */
+/* 1.  changed: value of ntrim in pcol */
 /* 2.  dimensioning (1) changed to (*) in some subroutines to avoid subscript */
 /*     range checks in sparse solvers */
 
@@ -1119,7 +1119,7 @@ L70:
 /*     AMG1R6                                        MAIN SUBROUTINE */
 
 /*     RELEASE 1.6, July 2002 */
-/* 1.  changed : value of ntrim in pcol */
+/* 1.  changed: value of ntrim in pcol */
 /* 2.  dimensioning (1) changed to (*) in some subroutines to avoid subscript */
 /*     range checks in sparse solvers */
 
@@ -1344,7 +1344,7 @@ L70:
 										/*                  -- MOST OF THE OFF-DIAGONAL ENTRIES <= 0 ; */
 										/*                  -- ROWSUMS SHOULD BE >= 0 . */
 
-										// Матрица L положительно определённая : диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
+										// Матрица L положительно определённая: диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
 										// Сумма коэффициентов в строке больше либо равна нулю - диагональное преобладание.
 
 
@@ -2053,7 +2053,7 @@ L20:
 
 	if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+		printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -2111,7 +2111,7 @@ L20:
 	z75 = new doublereal[n75];
 	if ((ri75 == NULL) || (roc75 == NULL) || (s75 == NULL) || (t75 == NULL) || (vi75 == NULL) || (pi75 == NULL) || (dx75 == NULL) || (dax75 == NULL) || (y75 == NULL) || (z75 == NULL)) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for : bicgStab + camg...\n");
+		printf("Problem: not enough memory on your equipment for: bicgStab + camg...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -2217,7 +2217,7 @@ L20:
 	}
 	else if ((n75 >= 30000) && (n75 < 100000)) {
 		// Здесь я немного увеличил число итераций и 
-		// скоректировал условие окончания чтобы считало 
+		// скорректировал условие окончания чтобы считало 
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
@@ -2978,7 +2978,7 @@ L70:
 										/*                  -- MOST OF THE OFF-DIAGONAL ENTRIES <= 0 ; */
 										/*                  -- ROWSUMS SHOULD BE >= 0 . */
 
-										// Матрица L положительно определённая : диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
+										// Матрица L положительно определённая: диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
 										// Сумма коэффициентов в строке больше либо равна нулю - диагональное преобладание.
 
 
@@ -3654,7 +3654,7 @@ L20:
 
 	if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+		printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -3712,7 +3712,7 @@ L20:
 	z75 = new doublereal[n75];
 	if ((ri75 == NULL) || (roc75 == NULL) || (s75 == NULL) || (t75 == NULL) || (vi75 == NULL) || (pi75 == NULL) || (dx75 == NULL) || (dax75 == NULL) || (y75 == NULL) || (z75 == NULL)) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for : bicgStab + camg...\n");
+		printf("Problem: not enough memory on your equipment for: bicgStab + camg...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -3818,7 +3818,7 @@ L20:
 	}
 	else if ((n75 >= 30000) && (n75 < 100000)) {
 		// Здесь я немного увеличил число итераций и 
-		// скоректировал условие окончания чтобы считало 
+		// скорректировал условие окончания чтобы считало 
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
@@ -5886,7 +5886,7 @@ L9901:
 /*     THE INTERCONNECTION BETWEEN THESE TWO REPRESENTATIONS OF THE */
 /*     SAME POINTS IS GIVEN BY THE RELATION */
 
-/*                          II := I+NPTS+1. */
+/*                          II:= I+NPTS+1. */
 
 /*     AN EMPTY LIST IS CHARACTERIZED BY ICG(JV)=JV, IFG(JV)=JV. */
 /*     OBVIOUSLY, IT IS QUITE EASY TO REMOVE OR ADD POINTS TO THE LIST. */
@@ -5980,7 +5980,7 @@ L9901:
 
 		/* old value of ntrlim has been removed */
 		/*     NTRLIM = 2*(IW(IHI+IWS+1)-IW(ILO+IWS))/NPTS */
-		/* new value of ntrlim : (modified by Krechel 22.07.02) */
+		/* new value of ntrlim: (modified by Krechel 22.07.02) */
 		ntrlim = 0;
 		i__1 = ihi;
 		for (i__ = ilo; i__ <= i__1; ++i__) {
@@ -8368,10 +8368,10 @@ L190:
 
 /*     PERFORMS ONE (PARTIAL) GAUSS-SEIDEL SWEEP ON GRIK K: */
 
-/*     IREL = 1 :   PARTIAL GAUSS-SEIDEL SWEEP (ONLY F-POINTS) */
-/*          = 2 :   FULL GAUSS-SEIDEL SWEEP (ALL POINTS) */
-/*          = 3 :   PARTIAL GAUSS-SEIDEL SWEEP (ONLY C-POINTS) */
-/*          = 4 :   FULL SWEEP: FF -- C -- COLORS (HIGHEST FIRST) */
+/*     IREL = 1:   PARTIAL GAUSS-SEIDEL SWEEP (ONLY F-POINTS) */
+/*          = 2:   FULL GAUSS-SEIDEL SWEEP (ALL POINTS) */
+/*          = 3:   PARTIAL GAUSS-SEIDEL SWEEP (ONLY C-POINTS) */
+/*          = 4:   FULL SWEEP: FF -- C -- COLORS (HIGHEST FIRST) */
 
 
     /* Parameter adjustments */
@@ -11006,7 +11006,7 @@ typedef struct TQuickMemVorst {
 
 
 // Здесь содержится обвязка вызывающая amg1r5.
-// локальное выдление памяти :всё внутри, многократные alloc и free.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
 void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, 
@@ -11142,21 +11142,21 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		if ((sl[i].iT>-1) && (fabs(sl[i].at) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iW>-1) && (fabs(sl[i].aw) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
-		// Дополнение для АЛИС сетки :
+		// Дополнение для АЛИС сетки:
 		if ((sl[i].iB2>-1) && (fabs(sl[i].ab2) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iE2>-1) && (fabs(sl[i].ae2) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iN2>-1) && (fabs(sl[i].an2) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iS2>-1) && (fabs(sl[i].as2) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iT2>-1) && (fabs(sl[i].at2) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iW2>-1) && (fabs(sl[i].aw2) > nonzeroEPS)) (nna)++;
-		// Дополнение для АЛИС сетки :
+		// Дополнение для АЛИС сетки:
 		if ((sl[i].iB3>-1) && (fabs(sl[i].ab3) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iE3>-1) && (fabs(sl[i].ae3) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iN3>-1) && (fabs(sl[i].an3) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iS3>-1) && (fabs(sl[i].as3) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iT3>-1) && (fabs(sl[i].at3) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iW3>-1) && (fabs(sl[i].aw3) > nonzeroEPS)) (nna)++;
-		// Дополнение для АЛИС сетки :
+		// Дополнение для АЛИС сетки:
 		if ((sl[i].iB4>-1) && (fabs(sl[i].ab4) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iE4>-1) && (fabs(sl[i].ae4) > nonzeroEPS)) (nna)++;
 		if ((sl[i].iN4>-1) && (fabs(sl[i].an4) > nonzeroEPS)) (nna)++;
@@ -11389,7 +11389,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	integer levelx=0;
 	levelx=25;
 	integer ifirst=0;
-	// начальное приближение :
+	// начальное приближение:
 	// 0 - используется из вне.
 	// 1 - нулевое.
 	// 2 - единицы.
@@ -11435,7 +11435,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		//getchar();
 		// Симметричная положительно определённая матрица это такая матрица
 		// которая возникает для поправки давления при решении вязких несжимаемых уравнений Навье-Стокса в 
-		// случае задач : каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
+		// случае задач: каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
 		// конвекции охлаждающие висящие в воздухе без контакта с теплоотводом греющиеся изделия.
 		// Это особый специфический класс задач.
 		matrix=11;
@@ -11467,7 +11467,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	a=(doublereal*)malloc(((integer)(nda) + 1)*sizeof(doublereal));
 	if (a==NULL) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
+		printf("Problem: not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -11478,7 +11478,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	ia = (integer*)malloc(((integer)(ndia)+1)*sizeof(integer));
 	if (ia==NULL) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
+		printf("Problem: not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -11489,7 +11489,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	ja = (integer*)malloc(((integer)(ndja)+1)*sizeof(integer));
 	if (ja==NULL) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
+		printf("Problem: not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -11500,7 +11500,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	u = (doublereal*)malloc(((integer)(ndu)+1)*sizeof(doublereal));
 	if (u==NULL) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
+		printf("Problem: not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -11511,7 +11511,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	f = (doublereal*)malloc(((integer)(ndf)+1)*sizeof(doublereal));
 	if (f==NULL) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
+		printf("Problem: not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -11522,7 +11522,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	ig = (integer*)malloc(((integer)(ndig)+1)*sizeof(integer));
 	if (ig==NULL) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
+		printf("Problem: not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -11752,7 +11752,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
                // val[ik]=slb[k].aw/alpharelax;
 				a[ik+id]=slb[k].aw; // релаксация для граничных узлов не применяется.
 				/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
-				     // Внимание !!! было произведено тестирование : один вариант был с нижней релаксацией для граничных узлов,
+				     // Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
 					 // а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
 					 // более благоприятен вариант без нижней релаксации на граничных узлах.
 					 // Данное изменение согласовано с функцией solve.
@@ -11775,7 +11775,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		// TODO : 
+		// TODO: 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
         // в каждой строке элементы отсортированы по номерам столбцов:
@@ -11842,27 +11842,27 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 		switch (ierr) {
-			case 1 : printf("dimension A small\n.");
+			case 1: printf("dimension A small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 2 : printf("dimension IA small\n.");
+			case 2: printf("dimension IA small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 3 : printf("dimension JA small\n.");
+			case 3: printf("dimension JA small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 4 : printf("dimension U small\n.");
+			case 4: printf("dimension U small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 5 : printf("dimension F small\n.");
+			case 5: printf("dimension F small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 6 : printf("dimension IG small\n.");
+			case 6: printf("dimension IG small\n.");
 			//getchar();
 				system("pause");
 			break;
@@ -11962,7 +11962,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 } // amg_loc_memory
 
   // Здесь содержится обвязка вызывающая amg1r5.
-  // локальное выдление памяти :всё внутри, многократные alloc и free.
+  // локальное выделение памяти:всё внутри, многократные alloc и free.
 void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 	doublereal *dV, doublereal* &dX0,
 	integer maxit,
@@ -12327,7 +12327,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		integer levelx = 0;
 		levelx = 25;
 		integer ifirst = 0;
-		// начальное приближение :
+		// начальное приближение:
 		// 0 - используется из вне.
 		// 1 - нулевое.
 		// 2 - единицы.
@@ -12396,7 +12396,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		a = (doublereal*)malloc(((integer)(nda)+1) * sizeof(doublereal));
 		if (a == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
+			printf("Problem: not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -12407,7 +12407,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		ia = (integer*)malloc(((integer)(ndia)+1) * sizeof(integer));
 		if (ia == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
+			printf("Problem: not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -12418,7 +12418,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		ja = (integer*)malloc(((integer)(ndja)+1) * sizeof(integer));
 		if (ja == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
+			printf("Problem: not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -12429,7 +12429,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		u = (doublereal*)malloc(((integer)(ndu)+1) * sizeof(doublereal));
 		if (u == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
+			printf("Problem: not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -12440,7 +12440,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		f = (doublereal*)malloc(((integer)(ndf)+1) * sizeof(doublereal));
 		if (f == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
+			printf("Problem: not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -12451,7 +12451,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		ig = (integer*)malloc(((integer)(ndig)+1) * sizeof(integer));
 		if (ig == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
+			printf("Problem: not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -12604,7 +12604,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		//****debug print message*******
 		
 
-		// TODO : 
+		// TODO: 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		// в каждой строке элементы отсортированы по номерам столбцов:
@@ -12830,7 +12830,7 @@ typedef struct TamgGlobalMemory {
 // этот метод показывает значительно более лучшую сходимость, чем простой BiCGStabCRS,
 // а также он гораздо лучше (и повидимому правильней) чем Bi_CGStab_internal1.
 // Bi_CGStab_internal3 использует предобуславливание из библиотеки Ю.Саада.
-// дата написания Bi_CGStab_internal3 : 31.03.2013. 
+// дата написания Bi_CGStab_internal3: 31.03.2013. 
 void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
@@ -12946,9 +12946,9 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		integer iprogon=0; // в случае расходимости мы будем повторно производить решение.
 
-		//LabelAMGdivergenceDetected :
+		//LabelAMGdivergenceDetected:
 
-		LabelReallocMemory :
+		LabelReallocMemory:
 
 
 	//yes_print_amg=false;
@@ -13247,7 +13247,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	integer levelx=0;
 	levelx=25;
 	integer ifirst=0;
-	// начальное приближение :
+	// начальное приближение:
 	// 0 - используется из вне.
 	// 1 - нулевое.
 	// 2 - единицы.
@@ -13314,7 +13314,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		//getchar();
 		// Симметричная положительно определённая матрица это такая матрица
 		// которая возникает для поправки давления при решении вязких несжимаемых уравнений Навье-Стокса в 
-		// случае задач : каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
+		// случае задач: каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
 		// конвекции охлаждающие висящие в воздухе без контакта с теплоотводом греющиеся изделия.
 		// Это особый специфический класс задач.
 		matrix=11;
@@ -13327,7 +13327,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	    // 2 - единицы.
 	    // 3 - случайная последовательность.
 	    ifirst=10;//13 по умолчанию.
-		// B : считаем с точностью до eps.
+		// B: считаем с точностью до eps.
 		// точность на два порядка меньше чем начальное значение невязки.
 		//eps=0.01*res_sum*res_sum;
 		eps=0.1*res_sum*res_sum;
@@ -13349,11 +13349,11 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar==PAM)) {
 		// лучше стартовать с приближения которое было на прошлой итерации так как оно наиболее близкое.
 		switch (iprogon) {
-			case 0 : ifirst=10; break; // начальное приближение с предыдущей итерации.
-			case 1 : ifirst=11; break; // нулевое начальное приближение.
-			case 2 : ifirst=12; break; // единичное начальное приближение.
-			case 3 : ifirst=13; break; // случайное начальное приближение.
-			default : exit(1); break;
+			case 0: ifirst=10; break; // начальное приближение с предыдущей итерации.
+			case 1: ifirst=11; break; // нулевое начальное приближение.
+			case 2: ifirst=12; break; // единичное начальное приближение.
+			case 3: ifirst=13; break; // случайное начальное приближение.
+			default: exit(1); break;
 		}
 		
 		// порог точности взят из BicgStab+ilu2.
@@ -13386,7 +13386,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		amgGM.nda=nda;
 	    if (amgGM.a==NULL) {
 	        // недостаточно памяти на данном оборудовании.
-		    printf("Problem : not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
+		    printf("Problem: not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
 		    printf("Please any key to exit...\n");
 		    //getchar();
 			system("pause");
@@ -13403,7 +13403,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		    amgGM.nda=nda;
 	        if (amgGM.a==NULL) {
 	            // недостаточно памяти на данном оборудовании.
-		        printf("Problem : not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
+		        printf("Problem: not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
 		        printf("Please any key to exit...\n");
 		        //getchar();
 				system("pause");
@@ -13416,7 +13416,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	   amgGM.ndia=ndia;
 	   if (amgGM.ia==NULL) {
 	       // недостаточно памяти на данном оборудовании.
-		   printf("Problem : not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
+		   printf("Problem: not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
 		   printf("Please any key to exit...\n");
 		   //getchar();
 		   system("pause");
@@ -13434,7 +13434,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	        amgGM.ndia=ndia;
 	        if (amgGM.ia==NULL) {
 	           // недостаточно памяти на данном оборудовании.
-		       printf("Problem : not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
+		       printf("Problem: not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
 		       printf("Please any key to exit...\n");
 		       //getchar();
 			   system("pause");
@@ -13447,7 +13447,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		amgGM.ndja=ndja;
 	    if (amgGM.ja==NULL) {
 	        // недостаточно памяти на данном оборудовании.
-		    printf("Problem : not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
+		    printf("Problem: not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
 		    printf("Please any key to exit...\n");
 		    //getchar();
 			system("pause");
@@ -13464,7 +13464,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		    amgGM.ndja=ndja;
 	        if (amgGM.ja==NULL) {
 	             // недостаточно памяти на данном оборудовании.
-		         printf("Problem : not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
+		         printf("Problem: not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
 		         printf("Please any key to exit...\n");
 		         //getchar();
 				 system("pause");
@@ -13477,7 +13477,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		amgGM.ndu=ndu;
 	    if (amgGM.u==NULL) {
 	        // недостаточно памяти на данном оборудовании.
-		    printf("Problem : not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
+		    printf("Problem: not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
 	    	printf("Please any key to exit...\n");
 		    //getchar();
 			system("pause");
@@ -13494,7 +13494,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		    amgGM.ndu=ndu;
 	        if (amgGM.u==NULL) {
 	             // недостаточно памяти на данном оборудовании.
-		         printf("Problem : not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
+		         printf("Problem: not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
 	    	     printf("Please any key to exit...\n");
 		        // getchar();
 				 system("pause");
@@ -13508,7 +13508,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		amgGM.ndf=ndf;
 	    if (amgGM.f==NULL) {
 	        // недостаточно памяти на данном оборудовании.
-		    printf("Problem : not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
+		    printf("Problem: not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
 		    printf("Please any key to exit...\n");
 		    //getchar();
 			system("pause");
@@ -13524,7 +13524,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		    amgGM.ndf=ndf;
 	        if (amgGM.f==NULL) {
 	            // недостаточно памяти на данном оборудовании.
-		        printf("Problem : not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
+		        printf("Problem: not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
 		        printf("Please any key to exit...\n");
 		        //getchar();
 				system("pause");
@@ -13537,7 +13537,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		amgGM.ndig=ndig;
 	    if (amgGM.ig==NULL) {
 	         // недостаточно памяти на данном оборудовании.
-		     printf("Problem : not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
+		     printf("Problem: not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
 		     printf("Please any key to exit...\n");
 		     //getchar();
 			 system("pause");
@@ -13553,7 +13553,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		    amgGM.ndig=ndig;
 	        if (amgGM.ig==NULL) {
 	            // недостаточно памяти на данном оборудовании.
-		        printf("Problem : not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
+		        printf("Problem: not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
 		        printf("Please any key to exit...\n");
 		       // getchar();
 				system("pause");
@@ -13791,7 +13791,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
                // val[ik]=slb[k].aw/alpharelax;
 				amgGM.a[ik+id]=slb[k].aw; // релаксация для граничных узлов не применяется.
 				/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
-				     // Внимание !!! было произведено тестирование : один вариант был с нижней релаксацией для граничных узлов,
+				     // Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
 					 // а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
 					 // более благоприятен вариант без нижней релаксации на граничных узлах.
 					 // Данное изменение согласовано с функцией solve.
@@ -13823,7 +13823,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		//printf("ik=%d\n",ik);
 		//getchar();
 
-		// TODO : 
+		// TODO: 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
         // в каждой строке элементы отсортированы по номерам столбцов:
@@ -13843,7 +13843,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		//getchar();
 
 	    // amg - особенно хорош для поправки давления в SIMPLE алгоритме.
-	    // алгоритм Руге и Стубена 1985 года.
+	    // алгоритм Руге и Штубена 1985 года.
 		if (iVorst_version == 0) {
 			// просто amg1r5 алгоритм.
 
@@ -13893,27 +13893,27 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 		switch (ierr) {
-			case 1 : printf("dimension A small\n.");
+			case 1: printf("dimension A small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 2 : printf("dimension IA small\n.");
+			case 2: printf("dimension IA small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 3 : printf("dimension JA small\n.");
+			case 3: printf("dimension JA small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 4 : printf("dimension U small\n.");
+			case 4: printf("dimension U small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 5 : printf("dimension F small\n.");
+			case 5: printf("dimension F small\n.");
 			//getchar();
 				system("pause");
 			break;
-			case 6 : printf("dimension IG small\n.");
+			case 6: printf("dimension IG small\n.");
 			//getchar();
 				system("pause");
 			break;
@@ -14028,7 +14028,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 			   else {
 				   // расходимость нужен перезапуск.
 				   printf("\namg solver divergence detected...\n");
-				   //printf("\nno panic : because WACEB run. restart solver.\n");
+				   //printf("\nno panic: because WACEB run. restart solver.\n");
 				   printf("iVar=");
 				   switch (iVar) {
 				   case VX: printf("VX\n"); break;

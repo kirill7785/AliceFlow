@@ -268,7 +268,7 @@ void HeapSort_j(Ak * &A, integer n, integer first, integer last)
 } // HeapSort_j
 
 // Сортировка слиянием. 
-// Требует дополнительной пямяти.
+// Требует дополнительной памяти.
 void MergeSort(Ak * &Aorig, integer size) {
 	// предполагается индексация от нуля до size-1.
 	// Массив А предполагается не менее двойного размера.
@@ -339,7 +339,7 @@ void MergeSort(Ak * &Aorig, integer size) {
 
 
 // Сортировка слиянием. 
-// Требует дополнительной пямяти.
+// Требует дополнительной памяти.
 void MergeSort_j(Ak * &Aorig, integer size) {
 	// предполагается индексация от нуля до size-1.
 	// Массив А предполагается не менее двойного размера.
@@ -667,7 +667,7 @@ im0 = 0;
 nnz_a[ilevel] = ic1 - 1 - 2 * nnz_a[ilevel - 1] - iadd;
 iadd += 2 * nnz_a[ilevel - 1];
 
-printf("nnz : fine=%d, coarse=%d, operator complexity=%e. n : fine=%d, coarse=%d grid complexity=%e.\n", nnz_a[ilevel - 1], nnz_a[ilevel], (double)(nnz_a[ilevel])/(double)( nnz_a[ilevel - 1]), n_a[ilevel - 1], n_a[ilevel], (double)(n_a[ilevel])/ (double)(n_a[ilevel - 1]));
+printf("nnz: fine=%d, coarse=%d, operator complexity=%e. n: fine=%d, coarse=%d grid complexity=%e.\n", nnz_a[ilevel - 1], nnz_a[ilevel], (double)(nnz_a[ilevel])/(double)( nnz_a[ilevel - 1]), n_a[ilevel - 1], n_a[ilevel], (double)(n_a[ilevel])/ (double)(n_a[ilevel - 1]));
 getchar();
 
 ilevel++;// грубосеточная матрица построена.
@@ -1172,7 +1172,7 @@ integer aggregative_amg(Ak* &A, integer nnz, integer n,
 		// сделаем копию А упорядочим её по j 
 		for (integer k = 1 + iadd; k <= nnz_a[ilevel - 1] + iadd; k++) {
 			A[k + 2 * nnz_a[ilevel - 1]] = A[k]; // copy
-			A[k + 2 * nnz_a[ilevel - 1]].ind = k; // запомиаем номер до сортировки.
+			A[k + 2 * nnz_a[ilevel - 1]].ind = k; // запоминаем номер до сортировки.
 		}
 		// сортировка по j.
 		if (nnz_a[ilevel - 1] < 100000) {
@@ -1395,7 +1395,7 @@ integer aggregative_amg(Ak* &A, integer nnz, integer n,
 
 		// оператор интерполяции это не просто транспонированный оператор проекции а
 		// а транспонированный оператор проекции умноженный на константу. Константа 
-		// определяется из следующего соображения : если сумма элементов оператора рестрикции в стоке единица,
+		// определяется из следующего соображения: если сумма элементов оператора рестрикции в стоке единица,
 		// то соответственно в столбце у оператора интерполяции максимальный элемент равен единица.
 		// этот код обязательно должен быть включён чтобы пара рестрикция-интерполяция была верна.
 		// действительо рабочий 15 сентября 2015.
@@ -1503,8 +1503,8 @@ integer aggregative_amg(Ak* &A, integer nnz, integer n,
 		nnz_a[ilevel] = ic1 - 1 - 2 * nnz_a[ilevel - 1] - iadd;
 		iadd += 2 * nnz_a[ilevel - 1];
 
-		printf("nnz : fine=%d, coarse=%d, operator complexity=%e. \n", nnz_a[ilevel - 1], nnz_a[ilevel], (double)(nnz_a[ilevel]) / (double)(nnz_a[ilevel - 1]));
-	    printf("n : fine=%d, coarse=%d grid complexity=%e.\n",   n_a[ilevel - 1], n_a[ilevel], (double)(n_a[ilevel]) / (double)(n_a[ilevel - 1]));
+		printf("nnz: fine=%d, coarse=%d, operator complexity=%e. \n", nnz_a[ilevel - 1], nnz_a[ilevel], (double)(nnz_a[ilevel]) / (double)(nnz_a[ilevel - 1]));
+	    printf("n: fine=%d, coarse=%d grid complexity=%e.\n",   n_a[ilevel - 1], n_a[ilevel], (double)(n_a[ilevel]) / (double)(n_a[ilevel - 1]));
 		printf("nnz_aRP = %d\n",nnz_aRP[ilevel-1]);
 		//getchar();
 
@@ -3246,7 +3246,7 @@ integer _tmain(integer argc, _TCHAR* argv[])
 		// 3D
 		 n = m*m*m;
 		 nnz = 7 * ((m - 2)*(m - 2)*(m - 2)) + 8 + 6 * (m - 2)*(m-2) + 12*(m-2);
-		 // куб : 8 вершин, 12 рёбер, 6 граней.
+		 // куб: 8 вершин, 12 рёбер, 6 граней.
 
 		// 31 aug 2015
 		 // 6 3 3 с запасом. реально 4.52 2.26 2.26
@@ -3389,7 +3389,7 @@ integer _tmain(integer argc, _TCHAR* argv[])
 
 
 // Здесь содержится обвязка вызывающая amg1r5.
-// локальное выдление памяти :всё внутри, многократные alloc и free.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
 void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0,
@@ -3717,7 +3717,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		integer levelx = 0;
 		levelx = 25;
 		integer ifirst = 0;
-		// начальное приближение :
+		// начальное приближение:
 		// 0 - используется из вне.
 		// 1 - нулевое.
 		// 2 - единицы.
@@ -3756,7 +3756,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			//getchar();
 			// Симметричная положительно определённая матрица это такая матрица
 			// которая возникает для поправки давления при решении вязких несжимаемых уравнений Навье-Стокса в 
-			// случае задач : каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
+			// случае задач: каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
 			// конвекции охлаждающие висящие в воздухе без контакта с теплоотводом греющиеся изделия.
 			// Это особый специфический класс задач.
 			matrix = 11;
@@ -3767,7 +3767,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		A = new Ak[(integer)(6 * nna) + 1]; // 6
 		if (A == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for A matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for A matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -3776,7 +3776,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		R = new Ak[(integer)(3 * nnu) + 1]; // 3*nnz 2.4
 		if (R == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -3785,7 +3785,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		P = new Ak[(integer)(3 * nnu) + 1]; // 3*nnz 2.4
 		if (P == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -3795,7 +3795,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		result_amg = new doublereal[nnu + 1];
 		if (result_amg == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for result_amg vector in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for result_amg vector in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -3805,7 +3805,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		rthdsd_amg = new doublereal[nnu + 1];
 		if (result_amg == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for rthdsd_amg vector in my_agregat_amg.cpp algorithm...\n");
+			printf("Problem: not enough memory on your equipment for rthdsd_amg vector in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -3901,7 +3901,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				// val[ik]=slb[k].aw/alpharelax;
 				A[ik + id].aij = slb[k].aw; // релаксация для граничных узлов не применяется.
 										/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
-										// Внимание !!! было произведено тестирование : один вариант был с нижней релаксацией для граничных узлов,
+										// Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
 										// а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
 										// более благоприятен вариант без нижней релаксации на граничных узлах.
 										// Данное изменение согласовано с функцией solve.
@@ -3928,7 +3928,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		// TODO : 
+		// TODO: 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		

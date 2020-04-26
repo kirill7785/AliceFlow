@@ -11,8 +11,8 @@ const bool RED_WARNING = false; // true печатать все предупреждения.
 // 13 апреля 2015 года.
 // вычисление градиентов Температуры с помощью теоремы Грина-Гаусса. 
 void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-	BOUND* &sosedb, doublereal* &Tx, doublereal* &Ty, doublereal* &Tz,
+	ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND* &border_neighbor, doublereal* &Tx, doublereal* &Ty, doublereal* &Tz,
 	integer *ilevel_alice);
 
 // Модуль constr_struct_alice.cpp повторяет функционал модуля constr_struct, НО с учётом использования АЛИС сетки.
@@ -28,7 +28,7 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 // 22484 строк кода. Первый успешный запуск данных алгоритмов 28 сентября 2016 года.
 
 // Вычисляет количество элементов модели.
-void calculate_max_elm(octTree* &oc, integer &maxelm, integer iflag, BLOCK* b, integer lb, bool binit_TD) {
+void calculate_max_elm(octree* &oc, integer &maxelm, integer iflag, BLOCK* b, integer lb, bool binit_TD) {
 
 	// Если binit_TD true то нужно обнулять octree1->inum_TD = 0; Иначе мы его не трогаем.
 
@@ -118,7 +118,7 @@ void calculate_max_elm(octTree* &oc, integer &maxelm, integer iflag, BLOCK* b, i
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				TOCHKA p;
 				p.x = 0.125*(octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
 				p.y = 0.125*(octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
@@ -135,7 +135,7 @@ void calculate_max_elm(octTree* &oc, integer &maxelm, integer iflag, BLOCK* b, i
 						printf("ERROR!!! ib=%lld,%e %e %e\n", ib, p.x, p.y, p.z);
 						printf("%e %e %e %e %e %e %e %e \n", octree1->p0.x, octree1->p1.x, octree1->p2.x, octree1->p3.x, octree1->p4.x, octree1->p5.x, octree1->p6.x, octree1->p7.x);
 						//system("PAUSE");
-						// Причина этого бага в дефектности массивов xpos, ypos или zpos. Помоему это проявляется на этапе coarcemeshgen.
+						// Причина этой ошибки в дефектности массивов xpos, ypos или zpos. По-моему это проявляется на этапе coarsemeshgen.
 						// Здесь эти сообщения об ошибках погашены.
 					}
 				}
@@ -248,7 +248,7 @@ void calculate_max_elm(octTree* &oc, integer &maxelm, integer iflag, BLOCK* b, i
 
 // визуализация в tecplot 360 с учётом hollow блоков в программной модели.
 // Построение nodes, nvtx, prop. Частей 1..6 в программной модели.
-void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, integer inz, 
+void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer inz, 
 	integer &maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	integer iflag, BLOCK* b, integer lb, integer* &whot_is_block, TOCHKA* &pa, integer &maxnode, integer** &nvtx, 
 	doublereal** &prop, doublereal* &Sc, integer* &ipower_time_depend, TPROP* matlist, integer* &ilevel_alice) {
@@ -268,7 +268,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	ilevel_alice = new integer[maxelm];
 	if (ilevel_alice == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ilevel_alice constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for ilevel_alice constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -277,7 +277,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	whot_is_block = new integer[maxelm];
 	if (whot_is_block == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for whot_is_block constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for whot_is_block constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -286,7 +286,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	prop = new doublereal*[9];
 	if (prop == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for prop constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for prop constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -298,9 +298,9 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 		if (prop[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for prop[%lld] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for prop[%lld] constr struct_alice...\n", i);
 #else
-			printf("Problem : not enough memory on your equipment for prop[%d] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for prop[%d] constr struct_alice...\n", i);
 #endif
 
 			
@@ -314,7 +314,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	Sc = new doublereal[maxelm];
 	if (Sc == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for Sc constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for Sc constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -324,7 +324,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	ipower_time_depend = new integer[maxelm];
 	if (ipower_time_depend == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ipower_time_depend constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for ipower_time_depend constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -353,7 +353,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 		}
 	}
 
-	printf("geometric precision tolerance : epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
+	printf("geometric precision tolerance: epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
 	//system("PAUSE");
 
 	
@@ -458,7 +458,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
 				integer i0, i1, i2, i3, i4, i5, i6, i7;
@@ -483,7 +483,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 				}
 				if (inDomain) {
 
-					// Мы будем оперировать только над точувми принадлежащими РО.
+					// Мы будем оперировать только над точками принадлежащими РО.
 					// Т.е. точки в HOLLOW блоках мы игнорируем.
 					// Этот кусок кода занесён внутрь 08 ноября 2016.
 
@@ -702,7 +702,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	// Оператор new не требует проверки.
 	//if (pa_alice == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -713,7 +713,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	// Оператор new не требует проверки.
 	//if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -725,9 +725,9 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 		//if (nvtx[k_1] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 //#if doubleintprecision == 1
-	//		printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
+	//		printf("Problem: not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#else
-	//		printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
+	//		printf("Problem: not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#endif
 			
 	//		printf("Please any key to exit...\n");
@@ -833,7 +833,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
 				integer i0, i1, i2, i3, i4, i5, i6, i7;
@@ -983,7 +983,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 						prop[MULT_LAM_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x;
 						prop[MULT_LAM_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y;
 						prop[MULT_LAM_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z;
-						// Коэффициенты Лямэ.
+						// Коэффициенты Ламе.
 						prop[MU_LAME][l] = matlist[b[ib].imatid].mu_Lame;
 						prop[LAMBDA_LAME][l] = matlist[b[ib].imatid].lambda_Lame;
 						prop[BETA_T_MECHANICAL][l] = matlist[b[ib].imatid].beta_t_solid;
@@ -1118,7 +1118,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	pa = new TOCHKA[maxnode];
 	if (pa == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for pa constr struct alice...\n");
+		printf("Problem: not enough memory on your equipment for pa constr struct alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -1370,7 +1370,7 @@ void ZERO_ORDER_RECONSTRUCT(integer maxnod, integer maxelm,
 	doublereal maximum = -1.0e60;
 	doublereal maximum_loc = -1.0e60;
 
-	// TODO Метод повидимому неточный и чтобы увеличить точность надо организовать 
+	// TODO Данный метод неточный и чтобы увеличить точность надо организовать 
 	// преобразование сохраняющее максимальное значение. 02.04.2019
 
 	for (integer i = 0; i < maxelm; i++) {
@@ -1390,7 +1390,7 @@ void ZERO_ORDER_RECONSTRUCT(integer maxnod, integer maxelm,
 
 	for (integer i = 0; i <= maxelm - 1; i++) {
 		// вычисление размеров текущего контрольного объёма:
-		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 		volume3D(i, nvtx, pa, dx, dy, dz);
 
 		for (integer j = 0; j <= 7; j++) {
@@ -1425,7 +1425,7 @@ void ZERO_ORDER_RECONSTRUCT(integer maxnod, integer maxelm,
 	if (fabs(maximum_loc) > 1.0e-20) {
 		for (integer i = 0; i < maxnod; i++) {
 			// Обеспечиваем сохранение модуля, 
-			// т.к. интерполчция сглаживает и 
+			// т.к. интерполяция сглаживает и 
 			// занижает пиковые значения.
 			lam[i] *= (maximum) / (maximum_loc);
 		}
@@ -1451,7 +1451,7 @@ void ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(integer maxnod, integer maxelm,
 	doublereal maximum_loc3 = -1.0e60;
 
 
-	// TODO Метод повидимому неточный и чтобы увеличить точность надо организовать 
+	// TODO Данный метод неточный и чтобы увеличить точность надо организовать 
 	// преобразование сохраняющее максимальное значение. 02.04.2019
 
 	for (integer i = 0; i < maxelm; i++) {
@@ -1475,7 +1475,7 @@ void ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(integer maxnod, integer maxelm,
 
 	for (integer i = 0; i <= maxelm - 1; i++) {
 		// вычисление размеров текущего контрольного объёма:
-		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 		volume3D(i, nvtx, pa, dx, dy, dz);
 
 		for (integer j = 0; j <= 7; j++) {
@@ -1519,7 +1519,7 @@ void ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(integer maxnod, integer maxelm,
 		if ((fabs(maximum_loc1) > 1.0e-20)&& (fabs(maximum_loc2) > 1.0e-20) && (fabs(maximum_loc3) > 1.0e-20)) {
 			for (integer i = 0; i < maxnod; i++) {
 				// Обеспечиваем сохранение модуля, 
-				// т.к. интерполчция сглаживает и 
+				// т.к. интерполяция сглаживает и 
 				// занижает пиковые значения.
 				lamx[i] *= (maximum1) / (maximum_loc1);
 				lamy[i] *= (maximum2) / (maximum_loc2);
@@ -1531,7 +1531,7 @@ void ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(integer maxnod, integer maxelm,
 		if (fabs(maximum_loc1) > 1.0e-20) {
 			for (integer i = 0; i < maxnod; i++) {
 				// Обеспечиваем сохранение модуля, 
-				// т.к. интерполчция сглаживает и 
+				// т.к. интерполяция сглаживает и 
 				// занижает пиковые значения.
 				lamx[i] *= (maximum1) / (maximum_loc1);
 			}
@@ -2094,7 +2094,7 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
 					}
 					else {
 						// мы в SOLID зоне пытаемся найти значения гидродинамической величины.
-						// 0.0 подходит для дефолтного значения большинства гидродинамических величин.
+						// 0.0 подходит для начального значения большинства гидродинамических величин.
 						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = 0.0;
 					}
 				}
@@ -2144,7 +2144,7 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
 										}
 										else {
 											// SOLID зона
-											// 0.0 подходящее дефолтное значение для большинства гидродинамических
+											// 0.0 подходящее начальное значение для большинства гидродинамических
 											// величин в SOLID зоне.
 											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = 0.0;
 										}
@@ -2972,7 +2972,7 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 
 
 
-// Экспорт в программу техплот температуры.
+// Экспорт в программу tecplot температуры.
 //С АЛИС сетки.
 void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 	integer maxelm, integer** nvtx, doublereal* potent, TEMPER &t,
@@ -3219,7 +3219,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
 				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, nvtx, pa, dx, dy, dz);
 
 				for (integer j = 0; j <= 7; j++) {
@@ -3511,7 +3511,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
 				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, nvtx, pa, dx, dy, dz);
 
 				for (integer j = 0; j <= 7; j++) {
@@ -3717,7 +3717,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 		}
 		else if (3 == iRECONSTRUCTION_METHOD) {
 			// линейная реконструкция, НО по расширенному шаблону.
-			// Расширенный шаблон содержит больше опорных точек интерполляции, 
+			// Расширенный шаблон содержит больше опорных точек интерполяции, 
 			// поэтому в теории реконструкция должна быть более точная.
 
 			// Метод линейного порядка.
@@ -3811,15 +3811,15 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			for (integer i_9 = 0; i_9 < t.maxelm; i_9++) {
 				// Только внутренние узлы.
 				green_gaussTemperature(i_9, t.potent, t.nvtx, t.pa,
-					t.sosedi, t.maxelm, false,
-					t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+					t.neighbors_for_the_internal_node, t.maxelm, false,
+					t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 			}
 
 			for (integer i_9 = 0; i_9 < t.maxelm; i_9++) {
 				// Только граничные узлы.
 				green_gaussTemperature(i_9, t.potent, t.nvtx, t.pa,
-					t.sosedi, t.maxelm, true,
-					t.sosedb, Tx, Ty, Tz, t.ilevel_alice);
+					t.neighbors_for_the_internal_node, t.maxelm, true,
+					t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 			}
 
 
@@ -4123,9 +4123,9 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 				if (1) {
 					// Контрольные объёмы состоят из кубиков. Вершины 
 					// каждого такого кубика должны быть перечислены в строго порядке сортировки.
-					// Сортировка : упорядочивание восьмерки по возракстанию координаты z.
+					// Сортировка: упорядочивание восьмерки по возрастанию координаты z.
 					// Сортировка: упорядочивание каждой четверки по возрастанию координаты y. Всего 2 четверки.
-					// Сортировка четырехз двоек по возрастанию х.
+					// Сортировка четырех двоек по возрастанию х.
 					if ((t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)) {
 						printf("ERROR in function ANES_tecplot360_export_temperature.\n");
 						printf("(t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)\n");
@@ -4478,7 +4478,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						xnvtx[location + 1] = xnewelm;
 					}
 
-					fprintf_s(fp_4, "%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
+					fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
 
 					//debug
 					//printf("%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
@@ -4507,7 +4507,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 } // ANES_tecplot360_export_temperature
 
-// Переинтерполляция температуры с сетки на сетку. Конкретно с АЛИС сетки на обычную сетку.
+// Переинтерполяция температуры с сетки на сетку. Конкретно с АЛИС сетки на обычную сетку.
 // t_buf->potent
 void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 	integer maxelm, integer** nvtx, doublereal* &potent,
@@ -4589,12 +4589,12 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 		bool bfound = false;
 		integer ifound = NON_EXISTENT_NODE;
 
-		// Эвристика 02.01.2018 для существенного ускорения поиска при интерполляции.
+		// Эвристика 02.01.2018 для существенного ускорения поиска при интерполяции.
 		// Наиболее часто, следующий найденный элемент оказывается меньше либо равен предыдущему.
 		// Первый вызов основан на этой эвристике и хочет быстро отсечь большинство сканирований.
 		// Только в том случае когда он ничего не находит запускается повторный вызов.
-		// Это работает потому что элеменеты -nvtx ячейки были занумерованы до интерполляции 
-		// согласно определенному порядку обхода. Этот же порядок обхода в общем и целом справелив и для ячеек 
+		// Это работает потому что элементы -nvtx ячейки были занумерованы до интерполяции 
+		// согласно определенному порядку обхода. Этот же порядок обхода в общем и целом справедлив и для ячеек 
 		// полученных после на обычной декартовой прямоугольной структурированной сетке. 
 		// Здесь мы переводим информацию с АЛИС сетки на обычную декартовую
 		// прямоугольную структурированную сетку с главной целью правильно и точно вычислить градиенты. Что проблематично на АЛИС.
@@ -4831,7 +4831,7 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 			potent[i] = temp_47;
 		}
 		else {
-			printf("WARNING : ALICE_2_Structural node not found!!! bfound==false...\n");
+			printf("WARNING: ALICE_2_Structural node not found!!! bfound==false...\n");
 			//system("PAUSE");
 			potent[i] = operatingtemperature_loc;
 		}
@@ -4840,8 +4840,8 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 		
 		}
 
-		// Диагностическая печать для исследования закономерностей в процессе интерполляции.
-		// Закономерности используются чтобы существенно ускорить процесс интерполляции.
+		// Диагностическая печать для исследования закономерностей в процессе интерполяции.
+		// Закономерности используются чтобы существенно ускорить процесс интерполяции.
 		//if (ic76 > 0) {
 			//printf("monotonnost narushena=%d %d h=%d\n",ic76, maxelm47,ih64);
 			//getchar();
@@ -4890,7 +4890,7 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 
 }//ALICE_2_Structural
 
-  // Экспорт в программу техплот температуры.
+  // Экспорт в программу tecplot температуры.
   //С АЛИС сетки.
 void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* pa,
 	integer maxelm, integer** nvtx, doublereal* potent, TEMPER &t, 
@@ -5002,7 +5002,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
 				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, nvtx, pa, dx, dy, dz);
 
 				for (integer j = 0; j <= 7; j++) {
@@ -5135,7 +5135,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
 				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, nvtx, pa, dx, dy, dz);
 
 				for (integer j = 0; j <= 7; j++) {
@@ -5427,7 +5427,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
 				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, nvtx, pa, dx, dy, dz);
 
 				for (integer j = 0; j <= 7; j++) {
@@ -5633,7 +5633,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 		}
 		else if (3 == IORDER_METHOD) {
 			// линейная реконструкция, НО по расширенному шаблону.
-			// Расширенный шаблон содержит больше опорных точек интерполляции, 
+			// Расширенный шаблон содержит больше опорных точек интерполяции, 
 			// поэтому в теории реконструкция должна быть более точная.
 
 			// Метод линейного порядка.
@@ -6046,7 +6046,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
 				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				volume3D(i, nvtx, pa, dx, dy, dz);
 
 				for (integer j = 0; j <= 7; j++) {
@@ -6165,9 +6165,9 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 			if (0) {
 				// Контрольные объёмы состоят из кубиков. Вершины 
 				// каждого такого кубика должны быть перечислены в строго порядке сортировки.
-				// Сортировка : упорядочивание восьмерки по возракстанию координаты z.
+				// Сортировка: упорядочивание восьмерки по возрастанию координаты z.
 				// Сортировка: упорядочивание каждой четверки по возрастанию координаты y. Всего 2 четверки.
-				// Сортировка четырехз двоек по возрастанию х.
+				// Сортировка четырёх двоек по возрастанию х.
 
 
 				integer invtx[8];
@@ -6628,7 +6628,7 @@ void ANES_ALICE_CORRECT(integer maxnod, TOCHKA* pa,
 
 		for (integer i = 0; i <= maxelm - 1; i++) {
 			// вычисление размеров текущего контрольного объёма:
-			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 			volume3D(i, nvtx, pa, dx, dy, dz);
 
 			// Проверка корректности нахождения объёма ячейки.
@@ -6708,7 +6708,7 @@ void ANES_ALICE_CORRECT(integer maxnod, TOCHKA* pa,
 
 // визуализация в tecplot 360 с учётом hollow блоков в программной модели.
 // Построение nodes, nvtx, prop для гидродинамической подобласти. Частей 19..22 в программной модели. 
-void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, integer inz, integer &maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
+void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, integer inz, integer &maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	integer iflag, BLOCK* b, integer lb,  TOCHKA* &pa, integer &maxnode, integer** &nvtx,
 	doublereal** &prop, TPROP* matlist, integer* &ptr, integer* &whot_is_block, integer** &ptr_temp, integer maxelm_temp) {
 
@@ -6724,12 +6724,12 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	//getchar();
 
 
-	// Выделение памяти :
+	// Выделение памяти:
 	ptr_temp = nullptr;
 	ptr_temp = new integer*[2];
 	if (ptr_temp == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ptr_temp constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for ptr_temp constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -6742,9 +6742,9 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 		if (ptr_temp[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for ptr[%lld] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for ptr[%lld] constr struct_alice...\n", i);
 #else
-			printf("Problem : not enough memory on your equipment for ptr[%d] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for ptr[%d] constr struct_alice...\n", i);
 #endif
 			
 			printf("Please any key to exit...\n");
@@ -6767,7 +6767,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	whot_is_block = new integer[maxelm];
 	if (whot_is_block == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for whot_is_block constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for whot_is_block constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -6776,7 +6776,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	ptr = new integer[maxelm];
 	if (ptr == nullptr) { // -2N
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for ptr flow0 constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for ptr flow0 constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -6789,7 +6789,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 		prop = new doublereal*[9];
 		if (prop == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for prop constr struct_alice...\n");
+			printf("Problem: not enough memory on your equipment for prop constr struct_alice...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -6801,9 +6801,9 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 			if (prop[i] == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-				printf("Problem : not enough memory on your equipment for prop[%lld] constr struct_alice...\n", i);
+				printf("Problem: not enough memory on your equipment for prop[%lld] constr struct_alice...\n", i);
 #else
-				printf("Problem : not enough memory on your equipment for prop[%d] constr struct_alice...\n", i);
+				printf("Problem: not enough memory on your equipment for prop[%d] constr struct_alice...\n", i);
 #endif
 				
 				printf("Please any key to exit...\n");
@@ -6818,7 +6818,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 		prop = new doublereal*[3];
 		if (prop == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for prop flow constr struct_alice...\n");
+			printf("Problem: not enough memory on your equipment for prop flow constr struct_alice...\n");
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -6830,9 +6830,9 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 			if (prop[i] == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-				printf("Problem : not enough memory on your equipment for prop[%lld] flow constr struct_alice...\n", i);
+				printf("Problem: not enough memory on your equipment for prop[%lld] flow constr struct_alice...\n", i);
 #else
-				printf("Problem : not enough memory on your equipment for prop[%d] flow constr struct_alice...\n", i);
+				printf("Problem: not enough memory on your equipment for prop[%d] flow constr struct_alice...\n", i);
 #endif
 				
 				printf("Please any key to exit...\n");
@@ -6871,7 +6871,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 		}
 	}
 
-	printf("geometric precision tolerance : epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
+	printf("geometric precision tolerance: epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
 	//system("PAUSE");
 
 
@@ -6884,7 +6884,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	// Оператор new не требует проверки.
 	//if (pa_alice == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -6895,7 +6895,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	// Оператор new не требует проверки.
 	//if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
+		//printf("Problem: not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
@@ -6906,9 +6906,9 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 		//if (nvtx[k_1] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 //#if doubleintprecision == 1
-	//		printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
+	//		printf("Problem: not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#else
-	//		printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
+	//		printf("Problem: not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#endif
 			
 	//		printf("Please any key to exit...\n");
@@ -7012,7 +7012,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
 				integer i0, i1, i2, i3, i4, i5, i6, i7;
@@ -7165,11 +7165,11 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 					// для задач сопряжённого теплообмена.
 					// ptr[fluid_elm_id]=соответствующий temper_elm_id.
 					ptr[imarker_nvtx] = octree1->inum_TD-1;
-					// Связь теплового внутреннего элемента с гидродинамическим внутреним элементом или -1.
+					// Связь теплового внутреннего элемента с гидродинамическим внутренним элементом или -1.
 					ptr_temp[0][octree1->inum_TD - 1] = imarker_nvtx; // 25.09.2016.
 					// Теперь у нас все гидродинамические подобласти слиты в одну и это позволяет считать 
 					// в одной модели сразу несколько несвязанных гидродинамически fluid областей которые 
-					// связаны лишь уравнением теплопередачи. Поэтому заполняем следующую структуру : 
+					// связаны лишь уравнением теплопередачи. Поэтому заполняем следующую структуру: 
 					ptr_temp[1][octree1->inum_TD - 1] = 0; // Одна единственная fluid зона с идентификатором 0.
 					octree1->inum_FD = imarker_nvtx + 1; // Нумерация начинается с 1.
 
@@ -7292,7 +7292,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	pa = new TOCHKA[maxnode];
 	if (pa == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for pa constr struct alice...\n");
+		printf("Problem: not enough memory on your equipment for pa constr struct alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -7392,7 +7392,7 @@ void patch_maxbound(integer iplane, SOURCE* s, integer ls, doublereal x_c, doubl
 
 // Вычисляет количество граничных элементов модели для температуры.
 // Внутренние источники тепла также пронумерованы.
-void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_memo, BLOCK* b, integer lb, 
+void calculate_max_bound_temp(octree* &oc, integer &maxbound, integer maxelm_memo, BLOCK* b, integer lb, 
 	SOURCE* s, integer ls) {
 	maxbound = 0; // инициализация.
 	integer maxelm = 0;
@@ -7401,7 +7401,7 @@ void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_me
 	// оператор new не требует проверки на null.
 	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Problem: not enough memory on your equipment for bvisit constr struct_alice...\n");
 		//printf("Please any key to exit...\n");
 		//getchar();
 		//system("pause");
@@ -7496,7 +7496,7 @@ void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_me
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				if (!((octree1->link0 == nullptr) && (octree1->link1 == nullptr) && (octree1->link2 == nullptr) && (octree1->link3 == nullptr) && (octree1->link4 == nullptr) && (octree1->link5 == nullptr) && (octree1->link6 == nullptr) && (octree1->link7 == nullptr))) {
 					printf("eto ne list error!!!\n");
@@ -7518,7 +7518,7 @@ void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_me
 					inDomain = false;
 				}
 				if (inDomain) {
-					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_TD.
+					// Узел принадлежит расчётной области и его номер maxelm==octree1->inum_TD.
 
 					// сосед не существует
 					// записываем идентификатор грани и
@@ -8620,7 +8620,7 @@ void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_me
 
 // Вычисляет количество граничных элементов модели для температуры.
 // Внутренние источники тепла также пронумерованы.
-void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_memo, BLOCK* b, integer lb,
+void calculate_max_bound_flow(octree* &oc, integer &maxbound, integer maxelm_memo, BLOCK* b, integer lb,
 	SOURCE* s, integer ls) {
 	maxbound = 0; // инициализация.
 	integer maxelm = 0;
@@ -8629,7 +8629,7 @@ void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_me
 	// оператор new не требует проверки на null.
 	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Problem: not enough memory on your equipment for bvisit constr struct_alice...\n");
 		//printf("Please any key to exit...\n");
 		//getchar();
 		//system("pause");
@@ -8724,10 +8724,10 @@ void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_me
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				// Гасим информацию о посещениях.
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				if (!((octree1->link0 == nullptr) && (octree1->link1 == nullptr) && (octree1->link2 == nullptr) && (octree1->link3 == nullptr) && (octree1->link4 == nullptr) && (octree1->link5 == nullptr) && (octree1->link6 == nullptr) && (octree1->link7 == nullptr))) {
-					printf("eto ne list error!!!\n");
+					printf("It is not terminal list. error!!!\n");
 					//getchar();
 					system("PAUSE");
 				}
@@ -8746,7 +8746,7 @@ void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_me
 					inDomain = false;
 				}
 				if (inDomain) {
-					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_FD.
+					// Узел принадлежит расчётной области и его номер maxelm==octree1->inum_FD.
 
 					// сосед не существует
 					// записываем идентификатор грани и
@@ -9913,10 +9913,10 @@ void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_me
 
 
 // G - грань по которой ставится граничное условие.
-// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 // bound_id - номер граничного узла, начиная с нуля.
 // elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
-void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHKA* pa, integer elm_id, integer bound_id,
+void obrabotka_granichnoi_grani(integer G, BOUND* &border_neighbor, integer **nvtx, TOCHKA* pa, integer elm_id, integer bound_id,
 	integer elm_id_inverse, integer maxelm_out, integer* &whot_is_block, integer ls, integer lw, WALL* w, SOURCE* s, BLOCK* b,
 	doublereal dS, bool binternalg, bool bvisit_g)
 {
@@ -9930,7 +9930,7 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	integer iplane; // плоскость в которой лежит грань.
 
 	// Эта информация совсем неактивна при данной сборке.
-	for (integer j = 0; j<6; j++) sosedb[bound_id].iW[j] = NON_EXISTENT_NODE; // инициализация
+	for (integer j = 0; j<6; j++) border_neighbor[bound_id].iW[j] = NON_EXISTENT_NODE; // инициализация
 
 	distx = fmax(distx,0.2 * fabs(pa[nvtx[1][elm_id] - 1].x - pa[nvtx[0][elm_id] - 1].x));
 	disty = fmax(disty,0.2 * fabs(pa[nvtx[1][elm_id] - 1].y - pa[nvtx[3][elm_id] - 1].y));
@@ -10005,26 +10005,26 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	}
 
 	// Площадь грани передаётся извне.
-	sosedb[bound_id].dS = dS; // Присваиваем площадь граничной грани.
+	border_neighbor[bound_id].dS = dS; // Присваиваем площадь граничной грани.
 
 	// грань лежит на границе расчётной области.
 	switch (G) {
-	case ESIDE: sosedb[bound_id].Norm = WSIDE;
+	case ESIDE: border_neighbor[bound_id].Norm = WSIDE;
 		break;
-	case WSIDE: sosedb[bound_id].Norm = ESIDE;
+	case WSIDE: border_neighbor[bound_id].Norm = ESIDE;
 		break;
-	case NSIDE: sosedb[bound_id].Norm = SSIDE;
+	case NSIDE: border_neighbor[bound_id].Norm = SSIDE;
 		break;
-	case SSIDE: sosedb[bound_id].Norm = NSIDE;
+	case SSIDE: border_neighbor[bound_id].Norm = NSIDE;
 		break;
-	case TSIDE: sosedb[bound_id].Norm = BSIDE;
+	case TSIDE: border_neighbor[bound_id].Norm = BSIDE;
 		break;
-	case BSIDE: sosedb[bound_id].Norm = TSIDE;	
+	case BSIDE: border_neighbor[bound_id].Norm = TSIDE;	
 		break;
-	} // end определеиие внутренней нормали
-	sosedb[bound_id].iII = elm_id_inverse;
-	sosedb[bound_id].iB = maxelm_out + bound_id;
-	sosedb[bound_id].iI = elm_id;
+	} // end определение внутренней нормали
+	border_neighbor[bound_id].iII = elm_id_inverse;
+	border_neighbor[bound_id].iB = maxelm_out + bound_id;
+	border_neighbor[bound_id].iI = elm_id;
 	
 	if (binternalg) {
 		// 1 октября 2016 (суббота).
@@ -10036,22 +10036,22 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 		//p.z = 0.125*(pa[nvtx[0][elm_id] - 1].z + pa[nvtx[1][elm_id] - 1].z + pa[nvtx[2][elm_id] - 1].z + pa[nvtx[3][elm_id] - 1].z + pa[nvtx[4][elm_id] - 1].z + pa[nvtx[5][elm_id] - 1].z + pa[nvtx[6][elm_id] - 1].z + pa[nvtx[7][elm_id] - 1].z);
 		//integer ib;
 		//if (in_model_flow(p, ib, b, lb)) {
-			//sosedb[bound_id].iI1 = elm_id;
-		//} else {sosedb[bound_id].iI1 = elm_id; }
+			//border_neighbor[bound_id].iI1 = elm_id;
+		//} else {border_neighbor[bound_id].iI1 = elm_id; }
 		// В любом случае мы присваиваем iI позицию узла.
 		if (!bvisit_g) {
 			// грань еще не была посещена.
-			sosedb[bound_id].iI1 = elm_id;
+			border_neighbor[bound_id].iI1 = elm_id;
 		}
 		else {
 			// грань уже была посещена.
-			sosedb[bound_id].iI2 = elm_id;
+			border_neighbor[bound_id].iI2 = elm_id;
 		}
 	}
 	else {
 		// Не внутренний источник тепла.
-		sosedb[bound_id].iI1 = NON_EXISTENT_NODE;
-		sosedb[bound_id].iI2 = NON_EXISTENT_NODE;
+		border_neighbor[bound_id].iI1 = NON_EXISTENT_NODE;
+		border_neighbor[bound_id].iI2 = NON_EXISTENT_NODE;
 	}
 	//bvisit[bound_id] = true; // грань была посещена
 	// Вычисляем emissivity:
@@ -10060,23 +10060,23 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	if (ibfound >= 0) {
 		// блок найден.
 		// Определяем внутреннюю нормаль:
-		switch (sosedb[bound_id].Norm) {
-		case WSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissE;
+		switch (border_neighbor[bound_id].Norm) {
+		case WSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissE;
 			break;
-		case ESIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissW;
+		case ESIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissW;
 			break;
-		case SSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissN;
+		case SSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissN;
 			break;
-		case NSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissS;
+		case NSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissS;
 			break;
-		case BSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissT;
+		case BSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissT;
 			break;
-		case TSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissB;
+		case TSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissB;
 			break;
 		}
 	}
 	else {
-		printf("error: emissivity calculation block unfound. in constr_sosedb_temp.\n");
+		printf("error: emissivity calculation block unfound. in constr_border_neighbor_temp.\n");
 		system("PAUSE");
 		exit(1);
 	}
@@ -10085,7 +10085,7 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	
 
 	bool bfind = false;
-	sosedb[bound_id].MCB = ls + lw; // Инициализация.
+	border_neighbor[bound_id].MCB = ls + lw; // Инициализация.
 	for (integer j = 0; j<ls; j++) {
 		if (s[j].iPlane == iplane) {
 			// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
@@ -10100,7 +10100,7 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 		// внешний источник тепла
 		//printf("source out found...\n"); // debug
 		//getchar();
-		sosedb[bound_id].MCB = jpos;
+		border_neighbor[bound_id].MCB = jpos;
 	}
 	else {
 		for (integer j = 0; j<lw; j++) {
@@ -10115,14 +10115,14 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 			}
 		}
 		if (bfind) {
-			// найдена стека
+			// найдена стенка
 			//printf("ambient wall found...\n"); // debug
 			//getchar();
-			sosedb[bound_id].MCB = ls + jpos;
+			border_neighbor[bound_id].MCB = ls + jpos;
 		}
 		else {
 			// граничное условие по умолчанию
-			sosedb[bound_id].MCB = ls + lw;
+			border_neighbor[bound_id].MCB = ls + lw;
 		}
 
 	}
@@ -10131,10 +10131,10 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 } // obrabotka_granichnoi_grani
 
   // G - грань по которой ставится граничное условие.
-  // elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+  // elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
   // bound_id - номер граничного узла, начиная с нуля.
   // elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
-void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHKA* pa, integer elm_id, integer bound_id,
+void obrabotka_granichnoi_grani(integer G, BOUND* &border_neighbor, integer **nvtx, TOCHKA* pa, integer elm_id, integer bound_id,
 	integer elm_id_inverse, integer maxelm_out, integer* &whot_is_block, integer ls, integer lw, WALL* w, SOURCE* s, BLOCK* b,
 	doublereal dS, bool binternalg, bool bvisit_g, TOCHKA &p_centerG)
 {
@@ -10173,7 +10173,7 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	integer iplane; // плоскость в которой лежит грань.
 
 					// Эта информация совсем неактивна при данной сборке.
-	for (integer j = 0; j<6; j++) sosedb[bound_id].iW[j] = NON_EXISTENT_NODE; // инициализация
+	for (integer j = 0; j<6; j++) border_neighbor[bound_id].iW[j] = NON_EXISTENT_NODE; // инициализация
 
 																			  // узнать координаты центра грани и ориентацию в пространстве
 	switch (G) {
@@ -10211,29 +10211,29 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	}
 
 	// Площадь грани передаётся извне.
-	sosedb[bound_id].dS = dS; // Присваиваем площадь граничной грани.
-	sosedb[bound_id].p_c.x = p_centerG.x;
-	sosedb[bound_id].p_c.y = p_centerG.y;
-	sosedb[bound_id].p_c.z = p_centerG.z;
+	border_neighbor[bound_id].dS = dS; // Присваиваем площадь граничной грани.
+	border_neighbor[bound_id].p_c.x = p_centerG.x;
+	border_neighbor[bound_id].p_c.y = p_centerG.y;
+	border_neighbor[bound_id].p_c.z = p_centerG.z;
 
 							  // грань лежит на границе расчётной области.
 	switch (G) {
-	case ESIDE: sosedb[bound_id].Norm = WSIDE;
+	case ESIDE: border_neighbor[bound_id].Norm = WSIDE;
 		break;
-	case WSIDE: sosedb[bound_id].Norm = ESIDE;
+	case WSIDE: border_neighbor[bound_id].Norm = ESIDE;
 		break;
-	case NSIDE: sosedb[bound_id].Norm = SSIDE;
+	case NSIDE: border_neighbor[bound_id].Norm = SSIDE;
 		break;
-	case SSIDE: sosedb[bound_id].Norm = NSIDE;
+	case SSIDE: border_neighbor[bound_id].Norm = NSIDE;
 		break;
-	case TSIDE: sosedb[bound_id].Norm = BSIDE;
+	case TSIDE: border_neighbor[bound_id].Norm = BSIDE;
 		break;
-	case BSIDE: sosedb[bound_id].Norm = TSIDE;
+	case BSIDE: border_neighbor[bound_id].Norm = TSIDE;
 		break;
-	} // end определеиие внутренней нормали
-	sosedb[bound_id].iII = elm_id_inverse;
-	sosedb[bound_id].iB = maxelm_out + bound_id;
-	sosedb[bound_id].iI = elm_id;
+	} // end определение внутренней нормали
+	border_neighbor[bound_id].iII = elm_id_inverse;
+	border_neighbor[bound_id].iB = maxelm_out + bound_id;
+	border_neighbor[bound_id].iI = elm_id;
 
 	if (binternalg) {
 		// 1 октября 2016 (суббота).
@@ -10245,22 +10245,22 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 		//p.z = 0.125*(pa[nvtx[0][elm_id] - 1].z + pa[nvtx[1][elm_id] - 1].z + pa[nvtx[2][elm_id] - 1].z + pa[nvtx[3][elm_id] - 1].z + pa[nvtx[4][elm_id] - 1].z + pa[nvtx[5][elm_id] - 1].z + pa[nvtx[6][elm_id] - 1].z + pa[nvtx[7][elm_id] - 1].z);
 		//integer ib;
 		//if (in_model_flow(p, ib, b, lb)) {
-		//sosedb[bound_id].iI1 = elm_id;
-		//} else {sosedb[bound_id].iI1 = elm_id; }
+		//border_neighbor[bound_id].iI1 = elm_id;
+		//} else {border_neighbor[bound_id].iI1 = elm_id; }
 		// В любом случае мы присваиваем iI позицию узла.
 		if (!bvisit_g) {
 			// грань еще не была посещена.
-			sosedb[bound_id].iI1 = elm_id;
+			border_neighbor[bound_id].iI1 = elm_id;
 		}
 		else {
 			// грань уже была посещена.
-			sosedb[bound_id].iI2 = elm_id;
+			border_neighbor[bound_id].iI2 = elm_id;
 		}
 	}
 	else {
 		// Не внутренний источник тепла.
-		sosedb[bound_id].iI1 = NON_EXISTENT_NODE;
-		sosedb[bound_id].iI2 = NON_EXISTENT_NODE;
+		border_neighbor[bound_id].iI1 = NON_EXISTENT_NODE;
+		border_neighbor[bound_id].iI2 = NON_EXISTENT_NODE;
 	}
 	//bvisit[bound_id] = true; // грань была посещена
 	// Вычисляем emissivity:
@@ -10269,30 +10269,30 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	if (ibfound >= 0) {
 		// блок найден.
 		// Определяем внутреннюю нормаль:
-		switch (sosedb[bound_id].Norm) {
-		case WSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissE;
+		switch (border_neighbor[bound_id].Norm) {
+		case WSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissE;
 			break;
-		case ESIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissW;
+		case ESIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissW;
 			break;
-		case SSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissN;
+		case SSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissN;
 			break;
-		case NSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissS;
+		case NSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissS;
 			break;
-		case BSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissT;
+		case BSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissT;
 			break;
-		case TSIDE: sosedb[bound_id].emissivity = b[ibfound].radiation.emissB;
+		case TSIDE: border_neighbor[bound_id].emissivity = b[ibfound].radiation.emissB;
 			break;
 		}
 	}
 	else {
-		printf("error: emissivity calculation block unfound. in constr_sosedb_temp.\n");
+		printf("error: emissivity calculation block unfound. in constr_border_neighbor_temp.\n");
 		system("PAUSE");
 		exit(1);
 	}
 	integer jpos;
 
 	bool bfind = false;
-	sosedb[bound_id].MCB = ls + lw; // Инициализация.
+	border_neighbor[bound_id].MCB = ls + lw; // Инициализация.
 	for (integer j = 0; j<ls; j++) {
 		if (s[j].iPlane == iplane) {
 			// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
@@ -10307,7 +10307,7 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 		// внешний источник тепла
 		//printf("source out found...\n"); // debug
 		//getchar();
-		sosedb[bound_id].MCB = jpos;
+		border_neighbor[bound_id].MCB = jpos;
 	}
 	else {
 		for (integer j = 0; j<lw; j++) {
@@ -10321,14 +10321,14 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 			}
 		}
 		if (bfind) {
-			// найдена стека
+			// найдена стенка
 			//printf("ambient wall found...\n"); // debug
 			//getchar();
-			sosedb[bound_id].MCB = ls + jpos;
+			border_neighbor[bound_id].MCB = ls + jpos;
 		}
 		else {
 			// граничное условие по умолчанию
-			sosedb[bound_id].MCB = ls + lw;
+			border_neighbor[bound_id].MCB = ls + lw;
 		}
 
 	}
@@ -10353,26 +10353,26 @@ void CALC_GG(integer G, integer &GG)
 } // CALC_GG
 
 // 9.03.2019
-// INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-void INIT_SOSEDI(ALICE_PARTITION** &sosedi, integer maxelm, integer G,integer &GG, bool bdroblenie4G,
+// INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+void INIT_neighbors_for_the_internal_node(ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, integer G,integer &GG, bool bdroblenie4G,
 	integer iNODE1G, integer iNODE2G, integer iNODE3G, integer iNODE4G,
 	bool bdroblenie4GG, integer iNODE1GG, integer iNODE2GG, integer iNODE3GG, integer iNODE4GG)
 {
 	// граничная грань:
-	sosedi[G][maxelm].bdroblenie4 = bdroblenie4G;
-	sosedi[G][maxelm].iNODE1 = iNODE1G; // граничные КО нумеруются в последнюю очередь,	
-	sosedi[G][maxelm].iNODE2 = iNODE2G;
-	sosedi[G][maxelm].iNODE3 = iNODE3G;
-	sosedi[G][maxelm].iNODE4 = iNODE4G;
+	neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = bdroblenie4G;
+	neighbors_for_the_internal_node[G][maxelm].iNODE1 = iNODE1G; // граничные КО нумеруются в последнюю очередь,	
+	neighbors_for_the_internal_node[G][maxelm].iNODE2 = iNODE2G;
+	neighbors_for_the_internal_node[G][maxelm].iNODE3 = iNODE3G;
+	neighbors_for_the_internal_node[G][maxelm].iNODE4 = iNODE4G;
 	// после maxelm_memo внутренних КО.
 	// Вычисление дальнего соседа
 	CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-	sosedi[GG][maxelm].bdroblenie4 = bdroblenie4GG;
-	sosedi[GG][maxelm].iNODE1 = iNODE1GG; // соседа нет.
-	sosedi[GG][maxelm].iNODE2 = iNODE2GG;
-	sosedi[GG][maxelm].iNODE3 = iNODE3GG;
-	sosedi[GG][maxelm].iNODE4 = iNODE4GG;
-} // CALC_SOSEDI
+	neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = bdroblenie4GG;
+	neighbors_for_the_internal_node[GG][maxelm].iNODE1 = iNODE1GG; // соседа нет.
+	neighbors_for_the_internal_node[GG][maxelm].iNODE2 = iNODE2GG;
+	neighbors_for_the_internal_node[GG][maxelm].iNODE3 = iNODE3GG;
+	neighbors_for_the_internal_node[GG][maxelm].iNODE4 = iNODE4GG;
+} // CALC_neighbors_for_the_internal_node
 
 // 9.03.2019
 // DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
@@ -10402,7 +10402,7 @@ void DEFINE_BOUNDARY_PROPERTIES_FLOW(doublereal **prop, doublereal** &prop_b, in
 doublereal CALC_SQUARE(integer G, integer maxelm, integer** nvtx, TOCHKA* &pa) 
 {
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+	doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 	volume3D(maxelm, nvtx, pa, dx_loc, dy_loc, dz_loc);
 	doublereal dSloc = 0.0;
 
@@ -10425,7 +10425,7 @@ doublereal CALC_SQUARE(integer G, integer maxelm, integer** nvtx, TOCHKA* &pa)
 TOCHKA CALC_CENTERG(integer G, integer iP, integer** nvtx, TOCHKA* &pa)
 {
 	// вычисление размеров текущего контрольного объёма:
-	doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+	doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx_loc, dy_loc, dz_loc);
 	TOCHKA p;
 
@@ -10451,15 +10451,15 @@ TOCHKA CALC_CENTERG(integer G, integer iP, integer** nvtx, TOCHKA* &pa)
 // Создана на базе calculate_max_bound_temp.
 // Самое начало реализации. 10.сентября.2016 14_20. 
 // Середина разработки 21 сентября 2016.
-// Окончил писать и жду запуска для тестирования 22 сетября 2016.
+// Окончил писать и жду запуска для тестирования 22 сентября 2016.
 // Написано очень плохо, много дублирующегося кода, за большим
 // объёмом кода не прослеживается логика исполнения данной функции.
 // Начало рефакторинга 9.марта.2019. (сократил в этом модуле в двух этих 
 // функциях 6945 строк кода с сохранением работоспособности.
 //  Был объём модуля 29601 строк стало 22656 строк.
 // Метод работает верно. Проверено 10.03.2019.
-void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalsource, 
-	ALICE_PARTITION** &sosedi, doublereal **prop, doublereal** &prop_b,
+void constr_neighbors_for_the_internal_node_prop_b_alice(octree* &oc, BOUND* &border_neighbor, bool* &binternalsource, 
+	ALICE_PARTITION** &neighbors_for_the_internal_node, doublereal **prop, doublereal** &prop_b,
 	integer maxbound_out, integer maxelm_memo, integer maxelm_memo1,
 	BLOCK* b, integer lb, SOURCE* s, integer ls, WALL* w, integer lw, 
 	integer* &whot_is_block,
@@ -10469,25 +10469,25 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	integer G, GG; // грань ячейки дискретизации.
 
 	// Выделение оперативной памяти.
-	sosedi = nullptr;
-	sosedi = new ALICE_PARTITION*[12];
-	if (sosedi == nullptr) {
+	neighbors_for_the_internal_node = nullptr;
+	neighbors_for_the_internal_node = new ALICE_PARTITION*[12];
+	if (neighbors_for_the_internal_node == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for sosedi constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
 		exit(1);
 	}
-	for (integer i = 0; i<12; i++) sosedi[i] = nullptr;
+	for (integer i = 0; i<12; i++) neighbors_for_the_internal_node[i] = nullptr;
 	for (integer i = 0; i<12; i++) {
-		sosedi[i] = new ALICE_PARTITION[maxelm_memo+2];
-		if (sosedi[i] == nullptr) {
+		neighbors_for_the_internal_node[i] = new ALICE_PARTITION[maxelm_memo+2];
+		if (neighbors_for_the_internal_node[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for sosedi[%lld] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node[%lld] constr struct_alice...\n", i);
 #else
-			printf("Problem : not enough memory on your equipment for sosedi[%d] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node[%d] constr struct_alice...\n", i);
 #endif
 			
 			printf("Please any key to exit...\n");
@@ -10499,12 +10499,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	// Инициализация. 09.03.2019
 	for (integer i = 0; i < maxelm_memo + 2; i++) {
 		integer GGloc;
-		INIT_SOSEDI(sosedi, i, ESIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, NSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, TSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, BSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, ESIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, WSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, NSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, WSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, TSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, BSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 	}
 
 	// Выделение оперативной памяти:
@@ -10512,7 +10512,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	prop_b = new doublereal*[6];
 	if (prop_b == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for prop_b constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for prop_b constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -10525,9 +10525,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 		if (prop_b[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for prop_b[%lld] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for prop_b[%lld] constr struct_alice...\n", i);
 #else
-			printf("Problem : not enough memory on your equipment for prop_b[%d] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for prop_b[%d] constr struct_alice...\n", i);
 #endif
 			
 			printf("Please any key to exit...\n");
@@ -10551,11 +10551,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	// Алгоритм:
 	// Выделение оперативной памяти:
 	// gran[0..5][0..maxbound-1]
-	sosedb = nullptr;
-	sosedb = new BOUND[maxbound_out];
-	if (sosedb == nullptr) {
+	border_neighbor = nullptr;
+	border_neighbor = new BOUND[maxbound_out];
+	if (border_neighbor == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for sosedb constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for border_neighbor constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -10566,7 +10566,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	// оператор new не требует проверки на null.
 	//if (binternalsource == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for binternalsource constr struct_alice...\n");
+		//printf("Problem: not enough memory on your equipment for binternalsource constr struct_alice...\n");
 		//printf("Please any key to exit...\n");
 		//getchar();
 		//system("pause");
@@ -10581,7 +10581,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	// оператор new не требует проверки на null.
 	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Problem: not enough memory on your equipment for bvisit constr struct_alice...\n");
 		//printf("Please any key to exit...\n");
 		//getchar();
 		//system("pause");
@@ -10676,7 +10676,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 				
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				TOCHKA p;
 				p.x = 0.125*(octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
 				p.y = 0.125*(octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
@@ -10693,7 +10693,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 					inDomain = false;
 				}
 				if (inDomain) {
-					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_TD.
+					// Узел принадлежит расчётной области и его номер maxelm==octree1->inum_TD.
 
 					// сосед не существует
 					// записываем идентификатор грани и
@@ -10705,27 +10705,27 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkW == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -10741,7 +10741,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
 									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
 									// 10.03.2019
-									integer return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
 									if (octree1->linkE->b4W) {
 										integer current_node_number = octree1->inum_TD - 1;// Текущий внутренний номер.
 										bool bcontinue = true;
@@ -10749,8 +10749,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkE->linkW0 != nullptr) {
 												if (octree1->linkE->linkW0->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be E W0\n");
@@ -10764,8 +10764,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkE->linkW3!=nullptr) {
 												if (octree1->linkE->linkW3->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be E W3\n");
@@ -10779,8 +10779,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkE->linkW4!=nullptr) {
 												if (octree1->linkE->linkW4->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be E W4\n");
@@ -10794,8 +10794,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkE->linkW7!=nullptr) {
 												if (octree1->linkE->linkW7->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be E W7\n");
@@ -10821,39 +10821,39 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Это граничная грань внутреннего источника тепла.
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkE->inum_TD - 1, sosedi[G][maxelm].iNODE1 - maxelm_memo); 
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkE->inum_TD - 1, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo); 
 										}
 										else {
 											// SOLID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, sosedi[G][maxelm].iNODE1 - maxelm_memo); 
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo); 
 										}
 
-										binternalsource[sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
+										binternalsource[neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4W) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
 												octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkW == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
 													octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -10865,20 +10865,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										G = ESIDE;
 										// внутренняя грань (нумерация начинается с нуля):
 										// Ссылка на строго внутреннего соседа который точно существует.
-										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 										//if ((octree1->linkE->linkE == nullptr) || ((octree1->linkE->linkE != nullptr)&&(octree1->linkE->linkE->inum_TD==0))) {
-											//sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE;
+											//neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE;
 										//}
 										//else {
-											//sosedi[GG][maxelm].iNODE1 = уникальный номер граничного узла;
+											//neighbors_for_the_internal_node[GG][maxelm].iNODE1 = уникальный номер граничного узла;
 										// уникальный номер граничного узла неизвестен, нужен второй проход для дальнего соседа.
 										//}
 
@@ -10901,7 +10901,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound - 1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound - 1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
@@ -10918,20 +10918,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4W) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkW == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -10942,15 +10942,15 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										G = ESIDE;
 										// внутренняя грань (нумерация начинается с нуля):
-										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										// CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -10980,28 +10980,28 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].							
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].							
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkW == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
 
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -11015,9 +11015,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							if (octree1->linkE1 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi E1 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node E1 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi E1 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node E1 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -11025,18 +11025,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi E1 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E1 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi E1 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E1 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -11047,20 +11047,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkW == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -11072,19 +11072,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkE1->inum_TD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi E1 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E1 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi E1 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E1 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -11102,20 +11102,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -11141,14 +11141,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkE1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -11173,14 +11173,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkE1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 
 										}
@@ -11194,32 +11194,32 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi E2 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E2 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi E2 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E2 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -11230,20 +11230,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkW == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -11257,19 +11257,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkE2->inum_TD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi E2 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E2 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi E2 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E2 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -11285,20 +11285,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = octree1->linkE2->p0.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -11314,14 +11314,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkE2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkE2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -11346,14 +11346,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkE2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkE2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 
 										}
@@ -11368,30 +11368,30 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi E5 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E5 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi E5 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E5 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -11402,20 +11402,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkW == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -11427,18 +11427,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkE5->inum_TD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi E5 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E5 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi E5 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E5 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -11454,20 +11454,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = octree1->linkE5->p0.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -11483,14 +11483,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkE5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkE5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -11514,14 +11514,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkE5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkE5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -11535,31 +11535,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi E6 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node E6 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi E6 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node E6 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -11571,20 +11571,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkW == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -11597,18 +11597,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkE6->inum_TD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi E6 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E6 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi E6 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node E6 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -11626,20 +11626,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -11655,14 +11655,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkE6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkE6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -11686,14 +11686,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkE6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkE6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -11711,28 +11711,28 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].	
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].	
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4E) {
 								
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkE == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -11749,7 +11749,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
 									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
 									// 10.03.2019
-									integer return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
 									if (octree1->linkW->b4E) {
 										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
@@ -11757,8 +11757,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkW->linkE1 != nullptr) {
 												if (octree1->linkW->linkE1->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be W E1\n");
@@ -11772,8 +11772,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkW->linkE2 != nullptr) {
 												if (octree1->linkW->linkE2->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be W E2\n");
@@ -11787,8 +11787,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkW->linkE5 != nullptr) {
 												if (octree1->linkW->linkE5->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be W E5\n");
@@ -11802,8 +11802,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkW->linkE6 != nullptr) {
 												if (octree1->linkW->linkE6->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be W E6\n");
@@ -11829,56 +11829,56 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].	
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].	
 										
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkW->inum_TD - 1, sosedi[G][maxelm].iNODE1 - maxelm_memo); 
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkW->inum_TD - 1, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo); 
 										}
 										else {
 											// SOLID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4E) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
 												octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkE == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
 													octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
 											}
 										}
-										binternalsource[sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
+										binternalsource[neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
 
 									}
 									else {
 										// Это строго внутренний узел.
 										G = WSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -11898,7 +11898,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -11915,20 +11915,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4E) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound-1,
 												octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkE == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound-1,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound-1,
 													octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -11940,15 +11940,15 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = WSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -11970,34 +11970,34 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							(octree1->linkW0->inum_TD == 0))))
 						{
 							// 1 - W0&&W3&&W4&&W7 - на границе расчётной области (РО).
-							// 2 - W0&&W3&&W4&&W7 - на гранеице HOLLOW блока.
+							// 2 - W0&&W3&&W4&&W7 - на границе HOLLOW блока.
 							// 3 - W0&&W4 на границе HOLLOW блока, W3&&W7 на границе РО.
 							// 4 - W0&&W3 на границе HOLLOW блока, W4&&W7 на границе РО.
 							// 5 - W0 на границе HOLLOW блока, W3&&W4&&W7  на границе РО.
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkE == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -12013,9 +12013,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							if (octree1->linkW0 == nullptr) {
 
 #if doubleintprecision == 1
-								printf("error nullptr sosedi W0 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node W0 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi W0 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node W0 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -12024,17 +12024,17 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi W0 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node W0 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi W0 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node W0 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -12045,20 +12045,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkE == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -12070,17 +12070,17 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkW0->inum_TD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi W0 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W0 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi W0 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W0 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -12096,20 +12096,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = octree1->linkW0->p1.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -12124,13 +12124,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkW0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -12155,13 +12155,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkW0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -12175,29 +12175,29 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi W3 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node W3 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi W3 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node W3 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -12208,20 +12208,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkE == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -12234,17 +12234,17 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkW3->inum_TD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi W3 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W3 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi W3 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W3 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -12261,20 +12261,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -12290,13 +12290,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkW3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkW3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -12320,13 +12320,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkW3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkW3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -12340,29 +12340,29 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi W4 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W4 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi W4 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W4 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -12373,20 +12373,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkE == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -12399,18 +12399,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkW4->inum_TD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi W4 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W4 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi W4 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W4 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -12428,20 +12428,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -12456,13 +12456,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkW4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkW4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -12486,13 +12486,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkW4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkW4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -12506,29 +12506,29 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi W7 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W7 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi W7 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W7 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -12539,20 +12539,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkE == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -12565,18 +12565,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								if (octree1->linkW7->inum_TD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi W7 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W7 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi W7 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node W7 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -12592,20 +12592,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = octree1->linkW7->p1.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -12620,13 +12620,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkW7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkW7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -12650,13 +12650,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkW7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkW7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -12675,27 +12675,27 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkS == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -12712,7 +12712,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
 									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
 									// 10.03.2019
-									integer return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
 									//S0 NODE1,
 									//S1 NODE2,
 									//S4 NODE3,
@@ -12725,8 +12725,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkN->linkS0 != nullptr) {
 												if (octree1->linkN->linkS0->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be N S0\n");
@@ -12740,8 +12740,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkN->linkS1 != nullptr) {
 												if (octree1->linkN->linkS1->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be N S1\n");
@@ -12755,8 +12755,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkN->linkS4 != nullptr) {
 												if (octree1->linkN->linkS4->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be N S4\n");
@@ -12770,8 +12770,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkN->linkS5 != nullptr) {
 												if (octree1->linkN->linkS5->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be N S5\n");
@@ -12797,41 +12797,41 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkN->inum_TD - 1, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkN->inum_TD - 1, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 										else {
 											// SOLID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4S) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
 												octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkS == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
 													octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
-										binternalsource[sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
+										binternalsource[neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
 
 									}
 									else {
@@ -12839,15 +12839,15 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = NSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -12867,7 +12867,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound -1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, maxelm_memo + maxbound -1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -12884,20 +12884,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4S) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkS == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -12908,15 +12908,15 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = NSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										// CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -12940,34 +12940,34 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							(octree1->linkN3->inum_TD == 0))))						
 						{
 							// 1 - N2&&N3&&N6&&N7 - на границе расчётной области (РО).
-							// 2 -  N2&&N3&&N6&&N7 - на гранеице HOLLOW блока.
+							// 2 -  N2&&N3&&N6&&N7 - на границе HOLLOW блока.
 							// 3 - N3&&N7 на границе HOLLOW блока, N2&&N6 на границе РО.
 							// 4 - N2&&N3 на границе HOLLOW блока, N6&N7 на границе РО.
 							// 5 - N3 на границе HOLLOW блока, N2&&N6&&N7  на границе РО.
 
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkS == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -12987,31 +12987,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi N2 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node N2 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi N2 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node N2 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -13022,20 +13022,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkS == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -13049,18 +13049,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi N2 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N2 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi N2 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N2 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -13077,20 +13077,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -13105,13 +13105,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkN2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -13135,13 +13135,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkN2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -13150,9 +13150,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							if (octree1->linkN3 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi N3 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node N3 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi N3 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node N3 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -13161,19 +13161,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N3 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N3 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi N3 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N3 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -13186,20 +13186,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkS == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -13214,19 +13214,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi N3 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N3 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi N3 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N3 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -13242,20 +13242,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkN3->p1.x + octree1->linkN3->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -13271,13 +13271,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkN3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkN3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -13301,13 +13301,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkN3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkN3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -13321,31 +13321,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 								
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N6 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N6 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi N6 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N6 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -13356,20 +13356,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkS == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -13383,19 +13383,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi N6 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N6 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi N6 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N6 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -13412,20 +13412,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -13440,13 +13440,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkN6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkN6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -13470,13 +13470,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkN6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkN6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -13490,31 +13490,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = - 1; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = - 1; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N7 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N7 elm=%lld\n", maxelm);
 #else
-		printf("error nullptr sosedi N7 elm=%d\n", maxelm);
+		printf("error nullptr neighbors_for_the_internal_node N7 elm=%d\n", maxelm);
 #endif
 								
 								getchar();
@@ -13525,20 +13525,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkS == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -13552,19 +13552,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi N7 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N7 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi N7 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node N7 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -13581,20 +13581,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -13609,13 +13609,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkN7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkN7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -13639,13 +13639,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkN7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkN7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -13663,27 +13663,27 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkN == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -13703,7 +13703,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
 									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
 									// 10.03.2019
-									integer return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
 									//N2 NODE1,
 									//N3 NODE2,
 									//N6 NODE3,
@@ -13716,8 +13716,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkS->linkN2!=nullptr) {
 												if (octree1->linkS->linkN2->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be S N2\n");
@@ -13731,8 +13731,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkS->linkN3!=nullptr) {
 												if (octree1->linkS->linkN3->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be S N3\n");
@@ -13746,8 +13746,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkS->linkN6!=nullptr) {
 												if (octree1->linkS->linkN6->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be S N6\n");
@@ -13761,8 +13761,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkS->linkN7 != nullptr) {
 												if (octree1->linkS->linkN7->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be S N7\n");
@@ -13789,41 +13789,41 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
 											 // В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkS->inum_TD - 1, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkS->inum_TD - 1, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 										else {
 											// SOLID
 											 // В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4N) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
 												octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkN == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
 													octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
-										binternalsource[sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
+										binternalsource[neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
 
 									}
 									else {
@@ -13831,16 +13831,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = SSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -13860,7 +13860,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -13877,20 +13877,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4N) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound-1,
 												octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkN == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound-1,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound-1,
 													octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -13901,16 +13901,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = SSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 								}
@@ -13932,34 +13932,34 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							(octree1->linkS0->inum_TD == 0))))
 						{
 							// 1 - S0&&S1&&S4&&S5 - на границе расчётной области (РО).
-							// 2 - S0&&S1&&S4&&S5 - на гранеице HOLLOW блока.
+							// 2 - S0&&S1&&S4&&S5 - на границе HOLLOW блока.
 							// 3 - S0&&S4 на границе HOLLOW блока, S1&&S5 на границе РО.
 							// 4 - S0&&S1 на границе HOLLOW блока, S4&S5 на границе РО.
 							// 5 - S0 на границе HOLLOW блока, S1&&S4&&S5  на границе РО.
 
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 								
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkN == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -13974,9 +13974,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							if (octree1->linkS0 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi S0 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node S0 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi S0 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node S0 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -13986,18 +13986,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi S0 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node S0 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi S0 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node S0 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -14008,20 +14008,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkN == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -14035,19 +14035,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 									
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi S0 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S0 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi S0 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S0 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -14064,20 +14064,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -14092,13 +14092,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkS0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -14122,13 +14122,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkS0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -14142,31 +14142,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi S1 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node S1 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi S1 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node S1 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -14177,20 +14177,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkN == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -14203,18 +14203,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi S1 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S1 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi S1 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S1 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -14230,20 +14230,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkS1->p2.x + octree1->linkS1->p3.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -14259,13 +14259,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkS1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkS1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -14289,13 +14289,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkS1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkS1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -14309,30 +14309,30 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi S4 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S4 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi S4 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S4 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -14343,20 +14343,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkN == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -14369,18 +14369,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 									
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi S4 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S4 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi S4 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S4 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -14396,21 +14396,21 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkS4->p2.x + octree1->linkS4->p3.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -14425,13 +14425,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkS4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkS4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -14455,13 +14455,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkS4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkS4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -14475,31 +14475,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 								
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi S5 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S5 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi S5 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S5 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -14510,20 +14510,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkN == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -14536,19 +14536,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi S5 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S5 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi S5 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node S5 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -14564,20 +14564,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkS5->p2.x + octree1->linkS5->p3.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -14592,13 +14592,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkS5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkS5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -14622,13 +14622,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkS5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkS5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -14646,27 +14646,27 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkB == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								
@@ -14685,7 +14685,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
 									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
 									// 10.03.2019
-									integer return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
 									if (octree1->linkT->b4B) {
 										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
@@ -14693,8 +14693,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkT->linkB0 != nullptr) {
 												if (octree1->linkT->linkB0->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be T B0\n");
@@ -14708,8 +14708,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkT->linkB1 != nullptr) {
 												if (octree1->linkT->linkB1->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be T B1\n");
@@ -14723,8 +14723,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkT->linkB2 != nullptr) {
 												if (octree1->linkT->linkB2->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be T B2\n");
@@ -14738,8 +14738,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkT->linkB3 != nullptr) {
 												if (octree1->linkT->linkB3->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be T B3\n");
@@ -14765,41 +14765,41 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkT->inum_TD - 1, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkT->inum_TD - 1, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 										else {
 											// SOLID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4B) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
 												octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkB == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
 													octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
-										binternalsource[sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
+										binternalsource[neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
 
 									}
 									else {
@@ -14807,16 +14807,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань.
 										G = TSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -14836,7 +14836,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -14853,20 +14853,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4B) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkB == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -14876,16 +14876,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань.
 										G = TSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 								}
@@ -14907,34 +14907,34 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 						{
 
 							// 1 - T4&&T5&&T6&&T7 - на границе расчётной области (РО).
-							// 2 - T4&&T5&&T6&&T7 - на гранеице HOLLOW блока.
+							// 2 - T4&&T5&&T6&&T7 - на границе HOLLOW блока.
 							// 3 - T4&&T7 на границе HOLLOW блока, T5&&T6 на границе РО.
 							// 4 - T4&&T5 на границе HOLLOW блока, T6&T7 на границе РО.
 							// 5 - T4 на границе HOLLOW блока, T5&&T6&&T7  на границе РО.
 
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkB == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -14949,9 +14949,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							if (octree1->linkT4 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi T4 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node T4 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi T4 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node T4 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -14961,19 +14961,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T4 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T4 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T4 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T4 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -14984,20 +14984,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkB == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 
@@ -15011,18 +15011,18 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi T4 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T4 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi T4 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T4 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -15038,20 +15038,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkT4->p1.x + octree1->linkT4->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -15067,13 +15067,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkT4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -15097,13 +15097,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkT4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT4->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -15117,31 +15117,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T5 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T5 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T5 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T5 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -15152,20 +15152,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkB == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 
@@ -15179,19 +15179,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi T5 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T5 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi T5 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T5 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -15207,20 +15207,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkT5->p1.x + octree1->linkT5->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -15236,13 +15236,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkT5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkT5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -15266,13 +15266,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkT5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkT5->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -15286,31 +15286,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T6 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T6 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T6 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T6 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -15321,20 +15321,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkB == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 
@@ -15348,19 +15348,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi T6 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T6 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi T6 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T6 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -15376,20 +15376,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkT6->p1.x + octree1->linkT6->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -15406,13 +15406,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkT6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkT6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -15436,13 +15436,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkT6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkT6->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -15456,31 +15456,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T7 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T7 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T7 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T7 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -15491,20 +15491,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkB == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 
@@ -15518,19 +15518,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi T7 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T7 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi T7 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node T7 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -15546,20 +15546,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkT7->p1.x + octree1->linkT7->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -15575,13 +15575,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkT7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkT7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -15605,13 +15605,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkT7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkT7->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -15629,27 +15629,27 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 						
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkT == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -15666,7 +15666,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
 									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
 									// 10.03.2019
-									integer return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
 									if (octree1->linkB->b4B) {
 										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
@@ -15674,8 +15674,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkB->linkT4 != nullptr) {
 												if (octree1->linkB->linkT4->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be B T4\n");
@@ -15689,8 +15689,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkB->linkT5 != nullptr) {
 												if (octree1->linkB->linkT5->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be B T5\n");
@@ -15704,8 +15704,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkB->linkT6 != nullptr) {
 												if (octree1->linkB->linkT6->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be B T6\n");
@@ -15719,8 +15719,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											if (octree1->linkB->linkT7 != nullptr) {
 												if (octree1->linkB->linkT7->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be B T7\n");
@@ -15746,41 +15746,41 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkB->inum_TD - 1, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, octree1->linkB->inum_TD - 1, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 										else {
 											// SOLID
 											// В граничный узел сносятся свойства прилегающего КО.
-											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, sosedi[G][maxelm].iNODE1 - maxelm_memo);
+											DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo);
 										}
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4T) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
 												octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkT == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
 													octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
-										binternalsource[sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
+										binternalsource[neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo] = true; // внутренний источник тепла на границе жидкости и твёрдого тела
 
 									}
 									else {
@@ -15788,16 +15788,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань.
 										G = BSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -15817,7 +15817,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound -1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, maxelm_memo + maxbound -1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -15834,20 +15834,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4T) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkT == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -15858,16 +15858,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань.
 										G = BSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 								}
@@ -15889,34 +15889,34 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 						
 						{
 							// 1 - B0&&B1&&B2&&B3 - на границе расчётной области (РО).
-							// 2 - B0&&B1&&B2&&B3 - на гранеице HOLLOW блока.
+							// 2 - B0&&B1&&B2&&B3 - на границе HOLLOW блока.
 							// 3 - B0&&B3 на границе HOLLOW блока, B1&&B2 на границе РО.
 							// 4 - B0&&B1 на границе HOLLOW блока, B2&B3 на границе РО.
 							// 5 - B0 на границе HOLLOW блока, B1&&B2&&B3  на границе РО.
 
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkT == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -15931,9 +15931,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							if (octree1->linkB0 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi B0 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node B0 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi B0 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node B0 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -15942,19 +15942,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B0 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B0 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B0 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B0 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -15965,20 +15965,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkT == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -15991,19 +15991,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi B0 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B0 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi B0 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B0 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -16020,20 +16020,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -16048,13 +16048,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkB0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -16078,13 +16078,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkB0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB0->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -16098,31 +16098,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B1 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B1 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B1 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B1 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -16133,20 +16133,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkT == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -16159,19 +16159,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi B1 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B1 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi B1 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B1 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -16187,20 +16187,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkB1->p6.x + octree1->linkB1->p7.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -16215,13 +16215,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkB1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkB1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -16245,13 +16245,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkB1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkB1->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -16265,31 +16265,31 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 								
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B2 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B2 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B2 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B2 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -16300,20 +16300,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkT == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -16327,19 +16327,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 									
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi B2 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B2 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi B2 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B2 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -16356,20 +16356,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkB2->p6.x + octree1->linkB2->p7.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -16384,13 +16384,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkB2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkB2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -16414,13 +16414,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkB2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkB2->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -16434,30 +16434,30 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B3 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B3 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B3 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B3 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -16468,20 +16468,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 									if (octree1->linkT == nullptr) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 								}
@@ -16495,19 +16495,19 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_TD == 0 sosedi B3 elm=%lld\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B3 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_TD == 0 sosedi B3 elm=%d\n", maxelm);
+									//printf("error inum_TD == 0 neighbors_for_the_internal_node B3 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -16523,20 +16523,20 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									p_centerG.x = 0.5*(octree1->linkB3->p6.x + octree1->linkB3->p7.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_TD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -16551,13 +16551,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkB3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkB3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -16581,13 +16581,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkB3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkB3->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -16701,7 +16701,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 		delete[] bvisit;
 		bvisit = nullptr;
 	//}
-} // constr_sosedi_prop_b_alice
+} // constr_neighbors_for_the_internal_node_prop_b_alice
 
 
 // Вычисление соседей для каждого внутреннего узла. 
@@ -16710,14 +16710,14 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 // Создана на базе calculate_max_bound_temp.
 // Самое начало реализации. 10.сентября.2016 14_20. 
 //  Середина разработки 21 сентября 2016.
-// Окончил писать и жду запуска для тестирования 22 сетября 2016.
+// Окончил писать и жду запуска для тестирования 22 сентября 2016.
 // Написано очень плохо, много дублирующегося кода, за большим
 // объёмом кода не прослеживается логика исполнения данной функции.
 // Начало рефакторинга 9.марта.2019. (сократил в этом модуле в двух этих 
 // функциях 6945 строк кода с сохранением работоспособности.
 //  Был объём модуля 29601 строк стало 22656 строк.
-void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
-	ALICE_PARTITION** &sosedi, doublereal **prop, doublereal** &prop_b,
+void constr_neighbors_for_the_internal_node_prop_b_flow_alice(octree* &oc, BOUND* &border_neighbor,
+	ALICE_PARTITION** &neighbors_for_the_internal_node, doublereal **prop, doublereal** &prop_b,
 	integer maxbound_out, integer maxelm_memo, integer maxelm_memo1,
 	BLOCK* b, integer lb, SOURCE* s, integer ls, WALL* w, integer lw,
 	integer* &whot_is_block,
@@ -16726,25 +16726,25 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	integer G, GG; // грань ячейки дискретизации.
 
 	// Выделение оперативной памяти.
-	sosedi = nullptr;
-	sosedi = new ALICE_PARTITION*[12];
-	if (sosedi == nullptr) {
+	neighbors_for_the_internal_node = nullptr;
+	neighbors_for_the_internal_node = new ALICE_PARTITION*[12];
+	if (neighbors_for_the_internal_node == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for sosedi constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
 		exit(1);
 	}
-	for (integer i = 0; i<12; i++) sosedi[i] = nullptr;
+	for (integer i = 0; i<12; i++) neighbors_for_the_internal_node[i] = nullptr;
 	for (integer i = 0; i<12; i++) {
-		sosedi[i] = new ALICE_PARTITION[maxelm_memo + 2];
-		if (sosedi[i] == nullptr) {
+		neighbors_for_the_internal_node[i] = new ALICE_PARTITION[maxelm_memo + 2];
+		if (neighbors_for_the_internal_node[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for sosedi[%lld] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node[%lld] constr struct_alice...\n", i);
 #else
-			printf("Problem : not enough memory on your equipment for sosedi[%d] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node[%d] constr struct_alice...\n", i);
 #endif
 			
 			printf("Please any key to exit...\n");
@@ -16756,12 +16756,12 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	// Инициализация. 09.03.2019
 	for (integer i = 0; i < maxelm_memo + 2; i++) {
 		integer GGloc;
-		INIT_SOSEDI(sosedi, i, ESIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, NSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, TSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, BSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, ESIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, WSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, NSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, WSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, TSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
+		INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, i, BSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 	}
 
 
@@ -16770,7 +16770,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	prop_b = new doublereal*[3];
 	if (prop_b == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for prop_b constr struct_alice...\n");
+		printf("Problem: not enough memory on your equipment for prop_b constr struct_alice...\n");
 		printf("Please any key to exit...\n");
 		//getchar();
 		system("pause");
@@ -16783,9 +16783,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 		if (prop_b[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for prop_b[%lld] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for prop_b[%lld] constr struct_alice...\n", i);
 #else
-			printf("Problem : not enough memory on your equipment for prop_b[%d] constr struct_alice...\n", i);
+			printf("Problem: not enough memory on your equipment for prop_b[%d] constr struct_alice...\n", i);
 #endif
 			
 			printf("Please any key to exit...\n");
@@ -16822,12 +16822,12 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	// Алгоритм:
 	// Выделение оперативной памяти:
 	// gran[0..5][0..maxbound-1]
-	sosedb = nullptr;
-	sosedb = new BOUND[maxbound_out];
+	border_neighbor = nullptr;
+	border_neighbor = new BOUND[maxbound_out];
 	// оператор new не требует проверки на null.
-	//if (sosedb == nullptr) {
+	//if (border_neighbor == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for sosedb constr struct_alice...\n");
+		//printf("Problem: not enough memory on your equipment for border_neighbor constr struct_alice...\n");
 		//printf("Please any key to exit...\n");
 		//getchar();
 		//system("pause");
@@ -16842,7 +16842,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	// оператор new не требует проверки на null.
 	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Problem: not enough memory on your equipment for bvisit constr struct_alice...\n");
 		//printf("Please any key to exit...\n");
 		//getchar();
 		//system("pause");
@@ -16937,7 +16937,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 
-				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				TOCHKA p;
 				p.x = 0.125*(octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
 				p.y = 0.125*(octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
@@ -16952,7 +16952,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 					inDomain = false;
 				}
 				if (inDomain) {
-					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_FD.				
+					// Узел принадлежит расчётной области и его номер maxelm==octree1->inum_FD.				
 
 					// сосед не существует
 					// записываем идентификатор грани и
@@ -16961,27 +16961,27 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkE == nullptr)||((octree1->linkE != nullptr)&&(octree1->linkE->inum_FD == 0))) {
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 													
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkW == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -16992,7 +16992,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkE->inum_FD - 1]) {
 
-									integer return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
 									if (octree1->linkE->b4W) {
 										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
@@ -17000,8 +17000,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkE->linkW0!=nullptr) {
 												if (octree1->linkE->linkW0->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be E W0\n");
@@ -17015,8 +17015,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkE->linkW3 != nullptr) {
 												if (octree1->linkE->linkW3->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be E W3\n");
@@ -17030,8 +17030,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkE->linkW4 != nullptr) {
 												if (octree1->linkE->linkW4->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be E W4\n");
@@ -17045,8 +17045,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkE->linkW7 != nullptr) {
 												if (octree1->linkE->linkW7->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be E W7\n");
@@ -17077,13 +17077,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Это граничная грань внутреннего источника тепла.
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										integer ib1;
 
-										prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-										prop_b[MU][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MU][maxelm];
-										prop_b[BETA_T][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[BETA_T][maxelm];
+										prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
+										prop_b[MU][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MU][maxelm];
+										prop_b[BETA_T][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[BETA_T][maxelm];
 
 										// TODO 22.09.2016
 										// Проблема. Надо подумать над ситуацией.
@@ -17092,32 +17092,32 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 										
 											// FLUID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkE->inum_FD - 1];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkE->inum_FD - 1];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkE->inum_FD - 1];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkE->inum_FD - 1];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkE->inum_FD - 1];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkE->inum_FD - 1];
+											prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkE->inum_FD - 1];
+											prop_b[CP][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkE->inum_FD - 1];
+											prop_b[LAM][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkE->inum_FD - 1];
+											prop_b[MULT_LAM_X][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkE->inum_FD - 1];
+											prop_b[MULT_LAM_Y][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkE->inum_FD - 1];
+											prop_b[MULT_LAM_Z][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkE->inum_FD - 1];
 										
 
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4W) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
 												octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkW == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
 													octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -17130,15 +17130,15 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = ESIDE;
 										// внутренняя грань (нумерация начинается с нуля):
-										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -17166,7 +17166,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										// Сосед E есть внутренний узел и он еще не был посещен.
 										// На границе этих двух внутренних узлов расположен источник тепла.
@@ -17185,20 +17185,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4W) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkW == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -17210,15 +17210,15 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = ESIDE;
 										// внутренняя грань (нумерация начинается с нуля):
-										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -17248,28 +17248,28 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkW == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
 
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -17283,9 +17283,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							if (octree1->linkE1 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi E1 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node E1 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi E1 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node E1 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -17293,19 +17293,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi E1 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node E1 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi E1 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node E1 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -17316,20 +17316,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkW == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -17341,19 +17341,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkE1->inum_FD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi E1 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E1 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi E1 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E1 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -17369,20 +17369,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = octree1->linkE1->p0.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -17408,14 +17408,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkE1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -17440,14 +17440,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkE1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkE1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 
 										}
@@ -17461,32 +17461,32 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi E2 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E2 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi E2 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E2 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -17497,20 +17497,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkW == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -17524,19 +17524,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkE2->inum_FD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi E2 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E2 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi E2 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E2 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -17553,20 +17553,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -17582,14 +17582,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkE2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkE2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -17614,14 +17614,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkE2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkE2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 
 										}
@@ -17636,31 +17636,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi E5 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node E5 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi E5 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node E5 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -17671,20 +17671,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkW == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -17696,19 +17696,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkE5->inum_FD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi E5 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E5 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi E5 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E5 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -17724,20 +17724,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = octree1->linkE5->p0.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -17753,14 +17753,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkE5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkE5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -17784,14 +17784,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkE5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkE5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -17805,32 +17805,32 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi E6 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E6 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi E6 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node E6 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -17841,20 +17841,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4W) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkW == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -17867,19 +17867,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkE6->inum_FD == 0) {
 									G = ESIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi E6 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E6 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi E6 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node E6 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -17895,20 +17895,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = octree1->linkE6->p0.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4W) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkW0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkW == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkW->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -17924,14 +17924,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = ESIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkE6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkE6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -17955,14 +17955,14 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Внутренний узел.
 											G = ESIDE;
 											// Внутренняя грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkE6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkE6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -17979,27 +17979,27 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].							
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].							
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkE == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -18013,7 +18013,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (bvisit[octree1->linkW->inum_FD - 1]) {
 
 
-									integer return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
 									if (octree1->linkW->b4E) {
 										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
@@ -18021,8 +18021,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkW->linkE1 != nullptr) {
 												if (octree1->linkW->linkE1->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be W E1\n");
@@ -18036,8 +18036,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkW->linkE2 != nullptr) {
 												if (octree1->linkW->linkE2->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be W E2\n");
@@ -18051,8 +18051,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkW->linkE5 != nullptr) {
 												if (octree1->linkW->linkE5->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be W E5\n");
@@ -18066,8 +18066,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkW->linkE6 != nullptr) {
 												if (octree1->linkW->linkE6->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be W E6\n");
@@ -18099,36 +18099,36 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 																				
 										
 											// FLUID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkW->inum_FD - 1];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkW->inum_FD - 1];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkW->inum_FD - 1];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkW->inum_FD - 1];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkW->inum_FD - 1];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkW->inum_FD - 1];
+											prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkW->inum_FD - 1];
+											prop_b[CP][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkW->inum_FD - 1];
+											prop_b[LAM][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkW->inum_FD - 1];
+											prop_b[MULT_LAM_X][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkW->inum_FD - 1];
+											prop_b[MULT_LAM_Y][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkW->inum_FD - 1];
+											prop_b[MULT_LAM_Z][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkW->inum_FD - 1];
 										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4E) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
 												octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkE == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
 													octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -18140,15 +18140,15 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Это строго внутренний узел.
 										G = WSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -18176,7 +18176,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										
 											// FLUID
@@ -18192,20 +18192,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4E) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkE == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -18217,15 +18217,15 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = WSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -18247,34 +18247,34 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							(octree1->linkW0->inum_FD == 0))))
 						{
 							// 1 - W0&&W3&&W4&&W7 - на границе расчётной области (РО).
-							// 2 -  W0&&W3&&W4&&W7 - на гранеице HOLLOW блока.
+							// 2 -  W0&&W3&&W4&&W7 - на границе HOLLOW блока.
 							// 3 - W0&&W4 на границе HOLLOW блока, W3&&W7 на границе РО.
 							// 4 - W0&&W3 на границе HOLLOW блока, W4&&W7 на границе РО.
 							// 5 - W0 на границе HOLLOW блока, W3&&W4&&W7  на границе РО.
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 													
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkE == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -18290,9 +18290,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							if (octree1->linkW0 == nullptr) {
 
 #if doubleintprecision == 1
-								printf("error nullptr sosedi W0 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node W0 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi W0 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node W0 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -18301,17 +18301,17 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi W0 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W0 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi W0 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W0 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -18322,20 +18322,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkE == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -18347,17 +18347,17 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkW0->inum_FD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi W0 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W0 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi W0 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W0 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -18373,20 +18373,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = octree1->linkW0->p1.x;
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -18401,13 +18401,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkW0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -18432,13 +18432,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkW0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkW0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -18452,29 +18452,29 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-									printf("error nullptr sosedi W3 elm=%lld\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node W3 elm=%lld\n", maxelm);
 								#else
-									printf("error nullptr sosedi W3 elm=%d\n", maxelm);
+									printf("error nullptr neighbors_for_the_internal_node W3 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -18485,20 +18485,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkE == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -18511,18 +18511,18 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkW3->inum_FD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi W3 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W3 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi W3 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W3 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -18539,20 +18539,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -18568,13 +18568,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkW3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkW3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -18598,13 +18598,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkW3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkW3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -18618,29 +18618,29 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi W4 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W4 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi W4 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W4 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -18651,20 +18651,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkE == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -18677,18 +18677,18 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkW4->inum_FD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi W4 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W4 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi W4 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W4 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -18705,20 +18705,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -18733,13 +18733,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkW4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkW4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -18763,13 +18763,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkW4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkW4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -18783,28 +18783,28 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi W7 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W7 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi W7 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node W7 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -18815,20 +18815,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4E) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkE == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -18841,17 +18841,17 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (octree1->linkW7->inum_FD == 0) {
 									G = WSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi W7 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W7 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi W7 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node W7 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -18869,20 +18869,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4E) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkE1->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkE == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkE->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -18897,13 +18897,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = WSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkW7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkW7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -18927,13 +18927,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = WSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkW7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkW7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -18951,27 +18951,27 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkN == nullptr)||((octree1->linkN != nullptr)&&(octree1->linkN->inum_FD == 0))) {
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkS == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -18983,7 +18983,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkN->inum_FD - 1]) {
 
-									integer return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
 									//S0 NODE1,
 									//S1 NODE2,
 									//S4 NODE3,
@@ -18996,8 +18996,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkN->linkS0 != nullptr) {
 												if (octree1->linkN->linkS0->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be N S0\n");
@@ -19011,8 +19011,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkN->linkS1 != nullptr) {
 												if (octree1->linkN->linkS1->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be N S1\n");
@@ -19026,8 +19026,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkN->linkS4 != nullptr) {
 												if (octree1->linkN->linkS4->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be N S4\n");
@@ -19041,8 +19041,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkN->linkS5 != nullptr) {
 												if (octree1->linkN->linkS5->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be N S5\n");
@@ -19075,36 +19075,36 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										
 											// FLUID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkN->inum_FD - 1];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkN->inum_FD - 1];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkN->inum_FD - 1];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkN->inum_FD - 1];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkN->inum_FD - 1];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkN->inum_FD - 1];
+											prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkN->inum_FD - 1];
+											prop_b[CP][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkN->inum_FD - 1];
+											prop_b[LAM][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkN->inum_FD - 1];
+											prop_b[MULT_LAM_X][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkN->inum_FD - 1];
+											prop_b[MULT_LAM_Y][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkN->inum_FD - 1];
+											prop_b[MULT_LAM_Z][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkN->inum_FD - 1];
 										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4S) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
 												octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkS == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
 													octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -19117,15 +19117,15 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = NSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -19154,7 +19154,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										
 											// FLUID
@@ -19170,20 +19170,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4S) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkS == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -19195,15 +19195,15 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = NSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 
 									}
@@ -19226,34 +19226,34 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							(octree1->linkN3->inum_FD == 0))))
 						{
 							// 1 - N2&&N3&&N6&&N7 - на границе расчётной области (РО).
-							// 2 -  N2&&N3&&N6&&N7 - на гранеице HOLLOW блока.
+							// 2 -  N2&&N3&&N6&&N7 - на границе HOLLOW блока.
 							// 3 - N3&&N7 на границе HOLLOW блока, N2&&N6 на границе РО.
 							// 4 - N2&&N3 на границе HOLLOW блока, N6&N7 на границе РО.
 							// 5 - N3 на границе HOLLOW блока, N2&&N6&&N7  на границе РО.
 							
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkS == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -19273,31 +19273,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N2 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N2 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi N2 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N2 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -19312,20 +19312,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkS == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -19339,19 +19339,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi N2 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N2 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi N2 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N2 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -19369,20 +19369,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -19397,13 +19397,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkN2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -19427,13 +19427,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkN2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkN2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -19443,9 +19443,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							if (octree1->linkN3 == nullptr) {
 
 #if doubleintprecision == 1
-								printf("error nullptr sosedi N3 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node N3 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi N3 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node N3 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -19454,19 +19454,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N3 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N3 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi N3 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N3 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -19477,20 +19477,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkS == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -19505,19 +19505,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi N3 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N3 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi N3 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N3 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -19533,20 +19533,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkN3->p1.x + octree1->linkN3->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -19562,13 +19562,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkN3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkN3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -19592,13 +19592,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkN3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkN3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -19612,31 +19612,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N6 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N6 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi N6 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N6 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -19647,20 +19647,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkS == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -19674,19 +19674,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi N6 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N6 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi N6 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N6 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -19702,20 +19702,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkN6->p1.x + octree1->linkN6->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -19730,13 +19730,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkN6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkN6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -19760,13 +19760,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkN6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkN6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -19780,32 +19780,32 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = - 1; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = - 1; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi N7 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N7 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi N7 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node N7 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -19816,20 +19816,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4S) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkS == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -19843,19 +19843,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = NSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi N7 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N7 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi N7 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node N7 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -19871,20 +19871,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkN7->p1.x + octree1->linkN7->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4S) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkS0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkS == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkS->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -19899,13 +19899,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = NSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkN7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkN7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -19929,13 +19929,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = NSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkN7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkN7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -19951,27 +19951,27 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkS == nullptr)||((octree1->linkS != nullptr)&&(octree1->linkS->inum_FD == 0))) {
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkN == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -19985,7 +19985,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkS->inum_FD - 1]) {
 
-									integer return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
 									//N2 NODE1,
 									//N3 NODE2,
 									//N6 NODE3,
@@ -19998,8 +19998,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkS->linkN2 != nullptr) {
 												if (octree1->linkS->linkN2->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be S N2\n");
@@ -20013,8 +20013,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkS->linkN3 != nullptr) {
 												if (octree1->linkS->linkN3->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be S N3\n");
@@ -20028,8 +20028,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkS->linkN6 != nullptr) {
 												if (octree1->linkS->linkN6->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be S N6\n");
@@ -20043,8 +20043,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkS->linkN7 != nullptr) {
 												if (octree1->linkS->linkN7->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be S N7\n");
@@ -20078,36 +20078,36 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 									
 											// FLUID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkS->inum_FD - 1];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkS->inum_FD - 1];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkS->inum_FD - 1];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkS->inum_FD - 1];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkS->inum_FD - 1];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkS->inum_FD - 1];
+											prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkS->inum_FD - 1];
+											prop_b[CP][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkS->inum_FD - 1];
+											prop_b[LAM][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkS->inum_FD - 1];
+											prop_b[MULT_LAM_X][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkS->inum_FD - 1];
+											prop_b[MULT_LAM_Y][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkS->inum_FD - 1];
+											prop_b[MULT_LAM_Z][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkS->inum_FD - 1];
 										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4N) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
 												octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
 										}
 										else {
 											if (octree1->linkN == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
 													octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -20120,16 +20120,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = SSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -20158,7 +20158,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										
 											// FLUID
@@ -20174,20 +20174,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4N) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkN == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -20199,16 +20199,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний узел.
 										G = SSIDE;
 										// внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 								}
@@ -20229,34 +20229,34 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							(octree1->linkS0->inum_FD == 0))))
 						{
 							// 1 - S0&&S1&&S4&&S5 - на границе расчётной области (РО).
-							// 2 - S0&&S1&&S4&&S5 - на гранеице HOLLOW блока.
+							// 2 - S0&&S1&&S4&&S5 - на границе HOLLOW блока.
 							// 3 - S0&&S4 на границе HOLLOW блока, S1&&S5 на границе РО.
 							// 4 - S0&&S1 на границе HOLLOW блока, S4&S5 на границе РО.
 							// 5 - S0 на границе HOLLOW блока, S1&&S4&&S5  на границе РО.
 
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkN == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -20272,9 +20272,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							if (octree1->linkS0 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi S0 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node S0 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi S0 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node S0 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -20284,19 +20284,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi S0 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S0 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi S0 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S0 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -20307,20 +20307,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkN == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -20334,19 +20334,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi S0 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S0 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi S0 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S0 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -20363,20 +20363,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -20391,13 +20391,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkS0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -20421,13 +20421,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkS0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkS0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -20441,32 +20441,32 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi S1 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S1 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi S1 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S1 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -20477,20 +20477,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkN == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -20503,19 +20503,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi S1 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S1 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi S1 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S1 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -20532,20 +20532,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -20561,13 +20561,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkS1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkS1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -20591,13 +20591,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkS1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkS1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -20611,30 +20611,30 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 
 								/*
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi S4 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S4 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi S4 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S4 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -20645,20 +20645,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkN == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -20671,18 +20671,18 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi S4 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S4 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi S4 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S4 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -20699,20 +20699,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -20727,13 +20727,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkS4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkS4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -20757,13 +20757,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkS4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkS4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -20777,31 +20777,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi S5 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S5 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi S5 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node S5 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -20812,20 +20812,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4N) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkN == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -20838,19 +20838,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = SSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi S5 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S5 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi S5 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node S5 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -20866,20 +20866,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkS5->p2.x + octree1->linkS5->p3.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4N) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkN3->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkN == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkN->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -20894,13 +20894,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = SSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkS5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkS5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -20924,13 +20924,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = SSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkS5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkS5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -20946,27 +20946,27 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkT == nullptr)||((octree1->linkT != nullptr)&&(octree1->linkT->inum_FD == 0))) {
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkB == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 
@@ -20979,7 +20979,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkT->inum_FD - 1]) {
 									
-									integer return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
 									if (octree1->linkT->b4B) {
 										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
@@ -20987,8 +20987,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkT->linkB0 != nullptr) {
 												if (octree1->linkT->linkB0->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be T B0\n");
@@ -21002,8 +21002,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkT->linkB1 != nullptr) {
 												if (octree1->linkT->linkB1->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be T B1\n");
@@ -21017,8 +21017,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkT->linkB2 != nullptr) {
 												if (octree1->linkT->linkB2->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be T B2\n");
@@ -21032,8 +21032,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkT->linkB3 != nullptr) {
 												if (octree1->linkT->linkB3->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be T B3\n");
@@ -21061,8 +21061,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkT->linkB != nullptr) {
 												if (octree1->linkT->linkB->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be T B (not 4B)\n");
@@ -21082,7 +21082,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									if (RED_WARNING&&(return_current_node_number >= maxelm_memo)) {
 
 #if doubleintprecision == 1
-										printf("maxelm=%lld sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%lld octree1->inum_FD - 1=%lld\n", maxelm_memo, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, octree1->inum_FD - 1);
+										printf("maxelm=%lld neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%lld octree1->inum_FD - 1=%lld\n", maxelm_memo, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, octree1->inum_FD - 1);
 										printf("octree1->linkT->inum_FD-1=%lld\n", octree1->linkT->inum_FD - 1);
 
 										if (octree1->linkT->b4B) {
@@ -21107,7 +21107,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										system("pause");
 
-										octTree* oc2 = octree1->linkT;
+										octree* oc2 = octree1->linkT;
 										if (oc2->b4B) {
 											printf("b4B situation.\n");
 											if (oc2->linkB0 == nullptr) {
@@ -21143,10 +21143,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											}
 										}
 #else
-										printf("maxelm=%d sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%d\n", maxelm_memo, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1);
+										printf("maxelm=%d neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%d\n", maxelm_memo, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1);
 										printf("inum_FD-1=%d\n", octree1->linkT->inum_FD - 1);
 
-										octTree* oc2 = octree1->linkT;
+										octree* oc2 = octree1->linkT;
 										if (oc2->b4B) {
 											printf("b4B situation.\n");
 											if (oc2->linkB0 == nullptr) {
@@ -21199,36 +21199,36 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										
 											// FLUID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkT->inum_FD - 1];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkT->inum_FD - 1];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkT->inum_FD - 1];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkT->inum_FD - 1];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkT->inum_FD - 1];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkT->inum_FD - 1];
+											prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkT->inum_FD - 1];
+											prop_b[CP][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkT->inum_FD - 1];
+											prop_b[LAM][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkT->inum_FD - 1];
+											prop_b[MULT_LAM_X][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkT->inum_FD - 1];
+											prop_b[MULT_LAM_Y][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkT->inum_FD - 1];
+											prop_b[MULT_LAM_Z][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkT->inum_FD - 1];
 									
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4B) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
 												octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkB == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
 													octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -21241,16 +21241,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань.
 										G = TSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -21279,7 +21279,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										
 											// FLUID
@@ -21294,20 +21294,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4B) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkB == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -21319,16 +21319,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань.
 										G = TSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 								}
@@ -21349,34 +21349,34 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							(octree1->linkT4->inum_FD == 0))))
 						{
 							// 1 - T4&&T5&&T6&&T7 - на границе расчётной области (РО).
-							// 2 - T4&&T5&&T6&&T7 - на гранеице HOLLOW блока.
+							// 2 - T4&&T5&&T6&&T7 - на границе HOLLOW блока.
 							// 3 - T4&&T7 на границе HOLLOW блока, T5&&T6 на границе РО.
 							// 4 - T4&&T5 на границе HOLLOW блока, T6&T7 на границе РО.
 							// 5 - T4 на границе HOLLOW блока, T5&&T6&&T7  на границе РО.
 
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkB == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -21392,9 +21392,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							if (octree1->linkT4 == nullptr) {
 
 #if doubleintprecision == 1
-								printf("error nullptr sosedi T4 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node T4 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi T4 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node T4 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -21404,19 +21404,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T4 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T4 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T4 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T4 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -21427,20 +21427,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkB == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 
@@ -21454,19 +21454,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi T4 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T4 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi T4 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T4 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -21482,20 +21482,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkT4->p1.x + octree1->linkT4->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -21511,13 +21511,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkT4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -21541,13 +21541,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkT4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkT4->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -21561,31 +21561,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T5 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T5 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T5 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T5 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -21596,20 +21596,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkB == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 
@@ -21623,19 +21623,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi T5 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T5 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi T5 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T5 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -21652,20 +21652,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -21681,13 +21681,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkT5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkT5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -21711,13 +21711,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkT5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkT5->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -21731,31 +21731,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T6 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T6 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T6 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T6 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -21766,20 +21766,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkB == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 
@@ -21793,19 +21793,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi T6 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T6 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi T6 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T6 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -21821,20 +21821,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkT6->p1.x + octree1->linkT6->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -21851,13 +21851,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkT6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkT6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -21881,13 +21881,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkT6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkT6->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -21901,31 +21901,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi T7 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T7 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi T7 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node T7 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -21936,20 +21936,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4B) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkB == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 
@@ -21963,19 +21963,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = TSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi T7 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T7 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi T7 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node T7 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -21991,20 +21991,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkT7->p1.x + octree1->linkT7->p0.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4B) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkB0->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkB == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkB->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 
@@ -22020,13 +22020,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = TSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkT7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkT7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -22050,13 +22050,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = TSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkT7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkT7->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -22072,27 +22072,27 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkB == nullptr)||((octree1->linkB != nullptr)&&(octree1->linkB->inum_FD == 0))) {
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkT == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -22105,7 +22105,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (bvisit[octree1->linkB->inum_FD - 1]) {
 
 
-									integer return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
+									integer return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
 									if (octree1->linkB->b4B) {
 										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
@@ -22113,8 +22113,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkB->linkT4 != nullptr) {
 												if (octree1->linkB->linkT4->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be B T4\n");
@@ -22128,8 +22128,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkB->linkT5 != nullptr) {
 												if (octree1->linkB->linkT5->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE2 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE2;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be B T5\n");
@@ -22143,8 +22143,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkB->linkT6 != nullptr) {
 												if (octree1->linkB->linkT6->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE3 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE3;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be B T6\n");
@@ -22158,8 +22158,8 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											if (octree1->linkB->linkT7 != nullptr) {
 												if (octree1->linkB->linkT7->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE4 == current_node_number) {
-														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE4;
+													if (neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be B T7\n");
@@ -22190,36 +22190,36 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 										
 										
 											// FLUID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkB->inum_FD - 1];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkB->inum_FD - 1];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkB->inum_FD - 1];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkB->inum_FD - 1];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkB->inum_FD - 1];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkB->inum_FD - 1];
+											prop_b[RHO][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkB->inum_FD - 1];
+											prop_b[CP][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkB->inum_FD - 1];
+											prop_b[LAM][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][octree1->linkB->inum_FD - 1];
+											prop_b[MULT_LAM_X][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkB->inum_FD - 1];
+											prop_b[MULT_LAM_Y][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkB->inum_FD - 1];
+											prop_b[MULT_LAM_Z][neighbors_for_the_internal_node[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkB->inum_FD - 1];
 										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4T) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
 												octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 										}
 										else {
 											if (octree1->linkT == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, neighbors_for_the_internal_node[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
 													octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true, p_centerG);
 											}
 										}
@@ -22232,16 +22232,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань.
 										G = BSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 
@@ -22270,7 +22270,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+										INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 
 										
 											// FLUID
@@ -22286,20 +22286,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 										
 										// G - грань по которой ставится граничное условие.
-										// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+										// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 										// bound_id - номер граничного узла, начиная с нуля.
 										// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 										if (octree1->b4T) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 												octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 										}
 										else {
 											if (octree1->linkT == nullptr) {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 											else {
-												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
+												obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound - 1,
 													octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false, p_centerG);
 											}
 										}
@@ -22311,16 +22311,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань.
 										G = BSIDE;
 										// Внутренняя грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
-										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = false;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 								}
@@ -22341,34 +22341,34 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							(octree1->linkB0->inum_FD == 0))))
 						{
 							// 1 - B0&&B1&&B2&&B3 - на границе расчётной области (РО).
-							// 2 - B0&&B1&&B2&&B3 - на гранеице HOLLOW блока.
+							// 2 - B0&&B1&&B2&&B3 - на границе HOLLOW блока.
 							// 3 - B0&&B3 на границе HOLLOW блока, B1&&B2 на границе РО.
 							// 4 - B0&&B1 на границе HOLLOW блока, B2&B3 на границе РО.
 							// 5 - B0 на границе HOLLOW блока, B1&&B2&&B3  на границе РО.
 
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+							INIT_neighbors_for_the_internal_node(neighbors_for_the_internal_node, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение neighbors_for_the_internal_node[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 							TOCHKA p_centerG = CALC_CENTERG(G, maxelm, nvtx, pa); // Вычисление геометрического центра грани.
 							
 							// G - грань по которой ставится граничное условие.
-							// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+							// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 							// bound_id - номер граничного узла, начиная с нуля.
 							// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 							if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 									octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 							}
 							else {
 								if (octree1->linkT == nullptr) {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 								else {
-									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+									obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 										octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false, p_centerG);
 								}
 							}
@@ -22383,9 +22383,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							if (octree1->linkB0 == nullptr) {
 #if doubleintprecision == 1
-								printf("error nullptr sosedi B0 elm=%lld\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node B0 elm=%lld\n", maxelm);
 #else
-								printf("error nullptr sosedi B0 elm=%d\n", maxelm);
+								printf("error nullptr neighbors_for_the_internal_node B0 elm=%d\n", maxelm);
 #endif
 								
 								//getchar();
@@ -22394,19 +22394,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B0 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B0 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B0 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B0 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -22417,20 +22417,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkT == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -22443,19 +22443,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE1 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi B0 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B0 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi B0 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B0 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -22472,20 +22472,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -22500,13 +22500,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE1 = octree1->linkB0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -22530,13 +22530,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE1 = octree1->linkB0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE1 = octree1->linkB0->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -22550,31 +22550,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B1 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B1 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B1 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B1 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -22585,20 +22585,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkT == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -22611,19 +22611,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE2 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi B1 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B1 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi B1 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B1 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -22639,20 +22639,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkB1->p6.x + octree1->linkB1->p7.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -22667,13 +22667,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE2 = octree1->linkB1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkB1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -22697,13 +22697,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE2 = octree1->linkB1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE2 = octree1->linkB1->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -22717,31 +22717,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B2 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B2 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B2 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B2 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -22752,20 +22752,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkT == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -22779,19 +22779,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE3 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi B2 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B2 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi B2 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B2 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -22808,20 +22808,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkB2->p6.x + octree1->linkB2->p7.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -22836,13 +22836,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE3 = octree1->linkB2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkB2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -22866,13 +22866,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE3 = octree1->linkB2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE3 = octree1->linkB2->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -22886,31 +22886,31 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								/*
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-								sosedi[G][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+								neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-								sosedi[GG][maxelm].bdroblenie4 = true;
+								neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+								neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
-										printf("error nullptr sosedi B3 elm=%lld\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B3 elm=%lld\n", maxelm);
 								#else
-										printf("error nullptr sosedi B3 elm=%d\n", maxelm);
+										printf("error nullptr neighbors_for_the_internal_node B3 elm=%d\n", maxelm);
 								#endif
 								
 								getchar();
@@ -22921,20 +22921,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								doublereal dS_loc = 0.0;
 
 								// G - грань по которой ставится граничное условие.
-								// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+								// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 								// bound_id - номер граничного узла, начиная с нуля.
 								// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 								if (octree1->b4T) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
 								if (octree1->linkT == nullptr) {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								else {
-								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+								obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 								octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 								}
 								}
@@ -22948,19 +22948,19 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									G = BSIDE;
 									// граничная грань:
-									sosedi[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
-									sosedi[G][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[G][maxelm].iNODE4 = maxelm_memo + maxbound; // граничные КО нумеруются в последнюю очередь,
+									neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
-									sosedi[GG][maxelm].bdroblenie4 = true;
+									neighbors_for_the_internal_node[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
+									neighbors_for_the_internal_node[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
-									//printf("error inum_FD == 0 sosedi B3 elm=%lld\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B3 elm=%lld\n", maxelm);
 #else
-									//printf("error inum_FD == 0 sosedi B3 elm=%d\n", maxelm);
+									//printf("error inum_FD == 0 neighbors_for_the_internal_node B3 elm=%d\n", maxelm);
 #endif
 									
 									//getchar();
@@ -22976,20 +22976,20 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									p_centerG.x = 0.5*(octree1->linkB3->p6.x + octree1->linkB3->p7.x);
 
 									// G - грань по которой ставится граничное условие.
-									// elm_id - номер конечного элемента, начиная с нуля для которго рассматривается граничный узел.
+									// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
 									// bound_id - номер граничного узла, начиная с нуля.
 									// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 									if (octree1->b4T) {
-										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+										obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 											octree1->linkT4->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 									}
 									else {
 										if (octree1->linkT == nullptr) {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 										else {
-											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
+											obrabotka_granichnoi_grani(G, border_neighbor, nvtx, pa, maxelm, maxbound,
 												octree1->linkT->inum_FD - 1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false, p_centerG);
 										}
 									}
@@ -23004,13 +23004,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Только внутренняя грань.
 										G = BSIDE;
 										// граничная грань:
-										sosedi[G][maxelm].iNODE4 = octree1->linkB3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-										sosedi[G][maxelm].bdroblenie4 = true;
+										neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkB3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+										neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-										// Определение дальнего соседа :
+										// Определение дальнего соседа:
 										// TODO 13 сентября 2016.
 									}
 									else {
@@ -23034,13 +23034,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											// Только внутренняя грань.
 											G = BSIDE;
 											// граничная грань:
-											sosedi[G][maxelm].iNODE4 = octree1->linkB3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
-											sosedi[G][maxelm].bdroblenie4 = true;
+											neighbors_for_the_internal_node[G][maxelm].iNODE4 = octree1->linkB3->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
+											neighbors_for_the_internal_node[G][maxelm].bdroblenie4 = true;
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
 											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-											// Определение дальнего соседа :
+											// Определение дальнего соседа:
 											// TODO 13 сентября 2016.
 										}
 									}
@@ -23151,6 +23151,6 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 	delete[] bvisit;
 	bvisit = nullptr;
-} // constr_sosedi_prop_b_flow_alice
+} // constr_neighbors_for_the_internal_node_prop_b_flow_alice
 
 #endif

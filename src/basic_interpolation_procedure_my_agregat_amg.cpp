@@ -1,4 +1,4 @@
-// Содержит функции построения оператора интерполляции в алгебраическом многосеточном методе.
+// Содержит функции построения оператора интерполяции в алгебраическом многосеточном методе.
 
 #pragma once
 #ifndef BASIC_INTERPOLATION_PROCEDURE_MY_AGREGAT_AMG_CPP
@@ -24,7 +24,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 
 		// Нам нужен разреженный оператор Галёркина.
 		// 5 декабря 2015 года мы попробуем увеличить разреженность
-		// оператора интерполляции а значит и оператора Галёркина.
+		// оператора интерполяции а значит и оператора Галёркина.
 		doublereal maxelem_threshold = -1.0;
 		// O(log2(nnz))
 		//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -34,7 +34,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 		if (bpositive_connections) {
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -47,7 +47,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 			// 23_10_2016 только negative connections.
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -62,7 +62,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 		integer icsos = 0;
 
 		// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-		// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+		// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 		doublereal sumP = 0.0;
 		if (bpositive_connections) {
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
@@ -127,7 +127,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 							this_is_C_node[i8] = true;
 							bweSholdbeContinue = true;
 							//exit(1);
-							// здесь нужна непрямая интерполляция.
+							// здесь нужна непрямая интерполяция.
 						}
 						else {
 
@@ -198,8 +198,8 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 {
 	// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-	// Прямая интерполляция с элементам непрямой.
-	// Непрямая интерполляция применяется только для F узлов которые
+	// Прямая интерполяция с элементам непрямой.
+	// Непрямая интерполяция применяется только для F узлов которые
 	// не имеют С соседей.
 	// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 	// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
@@ -218,7 +218,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 		// Нам нужен разреженный оператор Галёркина.
 		// 5 декабря 2015 года мы попробуем увеличить разреженность
-		// оператора интерполляции а значит и оператора Галёркина.
+		// оператора интерполяции а значит и оператора Галёркина.
 		doublereal maxelem_threshold = -1.0;
 		// O(log2(nnz))
 		//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -227,7 +227,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 		if (bpositive_connections) {
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -239,7 +239,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 		else {
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -254,7 +254,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 		integer icsos = 0;
 
 		// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-		// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+		// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 		doublereal sumP = 0.0;
 		doublereal SumPall = 0.0;
 		integer icount_StronglyF = 0;
@@ -323,7 +323,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 				//printf("i8 is Dirichlet node\n");
 
 				//exit(1);
-				// здесь нужна непрямая интерполляция.
+				// здесь нужна непрямая интерполяция.
 				bool* empty_interpol = NULL;
 				//empty_interpol = new bool[icount_StronglyF];
 				empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
@@ -341,7 +341,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 				if (bpositive_connections) {
 
-					// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+					// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 						if (Amat.j[is0] != Amat.i[ii1]) {
 							if (this_is_F_node[Amat.j[is0]] == true) {
@@ -387,7 +387,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -413,7 +413,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -443,7 +443,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне.
 										//printf("problem situation");
@@ -468,7 +468,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 				}
 				else {
-					// Сканируем сильных F соседей данного F узла для которого надо построить интерполляцию.
+					// Сканируем сильных F соседей данного F узла для которого надо построить интерполяцию.
 					for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 						if (Amat.j[is0] != Amat.i[ii1]) {
 							if (this_is_F_node[Amat.j[is0]] == true) {
@@ -514,7 +514,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -540,7 +540,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -570,7 +570,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне.
 										//printf("problem situation");
@@ -600,7 +600,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 					bool bstandart_vjzov = true;
 					for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 						// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-						// когда с не менее чем двух сторон интерполляция сработала, здесь 
+						// когда с не менее чем двух сторон интерполяция сработала, здесь 
 						// же срабатывание было лишь с одной из сторон как минимум.
 						if (empty_interpol[i_38] == true) {
 							bstandart_vjzov = false;
@@ -708,14 +708,14 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 {
 	// Немного более экономичная по памяти. Коэффициент не превышал 3.
 
-	// Прямая интерполляция с элементам непрямой. Экспериментальный вариант. TODO.
-	// Непрямая интерполляция применяется только для F узлов которые
+	// Прямая интерполяция с элементам непрямой. Экспериментальный вариант. TODO.
+	// Непрямая интерполяция применяется только для F узлов которые
 	// не имеют С соседей или имеют недостаточное число С соседей.
 	// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
 
-	// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполляцию.
+	// Надо сохранить разреженность оператора Галёркина но при этом усилить интерполяцию.
 	// Идея в том чтобы узел F имеющий лишь одного Strong С соседа обработать так чтобы у него было не менее 
-	// двух  C соседей учитывая эффект непрямой интерполляции.
+	// двух  C соседей учитывая эффект непрямой интерполяции.
 
 
 	the_number_of_neighbors_that_are_not_C_nodes = 0;
@@ -729,13 +729,13 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -750,7 +750,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -781,7 +781,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -802,7 +802,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 					//printf("i8 is Dirichlet node\n");
 
 					//exit(1);
-					// здесь нужна непрямая интерполляция.
+					// здесь нужна непрямая интерполяция.
 					bool* empty_interpol = NULL;
 					//empty_interpol = new bool[icount_StronglyF];
 					empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
@@ -859,7 +859,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -885,7 +885,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -915,7 +915,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне вложенности.
 										//printf("problem situation");
@@ -939,7 +939,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 					bool bstandart_vjzov = true;
 					for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 						// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-						// когда с не менее чем двух сторон интерполляция сработала, здесь 
+						// когда с не менее чем двух сторон интерполяция сработала, здесь 
 						// же срабатывание было лишь с одной из сторон как минимум.
 						if (empty_interpol[i_38] == true) {
 							bstandart_vjzov = false;
@@ -976,7 +976,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -1010,7 +1010,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -1046,7 +1046,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -1068,7 +1068,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -1155,13 +1155,13 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -1176,7 +1176,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -1207,7 +1207,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -1228,7 +1228,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 					//printf("i8 is Dirichlet node\n");
 
 					//exit(1);
-					// здесь нужна непрямая интерполляция.
+					// здесь нужна непрямая интерполяция.
 					bool* empty_interpol = NULL;
 					//empty_interpol = new bool[icount_StronglyF];
 					empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
@@ -1285,7 +1285,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 									bool bvisit_sumPloc = false;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -1311,7 +1311,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 
 									if (bvisit_sumPloc) {
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -1341,7 +1341,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										}
 									}
 									else {
-										// не было С соседей интерполляция может испытывать проблемы.
+										// не было С соседей интерполяция может испытывать проблемы.
 										// Это означает что рядом есть два сильно связанных F узла у которых вообще нет сильных С соседей.
 										// Данная проблема проявляется уже на втором уровне вложенности.
 										//printf("problem situation");
@@ -1365,7 +1365,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 					bool bstandart_vjzov = true;
 					for (integer i_38 = 0; i_38 < icount_StronglyF; i_38++) {
 						// 3 января. На самом деле здесь хорошо бы посмотреть вариант
-						// когда с не менее чем двух сторон интерполляция сработала, здесь 
+						// когда с не менее чем двух сторон интерполяция сработала, здесь 
 						// же срабатывание было лишь с одной из сторон как минимум.
 						if (empty_interpol[i_38] == true) {
 							bstandart_vjzov = false;
@@ -1402,7 +1402,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -1436,7 +1436,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -1472,7 +1472,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -1494,7 +1494,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -1591,7 +1591,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
-	//integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol = 0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -1662,7 +1662,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -1671,7 +1671,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				if (!btreshold_on_new_vetv) {
 					for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 						if (Amat.j[is0] != Amat.i[ii1]) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat.j[is0]] == true) {
 							if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 								maxelem_threshold = fabs(Amat.aij[is0]);
@@ -1690,7 +1690,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -1725,7 +1725,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -1797,7 +1797,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true; // Были добавления узлов.
 															 //exit(1);
-															 // здесь нужна непрямая интерполляция.
+															 // здесь нужна непрямая интерполяция.
 										}
 
 
@@ -1833,7 +1833,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -1928,7 +1928,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -1937,7 +1937,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				if (!btreshold_on_new_vetv) {
 					for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 						if (Amat.j[is0] != Amat.i[ii1]) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat.j[is0]] == true) {
 							if ((Amat.aij[is0] < 0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 								maxelem_threshold = fabs(Amat.aij[is0]);
@@ -1956,7 +1956,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -1991,7 +1991,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -2027,7 +2027,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true; // Были добавления узлов.
 															 //exit(1);
-															 // здесь нужна непрямая интерполляция.
+															 // здесь нужна непрямая интерполяция.
 										}
 
 
@@ -2063,7 +2063,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -2106,7 +2106,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -2116,7 +2116,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 					for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 						iend_for1 = is0;
 						if (Amat.j[is0] != istr_etalon1) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat.j[is0]] == true) {
 							if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 								maxelem_threshold = fabs(Amat.aij[is0]);
@@ -2142,7 +2142,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -2176,7 +2176,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -2215,7 +2215,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -2258,7 +2258,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										if (fabs(Amat.aij[is0]) > maxelem_threshold_theta_strong_F) {
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -2304,7 +2304,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -2342,7 +2342,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 											doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -2521,11 +2521,11 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 
-											// Интерполляция только по ближайшим С узлам.
+											// интерполяция только по ближайшим С узлам.
 
 											// Внедиагональный элемент из множества С узлов.
 
@@ -2539,11 +2539,11 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 												P[icount1].j = i8;
 												P[icount1].i = C_numerate[Amat.j[is0]];
 												if (fabs(sumP) < 1.0e-33) {
-													// Несколько опорных С узлов, они являются главными опорами при интерполляции.
+													// Несколько опорных С узлов, они являются главными опорами при интерполяции.
 													// (fabs(Amat.aij[is0]) / sumP) не может быть больше единицы по определению. 
 													if ((fabs(sumP) < 1.0e-100) || (/*(fabs(sumP) >= 1.0e-100) &&*/ ((fabs(Amat.aij[is0]) / sumP) < 0.1))) {
 														printf("error 4.0 ! division by zero. sumP =%e\n", sumP);
-														// Ситуация : fabs(Amat.aij[is0]) / sumP==1.0, Amat.aij[is0]<1.0e-33;
+														// Ситуация: fabs(Amat.aij[is0]) / sumP==1.0, Amat.aij[is0]<1.0e-33;
 														printf("diagnostic: aij=%e aij/sumP=%e\n", Amat.aij[is0], fabs(Amat.aij[is0]) / sumP);
 														//getchar();
 														system("PAUSE");
@@ -2583,7 +2583,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
@@ -2593,7 +2593,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 					for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 						iend_for1 = is0;
 						if (Amat.j[is0] != istr_etalon1) {
-							// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+							// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 							//if (this_is_C_node[Amat.j[is0]] == true) {
 							if ((Amat.aij[is0] < 0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 								maxelem_threshold = fabs(Amat.aij[is0]);
@@ -2619,7 +2619,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -2653,7 +2653,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -2691,7 +2691,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -2734,7 +2734,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 										if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold_theta_strong_F)) {
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -2774,7 +2774,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -2812,7 +2812,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 											doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -2991,7 +2991,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 
@@ -3083,13 +3083,13 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -3104,7 +3104,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -3135,7 +3135,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -3171,7 +3171,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										this_is_C_node[i8] = true;
 										bweSholdbeContinue = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -3211,7 +3211,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -3253,7 +3253,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -3275,7 +3275,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -3336,7 +3336,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 									this_is_C_node[i8] = true;
 									bweSholdbeContinue = true;
 									//exit(1);
-									// здесь нужна непрямая интерполляция.
+									// здесь нужна непрямая интерполяция.
 								}
 								else {
 
@@ -3376,7 +3376,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 									// Рассматриваем Strong F связи.
 									// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-									// Смысл :
+									// Смысл:
 									//
 
 
@@ -3418,7 +3418,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -3440,7 +3440,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма
+										// В общем это двойная интерполяционная сумма
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -3500,13 +3500,13 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 						maxelem_threshold = fabs(Amat.aij[is0]);
@@ -3521,7 +3521,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 			integer icsosF = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -3552,7 +3552,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -3588,7 +3588,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										this_is_C_node[i8] = true;
 										bweSholdbeContinue = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -3628,7 +3628,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -3670,7 +3670,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -3692,7 +3692,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -3753,7 +3753,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 									this_is_C_node[i8] = true;
 									bweSholdbeContinue = true;
 									//exit(1);
-									// здесь нужна непрямая интерполляция.
+									// здесь нужна непрямая интерполяция.
 								}
 								else {
 
@@ -3793,7 +3793,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 
 									// Рассматриваем Strong F связи.
 									// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-									// Смысл :
+									// Смысл:
 									//
 
 
@@ -3829,7 +3829,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -3851,7 +3851,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 											}
 										}
 
-										// В общем это двойная интерполляционная сумма
+										// В общем это двойная интерполяционная сумма
 										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 												if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -3922,7 +3922,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 	if (1) {
 		// шестая попытка.
 		// CGHV1J amg1r5 time 0.26
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25   0:48  29  6.55A
 		// 0.3    0:45  28  6.19A 
@@ -3936,7 +3936,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 		// 0.35 1:46 27 3.51
 		// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 		// Electric potencial in FET2 amg1r5 time 1:38
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25 3:19 36 6.65
 		// 0.3 3:02 34 6.34
@@ -3963,13 +3963,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 					if (Amat.j[is0] != Amat.i[ii1]) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat.j[is0]] == true) {
 						if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat.aij[is0]);
@@ -3984,7 +3984,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -4015,7 +4015,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -4047,7 +4047,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 
 
@@ -4077,7 +4077,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 
 
@@ -4107,13 +4107,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 					if (Amat.j[is0] != Amat.i[ii1]) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat.j[is0]] == true) {
 						if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 							maxelem_threshold = fabs(Amat.aij[is0]);
@@ -4128,7 +4128,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -4159,7 +4159,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -4191,7 +4191,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											iadditionalCstatistic++;
 											byes_add = true;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 
 
@@ -4221,7 +4221,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 
 
@@ -4251,7 +4251,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 		// шестая попытка.
 		// CGHV1J amg1r5 time 0.26
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25   0:48  29  6.55A
 		// 0.3    0:45  28  6.19A 
@@ -4265,7 +4265,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 		// 0.35 1:46 27 3.51
 		// 0.4 1:44 28 3.413 // отыграно 5% производительности.
 		// Electric potencial in FET2 amg1r5 time 1:38
-		// cl_agl_amg_v0_14 time :
+		// cl_agl_amg_v0_14 time:
 		// magic  time number V cycles grid complexity
 		// 0.25 3:19 36 6.65
 		// 0.3 3:02 34 6.34
@@ -4284,7 +4284,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 		if (bpositive_connections) {
 
-			// positive connections :
+			// positive connections:
 
 			// Построение пролонгации для узлов которые составляют F nodes.
 			// Каждый F-nodes окружён C-nodes.
@@ -4292,13 +4292,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 					if (Amat.j[is0] != Amat.i[ii1]) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat.j[is0]] == true) {
 						if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat.aij[is0]);
@@ -4313,7 +4313,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -4344,7 +4344,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -4382,7 +4382,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -4416,7 +4416,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -4452,7 +4452,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -4475,7 +4475,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 													if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -4545,7 +4545,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -4581,7 +4581,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 										// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-										// Смысл :
+										// Смысл:
 										//
 
 
@@ -4620,7 +4620,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -4645,7 +4645,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											icsos_loc = 0;
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc1 = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -4671,7 +4671,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											}
 
 											if (icsos_loc > 0) {
-												// В общем это двойная интерполляционная сумма
+												// В общем это двойная интерполяционная сумма
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 													if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 														if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -4735,7 +4735,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 						//}
 						//}
 
-						// Апосториорная корекция
+						// Апосториорная коррекция
 						for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 							P[i_95].aij = P[i_95].aij / sum_ok;
 						}
@@ -4759,13 +4759,13 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 				// Нам нужен разреженный оператор Галёркина.
 				// 5 декабря 2015 года мы попробуем увеличить разреженность
-				// оператора интерполляции а значит и оператора Галёркина.
+				// оператора интерполяции а значит и оператора Галёркина.
 				doublereal maxelem_threshold = -1.0;
 				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				integer ii1 = row_startA[i8];
 				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 					if (Amat.j[is0] != Amat.i[ii1]) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat.j[is0]] == true) {
 						if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
 							maxelem_threshold = fabs(Amat.aij[is0]);
@@ -4780,7 +4780,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 				integer icsosF = 0;
 
 				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-				// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 				doublereal sumP = 0.0;
 				doublereal SumPall = 0.0;
 				integer icount_StronglyF = 0;
@@ -4811,7 +4811,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 																		   // Следующий случай назван "безнадёжным".
 																		   // Безнадёжный случай оставляется без изменений.
 																		   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																		   // интерполляцию на этих уровнях можно улучшить.
+																		   // интерполяцию на этих уровнях можно улучшить.
 					if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным C соседом и к тому-же не имеющих сильных F соседов.
 				}
 
@@ -4847,7 +4847,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											bweSholdbeContinue = true;
 											iadditionalCstatistic++;
 											//exit(1);
-											// здесь нужна непрямая интерполляция.
+											// здесь нужна непрямая интерполяция.
 										}
 										else {
 											// Это как раз единственная Strong C связь. 
@@ -4881,7 +4881,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											// Рассматриваем Strong F связи.
 
-											// Смысл :
+											// Смысл:
 											// 
 
 
@@ -4917,7 +4917,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -4940,7 +4940,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 												}
 											}
 
-											// В общем это двойная интерполляционная сумма 
+											// В общем это двойная интерполяционная сумма 
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 													if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -5010,7 +5010,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
@@ -5046,7 +5046,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 										// Рассматриваем Strong F связи.
 										// Мы дополнительно усиливаем Strong C интерполяцию за счёт неявной Strong F интерполяции.
-										// Смысл :
+										// Смысл:
 										//
 
 
@@ -5085,7 +5085,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											integer icsos_loc = 0;
 
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -5110,7 +5110,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 											icsos_loc = 0;
 											// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-											// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+											// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 											doublereal sumP_loc1 = 0.0;
 											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -5136,7 +5136,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 											}
 
 											if (icsos_loc > 0) {
-												// В общем это двойная интерполляционная сумма
+												// В общем это двойная интерполяционная сумма
 												for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 													if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 														if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -5200,7 +5200,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 						//}
 						//}
 
-						// Апосториорная корекция
+						// Апосториорная коррекция
 						for (integer i_95 = icount1_mem; i_95 < icount1; i_95++) {
 							P[i_95].aij = P[i_95].aij / sum_ok;
 						}
@@ -5236,7 +5236,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 {
 	// INTERPOLATION SIX
 
-	// Экспериментальная интерполляция 1 января 2016.
+	// Экспериментальная интерполяция 1 января 2016.
 	printf("interpolation SIX: experimental version 1 jan 2016\n");
 	system("PAUSE");
 
@@ -5251,7 +5251,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -5272,7 +5272,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			doublereal SumPall = 0.0;
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
@@ -5325,7 +5325,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 								bweSholdbeContinue = true;
 								iadditionalCstatistic++;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 							}
 							else {
 
@@ -5357,7 +5357,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 						else
 							if (this_is_F_node[Amat.j[is0]] == true) {
 
-								// Смысл :
+								// Смысл:
 								// 
 
 
@@ -5391,7 +5391,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 									integer icsos_loc = 0;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -5413,7 +5413,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 										}
 									}
 
-									// В общем это двойная интерполляционная сумма 
+									// В общем это двойная интерполяционная сумма 
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 											if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -5463,7 +5463,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -5484,7 +5484,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 
 			doublereal SumPall = 0.0;
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
@@ -5537,7 +5537,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 								bweSholdbeContinue = true;
 								iadditionalCstatistic++;
 								//exit(1);
-								// здесь нужна непрямая интерполляция.
+								// здесь нужна непрямая интерполяция.
 							}
 							else {
 
@@ -5569,7 +5569,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 						else
 							if (this_is_F_node[Amat.j[is0]] == true) {
 
-								// Смысл :
+								// Смысл:
 								// 
 
 
@@ -5603,7 +5603,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 									integer icsos_loc = 0;
 
 									// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-									// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+									// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 									doublereal sumP_loc = 0.0;
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
@@ -5625,7 +5625,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 										}
 									}
 
-									// В общем это двойная интерполляционная сумма 
+									// В общем это двойная интерполяционная сумма 
 									for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
 											if (this_is_C_node[Amat.j[is0_loc]] == true) {
@@ -5686,7 +5686,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 // Подлежит удалению Refactoring.
-	//integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol = 0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -5762,7 +5762,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -5771,7 +5771,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 			if (!btreshold_on_new_vetv) {
 				for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 					if (Amat.j[is0] != Amat.i[ii1]) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat.j[is0]] == true) {
 						if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat.aij[is0]);
@@ -5792,7 +5792,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 			integer icsosF_pos = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal sumP_pos = 0.0;
 			doublereal SumPall = 0.0;
@@ -5840,7 +5840,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -5917,7 +5917,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -5953,7 +5953,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									iadditionalCstatistic++;
 									byes_add = true; // Были добавления узлов.
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 								}
 
 
@@ -6065,7 +6065,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			integer ii1 = row_startA[i8];
@@ -6075,7 +6075,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 				for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 					iend_for1 = is0;
 					if (Amat.j[is0] != istr_etalon1) {
-						// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 						//if (this_is_C_node[Amat.j[is0]] == true) {
 						if (fabs(Amat.aij[is0]) > maxelem_threshold) {
 							maxelem_threshold = fabs(Amat.aij[is0]);
@@ -6103,7 +6103,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -6150,7 +6150,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -6191,7 +6191,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -6256,7 +6256,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold_theta_strong_F)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -6302,7 +6302,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -6340,7 +6340,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -6393,7 +6393,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 									if ((Amat.aij[is0]>0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold_theta_strong_F)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -6440,7 +6440,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -6478,7 +6478,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -6662,11 +6662,11 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
-										// Интерполляция только по ближайшим С узлам.
+										// интерполяция только по ближайшим С узлам.
 
 										// Внедиагональный элемент из множества С узлов.
 
@@ -6757,7 +6757,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 // Подлежит удалению Refactoring.
-	//integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol = 0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -6852,7 +6852,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold_plus = -1.0;
 			doublereal maxelem_threshold_minus = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -6861,7 +6861,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			integer iend_marker_position = row_startA[Amat.i[ii1] + 1] - 1;
 			for (integer is0 = ii1; (is0 <= iend_marker_position); is0++) {
 				if (Amat.j[is0] != Amat.i[ii1]) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if ((Amat.aij[is0]>0) && (fabs(Amat.aij[is0]) > maxelem_threshold_plus)) {
 						maxelem_threshold_plus = fabs(Amat.aij[is0]);
@@ -6881,7 +6881,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			integer icsosF_pos = 0;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal sumP_pos = 0.0;
 			doublereal SumPall = 0.0;
@@ -6934,7 +6934,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -7011,7 +7011,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										iadditionalCstatistic++;
 										byes_add = true; // Были добавления узлов.
 														 //exit(1);
-														 // здесь нужна непрямая интерполляция.
+														 // здесь нужна непрямая интерполяция.
 									}
 
 
@@ -7047,7 +7047,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									iadditionalCstatistic++;
 									byes_add = true; // Были добавления узлов.
 													 //exit(1);
-													 // здесь нужна непрямая интерполляция.
+													 // здесь нужна непрямая интерполяция.
 								}
 
 
@@ -7161,7 +7161,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 			// Нам нужен разреженный оператор Галёркина.
 			// 5 декабря 2015 года мы попробуем увеличить разреженность
-			// оператора интерполляции а значит и оператора Галёркина.
+			// оператора интерполяции а значит и оператора Галёркина.
 			doublereal maxelem_threshold_plus = -1.0;
 			doublereal maxelem_threshold_minus = -1.0;
 			//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
@@ -7171,7 +7171,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			for (integer is0 = ii1; (is0 <= row_startA[istr_etalon1 + 1] - 1); is0++) {
 				iend_for1 = is0;
 				if (Amat.j[is0] != istr_etalon1) {
-					// Если закоментировано то смотрится максимальный внедиагональный элемент в строке.
+					// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
 					//if (this_is_C_node[Amat.j[is0]] == true) {
 					if ((Amat.aij[is0]>0) && (fabs(Amat.aij[is0]) > maxelem_threshold_plus)) {
 						maxelem_threshold_plus = fabs(Amat.aij[is0]);
@@ -7198,7 +7198,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			doublereal maxelem_threshold_theta_strong_F_minus = maxelem_threshold_minus*theta_strong_F;
 
 			// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-			// Для каждого такого члена суммы увличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+			// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
 			doublereal sumP = 0.0;
 			doublereal SumPall = 0.0;
 			integer icount_StronglyF = 0;
@@ -7245,7 +7245,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 																	   // Следующий случай назван "безнадёжным".
 																	   // Безнадёжный случай оставляется без изменений.
 																	   // К счастью на глубоких уровнях сетки безнадёжный случай составляет лишь небольшой процент и 
-																	   // интерполляцию на этих уровнях можно улучшить.
+																	   // интерполяцию на этих уровнях можно улучшить.
 				if (icsosF == 0) number_of_F_nodes_with_one_single_strong_C_neighborF++; // Количество F узлов с одним единственным сильным  C соседом и к тому-же не имеющих сильных F соседов.
 			}
 
@@ -7290,7 +7290,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 										// Это как раз единственная Strong C связь. 
@@ -7355,7 +7355,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									if ((Amat.aij[is0]<0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold_theta_strong_F_minus)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -7401,7 +7401,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -7439,7 +7439,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -7492,7 +7492,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 									if ((Amat.aij[is0]>0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold_theta_strong_F_plus)) {
 										// Рассматриваем Strong F связи.
 
-										// Смысл :
+										// Смысл:
 										// 
 
 
@@ -7539,7 +7539,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										integer icsos_loc = 0;
 
 										// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
-										// Для каждого такого члена суммы увличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
+										// Для каждого такого члена суммы увеличиваем счётчик iscos_loc. По идее iscos_loc должно быть 2 и более.
 										doublereal sumP_loc = 0.0;
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
@@ -7577,7 +7577,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 										doublereal maxelem_threshold_loc_magic_minus = -maxelem_threshold_loc_magic;
 
-										// В общем это двойная интерполляционная сумма 
+										// В общем это двойная интерполяционная сумма 
 										//for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
 										for (integer is0_loc = ii1_loc; is0_loc <= iend_for; is0_loc++) {
 
@@ -7761,11 +7761,11 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 										bweSholdbeContinue = true;
 										iadditionalCstatistic++;
 										//exit(1);
-										// здесь нужна непрямая интерполляция.
+										// здесь нужна непрямая интерполяция.
 									}
 									else {
 
-										// Интерполляция только по ближайшим С узлам.
+										// интерполяция только по ближайшим С узлам.
 
 										// Внедиагональный элемент из множества С узлов.
 
@@ -7840,5 +7840,758 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 } // my_interpolation_procedure_number0
+
+
+doublereal theta(integer ilevel)
+{
+	/*
+	if (my_amg_manager.ilu2_smoother == 7) {
+		doublereal theta_return= my_amg_manager.theta;
+		switch (ilevel) {//Iwamura как в статье.
+		case 0: theta_return = 0.98;  break;
+		case 1: theta_return = 0.98;  break;
+		case 2: theta_return = 0.75;  break;
+		default: theta_return = 0.25; break;
+		}
+		return theta_return;
+	}
+	else
+	{
+		return my_amg_manager.theta;
+	}
+	*/
+	if ((my_amg_manager.icoarseningtype == 8) || (my_amg_manager.icoarseningtype == 9))
+	{
+		return activation_function_for_thrteshold(my_amg_manager.theta, ilevel, false);
+	}
+	else {
+		return my_amg_manager.theta;
+	}
+}
+
+doublereal theta83(integer ilevel)
+{
+	//return my_amg_manager.theta;
+	return theta(ilevel);
+}
+
+
+template <typename myARRT>
+myARRT* my_declaration_array(integer size, myARRT init_value, const char str[])
+{
+	myARRT* buf = (myARRT*)malloc((size + 1) * sizeof(myARRT));
+	//str<->noname_00.
+	handle_error<myARRT>(buf, "noname_00", "classic_aglomerative_amg_6", (size + 1));
+	// инициализация
+#pragma omp parallel for
+	for (integer i = 0; i <= size; i++) {
+		buf[i] = init_value;
+	}
+	return buf;
+} //my_declaration_array
+
+template <typename doublerealT>
+void my_interpolation_procedure_universal(integer& the_number_of_neighbors_that_are_not_C_nodes,
+	integer& number_of_F_nodes_with_one_single_strong_C_neighbor,
+	integer*& n_a, bool*& this_is_F_node, integer*& row_startA,
+	integer*& nnz_a, bool& bpositive_connections, Ak2& Amat,
+	bool& bweSholdbeContinue, bool*& this_is_C_node, integer& iadditionalCstatistic,
+	const doublereal RealZERO, integer& icount1, Ak1*& P, integer& nsizePR, integer& ilevel,
+	integer& iadd, integer& n, integer*& C_numerate,
+	integer& number_of_F_nodes_with_one_single_strong_C_neighborF,
+	bool& btreshold_on_new_vetv, integer& ifrom_re_operation_protection,
+	bool& from_re_operation_protection0, doublereal& magic82, doublereal*& threshold_quick_all,
+	doublereal*& threshold_quick_only_negative)
+{
+
+	bool the_good_old_interpolation = true;
+
+	if (the_good_old_interpolation) {
+
+		// Старая добрая верная, проверенная интерполяция.
+		// К тому же чрезвычайно простая.
+
+		//my_amg_manager.number_interpolation_procedure == 0
+		// 0
+		if (my_amg_manager.number_interpolation_procedure == 10) {
+
+			// Интерполяционная процедура №10. 
+			doublereal theta_loc = theta(ilevel);
+			my_interpolation_procedure_number10(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel, iadd, theta_loc, n, C_numerate);
+		}
+		//my_amg_manager.number_interpolation_procedure == 1
+		// 0
+		if (my_amg_manager.number_interpolation_procedure == 7) {
+
+			// Прямая интерполяция с элементам непрямой.
+			// Непрямая интерполяция применяется только для F узлов которые
+			// не имеют С соседей.
+			// По идее это должно поддерживать оператор Галёркина на должном уровне разреженности.
+			// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
+			// Узел F не имеющий Strong C соседей, получает значение из Strong C соседей соседних Strong F узлов в
+			// в результате сканирования списка Strong F соседей.
+			// Если нам встречаются два Strongly связанных F узла у которых в совокупности нет вообще ни одного Strong C соседа
+			// то один из этих Strong F узлов становится С узлом и сканирование списка сильных Strong F соседей данного узла F прекращается.
+			// Потом мы повторно запускаем алгоритм построения с учётом уже добавленных С узлов.
+
+
+			// Интерполяционная процедура №7.
+			doublereal theta_loc = theta(ilevel);
+			my_interpolation_procedure_number7(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate);
+		}
+		//my_amg_manager.number_interpolation_procedure == 2
+		// 0
+		if (my_amg_manager.number_interpolation_procedure == 2) {
+
+
+			// Интерполяционная процедура №2.
+			doublereal theta_loc = theta(ilevel);
+			my_interpolation_procedure_number2(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate, number_of_F_nodes_with_one_single_strong_C_neighborF);
+
+		}
+		//my_amg_manager.number_interpolation_procedure == 3
+		// 1
+		if (my_amg_manager.number_interpolation_procedure == 3)
+		{
+			// Базовая, наиболее часто используемая интерполяционная процедура.
+
+			// Интерполяционная процедура №3.
+			doublereal theta_loc = theta(ilevel);
+			doublereal theta83_loc = theta83(ilevel);
+			my_interpolation_procedure_number3(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate,
+				number_of_F_nodes_with_one_single_strong_C_neighborF,
+				theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+				from_re_operation_protection0, magic82, threshold_quick_all,
+				threshold_quick_only_negative);
+		}
+
+		//my_amg_manager.number_interpolation_procedure == 7
+		// 1
+		if (my_amg_manager.number_interpolation_procedure == 1) {
+
+			// 1.04.2017
+			// Главная идея в том чтобы разделить интерполяцию по знакам,
+			// отдельно положительные коэффициенты и отдельно положительные,
+			// в итоге учитывается и то и то.
+
+			// Интерполяционная процедура №1.
+			/*
+			my_interpolation_procedure_number1(the_number_of_neighbors_that_are_not_C_nodes,
+			number_of_F_nodes_with_one_single_strong_C_neighbor,
+			n_a, this_is_F_node, row_startA,
+			nnz_a, bpositive_connections, Amat,
+			bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+			RealZERO, icount1, P, nsizePR, ilevel,
+			iadd, theta(ilevel), n, R, C_numerate,
+			number_of_F_nodes_with_one_single_strong_C_neighborF,
+			theta83(ilevel), btreshold_on_new_vetv, ifrom_re_operation_protection,
+			from_re_operation_protection0, magic82, threshold_quick_all,
+			threshold_quick_only_negative);
+			*/
+
+			// Интерполяционная процедура №3. amg1r5 John W. Ruge и Klaus Stuben
+			doublereal theta_loc = theta(ilevel);
+			doublereal theta83_loc = theta83(ilevel);
+			my_interpolation_procedure_number3B(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate,
+				number_of_F_nodes_with_one_single_strong_C_neighborF,
+				theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+				from_re_operation_protection0, magic82, threshold_quick_all,
+				threshold_quick_only_negative);
+		}
+
+		if (my_amg_manager.number_interpolation_procedure == 0) {
+
+			// 1.04.2017; 28.04.2017;
+			// Главная идея в том чтобы разделить интерполяцию по знакам, отдельно положительные коэффициенты и отдельно положительные,
+			// в итоге учитывается и то и то.
+
+			// Интерполяционная процедура №0.
+			/*
+			my_interpolation_procedure_number0(the_number_of_neighbors_that_are_not_C_nodes,
+			number_of_F_nodes_with_one_single_strong_C_neighbor,
+			n_a, this_is_F_node, row_startA,
+			nnz_a, bpositive_connections, Amat,
+			bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+			RealZERO, icount1, P, nsizePR, ilevel,
+			iadd, theta(ilevel), n, R, C_numerate,
+			number_of_F_nodes_with_one_single_strong_C_neighborF,
+			theta83(ilevel), btreshold_on_new_vetv, ifrom_re_operation_protection,
+			from_re_operation_protection0, magic82, threshold_quick_all,
+			threshold_quick_only_negative);
+			*/
+
+			// Интерполяционная процедура №3.
+			// Улучшенный базовый вариант.
+			doublereal theta_loc = theta(ilevel);
+			doublereal theta83_loc = theta83(ilevel);
+			my_interpolation_procedure_number3A(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate,
+				number_of_F_nodes_with_one_single_strong_C_neighborF,
+				theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+				from_re_operation_protection0, magic82, threshold_quick_all,
+				threshold_quick_only_negative);
+
+		}
+
+		//my_amg_manager.number_interpolation_procedure == 4
+		// 0
+		if (my_amg_manager.number_interpolation_procedure == 4) {
+
+			// пятая попытка (Рабочая).
+			// показывает время 1.22 против времени в 1.36 в четвертой попытке.
+
+			// Здесь узел F не имеющий Strong С соседей сам становится С узлом.
+			// Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
+			// сильных F узлов.
+
+			// Интерполяционная процедура №4.
+			doublereal theta_loc = theta(ilevel);
+			doublereal theta83_loc = theta83(ilevel);
+			my_interpolation_procedure_number4(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate,
+				number_of_F_nodes_with_one_single_strong_C_neighborF,
+				theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+				from_re_operation_protection0, magic82, threshold_quick_all,
+				threshold_quick_only_negative);
+
+		}
+		//my_amg_manager.number_interpolation_procedure == 5
+		// 0
+		if (my_amg_manager.number_interpolation_procedure == 5) {
+
+			// Рабочая.
+
+			// Интерполяционная процедура №5.
+			doublereal theta_loc = theta(ilevel);
+			doublereal theta83_loc = theta83(ilevel);
+			my_interpolation_procedure_number5(the_number_of_neighbors_that_are_not_C_nodes,
+				number_of_F_nodes_with_one_single_strong_C_neighbor,
+				n_a, this_is_F_node, row_startA,
+				nnz_a, bpositive_connections, Amat,
+				bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+				RealZERO, icount1, P, nsizePR, ilevel,
+				iadd, theta_loc, n, C_numerate,
+				number_of_F_nodes_with_one_single_strong_C_neighborF,
+				theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+				from_re_operation_protection0, magic82, threshold_quick_all,
+				threshold_quick_only_negative);
+		}
+
+	}
+	else if (true) {
+
+		// INTERPOLATION SIX
+
+		// Экспериментальная интерполяция 1 января 2016.
+
+		// Интерполяционная процедура №6.
+		doublereal theta_loc = theta(ilevel);
+		doublereal theta83_loc = theta83(ilevel);
+		my_interpolation_procedure_number6(the_number_of_neighbors_that_are_not_C_nodes,
+			number_of_F_nodes_with_one_single_strong_C_neighbor,
+			n_a, this_is_F_node, row_startA,
+			nnz_a, bpositive_connections, Amat,
+			bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+			RealZERO, icount1, P, nsizePR, ilevel,
+			iadd, theta_loc, n, C_numerate,
+			number_of_F_nodes_with_one_single_strong_C_neighborF,
+			theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+			from_re_operation_protection0, magic82, threshold_quick_all,
+			threshold_quick_only_negative);
+	}
+	else {
+		// От интерполяции зависит очень много поэтому
+		// реализуем следующую экспериментальную идею интерполяции.
+		// Эта интерполяция претендует быть единственно теоретически верной,
+		// сделанной на основе литературных данных.
+
+		printf("interpolation SIX: Theoretical approach in Montenegro.\n");
+		system("PAUSE");
+
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
+		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
+
+		if (bpositive_connections) {
+
+			// positive connections.
+
+			// Построение пролонгации для узлов которые составляют F-nodes.
+			// Каждый F-nodes окружён C-nodes.
+			for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true) {
+
+				// Нам нужен разреженный оператор Галёркина.
+				// 5 декабря 2015 года мы попробуем увеличить разреженность
+				// оператора интерполяции а значит и оператора Галёркина.
+				doublerealT maxelem_threshold = -1.0;
+				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				integer ii1 = row_startA[i8];
+				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+					if (Amat.j[is0] != Amat.i[ii1]) {
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
+						//if (this_is_C_node[Amat.j[is0]] == true) {
+						if (fabs(Amat.aij[is0]) > maxelem_threshold) {
+							maxelem_threshold = fabs(Amat.aij[is0]);
+						}
+						//}
+					}
+				}
+				// Здесь maxelem_threshold это модуль максимального внедиагонального элемента в строке среди С соседей.
+
+				// Найти соседей данного F-node которые C-node.
+				//integer icsos = 0;
+
+				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				doublerealT sumP = 0.0;
+				doublerealT sumPindicator = 0.0;
+				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+					if (Amat.j[is0] != Amat.i[ii1]) {
+						if (this_is_C_node[Amat.j[is0]] == true) {
+							if (fabs(Amat.aij[is0]) <= maxelem_threshold * theta(ilevel)) {
+								// Weak connectors
+								sumP += fabs(Amat.aij[is0]); // сумма модулей внедиагональных элементов которые принадлежат С узлам.
+															 //icsos++;
+							}
+							else {
+								sumPindicator += fabs(Amat.aij[is0]);
+							}
+						}
+						else {
+							// Подсчитываем количество соседей которые не являются С узлами.
+							if (fabs(Amat.aij[is0]) <= maxelem_threshold * theta(ilevel)) {
+								// Weak connectors
+								sumP += fabs(Amat.aij[is0]); // сумма модулей внедиагональных элементов которые принадлежат С узлам.
+															 //icsos++;
+							}
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+						}
+					}
+					else {
+						// Диагональный элемент.
+						sumP += fabs(Amat.aij[is0]);
+					}
+				}
+				//if (icsos == 1) number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным сильным  С соседом.
+
+
+				// 1 января 2015 Один сосед это недостаточно.
+				// Поэтому в случае одного соседа делаем такой узел С узлом.
+				//if ((false) && (icsos == 1)) {
+				//this_is_F_node[i8] = false;
+				//this_is_C_node[i8] = true;
+				//bweSholdbeContinue = true;
+				//}
+				//else
+				{
+
+					if (fabs(sumPindicator) < RealZERO) {
+						//printf("error interpolation zero diagonal sumP.\n");
+						//printf("Fnode all neighbour is F");
+						//system("pause");
+						//printf("i8 is Dirichlet node\n");
+						this_is_F_node[i8] = false; // Этот узел Дирихле станет С узлом.
+						this_is_C_node[i8] = true;
+						bweSholdbeContinue = true;
+						iadditionalCstatistic++;
+						//exit(1);
+						// здесь нужна непрямая интерполяция.
+
+						// Мы не будем добавлять С узлы, мы будем использовать непрямую интерполяцию.
+
+
+
+					}
+					else {
+
+						integer icount1_frozen = icount1;
+
+						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+							if (Amat.j[is0] != Amat.i[ii1]) {
+								if (this_is_C_node[Amat.j[is0]] == true) {
+
+									// Внедиагональный элемент из множества С узлов.
+
+									// Данная вставка должна существенно сохранять 
+									// разреженность оператора Галёркина на глубоких 
+									// сеточных уровнях.
+									// Модификация 5 декабря 2015.
+
+									if (fabs(Amat.aij[is0]) > maxelem_threshold * theta(ilevel)) {
+										// Strongly C connectors.
+
+										P[icount1].j = i8;
+										P[icount1].i = C_numerate[Amat.j[is0]];
+										P[icount1].aij = fabs(Amat.aij[is0]) / sumP;
+										icount1++;
+										if (icount1 >= nsizePR * n) {
+											printf("memory error!!!\n");
+											printf("not enough memory for the interpolation operator.\n");
+											//system("PAUSE");
+											//exit(1);
+											deallocate_prolongation(nsizePR, n, P);
+										}
+									}
+
+
+								}
+							}
+						}
+
+						integer ilength_n = icount1 - icount1_frozen;
+						if (ilength_n > n_a[ilevel - 1]) {
+							printf("memory very large ilength_n=%lld n_a[ilevel - 1]=%lld\n", ilength_n, n_a[ilevel - 1]);
+							system("PAUSE");
+						}
+
+						integer* jposition_in_P = my_declaration_array<integer>(ilength_n - 1, -1, "jposition_in_P");
+
+
+						integer i_97 = 0;
+
+						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+							if (Amat.j[is0] != Amat.i[ii1]) {
+								if (this_is_C_node[Amat.j[is0]] == true) {
+									if (fabs(Amat.aij[is0]) > maxelem_threshold * theta(ilevel)) {
+										// Strongly C connections j position.
+										jposition_in_P[i_97] = Amat.j[is0];
+										i_97++;
+									}
+								}
+							}
+						}
+
+
+						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+							if (Amat.j[is0] != Amat.i[ii1]) {
+								if (this_is_F_node[Amat.j[is0]] == true) {
+									if (fabs(Amat.aij[is0]) > maxelem_threshold * theta(ilevel)) {
+										// Strong F connections
+										doublerealT my_mult = fabs(Amat.aij[is0]);
+										integer iFpoint = Amat.j[is0];
+										//integer ii1_loc = BinarySearchAi(Amat, iFpoint, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+										integer ii1_loc = row_startA[iFpoint];
+
+										// Смотрим всех соседей узла iFpoint
+										// если среди них окажутся сильные С соседи 
+										// первоначально рассматриваемого узла Amat.i[ii1]
+										// то мы будем накапливать в сумматоре sum23 
+										// модули значений матрицы.
+										doublerealT sum23 = 0.0;
+										bool bvisit23 = false;
+										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
+											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
+												if (this_is_C_node[Amat.j[is0_loc]] == true) {
+													for (i_97 = 0; i_97 < ilength_n; i_97++) {
+														if (Amat.j[is0_loc] == jposition_in_P[i_97]) {
+															sum23 += fabs(Amat.aij[is0_loc]);
+															bvisit23 = true;
+															break;
+														}
+													}
+												}
+											}
+										}
+
+										//if (fabs(sum23) > RealZERO) {
+										if (bvisit23) {
+											// мы точно не делим на ноль.
+
+											// Сканируем всех соседей узла F.
+											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
+												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
+													if (this_is_C_node[Amat.j[is0_loc]] == true) {
+														for (i_97 = 0; i_97 < ilength_n; i_97++) {
+															if (Amat.j[is0_loc] == jposition_in_P[i_97]) {
+																//P[icount1_frozen + i_97].j = i8;
+																//P[icount1_frozen+i_97].i = C_numerate[Amat.j[is0]];
+																P[icount1_frozen + i_97].aij += (my_mult * fabs(Amat.aij[is0_loc])) / (sumP * sum23);
+																break;
+															}
+														}
+													}
+												}
+											}
+										}
+
+
+									}
+								}
+							}
+						}
+
+						//delete[] jposition_in_P;
+						if (jposition_in_P != nullptr) {
+							free(jposition_in_P);
+						}
+						jposition_in_P = nullptr;
+
+					}
+
+				}
+
+
+			}
+
+		}
+		else {
+			// only negative connections
+
+			// Построение пролонгации для узлов которые составляют F-nodes.
+			// Каждый F-nodes окружён C-nodes.
+			for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true) {
+
+				// Нам нужен разреженный оператор Галёркина.
+				// 5 декабря 2015 года мы попробуем увеличить разреженность
+				// оператора интерполяции а значит и оператора Галёркина.
+				doublerealT maxelem_threshold = -1.0;
+				//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+				integer ii1 = row_startA[i8];
+				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+					if (Amat.j[is0] != Amat.i[ii1]) {
+						// Если закомментировано то смотрится максимальный внедиагональный элемент в строке.
+						//if (this_is_C_node[Amat.j[is0]] == true) {
+						if ((Amat.aij[is0] < 0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold)) {
+							maxelem_threshold = fabs(Amat.aij[is0]);
+						}
+						//}
+					}
+				}
+				// Здесь maxelem_threshold это модуль максимального внедиагонального элемента в строке среди С соседей.
+
+				// Найти соседей данного F-node которые C-node.
+				//integer icsos = 0;
+
+				// Суммируем модули внедиагональных элементов из С узлов которые больше порога.
+				// Для каждого такого члена суммы увеличиваем счётчик iscos. По идее iscos должно быть 2 и более.
+				doublerealT sumP = 0.0;
+				doublerealT sumPindicator = 0.0;
+				for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+					if (Amat.j[is0] != Amat.i[ii1]) {
+						if (this_is_C_node[Amat.j[is0]] == true) {
+							if ((Amat.aij[is0] > 0.0) || (fabs(Amat.aij[is0]) <= maxelem_threshold * theta(ilevel))) {
+								// Weak connectors
+								sumP += fabs(Amat.aij[is0]); // сумма модулей внедиагональных элементов которые принадлежат С узлам.
+															 //icsos++;
+							}
+							else {
+								sumPindicator += fabs(Amat.aij[is0]);
+							}
+						}
+						else {
+							// Подсчитываем количество соседей которые не являются С узлами.
+							if ((Amat.aij[is0] > 0.0) || (fabs(Amat.aij[is0]) <= maxelem_threshold * theta(ilevel))) {
+								// Weak connectors
+								sumP += fabs(Amat.aij[is0]); // сумма модулей внедиагональных элементов которые принадлежат С узлам.
+															 //icsos++;
+							}
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+						}
+					}
+					else {
+						// Диагональный элемент.
+						sumP += fabs(Amat.aij[is0]);
+					}
+				}
+				//if (icsos == 1) number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным сильным С соседом.
+
+
+				// 1 января 2015 Один сосед это недостаточно.
+				// Поэтому в случае одного соседа делаем такой узел С узлом.
+				//if ((false) && (icsos == 1)) {
+				//this_is_F_node[i8] = false;
+				//this_is_C_node[i8] = true;
+				//bweSholdbeContinue = true;
+				//}
+				//else
+				{
+
+					if (fabs(sumPindicator) < RealZERO) {
+						//printf("error interpolation zero diagonal sumP.\n");
+						//printf("Fnode all neighbour is F");
+						//system("pause");
+						//printf("i8 is Dirichlet node\n");
+						this_is_F_node[i8] = false; // Этот узел Дирихле станет С узлом.
+						this_is_C_node[i8] = true;
+						bweSholdbeContinue = true;
+						iadditionalCstatistic++;
+						//exit(1);
+						// здесь нужна непрямая интерполяция.
+
+						// Мы не будем добавлять С узлы, мы будем использовать непрямую интерполяцию.
+
+
+
+					}
+					else {
+
+						integer icount1_frozen = icount1;
+
+						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+							if (Amat.j[is0] != Amat.i[ii1]) {
+								if (this_is_C_node[Amat.j[is0]] == true) {
+
+									// Внедиагональный элемент из множества С узлов.
+
+									// Данная вставка должна существенно сохранять 
+									// разреженность оператора Галёркина на глубоких 
+									// сеточных уровнях.
+									// Модификация 5 декабря 2015.
+
+									if ((Amat.aij[is0] < 0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold * theta(ilevel))) {
+										// Strongly C connectors.
+
+										P[icount1].j = i8;
+										P[icount1].i = C_numerate[Amat.j[is0]];
+										P[icount1].aij = fabs(Amat.aij[is0]) / sumP;
+										icount1++;
+										if (icount1 >= nsizePR * n) {
+											printf("memory error!!!\n");
+											printf("not enough memory for the interpolation operator.\n");
+											//system("PAUSE");
+											//exit(1);
+											deallocate_prolongation(nsizePR, n, P);
+										}
+									}
+
+
+								}
+							}
+						}
+
+						integer ilength_n = icount1 - icount1_frozen;
+						integer* jposition_in_P = my_declaration_array<integer>(ilength_n - 1, -1, "jposition_in_P");
+
+						integer i_97 = 0;
+
+						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+							if (Amat.j[is0] != Amat.i[ii1]) {
+								if (this_is_C_node[Amat.j[is0]] == true) {
+									if ((Amat.aij[is0] < 0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold * theta(ilevel))) {
+										// Strongly C connections j position.
+										jposition_in_P[i_97] = Amat.j[is0];
+										i_97++;
+									}
+								}
+							}
+						}
+
+
+						for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
+							if (Amat.j[is0] != Amat.i[ii1]) {
+								if (this_is_F_node[Amat.j[is0]] == true) {
+									if ((Amat.aij[is0] < 0.0) && (fabs(Amat.aij[is0]) > maxelem_threshold * theta(ilevel))) {
+										// Strong F connections
+										doublerealT my_mult = fabs(Amat.aij[is0]);
+										integer iFpoint = Amat.j[is0];
+										//integer ii1_loc = BinarySearchAi(Amat, iFpoint, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+										integer ii1_loc = row_startA[iFpoint];
+
+										// Смотрим всех соседей узла iFpoint
+										// если среди них окажутся сильные С соседи 
+										// первоначально рассматриваемого узла Amat.i[ii1]
+										// то мы будем накапливать в сумматоре sum23 
+										// модули значений матрицы.
+										doublerealT sum23 = 0.0;
+										bool bvisit23 = false;
+										for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
+											if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
+												if (this_is_C_node[Amat.j[is0_loc]] == true) {
+													for (i_97 = 0; i_97 < ilength_n; i_97++) {
+														if (Amat.j[is0_loc] == jposition_in_P[i_97]) {
+															sum23 += fabs(Amat.aij[is0_loc]);
+															bvisit23 = true;
+															break;
+														}
+													}
+												}
+											}
+										}
+
+										//if (fabs(sum23) > RealZERO) {
+										if (bvisit23) {
+											// мы точно не делим на ноль.
+
+											// Сканируем всех соседей узла F.
+											for (integer is0_loc = ii1_loc; (is0_loc <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0_loc] == Amat.i[ii1_loc]); is0_loc++) {
+												if (Amat.j[is0_loc] != Amat.i[ii1_loc]) {
+													if (this_is_C_node[Amat.j[is0_loc]] == true) {
+														for (i_97 = 0; i_97 < ilength_n; i_97++) {
+															if (Amat.j[is0_loc] == jposition_in_P[i_97]) {
+																//P[icount1_frozen + i_97].j = i8;
+																//P[icount1_frozen+i_97].i = C_numerate[Amat.j[is0]];
+																P[icount1_frozen + i_97].aij += (my_mult * fabs(Amat.aij[is0_loc])) / (sumP * sum23);
+																break;
+															}
+														}
+													}
+												}
+											}
+										}
+
+
+									}
+								}
+							}
+						}
+
+						if (jposition_in_P != nullptr) {
+							free(jposition_in_P);
+						}
+						jposition_in_P = nullptr;
+
+					}
+
+				}
+
+
+			}
+
+
+		} // end only negative connections
+
+	}
+
+} // my_interpolation_procedure_universal
+
+
 
 #endif // !BASIC_INTERPOLATION_PROCEDURE_MY_AGREGAT_AMG_CPP
