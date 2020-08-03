@@ -1,9 +1,10 @@
 object FormCopyObject: TFormCopyObject
   Left = 336
   Top = 183
+  AutoSize = True
   Caption = 'Copy object'
-  ClientHeight = 232
-  ClientWidth = 226
+  ClientHeight = 217
+  ClientWidth = 217
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,8 +17,8 @@ object FormCopyObject: TFormCopyObject
   PixelsPerInch = 96
   TextHeight = 13
   object PanelMain: TPanel
-    Left = 8
-    Top = 8
+    Left = 0
+    Top = 0
     Width = 217
     Height = 217
     Color = clMoneyGreen
@@ -43,7 +44,8 @@ object FormCopyObject: TFormCopyObject
       Width = 185
       Height = 121
       Caption = 'Translate'
-      Color = clSkyBlue
+      Color = clMoneyGreen
+      ParentBackground = False
       ParentColor = False
       TabOrder = 1
       object Labelx: TLabel
@@ -100,6 +102,15 @@ object FormCopyObject: TFormCopyObject
       Caption = 'Apply'
       TabOrder = 2
       OnClick = ButtonApplyClick
+    end
+    object CheckBoxRotate: TCheckBox
+      Left = 16
+      Top = 180
+      Width = 64
+      Height = 17
+      Caption = 'Rotate'
+      TabOrder = 3
+      Visible = False
     end
   end
 end

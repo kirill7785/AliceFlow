@@ -177,6 +177,12 @@ begin
    if (CBFlow.Checked) then
    begin
       // уравнения гидродинамики решаются.
+      if ((ComboBoxTemperature.ItemIndex=2) or
+       (ComboBoxTemperature.ItemIndex=3)) then
+      begin
+         ComboBoxTemperature.ItemIndex:=1;
+      end;
+
       RadioGroupFlowRegime.Visible:=true;
       GBGravity.Visible:=true;
       // ламинарный или турбулентный.
@@ -197,7 +203,8 @@ begin
       RadioGroupFlowRegime.Visible:=false;
       GroupBoxTurbulentModel.Visible:=false;
       GBGravity.Visible:=false;
-      if ((ComboBoxTemperature.ItemIndex=0) and (CheckBoxStaticStructural.Checked=false)) then
+      if ((ComboBoxTemperature.ItemIndex=0) and
+       (CheckBoxStaticStructural.Checked=false)) then
       begin
          // Не рассчитываем гидродинамику
          // Не рассчитываем механику.
@@ -499,12 +506,27 @@ end;
 // Свойств модели Смагоринского.
 procedure TEGDForm.ComboBoxTemperatureChange(Sender: TObject);
 begin
-   if ((ComboBoxTemperature.ItemIndex=0)and(CBFlow.Checked=false)and
+   if ((ComboBoxTemperature.ItemIndex=0)
+   and(CBFlow.Checked=false)and
    (CheckBoxStaticStructural.Checked=false)) then
    begin
        // Ставим по умолчанию солвер методом контрольного объёма.
        ComboBoxTemperature.ItemIndex:=1; // Не даём убирать температуру,
        // если выключена гидродинамика и механика.
+   end;
+   if ((ComboBoxTemperature.ItemIndex=2)and
+   (CBFlow.Checked=true)and
+   (CheckBoxStaticStructural.Checked=false)) then
+   begin
+      // Finite Element Method -> Finite Volume Method.
+      ComboBoxTemperature.ItemIndex:=1;
+   end;
+    if ((ComboBoxTemperature.ItemIndex=3)and
+   (CBFlow.Checked=true)and
+   (CheckBoxStaticStructural.Checked=false)) then
+   begin
+      // Network T Solver -> Finite Volume Method.
+      ComboBoxTemperature.ItemIndex:=1;
    end;
 end;
 
@@ -525,11 +547,16 @@ begin
             BEditTurb.Visible:=false;
          end;
      3 : begin
-            // Spallart Allmares (RANS)
+            // Spalart Allmares (RANS) [1992]
             BEditTurb.Visible:=false;
          end;
      4 : begin
-            // SST Ментера (RANS)
+            // SST Ментера (RANS) [1993]
+            BEditTurb.Visible:=false;
+         end;
+     5 : begin
+            // Двухслойная модель на основе
+            // Standart K-Epsilon (RANS) [2001]
             BEditTurb.Visible:=false;
          end;
    end;

@@ -1,8 +1,9 @@
 object FormSetting: TFormSetting
   Left = 192
   Top = 124
-  ClientHeight = 527
-  ClientWidth = 194
+  AutoSize = True
+  ClientHeight = 529
+  ClientWidth = 186
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -255,22 +256,16 @@ object FormSetting: TFormSetting
       Top = 24
       Width = 145
       Height = 21
-      ItemIndex = 4
+      ItemIndex = 0
       TabOrder = 0
-      Text = 
-        'CPU BiCGStab[1992] + amg1r5[1986] (Precontiditioning, Multigrid ' +
-        'tecnology, Stabilisation)'
+      Text = 'CPU BiCGStab+ILU(lfil) Y.Saad'
       OnChange = ComboBoxStaticStructuralSolverSettingChange
       Items.Strings = (
-        'BiCGStab+ILU(lfil) Y.Saad'
-        'Direct Method'
-        'RUMBA v.0.14'
-        'amg1r5 Ruge and Stuben [1986]'
-        
-          'CPU BiCGStab[1992] + amg1r5[1986] (Precontiditioning, Multigrid ' +
-          'tecnology, Stabilisation)'
-        'CPU FGMRes[1986]+amg1r5[1986] (Saad, Shultc, Ruge, Stuben).'
-        'in development')
+        'CPU BiCGStab+ILU(lfil) Y.Saad'
+        'CPU Direct Method'
+        'CPU Algebraic multigrid method RUMBA v.0.14'
+        'CPU amg1r5 Ruge and Stuben [1986]'
+        'CPU Denis Demidov AMGCL')
     end
   end
   object GroupBoxNumberProcessors: TGroupBox

@@ -1,9 +1,10 @@
 object FormAMGCLParameters: TFormAMGCLParameters
   Left = 0
   Top = 0
+  AutoSize = True
   Caption = 'AMGCL'
-  ClientHeight = 325
-  ClientWidth = 194
+  ClientHeight = 316
+  ClientWidth = 186
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,14 +15,14 @@ object FormAMGCLParameters: TFormAMGCLParameters
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
-    Left = 8
+    Left = 9
     Top = 296
     Width = 90
     Height = 13
     Caption = 'Denis Demidov  alg'
   end
   object RadioGroupAMGCLsmoother1: TRadioGroup
-    Left = 0
+    Left = 1
     Top = 0
     Width = 185
     Height = 145
@@ -43,7 +44,7 @@ object FormAMGCLParameters: TFormAMGCLParameters
     TabOrder = 0
   end
   object Button1: TButton
-    Left = 109
+    Left = 110
     Top = 291
     Width = 75
     Height = 25
@@ -52,7 +53,7 @@ object FormAMGCLParameters: TFormAMGCLParameters
     OnClick = Button1Click
   end
   object RadioGroupAMGCLCoarseningType: TRadioGroup
-    Left = -1
+    Left = 0
     Top = 151
     Width = 185
     Height = 99
@@ -64,7 +65,7 @@ object FormAMGCLParameters: TFormAMGCLParameters
     TabOrder = 2
   end
   object ComboBoxIterator: TComboBox
-    Left = 8
+    Left = 9
     Top = 264
     Width = 169
     Height = 21

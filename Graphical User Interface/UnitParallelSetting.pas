@@ -49,7 +49,7 @@ implementation
 {$R *.dfm}
 
 uses Unitamgmanager, MeshUnit, VisualUnit, UnitAMGCLManager,
-  Unitamg1r5Parameters;
+  Unitamg1r5Parameters, UnitEQGD;
 
 
 // Запрет форме сворачиваться.
@@ -64,20 +64,60 @@ end;
 // Вызывает окно настроек параметров.
 procedure TFormSetting.Button_amg_managerClick(Sender: TObject);
 begin
-    if (ComboBoxSolverSetting.ItemIndex=5) then
+    // Метод контрольного объёма
+    if ((Laplas.egddata.itemper=1)
+    or (Laplas.egddata.myflmod[0].iflow=1)) then
     begin
-       // AMGCL Denis Demidov BiCGStab + samg
-       FormAMGCLParameters.ShowModal;
-    end
-    else  if (ComboBoxSolverSetting.ItemIndex=1) then
+       if (ComboBoxSolverSetting.ItemIndex=5) then
+       begin
+          // AMGCL Denis Demidov BiCGStab + samg
+          FormAMGCLParameters.ShowModal;
+       end
+       else  if (ComboBoxSolverSetting.ItemIndex=1) then
+       begin
+          // amg1r5 Ruge and Stueben.
+          Formamg1r5Parameters.ShowModal;
+       end
+       else
+       begin
+          // Вызов настроек РУМБА 0.14
+          Form_amg_manager.ShowModal;
+       end;
+    end;
+    // Метод конечных элементов.
+    if (Laplas.egddata.itemper=2) then
     begin
-       // amg1r5 Ruge and Stueben.
-       Formamg1r5Parameters.ShowModal;
-    end
-    else
+        if (ComboBoxStaticStructuralSolverSetting.ItemIndex=2) then
+        begin
+           // Вызов настроек РУМБА 0.14
+           Form_amg_manager.ShowModal;
+        end;
+
+        if (ComboBoxStaticStructuralSolverSetting.ItemIndex=3) then
+        begin  // Алгебраический многосеточный метод amg1r5
+           // amg1r5 Ruge and Stueben.
+           Formamg1r5Parameters.ShowModal;
+        end;
+
+         if (ComboBoxStaticStructuralSolverSetting.ItemIndex=4) then
+        begin
+           // AMGCL Denis Demidov BiCGStab + samg
+           FormAMGCLParameters.ShowModal;
+        end;
+    end;
+    // Графовый метод решения уравнения теплопроводности.
+    if (Laplas.egddata.itemper=3) then
     begin
-       // Вызов настроек РУМБА 0.14
-       Form_amg_manager.ShowModal;
+        if (ComboBoxSolverSetting.ItemIndex=5) then
+       begin
+          // AMGCL Denis Demidov BiCGStab + samg
+          FormAMGCLParameters.ShowModal;
+       end
+       else  if (ComboBoxSolverSetting.ItemIndex=1) then
+       begin
+          // amg1r5 Ruge and Stueben.
+          Formamg1r5Parameters.ShowModal;
+       end;
     end;
 end;
 
@@ -95,9 +135,10 @@ begin
      end;
      1 :  // amg1r5
      begin
+        //  Ruge & Stueben 1987.
         Button_amg_manager.Visible:=true;
-        GroupBox_lfil.Visible:=false;
-        GroupBox1.Visible:=false; // gmres restart
+        GroupBox_lfil.Visible:=true;
+        GroupBox1.Visible:=true; // gmres restart
      end;
      2 :  // bicgstab + adi
      begin
@@ -174,8 +215,25 @@ procedure TFormSetting.ComboBoxStaticStructuralSolverSettingChange(
   Sender: TObject);
 begin
    if (ComboBoxStaticStructuralSolverSetting.ItemIndex=2) then
+   begin  // Алгебраический многосеточный метод РУМБА 0.14
+      // Предоставляем доступ к настройкам
+      // алгебраического многосеточного метода.
+      GroupBox_lfil.Visible:=true;
+      GroupBox1.Visible:=true; // gmres restart
+      Button_amg_manager.Visible:=true;
+   end;
+   if (ComboBoxStaticStructuralSolverSetting.ItemIndex=3) then
+   begin  // Алгебраический многосеточный метод amg1r5
+      // Предоставляем доступ к настройкам
+      // алгебраического многосеточного метода.
+      GroupBox_lfil.Visible:=false;
+      GroupBox1.Visible:=true; // gmres restart
+      Button_amg_manager.Visible:=true;
+   end;
+   if (ComboBoxStaticStructuralSolverSetting.ItemIndex=4) then
    begin
-      // Предоставляем доступ к настройкам алгебраического многосеточного метода.
+      GroupBox_lfil.Visible:=false;
+      GroupBox1.Visible:=false; // gmres restart
       Button_amg_manager.Visible:=true;
    end;
 end;
