@@ -1,10 +1,10 @@
 object AddVariableForm: TAddVariableForm
   Left = 354
   Top = 150
-  Width = 285
-  Height = 204
   BorderIcons = []
   Caption = 'Add Variable'
+  ClientHeight = 166
+  ClientWidth = 269
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
