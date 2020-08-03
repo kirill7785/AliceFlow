@@ -15,6 +15,7 @@ type
     Edit1: TEdit;
     ButtonScale: TButton;
     procedure ButtonScaleClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -48,9 +49,22 @@ begin
    val(s,dmbuf,code);
    if (code=0) then
    begin
-      scale674:=StrToFloat(s);
-      // јвтоматическое закрытие формы.
-      Close;
+      if (abs(dmbuf)<1.0e-30) then
+      begin
+          // «ащита от нул€.
+          dmbuf:=1.0;
+      end;
+      if (dmbuf>1.0e-30) then
+      begin
+         scale674:=abs(dmbuf); // защита от отрицательного значени€.
+         Edit1.Color:=clWhite;
+         // јвтоматическое закрытие формы.
+         Close;
+      end
+      else
+      begin
+         Edit1.Color:=clRed;
+      end;
    end
     else
    begin
@@ -63,6 +77,11 @@ begin
          Edit1.Text:='1.0';
       end;
    end;
+end;
+
+procedure TFormScale.FormCreate(Sender: TObject);
+begin
+   scale674:=1.0; // »нициализаци€ при создании формы 19.05.2020.
 end;
 
 end.

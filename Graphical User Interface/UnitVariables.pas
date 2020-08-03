@@ -114,6 +114,20 @@ begin
    begin
       FormVariables.StringGridVariables.Cells[0,i]:=IntToStr(i);
    end;
+
+    for i:=1 to FormVariables.StringGridVariables.RowCount-1 do
+    begin
+       if (i-1>=Laplas.ivar) then
+       begin
+          FormVariables.StringGridVariables.Cells[1,i]:='';
+          FormVariables.StringGridVariables.Cells[2,i]:='';
+       end
+       else
+       begin
+          FormVariables.StringGridVariables.Cells[1,i]:=Laplas.parametric[i-1].svar;
+          FormVariables.StringGridVariables.Cells[2,i]:=Laplas.parametric[i-1].sval;
+       end;
+    end;
 end;
 
 procedure TFormVariables.BApplyClick(Sender: TObject);

@@ -15,6 +15,8 @@ type
     Label1: TLabel;
     EditNewName: TEdit;
     Button1: TButton;
+    Label2: TLabel;
+    LabelConflictName: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
   private
@@ -39,6 +41,7 @@ var
    j_var : Integer;
    sub : String;
 begin
+   bOk_rename:=false;
    EditNewName.Color:=clwhite;
    if (length(Trim(EditNewName.Text))>1) then
    begin
@@ -49,7 +52,8 @@ begin
             sub:= Trim(EditNewName.Text);
             for j_var := 0 to Laplas.ivar-1 do
             begin
-               if ((length(Trim(sub))=length(Trim(Laplas.parametric[j_var].svar)))and(pos(Trim(sub),Trim(Laplas.parametric[j_var].svar))=1))  then
+               if ((length(Trim(sub))=length(Trim(Laplas.parametric[j_var].svar)))
+               and(pos(Trim(sub),Trim(Laplas.parametric[j_var].svar))=1))  then
                begin
                   // Найдено полное совпадение.
                   bfound_variable:=true;

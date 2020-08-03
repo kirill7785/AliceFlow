@@ -1,10 +1,9 @@
 object FormTransientPowerSetting: TFormTransientPowerSetting
   Left = 0
   Top = 0
-  AutoSize = True
   Caption = 'Transient  Power  Setting in block'
-  ClientHeight = 281
-  ClientWidth = 171
+  ClientHeight = 309
+  ClientWidth = 194
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,31 +12,35 @@ object FormTransientPowerSetting: TFormTransientPowerSetting
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
     Left = 0
     Top = 0
     Width = 171
-    Height = 281
+    Height = 308
+    Color = clMoneyGreen
+    ParentBackground = False
     TabOrder = 0
     object RadioGroupTimeDependPowerLow: TRadioGroup
       Left = 1
       Top = 1
       Width = 169
-      Height = 137
+      Height = 161
       Caption = 'Time depent power law'
       ItemIndex = 0
       Items.Strings = (
         'it does not depend on time'
         'square wave'
-        'square wave apparat'
-        'hot cold double linear')
+        'square wave 2'
+        'hot cold double linear'
+        'piecewise const')
       TabOrder = 0
     end
     object Button1: TButton
       Left = 95
-      Top = 248
+      Top = 272
       Width = 75
       Height = 25
       Caption = 'Apply'
@@ -45,10 +48,12 @@ object FormTransientPowerSetting: TFormTransientPowerSetting
       OnClick = Button1Click
     end
     object PanelTemperaturedependpower: TPanel
-      Left = 10
-      Top = 144
+      Left = 9
+      Top = 168
       Width = 161
       Height = 98
+      Color = clMoneyGreen
+      ParentBackground = False
       TabOrder = 2
       object Label1: TLabel
         Left = 112

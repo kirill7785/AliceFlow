@@ -44,18 +44,24 @@ type
     LabelYoungModule: TLabel;
     EditLinearExpansionKoefficient: TEdit;
     LabelLinearExpansionCoefficient: TLabel;
+    ButtonCancel: TButton;
     procedure BApplyClick(Sender: TObject);
     procedure CBsolidmatChange(Sender: TObject);
     procedure ComboBoxheatcapacitytypeChange(Sender: TObject);
     procedure ComboBoxconductivitytypeChange(Sender: TObject);
     procedure ButtonheatcapacitypiecewiseClick(Sender: TObject);
     procedure ButtonconductiviypiecewiseClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure ButtonCancelClick(Sender: TObject);
 
   private
     { Private declarations }
+
     procedure patchstring(var s : String);
   public
     { Public declarations }
+    bCanselSelect : Boolean;
+
   end;
 
 var
@@ -94,6 +100,8 @@ var
   s : String;
   bOk : Boolean;
 begin
+
+   bCanselSelect:=false;
 
     bOk:=true;
     // исправление десятичного сепаратора.
@@ -234,6 +242,12 @@ begin
 end;
 
 // Вызов piecewise thermal conductivity.
+procedure TFormUserDefinedSolidMat.ButtonCancelClick(Sender: TObject);
+begin
+   bCanselSelect:=true;
+   Close;// зактыть форму.
+end;
+
 procedure TFormUserDefinedSolidMat.ButtonconductiviypiecewiseClick(
   Sender: TObject);
 var
@@ -351,6 +365,11 @@ begin
             LSICp.Visible:=false;
          end;
    end;
+end;
+
+procedure TFormUserDefinedSolidMat.FormCreate(Sender: TObject);
+begin
+    bCanselSelect:=false;
 end;
 
 end.

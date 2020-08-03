@@ -24,6 +24,7 @@ type
     ButtonCalc: TButton;
     GroupBoxNumberIterationsSimpleAlgorithm: TGroupBox;
     ComboBoxNumberIterationsSIMPLEAlgoritm: TComboBox;
+    CheckBoxNo_vacuum_Prism: TCheckBox;
     procedure ButtonCalcClick(Sender: TObject);
     procedure RadioGroup1Click(Sender: TObject);
     procedure ButtonTimeStepLawClick(Sender: TObject);
@@ -45,7 +46,7 @@ implementation
 {$R *.dfm}
 
 uses UnitVariables, UnitSquareWave, VisualUnit, UnitSquareWaveAPPARAT,
-  Unit_hot_cold;
+  Unit_hot_cold, Unitpiecewiseconst;
 
 procedure TFormUnsteady.ButtonCalcClick(Sender: TObject);
 var
@@ -87,7 +88,7 @@ begin
    end;
    if (ComboBoxTimeStep.ItemIndex=2) then
    begin
-      // Square Wave APPARAT.
+      // Square Wave 2.
       FormAPPARAT_Square_Wave.EditPeriod.Text:=FloatToStr(Laplas.glSTL.T);
       FormAPPARAT_Square_Wave.Editmultiplyer.Text:=FloatToStr(Laplas.glSTL.m1);
       FormAPPARAT_Square_Wave.Edittau1.Text:=FloatToStr(Laplas.glSTL.tau1);
@@ -101,6 +102,11 @@ begin
    begin
       Form_hot_cold.Edit_on_time.Text:=FloatToStr(Laplas.glSTL.on_time_double_linear);
       Form_hot_cold.ShowModal;
+   end;
+   // piecewise const
+   if (ComboBoxTimeStep.ItemIndex=4) then
+   begin
+      Formpiecewiseconstant.ShowModal;
    end;
 end;
 
@@ -117,6 +123,9 @@ begin
         ButtonTimeStepLaw.Visible:=true;
      end;
      3 : begin
+        ButtonTimeStepLaw.Visible:=true;
+     end;
+     4 : begin
         ButtonTimeStepLaw.Visible:=true;
      end;
    end;

@@ -37,6 +37,7 @@ type
     ButtonLam: TButton;
     ButtonCp: TButton;
     CBCp: TComboBox;
+    ButtonCancel: TButton;
     procedure BApplyClick(Sender: TObject);
     procedure CBTipPatternChange(Sender: TObject);
     procedure CBRhoChange(Sender: TObject);
@@ -46,11 +47,14 @@ type
     procedure ButtonLamClick(Sender: TObject);
     procedure CBCpChange(Sender: TObject);
     procedure CBLamChange(Sender: TObject);
+    procedure ButtonCancelClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
     procedure patchstring(var s : String);
   public
     { Public declarations }
+     bCanselSelect : Boolean;
   end;
 
 var
@@ -88,6 +92,8 @@ procedure TFormUserDefinedFluidMaterial.BApplyClick(Sender: TObject);
 var
  s : String;
 begin
+   bCanselSelect:=false;
+
    with Laplas.body[Laplas.itek] do
     begin
        Laplas.workmat[imatid].namemat:=EMatName.Text; // имя материала
@@ -142,6 +148,7 @@ begin
        Laplas.workmat[imatid].blibmat:=0; // это материал определённый пользователем
        Laplas.workmat[imatid].ilibident:=0; // это материал определённый пользователем
     end;
+    Close;
 end;
 
 // Выбор шаблона материала.
@@ -173,6 +180,11 @@ begin
    end;
 end;
 
+
+procedure TFormUserDefinedFluidMaterial.FormCreate(Sender: TObject);
+begin
+   bCanselSelect:=false;
+end;
 
 // Включение или выключение модели Обербека-Буссинеска
 procedure TFormUserDefinedFluidMaterial.CBRhoChange(Sender: TObject);
@@ -349,6 +361,12 @@ begin
 end;
 
 // Пользовательская кусочно линейная температуро-зависимая теплоёмкость.
+procedure TFormUserDefinedFluidMaterial.ButtonCancelClick(Sender: TObject);
+begin
+   bCanselSelect:=true;
+   Close; // Пользователь отменил создание нового материала, закрываем форму.
+end;
+
 procedure TFormUserDefinedFluidMaterial.ButtonCpClick(Sender: TObject);
 var
    i_4 : Integer;

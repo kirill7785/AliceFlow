@@ -12,6 +12,7 @@ object FormUserDefinedFluidMaterial: TFormUserDefinedFluidMaterial
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object PanelFLUID: TPanel
@@ -27,7 +28,8 @@ object FormUserDefinedFluidMaterial: TFormUserDefinedFluidMaterial
       Width = 305
       Height = 457
       Caption = 'user properties'
-      Color = clSkyBlue
+      Color = clMoneyGreen
+      ParentBackground = False
       ParentColor = False
       TabOrder = 0
       object GBRho: TGroupBox
@@ -36,7 +38,8 @@ object FormUserDefinedFluidMaterial: TFormUserDefinedFluidMaterial
         Width = 289
         Height = 97
         Caption = 'Rho'
-        Color = clSkyBlue
+        Color = clMoneyGreen
+        ParentBackground = False
         ParentColor = False
         TabOrder = 0
         object LRho: TLabel
@@ -274,6 +277,15 @@ object FormUserDefinedFluidMaterial: TFormUserDefinedFluidMaterial
           'Water320K'
           'Water360K')
       end
+    end
+    object ButtonCancel: TButton
+      Left = 134
+      Top = 607
+      Width = 75
+      Height = 25
+      Caption = 'Cancel'
+      TabOrder = 4
+      OnClick = ButtonCancelClick
     end
   end
 end

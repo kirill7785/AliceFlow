@@ -72,8 +72,8 @@ object EGDForm: TEGDForm
             'Zero Equation Model (RANS)'
             'Smagorinsky Model (LES)'
             'RNG (LES)'
-            'Spalart - Allmares (RANS)'
-            'K-Omega SST (RANS)')
+            'Spalart - Allmares (RANS) [1992]'
+            'K-Omega SST (RANS) [1993]')
         end
         object BEditTurb: TButton
           Left = 104
@@ -188,14 +188,15 @@ object EGDForm: TEGDForm
           Top = 20
           Width = 108
           Height = 21
-          ItemIndex = 0
+          ItemIndex = 1
           TabOrder = 0
-          Text = 'none'
+          Text = 'Finite Volume Method'
           OnChange = ComboBoxTemperatureChange
           Items.Strings = (
             'none'
             'Finite Volume Method'
-            'Finite Element Method')
+            'Finite Element Method'
+            'NetWork_T solver')
         end
       end
     end

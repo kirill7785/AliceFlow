@@ -11,6 +11,7 @@ object FormUserDefinedSolidMat: TFormUserDefinedSolidMat
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object PanelSOLID: TPanel
@@ -342,6 +343,15 @@ object FormUserDefinedSolidMat: TFormUserDefinedSolidMat
           TabOrder = 0
         end
       end
+    end
+    object ButtonCancel: TButton
+      Left = 106
+      Top = 527
+      Width = 75
+      Height = 25
+      Caption = 'Cancel'
+      TabOrder = 5
+      OnClick = ButtonCancelClick
     end
   end
 end

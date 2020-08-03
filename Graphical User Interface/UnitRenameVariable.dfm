@@ -2,8 +2,8 @@ object FormRenameVar: TFormRenameVar
   Left = 0
   Top = 0
   AutoSize = True
-  Caption = 'Rename variable'
-  ClientHeight = 153
+  Caption = 'Rename project variable'
+  ClientHeight = 185
   ClientWidth = 417
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,29 +19,45 @@ object FormRenameVar: TFormRenameVar
     Left = 0
     Top = 0
     Width = 417
-    Height = 153
-    Caption = 'Select variable for rename'
+    Height = 185
+    Caption = 'Select project variable for rename'
     Color = clMoneyGreen
     ParentBackground = False
     ParentColor = False
     TabOrder = 0
     object LabelRenamecandidate: TLabel
       Left = 16
-      Top = 27
-      Width = 89
+      Top = 53
+      Width = 165
       Height = 13
-      Caption = 'Rename candidate'
+      Caption = 'List of the names project variables'
     end
     object Label1: TLabel
-      Left = 24
-      Top = 64
-      Width = 290
+      Left = 16
+      Top = 104
+      Width = 342
       Height = 13
-      Caption = 'Please, enter new name vriable. First simbol must be equal $'
+      Caption = 
+        'Please, enter a new name project variable. First simbol must be ' +
+        'equal $'
+    end
+    object Label2: TLabel
+      Left = 24
+      Top = 24
+      Width = 156
+      Height = 13
+      Caption = 'Conflict variable name is equal ='
+    end
+    object LabelConflictName: TLabel
+      Left = 200
+      Top = 24
+      Width = 88
+      Height = 13
+      Caption = 'LabelConflictName'
     end
     object ComboBox1: TComboBox
       Left = 111
-      Top = 24
+      Top = 72
       Width = 290
       Height = 21
       TabOrder = 0
@@ -49,14 +65,14 @@ object FormRenameVar: TFormRenameVar
     end
     object EditNewName: TEdit
       Left = 232
-      Top = 80
+      Top = 130
       Width = 169
       Height = 21
       TabOrder = 1
     end
     object Button1: TButton
       Left = 296
-      Top = 112
+      Top = 157
       Width = 75
       Height = 25
       Caption = 'Apply'

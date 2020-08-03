@@ -19,6 +19,7 @@ type
     EditY: TEdit;
     EditZ: TEdit;
     ButtonApply: TButton;
+    CheckBoxRotate: TCheckBox;
     procedure ButtonApplyClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);

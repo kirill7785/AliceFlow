@@ -4,7 +4,7 @@ object MeshForm: TMeshForm
   AutoSize = True
   Caption = 'Mesh Parameters'
   ClientHeight = 329
-  ClientWidth = 194
+  ClientWidth = 129
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

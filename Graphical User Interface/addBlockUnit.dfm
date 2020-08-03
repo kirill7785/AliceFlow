@@ -708,8 +708,8 @@ object AddBlockForm: TAddBlockForm
           ParentColor = False
           TabOrder = 1
           object ButtonTransient: TButton
-            Left = 3
-            Top = 13
+            Left = -2
+            Top = 21
             Width = 54
             Height = 25
             Caption = 'Edit'

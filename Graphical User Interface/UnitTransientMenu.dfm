@@ -1,7 +1,7 @@
 object FormUnsteady: TFormUnsteady
   Left = 0
   Top = 0
-  ClientHeight = 392
+  ClientHeight = 422
   ClientWidth = 194
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
@@ -33,6 +33,8 @@ object FormUnsteady: TFormUnsteady
     Top = 111
     Width = 185
     Height = 98
+    Color = clMoneyGreen
+    ParentBackground = False
     TabOrder = 1
     Visible = False
     object LabelEndTime: TLabel
@@ -69,8 +71,9 @@ object FormUnsteady: TFormUnsteady
       Items.Strings = (
         'Linear'
         'Square Wave'
-        'Square Wave APPARAT'
-        'hot cold (double linear)')
+        'Square Wave 2'
+        'hot cold (double linear)'
+        'piecewise const')
     end
     object ButtonTimeStepLaw: TButton
       Left = 8
@@ -87,7 +90,7 @@ object FormUnsteady: TFormUnsteady
     Left = 9
     Top = 215
     Width = 169
-    Height = 177
+    Height = 194
     Caption = 'Additional Setting'
     TabOrder = 2
     object CheckBoxdonttec360: TCheckBox
@@ -134,12 +137,20 @@ object FormUnsteady: TFormUnsteady
     end
     object ButtonCalc: TButton
       Left = 33
-      Top = 140
+      Top = 163
       Width = 120
       Height = 25
       Caption = 'Calculation start'
       TabOrder = 5
       OnClick = ButtonCalcClick
+    end
+    object CheckBoxNo_vacuum_Prism: TCheckBox
+      Left = 16
+      Top = 140
+      Width = 97
+      Height = 17
+      Caption = 'No vacuum PRISM'
+      TabOrder = 6
     end
   end
   object GroupBoxNumberIterationsSimpleAlgorithm: TGroupBox

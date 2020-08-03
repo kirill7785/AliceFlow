@@ -21,10 +21,12 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ButtonpiecewisepowerClick(Sender: TObject);
     procedure ComboBoxTemperaturedependpowerChange(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
+    bBlock_piecewice_power : Boolean;
   end;
 
 var
@@ -50,6 +52,7 @@ begin
    // 1 - squre wave зависимость от времени,
    // 2 - square wave 2 зависимость от времени,
    // 3 - hot cold режим для Евдокимовой Н.Л.
+   // 4 - piecewise const.
    Laplas.body[Laplas.itek].ipower_time_depend:=RadioGroupTimeDependPowerLow.ItemIndex;
    bOk:=true; // признак правильности ввода
    if (ComboBoxTemperatureDependPower.ItemIndex=0) then
@@ -93,20 +96,30 @@ procedure TFormTransientPowerSetting.ButtonpiecewisepowerClick(Sender: TObject);
 var
    i_4 : Integer;
 begin
-   Formusertempdepend.Caption:='Temperature depend power';
-   Formusertempdepend.Label1.Caption:='The following curve specification consists of';
-   Formusertempdepend.Label2.Caption:='a list of temperature/power pairs, which define a';
-   Formusertempdepend.Label3.Caption:='piecewise-linear curve. Spacing is not significant';
-   Formusertempdepend.Label4.Caption:='as long as the numbers are given in pairs.';
-   Formusertempdepend.Label5.Caption:='Power units W.';
-   Formusertempdepend.ComboBoxtemperatureUnit.ItemIndex:=0;  // Градусы Цельсия
-   Formusertempdepend.Memopiecewiseproperties.Clear;
-   for i_4 := 0 to Laplas.body[Laplas.itek].n_power-1 do
+   if (not(bBlock_piecewice_power)) then
    begin
-      Formusertempdepend.Memopiecewiseproperties.Lines.Add(FloatToStr(Laplas.body[Laplas.itek].temp_power[i_4])+' '+Laplas.body[Laplas.itek].arr_s_power[i_4]);
+      Formusertempdepend.Caption:='Temperature depend power';
+      Formusertempdepend.Label1.Caption:='The following curve specification consists of';
+      Formusertempdepend.Label2.Caption:='a list of temperature/power pairs, which define a';
+      Formusertempdepend.Label3.Caption:='piecewise-linear curve. Spacing is not significant';
+      Formusertempdepend.Label4.Caption:='as long as the numbers are given in pairs.';
+      Formusertempdepend.Label5.Caption:='Power units W.';
+      Formusertempdepend.ComboBoxtemperatureUnit.ItemIndex:=0;  // Градусы Цельсия
+      Formusertempdepend.Memopiecewiseproperties.Clear;
+      for i_4 := 0 to Laplas.body[Laplas.itek].n_power-1 do
+      begin
+         Formusertempdepend.Memopiecewiseproperties.Lines.Add(FloatToStr(Laplas.body[Laplas.itek].temp_power[i_4])+' '+Laplas.body[Laplas.itek].arr_s_power[i_4]);
+      end;
+     Formusertempdepend.identifier:=2;   // power
+     Formusertempdepend.ShowModal;
+   end
+   else
+   begin
+     // Выше по коду был запрет на тепловую мощность зависящую
+     // от температуры.
+      ComboBoxTemperaturedependpower.ItemIndex:=0;
+      ComboBoxTemperaturedependpowerChange(Sender);
    end;
-   Formusertempdepend.identifier:=2;   // power
-   Formusertempdepend.ShowModal;
 end;
 
 procedure TFormTransientPowerSetting.ComboBoxTemperaturedependpowerChange(
@@ -135,6 +148,11 @@ procedure TFormTransientPowerSetting.FormClose(Sender: TObject;
 begin
    //Laplas.body[Laplas.itek].ipower_time_depend:=RadioGroupTimeDependPowerLow.ItemIndex;
    Button1Click(Sender);
+end;
+
+procedure TFormTransientPowerSetting.FormCreate(Sender: TObject);
+begin
+    bBlock_piecewice_power:=false;
 end;
 
 end.
