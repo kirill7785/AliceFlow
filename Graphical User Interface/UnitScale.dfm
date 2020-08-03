@@ -1,9 +1,10 @@
 object FormScale: TFormScale
   Left = 0
   Top = 0
+  AutoSize = True
   Caption = 'Scale'
-  ClientHeight = 140
-  ClientWidth = 229
+  ClientHeight = 137
+  ClientWidth = 225
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -11,6 +12,7 @@ object FormScale: TFormScale
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object GroupBox1: TGroupBox

@@ -68,6 +68,8 @@ type
     ComboBoxDeformationBoundaryConditon: TComboBox;
     EditForce: TEdit;
     LabelForce: TLabel;
+    Label13: TLabel;
+    EditViewFactor: TEdit;
     procedure BapplyClick(Sender: TObject);
     procedure RadioGroupPlaneClick(Sender: TObject);
     procedure RadioGroupflowtypeClick(Sender: TObject);
@@ -107,6 +109,25 @@ begin
    r4:=0.0;
    r5:=0.0;
    r6:=0.0;
+
+   s1:=Trim(EditViewFactor.Text);
+   for k:=1 to length(s1) do
+   begin
+      if (FormatSettings.DecimalSeparator=',') then
+      begin
+         if (s1[k]='.') then s1[k]:=',';
+      end;
+       if (FormatSettings.DecimalSeparator='.') then
+      begin
+         if (s1[k]=',') then s1[k]:='.';
+      end;
+   end;
+   EditViewFactor.Text:=s1;
+   if ((StrToFloat(s1)>1.0) or (StrToFloat(s1)<0.0)) then
+   begin
+       Laplas.MainMemo.Lines.Add('ViewFoctor mast be [0.0..1.0]');
+       Application.MessageBox('ViewFactor error','ViewFoctor mast be [0.0..1.0]',MB_OK);
+   end;
 
    s1:=Trim(Etemp.Text);
    for k:=1 to length(s1) do
@@ -287,11 +308,16 @@ begin
          buf.sheat_transfer_coefficient:=Trim(Editemissivity.Text);
          buf.heat_transfer_coefficient:=FormVariables.my_real_convert(Editemissivity.Text,bOk);
       end;
+      buf.ViewFactor:=StrToFloat(Trim(EditViewFactor.Text));
+
       buf.HF:=0.0; // только нулевой тепловой поток
       buf.name:=Trim(Ename.Text); // имя элемента
       // корректировка имени объекта чтобы избежать совпадающих имён.
       Laplas.correctobjname('w',buf.name,Laplas.itek);
       Ename.Text:=buf.name;
+
+
+
 
       bOk:=true;
 
@@ -575,19 +601,25 @@ begin
             PaneltemperatureBC.Visible:=true;
             Etemp.Text:=FloatToStr(Laplas.wall[k].Tamb);
             Panelemissivity.Visible:=false;
+            EditViewFactor.Visible:=false;
+            Label13.Visible:=false;
          end;
      1 : begin
             // однородное условие Неймана
             PaneltemperatureBC.Visible:=false;
             Panelemissivity.Visible:=false;
+            EditViewFactor.Visible:=false;
+            Label13.Visible:=false;
          end;
      2 : begin
-            // условие третьего рода Ньютона-Рихмана
+            // условие Ньютона-Рихмана
             Panelemissivity.Visible:=true;
             PaneltemperatureBC.Visible:=true;
             Etemp.Text:=FloatToStr(Laplas.wall[k].Tamb);
             Editemissivity.Text:=FloatToStr(Laplas.wall[k].heat_transfer_coefficient);
             Label12.Caption:='heat transfer coeff';
+            EditViewFactor.Visible:=false;
+            Label13.Visible:=false;
          end;
      3 : begin
             // Условие Стефана-Больцмана
@@ -596,6 +628,8 @@ begin
             Etemp.Text:=FloatToStr(Laplas.wall[k].Tamb);
             Editemissivity.Text:=FloatToStr(Laplas.wall[k].emissivity);
             Label12.Caption:='emissivity';
+            EditViewFactor.Visible:=true;
+            Label13.Visible:=true;
          end;
    end;
 end;

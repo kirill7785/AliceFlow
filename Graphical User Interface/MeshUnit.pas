@@ -47,8 +47,8 @@ procedure TMeshForm.ApplicationEvents1Message(var Msg: tagMSG;
   var Handled: Boolean);
 begin
      if (msg.message=WM_SYSCOMMAND)and(msg.wParam=SC_MINIMIZE)
- then
-  msg.message:=0;
+   then
+      msg.message:=0;
 end;
 
 // ¬вод параметров при нажатии кнопки Apply-применить.

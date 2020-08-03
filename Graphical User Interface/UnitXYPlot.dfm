@@ -1,9 +1,10 @@
 object FormXYPlot: TFormXYPlot
   Left = 0
   Top = 0
+  AutoSize = True
   Caption = 'XYPlot parameters'
-  ClientHeight = 188
-  ClientWidth = 277
+  ClientHeight = 177
+  ClientWidth = 265
   Color = clMoneyGreen
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,8 +16,8 @@ object FormXYPlot: TFormXYPlot
   PixelsPerInch = 96
   TextHeight = 13
   object GroupBoxXYPlot: TGroupBox
-    Left = 8
-    Top = 8
+    Left = 0
+    Top = 0
     Width = 265
     Height = 177
     Caption = 'XY Plot'

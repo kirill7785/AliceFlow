@@ -47,11 +47,23 @@ uses
   UnitresidualPlotSpallartAllmares in 'UnitresidualPlotSpallartAllmares.pas' {FormResidualSpallart_Allmares},
   UnitResidualSATemp2 in 'UnitResidualSATemp2.pas' {FormResidualSATemp},
   UnitResidualMenterSST in 'UnitResidualMenterSST.pas' {FormResidualSST},
-  UnitResidualSSTTemperature in 'UnitResidualSSTTemperature.pas' {FormResidualSSTTemp};
+  UnitResidualSSTTemperature in 'UnitResidualSSTTemperature.pas' {FormResidualSSTTemp},
+  UnitResidualStandartKEpsilon in 'UnitResidualStandartKEpsilon.pas' {FormResidualStandartKEpsilon},
+  UnitResidualStandartK_Epsilon_TEMP in 'UnitResidualStandartK_Epsilon_TEMP.pas' {FormResidualStandart_k_epsilon_Temp},
+  Unitpiecewiseconst in 'Unitpiecewiseconst.pas' {Formpiecewiseconstant},
+  UnitPatternDelete in 'UnitPatternDelete.pas' {FormPattern},
+  UnitTextNameSourcePattern in 'UnitTextNameSourcePattern.pas' {FormTextNameSourcePattern},
+  UnitSplash in 'UnitSplash.pas' {SplashForm},
+  UnitViewFactors in 'UnitViewFactors.pas' {FormViewFactors};
 
 {$R *.res}
 
 begin
+   SplashForm:=TSplashForm.Create(nil);
+   SplashForm.Show;
+   SplashForm.Repaint;
+
+
   Application.Initialize;
   // главная форма визуализатор
   Application.CreateForm(TLaplas, Laplas);
@@ -100,5 +112,16 @@ begin
   Application.CreateForm(TFormResidualSATemp, FormResidualSATemp);
   Application.CreateForm(TFormResidualSST, FormResidualSST);
   Application.CreateForm(TFormResidualSSTTemp, FormResidualSSTTemp);
+  Application.CreateForm(TFormResidualStandartKEpsilon, FormResidualStandartKEpsilon);
+  Application.CreateForm(TFormResidualStandart_k_epsilon_Temp, FormResidualStandart_k_epsilon_Temp);
+  Application.CreateForm(TFormpiecewiseconstant, Formpiecewiseconstant);
+  Application.CreateForm(TFormPattern, FormPattern);
+  Application.CreateForm(TFormTextNameSourcePattern, FormTextNameSourcePattern);
+  Application.CreateForm(TFormViewFactors, FormViewFactors);
+  //Application.CreateForm(TSplashForm, SplashForm);
+
+  SplashForm.Hide;
+  SplashForm.Free;
+
   Application.Run;
 end.

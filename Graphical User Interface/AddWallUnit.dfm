@@ -379,9 +379,9 @@ object AddWallForm: TAddWallForm
       end
       object GroupBoxtemper: TGroupBox
         Left = 167
-        Top = 24
+        Top = 8
         Width = 217
-        Height = 258
+        Height = 274
         Caption = 'Temperature Boundary Condition'
         Color = clMoneyGreen
         ParentBackground = False
@@ -407,29 +407,29 @@ object AddWallForm: TAddWallForm
         end
         object PaneltemperatureBC: TPanel
           Left = 12
-          Top = 184
-          Width = 129
-          Height = 65
+          Top = 228
+          Width = 192
+          Height = 43
           Color = clMoneyGreen
           ParentBackground = False
           TabOrder = 1
           object LTemp: TLabel
-            Left = 8
-            Top = 12
+            Left = 11
+            Top = 17
             Width = 56
             Height = 13
             Caption = 'temperature'
           end
           object Label5: TLabel
-            Left = 104
-            Top = 40
+            Left = 160
+            Top = 16
             Width = 14
             Height = 13
             Caption = ' '#176#1057
           end
           object Etemp: TEdit
-            Left = 16
-            Top = 36
+            Left = 73
+            Top = 13
             Width = 81
             Height = 21
             TabOrder = 0
@@ -438,26 +438,41 @@ object AddWallForm: TAddWallForm
         object Panelemissivity: TPanel
           Left = 12
           Top = 135
-          Width = 185
-          Height = 43
+          Width = 197
+          Height = 82
           Color = clMoneyGreen
           ParentBackground = False
           TabOrder = 2
           Visible = False
           object Label12: TLabel
-            Left = 8
+            Left = 5
             Top = 16
             Width = 44
             Height = 13
             Caption = 'emissivity'
           end
+          object Label13: TLabel
+            Left = 32
+            Top = 43
+            Width = 56
+            Height = 13
+            Caption = 'View Factor'
+          end
           object Editemissivity: TEdit
-            Left = 104
-            Top = 8
-            Width = 65
+            Left = 128
+            Top = 16
+            Width = 49
             Height = 21
             TabOrder = 0
             Text = '0.8'
+          end
+          object EditViewFactor: TEdit
+            Left = 128
+            Top = 43
+            Width = 49
+            Height = 21
+            TabOrder = 1
+            Text = '1.0'
           end
         end
       end

@@ -51,6 +51,8 @@ object AddSourceForm: TAddSourceForm
       Top = 83
       Width = 305
       Height = 247
+      Color = clMoneyGreen
+      ParentBackground = False
       TabOrder = 2
       object Lname: TLabel
         Left = 16
@@ -72,6 +74,8 @@ object AddSourceForm: TAddSourceForm
       Top = 83
       Width = 305
       Height = 247
+      Color = clMoneyGreen
+      ParentBackground = False
       TabOrder = 3
       Visible = False
       object GroupBox1: TGroupBox

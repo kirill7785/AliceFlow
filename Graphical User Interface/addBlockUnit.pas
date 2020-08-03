@@ -440,15 +440,20 @@ end;
 procedure TAddBlockForm.BEditApplyClick(Sender: TObject);
 var
     i : Integer;
+    iold_matid : Integer;
 begin
    if ((CBselectAction.ItemIndex=0) or (CBselectAction.ItemIndex=1)) then
    begin
       // 0 - Edit Current Material
       if (CBselectAction.ItemIndex=1) then
       begin
+         FormUserDefinedSolidMat.ButtonCancel.Visible:=true;
+         FormUserDefinedFluidMaterial.ButtonCancel.Visible:=true;
+
          // 1 - Create New Material
          if ((RadioGroupType.ItemIndex=0) or (RadioGroupType.ItemIndex=2)) then
          begin
+            iold_matid:=Laplas.body[Laplas.itek].imatid;
             Laplas.body[Laplas.itek].imatid:=Laplas.lmatmax;
             inc(Laplas.lmatmax);
             SetLength(Laplas.workmat,Laplas.lmatmax);
@@ -456,6 +461,8 @@ begin
             begin
                if (RadioGroupType.ItemIndex=0) then
                begin
+
+
                   //SOLID
                   rho:=2800; // плотность дюр-аллюминия
                   //cp:=921; // удельная теплоёмкость дюр-аллюминия
@@ -520,6 +527,12 @@ begin
                end;
             end;
          end;
+      end
+      else
+      begin
+        // Отмена может быть только при создании нового материала.
+        FormUserDefinedSolidMat.ButtonCancel.Visible:=false;
+        FormUserDefinedFluidMaterial.ButtonCancel.Visible:=false;
       end;
 
 
@@ -693,8 +706,21 @@ begin
 
          end;
 
+         FormUserDefinedSolidMat.bCanselSelect:=false;
          FormUserDefinedSolidMat.ShowModal;
-         LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+         if ((CBselectAction.ItemIndex=1) and (FormUserDefinedSolidMat.bCanselSelect)) then
+         begin
+            // была отмена  создания нового материала.
+            Laplas.body[Laplas.itek].imatid:=iold_matid;
+            LMN.Caption:=Laplas.workmat[iold_matid].namemat;
+            // Новый материал не будет создан.
+            dec(Laplas.lmatmax);
+            SetLength(Laplas.workmat,Laplas.lmatmax);
+         end
+         else
+         begin
+            LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+         end;
       end;
    end;
    if (RadioGroupType.ItemIndex=2) then
@@ -801,8 +827,21 @@ begin
 
             FormUserDefinedFluidMaterial.EBeta_T.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].beta_t);
          end;
+         FormUserDefinedFluidMaterial.bCanselSelect:=false;
          FormUserDefinedFluidMaterial.ShowModal;
-         LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+         if ((CBselectAction.ItemIndex=1) and (FormUserDefinedFluidMaterial.bCanselSelect)) then
+         begin
+            // была отмена  создания нового материала.
+            Laplas.body[Laplas.itek].imatid:=iold_matid;
+            LMN.Caption:=Laplas.workmat[iold_matid].namemat;
+            // Новый материал не будет создан.
+            dec(Laplas.lmatmax);
+            SetLength(Laplas.workmat,Laplas.lmatmax);
+         end
+         else
+         begin
+            LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+         end;
       end;
    end;
    end;
@@ -1033,20 +1072,7 @@ begin
    begin
       FormRadiation.CheckBoxinternalRadiation.Checked:=true;
    end;
-    if (FormRadiation.CheckBoxInternalRadiation.Checked=true) then
-   begin
-       FormRadiation.GroupBox1.Visible:=true;
-       FormRadiation.GroupBox2.Visible:=true;
-       FormRadiation.GroupBox3.Visible:=true;
-   end
-    else
-   begin
-       FormRadiation.GroupBox1.Visible:=false;
-       FormRadiation.GroupBox2.Visible:=false;
-       FormRadiation.GroupBox3.Visible:=false;
-   end;
-
-   FormRadiation.RadioGroup1Click(Sender);
+   
    FormRadiation.ShowModal;
 end;
 

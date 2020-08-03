@@ -259,6 +259,7 @@ type
       id_table : Integer; // номер таблицы
       operatingoffsetdrain : Real; // значение смещения стока.
       soperatingoffsetdrain : String; // параметризованное значение.
+      ViewFactor : Real; // Фактор видимости. (Коэффициент уменьшения площади излучающей поверхности).
       emissivity : Real; // излучательная способность.
       heat_transfer_coefficient : Real; // коэффициент теплоотдачи.
       // параметризация 12 марта 2017.
@@ -336,6 +337,7 @@ type
       // 2 - RNG (LES)
       // 3 - Spalart Allmares (RANS)
       // 4 - K - Omega SST Menter (RANS)
+      // 5 - Standart K-Epsilon (RANS)
       iturbmodel : Integer; // выбор модели турбулентности
       // Параметры модели Смагоринского.
       SmagConst : Real; // константа Смагоринского.
@@ -362,7 +364,10 @@ type
 
   // система уравнений в глобальной расчётной области
   TmyEGD = record
-     itemper : Integer; // 0 - не считать температуру, 1 - рассчитать температуру методом контрольного объема, 2 - рассчитать температуру методом конечных элементов.
+     itemper : Integer; // 0 - не считать температуру,
+     // 1 - рассчитать температуру методом контрольного объема,
+     // 2 - рассчитать температуру методом конечных элементов,
+     // 3 - рассчитать температуру графовым методом решения.
      iStaticStructural : Integer; // 0 - не считать Static Structural, 1 - Считать Static Structural.
      imaxflD : Integer; // максимальное число не пересекающихся по жидкости жидких зон.
      myflmod : array of TmyFLUIDmodel; // система уравнений в каждой жидкой зоне.
@@ -600,6 +605,14 @@ type
     Setting1: TMenuItem;
     ComboBoxplaneViewSelect: TComboBox;
     Scale1: TMenuItem;
+    Labeldopusk: TLabel;
+    Editdopusk: TEdit;
+    Editdopusk2: TEdit;
+    ComboBoxlineWidth: TComboBox;
+    RedoSourceforPattern: TBitBtn;
+    OpenDialog2: TOpenDialog;
+    SaveDialog1: TSaveDialog;
+    ViewFactorCalculator: TMenuItem;
     // Вызывается при создании формы
     procedure FormCreate(Sender: TObject);
     // увеличение иображения
@@ -720,7 +733,8 @@ type
     // задаёт набор уравнений для решения
     procedure Setting1Click(Sender: TObject);
     procedure Scale1Click(Sender: TObject);
-
+    procedure RedoSourceforPatternClick(Sender: TObject);
+    procedure ViewFactorCalculatorClick(Sender: TObject);
 
 
   private
@@ -748,6 +762,7 @@ type
 
   public
     { Public declarations }
+    bon_rotate_polygon : Boolean;
     bonly_mesh_gen_call : Boolean; // Отдельный вызов сеточного генератора только.
     isleep_render : Integer;
     perspectiveangle_counter : Real;
@@ -804,6 +819,7 @@ type
     // Для моделирования освещения на основе OpenGL :
     glamb0, remis, rspec, matdiff, matamb : GLfloat; // параметры материала.
     matt, mr : GLfloat; // зависимость от расстояния для LIGHT0
+    dopusk_gl1, dopusk_gl2 : GLfloat; // допуск для прорисовки Z буффером.
     lithtangle, lithtexponent, mldx, mldy : GLfloat; // LIGHT0
     lamb, lspec, ldiff : GLfloat; // параметры нулевой лампы.
     rblick : Integer;
@@ -818,6 +834,11 @@ type
     bperenapravlenie_na_import : Boolean;
     bVisualization_Management_now : Boolean;
     bREALESEversion : Boolean;
+
+    // Каркасная модель не рисуется.
+    procedure off_visible_karkas();
+    // Каркасная модель рисуется.
+    procedure on_visible_karkas();
 
     property sourcepublic[Index : integer] :  TPlane read GetSource write SetSource;
     property wallpublic[Index : integer] :  TPlane read GetWall write SetWall;
@@ -842,6 +863,8 @@ type
     procedure myreadplane(var plane : TPlane; s : string);
     // инициализация формы редактированния стенки
     procedure Initializeaddwallform;
+    // Отображение дерева элементов.
+    procedure TreeLoad(Sender: TObject);
     // считывает параметры твёрдой стенки
     procedure myReadWall(var wall : TPlane; s : string);
     // считывает информацию о жидкой зоне
@@ -911,7 +934,10 @@ uses
   UnitParallelSetting, UnitTransientMenu, Unitresidual2, Unitwallinitposition,
   Unitamgmanager, UnitInitialization, UnitXYPlot, UnitRenameVariable, UnitScale,
   UnitAMGCLManager, Unitamg1r5Parameters, UnitresidualPlotSpallartAllmares,
-  UnitResidualSATemp2, UnitResidualMenterSST, UnitResidualSSTTemperature;
+  UnitResidualSATemp2, UnitResidualMenterSST, UnitResidualSSTTemperature,
+  UnitResidualStandartKEpsilon, UnitResidualStandartK_Epsilon_TEMP,
+  Unitpiecewiseconst, UnitPatternDelete, UnitTextNameSourcePattern,
+  UnitTimedependpowerLaw, UnitViewFactors;
 {$R *.dfm}
 
 
@@ -1054,6 +1080,11 @@ begin
 
       if (Laplas.bonly_mesh_gen_call=false) then
       begin
+         if (FileExists('report_temperature.txt')) then
+         begin
+            WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         end;
+         (*
          if (lbclone<300) then
          begin
             // Если будет больше 300 блоков то загружаться репорт
@@ -1063,29 +1094,22 @@ begin
                f3:=TStringList.Create();
                f:=TStringList.Create();
                f.LoadFromFile('report_temperature.txt');
-               //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
-               f3.Add('name  '+f.Strings[0]);
+               //Laplas.MainMemo.Lines.Add(f.Strings[0]);
+               f3.Add(f.Strings[0]);
                for i:=0 to lbclone-1 do
                begin
-                  //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
-                  if (is_hollow[i]) then
-                  begin
-                     f3.Add(bodyname[i]+'  HOLLOW');
-                  end
-                   else
-                  begin
-                     f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
-                  end;
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
+                  f3.Add(f.Strings[i+1]);
                end;
                for i:=0 to lsclone-1 do
                begin
-                  // Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-                  f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+                  // Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+1]);
+                  f3.Add(f.Strings[i+lbclone+1]);
                end;
                for i:=0 to lwclone-1 do
                begin
-                  // Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-                  f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+                  // Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(f.Strings[i+lbclone+lsclone+1]);
                end;
                //DeleteFile('solver/solid_static/report_temperature.txt');
                // ускоренная загрузка репорта, чтобы не ждать.
@@ -1106,6 +1130,7 @@ begin
             Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
             Laplas.MainMemo.Lines.Add('synopsis: very big file...');
          end;
+         *)
       end;
       // Освобождение оперативной памяти.
       SetLength(wallname,0);
@@ -1170,47 +1195,143 @@ begin
         end;
       end;
 
-      if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
-       begin
-      // вызов программы tecplot360
-     // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-      if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
-              begin
-                 WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
-              end
-         else
-        begin
-      if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
-     begin
-        WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-     end
-     else
-       begin
-          if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
-          begin
-             WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-          end
-           else
-          begin
-             if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
-             begin
-                WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-             end
-              else
-             begin
-                if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
-                begin
-                   WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-                end
-                 else
-                begin
-                  Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
-                end;
-             end;
-          end;
-     end;
-     end;
-     end;
+
+      if (Laplas.bVisualization_Management_now=true) then
+      begin
+          // вызов программы tecplot360
+            // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+            if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+            begin
+               WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT'),SW_SHOWNORMAL);
+            end
+             else
+            begin
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+               begin
+                  WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                        begin
+                           WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFlow0_07_Visualisation_Magement.PLT',SW_SHOWNORMAL);
+                        end
+                         else
+                        begin
+                           Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                        end;
+                     end;
+                  end;
+               end;
+            end;
+      end
+      else
+      begin
+         if (Laplas.egddata.itemper=2) then
+         begin
+            // Был запущен метод конечных элементов.
+            if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
+            begin
+               // вызов программы tecplot360
+               // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+               begin
+                  WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_08_temp.PLT'),SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                        begin
+                           WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                        end
+                         else
+                        begin
+                           if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                           begin
+                              WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                           end
+                            else
+                           begin
+                              Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                           end;
+                        end;
+                     end;
+                  end;
+               end;
+            end;
+         end
+          else
+         begin
+
+            if (not(FormUnsteady.CheckBoxdonttec360.Checked))  then
+            begin
+               // вызов программы tecplot360
+               // WinExec('C:/Program Files (x86)/Tecplot/Tec360 2008/bin/tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+               if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+               begin
+                  WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+                     begin
+                        WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                     end
+                      else
+                     begin
+                        if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+                        begin
+                           WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                        end
+                         else
+                        begin
+                           if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                           begin
+                              WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                           end
+                            else
+                           begin
+                              Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
+                           end;
+                        end;
+                     end;
+                  end;
+               end;
+            end;
+         end;
+      end;
+
+      Laplas.bVisualization_Management_now:=false;
 
    Laplas.brun:=false;
 
@@ -1321,6 +1442,8 @@ begin
       DeleteFile('ALICEFLOW0_06_temp_part3.txt');
 
 
+
+
       endtime:=Now();
       deltatime:=endtime-starttime;
       if (Laplas.bonly_mesh_gen_call=false) then
@@ -1393,7 +1516,135 @@ begin
                end;
             end;
 
-            if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+            if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+            begin
+               // Standart K-Epsilon model.
+               // первые две строки нужно пропустить.
+               FormResidualStandartKEpsilon.Chart1.SeriesList[0].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[1].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[2].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[3].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[4].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandartKEpsilon.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandartKEpsilon.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandartKEpsilon.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandartKEpsilon.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandartKEpsilon.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandartKEpsilon.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else if (Laplas.egddata.myflmod[0].iturbmodel=4) then
             begin
                // K-Omega SST.
                // первые две строки нужно пропустить.
@@ -1718,6 +1969,13 @@ begin
             end;
          f.Clear;
          f.Free;
+         if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+         begin
+            // Standart K-Epsilon model.
+            FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+            FormResidualStandartKEpsilon.Show;
+         end
+         else
          if (Laplas.egddata.myflmod[0].iturbmodel=4) then
          begin
             // SST Ментер 1993.
@@ -1746,6 +2004,11 @@ begin
 
       if (Laplas.bonly_mesh_gen_call=false) then
       begin
+         if (FileExists('report_temperature.txt')) then
+         begin
+            WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         end;
+         (*
          if (lbclone<300) then
          begin
             // Если будет больше 300 блоков то загружаться репорт
@@ -1755,29 +2018,22 @@ begin
                f3:=TStringList.Create();
                f:=TStringList.Create();
                f.LoadFromFile('report_temperature.txt');
-               //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
-               f3.Add('name  '+f.Strings[0]);
+               //Laplas.MainMemo.Lines.Add(f.Strings[0]);
+               f3.Add(f.Strings[0]);
                for i:=0 to lbclone-1 do
                begin
-                  //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
-                  if (is_hollow[i]) then
-                  begin
-                     f3.Add(bodyname[i]+'  HOLLOW');
-                  end
-                   else
-                  begin
-                     f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
-                  end;
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
+                  f3.Add(f.Strings[i+1]);
                end;
                for i:=0 to lsclone-1 do
                begin
-                 //Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-                 f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+                 //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+1]);
+                 f3.Add(f.Strings[i+lbclone+1]);
                end;
                for i:=0 to lwclone-1 do
                begin
-                  //Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-                  f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(f.Strings[i+lbclone+lsclone+1]);
                end;
                //DeleteFile('solver/solid_static/report_temperature.txt');
                // Ускоренная загрузка репорта в программу интерфейс.
@@ -1797,6 +2053,7 @@ begin
              Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
             Laplas.MainMemo.Lines.Add('synopsis: very big file...');
          end;
+         *)
       end;
 
      // Освобождение оперативной памяти.
@@ -1808,6 +2065,8 @@ begin
      Laplas.brun:=false;
 
      Laplas.bonly_mesh_gen_call:=false;
+
+     Laplas.bVisualization_Management_now:=false;
 end;
 
 // Нужно создать процедуру Execute, уже описанную в классе TMyThread
@@ -1908,6 +2167,11 @@ begin
       DeleteFile('ALICEFLOW0_06_temp_part3.txt');
 
 
+       if (FileExists('report_temperature.txt')) then
+      begin
+         WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+      end;
+
       endtime:=Now();
       deltatime:=endtime-starttime;
       if (Laplas.bonly_mesh_gen_call=false) then
@@ -1917,7 +2181,7 @@ begin
       end
         else
       begin
-          Laplas.MainMemo.Lines.Add('The mesh generation is completed.');
+         Laplas.MainMemo.Lines.Add('The mesh generation is completed.');
          Laplas.MainMemo.Lines.Add('Time mesh generation equals '+TimeToStr(deltatime));
       end;
 
@@ -1983,8 +2247,166 @@ begin
                   end;
                end;
 
+            if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+            begin
+               // Standart K-Epsilon model на основек двухслойной модели.
+               // первые две строки нужно пропустить.
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[0].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[1].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[2].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[3].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[4].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[5].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[6].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
 
-              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandart_k_epsilon_Temp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandart_k_epsilon_Temp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                FormResidualStandart_k_epsilon_Temp.Show;
+            end
+            else
+            if ((Laplas.egddata.myflmod[0].iflowregime=1)and
              (Laplas.egddata.myflmod[0].iturbmodel=4)) then
             begin
                // K-Omega SST.
@@ -2138,6 +2560,7 @@ begin
                 f.Free;
                 Formresidual2.brun_visible2:=false;
                 FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                 FormResidualSSTTemp.Show;
             end
@@ -2270,6 +2693,7 @@ begin
                    FormResidualSATemp.Chart1.LeftAxis.Maximum:=fmax;
                 end;
                  f.Free;
+                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  FormResidualSATemp.brun_visibleSA2:=true;
                  FormResidualSATemp.Show;
             end
@@ -2329,6 +2753,7 @@ begin
             end;
             f.Clear;
             f.Free;
+            FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
             Formresidual2.brun_visible2:=true;
             Formresidual2.Show;
             end;
@@ -2359,6 +2784,135 @@ begin
              end;
           end;
 
+          if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+            begin
+               // Standart K-Epsilon model.
+               // первые две строки нужно пропустить.
+               FormResidualStandartKEpsilon.Chart1.SeriesList[0].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[1].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[2].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[3].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[4].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandartKEpsilon.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandartKEpsilon.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandartKEpsilon.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandartKEpsilon.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandartKEpsilon.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandartKEpsilon.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
           if (Laplas.egddata.myflmod[0].iturbmodel=4) then
             begin
                // K-Omega SST Menter [1993].
@@ -2660,6 +3214,11 @@ begin
 
        if (Laplas.bonly_mesh_gen_call=false) then
       begin
+         if (FileExists('report_temperature.txt')) then
+         begin
+            WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         end;
+         (*
          if (lbclone<300) then
          begin
             // Если будет больше 300 блоков то загружаться репорт
@@ -2669,29 +3228,22 @@ begin
                f3:=TStringList.Create();
                f:=TStringList.Create();
                f.LoadFromFile('report_temperature.txt');
-               //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
-               f3.Add('name  '+f.Strings[0]);
+               //Laplas.MainMemo.Lines.Add(f.Strings[0]);
+               f3.Add(f.Strings[0]);
                for i:=0 to lbclone-1 do
                begin
-                  //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
-                  if (is_hollow[i]) then
-                  begin
-                     f3.Add(bodyname[i]+'  HOLLOW');
-                  end
-                   else
-                  begin
-                     f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
-                  end;
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
+                  f3.Add(f.Strings[i+1]);
                end;
                for i:=0 to lsclone-1 do
                begin
-                  //Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-                  f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+1]);
+                  f3.Add(f.Strings[i+lbclone+1]);
                end;
                for i:=0 to lwclone-1 do
                begin
-                  //Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-                  f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+                  //Laplas.MainMemo.Lines.Add(f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(f.Strings[i+lbclone+lsclone+1]);
                end;
                //DeleteFile('solver/solid_static/report_temperature.txt');
                // Ускоренная загрузка больших репортов в программу.
@@ -2711,6 +3263,7 @@ begin
              Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
             Laplas.MainMemo.Lines.Add('synopsis: very big file...');
          end;
+         *)
       end;
 
       // Освобождение оперативной памяти.
@@ -2721,6 +3274,8 @@ begin
 
       Laplas.brun:=false;
       Laplas.bonly_mesh_gen_call:=false;
+
+      Laplas.bVisualization_Management_now:=false;
 end;
 
 
@@ -2848,12 +3403,6 @@ procedure TLaplas.SetWall(Index : integer; Value : TPlane);
 begin
    wall[Index]:=Value;
 end;
-
-
-
-
-
-
 
 
 
@@ -3040,7 +3589,7 @@ begin
    //ReadyPaint1;
     // Более поздняя версия в которой улучшены
     // характеристики быстродействия.
-    if (rgview.ItemIndex<>0) then
+    if (rgview.ItemIndex=1) then
     begin
        // Применяем подготовку только в том случае
        // если прорисовка использует Z-буффер.
@@ -5324,17 +5873,18 @@ begin
 
 end;  // ReadyPaint1
 
-
-procedure TLaplas.ReadyPaint2; // подготавливает данные к визуализации.
+// подготавливает данные к визуализации.
+procedure TLaplas.ReadyPaint2;
 var
    x1, y1, z1 : array of Real;
-   i,j,k,isel,ib : Integer;
+   i,j,k,isel,ib, i87 : Integer;
    xc, yc, zc, epsilon_tol : Real;
    bonlyfluid, bisox, bisoy, bisoz, biso, bfound : Boolean;
    isovalgx, isovalgy, isovalgz : Real;
    // -1 нет блока. >=0 номер блока. -2 - объединение первого уровня.
    mask : array of array of array of Integer; // маска для последующего объединения.
-   bid : array of array of array of Integer; // номер исходного блока.
+   // номер исходного блока.
+   bid : array of array of array of Integer;
    bmask : array of array of array of Boolean;
    bg : array of GBody;
    vgloc : array of VisibleGran;
@@ -5343,7 +5893,7 @@ var
     epsx, epsy, epsz : Real;
    sbuf : String;
    rbuf : Real;
-
+   binit : Boolean;
 
 
 procedure Pushx(r : Real);
@@ -5543,7 +6093,7 @@ begin
          epsx:=abs(x1[i]-x1[i-1]);
       end;
    end;
-   epsx:=epsx*0.5;
+   epsx:=epsx*0.5*0.1;
 
 
 
@@ -5565,7 +6115,7 @@ begin
          epsy:=abs(y1[i]-y1[i-1]);
       end;
    end;
-   epsy:=epsy*0.5;
+   epsy:=epsy*0.5*0.1;
 
    z1[0]:=body[1].zS;
    z1[1]:=body[1].zE;
@@ -5585,9 +6135,19 @@ begin
          epsz:=abs(z1[i]-z1[i-1]);
       end;
    end;
-   epsz:=epsz*0.5;
+   epsz:=epsz*0.5*0.1;
 
-
+   (*
+   //debug ok
+   MainMemo.Lines.Add('z1='+FloatToStr(z1[0])+' '+
+   FloatToStr(z1[1])+' '+
+   FloatToStr(z1[2])+' '+
+   FloatToStr(z1[3])+' ');
+    MainMemo.Lines.Add('y1='+FloatToStr(y1[0])+' '+
+   FloatToStr(y1[1])+' '+
+   FloatToStr(y1[2])+' '+
+   FloatToStr(y1[3])+' ');
+     *)
    biso:=False;
    bisox:=False;
    bisoy:=False;
@@ -5619,16 +6179,16 @@ begin
    biso:=bisox or bisoy or bisoz;
 
    // инициализация
-   SetLength(mask,Length(x1),Length(y1),Length(z1));
-   SetLength(bid,Length(x1),Length(y1),Length(z1));
-   for i:=0 to Length(x1)-1 do
+   SetLength(mask,Length(x1)-1,Length(y1)-1,Length(z1)-1);
+   SetLength(bid,Length(x1)-1,Length(y1)-1,Length(z1)-1);
+   for i:=0 to Length(x1)-2 do
    begin
-      for j:=0 to Length(y1)-1 do
+      for j:=0 to Length(y1)-2 do
       begin
-         for k:=0 to Length(z1)-1 do
+         for k:=0 to Length(z1)-2 do
          begin
             mask[i][j][k]:=-2;
-            bid[i][j][k]:=-1;
+            bid[i][j][k]:=-1;// номер исходного блока.
          end;
       end;
    end;
@@ -5639,50 +6199,78 @@ begin
       body[isel].ixE:=Length(x1)-1;
       for i:=0 to Length(x1)-1 do
       begin
-         if (abs(x1[i]-body[isel].xS)<1.0e-15) then
+         if (abs(x1[i]-body[isel].xS)<epsx) then
          begin
             body[isel].ixS:=i;
+            break;
          end;
-         if (abs(x1[i]-body[isel].xE)<1.0e-15) then
+      end;
+      for i:=0 to Length(x1)-1 do
+      begin
+         if (abs(x1[i]-body[isel].xE)<epsx) then
          begin
             body[isel].ixE:=i;
+            break;
          end;
       end;
       body[isel].iyS:=0;
       body[isel].iyE:=Length(y1)-1;
       for i:=0 to Length(y1)-1 do
       begin
-         if (abs(y1[i]-body[isel].yS)<1.0e-15) then
+         if (abs(y1[i]-body[isel].yS)<epsy) then
          begin
             body[isel].iyS:=i;
+            break;
          end;
-         if (abs(y1[i]-body[isel].yE)<1.0e-15) then
+      end;
+      for i:=0 to Length(y1)-1 do
+      begin
+         if (abs(y1[i]-body[isel].yE)<epsy) then
          begin
             body[isel].iyE:=i;
+            break;
          end;
       end;
        body[isel].izS:=0;
       body[isel].izE:=Length(z1)-1;
       for i:=0 to Length(z1)-1 do
       begin
-         if (abs(z1[i]-body[isel].zS)<1.0e-15) then
+         if (abs(z1[i]-body[isel].zS)<epsz) then
          begin
             body[isel].izS:=i;
+            break;
          end;
-         if (abs(z1[i]-body[isel].zE)<1.0e-15) then
+      end;
+      for i:=0 to Length(z1)-1 do
+      begin
+         if (abs(z1[i]-body[isel].zE)<epsz) then
          begin
             body[isel].izE:=i;
+            break;
          end;
       end;
    end;
 
+   (*
+   // debug
+    for isel:=lb-1 downto 1 do
+   begin
+   MainMemo.Lines.Add(IntToStr(body[isel].ixS)+' '+
+   IntToStr(body[isel].ixE)+' '+
+   IntToStr(body[isel].iyS)+' '+
+   IntToStr(body[isel].iyE)+' '+
+   IntToStr(body[isel].izS)+' '+
+   IntToStr(body[isel].izE)+' ');
+   end;
+   *)
+
    for isel:=lb-1 downto 1 do
    begin
-       for i:=body[isel].ixS to body[isel].ixE do
+       for i:=body[isel].ixS to (body[isel].ixE-1) do
        begin
-          for j:=body[isel].iyS to body[isel].iyE do
+          for j:=body[isel].iyS to (body[isel].iyE-1) do
           begin
-             for k:=body[isel].izS to body[isel].izE do
+             for k:=body[isel].izS to (body[isel].izE-1) do
              begin
                 if (mask[i][j][k]=-2) then
                 begin
@@ -5695,14 +6283,15 @@ begin
    end;
 
 
-    for i:=0 to Length(x1)-1 do
+    for i:=0 to Length(x1)-2 do
    begin
-      for j:=0 to Length(y1)-1 do
+      for j:=0 to Length(y1)-2 do
       begin
-         for k:=0 to Length(z1)-1 do
+         for k:=0 to Length(z1)-2 do
          begin
            if( mask[i][j][k]=-2) then
            begin
+              // ShowMessage('Error! cell not visited.');
                mask[i][j][k]:=-1;
                bid[i][j][k]:=-1;
             end;
@@ -5718,18 +6307,25 @@ begin
       begin
          for k:=0 to Length(z1)-2 do
          begin
-            // Принадлежит ли ячейка SOLID телу, составляющему расчётную модель.
+            // Принадлежит ли ячейка SOLID телу,
+            // составляющему расчётную модель.
 
 
             xc:=0.5*(x1[i]+x1[i+1]);
             yc:=0.5*(y1[j]+y1[j+1]);
             zc:=0.5*(z1[k]+z1[k+1]);
 
-            if ((not(biso)) or (bisox and (xc<isovalgx)) or (bisoy and (yc<isovalgy)) or (bisoz and (zc<isovalgz))) then
+            if ((not(biso)) or
+            (bisox and (xc<isovalgx))
+            or (bisoy and (yc<isovalgy))
+            or (bisoz and (zc<isovalgz)))
+            then
             begin
                ib:=bid[i][j][k];
                // только Solid.
-               if ((ib<>0) and (body[ib].itype=1)and (body[ib].bvisible)) then
+               if ((ib>0)(* and
+                (body[ib].itype=1)and // SOLID
+                (body[ib].bvisible)*)) then
                begin
                   SetLength(blockgraphics,Length(blockgraphics)+1);
                   blockgraphics[Length(blockgraphics)-1].xS:=x1[i];
@@ -5744,6 +6340,9 @@ begin
                   blockgraphics[Length(blockgraphics)-1].bluecolor:=body[ib].bluecolor;
                   blockgraphics[Length(blockgraphics)-1].transparency:=body[ib].transparency;
                   blockgraphics[Length(blockgraphics)-1].dcol:=body[ib].dcol;
+                  blockgraphics[Length(blockgraphics)-1].igeometry_type:=body[ib].itype;
+                  // debug
+                  //MainMemo.Lines.Add(IntToStr(ib)+' '+IntToStr(body[ib].itype));
                   bonlyfluid:=false;
                   mask[i][j][k]:=Length(blockgraphics)-1;
                   bid[i][j][k]:=ib;
@@ -5756,6 +6355,7 @@ begin
    // Совершенно аналогично для Fluid блоков.
    // Если нет ни одного SOLID блока к показу то мы визуализируем только
    // Fluid блоки.
+   (*
    if (bonlyfluid) then
    begin
       for i:=0 to Length(x1)-2 do
@@ -5768,11 +6368,17 @@ begin
                yc:=0.5*(y1[j]+y1[j+1]);
                zc:=0.5*(z1[k]+z1[k+1]);
 
-               if ((not(biso)) or (bisox and (xc<isovalgx)) or (bisoy and (yc<isovalgy)) or (bisoz and (zc<isovalgz))) then
+               if ((not(biso)) or
+                (bisox and (xc<isovalgx))
+                or (bisoy and (yc<isovalgy))
+                or (bisoz and (zc<isovalgz)))
+               then
                begin
                   ib:=bid[i][j][k];
-                  // только Solid.
-                  if ((ib<>0) and (body[ib].itype=3) and (body[ib].bvisible)) then
+                  // только FLUID.
+                  if ((ib<>0) and
+                   (body[ib].itype=3) // FLUID
+                   and (body[ib].bvisible)) then
                   begin
                      SetLength(blockgraphics,Length(blockgraphics)+1);
                      blockgraphics[Length(blockgraphics)-1].xS:=x1[i];
@@ -5795,15 +6401,16 @@ begin
          end;
       end;
    end;
+     *)
 
-
-    // подготовка списка линий которые нужно перерисовывать.
+    // подготовка списка линий
+    // которые нужно перерисовывать.
 
     //eps:=1.0e-12;
 
 
     lvl:=0;
-
+    (*
     for i:=1 to lb-1 do
     begin
 
@@ -5834,6 +6441,9 @@ begin
                 end
                  else
                 begin
+
+                   // 24,11,2019
+                   // не найден и ладно.
                    inc(lvl);
                    SetLength(vl,lvl);
                    vl[lvl-1].normal:='X';
@@ -5843,13 +6453,14 @@ begin
                    vl[lvl-1].zE:=body[i].zS;
                    vl[lvl-1].xS:=x1[j];
                    vl[lvl-1].xE:=x1[j+1];
+
                 end;
              end;
              break;
           end;
        end;
 
-
+       (*
        // найти в x1 позицию xS.
        for j1:=0 to length(x1)-1 do
        begin
@@ -5868,7 +6479,7 @@ begin
                    vl[lvl-1].yE:=body[i].yS;
                    vl[lvl-1].zS:=body[i].zE;
                    vl[lvl-1].zE:=body[i].zE;
-                   vl[lvl-1].xS:=x1[j];
+                   vl[lvl-1].xS:=x1[j1];
                    vl[lvl-1].xE:=body[i].xE;
                    break;
                 end
@@ -5881,7 +6492,7 @@ begin
                    vl[lvl-1].yE:=body[i].yS;
                    vl[lvl-1].zS:=body[i].zE;
                    vl[lvl-1].zE:=body[i].zE;
-                   vl[lvl-1].xS:=x1[j];
+                   vl[lvl-1].xS:=x1[j1];
                    vl[lvl-1].xE:=x1[j+1];
                 end;
              end;
@@ -5909,7 +6520,7 @@ begin
                    vl[lvl-1].yE:=body[i].yE;
                    vl[lvl-1].zS:=body[i].zE;
                    vl[lvl-1].zE:=body[i].zE;
-                   vl[lvl-1].xS:=x1[j];
+                   vl[lvl-1].xS:=x1[j1];
                    vl[lvl-1].xE:=body[i].xE;
                    break;
                 end
@@ -5922,7 +6533,7 @@ begin
                    vl[lvl-1].yE:=body[i].yE;
                    vl[lvl-1].zS:=body[i].zE;
                    vl[lvl-1].zE:=body[i].zE;
-                   vl[lvl-1].xS:=x1[j];
+                   vl[lvl-1].xS:=x1[j1];
                    vl[lvl-1].xE:=x1[j+1];
                 end;
              end;
@@ -5949,7 +6560,7 @@ begin
                  vl[lvl-1].yE:=body[i].yE;
                  vl[lvl-1].zS:=body[i].zS;
                  vl[lvl-1].zE:=body[i].zS;
-                 vl[lvl-1].xS:=x1[j];
+                 vl[lvl-1].xS:=x1[j1];
                  vl[lvl-1].xE:=body[i].xE;
                  break;
              end
@@ -5962,15 +6573,15 @@ begin
                  vl[lvl-1].yE:=body[i].yE;
                  vl[lvl-1].zS:=body[i].zS;
                  vl[lvl-1].zE:=body[i].zS;
-                 vl[lvl-1].xS:=x1[j];
+                 vl[lvl-1].xS:=x1[j1];
                 vl[lvl-1].xE:=x1[j+1];
              end;
              end;
              break;
           end;
        end;
-
-
+       *)
+        (*
        // найти в y1 позицию yS.
        for j1:=0 to length(y1)-1 do
        begin
@@ -5995,6 +6606,7 @@ begin
                 end
                  else
                 begin
+
                    inc(lvl);
                    SetLength(vl,lvl);
                    vl[lvl-1].normal:='Y';
@@ -6004,13 +6616,14 @@ begin
                    vl[lvl-1].zE:=body[i].zS;
                    vl[lvl-1].yS:=y1[j];
                    vl[lvl-1].yE:=y1[j+1];
+
                 end;
              end;
              break;
           end;
        end;
 
-
+       (*
        // найти в y1 позицию yS.
        for j1:=0 to length(y1)-1 do
        begin
@@ -6130,8 +6743,8 @@ begin
              break;
           end;
        end;
-
-
+        *)
+        (*
        // найти в z1 позицию zS.
        for j1:=0 to length(z1)-1 do
        begin
@@ -6156,6 +6769,7 @@ begin
                 end
                  else
                 begin
+
                    inc(lvl);
                     SetLength(vl,lvl);
                     vl[lvl-1].normal:='Z';
@@ -6165,13 +6779,14 @@ begin
                     vl[lvl-1].yE:=body[i].yS;
                     vl[lvl-1].zS:=z1[j];
                    vl[lvl-1].zE:=z1[j+1];
+
                 end;
              end;
              break;
           end;
        end;
 
-
+       (*
        // найти в z1 позицию zS.
        for j1:=0 to length(z1)-1 do
        begin
@@ -6291,12 +6906,12 @@ begin
              break;
           end;
        end;
-
-
+       *)
+        (*
        inc(lvl);
     end;
     dec(lvl); // длина vl.
-
+    *)
    // ShowMessage(IntToStr(lvl)); //160
     (*
     for j:=0 to length(vl)-1 do
@@ -6316,45 +6931,48 @@ begin
         end;
      end;
      *)
+     (*
+     binit:=true;
 
      // изначально все линии не прорисовываем.
    for i:=0 to Length(blockgraphics)-1 do
    begin
       // TOP
-      blockgraphics[i].zE_xE2xS:=False;
-      blockgraphics[i].zE_yE2yS:=False;
-      blockgraphics[i].zE_xS2xE:=False;
-      blockgraphics[i].zE_yS2yE:=False;
+      blockgraphics[i].zE_xE2xS:=binit;
+      blockgraphics[i].zE_yE2yS:=binit;
+      blockgraphics[i].zE_xS2xE:=binit;
+      blockgraphics[i].zE_yS2yE:=binit;
       // BOTTOM
-      blockgraphics[i].zS_yE2yS:=False;
-      blockgraphics[i].zS_xE2xS:=False;
-      blockgraphics[i].zS_yS2yE:=False;
-      blockgraphics[i].zS_xS2xE:=False;
+      blockgraphics[i].zS_yE2yS:=binit;
+      blockgraphics[i].zS_xE2xS:=binit;
+      blockgraphics[i].zS_yS2yE:=binit;
+      blockgraphics[i].zS_xS2xE:=binit;
       // индикация прорисовки линий на WEST грани.
-      blockgraphics[i].xS_zE2zS:=False;
-      blockgraphics[i].xS_yE2yS:=False;
-      blockgraphics[i].xS_zS2zE:=False;
-      blockgraphics[i].xS_yS2yE:=False;
+      blockgraphics[i].xS_zE2zS:=binit;
+      blockgraphics[i].xS_yE2yS:=binit;
+      blockgraphics[i].xS_zS2zE:=binit;
+      blockgraphics[i].xS_yS2yE:=binit;
       // индикация прорисовки линий на EAST грани.
-      blockgraphics[i].xE_zE2zS:=False;
-      blockgraphics[i].xE_yE2yS:=False;
-      blockgraphics[i].xE_zS2zE:=False;
-      blockgraphics[i].xE_yS2yE:=False;
+      blockgraphics[i].xE_zE2zS:=binit;
+      blockgraphics[i].xE_yE2yS:=binit;
+      blockgraphics[i].xE_zS2zE:=binit;
+      blockgraphics[i].xE_yS2yE:=binit;
       // North
-      blockgraphics[i].yE_zS2zE:=False;
-      blockgraphics[i].yE_xS2xE:=False;
-      blockgraphics[i].yE_zE2zS:=False;
-      blockgraphics[i].yE_xE2xS:=False;
+      blockgraphics[i].yE_zS2zE:=binit;
+      blockgraphics[i].yE_xS2xE:=binit;
+      blockgraphics[i].yE_zE2zS:=binit;
+      blockgraphics[i].yE_xE2xS:=binit;
       // Soush
-      blockgraphics[i].yS_xS2xE:=False;
-      blockgraphics[i].yS_zS2zE:=False;
-      blockgraphics[i].yS_xE2xS:=False;
-      blockgraphics[i].yS_zE2zS:=False;
+      blockgraphics[i].yS_xS2xE:=binit;
+      blockgraphics[i].yS_zS2zE:=binit;
+      blockgraphics[i].yS_xE2xS:=binit;
+      blockgraphics[i].yS_zE2zS:=binit;
    end;
-
+    *)
    //eps:=1.0e-12;
-
-
+   (*
+   if (not(binit)) then
+   begin
 
    for i:=0 to Length(blockgraphics)-1 do
    begin
@@ -6365,10 +6983,14 @@ begin
      begin
         if (vl[j].normal='X') then
         begin
-           if (abs(vl[j].xS-blockgraphics[i].xS)<epsx) and (abs(vl[j].xE-blockgraphics[i].xE)<epsx) then
+          if (abs(vl[j].xS-blockgraphics[i].xS)<epsx)
+          and (abs(vl[j].xE-blockgraphics[i].xE)<epsx)
+          then
            begin
               //ShowMessage(IntToStr(lvl));
-              if ((abs(vl[j].yS-blockgraphics[i].yE)<epsy) and (abs(vl[j].zS-blockgraphics[i].zE)<epsz)) then
+              if ((abs(vl[j].yS-blockgraphics[i].yE)<epsy)
+               and (abs(vl[j].zS-blockgraphics[i].zE)<epsz))
+                then
               begin
                  blockgraphics[i].zE_xE2xS:=true;
               end;
@@ -6726,423 +7348,356 @@ begin
         end;
      end;
    end;
-
-
+ end;
+   *)
    // Я отказался от  идеи объединения, так как она плохо формализуема в пользу идеи
    // в которой я не прорисовываю грань если она встречается дважды. Для идеи не
    // проррисовывать грань если она встречается дважды важно не выполнять никаких объединений.
    // Это существенным образом ускоряет рендеринг.
+   (*
    SetLength(vg,0);
 
    SetLength(vgloc,6);// 6 граней куба
    for i:=0 to Length(blockgraphics)-1 do
    begin
-     vgloc[0].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
-     vgloc[0].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
-     vgloc[0].zc:=blockgraphics[i].zE;
-     vgloc[0].start_on:=False; // z End
-     vgloc[0].redcolor:=blockgraphics[i].redcolor;
-     vgloc[0].greencolor:=blockgraphics[i].greencolor;
-     vgloc[0].bluecolor:=blockgraphics[i].bluecolor;
-     vgloc[0].transparency:=blockgraphics[i].transparency;
-     vgloc[0].iPlane:=1; // XY
-     vgloc[0].xS:=blockgraphics[i].xS;
-     vgloc[0].xE:=blockgraphics[i].xE;
-     vgloc[0].yS:=blockgraphics[i].yS;
-     vgloc[0].yE:=blockgraphics[i].yE;
-     vgloc[0].zS:=blockgraphics[i].zS;
-     vgloc[0].zE:=blockgraphics[i].zE;
-     // 10 marth 2015 для каркасной модели с удалением невидимых линий.
-     // zE
-     vgloc[0].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
-     vgloc[0].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
-     vgloc[0].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
-     vgloc[0].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
-     // zS
-     vgloc[0].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
-     vgloc[0].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
-     vgloc[0].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
-     vgloc[0].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
-     // xS
-     vgloc[0].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
-     vgloc[0].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
-     vgloc[0].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
-     vgloc[0].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
-     // xE
-     vgloc[0].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
-     vgloc[0].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
-     vgloc[0].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
-     vgloc[0].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
-     // yE
-     vgloc[0].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
-     vgloc[0].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
-     vgloc[0].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
-     vgloc[0].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
-     // yS
-     vgloc[0].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
-     vgloc[0].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
-     vgloc[0].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
-     vgloc[0].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
-
-
-     vgloc[1].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
-     vgloc[1].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
-     vgloc[1].zc:=blockgraphics[i].zS;
-     vgloc[1].start_on:=True; // z Start
-     vgloc[1].redcolor:=blockgraphics[i].redcolor;
-     vgloc[1].greencolor:=blockgraphics[i].greencolor;
-     vgloc[1].bluecolor:=blockgraphics[i].bluecolor;
-     vgloc[1].transparency:=blockgraphics[i].transparency;
-     vgloc[1].iPlane:=1; // XY
-     vgloc[1].xS:=blockgraphics[i].xS;
-     vgloc[1].xE:=blockgraphics[i].xE;
-     vgloc[1].yS:=blockgraphics[i].yS;
-     vgloc[1].yE:=blockgraphics[i].yE;
-     vgloc[1].zS:=blockgraphics[i].zS;
-     vgloc[1].zE:=blockgraphics[i].zE;
-     // 10 marth 2015 для каркасной модели с удалением невидимых линий.
-     // zE
-     vgloc[1].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
-     vgloc[1].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
-     vgloc[1].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
-     vgloc[1].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
-     // zS
-     vgloc[1].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
-     vgloc[1].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
-     vgloc[1].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
-     vgloc[1].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
-     // xS
-     vgloc[1].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
-     vgloc[1].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
-     vgloc[1].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
-     vgloc[1].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
-     // xE
-     vgloc[1].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
-     vgloc[1].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
-     vgloc[1].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
-     vgloc[1].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
-     // yE
-     vgloc[1].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
-     vgloc[1].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
-     vgloc[1].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
-     vgloc[1].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
-     // yS
-     vgloc[1].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
-     vgloc[1].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
-     vgloc[1].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
-     vgloc[1].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
-
-
-
-     vgloc[2].xc:=blockgraphics[i].xS;
-     vgloc[2].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
-     vgloc[2].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
-     vgloc[2].start_on:=True; // x Start
-     vgloc[2].redcolor:=blockgraphics[i].redcolor;
-     vgloc[2].greencolor:=blockgraphics[i].greencolor;
-     vgloc[2].bluecolor:=blockgraphics[i].bluecolor;
-     vgloc[2].transparency:=blockgraphics[i].transparency;
-     vgloc[2].iPlane:=3; // YZ
-     vgloc[2].xS:=blockgraphics[i].xS;
-     vgloc[2].xE:=blockgraphics[i].xE;
-     vgloc[2].yS:=blockgraphics[i].yS;
-     vgloc[2].yE:=blockgraphics[i].yE;
-     vgloc[2].zS:=blockgraphics[i].zS;
-     vgloc[2].zE:=blockgraphics[i].zE;
-     // 10 marth 2015 для каркасной модели с удалением невидимых линий.
-     // zE
-     vgloc[2].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
-     vgloc[2].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
-     vgloc[2].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
-     vgloc[2].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
-     // zS
-     vgloc[2].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
-     vgloc[2].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
-     vgloc[2].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
-     vgloc[2].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
-     // xS
-     vgloc[2].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
-     vgloc[2].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
-     vgloc[2].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
-     vgloc[2].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
-     // xE
-     vgloc[2].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
-     vgloc[2].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
-     vgloc[2].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
-     vgloc[2].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
-     // yE
-     vgloc[2].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
-     vgloc[2].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
-     vgloc[2].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
-     vgloc[2].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
-     // yS
-     vgloc[2].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
-     vgloc[2].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
-     vgloc[2].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
-     vgloc[2].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
-
-
-     vgloc[3].xc:=blockgraphics[i].xE;
-     vgloc[3].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
-     vgloc[3].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
-     vgloc[3].start_on:=False; // x End
-     vgloc[3].redcolor:=blockgraphics[i].redcolor;
-     vgloc[3].greencolor:=blockgraphics[i].greencolor;
-     vgloc[3].bluecolor:=blockgraphics[i].bluecolor;
-     vgloc[3].transparency:=blockgraphics[i].transparency;
-     vgloc[3].iPlane:=3; // YZ
-     vgloc[3].xS:=blockgraphics[i].xS;
-     vgloc[3].xE:=blockgraphics[i].xE;
-     vgloc[3].yS:=blockgraphics[i].yS;
-     vgloc[3].yE:=blockgraphics[i].yE;
-     vgloc[3].zS:=blockgraphics[i].zS;
-     vgloc[3].zE:=blockgraphics[i].zE;
-     // 10 marth 2015 для каркасной модели с удалением невидимых линий.
-     // zE
-     vgloc[3].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
-     vgloc[3].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
-     vgloc[3].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
-     vgloc[3].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
-     // zS
-     vgloc[3].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
-     vgloc[3].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
-     vgloc[3].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
-     vgloc[3].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
-     // xS
-     vgloc[3].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
-     vgloc[3].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
-     vgloc[3].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
-     vgloc[3].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
-     // xE
-     vgloc[3].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
-     vgloc[3].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
-     vgloc[3].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
-     vgloc[3].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
-     // yE
-     vgloc[3].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
-     vgloc[3].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
-     vgloc[3].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
-     vgloc[3].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
-     // yS
-     vgloc[3].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
-     vgloc[3].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
-     vgloc[3].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
-     vgloc[3].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
-
-
-     vgloc[4].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
-     vgloc[4].yc:=blockgraphics[i].yS;
-     vgloc[4].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
-     vgloc[4].start_on:=True; // y Start
-     vgloc[4].redcolor:=blockgraphics[i].redcolor;
-     vgloc[4].greencolor:=blockgraphics[i].greencolor;
-     vgloc[4].bluecolor:=blockgraphics[i].bluecolor;
-     vgloc[4].transparency:=blockgraphics[i].transparency;
-     vgloc[4].iPlane:=2; // XZ
-     vgloc[4].xS:=blockgraphics[i].xS;
-     vgloc[4].xE:=blockgraphics[i].xE;
-     vgloc[4].yS:=blockgraphics[i].yS;
-     vgloc[4].yE:=blockgraphics[i].yE;
-     vgloc[4].zS:=blockgraphics[i].zS;
-     vgloc[4].zE:=blockgraphics[i].zE;
-     // 10 marth 2015 для каркасной модели с удалением невидимых линий.
-     // zE
-     vgloc[4].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
-     vgloc[4].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
-     vgloc[4].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
-     vgloc[4].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
-     // zS
-     vgloc[4].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
-     vgloc[4].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
-     vgloc[4].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
-     vgloc[4].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
-     // xS
-     vgloc[4].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
-     vgloc[4].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
-     vgloc[4].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
-     vgloc[4].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
-     // xE
-     vgloc[4].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
-     vgloc[4].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
-     vgloc[4].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
-     vgloc[4].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
-     // yE
-     vgloc[4].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
-     vgloc[4].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
-     vgloc[4].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
-     vgloc[4].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
-     // yS
-     vgloc[4].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
-     vgloc[4].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
-     vgloc[4].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
-     vgloc[4].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
-
-
-     vgloc[5].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
-     vgloc[5].yc:=blockgraphics[i].yE;
-     vgloc[5].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
-     vgloc[5].start_on:=False; // y End
-     vgloc[5].redcolor:=blockgraphics[i].redcolor;
-     vgloc[5].greencolor:=blockgraphics[i].greencolor;
-     vgloc[5].bluecolor:=blockgraphics[i].bluecolor;
-     vgloc[5].transparency:=blockgraphics[i].transparency;
-     vgloc[5].iPlane:=2; // XZ
-     vgloc[5].xS:=blockgraphics[i].xS;
-     vgloc[5].xE:=blockgraphics[i].xE;
-     vgloc[5].yS:=blockgraphics[i].yS;
-     vgloc[5].yE:=blockgraphics[i].yE;
-     vgloc[5].zS:=blockgraphics[i].zS;
-     vgloc[5].zE:=blockgraphics[i].zE;
-     // 10 marth 2015 для каркасной модели с удалением невидимых линий.
-     // zE
-     vgloc[5].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
-     vgloc[5].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
-     vgloc[5].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
-     vgloc[5].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
-     // zS
-     vgloc[5].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
-     vgloc[5].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
-     vgloc[5].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
-     vgloc[5].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
-     // xS
-     vgloc[5].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
-     vgloc[5].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
-     vgloc[5].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
-     vgloc[5].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
-     // xE
-     vgloc[5].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
-     vgloc[5].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
-     vgloc[5].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
-     vgloc[5].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
-     // yE
-     vgloc[5].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
-     vgloc[5].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
-     vgloc[5].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
-     vgloc[5].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
-     // yS
-     vgloc[5].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
-     vgloc[5].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
-     vgloc[5].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
-     vgloc[5].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
-
-
-     k:=Length(vg)-1;
-     epsilon_tol:=1.0e-12;
-     bfound:=False;
-     // построение списка уникальных граней.
-     for j:=0 to k do
-     begin
-
-         if ((abs(vg[j].xc-vgloc[0].xc)<epsx)and(abs(vg[j].yc-vgloc[0].yc)<epsy)and(abs(vg[j].zc-vgloc[0].zc)<epsz)) then
-         begin
-            bfound:=True;
-         end;
-     end;
-     if (not(bfound)) then
-     begin
-        SetLength(vg,Length(vg)+1);
-        Inc(k);
-        vg[Length(vg)-1]:=vgloc[0];
-        vg[Length(vg)-1].flagvisit:=false;
-     end;
-     bfound:=False;
-     for j:=0 to k do
-     begin
-         if ((abs(vg[j].xc-vgloc[1].xc)<epsx)and(abs(vg[j].yc-vgloc[1].yc)<epsy)and(abs(vg[j].zc-vgloc[1].zc)<epsz)) then
-         begin
-            bfound:=True;
-            vg[j].flagvisit:=True;
-         end;
-     end;
-     if (not(bfound)) then
-     begin
-        SetLength(vg,Length(vg)+1);
-        Inc(k);
-        vg[Length(vg)-1]:=vgloc[1];
-        vg[Length(vg)-1].flagvisit:=false;
-     end;
-     bfound:=False;
-     for j:=0 to k do
-     begin
-         if ((abs(vg[j].xc-vgloc[2].xc)<epsx)and(abs(vg[j].yc-vgloc[2].yc)<epsy)and(abs(vg[j].zc-vgloc[2].zc)<epsz)) then
-         begin
-             bfound:=True;
-             vg[j].flagvisit:=True;
-         end;
-     end;
-     if (not(bfound)) then
-     begin
-        SetLength(vg,Length(vg)+1);
-        Inc(k);
-        vg[Length(vg)-1]:=vgloc[2];
-        vg[Length(vg)-1].flagvisit:=false;
-     end;
-     bfound:=False;
-     for j:=0 to k do
-     begin
-          if ((abs(vg[j].xc-vgloc[3].xc)<epsx)and(abs(vg[j].yc-vgloc[3].yc)<epsy)and(abs(vg[j].zc-vgloc[3].zc)<epsz)) then
-         begin
-             bfound:=True;
-            vg[j].flagvisit:=True;
-         end;
-     end;
-     if (not(bfound)) then
-     begin
-        SetLength(vg,Length(vg)+1);
-        Inc(k);
-        vg[Length(vg)-1]:=vgloc[3];
-        vg[Length(vg)-1].flagvisit:=false;
-     end;
-     bfound:=False;
-     for j:=0 to k do
-     begin
-          if ((abs(vg[j].xc-vgloc[4].xc)<epsx)and(abs(vg[j].yc-vgloc[4].yc)<epsy)and(abs(vg[j].zc-vgloc[4].zc)<epsz)) then
-         begin
-            bfound:=True;
-            vg[j].flagvisit:=True;
-         end;
-     end;
-     if (not(bfound)) then
-     begin
-        SetLength(vg,Length(vg)+1);
-        Inc(k);
-        vg[Length(vg)-1]:=vgloc[4];
-        vg[Length(vg)-1].flagvisit:=false;
-     end;
-     bfound:=False;
-     for j:=0 to k do
-     begin
-          if ((abs(vg[j].xc-vgloc[5].xc)<epsx)and(abs(vg[j].yc-vgloc[5].yc)<epsy)and(abs(vg[j].zc-vgloc[5].zc)<epsz)) then
-         begin
-             bfound:=True;
-            vg[j].flagvisit:=True;
-         end;
-     end;
-     if (not(bfound)) then
-     begin
-        SetLength(vg,Length(vg)+1);
-        Inc(k);
-        vg[Length(vg)-1]:=vgloc[5];
-        vg[Length(vg)-1].flagvisit:=false;
-     end;
-   end;
-    SetLength(vgloc,Length(vg));
-    k:=0;
-    for i:=0 to Length(vg)-1 do
-    begin
-      if (vg[i].flagvisit=False) then
+     // if (blockgraphics[i].igeometry_type<>2) then
       begin
-         vgloc[k]:=vg[i];
-         inc(k);
-      end;
-    end;
-    SetLength(vg,k);
-    for i:=0 to k-1 do
-    begin
-       vg[i]:=vgloc[i];
-    end;
-    SetLength(vgloc,0);
 
+         vgloc[0].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
+         vgloc[0].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
+         vgloc[0].zc:=blockgraphics[i].zE;
+         vgloc[0].start_on:=False; // z End
+         vgloc[0].redcolor:=blockgraphics[i].redcolor;
+         vgloc[0].greencolor:=blockgraphics[i].greencolor;
+         vgloc[0].bluecolor:=blockgraphics[i].bluecolor;
+         vgloc[0].transparency:=blockgraphics[i].transparency;
+         vgloc[0].iPlane:=1; // XY
+         vgloc[0].xS:=blockgraphics[i].xS;
+         vgloc[0].xE:=blockgraphics[i].xE;
+         vgloc[0].yS:=blockgraphics[i].yS;
+         vgloc[0].yE:=blockgraphics[i].yE;
+         vgloc[0].zS:=blockgraphics[i].zS;
+         vgloc[0].zE:=blockgraphics[i].zE;
+         // 10 marth 2015 для каркасной модели с удалением невидимых линий.
+         // zE
+         vgloc[0].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
+         vgloc[0].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
+         vgloc[0].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
+         vgloc[0].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
+         // zS
+         vgloc[0].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
+         vgloc[0].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
+         vgloc[0].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
+         vgloc[0].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
+         // xS
+         vgloc[0].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
+         vgloc[0].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
+         vgloc[0].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
+         vgloc[0].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
+         // xE
+         vgloc[0].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
+         vgloc[0].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
+         vgloc[0].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
+         vgloc[0].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
+         // yE
+         vgloc[0].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
+         vgloc[0].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
+         vgloc[0].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
+         vgloc[0].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
+         // yS
+         vgloc[0].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
+         vgloc[0].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
+         vgloc[0].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
+         vgloc[0].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
+
+
+         vgloc[1].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
+         vgloc[1].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
+         vgloc[1].zc:=blockgraphics[i].zS;
+         vgloc[1].start_on:=True; // z Start
+         vgloc[1].redcolor:=blockgraphics[i].redcolor;
+         vgloc[1].greencolor:=blockgraphics[i].greencolor;
+         vgloc[1].bluecolor:=blockgraphics[i].bluecolor;
+         vgloc[1].transparency:=blockgraphics[i].transparency;
+         vgloc[1].iPlane:=1; // XY
+         vgloc[1].xS:=blockgraphics[i].xS;
+         vgloc[1].xE:=blockgraphics[i].xE;
+         vgloc[1].yS:=blockgraphics[i].yS;
+         vgloc[1].yE:=blockgraphics[i].yE;
+         vgloc[1].zS:=blockgraphics[i].zS;
+         vgloc[1].zE:=blockgraphics[i].zE;
+         // 10 marth 2015 для каркасной модели с удалением невидимых линий.
+         // zE
+         vgloc[1].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
+         vgloc[1].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
+         vgloc[1].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
+         vgloc[1].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
+         // zS
+         vgloc[1].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
+         vgloc[1].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
+         vgloc[1].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
+         vgloc[1].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
+         // xS
+         vgloc[1].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
+         vgloc[1].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
+         vgloc[1].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
+         vgloc[1].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
+         // xE
+         vgloc[1].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
+         vgloc[1].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
+         vgloc[1].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
+         vgloc[1].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
+         // yE
+         vgloc[1].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
+         vgloc[1].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
+         vgloc[1].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
+         vgloc[1].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
+         // yS
+         vgloc[1].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
+         vgloc[1].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
+         vgloc[1].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
+         vgloc[1].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
+
+
+
+         vgloc[2].xc:=blockgraphics[i].xS;
+         vgloc[2].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
+         vgloc[2].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
+         vgloc[2].start_on:=True; // x Start
+         vgloc[2].redcolor:=blockgraphics[i].redcolor;
+         vgloc[2].greencolor:=blockgraphics[i].greencolor;
+         vgloc[2].bluecolor:=blockgraphics[i].bluecolor;
+         vgloc[2].transparency:=blockgraphics[i].transparency;
+         vgloc[2].iPlane:=3; // YZ
+         vgloc[2].xS:=blockgraphics[i].xS;
+         vgloc[2].xE:=blockgraphics[i].xE;
+         vgloc[2].yS:=blockgraphics[i].yS;
+         vgloc[2].yE:=blockgraphics[i].yE;
+         vgloc[2].zS:=blockgraphics[i].zS;
+         vgloc[2].zE:=blockgraphics[i].zE;
+         // 10 marth 2015 для каркасной модели с удалением невидимых линий.
+         // zE
+         vgloc[2].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
+         vgloc[2].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
+         vgloc[2].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
+         vgloc[2].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
+         // zS
+         vgloc[2].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
+         vgloc[2].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
+         vgloc[2].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
+         vgloc[2].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
+         // xS
+         vgloc[2].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
+         vgloc[2].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
+         vgloc[2].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
+         vgloc[2].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
+         // xE
+         vgloc[2].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
+         vgloc[2].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
+         vgloc[2].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
+         vgloc[2].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
+         // yE
+         vgloc[2].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
+         vgloc[2].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
+         vgloc[2].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
+         vgloc[2].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
+         // yS
+         vgloc[2].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
+         vgloc[2].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
+         vgloc[2].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
+         vgloc[2].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
+
+
+         vgloc[3].xc:=blockgraphics[i].xE;
+         vgloc[3].yc:=0.5*(blockgraphics[i].yS+blockgraphics[i].yE);
+         vgloc[3].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
+         vgloc[3].start_on:=False; // x End
+         vgloc[3].redcolor:=blockgraphics[i].redcolor;
+         vgloc[3].greencolor:=blockgraphics[i].greencolor;
+         vgloc[3].bluecolor:=blockgraphics[i].bluecolor;
+         vgloc[3].transparency:=blockgraphics[i].transparency;
+         vgloc[3].iPlane:=3; // YZ
+         vgloc[3].xS:=blockgraphics[i].xS;
+         vgloc[3].xE:=blockgraphics[i].xE;
+         vgloc[3].yS:=blockgraphics[i].yS;
+         vgloc[3].yE:=blockgraphics[i].yE;
+         vgloc[3].zS:=blockgraphics[i].zS;
+         vgloc[3].zE:=blockgraphics[i].zE;
+         // 10 marth 2015 для каркасной модели с удалением невидимых линий.
+         // zE
+         vgloc[3].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
+         vgloc[3].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
+         vgloc[3].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
+         vgloc[3].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
+         // zS
+         vgloc[3].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
+         vgloc[3].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
+         vgloc[3].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
+         vgloc[3].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
+         // xS
+         vgloc[3].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
+         vgloc[3].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
+         vgloc[3].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
+         vgloc[3].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
+         // xE
+         vgloc[3].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
+         vgloc[3].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
+         vgloc[3].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
+         vgloc[3].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
+         // yE
+         vgloc[3].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
+         vgloc[3].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
+         vgloc[3].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
+         vgloc[3].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
+         // yS
+         vgloc[3].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
+         vgloc[3].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
+         vgloc[3].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
+         vgloc[3].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
+
+
+         vgloc[4].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
+         vgloc[4].yc:=blockgraphics[i].yS;
+         vgloc[4].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
+         vgloc[4].start_on:=True; // y Start
+         vgloc[4].redcolor:=blockgraphics[i].redcolor;
+         vgloc[4].greencolor:=blockgraphics[i].greencolor;
+         vgloc[4].bluecolor:=blockgraphics[i].bluecolor;
+         vgloc[4].transparency:=blockgraphics[i].transparency;
+         vgloc[4].iPlane:=2; // XZ
+         vgloc[4].xS:=blockgraphics[i].xS;
+         vgloc[4].xE:=blockgraphics[i].xE;
+         vgloc[4].yS:=blockgraphics[i].yS;
+         vgloc[4].yE:=blockgraphics[i].yE;
+         vgloc[4].zS:=blockgraphics[i].zS;
+         vgloc[4].zE:=blockgraphics[i].zE;
+         // 10 marth 2015 для каркасной модели с удалением невидимых линий.
+         // zE
+         vgloc[4].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
+         vgloc[4].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
+         vgloc[4].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
+         vgloc[4].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
+         // zS
+         vgloc[4].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
+         vgloc[4].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
+         vgloc[4].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
+         vgloc[4].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
+         // xS
+         vgloc[4].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
+         vgloc[4].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
+         vgloc[4].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
+         vgloc[4].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
+         // xE
+         vgloc[4].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
+         vgloc[4].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
+         vgloc[4].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
+         vgloc[4].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
+         // yE
+         vgloc[4].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
+         vgloc[4].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
+         vgloc[4].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
+         vgloc[4].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
+         // yS
+         vgloc[4].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
+         vgloc[4].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
+         vgloc[4].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
+         vgloc[4].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
+
+
+         vgloc[5].xc:=0.5*(blockgraphics[i].xS+blockgraphics[i].xE);
+         vgloc[5].yc:=blockgraphics[i].yE;
+         vgloc[5].zc:=0.5*(blockgraphics[i].zS+blockgraphics[i].zE);
+         vgloc[5].start_on:=False; // y End
+         vgloc[5].redcolor:=blockgraphics[i].redcolor;
+         vgloc[5].greencolor:=blockgraphics[i].greencolor;
+         vgloc[5].bluecolor:=blockgraphics[i].bluecolor;
+         vgloc[5].transparency:=blockgraphics[i].transparency;
+         vgloc[5].iPlane:=2; // XZ
+         vgloc[5].xS:=blockgraphics[i].xS;
+         vgloc[5].xE:=blockgraphics[i].xE;
+         vgloc[5].yS:=blockgraphics[i].yS;
+         vgloc[5].yE:=blockgraphics[i].yE;
+         vgloc[5].zS:=blockgraphics[i].zS;
+         vgloc[5].zE:=blockgraphics[i].zE;
+         // 10 marth 2015 для каркасной модели с удалением невидимых линий.
+         // zE
+         vgloc[5].zE_xE2xS:=blockgraphics[i].zE_xE2xS;
+         vgloc[5].zE_yE2yS:=blockgraphics[i].zE_yE2yS;
+         vgloc[5].zE_xS2xE:=blockgraphics[i].zE_xS2xE;
+         vgloc[5].zE_yS2yE:=blockgraphics[i].zE_yS2yE;
+         // zS
+         vgloc[5].zS_yE2yS:=blockgraphics[i].zS_yE2yS;
+         vgloc[5].zS_xE2xS:=blockgraphics[i].zS_xE2xS;
+         vgloc[5].zS_yS2yE:=blockgraphics[i].zS_yS2yE;
+         vgloc[5].zS_xS2xE:=blockgraphics[i].zS_xS2xE;
+         // xS
+         vgloc[5].xS_zE2zS:=blockgraphics[i].xS_zE2zS;
+         vgloc[5].xS_yE2yS:=blockgraphics[i].xS_yE2yS;
+         vgloc[5].xS_zS2zE:=blockgraphics[i].xS_zS2zE;
+         vgloc[5].xS_yS2yE:=blockgraphics[i].xS_yS2yE;
+         // xE
+         vgloc[5].xE_zE2zS:=blockgraphics[i].xE_zE2zS;
+         vgloc[5].xE_yE2yS:=blockgraphics[i].xE_yE2yS;
+         vgloc[5].xE_zS2zE:=blockgraphics[i].xE_zS2zE;
+         vgloc[5].xE_yS2yE:=blockgraphics[i].xE_yS2yE;
+         // yE
+         vgloc[5].yE_zS2zE:=blockgraphics[i].yE_zS2zE;
+         vgloc[5].yE_xS2xE:=blockgraphics[i].yE_xS2xE;
+         vgloc[5].yE_zE2zS:=blockgraphics[i].yE_zE2zS;
+         vgloc[5].yE_xE2xS:=blockgraphics[i].yE_xE2xS;
+         // yS
+         vgloc[5].yS_xS2xE:=blockgraphics[i].yS_xS2xE;
+         vgloc[5].yS_zS2zE:=blockgraphics[i].yS_zS2zE;
+         vgloc[5].yS_xE2xS:=blockgraphics[i].yS_xE2xS;
+         vgloc[5].yS_zE2zS:=blockgraphics[i].yS_zE2zS;
+
+
+         k:=Length(vg)-1;
+         epsilon_tol:=1.0e-12;
+         for i87 := 0 to 5 do
+         begin
+            bfound:=False;
+            // построение списка уникальных граней.
+            for j:=0 to k do
+            begin
+               if ((abs(vg[j].xc-vgloc[i87].xc)<epsx)and
+               (abs(vg[j].yc-vgloc[i87].yc)<epsy)and
+               (abs(vg[j].zc-vgloc[i87].zc)<epsz)) then
+               begin
+                  bfound:=True;
+               end;
+            end;
+            if (not(bfound)) then
+            begin
+               SetLength(vg,Length(vg)+1);
+               Inc(k);
+               vg[Length(vg)-1]:=vgloc[i87];
+               vg[Length(vg)-1].flagvisit:=false;
+            end;
+         end;
+
+      end;
+   end;
+
+      // Запись в vg только уникальных граней которые
+      // встречались не более одного раза.
+      SetLength(vgloc,Length(vg));
+      k:=0;
+      for i87:=0 to Length(vg)-1 do
+      begin
+         if (vg[i87].flagvisit=False) then
+         begin
+            vgloc[k]:=vg[i87];
+            inc(k);
+         end;
+      end;
+      SetLength(vg,k);
+      for i87:=0 to k-1 do
+      begin
+         vg[i87]:=vgloc[i87];
+      end;
+      SetLength(vgloc,0);
+    *)
 
    (*
    // Объединение.
@@ -7645,13 +8200,105 @@ begin
          end;
       end;
    end;
-
+    *)
    SetLength(mask,0,0,0);
    SetLength(bmask,0,0,0);
    SetLength(bg,0);
-    *)
 
-end;  // ReadyPaint2
+
+end;   // ReadyPaint2
+
+// Задаёт закон изменения тепловой мощности в блоках имена
+// которых соответствуют образцу.
+procedure TLaplas.RedoSourceforPatternClick(Sender: TObject);
+var
+    i_1, i_1_first : Integer;
+    bfirst : Boolean;
+begin
+   FormTextNameSourcePattern.ShowModal;
+
+    // Текстовый шаблон.
+      if (length(FormTextNameSourcePattern.EditSourcepatternname.Text)>0) then
+      begin
+
+            bfirst:=true;
+
+            for i_1 := 1 to (lb-1) do
+            begin
+               if (Pos(Trim(FormTextNameSourcePattern.EditSourcepatternname.Text),body[i_1].name)>0) then
+               begin
+                  itek:=i_1;
+                  if (bfirst) then
+                  begin
+                     bfirst:=false;
+                     i_1_first:=i_1;
+                     // 2 - это полигон. Мы не можем задаваать мощность тепловыделения
+                     // внутри полигона.
+                     if (body[Laplas.itek].igeometry_type<>2) then
+                     begin
+                        if (body[itek].n_power=1) then
+                         begin
+                            // Constant (not temperature depend)
+                            FormTransientPowerSetting.EditPower.Visible:=true;
+                            FormTransientPowerSetting.Label1.Visible:=true;
+                            FormTransientPowerSetting.Buttonpiecewisepower.Visible:=false;
+                            //FormTransientPowerSetting.EditPower.Text:=FloatToStr(Laplas.body[Laplas.itek].arr_power[0]);
+                            FormTransientPowerSetting.EditPower.Text:=Trim(Laplas.body[Laplas.itek].arr_s_power[0]);
+                            FormTransientPowerSetting.ComboBoxTemperaturedependpower.ItemIndex:=0;
+                            FormTransientPowerSetting.ComboBoxTemperaturedependpowerChange(Sender);
+                         end
+                          else
+                         begin
+                            // Temperature depend.
+                            FormTransientPowerSetting.EditPower.Visible:=false;
+                            FormTransientPowerSetting.Label1.Visible:=false;
+                            FormTransientPowerSetting.Buttonpiecewisepower.Visible:=true;
+                            FormTransientPowerSetting.ComboBoxTemperaturedependpower.ItemIndex:=1;
+                            FormTransientPowerSetting.ComboBoxTemperaturedependpowerChange(Sender);
+                         end;
+                     end;
+                     // Зависимость мощности тепловыделения от времени.
+                     // 0 - не зависит от времени и выделяется постоянно,
+                     // 1 - squre wave зависимость от времени,
+                     // 2 - square wave 2 зависимость от времени,
+                     // 3 - hot cold режим для Евдокимовой Н.Л.
+                     FormTransientPowerSetting.RadioGroupTimeDependPowerLow.ItemIndex:=body[itek].ipower_time_depend;
+                     // Запрет на тепловую мощность зависящую от температуры
+                     // при массовом изменении закона тепловой мощности.
+                     FormTransientPowerSetting.bBlock_piecewice_power:=true;
+                     FormTransientPowerSetting.ShowModal;
+                  end
+                  else
+                  begin
+                     // Просто задаём параметры тепловой мощности текущему блоку.
+
+                      // Зависимость мощности тепловыделения от времени.
+                      // 0 - не зависит от времени и выделяется постоянно,
+                      // 1 - squre wave зависимость от времени,
+                      // 2 - square wave 2 зависимость от времени,
+                      // 3 - hot cold режим для Евдокимовой Н.Л.
+                      // 4 - piecewise const.
+                     body[itek].ipower_time_depend:=FormTransientPowerSetting.RadioGroupTimeDependPowerLow.ItemIndex;
+                     body[itek].n_power:= body[i_1_first].n_power;
+                     // Только постоянное значение тепловой мощности.
+                     SetLength(body[itek].temp_power, body[itek].n_power);
+                     SetLength(body[itek].arr_power, body[itek].n_power);
+                     SetLength(body[itek].arr_s_power, body[itek].n_power);
+                     body[itek].arr_s_power[0]:=body[i_1_first].arr_s_power[0];
+                     body[itek].arr_power[0]:=body[i_1_first].arr_power[0];
+                  end;
+               end;
+            end;
+
+            MainMemo.Lines.Add('Pathing heat source Done...');
+            Application.MessageBox('Pathing heat source Done...','Define group heat source', MB_OK);
+
+      end;
+      // запрет на мощность зависящую от температуры снят.
+      FormTransientPowerSetting.bBlock_piecewice_power:=false;
+end;
+
+
 
 
 
@@ -7851,6 +8498,8 @@ begin
    // параметры материала :
    remis:=0.0; rspec:=0.0; rblick:=60;
    matdiff:=0.8; matamb:=0.2;
+   dopusk_gl1:=0.01; // глобальный допуск для алгоритма z-буффера.
+   dopusk_gl2:=0.01; // глобальный допуск для алгоритма z-буффера.
    // LIGHT0
    matt:=1.0; mr:=1.0;   glamb0:=0.0;
    mldx:=-0.5;
@@ -8140,6 +8789,7 @@ begin
    // 2 - RNG (LES).
    // 3 - Spalart Allmares (RANS) [1992]
    // 4 - K-Omega SST Menter (RANS) [1993]
+   // 5 - Standart K-Epsilon (RANS) [2001]
    egddata.myflmod[0].iturbmodel:=0; // ZEM
    // модель Смагоринского
    egddata.myflmod[0].SmagConst:=0.151; // при Ck==1.8   (Ck соответствующая константа Колмогорова).
@@ -8178,6 +8828,7 @@ begin
    end;
 
 
+
    iltdp:=0; // пока нет ни одной таблицы.
    SetLength(listtablename,0); // пустой список имён файлов
 
@@ -8196,19 +8847,11 @@ begin
    glEnable(GL_DEPTH_TEST); //включить тест глубины : включаем проверку разрешения фигур (впереди стоящая закрывает фигуру за ней)
    glDepthFunc(GL_LEQUAL); //тип проверки
 
-   MainMemo.Lines.Add('Load material library: ');
-   MainMemo.Lines.Add('SOLID : Al-Duralumin, GaN, SiC4H, Au80Sn20, Cu, MD40, GaAs, Au');
-   MainMemo.Lines.Add('SiO2, Si, kovar (Co 17% Ni 29% Fe), Alumina (Polycor) ');
-   MainMemo.Lines.Add('Brass (59-1-L), Polyimide (PI), Sapphire (Al2O3), Glue ECHES');
-   MainMemo.Lines.Add('BeO, Ag, Diamond, Si3N4, KPT8, Polyurethane_foam');
-   MainMemo.Lines.Add('SOLDER_PbSn2Ag2.5, SOLDER_SnAg25Sb10, SOLDER_SnPb36Ag2, GLUE_Ablebond_3230');
-   MainMemo.Lines.Add('GLUE_Ablebond_8290, SOLDER_Au88Ge12, kanifoul, Polystyrene_rigid_R12');
-   MainMemo.Lines.Add('FR4, Polystyrene_Typical, air_solid');
-   MainMemo.Lines.Add('Gas : Dry_Air, Hydrogen_H2, Helium_He, Argon_Ar, Carbon_dioxide');
-   MainMemo.Lines.Add('Liquid : Water280K, Water320K, Water360K.');
-   MainMemo.Lines.Add('Reopen project, Orthotropy thermal conductivity, change priority blocks is supported.');
-   MainMemo.Lines.Add('Done');
+   MainMemo.Lines.Add('Current date and time:'+ DateTimeToStr(Now));
+   MainMemo.Lines.Add('This is 64 bit version.');
+   MainMemo.Lines.Add('Done loading.');
    breadfinish:=true;
+   bon_rotate_polygon:=true;
 
    if (bREALESEversion) then
    begin
@@ -8235,7 +8878,7 @@ begin
       // В моём визуализаторе к тому-же
       // наблюдается проблема с правильностью
       // использования OpenGL.
-      LoadSolutionID.Visible:=true;
+      LoadSolutionID.Visible:=false;
       // Также собственный визуализатор
       // неудовлетворительно работает
       // (не работает) поэтому геометрия
@@ -8263,7 +8906,9 @@ begin
       // Убираем управление фиксацией боковых стенок цилиндра.
       // AddBlockForm.CheckBoxFixedCylinder.Visible:=false;
       // Убираем задание механических граничных условий на стенке.
-     // AddWallForm.GroupBoxThermalStress.Visible:=false;
+      //AddWallForm.GroupBoxThermalStress.Visible:=false;
+
+      bon_rotate_polygon:=false; // закоментировать если используется вращение полигона
    end;
 
 end;
@@ -9326,29 +9971,40 @@ begin
          // условие Дирихле
          AddWallForm.PaneltemperatureBC.Visible:=true;
          AddWallForm.Etemp.Text:=FloatToStr(Tamb);
+         AddWallForm.EditViewFactor.Visible:=false;
+         AddWallForm.Label13.Visible:=false;
       end
-      else if (family=4) then
+       else if (family=4) then
       begin
-          AddWallForm.PaneltemperatureBC.Visible:=true;
+         // Стефан-Больцман
+         AddWallForm.PaneltemperatureBC.Visible:=true;
          AddWallForm.Etemp.Text:=FloatToStr(Tamb);
+         AddWallForm.EditViewFactor.Text:=FloatToStr(ViewFactor);
          AddWallForm.Panelemissivity.Visible:=true;
          //AddWallForm.Editemissivity.Text:=FloatToStr(emissivity);
          AddWallForm.Editemissivity.Text:=semissivity;
          AddWallForm.Label12.Caption:='emissivity';
+         AddWallForm.EditViewFactor.Visible:=true;
+         AddWallForm.Label13.Visible:=true;
       end
-      else if (family=3) then
+       else if (family=3) then
       begin
+         // Ньютон-Рихман.
          AddWallForm.PaneltemperatureBC.Visible:=true;
          AddWallForm.Etemp.Text:=FloatToStr(Tamb);
          AddWallForm.Panelemissivity.Visible:=true;
          //AddWallForm.Editemissivity.Text:=FloatToStr(heat_transfer_coefficient);
          AddWallForm.Editemissivity.Text:=sheat_transfer_coefficient;
          AddWallForm.Label12.Caption:='heat transfer coeff';
+         AddWallForm.EditViewFactor.Visible:=false;
+         AddWallForm.Label13.Visible:=false;
       end
        else
       begin
          // однородное условие Неймана
          AddWallForm.PaneltemperatureBC.Visible:=false;
+         AddWallForm.EditViewFactor.Visible:=false;
+         AddWallForm.Label13.Visible:=false;
       end;
       AddWallForm.RadioGroupPlane.ItemIndex:=iPlane-1;
       AddWallForm.Ename.Text:=Trim(name);
@@ -9594,9 +10250,9 @@ begin
    body[itek].binternalRadiation:=0;
    body[itek].iunion:=0;
    body[itek].bvisible:=true;
-   body[itek].redcolor:=0.502;
-   body[itek].greencolor:=0.502;
-   body[itek].bluecolor:=0.502;
+   body[itek].redcolor:=0.0; //0.502;
+   body[itek].greencolor:=0.0;//0.502;
+   body[itek].bluecolor:=0.0;//0.502;
    body[itek].transparency:=1.0;  // абсолютно непрозрачный.
    body[itek].dcol:=8421504;
    body[itek].BodyLineWidth:=1;
@@ -9921,7 +10577,7 @@ var
    filename : string; // имя записываемого файла
    f : TStringList; // переменная типа объект TStringList
    s : String; // текущая рабочая строка
-   i, i_4, j : Integer;
+   i, i_4, j, i_2, i_3 : Integer;
    bOk : Boolean;
    // isort, jsort : Integer; // текущий номер блока или источника при записи
    //body_change : TBody; // для сортировки блоков.
@@ -10473,6 +11129,7 @@ begin
             //s:=s+FloatToStr(emissivity)+' :';// излучательная способность.
             s:=s+FloatToStr(FormVariables.my_real_convert(semissivity,bOk))+' :';
          end;
+         s:=s+FloatToStr(ViewFactor)+' :';// Для фактора видимости.
          s:=s+FloatToStr(HF)+' :'; // для граничного условия 2 или 3 рода.
          if (bsymmetry) then s:=s+'1 :' else s:=s+'0 :';
          if (bpressure) then s:=s+'1 :' else s:=s+'0 :';
@@ -10692,9 +11349,401 @@ begin
     end;
     f.Add(s);
 
-   f.SaveToFile(filename+'.txt'); // сохранение результата
-   f.Free;
-   MainMemo.Lines.Add('File '+filename+'.txt  successfully written.');
+    // additional setting 24.07.2020
+    s:=FormSpeedInitialization.EditVx.Text+' :';
+    f.Add(s);
+    s:=FormSpeedInitialization.EditVy.Text+' :';
+    f.Add(s);
+    s:=FormSpeedInitialization.EditVz.Text+' :';
+    f.Add(s);
+    s:=IntToStr(FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(MeshForm.ComboBoxmeshgen.ItemIndex)+' :';
+    f.Add(s);
+    if (MeshForm.CheckBoxALICE.Checked) then
+    begin
+       // Adaptive Local Refinement Mesh
+       s:='1 :';
+    end
+    else
+    begin
+       // Structural Mesh
+       s:='0 :';
+    end;
+    f.Add(s);
+    s:=IntToStr(MeshForm.ComboBoxALICEType.ItemIndex)+' :';
+    f.Add(s);
+
+    if (FormXYPlot.bfirst_zapusk_XYPlot) then
+    begin
+
+       // При считывании тепловой модели инициализируем XYPlot.
+       if (ls>0) then
+       begin
+          // Инициализируем геометрическим центром первого источника тепла при его наличии.
+          FormXYPlot.EditXo.Text:=FloatToStr(0.5*(source[0].xS+source[0].xE));
+          FormXYPlot.EditYo.Text:=FloatToStr(0.5*(source[0].yS+source[0].yE));
+          FormXYPlot.EditZo.Text:=FloatToStr(0.5*(source[0].zS+source[0].zE));
+
+          if (ls>1) then
+          begin
+             if (abs(source[0].xS-source[1].xS)>1.0e-23) then
+             begin
+                FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+             end;
+             if (abs(source[0].yS-source[1].yS)>1.0e-23) then
+             begin
+                FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+             end;
+             if (abs(source[0].zS-source[1].zS)>1.0e-23) then
+             begin
+                FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+             end;
+          end;
+       end
+        else
+       begin
+          // Инициализируем геометрическим центром кабинета.
+          FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[0].xS+body[0].xE));
+          FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[0].yS+body[0].yE));
+          FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[0].zS+body[0].zE));
+          i_3:=-1;
+          for i_2 := 0 to lb-1 do
+          begin
+             if (body[i_2].n_power>0) then
+             begin
+                if ((i_3>-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                begin
+                   if (abs(body[i_3].xS-body[i_2].xS)>1.0e-23) then
+                   begin
+                      FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+                   end;
+                   if (abs(body[i_3].yS-body[i_2].yS)>1.0e-23) then
+                   begin
+                      FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+                   end;
+                   if (abs(body[i_3].zS-body[i_2].zS)>1.0e-23) then
+                   begin
+                      FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+                   end;
+                   break;
+                end;
+                if ((i_3=-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                begin
+                   i_3:=i_2;
+                   FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[i_2].xS+body[i_2].xE));
+                   FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[i_2].yS+body[i_2].yE));
+                   FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[i_2].zS+body[i_2].zE));
+                end;
+             end;
+          end;
+       end;
+
+       FormXYPlot.bfirst_zapusk_XYPlot:=false;
+
+    end;
+
+
+    s:=FormXYPlot.EditXo.Text+' :';
+    f.Add(s);
+    s:=FormXYPlot.EditYo.Text+' :';
+    f.Add(s);
+    s:=FormXYPlot.EditZo.Text+' :';
+    f.Add(s);
+    s:=IntToStr(FormXYPlot.ComboBoxdirectional.ItemIndex)+' :';
+    f.Add(s);
+
+    // Save AMGCL settings 25.07.2020
+    s:=IntToStr(FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(FormAMGCLParameters.ComboBoxIterator.ItemIndex)+' :';
+    f.Add(s);
+
+    // Save amg1r5 settings 27.07.2020
+    s:=IntToStr(FormSetting.ComboBoxNumberProcessors.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Formamg1r5Parameters.ComboBoxStabilization.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex)+' :';
+    f.Add(s);
+    s:=Trim(Formamg1r5Parameters.Editstrongthreshold.Text)+' :';
+    f.Add(s);
+    s:=Trim(Formamg1r5Parameters.EditF2F.Text)+' :';
+    f.Add(s);
+    if (Formamg1r5Parameters.CheckBox_amg1r6.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    s:=IntToStr(FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(FormSetting.ComboBoxFlowScheme.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(FormSetting.ComboBoxSchemeTemperature.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(FormSetting.ComboBox_lfil.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(FormSetting.ComboBox_m_restart_for_gmres.ItemIndex)+' :';
+    f.Add(s);
+
+    // Сохранение настроек Румба v.0.14 решателя.
+    // 28.07.2020.
+    s:=IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnFinnest.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnFinnestStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmemorysize.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxinterpolation.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxinterpollationStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxSort.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxcoarseningStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxStabilizationStress.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex)+' :';
+    f.Add(s);
+    s:=IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex)+' :';
+    f.Add(s);
+
+     // 30.07.2020
+    s:=Trim(Form_amg_manager.Editthreshold.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditthresholdSpeed.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditthresholdPressure.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditthresholdStress.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.Edit_truncation_T.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.Edit_truncation_Speed.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.Edit_truncation_Pressure.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.Edittruncation_Stress.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditmagicT.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditmagicSpeed.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditmagicPressure.Text)+' :';
+    f.Add(s);
+    s:=Trim(Form_amg_manager.EditmagicStress.Text)+' :';
+    f.Add(s);
+     if (Form_amg_manager.CheckBoxDiagonalDominant.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationT.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationSpeed.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationPressure.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationStress.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxStrongTranspose.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxprintlogTemperature.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+     if (Form_amg_manager.CheckBoxprintlogSpeed.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxprintlogPressure.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxprintlogStress.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+     if (Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxStressMatrixPortrait.Checked=true) then
+    begin
+       s:='1 :';
+    end
+    else
+    begin
+       s:='0 :';
+    end;
+    f.Add(s);
+
+
+
+    if (Pos('.txt',filename)>0) then
+    begin
+       filename:=StringReplace(filename,'.txt','',[rfReplaceAll, rfIgnoreCase]);
+    end;
+    f.SaveToFile(filename+'.txt'); // сохранение результата
+    f.Free;
+    MainMemo.Lines.Add('File '+filename+'.txt  successfully written.');
 end;
 
 procedure NewWriteFile();
@@ -10702,17 +11751,23 @@ var
    filename : string; // имя записываемого файла
    f : TStringList; // переменная типа объект TStringList
    s : String; // текущая рабочая строка
-   i, i_4, j : Integer;
+   i, i_4, j, i_2, i_3 : Integer;
    bOk : Boolean;
    // isort, jsort : Integer; // текущий номер блока или источника при записи
    //body_change : TBody; // для сортировки блоков.
 begin
     // записывает файл с геометрией задачи
-   filename:='';
-   if not InputQuery('Input name file', 'Please, enter name writing file',filename)
-   then exit;
+   //filename:='';
+   //if not InputQuery('Input name file', 'Please, enter name writing file',filename)
+   //then exit;
 
    f:=TStringList.Create();
+
+   // 01.08.2020 В файл пишется метка для того чтобы понять что это не
+   // просто текстовый файл, а именно файл с моделью для программы AliceMesh.v.0.45.
+   s:='open_label=1082020 :';
+   f.Add(s);
+   // Если метка во входном файле отсутствует значит файл не будет открываться.
 
    s:='mashtab='+FloatToStr(m);
    s:=s+' :'+'gravity_x='+FloatToStr(gx)+' :'+'gravity_y='+FloatToStr(gy)+' :'+'gravity_z='+FloatToStr(gz)+' :';
@@ -11258,6 +12313,7 @@ begin
             //s:=s+FloatToStr(emissivity)+' :';// излучательная способность.
             s:=s+'wall'+IntToStr(i)+'semissivity='+FloatToStr(FormVariables.my_real_convert(semissivity,bOk))+' :';
          end;
+         s:=s+'wall'+IntToStr(i)+'ViewFactor='+FloatToStr(ViewFactor)+' :'; // Фактор видимости.
          s:=s+'wall'+IntToStr(i)+'HF='+FloatToStr(HF)+' :'; // для граничного условия 2 или 3 рода.
          if (bsymmetry) then s:=s+'wall'+IntToStr(i)+'bsymmetry='+'1 :' else s:=s+'wall'+IntToStr(i)+'bsymmetry='+'0 :';
          if (bpressure) then s:=s+'wall'+IntToStr(i)+'bpressure='+'1 :' else s:=s+'wall'+IntToStr(i)+'bpressure='+'0 :';
@@ -11477,9 +12533,442 @@ begin
     end;
     f.Add(s);
 
-   f.SaveToFile(filename+'.txt'); // сохранение результата
-   f.Free;
-   MainMemo.Lines.Add('File '+filename+'.txt  successfully written.');
+    if (FormatSettings.DecimalSeparator=',') then
+    begin
+        // заменить все точки в FormSpeedInitialization на запятые.
+        s:=FormSpeedInitialization.EditVx.Text;
+        FormSpeedInitialization.EditVx.Text:=StringReplace(s,'.',',',[rfReplaceAll]);
+
+        s:=FormSpeedInitialization.EditVy.Text;
+        FormSpeedInitialization.EditVy.Text:=StringReplace(s,'.',',',[rfReplaceAll]);
+
+        s:=FormSpeedInitialization.EditVz.Text;
+        FormSpeedInitialization.EditVz.Text:=StringReplace(s,'.',',',[rfReplaceAll]);
+
+    end;
+    if (FormatSettings.DecimalSeparator='.') then
+    begin
+        // заменить все точки в FormSpeedInitialization на запятые.
+        s:=FormSpeedInitialization.EditVx.Text;
+        FormSpeedInitialization.EditVx.Text:=StringReplace(s,',','.',[rfReplaceAll]);
+
+        s:=FormSpeedInitialization.EditVy.Text;
+        FormSpeedInitialization.EditVy.Text:=StringReplace(s,',','.',[rfReplaceAll]);
+
+        s:=FormSpeedInitialization.EditVz.Text;
+        FormSpeedInitialization.EditVz.Text:=StringReplace(s,',','.',[rfReplaceAll]);
+
+    end;
+
+    // additional setting 24.07.2020
+    s:='VxInitialization_Speed='+FormSpeedInitialization.EditVx.Text+' :';
+    f.Add(s);
+    s:='VyInitialization_Speed='+FormSpeedInitialization.EditVy.Text+' :';
+    f.Add(s);
+    s:='VzInitialization_Speed='+FormSpeedInitialization.EditVz.Text+' :';
+    f.Add(s);
+    s:='StaticStructuralSolverSetting='+IntToStr(FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex)+' :';
+    f.Add(s);
+    s:='MeshGenAlgo_id='+IntToStr(MeshForm.ComboBoxmeshgen.ItemIndex)+' :';
+    f.Add(s);
+    if (MeshForm.CheckBoxALICE.Checked) then
+    begin
+       // Adaptive Local Refinement Mesh
+       s:='AdaptiveLocalRefinementMesh_Checker='+'1 :';
+    end
+    else
+    begin
+       // Structural Mesh
+       s:='AdaptiveLocalRefinementMesh_Checker='+'0 :';
+    end;
+    f.Add(s);
+
+    s:='ALICE_Mesh_Type='+IntToStr(MeshForm.ComboBoxALICEType.ItemIndex)+' :';
+    f.Add(s);
+
+    if (FormXYPlot.bfirst_zapusk_XYPlot) then
+    begin
+
+       // При считывании тепловой модели инициализируем XYPlot.
+       if (ls>0) then
+       begin
+          // Инициализируем геометрическим центром первого источника тепла при его наличии.
+          FormXYPlot.EditXo.Text:=FloatToStr(0.5*(source[0].xS+source[0].xE));
+          FormXYPlot.EditYo.Text:=FloatToStr(0.5*(source[0].yS+source[0].yE));
+          FormXYPlot.EditZo.Text:=FloatToStr(0.5*(source[0].zS+source[0].zE));
+
+          if (ls>1) then
+          begin
+             if (abs(source[0].xS-source[1].xS)>1.0e-23) then
+             begin
+                FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+             end;
+             if (abs(source[0].yS-source[1].yS)>1.0e-23) then
+             begin
+                FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+             end;
+             if (abs(source[0].zS-source[1].zS)>1.0e-23) then
+             begin
+                FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+             end;
+          end;
+       end
+        else
+       begin
+          // Инициализируем геометрическим центром кабинета.
+          FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[0].xS+body[0].xE));
+          FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[0].yS+body[0].yE));
+          FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[0].zS+body[0].zE));
+          i_3:=-1;
+          for i_2 := 0 to lb-1 do
+          begin
+             if (body[i_2].n_power>0) then
+             begin
+                if ((i_3>-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                begin
+                   if (abs(body[i_3].xS-body[i_2].xS)>1.0e-23) then
+                   begin
+                      FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+                   end;
+                   if (abs(body[i_3].yS-body[i_2].yS)>1.0e-23) then
+                   begin
+                      FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+                   end;
+                   if (abs(body[i_3].zS-body[i_2].zS)>1.0e-23) then
+                   begin
+                      FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+                   end;
+                   break;
+                end;
+                if ((i_3=-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                begin
+                   i_3:=i_2;
+                   FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[i_2].xS+body[i_2].xE));
+                   FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[i_2].yS+body[i_2].yE));
+                   FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[i_2].zS+body[i_2].zE));
+                end;
+             end;
+          end;
+       end;
+
+       FormXYPlot.bfirst_zapusk_XYPlot:=false;
+
+    end;
+
+    s:='XYPlotXo='+FormXYPlot.EditXo.Text+' :';
+    f.Add(s);
+    s:='XYPlotYo='+FormXYPlot.EditYo.Text+' :';
+    f.Add(s);
+    s:='XYPlotZo='+FormXYPlot.EditZo.Text+' :';
+    f.Add(s);
+    s:='line_directional='+IntToStr(FormXYPlot.ComboBoxdirectional.ItemIndex)+' :';
+    f.Add(s);
+
+    // Save AMGCL settings 25.07.2020
+    s:='AMGCL_ddemidov_smoother='+IntToStr(FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex)+' :';
+    f.Add(s);
+    s:='AMGCL_ddemidov_AMG_Coarseng='+IntToStr(FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex)+' :';
+    f.Add(s);
+    s:='AMGCL_ddemidov_Krjlov_iterator='+IntToStr(FormAMGCLParameters.ComboBoxIterator.ItemIndex)+' :';
+    f.Add(s);
+
+    // Save amg1r5 settings 27.07.2020
+    s:='inumber_processors='+IntToStr(FormSetting.ComboBoxNumberProcessors.ItemIndex)+' :';
+    f.Add(s);
+    s:='amg1r5_Stailization='+IntToStr(Formamg1r5Parameters.ComboBoxStabilization.ItemIndex)+' :';
+    f.Add(s);
+    s:='amg1r5_number_presmoothers='+IntToStr(Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex)+' :';
+    f.Add(s);
+    s:='amg1r5_number_postsmoothers='+IntToStr(Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex)+' :';
+    f.Add(s);
+    s:='amg1r5_type_algorithm_presmoother='+IntToStr(Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex)+' :';
+    f.Add(s);
+    s:='amg1r5_type_algorithm_postsmoother='+IntToStr(Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex)+' :';
+    f.Add(s);
+    s:='amg1r5_Strong_threshold='+Trim(Formamg1r5Parameters.Editstrongthreshold.Text)+' :';
+    f.Add(s);
+    s:='amg1r5_F_to_F='+Trim(Formamg1r5Parameters.EditF2F.Text)+' :';
+    f.Add(s);
+    if (Formamg1r5Parameters.CheckBox_amg1r6.Checked=true) then
+    begin
+       s:='amg1r5_amg1r6_version_aggregator='+'1 :';
+    end
+    else
+    begin
+       s:='amg1r5_amg1r6_version_aggregator='+'0 :';
+    end;
+    f.Add(s);
+
+    s:='PressureVelocityCoupling='+IntToStr(FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex)+' :';
+    f.Add(s);
+    s:='FlowConvectionScheme_id='+IntToStr(FormSetting.ComboBoxFlowScheme.ItemIndex)+' :';
+    f.Add(s);
+    s:='TemperatureConvectionScheme_id='+IntToStr(FormSetting.ComboBoxSchemeTemperature.ItemIndex)+' :';
+    f.Add(s);
+    s:='ILUK_lfil_number='+IntToStr(FormSetting.ComboBox_lfil.ItemIndex)+' :';
+    f.Add(s);
+    s:='FGMRes_mrestart_number='+IntToStr(FormSetting.ComboBox_m_restart_for_gmres.ItemIndex)+' :';
+    f.Add(s);
+
+    // Сохранение настроек Румба v.0.14 решателя.
+    // 28.07.2020.
+    s:='Maximum_reduced_levels_Temperature='+IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex)+' :';
+    f.Add(s);
+    s:='Maximum_reduced_levels_Speed='+IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Maximum_reduced_levels_Pressure='+IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Maximum_reduced_levels_Stress='+IntToStr(Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_nFinnest='+IntToStr(Form_amg_manager.ComboBoxnFinnest.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_nFinnestSpeed='+IntToStr(Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_nFinnestPressure='+IntToStr(Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_nFinnestStress='+IntToStr(Form_amg_manager.ComboBoxnFinnestStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_presmoothers='+IntToStr(Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_presmoothersSpeed='+IntToStr(Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_presmoothersPressure='+IntToStr(Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_presmoothersStress='+IntToStr(Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_postsmoothers='+IntToStr(Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_postsmoothersSpeed='+IntToStr(Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_postsmoothersPressure='+IntToStr(Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_number_postsmoothersStress='+IntToStr(Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_memory_size='+IntToStr(Form_amg_manager.ComboBoxmemorysize.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_memory_sizeSpeed='+IntToStr(Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_memory_sizePressure='+IntToStr(Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_memory_sizeStress='+IntToStr(Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_interpolation_id='+IntToStr(Form_amg_manager.ComboBoxinterpolation.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_interpolation_id_Speed='+IntToStr(Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_interpolation_id_Pressure='+IntToStr(Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_interpolation_id_Stress='+IntToStr(Form_amg_manager.ComboBoxinterpollationStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_sort_algo='+IntToStr(Form_amg_manager.ComboBoxSort.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_Relaxation_Temperature='+IntToStr(Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_Relaxation_Speed='+IntToStr(Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_Relaxation_Pressure='+IntToStr(Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_Relaxation_Stress='+IntToStr(Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_amg_splitting_coarsening='+IntToStr(Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_amg_splitting_coarseningSpeed='+IntToStr(Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_amg_splitting_coarseningPressure='+IntToStr(Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_amg_splitting_coarseningStress='+IntToStr(Form_amg_manager.ComboBoxcoarseningStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_Stabilization='+IntToStr(Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_StabilizationSpeed='+IntToStr(Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_StabilizationPressure='+IntToStr(Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='Rumba_StabilizationStress='+IntToStr(Form_amg_manager.ComboBoxStabilizationStress.ItemIndex)+' :';
+    f.Add(s);
+    s:='C_F_decomposition_algorithms_and_data_structure='+IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex)+' :';
+    f.Add(s);
+    s:='C_F_decomposition_algorithms_and_data_structureSpeed='+IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex)+' :';
+    f.Add(s);
+    s:='C_F_decomposition_algorithms_and_data_structurePressure='+IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex)+' :';
+    f.Add(s);
+    s:='C_F_decomposition_algorithms_and_data_structureStress='+IntToStr(Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex)+' :';
+    f.Add(s);
+
+    // 30.07.2020
+    s:='Rumba_threshold_Temperature='+Trim(Form_amg_manager.Editthreshold.Text)+' :';
+    f.Add(s);
+    s:='Rumba_threshold_Speed='+Trim(Form_amg_manager.EditthresholdSpeed.Text)+' :';
+    f.Add(s);
+    s:='Rumba_threshold_Pressure='+Trim(Form_amg_manager.EditthresholdPressure.Text)+' :';
+    f.Add(s);
+    s:='Rumba_threshold_Stress='+Trim(Form_amg_manager.EditthresholdStress.Text)+' :';
+    f.Add(s);
+    s:='Rumba_truncation_interpolation_Temp='+Trim(Form_amg_manager.Edit_truncation_T.Text)+' :';
+    f.Add(s);
+    s:='Rumba_truncation_interpolation_Speed='+Trim(Form_amg_manager.Edit_truncation_Speed.Text)+' :';
+    f.Add(s);
+    s:='Rumba_truncation_interpolation_Pressure='+Trim(Form_amg_manager.Edit_truncation_Pressure.Text)+' :';
+    f.Add(s);
+    s:='Rumba_truncation_interpolation_Stress='+Trim(Form_amg_manager.Edittruncation_Stress.Text)+' :';
+    f.Add(s);
+    s:='Rumba_F2F_Temperature='+Trim(Form_amg_manager.EditmagicT.Text)+' :';
+    f.Add(s);
+    s:='Rumba_F2F_Speed='+Trim(Form_amg_manager.EditmagicSpeed.Text)+' :';
+    f.Add(s);
+    s:='Rumba_F2F_Pressure='+Trim(Form_amg_manager.EditmagicPressure.Text)+' :';
+    f.Add(s);
+    s:='Rumba_F2F_Stress='+Trim(Form_amg_manager.EditmagicStress.Text)+' :';
+    f.Add(s);
+
+    if (Form_amg_manager.CheckBoxDiagonalDominant.Checked=true) then
+    begin
+       s:='Rumba_Diagonal_dominant='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_Diagonal_dominant='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationT.Checked=true) then
+    begin
+       s:='Rumba_truncationT='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_truncationT='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationSpeed.Checked=true) then
+    begin
+       s:='Rumba_truncationSpeed='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_truncationSpeed='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationPressure.Checked=true) then
+    begin
+       s:='Rumba_truncationPressure='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_truncationPressure='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxtruncationStress.Checked=true) then
+    begin
+       s:='Rumba_truncationStress='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_truncationStress='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxStrongTranspose.Checked=true) then
+    begin
+       s:='Rumba_StrongTranspose='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_StrongTranspose='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxprintlogTemperature.Checked=true) then
+    begin
+       s:='Rumba_PrintLogTemperature='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_PrintLogTemperature='+'0 :';
+    end;
+    f.Add(s);
+     if (Form_amg_manager.CheckBoxprintlogSpeed.Checked=true) then
+    begin
+       s:='Rumba_PrintLogSpeed='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_PrintLogSpeed='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxprintlogPressure.Checked=true) then
+    begin
+       s:='Rumba_PrintLogPressure='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_PrintLogPressure='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxprintlogStress.Checked=true) then
+    begin
+       s:='Rumba_PrintLogStress='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_PrintLogStress='+'0 :';
+    end;
+    f.Add(s);
+     if (Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked=true) then
+    begin
+       s:='Rumba_TemperatureMatrixPortrait='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_TemperatureMatrixPortrait='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked=true) then
+    begin
+       s:='Rumba_SpeedMatrixPortrait='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_SpeedMatrixPortrait='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked=true) then
+    begin
+       s:='Rumba_PressureMatrixPortrait='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_PressureMatrixPortrait='+'0 :';
+    end;
+    f.Add(s);
+    if (Form_amg_manager.CheckBoxStressMatrixPortrait.Checked=true) then
+    begin
+       s:='Rumba_StressMatrixPortrait='+'1 :';
+    end
+    else
+    begin
+       s:='Rumba_StressMatrixPortrait='+'0 :';
+    end;
+    f.Add(s);
+
+
+    //if (Pos('.txt',filename)>0) then
+    //begin
+      // filename:=StringReplace(filename,'.txt','',[rfReplaceAll, rfIgnoreCase]);
+    //end;
+    // f.SaveToFile(filename+'.txt'); // сохранение результата
+
+    if SaveDialog1.Execute then
+    begin
+       filename:=SaveDialog1.FileName;
+       if (Pos('.txt',filename)>0) then
+       begin
+          filename:=StringReplace(filename,'.txt','',[rfReplaceAll, rfIgnoreCase]);
+       end;
+
+       f.SaveToFile(filename+'.txt'); // сохранение результата
+       MainMemo.Lines.Add('File '+filename+'.txt successfully written.');
+    end;
+
+    f.Free;
+    //MainMemo.Lines.Add('File '+filename+'.txt  successfully written.');
 end; // NewWriteFile();
 
 begin
@@ -12365,6 +13854,11 @@ begin
    end;
 
    s:=Copy(s,Pos(':',s)+1,length(s));
+   // ViewFactor
+   sub:=Trim(Copy(s,1,Pos(':',s)-1));
+   wall.ViewFactor:=StrToFloat(sub);
+
+   s:=Copy(s,Pos(':',s)+1,length(s));
    // Heat Flux
    sub:=Trim(Copy(s,1,Pos(':',s)-1));
    wall.HF:=StrToFloat(sub);
@@ -12472,12 +13966,12 @@ end;
 
 // считываем входной файл :
 procedure TLaplas.read1Click(Sender: TObject);
-var iq, i_2, i_3 : Integer;
+var iq : Integer;
 
 procedure My_read_model_old();
 var
    f : TStringList; // переменная типа объект TStringList
-   i,j, imlength : Integer; // счётчик
+   i,j, i_2, i_3, imlength : Integer; // счётчик
    s,sub : string; // анализируемая строка из файла
    NewNode, Nodeloc, Noddy : TTreeNode; // узел дерева элементов
    flagunion : array of Boolean; //  было ли создано объединение
@@ -12487,6 +13981,7 @@ var
    bOk : Boolean;
    Qunion_number : array of Integer; // номера unionov
    im1, im2 : Integer;
+   bXY_empty : Boolean;
 begin
     breadfinish:=false;
    f:=TStringList.Create();
@@ -13075,604 +14570,2757 @@ begin
       chkSpecular.Checked:=False;
    end;
 
-
-   // отображение дерева элементов:
-
-   // количество объединений уже известно.
-   // Всего lu объединений.
-   SetLength(flagunion,lu+1);
-   for j:=0 to lu do flagunion[j]:=false; // ни один union не был создан
-
-   MainTreeView.Items.Clear; // очистка дерева
-   for j:=0 to (lb-1) do
+   // i+3 строк присутствуют, значит файл нового образца и в нем сохраняются
+   // скорости для инициализации.
+   if (i+3< f.Count) then
    begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      FormSpeedInitialization.EditVx.Text:=Trim(sub);
 
-      if (j=0) then
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      FormSpeedInitialization.EditVy.Text:=Trim(sub);
+
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      FormSpeedInitialization.EditVz.Text:=Trim(sub);
+   end
+   else
+   begin
+      FormSpeedInitialization.EditVx.Text:='0.0';
+      FormSpeedInitialization.EditVy.Text:='0.0';
+      FormSpeedInitialization.EditVz.Text:='0.0';
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
       begin
-         // кабинет
-         NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,body[j].name);
-         NewNode.ImageIndex:=0;  // номер картинки
-         NewNode.SelectedIndex:=0; // номер картинки когда элемент выделен
+         //ShowMessage('error! StaticStructuralSolverSetting is empty.');
+         FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=0; // BiCGStab+ILU(lfil).
       end
-       else
+        else
       begin
-         // другие блоки
-         if (body[j].iunion=0) then
+         if ((StrToInt(Trim(sub))>4)or(StrToInt(Trim(sub))<0)) then
          begin
-            MainTreeView.SetFocus;
-            MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-            NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,body[j].name);
-            NewNode.ImageIndex:=1;  // номер картинки
-            NewNode.SelectedIndex:=1; // номер картинки когда элемент выделен
+            FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=0; // BiCGStab+ILU(lfil).
          end
           else
          begin
-            if (flagunion[body[j].iunion]=false) then
-            begin
-               if (myassembles[body[j].iunion-1].iunionparent=-1) then
-               begin
-                  MainTreeView.SetFocus;
-                  MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[body[j].iunion-1].name);
-                  NewNode.ImageIndex:=4;  // номер картинки
-                  NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-               end
-               else
-               begin
-                  // у union`а есть родительский union не являющийся кабинетом.
-                  im1:=1;
-                  SetLength(Qunion_number,im1);
-                  Qunion_number[0]:=body[j].iunion;
-                  while ((Qunion_number[im1-1]<>0)and (flagunion[Qunion_number[im1-1]]=false)) do
-                  begin
-                     inc(im1);
-                     SetLength(Qunion_number,im1);
-                     Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
-                  end;
-                  // построен список вложенных unionov.
-                  // в конце списка либо кабинет либо уже построенный union.
-                  // последний значимый элемент im1-2. Всего значимых элементов im1-1.
-                  // Теперь надо создать в дереве последовательность вложенных unionov.
-                  if (Qunion_number[im1-1]=0) then
-                  begin
-                     MainTreeView.SetFocus;
-                     MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
-                     NewNode.ImageIndex:=4;  // номер картинки
-                     NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                     for im2:=im1-3 downto 0 do
-                     begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                        Noddy := MainTreeView.Items[0];
-                        Searching := true;
-                        while (Searching) and (Noddy <> nil) do
-                        begin
-                           if Noddy.text = SearchTarget then
-                           begin
-                              // найден
-                              Searching := False;
-                              MainTreeView.Selected := Noddy;
-                              MainTreeView.SetFocus;
-                           end
-                            else
-                           begin
-                              Noddy := Noddy.GetNext
-                           end;
-                        end;
-                        Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                        NewNode.ImageIndex:=4;  // номер картинки
-                        NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                        MainTreeView.Selected:=Nodeloc;
-                     end;
-                  end
-                   else
-                  begin
-                     for im2:=im1-2 downto 0 do
-                     begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                        Noddy := MainTreeView.Items[0];
-                        Searching := true;
-                        while (Searching) and (Noddy <> nil) do
-                        begin
-                           if Noddy.text = SearchTarget then
-                           begin
-                              // найден
-                              Searching := False;
-                              MainTreeView.Selected := Noddy;
-                              MainTreeView.SetFocus;
-                           end
-                            else
-                           begin
-                              Noddy := Noddy.GetNext
-                           end;
-                        end;
-                        Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                        NewNode.ImageIndex:=4;  // номер картинки
-                        NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                        MainTreeView.Selected:=Nodeloc;
-                     end;
-                  end;
-                  for im2:=0 to im1-2 do
-                  begin
-                     flagunion[Qunion_number[im2]]:=True;
-                  end;
-               end;
+            FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=0; // BiCGStab+ILU(lfil).
+   end;
 
-                SearchTarget:=myassembles[body[j].iunion-1].name;
-                Noddy := MainTreeView.Items[0];
-                Searching := true;
-                while (Searching) and (Noddy <> nil) do
-                begin
-                   if Noddy.text = SearchTarget then
-                   begin
-                      // найден
-                      Searching := False;
-                      MainTreeView.Selected := Noddy;
-                      MainTreeView.SetFocus;
-                   end
-                 else
-                   begin
-                     Noddy := Noddy.GetNext
-                   end;
-                 end;
-               Nodeloc:=MainTreeView.Selected;
-               NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,body[j].name);
-               NewNode.ImageIndex:=1;  // номер картинки
-               NewNode.SelectedIndex:=1; // номер картинки когда элемент выделен
-               MainTreeView.Selected:=Nodeloc;
-               flagunion[body[j].iunion]:=true;
-            end
-             else
-            begin
-                SearchTarget:=myassembles[body[j].iunion-1].name;
-                Noddy := MainTreeView.Items[0];
-                Searching := true;
-                while (Searching) and (Noddy <> nil) do
-                begin
-                   if Noddy.text = SearchTarget then
-                   begin
-                      Searching := False;
-                      MainTreeView.Selected := Noddy;
-                      MainTreeView.SetFocus;
-                   end
-                 else
-                   begin
-                     Noddy := Noddy.GetNext
-                   end;
-                 end;
-                 Nodeloc:=MainTreeView.Selected;
-                 NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,body[j].name);
-                 NewNode.ImageIndex:=1;  // номер картинки
-                 NewNode.SelectedIndex:=1; // номер картинки когда элемент выделен
-                 MainTreeView.Selected:=Nodeloc;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! MeshGenAlgo_id is empty.');
+         MeshForm.ComboBoxmeshgen.ItemIndex:=2; // CoarseMesh
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            MeshForm.ComboBoxmeshgen.ItemIndex:=2; // CoarseMesh
+         end
+          else
+         begin
+            MeshForm.ComboBoxmeshgen.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      MeshForm.ComboBoxmeshgen.ItemIndex:=2; // CoarseMesh
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! AdaptiveLocalRefinementMesh_Checker is empty.');
+         MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+      end
+       else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+            MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+               0 :
+               begin
+                  MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+               end;
+               1 :
+               begin
+                  MeshForm.CheckBoxALICE.Checked:=true; // Адаптивная Локально Измельчённая Сетка.
+               end;
             end;
          end;
       end;
-   end;
-   for j:=0 to (ls-1) do
+   end
+    else
    begin
-      // источники тепла
-      if (source[j].iunion=0) then
+      MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+   end;
+
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
       begin
-         MainTreeView.SetFocus;
-         MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-         NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,source[j].name);
-         NewNode.ImageIndex:=2;  // номер картинки
-         NewNode.SelectedIndex:=2; // номер картинки когда элемент выделен
+         //ShowMessage('error! ALICE_Mesh_Type is empty.');
+         MeshForm.ComboBoxALICEType.ItemIndex:=0; // AliceMesh Coarse
       end
-       else
+        else
       begin
-          if (flagunion[source[j].iunion]=false) then
-            begin
-
-               if (myassembles[body[j].iunion-1].iunionparent=-1) then
-               begin
-                  MainTreeView.SetFocus;
-                  MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[source[j].iunion-1].name);
-                  NewNode.ImageIndex:=4;  // номер картинки
-                  NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-               end
-               else
-               begin
-                  // у union`а есть родительский union не являющийся кабинетом.
-                  im1:=1;
-                  SetLength(Qunion_number,im1);
-                  Qunion_number[0]:=source[j].iunion;
-                  while ((Qunion_number[im1-1]<>0)and (flagunion[Qunion_number[im1-1]]=false)) do
-                  begin
-                     inc(im1);
-                     SetLength(Qunion_number,im1);
-                     Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
-                  end;
-                  // построен список вложенных unionov.
-                  // в конце списка либо кабинет либо уже построенный union.
-                  // последний значимый элемент im1-2. Всего значимых элементов im1-1.
-                  // Теперь надо создать в дереве последовательность вложенных unionov.
-                  if (Qunion_number[im1-1]=0) then
-                  begin
-                     MainTreeView.SetFocus;
-                     MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
-                     NewNode.ImageIndex:=4;  // номер картинки
-                     NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                     for im2:=im1-3 downto 0 do
-                     begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                        Noddy := MainTreeView.Items[0];
-                        Searching := true;
-                        while (Searching) and (Noddy <> nil) do
-                        begin
-                           if Noddy.text = SearchTarget then
-                           begin
-                              // найден
-                              Searching := False;
-                              MainTreeView.Selected := Noddy;
-                              MainTreeView.SetFocus;
-                           end
-                            else
-                           begin
-                              Noddy := Noddy.GetNext
-                           end;
-                        end;
-                        Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                        NewNode.ImageIndex:=4;  // номер картинки
-                        NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                        MainTreeView.Selected:=Nodeloc;
-                     end;
-                  end
-                   else
-                  begin
-                     for im2:=im1-2 downto 0 do
-                     begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                        Noddy := MainTreeView.Items[0];
-                        Searching := true;
-                        while (Searching) and (Noddy <> nil) do
-                        begin
-                           if Noddy.text = SearchTarget then
-                           begin
-                              // найден
-                              Searching := False;
-                              MainTreeView.Selected := Noddy;
-                              MainTreeView.SetFocus;
-                           end
-                            else
-                           begin
-                              Noddy := Noddy.GetNext
-                           end;
-                        end;
-                        Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                        NewNode.ImageIndex:=4;  // номер картинки
-                        NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                        MainTreeView.Selected:=Nodeloc;
-                     end;
-                  end;
-                  for im2:=0 to im1-2 do
-                  begin
-                     flagunion[Qunion_number[im2]]:=True;
-                  end;
-               end;
-
-
-               SearchTarget:=myassembles[source[j].iunion-1].name;
-                Noddy := MainTreeView.Items[0];
-                Searching := true;
-                while (Searching) and (Noddy <> nil) do
-                begin
-                   if Noddy.text = SearchTarget then
-                   begin
-                      Searching := False;
-                      MainTreeView.Selected := Noddy;
-                      MainTreeView.SetFocus;
-                   end
-                 else
-                   begin
-                     Noddy := Noddy.GetNext
-                   end;
-                 end;
-               Nodeloc:=MainTreeView.Selected;
-               NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,source[j].name);
-               NewNode.ImageIndex:=2;  // номер картинки
-               NewNode.SelectedIndex:=2; // номер картинки когда элемент выделен
-               MainTreeView.Selected:=Nodeloc;
-               flagunion[source[j].iunion]:=true;
-            end
-             else
-            begin
-                SearchTarget:=myassembles[source[j].iunion-1].name;
-                Noddy := MainTreeView.Items[0];
-                Searching := true;
-                while (Searching) and (Noddy <> nil) do
-                begin
-                   if Noddy.text = SearchTarget then
-                   begin
-                      Searching := False;
-                      MainTreeView.Selected := Noddy;
-                      MainTreeView.SetFocus;
-                   end
-                 else
-                   begin
-                     Noddy := Noddy.GetNext
-                   end;
-                 end;
-                 Nodeloc:=MainTreeView.Selected;
-                 NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,source[j].name);
-                 NewNode.ImageIndex:=2;  // номер картинки
-                 NewNode.SelectedIndex:=2; // номер картинки когда элемент выделен
-                 MainTreeView.Selected:=Nodeloc;
-            end;
-      end;
-   end;
-   for j:=0 to (lw-1) do
-   begin
-      // твёрдые стенки
-      if (wall[j].iunion=0) then
-      begin
-         MainTreeView.SetFocus;
-         MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-         NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,wall[j].name);
-         NewNode.ImageIndex:=3;  // номер картинки
-         NewNode.SelectedIndex:=3; // номер картинки когда элемент выделен
-      end
-       else
-       begin
-          if (flagunion[wall[j].iunion]=false) then
-            begin
-
-
-               if (myassembles[body[j].iunion-1].iunionparent=-1) then
-               begin
-                  MainTreeView.SetFocus;
-                  MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[wall[j].iunion-1].name);
-                  NewNode.ImageIndex:=4;  // номер картинки
-                  NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-               end
-               else
-               begin
-                  // у union`а есть родительский union не являющийся кабинетом.
-                  im1:=1;
-                  SetLength(Qunion_number,im1);
-                  Qunion_number[0]:=wall[j].iunion;
-                  while ((Qunion_number[im1-1]<>0)and(flagunion[Qunion_number[im1-1]]=false)) do
-                  begin
-                     inc(im1);
-                     SetLength(Qunion_number,im1);
-                     Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
-                  end;
-                  // построен список вложенных unionov.
-                  // в конце списка либо кабинет либо уже построенный union.
-                  // последний значимый элемент im1-2. Всего значимых элементов im1-1.
-                  // Теперь надо создать в дереве последовательность вложенных unionov.
-                  if (Qunion_number[im1-1]=0) then
-                  begin
-                     MainTreeView.SetFocus;
-                     MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
-                     NewNode.ImageIndex:=4;  // номер картинки
-                     NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                     for im2:=im1-3 downto 0 do
-                     begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                        Noddy := MainTreeView.Items[0];
-                        Searching := true;
-                        while (Searching) and (Noddy <> nil) do
-                        begin
-                           if Noddy.text = SearchTarget then
-                           begin
-                              // найден
-                              Searching := False;
-                              MainTreeView.Selected := Noddy;
-                              MainTreeView.SetFocus;
-                           end
-                            else
-                           begin
-                              Noddy := Noddy.GetNext
-                           end;
-                        end;
-                        Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                        NewNode.ImageIndex:=4;  // номер картинки
-                        NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                        MainTreeView.Selected:=Nodeloc;
-                     end;
-                  end
-                   else
-                  begin
-                     for im2:=im1-2 downto 0 do
-                     begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                        Noddy := MainTreeView.Items[0];
-                        Searching := true;
-                        while (Searching) and (Noddy <> nil) do
-                        begin
-                           if Noddy.text = SearchTarget then
-                           begin
-                              // найден
-                              Searching := False;
-                              MainTreeView.Selected := Noddy;
-                              MainTreeView.SetFocus;
-                           end
-                            else
-                           begin
-                              Noddy := Noddy.GetNext
-                           end;
-                        end;
-                        Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                        NewNode.ImageIndex:=4;  // номер картинки
-                        NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                        MainTreeView.Selected:=Nodeloc;
-                     end;
-                  end;
-                  for im2:=0 to im1-2 do
-                  begin
-                     flagunion[Qunion_number[im2]]:=True;
-                  end;
-               end;
-
-
-
-
-               SearchTarget:=myassembles[wall[j].iunion-1].name;
-               Noddy := MainTreeView.Items[0];
-               Searching := true;
-               while (Searching) and (Noddy <> nil) do
-               begin
-                  if Noddy.text = SearchTarget then
-                  begin
-                     Searching := False;
-                     MainTreeView.Selected := Noddy;
-                     MainTreeView.SetFocus;
-                  end
-                 else
-                   begin
-                     Noddy := Noddy.GetNext
-                   end;
-               end;
-               Nodeloc:=MainTreeView.Selected;
-
-
-               NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,wall[j].name);
-               NewNode.ImageIndex:=3;  // номер картинки
-               NewNode.SelectedIndex:=3; // номер картинки когда элемент выделен
-               MainTreeView.Selected:=Nodeloc;
-               flagunion[wall[j].iunion]:=true;
-            end
-             else
-            begin
-                SearchTarget:=myassembles[wall[j].iunion-1].name;
-                Noddy := MainTreeView.Items[0];
-                Searching := true;
-                while (Searching) and (Noddy <> nil) do
-                begin
-                   if Noddy.text = SearchTarget then
-                   begin
-                      Searching := False;
-                      MainTreeView.Selected := Noddy;
-                      MainTreeView.SetFocus;
-                   end
-                 else
-                   begin
-                     Noddy := Noddy.GetNext
-                   end;
-                 end;
-                 Nodeloc:=MainTreeView.Selected;
-                 NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,wall[j].name);
-                 NewNode.ImageIndex:=3;  // номер картинки
-                 NewNode.SelectedIndex:=3; // номер картинки когда элемент выделен
-                 MainTreeView.Selected:=Nodeloc;
-            end;
-      end;
-   end;
-
-   // добавляем объединения не содержащие элементов.
-   for j:=1 to lu do
-   begin
-       if (flagunion[j]=false) then
-       begin
-          if (myassembles[j-1].iunionparent=-1) then
-          begin
-             MainTreeView.SetFocus;
-             MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-             NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[j-1].name);
-             NewNode.ImageIndex:=4;  // номер картинки
-             NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-             flagunion[j]:=True;
-          end
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+            MeshForm.ComboBoxALICEType.ItemIndex:=0; // AliceMesh Coarse
+         end
           else
-          begin
-             // у union`а есть родительский union не являющийся кабинетом.
-             im1:=1;
-             SetLength(Qunion_number,im1);
-             Qunion_number[0]:=j;
-             while ((Qunion_number[im1-1]<>0)and(flagunion[Qunion_number[im1-1]]=false)) do
-             begin
-                inc(im1);
-                SetLength(Qunion_number,im1);
-                Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
-             end;
-             // построен список вложенных unionov.
-             // в конце списка либо кабинет либо уже построенный union.
-             // последний значимый элемент im1-2. Всего значимых элементов im1-1.
-             // Теперь надо создать в дереве последовательность вложенных unionov.
-             if (Qunion_number[im1-1]=0) then
-             begin
-                MainTreeView.SetFocus;
-                MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
-                NewNode.ImageIndex:=4;  // номер картинки
-                NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                for im2:=im1-3 downto 0 do
-                begin
-                   SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                   Noddy := MainTreeView.Items[0];
-                   Searching := true;
-                   while (Searching) and (Noddy <> nil) do
-                   begin
-                      if Noddy.text = SearchTarget then
-                      begin
-                         // найден
-                         Searching := False;
-                         MainTreeView.Selected := Noddy;
-                         MainTreeView.SetFocus;
-                      end
-                       else
-                      begin
-                         Noddy := Noddy.GetNext
-                      end;
-                   end;
-                   Nodeloc:=MainTreeView.Selected;
-                   NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                   NewNode.ImageIndex:=4;  // номер картинки
-                   NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                   MainTreeView.Selected:=Nodeloc;
-                end;
-             end
-              else
-             begin
-                for im2:=im1-2 downto 0 do
-                begin
-                   SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
-                   Noddy := MainTreeView.Items[0];
-                   Searching := true;
-                   while (Searching) and (Noddy <> nil) do
-                   begin
-                      if Noddy.text = SearchTarget then
-                      begin
-                         // найден
-                         Searching := False;
-                         MainTreeView.Selected := Noddy;
-                         MainTreeView.SetFocus;
-                      end
-                       else
-                      begin
-                         Noddy := Noddy.GetNext
-                      end;
-                   end;
-                   Nodeloc:=MainTreeView.Selected;
-                   NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
-                   NewNode.ImageIndex:=4;  // номер картинки
-                   NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-                   MainTreeView.Selected:=Nodeloc;
-                end;
-             end;
-             for im2:=0 to im1-2 do
-             begin
-                flagunion[Qunion_number[im2]]:=True;
-             end;
-          end;
-       end;
+         begin
+            MeshForm.ComboBoxALICEType.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      MeshForm.ComboBoxALICEType.ItemIndex:=0; // AliceMesh Coarse
    end;
 
-   MainMemo.Lines.Add('Done');
-   f.Free;
-   // прорисовка геометрии
+
+   bXY_empty:=false;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! XYPlotXo is empty.');
+         bXY_empty:=true;
+      end
+        else
+      begin
+         FormXYPlot.EditXo.Text:=Trim(sub);
+      end;
+   end
+   else
+   begin
+      bXY_empty:=true;
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! XYPlotYo is empty.');
+         bXY_empty:=true;
+      end
+        else
+      begin
+         FormXYPlot.EditYo.Text:=Trim(sub);
+      end;
+   end
+   else
+   begin
+      bXY_empty:=true;
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! XYPlotZo is empty.');
+         bXY_empty:=true;
+      end
+        else
+      begin
+         FormXYPlot.EditZo.Text:=Trim(sub);
+      end;
+   end
+   else
+   begin
+      bXY_empty:=true;
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! line_directional is empty.');
+         bXY_empty:=true;
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            bXY_empty:=true;
+         end
+          else
+         begin
+            FormXYPlot.ComboBoxdirectional.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      bXY_empty:=true;
+   end;
+
+    if (bXY_empty) then
+    begin
+        // При считывании тепловой модели инициализируем XYPlot.
+        if (ls>0) then
+        begin
+           // Инициализируем геометрическим центром первого источника тепла при его наличии.
+           FormXYPlot.EditXo.Text:=FloatToStr(0.5*(source[0].xS+source[0].xE));
+           FormXYPlot.EditYo.Text:=FloatToStr(0.5*(source[0].yS+source[0].yE));
+           FormXYPlot.EditZo.Text:=FloatToStr(0.5*(source[0].zS+source[0].zE));
+
+           if (ls>1) then
+           begin
+              if (abs(source[0].xS-source[1].xS)>1.0e-23) then
+              begin
+                 FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+              end;
+              if (abs(source[0].yS-source[1].yS)>1.0e-23) then
+              begin
+                 FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+              end;
+              if (abs(source[0].zS-source[1].zS)>1.0e-23) then
+              begin
+                 FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+              end;
+           end;
+        end
+         else
+        begin
+           // Инициализируем геометрическим центром кабинета.
+           FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[0].xS+body[0].xE));
+           FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[0].yS+body[0].yE));
+           FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[0].zS+body[0].zE));
+           i_3:=-1;
+           for i_2 := 0 to lb-1 do
+           begin
+              if (body[i_2].n_power>0) then
+              begin
+                 if ((i_3>-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                 begin
+                    if (abs(body[i_3].xS-body[i_2].xS)>1.0e-23) then
+                    begin
+                       FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+                    end;
+                    if (abs(body[i_3].yS-body[i_2].yS)>1.0e-23) then
+                    begin
+                       FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+                    end;
+                    if (abs(body[i_3].zS-body[i_2].zS)>1.0e-23) then
+                    begin
+                       FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+                    end;
+                    break;
+                 end;
+                 if ((i_3=-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                 begin
+                    i_3:=i_2;
+                    FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[i_2].xS+body[i_2].xE));
+                    FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[i_2].yS+body[i_2].yE));
+                    FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[i_2].zS+body[i_2].zE));
+                 end;
+              end;
+           end;
+        end;
+    end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! AMGCL_ddemidov_smoother is empty.');
+         FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0
+         end
+          else
+         begin
+            FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0
+   end;
+
+
+     if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! AMGCL_ddemidov_AMG_Coarseng is empty.');
+         FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=1; // samg
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=1; // samg
+         end
+          else
+         begin
+            FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=1; // samg
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! AMGCL_ddemidov_Krjlov_iterator is empty.');
+         FormAMGCLParameters.ComboBoxIterator.ItemIndex:=0; // bicgstab
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormAMGCLParameters.ComboBoxIterator.ItemIndex:=0; // bicgstab
+         end
+          else
+         begin
+            FormAMGCLParameters.ComboBoxIterator.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormAMGCLParameters.ComboBoxIterator.ItemIndex:=0; // bicgstab
+   end;
+
+
+   // Read amg1r5 settings 27.07.2020
+
+     if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! inumber_processors is empty.');
+         FormSetting.ComboBoxNumberProcessors.ItemIndex:=0; // one thread
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>31)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBoxNumberProcessors.ItemIndex:=0; // one thread
+         end
+          else
+         begin
+            FormSetting.ComboBoxNumberProcessors.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBoxNumberProcessors.ItemIndex:=0; // one thread
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_Stailization is empty.');
+         Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=2; // FGMRes
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=2; // FGMRes
+         end
+          else
+         begin
+            Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=2; // FGMRes
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_number_presmoothers is empty.');
+         Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=0; // одна итерация
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=0; // одна итерация
+         end
+          else
+         begin
+            Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=0; // одна итерация
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_number_postsmoothers is empty.');
+         Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=0; // одна итерация
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=0; // одна итерация
+         end
+          else
+         begin
+            Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=0; // одна итерация
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_type_algorithm_presmoother is empty.');
+         Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=0; // С/F relaxation
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=0; // С/F relaxation
+         end
+          else
+         begin
+            Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=0; // С/F relaxation
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_type_algorithm_postsmoother is empty.');
+         Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=0; // С/F relaxation
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=0; // С/F relaxation
+         end
+          else
+         begin
+            Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=0; // С/F relaxation
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_Strong_threshold is empty.');
+         Formamg1r5Parameters.Editstrongthreshold.Text:='0.25'; // Strong Threshold
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.002)) then
+         begin
+            Formamg1r5Parameters.Editstrongthreshold.Text:='0.25'; // Strong Threshold
+         end
+          else
+         begin
+             Formamg1r5Parameters.Editstrongthreshold.Text:=(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.Editstrongthreshold.Text:='0.25'; // Strong Threshold
+   end;
+
+
+    s:='amg1r5_F_to_F='+Trim(Formamg1r5Parameters.EditF2F.Text)+' :';
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_F_to_F is empty.');
+         Formamg1r5Parameters.EditF2F.Text:='0.35'; // F_2_F
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.002)) then
+         begin
+            Formamg1r5Parameters.EditF2F.Text:='0.35'; // F_2_F
+         end
+          else
+         begin
+             Formamg1r5Parameters.EditF2F.Text:=(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.EditF2F.Text:='0.35'; // F_2_F
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! amg1r5_amg1r6_version_aggregator is empty.');
+         Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false;  // amg1r5 version aggregator
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false;  // amg1r5 version aggregator
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // amg1r5 version
+              begin
+                 Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false;  // amg1r5 version aggregator
+              end;
+              1 : // amg1r6 version
+              begin
+                 Formamg1r5Parameters.CheckBox_amg1r6.Checked:=true;  // amg1r6 version aggregator
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false;  // amg1r5 version aggregator
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! PressureVelocityCoupling is empty.');
+         FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=0; // SIMPLE 1972 Б.Сполдинг и С.Патанкар.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=0; // SIMPLE 1972 Б.Сполдинг и С.Патанкар.
+         end
+          else
+         begin
+            FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=0; // SIMPLE 1972 Б.Сполдинг и С.Патанкар.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! FlowConvectionScheme_id is empty.');
+         FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>15)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind.
+         end
+          else
+         begin
+            FormSetting.ComboBoxFlowScheme.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! TemperatureConvectionScheme_id is empty.');
+         FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>15)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind.
+         end
+          else
+         begin
+            FormSetting.ComboBoxSchemeTemperature.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! ILUK_lfil_number is empty.');
+         FormSetting.ComboBox_lfil.ItemIndex:=2; // lfil=2.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBox_lfil.ItemIndex:=2; // lfil=2.
+         end
+          else
+         begin
+            FormSetting.ComboBox_lfil.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBox_lfil.ItemIndex:=2; // lfil=2.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! FGMRes_mrestart_number is empty.');
+         FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=1; // FGMRes(Mrestart=20).
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+         begin
+            FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=1; // FGMRes(Mrestart=20).
+         end
+          else
+         begin
+            FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=1; // FGMRes(Mrestart=20).
+   end;
+
+    // Прочтение настроек Румба v.0.14 решателя.
+    // 30.07.2020.
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Maximum_reduced_levels_Temperature is empty.');
+         Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Maximum_reduced_levels_Speed is empty.');
+         Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Maximum_reduced_levels_Pressure is empty.');
+         Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Maximum_reduced_levels_Stress is empty.');
+         Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=0; // отсутствуют отсекаемые уровни сетки.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_nFinnest is empty.');
+         Form_amg_manager.ComboBoxnFinnest.ItemIndex:=1; // две итерации на самой подробной сетке.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnFinnest.ItemIndex:=1; // две итерации на самой подробной сетке.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnFinnest.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnFinnest.ItemIndex:=1; // две итерации на самой подробной сетке.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_nFinnestSpeed is empty.');
+         Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=1; // две итерации на самой подробной сетке.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=1; // две итерации на самой подробной сетке.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=1; // две итерации на самой подробной сетке.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_nFinnestPressure is empty.');
+         Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=1; // две итерации на самой подробной сетке.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=1; // две итерации на самой подробной сетке.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=1; // две итерации на самой подробной сетке.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_nFinnestStress is empty.');
+         Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=1; // две итерации на самой подробной сетке.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=1; // две итерации на самой подробной сетке.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=1; // две итерации на самой подробной сетке.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_presmoothers is empty.');
+         Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=1; // одно предсглаживание.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=1; // одно предсглаживание.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=1; // одно предсглаживание.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_presmoothersSpeed is empty.');
+         Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=1; // одно предсглаживание.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=1; // одно предсглаживание.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=1; // одно предсглаживание.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_presmoothersPressure is empty.');
+         Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=1; // одно предсглаживание.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=1; // одно предсглаживание.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=1; // одно предсглаживание.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_presmoothersStress is empty.');
+         Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=1; // одно предсглаживание.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=1; // одно предсглаживание.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=1; // одно предсглаживание.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_postsmoothers is empty.');
+         Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=2; // два постсглаживания.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=2; // два постсглаживания.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=2; // два постсглаживания.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_postsmoothersSpeed is empty.');
+         Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=2; // два постсглаживания.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=2; // два постсглаживания.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=2; // два постсглаживания.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_postsmoothersPressure is empty.');
+         Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=2; // два постсглаживания.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=2; // два постсглаживания.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=2; // два постсглаживания.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_number_postsmoothersStress is empty.');
+         Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=2; // два постсглаживания.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=2; // два постсглаживания.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=2; // два постсглаживания.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_memory_size is empty.');
+         Form_amg_manager.ComboBoxmemorysize.ItemIndex:=5; // девять размеров исходной матрицы.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmemorysize.ItemIndex:=5; // девять размеров исходной матрицы.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmemorysize.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmemorysize.ItemIndex:=5; // девять размеров исходной матрицы.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_memory_sizeSpeed is empty.');
+         Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=5; // девять размеров исходной матрицы.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=5; // девять размеров исходной матрицы.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=5; // девять размеров исходной матрицы.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_memory_sizePressure is empty.');
+         Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=5; // девять размеров исходной матрицы.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=5; // девять размеров исходной матрицы.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=5; // девять размеров исходной матрицы.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_memory_sizeStress is empty.');
+         Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=5; // девять размеров исходной матрицы.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=5; // девять размеров исходной матрицы.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=5; // девять размеров исходной матрицы.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_interpolation_id is empty.');
+         Form_amg_manager.ComboBoxinterpolation.ItemIndex:=3; // четвёртая версия интерполяции.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxinterpolation.ItemIndex:=3; // четвёртая версия интерполяции.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxinterpolation.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxinterpolation.ItemIndex:=3; // четвёртая версия интерполяции.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_interpolation_id_Speed is empty.');
+         Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=3; // четвёртая версия интерполяции.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=3; // четвёртая версия интерполяции.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=3; // четвёртая версия интерполяции.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_interpolation_id_Pressure is empty.');
+         Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=3; // четвёртая версия интерполяции.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=3; // четвёртая версия интерполяции.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=3; // четвёртая версия интерполяции.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_interpolation_id_Stress is empty.');
+         Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=3; // четвёртая версия интерполяции.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=3; // четвёртая версия интерполяции.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=3; // четвёртая версия интерполяции.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_sort_algo is empty.');
+         Form_amg_manager.ComboBoxSort.ItemIndex:=0; // Counting Sort.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>4)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxSort.ItemIndex:=0; // Counting Sort.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxSort.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxSort.ItemIndex:=0; // Counting Sort.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_Relaxation_Temperature is empty.');
+         Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=0; // Gauss-Seidel.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=0; // Gauss-Seidel.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=0; // Gauss-Seidel.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_Relaxation_Speed is empty.');
+         Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=0; // Gauss-Seidel.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=0; // Gauss-Seidel.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=0; // Gauss-Seidel.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_Relaxation_Pressure is empty.');
+         Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=0; // Gauss-Seidel.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=0; // Gauss-Seidel.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=0; // Gauss-Seidel.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_Relaxation_Stress is empty.');
+         Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=0; // Gauss-Seidel.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=0; // Gauss-Seidel.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=0; // Gauss-Seidel.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_amg_splitting_coarsening is empty.');
+         Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=2; // classical ST all connectioon.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=2; // classical ST all connectioon.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=2; // classical ST all connectioon.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_amg_splitting_coarseningSpeed is empty.');
+         Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=2; // classical ST all connectioon.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=2; // classical ST all connectioon.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=2; // classical ST all connectioon.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_amg_splitting_coarseningPressure is empty.');
+         Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=2; // classical ST all connectioon.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=2; // classical ST all connectioon.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=2; // classical ST all connectioon.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_amg_splitting_coarseningStress is empty.');
+         Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=2; // classical ST all connectioon.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=2; // classical ST all connectioon.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=2; // classical ST all connectioon.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_Stabilization is empty.');
+         Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=0; // none.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=0; // none.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=0; // none.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_StabilizationSpeed is empty.');
+         Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=0; // none.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=0; // none.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=0; // none.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_StabilizationPressure is empty.');
+         Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=0; // none.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=0; // none.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=0; // none.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_StabilizationStress is empty.');
+         Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=0; // none.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=0; // none.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=0; // none.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! C_F_decomposition_algorithms_and_data_structure is empty.');
+         Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=2; // BinaryHeap.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=2; // BinaryHeap.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=2; // BinaryHeap.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! C_F_decomposition_algorithms_and_data_structureSpeed is empty.');
+         Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=2; // BinaryHeap.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=2; // BinaryHeap.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=2; // BinaryHeap.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! C_F_decomposition_algorithms_and_data_structurePressure is empty.');
+         Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=2; // BinaryHeap.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=2; // BinaryHeap.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=2; // BinaryHeap.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! C_F_decomposition_algorithms_and_data_structureStress is empty.');
+         Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=2; // BinaryHeap.
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=2; // BinaryHeap.
+         end
+          else
+         begin
+            Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=StrToInt(Trim(sub));
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=2; // BinaryHeap.
+   end;
+
+   // 30.07.2020
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_threshold_Temperature is empty.');
+         Form_amg_manager.Editthreshold.Text:='0.24'; // standart threshold.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.Editthreshold.Text:='0.24'; // standart threshold.
+         end
+          else
+         begin
+            Form_amg_manager.Editthreshold.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.Editthreshold.Text:='0.24'; // standart threshold.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_threshold_Speed is empty.');
+         Form_amg_manager.EditthresholdSpeed.Text:='0.24'; // standart threshold.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditthresholdSpeed.Text:='0.24'; // standart threshold.
+         end
+          else
+         begin
+            Form_amg_manager.EditthresholdSpeed.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditthresholdSpeed.Text:='0.24'; // standart threshold.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_threshold_Pressure is empty.');
+         Form_amg_manager.EditthresholdPressure.Text:='0.24'; // standart threshold.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditthresholdPressure.Text:='0.24'; // standart threshold.
+         end
+          else
+         begin
+            Form_amg_manager.EditthresholdPressure.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditthresholdPressure.Text:='0.24'; // standart threshold.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_threshold_Stress is empty.');
+         Form_amg_manager.EditthresholdStress.Text:='0.24'; // standart threshold.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditthresholdStress.Text:='0.24'; // standart threshold.
+         end
+          else
+         begin
+            Form_amg_manager.EditthresholdStress.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditthresholdStress.Text:='0.24'; // standart threshold.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncation_interpolation_Temp is empty.');
+         Form_amg_manager.Edit_truncation_T.Text:='0.2'; // standart hruncation.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.Edit_truncation_T.Text:='0.2'; // standart truncation.
+         end
+          else
+         begin
+            Form_amg_manager.Edit_truncation_T.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.Edit_truncation_T.Text:='0.2'; // standart truncation.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncation_interpolation_Speed is empty.');
+         Form_amg_manager.Edit_truncation_Speed.Text:='0.2'; // standart hruncation.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.Edit_truncation_Speed.Text:='0.2'; // standart truncation.
+         end
+          else
+         begin
+            Form_amg_manager.Edit_truncation_Speed.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.Edit_truncation_Speed.Text:='0.2'; // standart truncation.
+   end;
+
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncation_interpolation_Pressure is empty.');
+         Form_amg_manager.Edit_truncation_Pressure.Text:='0.2'; // standart hruncation.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.Edit_truncation_Pressure.Text:='0.2'; // standart truncation.
+         end
+          else
+         begin
+            Form_amg_manager.Edit_truncation_Pressure.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.Edit_truncation_Pressure.Text:='0.2'; // standart truncation.
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncation_interpolation_Stress is empty.');
+         Form_amg_manager.Edittruncation_Stress.Text:='0.2'; // standart hruncation.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.Edittruncation_Stress.Text:='0.2'; // standart truncation.
+         end
+          else
+         begin
+            Form_amg_manager.Edittruncation_Stress.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.Edittruncation_Stress.Text:='0.2'; // standart truncation.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_F2F_Temperature is empty.');
+         Form_amg_manager.EditmagicT.Text:='0.4'; // standart F2F.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditmagicT.Text:='0.4'; // standart F2F.
+         end
+          else
+         begin
+            Form_amg_manager.EditmagicT.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditmagicT.Text:='0.4'; // standart F2F.
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_F2F_Speed is empty.');
+         Form_amg_manager.EditmagicSpeed.Text:='0.4'; // standart F2F.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditmagicSpeed.Text:='0.4'; // standart F2F.
+         end
+          else
+         begin
+            Form_amg_manager.EditmagicSpeed.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditmagicSpeed.Text:='0.4'; // standart F2F.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_F2F_Pressure is empty.');
+         Form_amg_manager.EditmagicPressure.Text:='0.4'; // standart F2F.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditmagicPressure.Text:='0.4'; // standart F2F.
+         end
+          else
+         begin
+            Form_amg_manager.EditmagicPressure.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditmagicPressure.Text:='0.4'; // standart F2F.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_F2F_Stress is empty.');
+         Form_amg_manager.EditmagicStress.Text:='0.4'; // standart F2F.
+      end
+        else
+      begin
+         if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+         begin
+            Form_amg_manager.EditmagicStress.Text:='0.4'; // standart F2F.
+         end
+          else
+         begin
+            Form_amg_manager.EditmagicStress.Text:=Trim(sub);
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.EditmagicStress.Text:='0.4'; // standart F2F.
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_Diagonal_dominant is empty.');
+         Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true;  // диагональное преобладание
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true;  // диагональное преобладание
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // диагональное преобладание
+              begin
+                 Form_amg_manager.CheckBoxDiagonalDominant.Checked:=false;  // диагональное преобладание
+              end;
+              1 : // диагональное преобладание
+              begin
+                 Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true;  // диагональное преобладание
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true;  // диагональное преобладание
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncationT is empty.');
+         Form_amg_manager.CheckBoxtruncationT.Checked:=true;  // truncation interpolation
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxtruncationT.Checked:=true;  // truncation interpolation
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationT.Checked:=false;  // truncation interpolation
+              end;
+              1 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationT.Checked:=true;  // truncation interpolation
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxtruncationT.Checked:=true;  // truncation interpolation
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncationSpeed is empty.');
+         Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true;  // truncation interpolation
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true;  // truncation interpolation
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationSpeed.Checked:=false;  // truncation interpolation
+              end;
+              1 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true;  // truncation interpolation
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true;  // truncation interpolation
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncationPressure is empty.');
+         Form_amg_manager.CheckBoxtruncationPressure.Checked:=true;  // truncation interpolation
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxtruncationPressure.Checked:=true;  // truncation interpolation
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationPressure.Checked:=false;  // truncation interpolation
+              end;
+              1 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationPressure.Checked:=true;  // truncation interpolation
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxtruncationPressure.Checked:=true;  // truncation interpolation
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_truncationStress is empty.');
+         Form_amg_manager.CheckBoxtruncationStress.Checked:=true;  // truncation interpolation
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxtruncationStress.Checked:=true;  // truncation interpolation
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationStress.Checked:=false;  // truncation interpolation
+              end;
+              1 : // truncation interpolation
+              begin
+                 Form_amg_manager.CheckBoxtruncationStress.Checked:=true;  // truncation interpolation
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxtruncationStress.Checked:=true;  // truncation interpolation
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_StrongTranspose is empty.');
+         Form_amg_manager.CheckBoxStrongTranspose.Checked:=true;  // StrongTranspose
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxStrongTranspose.Checked:=true;  // StrongTranspose
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // StrongTranspose
+              begin
+                 Form_amg_manager.CheckBoxStrongTranspose.Checked:=false;  // StrongTranspose
+              end;
+              1 : // StrongTranspose
+              begin
+                 Form_amg_manager.CheckBoxStrongTranspose.Checked:=true;  // StrongTranspose
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxStrongTranspose.Checked:=true;  // StrongTranspose
+   end;
+
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_PrintLogTemperature is empty.');
+         Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true;  // print amg log
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true;  // print amg log
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogTemperature.Checked:=false;  // print amg log
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true;  // print amg log
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true;  // print amg log
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_PrintLogSpeed is empty.');
+         Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true;  // print amg log
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true;  // print amg log
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogSpeed.Checked:=false;  // print amg log
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true;  // print amg log
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true;  // print amg log
+   end;
+
+   if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_PrintLogPressure is empty.');
+         Form_amg_manager.CheckBoxprintlogPressure.Checked:=true;  // print amg log
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxprintlogPressure.Checked:=true;  // print amg log
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogPressure.Checked:=false;  // print amg log
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogPressure.Checked:=true;  // print amg log
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxprintlogPressure.Checked:=true;  // print amg log
+   end;
+
+     if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_PrintLogStress is empty.');
+         Form_amg_manager.CheckBoxprintlogStress.Checked:=true;  // print amg log
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxprintlogStress.Checked:=true;  // print amg log
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogStress.Checked:=false;  // print amg log
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxprintlogStress.Checked:=true;  // print amg log
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxprintlogStress.Checked:=true;  // print amg log
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_TemperatureMatrixPortrait is empty.');
+         Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=true;  // печать портрета матрицы
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_SpeedMatrixPortrait is empty.');
+         Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false;  // печать портрета матрицы
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false;  // печать портрета матрицы
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false;  // печать портрета матрицы
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=true;  // печать портрета матрицы
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false;  // печать портрета матрицы
+   end;
+
+    if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_PressureMatrixPortrait is empty.');
+         Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=true;  // печать портрета матрицы
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false;  // печать портрета матрицы
+   end;
+
+      if (i+1< f.Count) then
+   begin
+      inc(i);
+      s:=f.Strings[i];
+      sub:=Trim(Copy(s,1,Pos(':',s)-1));
+      if (length(sub)=0) then
+      begin
+         //ShowMessage('error! Rumba_StressMatrixPortrait is empty.');
+         Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false;  // печать портрета матрицы
+      end
+        else
+      begin
+         if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+         begin
+           Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false;  // печать портрета матрицы
+         end
+          else
+         begin
+            case StrToInt(Trim(sub)) of
+              0 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false;  // печать портрета матрицы
+              end;
+              1 : // print amg log
+              begin
+                 Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=true;  // печать портрета матрицы
+              end;
+            end;
+         end;
+      end;
+   end
+   else
+   begin
+      Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false;  // печать портрета матрицы
+   end;
+
+
+
+    // отображение дерева элементов:
+    TreeLoad(Sender);
+
+    MainMemo.Lines.Add('Done');
+    f.Free;
+    // прорисовка геометрии
    end;  // иначе чтение файла не удалось, например пользователь отказался от открытитя файла.
 
    breadfinish:=true;
@@ -13855,13 +17503,13 @@ procedure My_read_model_new(bAdd_packaje : Boolean);
 var
    f: TStringList; // переменная типа объект TStringList
    //f2 : TStringList;
-   i,j, imlength, idob, iscan_ass, i_2 : Integer; // счётчик
+   i,j, imlength, idob, iscan_ass, i_2, i_3 : Integer; // счётчик
    s,sub : string; // анализируемая строка из файла
    NewNode, Nodeloc, Noddy : TTreeNode; // узел дерева элементов
    flagunion : array of Boolean; //  было ли создано объединение
    bdobavlen : array of Boolean; // какие блоки уже были добавлены в дерево.
    SearchTarget : String;
-   Searching : Boolean;
+   Searching, not_ignoring : Boolean;
    imeshassemblesseparately : Integer;
    bOk : Boolean;
    Qunion_number : array of Integer; // номера unionov
@@ -13870,7 +17518,9 @@ var
    priority_id_old, ls_old, lw_old, ics_old, icw_old : Integer;
    ivar_package, j_var : Integer;
    bfound_variable : Boolean;
-   snew, sold : String;
+   snew, sold, subloc : String;
+   bXY_empty  : Boolean;
+
 
 begin
 
@@ -13939,6 +17589,11 @@ begin
              f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
           end;
        end;
+
+
+       sub:=My_Get_String_for_to_val('open_label',f);
+       if ((length(sub)>0)and(StrToInt(sub)=1082020)) then
+       begin
 
        if (bAdd_packaje) then
        begin
@@ -14160,147 +17815,147 @@ begin
    //FormSetting.ComboBoxSolverSetting.ItemIndex:=StrToInt(Trim(sub));  // BicgStab+ILU2 vs amg1r5.
    //s:=Copy(s,Pos(':',s)+1,length(s));
     if (not(bAdd_packaje)) then
-   begin
+    begin
 
-    sub:=My_Get_String_for_to_val('film_coefficient',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      filmcoefficient:=0.0;
-   end
-   else
-   begin
-      filmcoefficient:=StrToFloat(sub);
-   end;
+       sub:=My_Get_String_for_to_val('film_coefficient',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          filmcoefficient:=0.0;
+       end
+        else
+       begin
+          filmcoefficient:=StrToFloat(sub);
+       end;
 
 
-   //sub:=Copy(s,1,Pos(':',s)-1);
-   //filmcoefficient:=StrToFloat(Trim(sub)); //  считывание  коэффициента теплоотдачи.
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
+       //sub:=Copy(s,1,Pos(':',s)-1);
+       //filmcoefficient:=StrToFloat(Trim(sub)); //  считывание  коэффициента теплоотдачи.
+       //s:=Copy(s,Pos(':',s)+1,length(s));
+       //sub:=Copy(s,1,Pos(':',s)-1);
 
-    sub:=My_Get_String_for_to_val('adiabatic_vs_heat_transfer_coeff',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      adiabatic_vs_heat_transfer_coeff:=0;
-   end
-   else
-   begin
-      adiabatic_vs_heat_transfer_coeff:=StrToInt(sub);
-   end;
+       sub:=My_Get_String_for_to_val('adiabatic_vs_heat_transfer_coeff',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          adiabatic_vs_heat_transfer_coeff:=0;
+       end
+        else
+       begin
+          adiabatic_vs_heat_transfer_coeff:=StrToInt(sub);
+       end;
 
-   //adiabatic_vs_heat_transfer_coeff:=StrToInt(Trim(sub));
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
+       //adiabatic_vs_heat_transfer_coeff:=StrToInt(Trim(sub));
+       //s:=Copy(s,Pos(':',s)+1,length(s));
+       //sub:=Copy(s,1,Pos(':',s)-1);
 
-   end;
+    end;
+
+     if (not(bAdd_packaje)) then
+     begin
+        sub:=My_Get_String_for_to_val('time_step_id_law',f);
+        if (length(sub)=0) then
+        begin
+           // default
+           glSTL.id_law:=0;  // 0 - Linear, 1 - Square Wave.
+        end
+         else
+        begin
+           glSTL.id_law:=StrToInt(sub);
+        end;
+
+
+        //glSTL.id_law:=StrToInt(Trim(sub)); // 0 - Linear, 1 - Square Wave.
+        //s:=Copy(s,Pos(':',s)+1,length(s));
+        //sub:=Copy(s,1,Pos(':',s)-1);
+
+        sub:=My_Get_String_for_to_val('time_step_factor_a_for_linear',f);
+        if (length(sub)=0) then
+        begin
+           // default
+           glSTL.Factor_a_for_Linear:=0.4; // Factor (a) for Linear Law time step.
+        end
+         else
+        begin
+           glSTL.Factor_a_for_Linear:=StrToFloat(sub);
+        end;
+     end;
+     //glSTL.Factor_a_for_Linear:=StrToFloat(Trim(sub));  // Factor (a) for Linear Law time step.
+     //s:=Copy(s,Pos(':',s)+1,length(s));
+     //sub:=Copy(s,1,Pos(':',s)-1);
 
     if (not(bAdd_packaje)) then
-   begin
-   sub:=My_Get_String_for_to_val('time_step_id_law',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.id_law:=0;  // 0 - Linear, 1 - Square Wave.
-   end
-   else
-   begin
-      glSTL.id_law:=StrToInt(sub);
-   end;
+    begin
+       sub:=My_Get_String_for_to_val('tau',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          glSTL.tau:=1.0e-4; // pulse width.
+       end
+        else
+       begin
+          glSTL.tau:=StrToFloat(sub);
+       end;
 
+       sub:=My_Get_String_for_to_val('iQ_duty_cycle',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          glSTL.iQ:=4.0;  // duty cycle.
+       end
+        else
+       begin
+          glSTL.iQ:=StrToFloat(sub);
+       end;
 
-   //glSTL.id_law:=StrToInt(Trim(sub)); // 0 - Linear, 1 - Square Wave.
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
+       //glSTL.tau:=StrToFloat(Trim(sub)); // tau for Square Wave.
+       //s:=Copy(s,Pos(':',s)+1,length(s));
+       //sub:=Copy(s,1,Pos(':',s)-1);
+       //glSTL.iQ:=StrToFloat(Trim(sub)); // Скважность Q for Square Wave.
+       sub:=My_Get_String_for_to_val('m1',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          glSTL.m1:=0.3333;
+       end
+        else
+       begin
+          glSTL.m1:=StrToFloat(sub);
+       end;
 
-    sub:=My_Get_String_for_to_val('time_step_factor_a_for_linear',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.Factor_a_for_Linear:=0.4; // Factor (a) for Linear Law time step.
-   end
-   else
-   begin
-      glSTL.Factor_a_for_Linear:=StrToFloat(sub);
-   end;
-   end;
-   //glSTL.Factor_a_for_Linear:=StrToFloat(Trim(sub));  // Factor (a) for Linear Law time step.
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
+       sub:=My_Get_String_for_to_val('tau1',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          glSTL.tau1:=180.0;
+       end
+        else
+       begin
+          glSTL.tau1:=StrToFloat(sub);
+       end;
 
-    if (not(bAdd_packaje)) then
-   begin
-   sub:=My_Get_String_for_to_val('tau',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.tau:=1.0e-4; // pulse width.
-   end
-   else
-   begin
-      glSTL.tau:=StrToFloat(sub);
-   end;
+       sub:=My_Get_String_for_to_val('tau2',f);
+       if (length(sub)=0) then
+       begin
+          // default
+          glSTL.tau2:=240.0;
+       end
+        else
+       begin
+          glSTL.tau2:=StrToFloat(sub);
+       end;
 
-   sub:=My_Get_String_for_to_val('iQ_duty_cycle',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.iQ:=4.0;  // duty cycle.
-   end
-   else
-   begin
-      glSTL.iQ:=StrToFloat(sub);
-   end;
-
-   //glSTL.tau:=StrToFloat(Trim(sub)); // tau for Square Wave.
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
-   //glSTL.iQ:=StrToFloat(Trim(sub)); // Скважность Q for Square Wave.
-    sub:=My_Get_String_for_to_val('m1',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.m1:=0.3333;
-   end
-   else
-   begin
-      glSTL.m1:=StrToFloat(sub);
-   end;
-
-   sub:=My_Get_String_for_to_val('tau1',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.tau1:=180.0;
-   end
-    else
-   begin
-      glSTL.tau1:=StrToFloat(sub);
-   end;
-
-   sub:=My_Get_String_for_to_val('tau2',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      glSTL.tau2:=240.0;
-   end
-    else
-   begin
-      glSTL.tau2:=StrToFloat(sub);
-   end;
-
-   // Параметры импульсного режима АППАРАТ.
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
-   //glSTL.m1:=StrToFloat(Trim(sub));
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
-   //glSTL.tau1:=StrToFloat(Trim(sub));
-   //s:=Copy(s,Pos(':',s)+1,length(s));
-   //sub:=Copy(s,1,Pos(':',s)-1);
-   //glSTL.tau2:=StrToFloat(Trim(sub));
-   //s:=Copy(s,Pos(':',s)+1,length(s));
+       // Параметры импульсного режима АППАРАТ.
+       //s:=Copy(s,Pos(':',s)+1,length(s));
+       //sub:=Copy(s,1,Pos(':',s)-1);
+       //glSTL.m1:=StrToFloat(Trim(sub));
+       //s:=Copy(s,Pos(':',s)+1,length(s));
+       //sub:=Copy(s,1,Pos(':',s)-1);
+       //glSTL.tau1:=StrToFloat(Trim(sub));
+       //s:=Copy(s,Pos(':',s)+1,length(s));
+       //sub:=Copy(s,1,Pos(':',s)-1);
+       //glSTL.tau2:=StrToFloat(Trim(sub));
+       //s:=Copy(s,Pos(':',s)+1,length(s));
 
    sub:=My_Get_String_for_to_val('tau_pause',f);
    if (length(sub)=0) then
@@ -14432,27 +18087,27 @@ begin
    // считывание информации об объединениях :
    //s:=f.Strings[i]; inc(i);
 
-    if ((bAdd_packaje)) then
-   begin
-     iunion_old:=lu;
-   end
-   else
-   begin
-      iunion_old:=0;
-   end;
+     if ((bAdd_packaje)) then
+     begin
+        iunion_old:=lu;
+     end
+      else
+     begin
+        iunion_old:=0;
+     end;
 
-   sub:=My_Get_String_for_to_val('lu',f);
-   if (length(sub)=0) then
-   begin
-      // default
-      lu:=0;
-   end
-    else
-   begin
-      lu:=StrToInt(sub);
-   end;
+     sub:=My_Get_String_for_to_val('lu',f);
+     if (length(sub)=0) then
+     begin
+        // default
+        lu:=0;
+     end
+      else
+     begin
+        lu:=StrToInt(sub);
+     end;
 
-   lu:=lu+ iunion_old;
+     lu:=lu+ iunion_old;
 
    //lu:=StrToInt(Trim(Copy(s,Pos('lu=',s)+3,length(s))));
 
@@ -14787,67 +18442,90 @@ begin
                 begin
                     // Надо проверить есть ли переменная с таким именем в исходном проекте.
                     bfound_variable:=false;
+                    not_ignoring:=true;
                     for j_var := 0 to ivar-1 do
                       begin
                          if ((length(Trim(sub))=length(Trim(parametric[j_var].svar)))and(pos(Trim(sub),Trim(parametric[j_var].svar))=1))  then
                          begin
                             // Найдено полное совпадение.
                             bfound_variable:=true;
+
+                             subloc:=My_Get_String_for_to_val('var'+IntToStr(j)+'value',f);
+                             if (abs(StrToFloat(Trim(subloc))-StrToFloat(Trim(parametric[j_var].sval)))<1.0e-14) then
+                             begin
+                                not_ignoring:=false; // игнорируем. Такая переменная уже есть.
+                                // При этом не выдается никаких предупреждающих сообщений. Тихое считывание файла.
+                             end;
                          end;
                       end;
 
-                      if (bfound_variable) then
+                      if (not_ignoring) then
                       begin
-                        // Надо дать переменной новое имя и переименовать всё
-                        // внутри пакета.
-                         ShowMessage('WARNING! package variable name is found in the name project variable. Please rename package variable.');
 
-                         // Показать форму в которой надо выбрать что мы удаляем.
-                         FormRenameVar.ComboBox1.Clear();
-                         for j_var := 0 to Laplas.ivar-1 do
+                         if (bfound_variable) then
                          begin
-                            FormRenameVar.ComboBox1.Items.Add(Trim(Laplas.parametric[j_var].svar));
+                            // Надо дать переменной новое имя и переименовать всё
+                            // внутри пакета.
+                            ShowMessage('WARNING! package variable name is found in the name project variable. Please rename conflict project variable.');
+
+                            // Показать форму в которой надо выбрать что мы удаляем.
+                            // Пы показываем все проектные переменные (текущие).
+                            // Устанавливаем марке в списке на последнюю переменную из списка.
+                            FormRenameVar.ComboBox1.Clear();
+                            FormRenameVar.LabelConflictName.Caption:=Trim(sub);
+                            for j_var := 0 to Laplas.ivar-1 do
+                            begin
+                               FormRenameVar.ComboBox1.Items.Add(Trim(Laplas.parametric[j_var].svar));
+                            end;
+                            FormRenameVar.ComboBox1.ItemIndex:=Laplas.ivar-1;
+                            FormRenameVar.EditNewName.Text:='';
+                            FormRenameVar.ShowModal;
+
+                            // На данном этапе гарантируется что введенное новое имя переменной
+                            // уникально и не совпадает с именами других проектных переменных.
+                            if (FormRenameVar.bOk_rename) then
+                            begin
+                               snew:= Trim(FormRenameVar.EditNewName.Text);
+                               // Нельзя выбирать конфликтную переменную из списка самому.
+                               // Можно легко запутататься. Имя конфликтной переменной известно
+                               // программно. Список с именами проектных переменных нужен только для того чтобы
+                               // посмотреть какие переменные уже есть в проекте чтобы не задать совпадающее имя.
+                               //sold:=Trim(FormRenameVar.ComboBox1.Items[FormRenameVar.ComboBox1.ItemIndex]);
+                               sold:=Trim(sub);
+
+                               FormVariables.all_obj_project_variable_rename(sold,snew);
+
+                               FormVariables.StringGridVariables.Cells[1,1+FormRenameVar.ComboBox1.ItemIndex]:=Trim(snew);
+                               Laplas.parametric[FormRenameVar.ComboBox1.ItemIndex].svar:=Trim(snew);
+
+                               // обновление размеров объектов
+                               FormVariables.my_update_size();
+                               bfound_variable:=false;
+                            end;
+                            FormRenameVar.bOk_rename:=false;
                          end;
-                         FormRenameVar.ComboBox1.ItemIndex:=Laplas.ivar-1;
-                         FormRenameVar.EditNewName.Text:='';
-                         FormRenameVar.ShowModal;
 
-                         if (FormRenameVar.bOk_rename) then
+                         if (not(bfound_variable)) then
                          begin
-                            snew:= Trim(FormRenameVar.EditNewName.Text);
-                            sold:=Trim(FormRenameVar.ComboBox1.Items[FormRenameVar.ComboBox1.ItemIndex]);
-
-                            FormVariables.all_obj_project_variable_rename(sold,snew);
-
-                            FormVariables.StringGridVariables.Cells[1,1+FormRenameVar.ComboBox1.ItemIndex]:=Trim(snew);
-                            Laplas.parametric[FormRenameVar.ComboBox1.ItemIndex].svar:=Trim(snew);
-
-                            // обновление размеров объектов
-                            FormVariables.my_update_size();
-                            bfound_variable:=false;
-                          end;
+                            // Переменная уникальна 19.08.2019
+                            inc(ivar);
+                            SetLength(parametric,ivar); // выделение памяти под переменные
+                            parametric[ivar-1].svar:=Trim(sub);  // имя переменной
+                            // Надо задать значение.
+                            //s:=Copy(s,Pos(':',s)+1,length(s));
+                            //sub:=Copy(s,1,Pos(':',s)-1);
+                            sub:=My_Get_String_for_to_val('var'+IntToStr(j)+'value',f);
+                            if (length(sub)=0) then
+                            begin
+                               ShowMessage('error! package variable value is empty.');
+                               parametric[ivar-1].sval:='0.0'; // значение переменной
+                            end
+                             else
+                            begin
+                               parametric[ivar-1].sval:=Trim(sub); // значение переменной
+                            end;
+                         end; // Уникальная переменная.
                       end;
-
-                    if (not(bfound_variable)) then
-                    begin
-                       // Переменная уникальна 19.08.2019
-                       inc(ivar);
-                       SetLength(parametric,ivar); // выделение памяти под переменные
-                       parametric[ivar-1].svar:=Trim(sub);  // имя переменной
-                       // Надо задать значение.
-                       //s:=Copy(s,Pos(':',s)+1,length(s));
-                       //sub:=Copy(s,1,Pos(':',s)-1);
-                       sub:=My_Get_String_for_to_val('var'+IntToStr(j)+'value',f);
-                       if (length(sub)=0) then
-                       begin
-                          ShowMessage('error! package variable value is empty.');
-                          parametric[ivar-1].sval:='0.0'; // значение переменной
-                       end
-                         else
-                       begin
-                          parametric[ivar-1].sval:=Trim(sub); // значение переменной
-                       end;
-                    end; // Уникальная переменная.
 
                 end;
             end;
@@ -15822,7 +19500,7 @@ begin
        else
       begin
          body[0].ipower_time_depend:=StrToInt(Trim(sub));
-         if (not((body[0].ipower_time_depend>=0)and(body[0].ipower_time_depend<=3))) then
+         if (not((body[0].ipower_time_depend>=0)and(body[0].ipower_time_depend<=4))) then
          begin
              ShowMessage('error! body0.ipower_time_depend is udefined.');
              body[0].ipower_time_depend:=0;  // стационарное значение.
@@ -16620,7 +20298,7 @@ begin
        else
       begin
          body[j].ipower_time_depend:=StrToInt(Trim(sub));
-         if (not((body[j].ipower_time_depend>=0)and(body[j].ipower_time_depend<=3))) then
+         if (not((body[j].ipower_time_depend>=0)and(body[j].ipower_time_depend<=4))) then
          begin
              ShowMessage('error! body'+IntToStr(j)+'.ipower_time_depend is udefined.');
              body[j].ipower_time_depend:=0;  // стационарное значение.
@@ -17157,6 +20835,20 @@ begin
                 wall[j].heat_transfer_coefficient:=0.0;
             end;
          end;
+
+          // для граничного условия Стефана -Больцмана фактор видимости.
+          sub:=My_Get_String_for_to_val('wall'+IntToStr(j-lw_old)+'ViewFactor',f);
+          if (length(sub)=0) then
+          begin
+             //ShowMessage('error! wall'+IntToStr(j)+'ViewFactor is empty.');
+             wall[j].ViewFactor:=1.0;
+          end
+           else
+          begin
+             // wall[j].ViewFactor:=StrToFloat(Trim(sub));
+             bOk:=true;
+             wall[j].ViewFactor:=FormVariables.my_real_convert(Trim(sub),bOk);
+          end;
 
           // для граничного условия 2 или 3 рода.
           sub:=My_Get_String_for_to_val('wall'+IntToStr(j-lw_old)+'HF',f);
@@ -18319,7 +22011,7 @@ begin
        end;
     end;
 
-     sub:=My_Get_String_for_to_val('light_chkSpecular',f);
+    sub:=My_Get_String_for_to_val('light_chkSpecular',f);
     if (length(sub)=0) then
     begin
        ShowMessage('error! light_chkSpecular is empty.');
@@ -18337,9 +22029,1967 @@ begin
        end;
     end;
 
-   end;
+    sub:=My_Get_String_for_to_val('VxInitialization_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! VxInitialization_Speed is empty.');
+       FormSpeedInitialization.EditVx.Text:='0.0';
+    end
+     else
+    begin
+       FormSpeedInitialization.EditVx.Text:=Trim(sub);
+    end;
 
-   // отображение дерева элементов:
+    sub:=My_Get_String_for_to_val('VyInitialization_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! VyInitialization_Speed is empty.');
+       FormSpeedInitialization.EditVy.Text:='0.0';
+    end
+     else
+    begin
+       FormSpeedInitialization.EditVy.Text:=Trim(sub);
+    end;
+
+    sub:=My_Get_String_for_to_val('VzInitialization_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! VzInitialization_Speed is empty.');
+       FormSpeedInitialization.EditVz.Text:='0.0';
+    end
+     else
+    begin
+       FormSpeedInitialization.EditVz.Text:=Trim(sub);
+    end;
+
+    sub:=My_Get_String_for_to_val('StaticStructuralSolverSetting',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! StaticStructuralSolverSetting is empty.');
+       FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=0; // BiCGStab+ILU(lfil).
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>4)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=0; // BiCGStab+ILU(lfil).
+       end
+       else
+       begin
+          FormSetting.ComboBoxStaticStructuralSolverSetting.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('MeshGenAlgo_id',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! MeshGenAlgo_id is empty.');
+       MeshForm.ComboBoxmeshgen.ItemIndex:=2; // CoarseMesh.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          MeshForm.ComboBoxmeshgen.ItemIndex:=2; // CoarseMesh.
+       end
+       else
+       begin
+          MeshForm.ComboBoxmeshgen.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('AdaptiveLocalRefinementMesh_Checker',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! AdaptiveLocalRefinementMesh_Checker is empty.');
+       MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 :
+             begin
+                MeshForm.CheckBoxALICE.Checked:=false; // Структурированная сетка.
+             end;
+             1 :
+             begin
+                MeshForm.CheckBoxALICE.Checked:=true; // Адаптивная Локально Измельчённая Сетка.
+             end;
+          end;
+       end;
+    end;
+
+
+
+    sub:=My_Get_String_for_to_val('ALICE_Mesh_Type',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! ALICE_Mesh_Type is empty.');
+       MeshForm.ComboBoxALICEType.ItemIndex:=0; // AliceMesh Corse.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          MeshForm.ComboBoxALICEType.ItemIndex:=0; // AliceMesh Corse.
+       end
+       else
+       begin
+          MeshForm.ComboBoxALICEType.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    bXY_empty:=false;
+
+
+    sub:=My_Get_String_for_to_val('XYPlotXo',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! XYPlotXo is empty.');
+       bXY_empty:=true;
+    end
+     else
+    begin
+       FormXYPlot.EditXo.Text:=Trim(sub);
+    end;
+
+     sub:=My_Get_String_for_to_val('XYPlotYo',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! XYPlotYo is empty.');
+       bXY_empty:=true;
+    end
+     else
+    begin
+       FormXYPlot.EditYo.Text:=Trim(sub);
+    end;
+
+     sub:=My_Get_String_for_to_val('XYPlotZo',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! XYPlotZo is empty.');
+       bXY_empty:=true;
+    end
+     else
+    begin
+       FormXYPlot.EditZo.Text:=Trim(sub);
+    end;
+
+    sub:=My_Get_String_for_to_val('line_directional',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! line_directional is empty.');
+       bXY_empty:=true;
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          bXY_empty:=true;
+       end
+       else
+       begin
+          FormXYPlot.ComboBoxdirectional.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    if (bXY_empty) then
+    begin
+        // При считывании тепловой модели инициализируем XYPlot.
+        if (ls>0) then
+        begin
+           // Инициализируем геометрическим центром первого источника тепла при его наличии.
+           FormXYPlot.EditXo.Text:=FloatToStr(0.5*(source[0].xS+source[0].xE));
+           FormXYPlot.EditYo.Text:=FloatToStr(0.5*(source[0].yS+source[0].yE));
+           FormXYPlot.EditZo.Text:=FloatToStr(0.5*(source[0].zS+source[0].zE));
+
+           if (ls>1) then
+           begin
+              if (abs(source[0].xS-source[1].xS)>1.0e-23) then
+              begin
+                 FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+              end;
+              if (abs(source[0].yS-source[1].yS)>1.0e-23) then
+              begin
+                 FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+              end;
+              if (abs(source[0].zS-source[1].zS)>1.0e-23) then
+              begin
+                 FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+              end;
+           end;
+        end
+         else
+        begin
+           // Инициализируем геометрическим центром кабинета.
+           FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[0].xS+body[0].xE));
+           FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[0].yS+body[0].yE));
+           FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[0].zS+body[0].zE));
+           i_3:=-1;
+           for i_2 := 0 to lb-1 do
+           begin
+              if (body[i_2].n_power>0) then
+              begin
+                 if ((i_3>-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                 begin
+                    if (abs(body[i_3].xS-body[i_2].xS)>1.0e-23) then
+                    begin
+                       FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
+                    end;
+                    if (abs(body[i_3].yS-body[i_2].yS)>1.0e-23) then
+                    begin
+                       FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
+                    end;
+                    if (abs(body[i_3].zS-body[i_2].zS)>1.0e-23) then
+                    begin
+                       FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
+                    end;
+                    break;
+                 end;
+                 if ((i_3=-1)and(abs(body[i_2].arr_power[0])>0.0)) then
+                 begin
+                    i_3:=i_2;
+                    FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[i_2].xS+body[i_2].xE));
+                    FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[i_2].yS+body[i_2].yE));
+                    FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[i_2].zS+body[i_2].zE));
+                 end;
+              end;
+           end;
+        end;
+    end;
+
+
+     // Read AMGCL settings 25.07.2020
+
+     sub:=My_Get_String_for_to_val('AMGCL_ddemidov_smoother',f);
+     if (length(sub)=0) then
+     begin
+        //ShowMessage('error! AMGCL_ddemidov_smoother is empty.');
+        FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0.
+     end
+       else
+     begin
+        if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+        begin
+           FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=0; // spai0.
+        end
+         else
+        begin
+           FormAMGCLParameters.RadioGroupAMGCLsmoother1.ItemIndex:=StrToInt(Trim(sub));
+        end;
+     end;
+
+    sub:=My_Get_String_for_to_val('AMGCL_ddemidov_AMG_Coarseng',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! AMGCL_ddemidov_AMG_Coarseng is empty.');
+       FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=1; // samg.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=1; // samg.
+       end
+       else
+       begin
+          FormAMGCLParameters.RadioGroupAMGCLCoarseningType.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('AMGCL_ddemidov_Krjlov_iterator',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! AMGCL_ddemidov_Krjlov_iterator is empty.');
+       FormAMGCLParameters.ComboBoxIterator.ItemIndex:=0; // bicgstab.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormAMGCLParameters.ComboBoxIterator.ItemIndex:=0; // bicgstab.
+       end
+       else
+       begin
+          FormAMGCLParameters.ComboBoxIterator.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    // Read amg1r5 settings 27.07.2020
+
+    sub:=My_Get_String_for_to_val('inumber_processors',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! inumber_processors is empty.');
+       FormSetting.ComboBoxNumberProcessors.ItemIndex:=0; // один поток исполнения.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>31)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBoxNumberProcessors.ItemIndex:=0; // один поток исполнения.
+       end
+       else
+       begin
+          FormSetting.ComboBoxNumberProcessors.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('amg1r5_Stailization',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_Stailization is empty.');
+       Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=2; // FGMRes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=2; // FGMRes.
+       end
+       else
+       begin
+          Formamg1r5Parameters.ComboBoxStabilization.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('amg1r5_number_presmoothers',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_number_presmoothers is empty.');
+       Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=0; // одна итерация.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=0; // одна итерация.
+       end
+       else
+       begin
+          Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('amg1r5_number_postsmoothers',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_number_postsmoothers is empty.');
+       Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=0; // одна итерация.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=0; // одна итерация.
+       end
+       else
+       begin
+          Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('amg1r5_type_algorithm_presmoother',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_type_algorithm_presmoother is empty.');
+       Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=0; // C/F relaxation.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=0; // C/F relaxation.
+       end
+       else
+       begin
+          Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('amg1r5_type_algorithm_postsmoother',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_type_algorithm_postsmoother is empty.');
+       Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=0; // C/F relaxation.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=0; // C/F relaxation.
+       end
+       else
+       begin
+          Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('amg1r5_Strong_threshold',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_Strong_threshold is empty.');
+       Formamg1r5Parameters.Editstrongthreshold.Text:='0.25'; // amg1r5_Strong_threshold.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Formamg1r5Parameters.Editstrongthreshold.Text:='0.25'; // amg1r5_Strong_threshold.
+       end
+       else
+       begin
+          Formamg1r5Parameters.Editstrongthreshold.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('amg1r5_F_to_F',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_F_to_F is empty.');
+       Formamg1r5Parameters.EditF2F.Text:='0.35'; // amg1r5_F_to_F.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Formamg1r5Parameters.EditF2F.Text:='0.35'; // amg1r5_F_to_F.
+       end
+       else
+       begin
+          Formamg1r5Parameters.EditF2F.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('amg1r5_amg1r6_version_aggregator',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! amg1r5_amg1r6_version_aggregator is empty.');
+       Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false; // amg1r5 version.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false; // amg1r5 version.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // amg1r5 version
+             begin
+                Formamg1r5Parameters.CheckBox_amg1r6.Checked:=false; // amg1r5 version.
+             end;
+             1 : // amg1r6 version
+             begin
+                Formamg1r5Parameters.CheckBox_amg1r6.Checked:=true; // amg1r6 version.
+             end;
+          end;
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('PressureVelocityCoupling',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! PressureVelocityCoupling is empty.');
+       FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=0; // SIMPLE 1972 С.Патанкар и Б.Сполдинг.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=0; // SIMPLE 1972 С.Патанкар и Б.Сполдинг.
+       end
+       else
+       begin
+          FormSetting.ComboBoxPressureVelocityCoupling.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('FlowConvectionScheme_id',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! FlowConvectionScheme_id is empty.');
+       FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>15)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind.
+       end
+       else
+       begin
+          FormSetting.ComboBoxFlowScheme.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('TemperatureConvectionScheme_id',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! TemperatureConvectionScheme_id is empty.');
+       FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>15)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind.
+       end
+       else
+       begin
+          FormSetting.ComboBoxSchemeTemperature.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('ILUK_lfil_number',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! ILUK_lfil_number is empty.');
+       FormSetting.ComboBox_lfil.ItemIndex:=2; // lfil=2.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBox_lfil.ItemIndex:=2; // lfil=2.
+       end
+       else
+       begin
+          FormSetting.ComboBox_lfil.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('FGMRes_mrestart_number',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! FGMRes_mrestart_number is empty.');
+       FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=1; // FGMRes(Mrestart=20).
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+       begin
+          FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=1; // FGMRes(Mrestart=20).
+       end
+       else
+       begin
+          FormSetting.ComboBox_m_restart_for_gmres.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+     // Считывание настроек Румба v.0.14 решателя.
+    // 28.07.2020.
+
+    sub:=My_Get_String_for_to_val('Maximum_reduced_levels_Temperature',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Maximum_reduced_levels_Temperature is empty.');
+       Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevels.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Maximum_reduced_levels_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Maximum_reduced_levels_Speed is empty.');
+       Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevelsSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Maximum_reduced_levels_Pressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Maximum_reduced_levels_Pressure is empty.');
+       Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevelsPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Maximum_reduced_levels_Stress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Maximum_reduced_levels_Stress is empty.');
+       Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>20)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=0; // отсутствуют редуцируемые уровни.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmaximumreducedlevelsStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_nFinnest',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_nFinnest is empty.');
+       Form_amg_manager.ComboBoxnFinnest.ItemIndex:=1; // две итерации на самой подробной сетке.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnFinnest.ItemIndex:=1; // две итерации на самой подробной сетке.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnFinnest.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_nFinnestSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_nFinnestSpeed is empty.');
+       Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=1; // две итерации на самой подробной сетке.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=1; // две итерации на самой подробной сетке.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnFinnestSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_nFinnestPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_nFinnestPressure is empty.');
+       Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=1; // две итерации на самой подробной сетке.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=1; // две итерации на самой подробной сетке.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnFinnestPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_nFinnestStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_nFinnestStress is empty.');
+       Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=1; // две итерации на самой подробной сетке.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=1; // две итерации на самой подробной сетке.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnFinnestStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_presmoothers',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_presmoothers is empty.');
+       Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=1; // Одна итерация для предсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=1; // Одна итерация для предсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpresmothers.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_presmoothersSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_presmoothersSpeed is empty.');
+       Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=1; // Одна итерация для предсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=1; // Одна итерация для предсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpresmothersSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+     sub:=My_Get_String_for_to_val('Rumba_number_presmoothersPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_presmoothersPressure is empty.');
+       Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=1; // Одна итерация для предсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=1; // Одна итерация для предсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpresmothersPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_presmoothersStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_presmoothersStress is empty.');
+       Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=1; // Одна итерация для предсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=1; // Одна итерация для предсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpresmoothersStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_postsmoothers',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_postsmoothers is empty.');
+       Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=2; // Две итерации для постсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=2; // Две итерации для постсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweeps.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_postsmoothersSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_postsmoothersSpeed is empty.');
+       Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=2; // Две итерации для постсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=2; // Две итерации для постсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweepsSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_postsmoothersPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_postsmoothersPressure is empty.');
+       Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=2; // Две итерации для постсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=2; // Две итерации для постсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweepsPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_number_postsmoothersStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_number_postsmoothersStress is empty.');
+       Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=2; // Две итерации для постсглаживания.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=2; // Две итерации для постсглаживания.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxnumberpostsweepsStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_memory_size',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_memory_size is empty.');
+       Form_amg_manager.ComboBoxmemorysize.ItemIndex:=5; // Девять размеров исходной матрицы.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmemorysize.ItemIndex:=5; // Девять размеров исходной матрицы.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmemorysize.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_memory_sizeSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_memory_sizeSpeed is empty.');
+       Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=5; // Девять размеров исходной матрицы.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=5; // Девять размеров исходной матрицы.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmemorysizeSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_memory_sizePressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_memory_sizePressure is empty.');
+       Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=5; // Девять размеров исходной матрицы.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=5; // Девять размеров исходной матрицы.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmemorysizePressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_memory_sizeStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_memory_sizeStress is empty.');
+       Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=5; // Девять размеров исходной матрицы.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>96)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=5; // Девять размеров исходной матрицы.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxmemorysizeStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_interpolation_id',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_interpolation_id is empty.');
+       Form_amg_manager.ComboBoxinterpolation.ItemIndex:=3; // 4 - ая версия интерполяции.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxinterpolation.ItemIndex:=3; // 4 - ая версия интерполяции.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxinterpolation.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_interpolation_id_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_interpolation_id_Speed is empty.');
+       Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=3; // 4 - ая версия интерполяции.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=3; // 4 - ая версия интерполяции.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxinterpolationSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_interpolation_id_Pressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_interpolation_id_Pressure is empty.');
+       Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=3; // 4 - ая версия интерполяции.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=3; // 4 - ая версия интерполяции.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxinterpolationPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_interpolation_id_Stress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_interpolation_id_Stress is empty.');
+       Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=3; // 4 - ая версия интерполяции.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>5)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=3; // 4 - ая версия интерполяции.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxinterpollationStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_sort_algo',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_sort_algo is empty.');
+       Form_amg_manager.ComboBoxSort.ItemIndex:=0; // CountingSort.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>4)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxSort.ItemIndex:=0; // CountingSort.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxSort.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_Relaxation_Temperature',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_Relaxation_Temperature is empty.');
+       Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=0; // Gauss-Seidel.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=0; // Gauss-Seidel.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxsmoothertypeTemperature.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_Relaxation_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_Relaxation_Speed is empty.');
+       Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=0; // Gauss-Seidel.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=0; // Gauss-Seidel.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxsmoothertypeSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_Relaxation_Pressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_Relaxation_Pressure is empty.');
+       Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=0; // Gauss-Seidel.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=0; // Gauss-Seidel.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxsmoothertypePressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_Relaxation_Stress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_Relaxation_Stress is empty.');
+       Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=0; // Gauss-Seidel.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>7)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=0; // Gauss-Seidel.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxsmoothertypeStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_amg_splitting_coarsening',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_amg_splitting_coarsening is empty.');
+       Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=2; // classical ST all connection.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=2; // classical ST all connection.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxcoarseningTemp.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_amg_splitting_coarseningSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_amg_splitting_coarseningSpeed is empty.');
+       Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=2; // classical ST all connection.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=2; // classical ST all connection.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxcoarseningSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_amg_splitting_coarseningPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_amg_splitting_coarseningPressure is empty.');
+       Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=2; // classical ST all connection.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=2; // classical ST all connection.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxcoarseningPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_amg_splitting_coarseningStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_amg_splitting_coarseningStress is empty.');
+       Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=2; // classical ST all connection.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>9)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=2; // classical ST all connection.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxcoarseningStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_Stabilization',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_Stabilization is empty.');
+       Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=0; // none.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>3)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=0; // none.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxStabilizationTemp.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_StabilizationSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_StabilizationSpeed is empty.');
+       Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=0; // none.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=0; // none.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxStabilizationSpeed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_StabilizationPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_StabilizationPressure is empty.');
+       Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=0; // none.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=0; // none.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxStabilizationPressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_StabilizationStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_StabilizationStress is empty.');
+       Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=0; // none.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>2)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=0; // none.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxStabilizationStress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('C_F_decomposition_algorithms_and_data_structure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! C_F_decomposition_algorithms_and_data_structure is empty.');
+       Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=2; // BinaryHeap.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=2; // BinaryHeap.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Temperature.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('C_F_decomposition_algorithms_and_data_structureSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! C_F_decomposition_algorithms_and_data_structureSpeed is empty.');
+       Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=2; // BinaryHeap.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=2; // BinaryHeap.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Speed.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('C_F_decomposition_algorithms_and_data_structurePressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! C_F_decomposition_algorithms_and_data_structurePressure is empty.');
+       Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=2; // BinaryHeap.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=2; // BinaryHeap.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Pressure.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('C_F_decomposition_algorithms_and_data_structureStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! C_F_decomposition_algorithms_and_data_structureStress is empty.');
+       Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=2; // BinaryHeap.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>6)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=2; // BinaryHeap.
+       end
+       else
+       begin
+          Form_amg_manager.ComboBoxCFalgorithmandDataStruct_Stress.ItemIndex:=StrToInt(Trim(sub));
+       end;
+    end; // 30.07.2020
+
+
+    // 30.07.2020
+
+    sub:=My_Get_String_for_to_val('Rumba_threshold_Temperature',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_threshold_Temperature is empty.');
+       Form_amg_manager.Editthreshold.Text:='0.24'; // recomended threshold.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.Editthreshold.Text:='0.24'; // recomended threshold.
+       end
+       else
+       begin
+          Form_amg_manager.Editthreshold.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_threshold_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_threshold_Speed is empty.');
+       Form_amg_manager.EditthresholdSpeed.Text:='0.24'; // recomended threshold.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditthresholdSpeed.Text:='0.24'; // recomended threshold.
+       end
+       else
+       begin
+          Form_amg_manager.EditthresholdSpeed.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_threshold_Pressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_threshold_Pressure is empty.');
+       Form_amg_manager.EditthresholdPressure.Text:='0.24'; // recomended threshold.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditthresholdPressure.Text:='0.24'; // recomended threshold.
+       end
+       else
+       begin
+          Form_amg_manager.EditthresholdPressure.Text:=Trim(sub);
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_threshold_Stress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_threshold_Stress is empty.');
+       Form_amg_manager.EditthresholdStress.Text:='0.24'; // recomended threshold.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditthresholdStress.Text:='0.24'; // recomended threshold.
+       end
+       else
+       begin
+          Form_amg_manager.EditthresholdStress.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_truncation_interpolation_Temp',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncation_interpolation_Temp is empty.');
+       Form_amg_manager.Edit_truncation_T.Text:='0.2'; // recomended truncation.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.Edit_truncation_T.Text:='0.2'; // recomended truncation.
+       end
+       else
+       begin
+          Form_amg_manager.Edit_truncation_T.Text:=Trim(sub);
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_truncation_interpolation_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncation_interpolation_Speed is empty.');
+       Form_amg_manager.Edit_truncation_Speed.Text:='0.2'; // recomended truncation.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.Edit_truncation_Speed.Text:='0.2'; // recomended truncation.
+       end
+       else
+       begin
+          Form_amg_manager.Edit_truncation_Speed.Text:=Trim(sub);
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_truncation_interpolation_Pressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncation_interpolation_Pressure is empty.');
+       Form_amg_manager.Edit_truncation_Pressure.Text:='0.2'; // recomended truncation.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.Edit_truncation_Pressure.Text:='0.2'; // recomended truncation.
+       end
+       else
+       begin
+          Form_amg_manager.Edit_truncation_Pressure.Text:=Trim(sub);
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_truncation_interpolation_Stress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncation_interpolation_Stress is empty.');
+       Form_amg_manager.Edittruncation_Stress.Text:='0.2'; // recomended truncation.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.Edittruncation_Stress.Text:='0.2'; // recomended truncation.
+       end
+       else
+       begin
+          Form_amg_manager.Edittruncation_Stress.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_F2F_Temperature',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_F2F_Temperature is empty.');
+       Form_amg_manager.EditmagicT.Text:='0.4'; // recomended F2F value.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditmagicT.Text:='0.4'; // recomended F2F value.
+       end
+       else
+       begin
+          Form_amg_manager.EditmagicT.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_F2F_Speed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_F2F_Speed is empty.');
+       Form_amg_manager.EditmagicSpeed.Text:='0.4'; // recomended F2F value.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditmagicSpeed.Text:='0.4'; // recomended F2F value.
+       end
+       else
+       begin
+          Form_amg_manager.EditmagicSpeed.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_F2F_Pressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_F2F_Pressure is empty.');
+       Form_amg_manager.EditmagicPressure.Text:='0.4'; // recomended F2F value.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditmagicPressure.Text:='0.4'; // recomended F2F value.
+       end
+       else
+       begin
+          Form_amg_manager.EditmagicPressure.Text:=Trim(sub);
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_F2F_Stress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_F2F_Stress is empty.');
+       Form_amg_manager.EditmagicStress.Text:='0.4'; // recomended F2F value.
+    end
+     else
+    begin
+       if ((StrToFloat(Trim(sub))>0.98)or(StrToFloat(Trim(sub))<0.02)) then
+       begin
+          Form_amg_manager.EditmagicStress.Text:='0.4'; // recomended F2F value.
+       end
+       else
+       begin
+          Form_amg_manager.EditmagicStress.Text:=Trim(sub);
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_Diagonal_dominant',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_Diagonal_dominant is empty.');
+       Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true; // diagonal dominant Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true; // diagonal dominant Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // diagonal dominant
+             begin
+                Form_amg_manager.CheckBoxDiagonalDominant.Checked:=false; // diagonal dominant NO.
+             end;
+             1 : // diagonal dominant
+             begin
+                Form_amg_manager.CheckBoxDiagonalDominant.Checked:=true; // diagonal dominant Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_truncationT',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncationT is empty.');
+       Form_amg_manager.CheckBoxtruncationT.Checked:=true; // truncation Temperature Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxtruncationT.Checked:=true; // truncation Temperature Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // truncation Temperature
+             begin
+                Form_amg_manager.CheckBoxtruncationT.Checked:=false; // truncation Temperature NO.
+             end;
+             1 : // truncation Temperature
+             begin
+                Form_amg_manager.CheckBoxtruncationT.Checked:=true; // truncation Temperature Yes.
+             end;
+          end;
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_truncationSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncationSpeed is empty.');
+       Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true; // truncation Speed Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true; // truncation Speed Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // truncation Speed
+             begin
+                Form_amg_manager.CheckBoxtruncationSpeed.Checked:=false; // truncation Speed NO.
+             end;
+             1 : // truncation Speed
+             begin
+                Form_amg_manager.CheckBoxtruncationSpeed.Checked:=true; // truncation Speed Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_truncationPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncationPressure is empty.');
+       Form_amg_manager.CheckBoxtruncationPressure.Checked:=true; // truncation Pressure Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxtruncationPressure.Checked:=true; // truncation Pressure Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // truncation Pressure
+             begin
+                Form_amg_manager.CheckBoxtruncationPressure.Checked:=false; // truncation Pressure NO.
+             end;
+             1 : // truncation Pressure
+             begin
+                Form_amg_manager.CheckBoxtruncationPressure.Checked:=true; // truncation Pressure Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_truncationStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_truncationStress is empty.');
+       Form_amg_manager.CheckBoxtruncationStress.Checked:=true; // truncation Stress Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxtruncationStress.Checked:=true; // truncation Stress Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // truncation Temperature
+             begin
+                Form_amg_manager.CheckBoxtruncationStress.Checked:=false; // truncation Stress NO.
+             end;
+             1 : // truncation Temperature
+             begin
+                Form_amg_manager.CheckBoxtruncationStress.Checked:=true; // truncation Stress Yes.
+             end;
+          end;
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_StrongTranspose',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_StrongTranspose is empty.');
+       Form_amg_manager.CheckBoxStrongTranspose.Checked:=true; // Strong Transpose Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxStrongTranspose.Checked:=true; // Strong Transpose Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // Strong Transpose
+             begin
+                Form_amg_manager.CheckBoxStrongTranspose.Checked:=false; // Strong Transpose NO.
+             end;
+             1 : // Strong Transpose
+             begin
+                Form_amg_manager.CheckBoxStrongTranspose.Checked:=true; // Strong Transpose Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_PrintLogTemperature',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_PrintLogTemperature is empty.');
+       Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true; // печататать лог amg решения Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true; // печататать лог amg решения Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogTemperature.Checked:=false; // печататать лог amg решения NO.
+             end;
+             1 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogTemperature.Checked:=true; // печататать лог amg решения Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_PrintLogSpeed',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_PrintLogSpeed is empty.');
+       Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true; // печататать лог amg решения Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true; // печататать лог amg решения Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogSpeed.Checked:=false; // печататать лог amg решения NO.
+             end;
+             1 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogSpeed.Checked:=true; // печататать лог amg решения Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_PrintLogPressure',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_PrintLogPressure is empty.');
+       Form_amg_manager.CheckBoxprintlogPressure.Checked:=true; // печататать лог amg решения Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxprintlogPressure.Checked:=true; // печататать лог amg решения Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogPressure.Checked:=false; // печататать лог amg решения NO.
+             end;
+             1 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogPressure.Checked:=true; // печататать лог amg решения Yes.
+             end;
+          end;
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_PrintLogStress',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_PrintLogStress is empty.');
+       Form_amg_manager.CheckBoxprintlogStress.Checked:=true; // печататать лог amg решения Yes.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxprintlogStress.Checked:=true; // печататать лог amg решения Yes.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogStress.Checked:=false; // печататать лог amg решения NO.
+             end;
+             1 : // печататать лог amg решения
+             begin
+                Form_amg_manager.CheckBoxprintlogStress.Checked:=true; // печататать лог amg решения Yes.
+             end;
+          end;
+       end;
+    end;
+
+
+    sub:=My_Get_String_for_to_val('Rumba_TemperatureMatrixPortrait',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_TemperatureMatrixPortrait is empty.');
+       Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+             end;
+             1 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxTemperatureMatrixPortrait.Checked:=true; // печататать портрет матрицы Yes.
+             end;
+          end;
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_SpeedMatrixPortrait',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_SpeedMatrixPortrait is empty.');
+       Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+             end;
+             1 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxSpeedMatrixPortrait.Checked:=true; // печататать портрет матрицы Yes.
+             end;
+          end;
+       end;
+    end;
+
+     sub:=My_Get_String_for_to_val('Rumba_PressureMatrixPortrait',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_PressureMatrixPortrait is empty.');
+       Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+             end;
+             1 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxPressureMatrixPortrait.Checked:=true; // печататать портрет матрицы Yes.
+             end;
+          end;
+       end;
+    end;
+
+    sub:=My_Get_String_for_to_val('Rumba_StressMatrixPortrait',f);
+    if (length(sub)=0) then
+    begin
+       //ShowMessage('error! Rumba_StressMatrixPortrait is empty.');
+       Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+    end
+     else
+    begin
+       if ((StrToInt(Trim(sub))>1)or(StrToInt(Trim(sub))<0)) then
+       begin
+          Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+       end
+       else
+       begin
+          case StrToInt(Trim(sub)) of
+             0 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=false; // печататать портрет матрицы NO.
+             end;
+             1 : // печататать портрет матрицы
+             begin
+                Form_amg_manager.CheckBoxStressMatrixPortrait.Checked:=true; // печататать портрет матрицы Yes.
+             end;
+          end;
+       end;
+    end;
+
+       end;
+
+       // отображение дерева элементов:
+       TreeLoad(Sender);
+       breadfinish:=true;
+     end
+      else
+     begin
+        MainMemo.Lines.Add('File not model for AliceMesh.v.0.45.');
+        ShowMessage('File not model for AliceMesh.v.0.45');
+        breadfinish:=false;
+     end;
+
+     f.Free;
+     // прорисовка геометрии
+   end;  // иначе чтение файла не удалось, например пользователь отказался от открытитя файла.
+
+
+end; // My_read_model_new();
+
+begin
+
+   //My_read_model_old();
+   My_read_model_new(bperenapravlenie_na_import);
+   bperenapravlenie_na_import:=false;
+
+   // Снимаем флаг первого запуска. Запуск больше уже не первый и инициализация не требуется.
+   FormXYPlot.bfirst_zapusk_XYPlot:=false;
+
+end;
+
+
+procedure TLaplas.TreeLoad(Sender: TObject);
+var
+  j,iscan_ass, idob, i_2   : Integer;
+  NewNode, Nodeloc, Noddy : TTreeNode; // узел дерева элементов
+   flagunion : array of Boolean; //  было ли создано объединение
+   bdobavlen : array of Boolean; // какие блоки уже были добавлены в дерево.
+   SearchTarget : String;
+   Searching, not_ignoring : Boolean;
+   imeshassemblesseparately : Integer;
+   bOk : Boolean;
+   Qunion_number : array of Integer; // номера unionov
+    im1, im2 : Integer;
+   i_1, iunion_old, lb_old, icb_old, imatherial_old : Integer;
+   priority_id_old, ls_old, lw_old, ics_old, icw_old : Integer;
+   ivar_package, j_var : Integer;
+   bfound_variable : Boolean;
+   snew, sold, subloc : String;
+begin
+  // отображение дерева элементов:
 
    // количество объединений уже известно.
    // Всего lu объединений.
@@ -19217,84 +24867,9 @@ begin
    end;
 
    MainMemo.Lines.Add('Done');
-   f.Free;
-   // прорисовка геометрии
-   end;  // иначе чтение файла не удалось, например пользователь отказался от открытитя файла.
-
-   breadfinish:=true;
-end;   //  My_read_model_new();
-
-begin
-
-   //My_read_model_old();
-   My_read_model_new(bperenapravlenie_na_import);
-   bperenapravlenie_na_import:=false;
-
-   // При считывании тепловой модели инициализируем XYPlot.
-   if (ls>0) then
-   begin
-      // Инициализируем геометрическим центром первого источника тепла при его наличии.
-      FormXYPlot.EditXo.Text:=FloatToStr(0.5*(source[0].xS+source[0].xE));
-      FormXYPlot.EditYo.Text:=FloatToStr(0.5*(source[0].yS+source[0].yE));
-      FormXYPlot.EditZo.Text:=FloatToStr(0.5*(source[0].zS+source[0].zE));
-
-      if (ls>1) then
-      begin
-         if (abs(source[0].xS-source[1].xS)>1.0e-23) then
-         begin
-            FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
-         end;
-         if (abs(source[0].yS-source[1].yS)>1.0e-23) then
-         begin
-            FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
-         end;
-         if (abs(source[0].zS-source[1].zS)>1.0e-23) then
-         begin
-            FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
-         end;
-      end;
-   end
-    else
-   begin
-      // Инициализируем геометрическим центром кабинета.
-      FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[0].xS+body[0].xE));
-      FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[0].yS+body[0].yE));
-      FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[0].zS+body[0].zE));
-      i_3:=-1;
-      for i_2 := 0 to lb-1 do
-      begin
-         if (body[i_2].n_power>0) then
-         begin
-            if ((i_3>-1)and(abs(body[i_2].arr_power[0])>0.0)) then
-            begin
-               if (abs(body[i_3].xS-body[i_2].xS)>1.0e-23) then
-               begin
-                  FormXYPlot.ComboBoxdirectional.ItemIndex:=0; // X - directional
-               end;
-               if (abs(body[i_3].yS-body[i_2].yS)>1.0e-23) then
-               begin
-                  FormXYPlot.ComboBoxdirectional.ItemIndex:=1; // Y - directional
-               end;
-               if (abs(body[i_3].zS-body[i_2].zS)>1.0e-23) then
-               begin
-                  FormXYPlot.ComboBoxdirectional.ItemIndex:=2; // Z - directional
-               end;
-               break;
-            end;
-            if ((i_3=-1)and(abs(body[i_2].arr_power[0])>0.0)) then
-            begin
-                i_3:=i_2;
-                FormXYPlot.EditXo.Text:=FloatToStr(0.5*(body[i_2].xS+body[i_2].xE));
-                FormXYPlot.EditYo.Text:=FloatToStr(0.5*(body[i_2].yS+body[i_2].yE));
-                FormXYPlot.EditZo.Text:=FloatToStr(0.5*(body[i_2].zS+body[i_2].zE));
-            end;
-         end;
-      end;
-   end;
-   // Снимаем флаг первого запуска. Запуск больше уже не первый и инициализация не требуется.
-   FormXYPlot.bfirst_zapusk_XYPlot:=false;
-
 end;
+
+
 
 // возвращение в изометрию
 procedure TLaplas.SpeedButtonisogeomClick(Sender: TObject);
@@ -19662,6 +25237,7 @@ begin
    wall[itek].family:=1; // род краевого условия
    wall[itek].Tamb:=20.0; // градусов цельсия
    wall[itek].emissivity:=0.0; // излучательная способность.
+   wall[itek].ViewFactor:=1.0; // Фактор видимости.
    wall[itek].heat_transfer_coefficient:=0.0; // коэффициент теплоотдачи.
    if (FormatSettings.DecimalSeparator='.') then
    begin
@@ -19937,7 +25513,8 @@ begin
    Render; // прорисовка геометрии
 end;
 
-// Если кабинет имеет тип Hollow то его геометрические размеры естественым образом
+// Если кабинет имеет тип Hollow то его геометрические размеры естественым
+// образом
 // корректируются, чтобы соответствовать текущему размеру модели.
 procedure TLaplas.CorrectHollowCabinet;
 var
@@ -20931,7 +26508,8 @@ end;
 procedure TLaplas.SpeedButtonDelClick(Sender: TObject);
 var
    sdel : String;
-   i,j, idel, idel1 : Integer;
+   i,j,i_1, idel, idel1 : Integer;
+   bcontinue_del : Boolean;
 
 
 // удаляет элемент с именем sname
@@ -21258,6 +26836,144 @@ end;
 
 begin
 
+  FormPattern.ShowModal;
+
+   if (FormPattern.RadioGroupPattern.ItemIndex=1) then
+   begin
+      // Текстовый шаблон.
+      if (length(FormPattern.EdittextnamefragmentPattern.Text)>0) then
+      begin
+         while(true) do
+         begin
+            bcontinue_del:=false;
+            for i_1 := 1 to (lb-1) do
+            begin
+               if (Pos(Trim(FormPattern.EdittextnamefragmentPattern.Text),body[i_1].name)>0) then
+               begin
+                  bcontinue_del:=true;
+                  sdel:= body[i_1].name;
+               end;
+            end;
+             if not(bcontinue_del) then
+            begin
+               for i_1 := 0 to (lw-1) do
+               begin
+                  if (Pos(Trim(FormPattern.EdittextnamefragmentPattern.Text),wall[i_1].name)>0) then
+                  begin
+                     bcontinue_del:=true;
+                     sdel:= wall[i_1].name;
+                  end;
+               end;
+            end;
+              if not(bcontinue_del) then
+            begin
+               for i_1 := 0 to (ls-1) do
+               begin
+                  if (Pos(Trim(FormPattern.EdittextnamefragmentPattern.Text),source[i_1].name)>0) then
+                  begin
+                     bcontinue_del:=true;
+                     sdel:= source[i_1].name;
+                  end;
+               end;
+            end;
+            if not(bcontinue_del) then
+            begin
+               break; // досрочный выход из удаления.
+            end
+            else
+            begin
+               // очередное удаление
+                // по всем блокам
+                idel:=-1;
+                for i:=1 to (lb-1) do
+                begin
+                   if ( (length(body[i].name) = length(sdel)) and (Pos(body[i].name,sdel)=1)) then
+                   begin
+                      idel:=i; // номер удаляемого блока
+                   end;
+                end;
+                delete_body(idel); // удаляем блок с идентификатором idel.
+                // по всем источникам
+                idel:=-1;
+                for i:=0 to (ls-1) do
+                begin
+                   if ( (length(source[i].name) = length(sdel)) and (Pos(source[i].name,sdel)=1)) then
+                   begin
+                      idel:=i; // номер удаляемого блока
+                   end;
+                end;
+                delete_source(idel); // удаляет источник с идентификатором idel.
+                // по всем стенкам
+                idel:=-1;
+                for i:=0 to (lw-1) do
+                begin
+                   if ( (length(wall[i].name) = length(sdel)) and (Pos(wall[i].name,sdel)=1)) then
+                   begin
+                      idel:=i; // номер удаляемого блока
+                   end;
+                end;
+                delete_wall(idel);
+
+                // по всем объединениям.
+                idel:=-1;
+                for i:=0 to (lu-1) do
+                begin
+                   if ( (length(myassembles[i].name) = length(sdel)) and (Pos(myassembles[i].name,sdel)=1)) then
+                   begin
+                      idel:=i; // номер удаляемого объединения.
+                   end;
+                end;
+                if (idel >-1) then
+                begin
+                   // удаление наполнения union`а.
+                   delete_unionbsw(myassembles[idel].identifire);
+
+
+                   recursion_delete(sdel);
+                   idel:=-1;
+                   for i:=0 to (lu-1) do
+                   begin
+                      if ( (length(myassembles[i].name) = length(sdel)) and (Pos(myassembles[i].name,sdel)=1)) then
+                      begin
+                         idel:=i; // номер удаляемого объединения.
+                      end;
+                   end;
+
+
+
+                   delete_union(myassembles[idel].identifire); // удаляет строго пустой юнион.
+
+                   // Выделяем в дереве удаляемый юнион.
+                   MainTreeView.Selected:=nil;   // снимем выделение с дерева.
+                   // Найдём узел дерева который отвечает выбранному ассемблесу.
+                   for i:=0 to MainTreeView.Items.Count-1 do
+                   begin
+                      if ((length(sdel) = length(MainTreeView.Items.Item[i].Text)) and (Pos(sdel,MainTreeView.Items.Item[i].Text)=1)) then
+                      begin
+                         MainTreeView.Items.Item[i].Selected:=True;
+                         Break;
+                      end;
+                   end;
+
+                end;
+
+
+            end;
+         end;
+
+          // удаление выделенных элементов из дерева
+          // перезагрузка дерева.
+          TreeLoad(Sender);
+          CorrectHollowCabinet;
+          ReadyPaint;
+          Render;// прорисовка изменений
+
+      end;
+   end;
+  if (FormPattern.RadioGroupPattern.ItemIndex=0) then
+   begin
+      //  OnlySelect Text
+
    if (MainTreeView.Selected<>nil) then
    begin
       // Если элемент выделен !
@@ -21349,6 +27065,8 @@ begin
       ReadyPaint;
       Render;// прорисовка изменений
    end;
+   end;
+
 end;
 
 // создание inum копий выделенного объекта.
@@ -21366,6 +27084,18 @@ var
     imaxuident : Integer; // максимальный идентификатор объединения.
     sforval : String;
 
+function my_sign(x125 : Real) : Real;
+begin
+   if (x125>0.0) then
+   begin
+      Result:=1.0;
+   end
+    else
+   begin
+      Result:=-1.0;
+   end;
+end;
+
 // создаёт inum копий блока с идентификатором id.
 procedure copyblock(id : Integer; idunion : Integer; bCabinet : Boolean);
 var
@@ -21377,6 +27107,8 @@ var
    curNodeTree : TTreeNode;
    bOk_conflict_name : Boolean;
    b_polygon_x, b_polygon_y, b_polygon_z : Boolean;
+   phi0, phi_step, xavg, yavg, zavg, Rdd, Rdd2 : Real;
+   xmin2, ymin2, zmin2, xmax2, ymax2, zmax2, size_obj : Real;
 
 begin
    b_polygon_x:=false;
@@ -21400,399 +27132,688 @@ begin
 
          inc(j_4);
 
-         if (bdxchange) then
+         if (FormCopyObject.CheckBoxRotate.Checked) then
          begin
-            if (not bdxconst) then
-            begin
-               // параметризованное пользователем значение
-               bOk:=true;
-               // Prism
-               body[i1].sxS:=body[id].sxS+'+'+IntToStr(j1)+'*('+spdx+')';
-               body[i1].sxE:=body[id].sxE+'+'+IntToStr(j1)+'*('+spdx+')';
-               if (bOk) then body[i1].xS:=FormVariables.my_real_convert(body[i1].sxS,bOk);
-               if (bOk) then body[i1].xE:=FormVariables.my_real_convert(body[i1].sxE,bOk);
-               // Cylinder
-               body[i1].sxC:=body[id].sxC+'+'+IntToStr(j1)+'*('+spdx+')';
-               if (bOk) then body[i1].xC:=FormVariables.my_real_convert(body[i1].sxC,bOk);
-            end
-             else
-            begin
-               // числовое значение
-               // Cylinder
-               sforval:='';
-               sforval:=StringReplace(body[id].sxC,',','.',[rfReplaceAll]);
-               val(sforval,dmbuf,code);
-               // val(body[id].sxC,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].xC:=body[id].xC+j1*dx;
-                  body[i1].sxC:=FloatToStr(body[i1].xC);
-               end
-                else
-               begin
-                  dmbuf:=j1*dx;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].sxC:=body[id].sxC+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].xC:=FormVariables.my_real_convert(body[i1].sxC,bOk);
-                  end
-                  else
-                  begin
-                     body[i1].sxC:=body[id].sxC+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].xC:=FormVariables.my_real_convert(body[i1].sxC,bOk);
-                  end;
-               end;
+            // Вращение полигона.
+            xavg:=0.0;
+            yavg:=0.0;
+            zavg:=0.0;
+            case body[id].iPlane_obj2 of
+               1 : begin
+                      // XY
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          xavg:= body[id].xi[i_1];
+                          yavg:= body[id].yi[i_1];
+                       end;
+                       xavg:=xavg/body[id].nsizei;
+                       yavg:=yavg/body[id].nsizei;
+                       zavg:=body[id].zi[0];
+                       Rdd:= sqrt((xavg-dx)*(xavg-dx)+(yavg-dy)*(yavg-dy));
+                       phi0:=arcsin((yavg-dy)/Rdd);
+                       phi_step:=2.0*3.141/ (lb-1-lold1+2);
 
-              // polygon
-               SetLength(body[i1].xi,body[id].nsizei);
-              for i_1:=0 to body[id].nsizei-1 do
-              begin
-                 body[i1].xi[i_1]:=body[id].xi[i_1]+j1*dx;
-              end;
-               b_polygon_x:=true;
+                       b_polygon_x:=true;
+                       b_polygon_y:=true;
+                       SetLength(body[i1].xi,body[id].nsizei);
+                       SetLength(body[i1].yi,body[id].nsizei);
 
-               // Prism
-               sforval:='';
-               sforval:=StringReplace(body[id].sxS,',','.',[rfReplaceAll]);
-                val(sforval,dmbuf,code);
-              // val(body[id].sxS,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].xS:=body[id].xS+j1*dx;
-                  body[i1].sxS:=FloatToStr(body[i1].xS);
-               end
-                else
-               begin
-                  dmbuf:=j1*dx;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].sxS:=body[id].sxS+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].xS:=FormVariables.my_real_convert(body[i1].sxS,bOk);
-                  end
-                  else
-                  begin
-                     body[i1].sxS:=body[id].sxS+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].xS:=FormVariables.my_real_convert(body[i1].sxS,bOk);
-                  end;
-               end;
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          Rdd2:= sqrt((body[id].xi[i_1]-dx)*(body[id].xi[i_1]-dx)+(body[id].yi[i_1]-dy)*(body[id].yi[i_1]-dy));
+                          phi0:=arctan((body[id].yi[i_1]-dy)/(body[id].xi[i_1]-dx));
+                          body[i1].xi[i_1]:=dx+Rdd2*cos(phi0+j1*phi_step);
+                          body[i1].yi[i_1]:=dy+Rdd2*sin(phi0+j1*phi_step);
+                       end;
 
-                sforval:='';
-                sforval:=StringReplace(body[id].sxE,',','.',[rfReplaceAll]);
-                val(sforval,dmbuf,code);
-               //val(body[id].sxE,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].xE:=body[id].xE+j1*dx;
-                  body[i1].sxE:=FloatToStr(body[i1].xE);
-               end
-                else
-               begin
-                  // слева параметризованная величина а справа константа.
-                  dmbuf:=j1*dx;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].sxE:=body[id].sxE+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].xE:=FormVariables.my_real_convert(body[i1].sxE,bOk);
-                  end
-                  else
-                  begin
-                     body[i1].sxE:=body[id].sxE+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].xE:=FormVariables.my_real_convert(body[i1].sxE,bOk);
-                  end;
-               end;
+                       xmin2:=1.0e30;
+                       ymin2:=1.0e30;
+                       xmax2:=-1.0e30;
+                       ymax2:=-1.0e30;
+                       xavg:=0.0;
+                       yavg:=0.0;
+
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          xavg:= body[i1].xi[i_1];
+                          yavg:= body[i1].yi[i_1];
+                          if (body[i1].xi[i_1]<xmin2) then
+                          begin
+                              xmin2:=body[i1].xi[i_1];
+                          end;
+                          if (body[i1].xi[i_1]>xmax2) then
+                          begin
+                              xmax2:=body[i1].xi[i_1];
+                          end;
+                           if (body[i1].yi[i_1]<ymin2) then
+                          begin
+                              ymin2:=body[i1].yi[i_1];
+                          end;
+                          if (body[i1].yi[i_1]>ymax2) then
+                          begin
+                              ymax2:=body[i1].yi[i_1];
+                          end;
+                       end;
+                       xavg:=xavg/body[id].nsizei;
+                       yavg:=yavg/body[id].nsizei;
+                       body[i1].xS:=xmin2;
+                       body[i1].yS:=ymin2;
+                       body[i1].xE:=xmax2;
+                       body[i1].yE:=ymax2;
+                       body[i1].sxS:=FloatToStr(xmin2);
+                       body[i1].syS:=FloatToStr(ymin2);
+                       body[i1].sxE:=FloatToStr(xmax2);
+                       body[i1].syE:=FloatToStr(ymax2);
+                       body[i1].xC:=xavg;
+                       body[i1].yC:=yavg;
+                       body[i1].sxC:=FloatToStr(xavg);
+                       body[i1].syC:=FloatToStr(yavg);
+                        // copy
+                       body[i1].szS:=body[id].szS;
+                       body[i1].szE:=body[id].szE;
+                       body[i1].szC:=body[id].szC;
+                       body[i1].zS:=body[id].zS;
+                       body[i1].zE:=body[id].zE;
+                       body[i1].zC:=body[id].zC;
+
+                   end;
+               2 : begin
+                      // XZ
+                       xavg:=0.0;
+                       zavg:=0.0;
+                        xmin2:=1.0e30;
+                       zmin2:=1.0e30;
+                       xmax2:=-1.0e30;
+                       zmax2:=-1.0e30;
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          xavg:= body[id].xi[i_1];
+                          zavg:= body[id].zi[i_1];
+                           if (body[id].xi[i_1]<xmin2) then
+                          begin
+                              xmin2:=body[id].xi[i_1];
+                          end;
+                          if (body[id].xi[i_1]>xmax2) then
+                          begin
+                              xmax2:=body[id].xi[i_1];
+                          end;
+                           if (body[id].zi[i_1]<zmin2) then
+                          begin
+                              zmin2:=body[id].zi[i_1];
+                          end;
+                          if (body[id].zi[i_1]>zmax2) then
+                          begin
+                              zmax2:=body[id].zi[i_1];
+                          end;
+                       end;
+                       xavg:=xavg/body[id].nsizei;
+                       zavg:=zavg/body[id].nsizei;
+                       yavg:=body[id].yi[0];
+                       Rdd:= sqrt((xavg-dx)*(xavg-dx)+(zavg-dz)*(zavg-dz));
+                       phi0:=arcsin((zavg-dz)/Rdd);
+                       phi_step:=2.0*3.141/ (lb-1-lold1+2);
+                       size_obj:=sqrt((zmax2-zmin2)*(zmax2-zmin2)+(xmax2-xmin2)*(xmax2-xmin2));
+
+
+                      b_polygon_x:=true;
+                      b_polygon_z:=true;
+                      SetLength(body[i1].xi,body[id].nsizei);
+                      SetLength(body[i1].zi,body[id].nsizei);
+
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          Rdd2:= sqrt((body[id].xi[i_1]-dx)*(body[id].xi[i_1]-dx)+(body[id].zi[i_1]-dz)*(body[id].zi[i_1]-dz));
+                          phi0:=arctan((body[id].zi[i_1]-dz)/(body[id].xi[i_1]-dx));
+                          body[i1].xi[i_1]:=dx+Rdd2*cos(phi0+j1*phi_step);
+                          body[i1].zi[i_1]:=dz+Rdd2*sin(phi0+j1*phi_step);
+                       end;
+
+                       xmin2:=1.0e30;
+                       zmin2:=1.0e30;
+                       xmax2:=-1.0e30;
+                       zmax2:=-1.0e30;
+                       xavg:=0.0;
+                       zavg:=0.0;
+
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          xavg:= body[i1].xi[i_1];
+                          zavg:= body[i1].zi[i_1];
+                          if (body[i1].xi[i_1]<xmin2) then
+                          begin
+                              xmin2:=body[i1].xi[i_1];
+                          end;
+                          if (body[i1].xi[i_1]>xmax2) then
+                          begin
+                              xmax2:=body[i1].xi[i_1];
+                          end;
+                           if (body[i1].zi[i_1]<zmin2) then
+                          begin
+                              zmin2:=body[i1].zi[i_1];
+                          end;
+                          if (body[i1].zi[i_1]>zmax2) then
+                          begin
+                              zmax2:=body[i1].zi[i_1];
+                          end;
+                       end;
+                       xavg:=xavg/body[id].nsizei;
+                       zavg:=zavg/body[id].nsizei;
+                       body[i1].xS:=xmin2;
+                       body[i1].zS:=zmin2;
+                       body[i1].xE:=xmax2;
+                       body[i1].zE:=zmax2;
+                       body[i1].sxS:=FloatToStr(xmin2);
+                       body[i1].szS:=FloatToStr(zmin2);
+                       body[i1].sxE:=FloatToStr(xmax2);
+                       body[i1].szE:=FloatToStr(zmax2);
+                       body[i1].xC:=xavg;
+                       body[i1].zC:=zavg;
+                       body[i1].sxC:=FloatToStr(xavg);
+                       body[i1].szC:=FloatToStr(zavg);
+                       // copy
+                       body[i1].syS:=body[id].syS;
+                       body[i1].syE:=body[id].syE;
+                       body[i1].syC:=body[id].syC;
+                       body[i1].yS:=body[id].yS;
+                       body[i1].yE:=body[id].yE;
+                       body[i1].yC:=body[id].yC;
+
+
+
+                   end;
+               3 : begin
+
+                       // YZ
+                       yavg:=0.0;
+                       zavg:=0.0;
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          yavg:= body[id].yi[i_1];
+                          zavg:= body[id].zi[i_1];
+                       end;
+                       yavg:=yavg/body[id].nsizei;
+                       zavg:=zavg/body[id].nsizei;
+                       xavg:=body[id].xi[0];
+                       Rdd:= sqrt((yavg-dy)*(yavg-dy)+(zavg-dz)*(zavg-dz));
+                       phi_step:=2.0*3.141/ (lb-1-lold1+2);
+
+                       b_polygon_y:=true;
+                       b_polygon_z:=true;
+                       SetLength(body[i1].yi,body[id].nsizei);
+                       SetLength(body[i1].zi,body[id].nsizei);
+
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          Rdd2:= sqrt((body[id].zi[i_1]-dz)*(body[id].zi[i_1]-dz)+
+                          (body[id].yi[i_1]-dy)*(body[id].yi[i_1]-dy));
+                          if (abs(body[id].zi[i_1]-dz)<0.1) then
+                          begin
+                             phi0:=arccos((body[id].zi[i_1]-dz)/Rdd2);
+                          end
+                          else
+                          begin
+                             phi0:=arctan((body[id].yi[i_1]-dy)/(body[id].zi[i_1]-dz));
+                          end;
+                          body[i1].zi[i_1]:=dz+Rdd2*sin(phi0+j1*phi_step-3.141/2.0);
+                          body[i1].yi[i_1]:=dy+Rdd2*cos(phi0+j1*phi_step-3.141/2.0);
+                          //phi0:=arctan((body[id].zi[i_1]-dz)/(body[id].yi[i_1]-dy));
+                          //body[i1].zi[i_1]:=dz+Rdd2*cos(phi0+j1*phi_step);
+                          //body[i1].yi[i_1]:=dy+Rdd2*sin(phi0+j1*phi_step);
+                       end;
+
+                       zmin2:=1.0e30;
+                       ymin2:=1.0e30;
+                       zmax2:=-1.0e30;
+                       ymax2:=-1.0e30;
+                       zavg:=0.0;
+                       yavg:=0.0;
+
+                       for i_1:=0 to body[id].nsizei-1 do
+                       begin
+                          zavg:= body[i1].zi[i_1];
+                          yavg:= body[i1].yi[i_1];
+                          if (body[i1].zi[i_1]<zmin2) then
+                          begin
+                              zmin2:=body[i1].zi[i_1];
+                          end;
+                          if (body[i1].zi[i_1]>zmax2) then
+                          begin
+                              zmax2:=body[i1].zi[i_1];
+                          end;
+                           if (body[i1].yi[i_1]<ymin2) then
+                          begin
+                              ymin2:=body[i1].yi[i_1];
+                          end;
+                          if (body[i1].yi[i_1]>ymax2) then
+                          begin
+                              ymax2:=body[i1].yi[i_1];
+                          end;
+                       end;
+                       zavg:=zavg/body[id].nsizei;
+                       yavg:=yavg/body[id].nsizei;
+                       body[i1].zS:=zmin2;
+                       body[i1].yS:=ymin2;
+                       body[i1].zE:=zmax2;
+                       body[i1].yE:=ymax2;
+                       body[i1].szS:=FloatToStr(zmin2);
+                       body[i1].syS:=FloatToStr(ymin2);
+                       body[i1].szE:=FloatToStr(zmax2);
+                       body[i1].syE:=FloatToStr(ymax2);
+                       body[i1].zC:=zavg;
+                       body[i1].yC:=yavg;
+                       body[i1].szC:=FloatToStr(zavg);
+                       body[i1].syC:=FloatToStr(yavg);
+                       // copy
+                       body[i1].sxS:=body[id].sxS;
+                       body[i1].sxE:=body[id].sxE;
+                       body[i1].sxC:=body[id].sxC;
+                       body[i1].xS:=body[id].xS;
+                       body[i1].xE:=body[id].xE;
+                       body[i1].xC:=body[id].xC;
+
+                   end;
             end;
-         end
-          else
-         begin
-            // по этой оси размеры копии остаются такими же как и размеры оригинала.
-            // Prism
-            body[i1].sxS:=body[id].sxS;
-            body[i1].sxE:=body[id].sxE;
-            body[i1].xS:=body[id].xS;
-            body[i1].xE:=body[id].xE;
-            // Cylinder
-            body[i1].sxC:=body[id].sxC;
-            body[i1].xC:=body[id].xC;
-            // polygon
-            SetLength(body[i1].xi,body[id].nsizei);
-            for i_1:=0 to body[id].nsizei-1 do
-            begin
-               body[i1].xi[i_1]:=body[id].xi[i_1];
-            end;
-            b_polygon_x:=true;
-         end;
 
-         if (bdychange) then
-         begin
-            if (not bdyconst) then
-            begin
-               // параметризованное пользователем значение
-               bOk:=true;
-               // Prism
-               body[i1].syS:=body[id].syS+'+'+IntToStr(j1)+'*('+spdy+')';
-               body[i1].syE:=body[id].syE+'+'+IntToStr(j1)+'*('+spdy+')';
-               if (bOk) then body[i1].yS:=FormVariables.my_real_convert(body[i1].syS,bOk);
-               if (bOk) then body[i1].yE:=FormVariables.my_real_convert(body[i1].syE,bOk);
-               // Cylinder
-               body[i1].syC:=body[id].syC+'+'+IntToStr(j1)+'*('+spdy+')';
-               if (bOk) then body[i1].yC:=FormVariables.my_real_convert(body[i1].syC,bOk);
-            end
-             else
-            begin
-               // числовое значение
-               // Cylinder
-               sforval:='';
-               sforval:=StringReplace(body[id].syC,',','.',[rfReplaceAll]);
-               val(sforval,dmbuf,code);
-               //val(body[id].syC,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].yC:=body[id].yC+j1*dy;
-                  body[i1].syC:=FloatToStr(body[i1].yC);
-               end
-               else
-               begin
-                  dmbuf:=j1*dy;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].syC:=body[id].syC+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].yC:=FormVariables.my_real_convert(body[i1].syC,bOk);
-                  end
-                   else
-                  begin
-                     body[i1].syC:=body[id].syC+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].yC:=FormVariables.my_real_convert(body[i1].syC,bOk);
-                  end;
-               end;
-
-              // polygon
-              SetLength(body[i1].yi,body[id].nsizei);
-              for i_1:=0 to body[id].nsizei-1 do
-              begin
-                 body[i1].yi[i_1]:=body[id].yi[i_1]+j1*dy;
-              end;
-               b_polygon_y:=true;
-
-               // Prism
-               sforval:='';
-               sforval:=StringReplace(body[id].syS,',','.',[rfReplaceAll]);
-               val(sforval,dmbuf,code);
-               //val(body[id].syS,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].yS:=body[id].yS+j1*dy;
-                  body[i1].syS:=FloatToStr(body[i1].yS);
-               end
-               else
-               begin
-                  dmbuf:=j1*dy;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].syS:=body[id].syS+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].yS:=FormVariables.my_real_convert(body[i1].syS,bOk);
-                  end
-                   else
-                  begin
-                     body[i1].syS:=body[id].syS+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].yS:=FormVariables.my_real_convert(body[i1].syS,bOk);
-                  end;
-               end;
-
-                sforval:='';
-                sforval:=StringReplace(body[id].syE,',','.',[rfReplaceAll]);
-                val(sforval,dmbuf,code);
-               //val(body[id].syE,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].yE:=body[id].yE+j1*dy;
-                  body[i1].syE:=FloatToStr(body[i1].yE);
-               end
-               else
-               begin
-                  // слева параметризованная величина а справа константа.
-                  dmbuf:=j1*dy;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].syE:=body[id].syE+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].yE:=FormVariables.my_real_convert(body[i1].syE,bOk);
-                  end
-                  else
-                  begin
-                     body[i1].syE:=body[id].syE+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].yE:=FormVariables.my_real_convert(body[i1].syE,bOk);
-                  end;
-               end;
-            end;
-         end
-          else
-         begin
-            // по этой оси размеры копии остаются такими же как и размеры оригинала.
-            // Prism
-            body[i1].syS:=body[id].syS;
-            body[i1].syE:=body[id].syE;
-            body[i1].yS:=body[id].yS;
-            body[i1].yE:=body[id].yE;
-            // Cylinder
-            body[i1].syC:=body[id].syC;
-            body[i1].yC:=body[id].yC;
-
-             // polygon
-             SetLength(body[i1].yi,body[id].nsizei);
-             for i_1:=0 to body[id].nsizei-1 do
-             begin
-                 body[i1].yi[i_1]:=body[id].yi[i_1];
-             end;
-             b_polygon_y:=true;
-         end;
-
-         if (bdzchange) then
-         begin
-            if (not bdzconst) then
-            begin
-               // параметризованное пользователем значение
-               bOk:=true;
-               // Prism
-               body[i1].szS:=body[id].szS+'+'+IntToStr(j1)+'*('+spdz+')';
-               body[i1].szE:=body[id].szE+'+'+IntToStr(j1)+'*('+spdz+')';
-               if (bOk) then body[i1].zS:=FormVariables.my_real_convert(body[i1].szS,bOk);
-               if (bOk) then body[i1].zE:=FormVariables.my_real_convert(body[i1].szE,bOk);
-               // Cylinder
-               body[i1].szC:=body[id].szC+'+'+IntToStr(j1)+'*('+spdz+')';
-               if (bOk) then body[i1].zC:=FormVariables.my_real_convert(body[i1].szC,bOk);
-            end
-             else
-            begin
-               // числовое значение
-               // Cylinder
-               sforval:='';
-               sforval:=StringReplace(body[id].szC,',','.',[rfReplaceAll]);
-               val(sforval,dmbuf,code);
-               //val(body[id].szC,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].zC:=body[id].zC+j1*dz;
-                  body[i1].szC:=FloatToStr(body[i1].zC);
-               end
-               else
-               begin
-                  dmbuf:=j1*dz;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].szC:=body[id].szC+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].zC:=FormVariables.my_real_convert(body[i1].szC,bOk);
-                  end
-                   else
-                  begin
-                     body[i1].szC:=body[id].szC+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].zC:=FormVariables.my_real_convert(body[i1].szC,bOk);
-                  end;
-               end;
-
-
-               // polygon
-               SetLength(body[i1].zi,body[id].nsizei);
-              for i_1:=0 to body[id].nsizei-1 do
-              begin
-                 body[i1].zi[i_1]:=body[id].zi[i_1]+j1*dz;
-              end;
-               b_polygon_z:=true;
-
-               // Prism
-               sforval:='';
-               sforval:=StringReplace(body[id].szS,',','.',[rfReplaceAll]);
-               val(sforval,dmbuf,code);
-               //val(body[id].szS,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].zS:=body[id].zS+j1*dz;
-                  body[i1].szS:=FloatToStr(body[i1].zS);
-               end
-               else
-               begin
-                  dmbuf:=j1*dz;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].szS:=body[id].szS+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].zS:=FormVariables.my_real_convert(body[i1].szS,bOk);
-                  end
-                  else
-                  begin
-                     body[i1].szS:=body[id].szS+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].zS:=FormVariables.my_real_convert(body[i1].szS,bOk);
-                  end;
-               end;
-
-               sforval:='';
-               sforval:=StringReplace(body[id].szE,',','.',[rfReplaceAll]);
-               val(sforval,dmbuf,code);
-               //val(body[id].szE,dmbuf,code);
-               if (code=0) then
-               begin
-                  // обе константы
-                  body[i1].zE:=body[id].zE+j1*dz;
-                  body[i1].szE:=FloatToStr(body[i1].zE);
-               end
-               else
-               begin
-                  // слева параметризованная величина а справа константа.
-                  dmbuf:=j1*dz;
-                  if (dmbuf>0.0) then
-                  begin
-                     body[i1].szE:=body[id].szE+'+'+FloatToStr(dmbuf);
-                     bOk:=true;
-                     body[i1].zE:=FormVariables.my_real_convert(body[i1].szE,bOk);
-                  end
-                  else
-                  begin
-                     body[i1].szE:=body[id].szE+'-'+FloatToStr(abs(dmbuf));
-                     bOk:=true;
-                     body[i1].zE:=FormVariables.my_real_convert(body[i1].szE,bOk);
-                  end;
-               end;
-            end;
          end
          else
          begin
-            // по этой оси размеры копии остаются такими же как и размеры оригинала.
-            // Prism
-            body[i1].szS:=body[id].szS;
-            body[i1].szE:=body[id].szE;
-            body[i1].zS:=body[id].zS;
-            body[i1].zE:=body[id].zE;
-            // Cylinder
-            body[i1].szC:=body[id].szC;
-            body[i1].zC:=body[id].zC;
-             // polygon
-             SetLength(body[i1].zi,body[id].nsizei);
-             for i_1:=0 to body[id].nsizei-1 do
-             begin
-                 body[i1].zi[i_1]:=body[id].zi[i_1];
-             end;
-             b_polygon_z:=true;
+
+
+            if (bdxchange) then
+            begin
+               if (not bdxconst) then
+               begin
+                  // параметризованное пользователем значение
+                  bOk:=true;
+                  // Prism
+                  body[i1].sxS:=body[id].sxS+'+'+IntToStr(j1)+'*('+spdx+')';
+                  body[i1].sxE:=body[id].sxE+'+'+IntToStr(j1)+'*('+spdx+')';
+                  if (bOk) then body[i1].xS:=FormVariables.my_real_convert(body[i1].sxS,bOk);
+                  if (bOk) then body[i1].xE:=FormVariables.my_real_convert(body[i1].sxE,bOk);
+                  // Cylinder
+                  body[i1].sxC:=body[id].sxC+'+'+IntToStr(j1)+'*('+spdx+')';
+                  if (bOk) then body[i1].xC:=FormVariables.my_real_convert(body[i1].sxC,bOk);
+                end
+                  else
+                begin
+                   // числовое значение
+                   // Cylinder
+                   sforval:='';
+                   sforval:=StringReplace(body[id].sxC,',','.',[rfReplaceAll]);
+                   val(sforval,dmbuf,code);
+                   // val(body[id].sxC,dmbuf,code);
+                   if (code=0) then
+                   begin
+                      // обе константы
+                      body[i1].xC:=body[id].xC+j1*dx;
+                      body[i1].sxC:=FloatToStr(body[i1].xC);
+                   end
+                    else
+                   begin
+                      dmbuf:=j1*dx;
+                      if (dmbuf>0.0) then
+                      begin
+                         body[i1].sxC:=body[id].sxC+'+'+FloatToStr(dmbuf);
+                         bOk:=true;
+                         body[i1].xC:=FormVariables.my_real_convert(body[i1].sxC,bOk);
+                      end
+                        else
+                      begin
+                         body[i1].sxC:=body[id].sxC+'-'+FloatToStr(abs(dmbuf));
+                         bOk:=true;
+                         body[i1].xC:=FormVariables.my_real_convert(body[i1].sxC,bOk);
+                      end;
+                    end;
+
+                    // polygon
+                    SetLength(body[i1].xi,body[id].nsizei);
+                    for i_1:=0 to body[id].nsizei-1 do
+                    begin
+                       body[i1].xi[i_1]:=body[id].xi[i_1]+j1*dx;
+                    end;
+                    b_polygon_x:=true;
+
+                    // Prism
+                    sforval:='';
+                    sforval:=StringReplace(body[id].sxS,',','.',[rfReplaceAll]);
+                    val(sforval,dmbuf,code);
+                    // val(body[id].sxS,dmbuf,code);
+                    if (code=0) then
+                    begin
+                       // обе константы
+                       body[i1].xS:=body[id].xS+j1*dx;
+                       body[i1].sxS:=FloatToStr(body[i1].xS);
+                    end
+                      else
+                    begin
+                       dmbuf:=j1*dx;
+                       if (dmbuf>0.0) then
+                       begin
+                          body[i1].sxS:=body[id].sxS+'+'+FloatToStr(dmbuf);
+                          bOk:=true;
+                          body[i1].xS:=FormVariables.my_real_convert(body[i1].sxS,bOk);
+                       end
+                        else
+                       begin
+                          body[i1].sxS:=body[id].sxS+'-'+FloatToStr(abs(dmbuf));
+                          bOk:=true;
+                          body[i1].xS:=FormVariables.my_real_convert(body[i1].sxS,bOk);
+                       end;
+                    end;
+
+                    sforval:='';
+                    sforval:=StringReplace(body[id].sxE,',','.',[rfReplaceAll]);
+                    val(sforval,dmbuf,code);
+                    //val(body[id].sxE,dmbuf,code);
+                    if (code=0) then
+                    begin
+                       // обе константы
+                       body[i1].xE:=body[id].xE+j1*dx;
+                       body[i1].sxE:=FloatToStr(body[i1].xE);
+                    end
+                     else
+                    begin
+                       // слева параметризованная величина а справа константа.
+                       dmbuf:=j1*dx;
+                       if (dmbuf>0.0) then
+                       begin
+                          body[i1].sxE:=body[id].sxE+'+'+FloatToStr(dmbuf);
+                          bOk:=true;
+                          body[i1].xE:=FormVariables.my_real_convert(body[i1].sxE,bOk);
+                       end
+                        else
+                       begin
+                          body[i1].sxE:=body[id].sxE+'-'+FloatToStr(abs(dmbuf));
+                          bOk:=true;
+                          body[i1].xE:=FormVariables.my_real_convert(body[i1].sxE,bOk);
+                       end;
+                    end;
+                end;
+            end
+             else
+            begin
+               // по этой оси размеры копии остаются такими же как и размеры оригинала.
+               // Prism
+               body[i1].sxS:=body[id].sxS;
+               body[i1].sxE:=body[id].sxE;
+               body[i1].xS:=body[id].xS;
+               body[i1].xE:=body[id].xE;
+               // Cylinder
+               body[i1].sxC:=body[id].sxC;
+               body[i1].xC:=body[id].xC;
+               // polygon
+               SetLength(body[i1].xi,body[id].nsizei);
+               for i_1:=0 to body[id].nsizei-1 do
+               begin
+                  body[i1].xi[i_1]:=body[id].xi[i_1];
+               end;
+               b_polygon_x:=true;
+            end;
+
+            if (bdychange) then
+            begin
+               if (not bdyconst) then
+               begin
+                  // параметризованное пользователем значение
+                  bOk:=true;
+                  // Prism
+                  body[i1].syS:=body[id].syS+'+'+IntToStr(j1)+'*('+spdy+')';
+                  body[i1].syE:=body[id].syE+'+'+IntToStr(j1)+'*('+spdy+')';
+                  if (bOk) then body[i1].yS:=FormVariables.my_real_convert(body[i1].syS,bOk);
+                  if (bOk) then body[i1].yE:=FormVariables.my_real_convert(body[i1].syE,bOk);
+                  // Cylinder
+                  body[i1].syC:=body[id].syC+'+'+IntToStr(j1)+'*('+spdy+')';
+                  if (bOk) then body[i1].yC:=FormVariables.my_real_convert(body[i1].syC,bOk);
+               end
+                else
+               begin
+                  // числовое значение
+                  // Cylinder
+                  sforval:='';
+                  sforval:=StringReplace(body[id].syC,',','.',[rfReplaceAll]);
+                  val(sforval,dmbuf,code);
+                  //val(body[id].syC,dmbuf,code);
+                  if (code=0) then
+                  begin
+                     // обе константы
+                     body[i1].yC:=body[id].yC+j1*dy;
+                     body[i1].syC:=FloatToStr(body[i1].yC);
+                  end
+                    else
+                  begin
+                     dmbuf:=j1*dy;
+                     if (dmbuf>0.0) then
+                     begin
+                        body[i1].syC:=body[id].syC+'+'+FloatToStr(dmbuf);
+                        bOk:=true;
+                        body[i1].yC:=FormVariables.my_real_convert(body[i1].syC,bOk);
+                     end
+                      else
+                     begin
+                        body[i1].syC:=body[id].syC+'-'+FloatToStr(abs(dmbuf));
+                        bOk:=true;
+                        body[i1].yC:=FormVariables.my_real_convert(body[i1].syC,bOk);
+                     end;
+                  end;
+
+                  // polygon
+                  SetLength(body[i1].yi,body[id].nsizei);
+                  for i_1:=0 to body[id].nsizei-1 do
+                  begin
+                     body[i1].yi[i_1]:=body[id].yi[i_1]+j1*dy;
+                  end;
+                  b_polygon_y:=true;
+
+                  // Prism
+                  sforval:='';
+                  sforval:=StringReplace(body[id].syS,',','.',[rfReplaceAll]);
+                  val(sforval,dmbuf,code);
+                  //val(body[id].syS,dmbuf,code);
+                  if (code=0) then
+                  begin
+                     // обе константы
+                     body[i1].yS:=body[id].yS+j1*dy;
+                     body[i1].syS:=FloatToStr(body[i1].yS);
+                  end
+                   else
+                  begin
+                     dmbuf:=j1*dy;
+                     if (dmbuf>0.0) then
+                     begin
+                        body[i1].syS:=body[id].syS+'+'+FloatToStr(dmbuf);
+                        bOk:=true;
+                        body[i1].yS:=FormVariables.my_real_convert(body[i1].syS,bOk);
+                     end
+                      else
+                     begin
+                        body[i1].syS:=body[id].syS+'-'+FloatToStr(abs(dmbuf));
+                        bOk:=true;
+                        body[i1].yS:=FormVariables.my_real_convert(body[i1].syS,bOk);
+                     end;
+                  end;
+
+                  sforval:='';
+                  sforval:=StringReplace(body[id].syE,',','.',[rfReplaceAll]);
+                  val(sforval,dmbuf,code);
+                  //val(body[id].syE,dmbuf,code);
+                  if (code=0) then
+                  begin
+                     // обе константы
+                     body[i1].yE:=body[id].yE+j1*dy;
+                     body[i1].syE:=FloatToStr(body[i1].yE);
+                  end
+                   else
+                  begin
+                     // слева параметризованная величина а справа константа.
+                     dmbuf:=j1*dy;
+                     if (dmbuf>0.0) then
+                     begin
+                        body[i1].syE:=body[id].syE+'+'+FloatToStr(dmbuf);
+                        bOk:=true;
+                        body[i1].yE:=FormVariables.my_real_convert(body[i1].syE,bOk);
+                     end
+                      else
+                     begin
+                        body[i1].syE:=body[id].syE+'-'+FloatToStr(abs(dmbuf));
+                        bOk:=true;
+                        body[i1].yE:=FormVariables.my_real_convert(body[i1].syE,bOk);
+                     end;
+                  end;
+               end;
+            end
+             else
+            begin
+               // по этой оси размеры копии остаются такими же как и размеры оригинала.
+               // Prism
+               body[i1].syS:=body[id].syS;
+               body[i1].syE:=body[id].syE;
+               body[i1].yS:=body[id].yS;
+               body[i1].yE:=body[id].yE;
+               // Cylinder
+               body[i1].syC:=body[id].syC;
+               body[i1].yC:=body[id].yC;
+
+               // polygon
+               SetLength(body[i1].yi,body[id].nsizei);
+               for i_1:=0 to body[id].nsizei-1 do
+               begin
+                  body[i1].yi[i_1]:=body[id].yi[i_1];
+               end;
+               b_polygon_y:=true;
+            end;
+
+            if (bdzchange) then
+            begin
+               if (not bdzconst) then
+               begin
+                  // параметризованное пользователем значение
+                  bOk:=true;
+                  // Prism
+                  body[i1].szS:=body[id].szS+'+'+IntToStr(j1)+'*('+spdz+')';
+                  body[i1].szE:=body[id].szE+'+'+IntToStr(j1)+'*('+spdz+')';
+                  if (bOk) then body[i1].zS:=FormVariables.my_real_convert(body[i1].szS,bOk);
+                  if (bOk) then body[i1].zE:=FormVariables.my_real_convert(body[i1].szE,bOk);
+                  // Cylinder
+                  body[i1].szC:=body[id].szC+'+'+IntToStr(j1)+'*('+spdz+')';
+                  if (bOk) then body[i1].zC:=FormVariables.my_real_convert(body[i1].szC,bOk);
+               end
+                else
+               begin
+                  // числовое значение
+                  // Cylinder
+                  sforval:='';
+                  sforval:=StringReplace(body[id].szC,',','.',[rfReplaceAll]);
+                  val(sforval,dmbuf,code);
+                  //val(body[id].szC,dmbuf,code);
+                  if (code=0) then
+                  begin
+                     // обе константы
+                     body[i1].zC:=body[id].zC+j1*dz;
+                     body[i1].szC:=FloatToStr(body[i1].zC);
+                  end
+                   else
+                  begin
+                     dmbuf:=j1*dz;
+                     if (dmbuf>0.0) then
+                     begin
+                        body[i1].szC:=body[id].szC+'+'+FloatToStr(dmbuf);
+                        bOk:=true;
+                        body[i1].zC:=FormVariables.my_real_convert(body[i1].szC,bOk);
+                     end
+                       else
+                     begin
+                        body[i1].szC:=body[id].szC+'-'+FloatToStr(abs(dmbuf));
+                        bOk:=true;
+                        body[i1].zC:=FormVariables.my_real_convert(body[i1].szC,bOk);
+                     end;
+                  end;
+
+
+                  // polygon
+                  SetLength(body[i1].zi,body[id].nsizei);
+                  for i_1:=0 to body[id].nsizei-1 do
+                  begin
+                     body[i1].zi[i_1]:=body[id].zi[i_1]+j1*dz;
+                  end;
+                  b_polygon_z:=true;
+
+                  // Prism
+                  sforval:='';
+                  sforval:=StringReplace(body[id].szS,',','.',[rfReplaceAll]);
+                  val(sforval,dmbuf,code);
+                  //val(body[id].szS,dmbuf,code);
+                  if (code=0) then
+                  begin
+                     // обе константы
+                     body[i1].zS:=body[id].zS+j1*dz;
+                     body[i1].szS:=FloatToStr(body[i1].zS);
+                  end
+                   else
+                  begin
+                     dmbuf:=j1*dz;
+                     if (dmbuf>0.0) then
+                     begin
+                        body[i1].szS:=body[id].szS+'+'+FloatToStr(dmbuf);
+                        bOk:=true;
+                        body[i1].zS:=FormVariables.my_real_convert(body[i1].szS,bOk);
+                     end
+                      else
+                     begin
+                        body[i1].szS:=body[id].szS+'-'+FloatToStr(abs(dmbuf));
+                        bOk:=true;
+                        body[i1].zS:=FormVariables.my_real_convert(body[i1].szS,bOk);
+                     end;
+                  end;
+
+                  sforval:='';
+                  sforval:=StringReplace(body[id].szE,',','.',[rfReplaceAll]);
+                  val(sforval,dmbuf,code);
+                  //val(body[id].szE,dmbuf,code);
+                  if (code=0) then
+                  begin
+                     // обе константы
+                     body[i1].zE:=body[id].zE+j1*dz;
+                     body[i1].szE:=FloatToStr(body[i1].zE);
+                  end
+                   else
+                  begin
+                     // слева параметризованная величина а справа константа.
+                    dmbuf:=j1*dz;
+                    if (dmbuf>0.0) then
+                    begin
+                       body[i1].szE:=body[id].szE+'+'+FloatToStr(dmbuf);
+                       bOk:=true;
+                       body[i1].zE:=FormVariables.my_real_convert(body[i1].szE,bOk);
+                    end
+                     else
+                    begin
+                       body[i1].szE:=body[id].szE+'-'+FloatToStr(abs(dmbuf));
+                       bOk:=true;
+                       body[i1].zE:=FormVariables.my_real_convert(body[i1].szE,bOk);
+                    end;
+                  end;
+               end;
+            end
+             else
+            begin
+               // по этой оси размеры копии остаются такими же как и размеры оригинала.
+               // Prism
+               body[i1].szS:=body[id].szS;
+               body[i1].szE:=body[id].szE;
+               body[i1].zS:=body[id].zS;
+               body[i1].zE:=body[id].zE;
+               // Cylinder
+               body[i1].szC:=body[id].szC;
+               body[i1].zC:=body[id].zC;
+               // polygon
+               SetLength(body[i1].zi,body[id].nsizei);
+               for i_1:=0 to body[id].nsizei-1 do
+               begin
+                  body[i1].zi[i_1]:=body[id].zi[i_1];
+               end;
+               b_polygon_z:=true;
+            end;
+
          end;
 
          // новые блоки имеют наиболее высокий приоритет.
@@ -22303,6 +28324,7 @@ begin
          source[i1].family:=source[id].family;
          source[i1].Tamb:=source[id].Tamb;
          source[i1].emissivity:=source[id].emissivity;
+         source[i1].ViewFactor:=source[id].ViewFactor;
          source[i1].heat_transfer_coefficient:=source[id].heat_transfer_coefficient;
          source[i1].semissivity:=source[id].semissivity;
          source[i1].sheat_transfer_coefficient:=source[id].sheat_transfer_coefficient;
@@ -22691,6 +28713,7 @@ begin
          wall[i1].family:=wall[id].family;
          wall[i1].Tamb:=wall[id].Tamb;
          wall[i1].emissivity:=wall[id].emissivity;
+         wall[i1].ViewFactor:=wall[id].ViewFactor;
          wall[i1].heat_transfer_coefficient:=wall[id].heat_transfer_coefficient;
          wall[i1].semissivity:=wall[id].semissivity;
          wall[i1].sheat_transfer_coefficient:=wall[id].sheat_transfer_coefficient;
@@ -22920,11 +28943,51 @@ end;
 begin
    bcontinuecopy:=true; // по умолчанию всё впорядке и нужно осуществить операцию копирования.
 
-   // копирование элементов
-   FormCopyObject.ShowModal;
+
    // копированию подвергается только один объект,
    // имя данного объекта выделено в дереве.
    scop:=MainTreeView.Selected.Text;
+
+   // по всем блокам
+   iob:=-1;
+   for i:=1 to (lb-1) do
+   begin
+      if ( (length(body[i].name) = length(scop)) and (Pos(body[i].name,scop)=1)) then
+      begin
+         iob:=i; // номер копируемого блока
+      end;
+   end;
+
+    if (bon_rotate_polygon) then
+    begin
+       if (iob>-1) then
+       begin
+          if (body[iob].igeometry_type=2) then
+          begin
+             // Найденный блок полигон. Можно вращать в плоскости полигона,
+             // вокруг заданного центра.
+             FormCopyObject.CheckBoxRotate.Visible:=true;
+          end
+           else
+          begin
+             // Вращать нельзя.
+             FormCopyObject.CheckBoxRotate.Visible:=false;
+          end;
+      end
+       else
+      begin
+         // Вращать нельзя.
+         FormCopyObject.CheckBoxRotate.Visible:=false;
+      end;
+    end
+     else
+    begin
+        // Вращать нельзя.
+        FormCopyObject.CheckBoxRotate.Visible:=false;
+    end;
+
+    // копирование элементов
+   FormCopyObject.ShowModal;
 
    if (bcontinuecopy) then
    begin
@@ -23014,20 +29077,11 @@ begin
       end;
 
 
-
-      // по всем блокам
-      iob:=-1;
-      for i:=1 to (lb-1) do
-      begin
-         if ( (length(body[i].name) = length(scop)) and (Pos(body[i].name,scop)=1)) then
-         begin
-            iob:=i; // номер копируемого блока
-         end;
-      end;
       if (iob>-1) then
       begin
          copyblock(iob,body[iob].iunion,true);
       end;
+
 
       // по всем источникам
       iob:=-1;
@@ -23437,13 +29491,24 @@ begin
        end;
     end;
     //FormVariables.ShowModal;
+    FormRenameVar.Label2.Visible:=false;
+    FormRenameVar.LabelConflictName.Visible:=false;
+    FormRenameVar.LabelRenamecandidate.Caption:='Project variable rename candidate.';
     FormVariables.Show;
+    FormRenameVar.Label2.Visible:=true;
+    FormRenameVar.LabelConflictName.Visible:=true;
+    FormRenameVar.LabelRenamecandidate.Caption:='List of the names project variables.';
+end;
+
+// Вызывает калькулятор расчёта углов видимости.
+// скрипт.
+procedure TLaplas.ViewFactorCalculatorClick(Sender: TObject);
+begin
+   FormViewFactors.ShowModal;
 end;
 
 // записывает файл premeshin.txt
 procedure TLaplas.RunSolution1Click(Sender: TObject);
-
-
 
 procedure FixHeap(root : Integer; m : TBody; bound : Integer; iadd : Integer);
 var
@@ -23494,7 +29559,7 @@ end;
 
 procedure WriteStartSolutionOLD();
 var
-    f : TStringList; // переменная типа объект TStringList
+    f, freport : TStringList; // переменная типа объект TStringList
     s,subx,sub,s1, s2 : String; // текущая рабочая строка
     i, i1,i2,i3, i_4, j : Integer; // текущий номер блока или источника при записи
     xavg, yavg, zavg, powertri : Real;
@@ -23539,6 +29604,12 @@ begin
       //myDate:=EncodeDataTime(2000, 2, 9, 1, 2, 3, 4);
       myDate:=Now;
       MainMemo.Lines.Add('solver start '+FormatDateTime('c',myDate));
+      freport:=TStringList.Create();
+      freport.Add('solver start '+FormatDateTime('c',myDate));
+      freport.Add('Project name '+Laplas.Caption);
+      freport.Add('');
+      freport.SaveToFile('report_temperature.txt');
+      freport.Free;
    end;
 
 
@@ -23655,7 +29726,7 @@ begin
       FormUnsteady.RadioGroup1.Visible:=false;
       // FormUnsteady.ButtonTimeStepLaw.Visible:=false;
       FormUnsteady.ClientHeight:=180;
-      FormUnsteady.Height:=219;
+      FormUnsteady.Height:=243;
       FormUnsteady.ButtonCalc.Caption:='Meshing start';
    end
     else
@@ -23663,9 +29734,9 @@ begin
       FormUnsteady.PanelTime.Visible:=true;
       FormUnsteady.RadioGroup1.Visible:=true;
       FormUnsteady.GroupBox1.Top:=215;
-      FormUnsteady.ClientHeight:=392;
-      FormUnsteady.Height:=431;
-      FormUnsteady.ButtonCalc.Top:=140;
+      FormUnsteady.ClientHeight:=409;
+      FormUnsteady.Height:=448;
+      FormUnsteady.ButtonCalc.Top:=163;
       //FormUnsteady.ButtonTimeStepLaw.Visible:=true;
       FormUnsteady.ButtonCalc.Caption:='Calculation start';
       FormUnsteady.ButtonCalc.Visible:=true;
@@ -23896,10 +29967,10 @@ begin
          // На данный момент 1 мая 2016 с этим условием справляется только РУМБА решатель cl_agl_amg_v0_14.
          // Поэтому здесь будет осуществлён перевод решателя на этот солвер.
          //FormSetting.rgsolver.ItemIndex:=3; // РУМБА решатель.
-         MainMemo.Lines.Add('с граничным условием Ньютона-Рихмана, Стефана-Больцмана,');
-         MainMemo.Lines.Add('смешанным условием (Излучение плюс конвекция) на default границе ');
-         MainMemo.Lines.Add('на данный момент справляется только РУМБА v0_14 решатель.');
-         MainMemo.Lines.Add('решатель переведён на РУМБА v0_14 алгоритм.');
+         //MainMemo.Lines.Add('с граничным условием Ньютона-Рихмана, Стефана-Больцмана,');
+         //MainMemo.Lines.Add('смешанным условием (Излучение плюс конвекция) на default границе ');
+         //MainMemo.Lines.Add('на данный момент справляется только РУМБА v0_14 решатель.');
+         //MainMemo.Lines.Add('решатель переведён на РУМБА v0_14 алгоритм.');
          // РУМБА 0.14 решатель в случае сбоя пытается справиться с проблемой своими силами
          // не привлекая сторонних решателей.
       end
@@ -23964,86 +30035,121 @@ begin
       s:=s+' '+IntToStr(MeshForm.ComboBoxmeshgen.ItemIndex); // выбор сеточного генератора
    end;
    bOk:=true;
-   // Теперь конечное время можно параметризовывать через переменную.
-   // 0 - стационарная теплопередача в твёрдом теле,
-   // 1 - нестационарная теплопередача в твёрдом теле,
-   // 2 - сеточный генератор только,
-   // 3 - чистая гидродинамика,
-   // 3 - гидродинамика совместно с теплопередачей.
-   // 5 - Static Structural  (Стационарный температурный солвер №2)
-   // 6 - Thermal Stress
-   // 7 - Нестационарный температурный солвер №2
-   // 8 - подготовка данных к печати только. 5.01.2018
-   // 9 - нестационарная гидродинамика возможно с теплопередачей. 14.05.2019
-   if (bVisualization_Management_now) then
-   begin
-       //8 - подготовка данных к печати только. 5.01.2018
-       s:=s+' 8';
-   end
-   else
-   begin
-      if (bonly_mesh_gen_call) then
+      // Теперь конечное время можно параметризовывать через переменную.
+      // 0 - стационарная теплопередача в твёрдом теле,
+      // 1 - нестационарная теплопередача в твёрдом теле,
+      // 2 - сеточный генератор только,
+      // 3 - чистая гидродинамика,
+      // 3 - гидродинамика совместно с теплопередачей.
+      // 5 - Static Structural  (Стационарный температурный солвер №2)
+      // 6 - Thermal Stress
+      // 7 - Нестационарный температурный солвер №2
+      // 8 - подготовка данных к печати только. 5.01.2018
+      // 9 - нестационарная гидродинамика возможно с теплопередачей. 14.05.2019
+      // 10 - NetWork_T solver
+      // 11 - NetWork_T solver unsteady
+      if (egddata.itemper=3) then
       begin
-         // Отдельный вызов сеточного генератора только.
-         s:=s+' 2';
-         //bonly_mesh_gen_call:=false;  сделано позже по коду.
+         if (bVisualization_Management_now) then
+          begin
+             //8 - подготовка данных к печати только. 5.01.2018
+             s:=s+' 8';
+          end
+          else
+          begin
+             if (bonly_mesh_gen_call) then
+             begin
+               // Отдельный вызов сеточного генератора только.
+               s:=s+' 2';
+               //bonly_mesh_gen_call:=false;  сделано позже по коду.
+             end
+              else
+             begin
+                if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                begin
+                   // Нестационарный графовый температурный солвер
+                   s:=s+' 11';
+                end
+                 else
+                begin
+                   // Стационарный графовый температурный солвер.
+                   s:=s+' 10';
+                end;
+             end;
+          end;
+      end
+       else
+      begin
+
+      if (bVisualization_Management_now) then
+      begin
+         //8 - подготовка данных к печати только. 5.01.2018
+         s:=s+' 8';
       end
       else
       begin
-         if (EGDForm.CBFlow.Checked = false) then
+         if (bonly_mesh_gen_call) then
          begin
-            if (egddata.iStaticStructural=1) then
+            // Отдельный вызов сеточного генератора только.
+            s:=s+' 2';
+            //bonly_mesh_gen_call:=false;  сделано позже по коду.
+         end
+          else
+         begin
+            if (EGDForm.CBFlow.Checked = false) then
             begin
-               if (egddata.itemper>0) then
+               if (egddata.iStaticStructural=1) then
                begin
-                  // Thermal Stress
-                  s:=s+' 6';
-               end
-                else
-               begin
-                  // Static Structural
-                  if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                  if (egddata.itemper>0) then
                   begin
-                     // Нестационарный температурный солвер   #2 (10,11,2018)
-                     s:=s+' 7';
+                     // Thermal Stress
+                     s:=s+' 6';
                   end
                    else
                   begin
-                     // Стационарный температурный солвер #2. (10,11,2018)
-                     s:=s+' 5';
-                  end;
-               end;
-            end
-             else
-            begin
-
-               if (egddata.imaxflD=1) then
-               begin
-                  if ((egddata.itemper>0)and(egddata.myflmod[0].iflow=0)) then
-                  begin
-                     // Теплопередача в твёрдом теле.
-                     s:=s+' '+IntToStr(FormUnsteady.RadioGroup1.ItemIndex); // 1 - Нестационарность или 0 - стационарность.
-                  end
-                   else
-                  begin
-                     //  гидродинамика.
-                     // Default Structural Mesh
-                     if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+                     // Static Structural
+                     if (FormUnsteady.RadioGroup1.ItemIndex=1) then
                      begin
-                        // Стационарная гидродинамика.
-                        s:=s+' 3';
+                        // Нестационарный температурный солвер   #2 (10,11,2018)
+                        s:=s+' 7';
                      end
                       else
                      begin
-                        // 14.05.2019
-                        // Нестационарная гидродинамика
-                        s:=s+' 9';
+                        // Стационарный температурный солвер #2. (10,11,2018)
+                        s:=s+' 5';
                      end;
                   end;
                end
                 else
                begin
-                   if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+
+                  if (egddata.imaxflD=1) then
+                  begin
+                     if ((egddata.itemper>0)and(egddata.myflmod[0].iflow=0)) then
+                     begin
+                        // Теплопередача в твёрдом теле.
+                        s:=s+' '+IntToStr(FormUnsteady.RadioGroup1.ItemIndex); // 1 - Нестационарность или 0 - стационарность.
+                     end
+                      else
+                     begin
+                        //  гидродинамика.
+                        // Default Structural Mesh
+                        if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+                        begin
+                           // Стационарная гидродинамика.
+                           s:=s+' 3';
+                        end
+                         else
+                        begin
+                           // 14.05.2019
+                           // Нестационарная гидродинамика
+                           s:=s+' 9';
+                        end;
+                     end;
+                  end
+                   else
+                  begin
+                     if (FormUnsteady.RadioGroup1.ItemIndex=0) then
                      begin
                         // Стационарная гидродинамика.
                         //  гидродинамика.
@@ -24056,27 +30162,28 @@ begin
                         // Нестационарная гидродинамика
                         s:=s+' 9';
                      end;
+                  end;
                end;
-            end;
-         end
-          else
-         begin
-            //  EGDForm.CBFlow.Checked = true
-            // Гидродинамика включена.
-            //  гидродинамика.
-            // Default Structural Mesh
-             if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+            end
+             else
              begin
-                // Стационарная гидродинамика.
+                //  EGDForm.CBFlow.Checked = true
+                // Гидродинамика включена.
                 //  гидродинамика.
                 // Default Structural Mesh
-                s:=s+' 3';
-             end
-               else
-             begin
-                // 14.05.2019
-                // Нестационарная гидродинамика
-                s:=s+' 9';
+                if (FormUnsteady.RadioGroup1.ItemIndex=0) then
+                begin
+                   // Стационарная гидродинамика.
+                   //  гидродинамика.
+                   // Default Structural Mesh
+                   s:=s+' 3';
+                end
+                 else
+                begin
+                   // 14.05.2019
+                   // Нестационарная гидродинамика
+                   s:=s+' 9';
+                end;
              end;
          end;
       end;
@@ -25572,8 +31679,15 @@ begin
              s:=s+FloatToStr(FormVariables.my_real_convert(semissT,bOk))+' ';
             // для emissivity мы задаём не ноль а малое положительное число,
             // т.к. с нулём может возникнуть деление на ноль в программе.
-            s:=s+IntToStr(binternalRadiation)+' ';
-
+            if (FormUnsteady.CheckBoxNo_vacuum_Prism.Checked) then
+            begin
+               // Вакуумная призма неактивна.
+               s:=s+'0 ';
+            end
+            else
+            begin
+               s:=s+IntToStr(binternalRadiation)+' ';
+            end;
 
             s:=s+IntToStr(imatid)+' ';
             // Внимание ! нужно брать именно модуль разности координат,
@@ -25799,6 +31913,7 @@ begin
                     // 1,2,4
                      s:=s+FloatToStr(emissivity)+' '; // излучательная способность
                  end;
+                 s:=s+FloatToStr(ViewFactor)+' ';// Фактор видимости.
                  s:=s+FloatToStr(HF)+' '; // для граничного условия 2 или 3 рода.
                  if (bsymmetry) then s:=s+'1 ' else s:=s+'0 ';
                  if (bpressure) then s:=s+'1 ' else s:=s+'0 ';
@@ -25877,6 +31992,7 @@ begin
                 // 1,2,4
                   s:=s+FloatToStr(emissivity)+' '; // излучательная способность
              end;
+             s:=s+FloatToStr(ViewFactor)+' ';// Фактор видимости.
              s:=s+FloatToStr(HF)+' '; // для граничного условия 2 или 3 рода.
              if (bsymmetry) then s:=s+'1 ' else s:=s+'0 ';
              if (bpressure) then s:=s+'1 ' else s:=s+'0 ';
@@ -26247,13 +32363,75 @@ begin
          s:='0 ';
       end;
       f.Add(s);
+      s:='1131 ';
+      case Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex of
+         0 : s[2]:='1';
+         1 : s[2]:='2';
+         2 : s[2]:='3';
+      end;
+      case Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex of
+         0 : begin
+                s[3]:='3'; // C/F relaxation
+                s[4]:='1';
+             end;
+         1 : begin
+                s[3]:='2'; // Full GS SWEEP
+                s[4]:='2';
+             end;
+         2 : begin
+                s[3]:='4'; // Full MORE COLOR SWEEP
+                s[4]:='4';
+             end;
+         3 : begin
+                s:='11122 '; // ILU(lfil) smoother
+                 case Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex of
+                 0 : s[3]:='1';
+                 1 : s[3]:='2';
+                 2 : s[3]:='3';
+                end;
+             end;
+      end;
+      f.Add(s);
+      s:='1131 ';
+      case Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex of
+         0 : s[2]:='1';
+         1 : s[2]:='2';
+         2 : s[2]:='3';
+      end;
+      case Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex of
+         0 : begin
+                s[3]:='3'; // C/F relaxation
+                s[4]:='1';
+             end;
+         1 : begin
+                s[3]:='2'; // Full GS SWEEP
+                s[4]:='2';
+             end;
+         2 : begin
+                s[3]:='4'; // Full MORE COLOR SWEEP
+                s[4]:='4';
+             end;
+         3 : begin
+                s:='11122 '; // ILU(lfil) smoother
+                 case Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex of
+                 0 : s[3]:='1';
+                 1 : s[3]:='2';
+                 2 : s[3]:='3';
+                end;
+             end;
+      end;
+      f.Add(s);
+      s:=Trim(Formamg1r5Parameters.Editstrongthreshold.Text)+' ';
+      f.Add(s);
+      s:=Trim(Formamg1r5Parameters.EditF2F.Text)+' ';
+      f.Add(s);
       // # processors
       s:=IntToStr(1+FormSetting.ComboBoxNumberProcessors.ItemIndex)+' ';
       f.Add(s);
       // # iterations SIMPLE Algorithm
       s:=IntToStr(FormUnsteady.ComboBoxNumberIterationsSIMPLEAlgoritm.ItemIndex)+' ';
       f.Add(s);
-      // amg1r5 stabilization: 0 - none, 1 - bicgstab, 2 - fgmres.
+      // amg1r5 stabilization: 0 - none, 1 - bicgstab, 2 - fgmres, 3 - nonlinear.
       s:=IntToStr(Formamg1r5Parameters.ComboBoxStabilization.ItemIndex)+' ';
       f.Add(s);
 
@@ -26485,11 +32663,23 @@ begin
           if (Laplas.egddata.itemper>0) then
           begin
                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+                begin
+                    // Standart K-Epsilon model на основе двухслойной модели [2001].
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                    FormResidualStandart_k_epsilon_Temp.Show;
+                end
+                else
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                (Laplas.egddata.myflmod[0].iturbmodel=4)) then
                 begin
                     // K-Omega SST Menter [1993]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                     FormResidualSSTTemp.Show;
                 end
@@ -26500,6 +32690,7 @@ begin
                     // Спаларт Аллмарес [1992]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSATemp.brun_visibleSA2:=true;
                     FormResidualSATemp.Show;
                 end
@@ -26507,6 +32698,7 @@ begin
                 begin
                    FormResidualSATemp.brun_visibleSA2:=false;
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    Formresidual2.brun_visible2:=true;
                    Formresidual2.Show;
                 end;
@@ -26515,6 +32707,13 @@ begin
           begin
              if (egddata.iStaticStructural=0) then
              begin
+                if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+                begin
+                   // Standart K-Epsilon model
+                   FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+                   FormResidualStandartKEpsilon.Show;
+                end
+                else
                 if (Laplas.egddata.myflmod[0].iturbmodel=4) then
                 begin
                    // SST Ментер
@@ -26608,11 +32807,23 @@ begin
           if (Laplas.egddata.itemper>0) then
           begin
               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+                begin
+                    // Standart K-Epsilon на основе двухслойной модели [2001]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                    FormResidualStandart_k_epsilon_Temp.Show;
+                end
+                else
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                (Laplas.egddata.myflmod[0].iturbmodel=4)) then
                 begin
                     // K-Omega SST Menter [1993]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                     FormResidualSSTTemp.Show;
                 end
@@ -26623,6 +32834,7 @@ begin
                    // Спаларт Аллмарес
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    Formresidual2.brun_visible2:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=true;
                    FormResidualSATemp.Show;
                 end
@@ -26630,13 +32842,21 @@ begin
                 begin
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    Formresidual2.brun_visible2:=true;
                    Formresidual2.Show;
                 end;
           end
            else
           begin
-              if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+               if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+               begin
+                   // Standart K-Epsilon
+                   FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+                   FormResidualStandartKEpsilon.Show;
+                end
+                else
+                if (Laplas.egddata.myflmod[0].iturbmodel=4) then
                 begin
                    // SST Ментер
                    FormResidualSST.brun_visibleSST:=true;
@@ -26740,12 +32960,12 @@ end;
 
 procedure WriteStartSolutionNEW();
 var
-    f : TStringList; // переменная типа объект TStringList
-    s,subx,sub,s1, s2 : String; // текущая рабочая строка
-    i, i1,i2,i3, i_4, j, i_2, i_3, i_1 : Integer; // текущий номер блока или источника при записи
+    f, fpiecewise, freport : TStringList; // переменная типа объект TStringList
+    s,subx,sub,s1, s2, spiecewise : String; // текущая рабочая строка
+    i, i1,i2,i3, i_4, j, i_2, i_3, i_1, i_piecewise : Integer; // текущий номер блока или источника при записи
     xavg, yavg, zavg, powertri : Real;
     Sc : Real; // мощность тепловыделения на единицу объёма
-   // StartupInfo:TStartupInfo;  // Устаревший синтаксис.
+    // StartupInfo:TStartupInfo;  // Устаревший синтаксис.
     //ProcessInfo:TProcessInformation;
     fmin, fmax : Real;
     starttime, endtime, deltatime : TTime;
@@ -26756,18 +32976,19 @@ var
     bOk : Boolean;
     irun : Integer;
     // Для сортировки блоков по приоритетам.
-  //  isort, jsort : Integer;
-   // body_change : TBody;
-   cab_geom, cab_geom2 : Visible_Line;
-   lw_dec : Integer;
-   myDate : TDateTime;
-   checkFLUIDtoSOLID, bf7 : Boolean;
-   // для преобразования Цилиндра в призму.
-   xS1, yS1, zS1, xE1, yE1, zE1 : Real;
-   iu_number, i5 :   Integer;
-   xSass, xEass, ySass, yEass, zSass, zEass : Real;
+    // isort, jsort : Integer;
+    // body_change : TBody;
+    cab_geom, cab_geom2 : Visible_Line;
+    lw_dec : Integer;
+    myDate : TDateTime;
+    checkFLUIDtoSOLID, bf7 : Boolean;
+    // для преобразования Цилиндра в призму.
+    xS1, yS1, zS1, xE1, yE1, zE1 : Real;
+    iu_number, i5 :   Integer;
+    xSass, xEass, ySass, yEass, zSass, zEass : Real;
+
 begin
-  checkFLUIDtoSOLID:=false; // 8 september 2017 не трогать т.к. усторело.
+   checkFLUIDtoSOLID:=false; // 8 september 2017 не трогать т.к. усторело.
 
    if (brun) then
    begin
@@ -26777,16 +32998,20 @@ begin
       begin
          brun:=false;
       end;
-   end
-   else
-   begin
-      // Установка переменой TDateTime в полное значение даты и времени:
-      // 09/02/2000 в 01:02:03.004 (.004 миллисекунд).
-      //myDate:=EncodeDataTime(2000, 2, 9, 1, 2, 3, 4);
-      myDate:=Now;
-      MainMemo.Lines.Add('solver start '+FormatDateTime('c',myDate));
    end;
 
+
+   // Установка переменой TDateTime в полное значение даты и времени:
+   // 09/02/2000 в 01:02:03.004 (.004 миллисекунд).
+   //myDate:=EncodeDataTime(2000, 2, 9, 1, 2, 3, 4);
+   myDate:=Now;
+   MainMemo.Lines.Add('solver start '+FormatDateTime('c',myDate));
+   freport:=TStringList.Create();
+   freport.Add('solver start '+FormatDateTime('c',myDate));
+   freport.Add('Project name '+Laplas.Caption);
+   freport.Add('');
+   freport.SaveToFile('report_temperature.txt');
+   freport.Free;
 
 
    if (not(brun)) then
@@ -26906,7 +33131,7 @@ begin
       FormUnsteady.RadioGroup1.Visible:=false;
       // FormUnsteady.ButtonTimeStepLaw.Visible:=false;
       FormUnsteady.ClientHeight:=180;
-      FormUnsteady.Height:=219;
+      FormUnsteady.Height:=243;
       FormUnsteady.ButtonCalc.Caption:='Meshing start';
    end
     else
@@ -26914,9 +33139,9 @@ begin
       FormUnsteady.PanelTime.Visible:=true;
       FormUnsteady.RadioGroup1.Visible:=true;
       FormUnsteady.GroupBox1.Top:=215;
-      FormUnsteady.ClientHeight:=392;
-      FormUnsteady.Height:=431;
-      FormUnsteady.ButtonCalc.Top:=140;
+      FormUnsteady.ClientHeight:=409;
+      FormUnsteady.Height:=448;
+      FormUnsteady.ButtonCalc.Top:=163;
       //FormUnsteady.ButtonTimeStepLaw.Visible:=true;
       FormUnsteady.ButtonCalc.Caption:='Calculation start';
       FormUnsteady.ButtonCalc.Visible:=true;
@@ -26972,7 +33197,7 @@ begin
    f.Add(s);
    s:='# send message on mail: kirill7785@mail.ru for support.';
    f.Add(s);
-   s:='# AliceMesh_v0_45.exe - GUI, AliceFlow_v0_48.exe - Solver. 2009-2019.';
+   s:='# AliceMesh_v0_45.exe - GUI, AliceFlow_v0_48.exe - Solver. 2009-2020.';
    f.Add(s);
 
    if FormUnsteady.CheckBoxonlysolidvisible.Checked=true then
@@ -27230,10 +33455,10 @@ begin
          // На данный момент 1 мая 2016 с этим условием справляется только РУМБА решатель cl_agl_amg_v0_14.
          // Поэтому здесь будет осуществлён перевод решателя на этот солвер.
          //FormSetting.rgsolver.ItemIndex:=3; // РУМБА решатель.
-         MainMemo.Lines.Add('с граничным условием Ньютона-Рихмана, Стефана-Больцмана,');
-         MainMemo.Lines.Add('смешанным условием (Излучение плюс конвекция) на default границе ');
-         MainMemo.Lines.Add('на данный момент справляется только РУМБА v0_14 решатель.');
-         MainMemo.Lines.Add('решатель переведён на РУМБА v0_14 алгоритм.');
+         //MainMemo.Lines.Add('с граничным условием Ньютона-Рихмана, Стефана-Больцмана,');
+         //MainMemo.Lines.Add('смешанным условием (Излучение плюс конвекция) на default границе ');
+         //MainMemo.Lines.Add('на данный момент справляется только РУМБА v0_14 решатель.');
+         //MainMemo.Lines.Add('решатель переведён на РУМБА v0_14 алгоритм.');
          // РУМБА 0.14 решатель в случае сбоя пытается справиться с проблемой своими силами
          // не привлекая сторонних решателей.
       end
@@ -27324,126 +33549,187 @@ begin
    s:='mesh_generator_algorithm='+s+'  # 0 - mesh generator 1; 1 - mesh generator 2; 2 - coarse mesh;';
    f.Add(s);
 
-   bOk:=true;
-   // Теперь конечное время можно параметризовывать через переменную.
-   // 0 - стационарная теплопередача в твёрдом теле,
-   // 1 - нестационарная теплопередача в твёрдом теле,
-   // 2 - сеточный генератор только,
-   // 3 - чистая гидродинамика,
-   // 3 - гидродинамика совместно с теплопередачей.
-   // 5 - Static Structural
-   // 6 - Thermal Stress
-   // 8 - подготовка данных к печати только. 5.01.2018
-   if (bVisualization_Management_now) then
-   begin
-       //8 - подготовка данных к печати только. 5.01.2018
-       s:='8';
-   end
-   else
-   begin
-      if (bonly_mesh_gen_call) then
+      bOk:=true;
+      // Теперь конечное время можно параметризовывать через переменную.
+      // 0 - стационарная теплопередача в твёрдом теле,
+      // 1 - нестационарная теплопередача в твёрдом теле,
+      // 2 - сеточный генератор только,
+      // 3 - чистая гидродинамика,
+      // 3 - гидродинамика совместно с теплопередачей.
+      // 5 - Static Structural
+      // 6 - Thermal Stress
+      // 8 - подготовка данных к печати только. 5.01.2018
+      // 10 - NetWork_T solver
+      // 11 - NetWork_T solver unsteady   04.07.2020
+      if (egddata.itemper=3) then
       begin
-         // Отдельный вызов сеточного генератора только.
-         s:='2';
-         //bonly_mesh_gen_call:=false;  сделано позже по коду.
-      end
-      else
-      begin
-          if (EGDForm.CBFlow.Checked = false) then
+         if (bVisualization_Management_now) then
           begin
-             if (egddata.iStaticStructural=1) then
-             begin
-
-
-                 if (egddata.itemper>0) then
-                  begin
-                      // Thermal Stress
-                      s:='6';
-                   end
-                   else
-                  begin
-                    // Static Structural
-                     if (FormUnsteady.RadioGroup1.ItemIndex=1) then
-                     begin
-                       // Нестационарный температурный солвер   #2 (10,11,2018)
-                        s:='7';
-                     end
-                     else
-                     begin
-                        // Стационарный температурный солвер #2. (10,11,2018)
-                        s:='5';
-                      end;
-                  end;
-              end
-          else
-              begin
-
-                  if (egddata.imaxflD=1) then
-                   begin
-                      if ((egddata.itemper>0)and(egddata.myflmod[0].iflow=0)) then
-                      begin
-                          // Теплопередача в твёрдом теле.
-                          s:=IntToStr(FormUnsteady.RadioGroup1.ItemIndex); // 1 - Нестационарность или 0 - стационарность.
-                      end
-                      else
-                      begin
-                         //  гидродинамика.
-                         // Default Structural Mesh
-                         s:='3';
-                      end;
-                    end
-                     else
-                    begin
-                       //  гидродинамика.
-                       // Default Structural Mesh
-                        s:='3';
-                    end;
-              end;
+             //8 - подготовка данных к печати только. 5.01.2018
+             s:='8';
           end
-            else
+          else
           begin
-              //  EGDForm.CBFlow.Checked = true
-              // Гидродинамика включена.
-              //  гидродинамика.
-              // Default Structural Mesh
-              s:='3';
+             if (bonly_mesh_gen_call) then
+             begin
+               // Отдельный вызов сеточного генератора только.
+               s:='2';
+               //bonly_mesh_gen_call:=false;  сделано позже по коду.
+             end
+              else
+             begin
+                if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                begin
+                   // Нестационарный графовый температурный солвер
+                   s:='11';
+                end
+                 else
+                begin
+                   // Стационарный графовый температурный солвер.
+                   s:='10';
+                end;
+             end;
           end;
-      end;
-   end;
-   s:='Schedule='+s+' ';
-   f.Add(s);
+      end
+       else
+      begin
 
-   s:='TimeStep='+IntToStr(FormUnsteady.ComboBoxTimeStep.ItemIndex)+' '; // Закон изменения шага по времени.
-   f.Add(s);
-   s:='Factor_a_for_Linear='+FloatToStr(glSTL.Factor_a_for_Linear)+' '; // Factor (a) for Linear Law.
-   f.Add(s);
-   s:='tau='+FloatToStr(glSTL.tau)+' '; // длительность импульса.
-   f.Add(s);
-   s:='DutyCycle='+FloatToStr(glSTL.iQ)+' '; // Скважность.
-   f.Add(s);
-   // параметры импульсного режима работы для темы АППАРАТ.
-   s:='m1='+FloatToStr(glSTL.m1)+' ';
-   f.Add(s);
-   s:='tau1='+FloatToStr(glSTL.tau1)+' ';
-   f.Add(s);
-   s:='tau2='+FloatToStr(glSTL.tau2)+' ';
-   f.Add(s);
-   s:='tau_pause='+FloatToStr(glSTL.tau_pause)+' ';
-   f.Add(s);
-   s:='n='+IntToStr(glSTL.n)+' ';
-   f.Add(s);
-   s:='T='+FloatToStr(glSTL.T)+' ';
-   f.Add(s);
-   s:='on_time_double_linear='+FloatToStr(glSTL.on_time_double_linear)+' ';
-   f.Add(s);
-   // данные предполагаются корректными.
-   s:='EndTime='+FloatToStr(FormVariables.my_real_convert(FormUnsteady.EditTime.Text,bOk))+' ';
-   f.Add(s);
-   // Условие Ньютона-Рихмана.
-   s:='adiabatic_vs_heat_transfer_coeff='+IntToStr(adiabatic_vs_heat_transfer_coeff)+' ';
-   f.Add(s);
-   s:='filmcoefficient='+FloatToStr(filmcoefficient)+' ';
-   f.Add(s);
+         if (bVisualization_Management_now) then
+         begin
+            //8 - подготовка данных к печати только. 5.01.2018
+            s:='8';
+         end
+          else
+         begin
+            if (bonly_mesh_gen_call) then
+            begin
+               // Отдельный вызов сеточного генератора только.
+               s:='2';
+               //bonly_mesh_gen_call:=false;  сделано позже по коду.
+            end
+             else
+            begin
+               if (EGDForm.CBFlow.Checked = false) then
+               begin
+                  if (egddata.iStaticStructural=1) then
+                  begin
+
+
+                     if (egddata.itemper>0) then
+                     begin
+                        // Thermal Stress
+                        s:='6';
+                     end
+                      else
+                     begin
+                        // Static Structural
+                        if (FormUnsteady.RadioGroup1.ItemIndex=1) then
+                        begin
+                           // Нестационарный температурный солвер   #2 (10,11,2018)
+                           s:='7';
+                        end
+                         else
+                        begin
+                           // Стационарный температурный солвер #2. (10,11,2018)
+                           s:='5';
+                        end;
+                     end;
+                  end
+                  else
+                  begin
+
+                     if (egddata.imaxflD=1) then
+                     begin
+                        if ((egddata.itemper>0)and(egddata.myflmod[0].iflow=0)) then
+                        begin
+                            // Теплопередача в твёрдом теле.
+                            s:=IntToStr(FormUnsteady.RadioGroup1.ItemIndex); // 1 - Нестационарность или 0 - стационарность.
+                        end
+                         else
+                        begin
+                           //  гидродинамика.
+                           // Default Structural Mesh
+                           s:='3';
+                        end;
+                     end
+                      else
+                     begin
+                        //  гидродинамика.
+                        // Default Structural Mesh
+                        s:='3';
+                     end;
+                  end;
+               end
+                else
+               begin
+                  //  EGDForm.CBFlow.Checked = true
+                  // Гидродинамика включена.
+                  //  гидродинамика.
+                  // Default Structural Mesh
+                  s:='3';
+               end;
+            end;
+         end;
+      end;
+      s:='Schedule='+s+' ';
+      f.Add(s);
+
+      s:='TimeStep='+IntToStr(FormUnsteady.ComboBoxTimeStep.ItemIndex)+' '; // Закон изменения шага по времени.
+      f.Add(s);
+      s:='Factor_a_for_Linear='+FloatToStr(glSTL.Factor_a_for_Linear)+' '; // Factor (a) for Linear Law.
+      f.Add(s);
+      s:='tau='+FloatToStr(glSTL.tau)+' '; // длительность импульса.
+      f.Add(s);
+      s:='DutyCycle='+FloatToStr(glSTL.iQ)+' '; // Скважность.
+      f.Add(s);
+      // параметры импульсного режима работы для темы АППАРАТ.
+      s:='m1='+FloatToStr(glSTL.m1)+' ';
+      f.Add(s);
+      s:='tau1='+FloatToStr(glSTL.tau1)+' ';
+      f.Add(s);
+      s:='tau2='+FloatToStr(glSTL.tau2)+' ';
+      f.Add(s);
+      s:='tau_pause='+FloatToStr(glSTL.tau_pause)+' ';
+      f.Add(s);
+      s:='n='+IntToStr(glSTL.n)+' ';
+      f.Add(s);
+      s:='T='+FloatToStr(glSTL.T)+' ';
+      f.Add(s);
+      s:='on_time_double_linear='+FloatToStr(glSTL.on_time_double_linear)+' ';
+      f.Add(s);
+      // данные предполагаются корректными.
+      s:='EndTime='+FloatToStr(FormVariables.my_real_convert(FormUnsteady.EditTime.Text,bOk))+' ';
+      f.Add(s);
+      fpiecewise:=TStringList.Create();
+      // 0 - time (s); 1 - duration time (s); 21.12.2019
+      fpiecewise.Add(IntToStr(Formpiecewiseconstant.ComboBoxpiecewiseconst.ItemIndex));
+
+     i_piecewise:=0;
+     for i := 0 to Formpiecewiseconstant.Memopiecewiseconst.Lines.Count do
+     begin
+        if (length(Formpiecewiseconstant.Memopiecewiseconst.Lines[i])>0) then
+        begin
+           inc(i_piecewise);
+           spiecewise:=Formpiecewiseconstant.Memopiecewiseconst.Lines[i];
+           if (FormatSettings.DecimalSeparator=',') then
+           begin
+              for i_1 := 1 to length(s) do
+              begin
+                 if (spiecewise[i_1]=',') then spiecewise[i_1]:='.';
+              end;
+           end;
+           fpiecewise.Add(spiecewise);
+        end;
+     end;
+     s:='n_string_PiecewiseConst='+IntToStr(i_piecewise)+' ';
+     f.Add(s);
+     fpiecewise.SaveToFile('premeshin_piecewise_const.txt');
+     fpiecewise.Free;
+     // Условие Ньютона-Рихмана.
+     s:='adiabatic_vs_heat_transfer_coeff='+IntToStr(adiabatic_vs_heat_transfer_coeff)+' ';
+     f.Add(s);
+     s:='filmcoefficient='+FloatToStr(filmcoefficient)+' ';
+     f.Add(s);
 
    if (EGDForm.CBFlow.Checked = false) then
    begin
@@ -28024,46 +34310,46 @@ begin
      s:='lfil='+IntToStr(FormSetting.ComboBox_lfil.ItemIndex)+' ';
      f.Add(s);
 
-   // Делать ли уничтожения памяти и новые построения.
-   // 9 september 2017.
-   if (FormUnsteady.CheckBoxreconstruct.Checked) then
-   begin
-      s:='1 ';
-   end
-    else
-   begin
-      s:='0 ';
-   end;
-   s:='reconstruct='+s+' # 0 - OFF; 1 - ON; 1 is recomended.';
-   f.Add(s);
+     // Делать ли уничтожения памяти и новые построения.
+     // 9 september 2017.
+     if (FormUnsteady.CheckBoxreconstruct.Checked) then
+     begin
+        s:='1 ';
+     end
+      else
+     begin
+        s:='0 ';
+     end;
+     s:='reconstruct='+s+' # 0 - OFF; 1 - ON; 1 is recomended.';
+     f.Add(s);
 
-   // 17 november 2017.
-   // Сохранять ли анимацию в текстовый файл.
-   if (FormUnsteady.CheckBoxAnimationFields.Checked) then
-   begin
-      s:='1 ';
-   end
-    else
-   begin
-      s:='0 ';
-   end;
-   s:='AnimationFields='+s+' # 0 - OFF; 1 - ON;';
-   f.Add(s);
+     // 17 november 2017.
+     // Сохранять ли анимацию в текстовый файл.
+     if (FormUnsteady.CheckBoxAnimationFields.Checked) then
+     begin
+        s:='1 ';
+     end
+      else
+     begin
+        s:='0 ';
+     end;
+     s:='AnimationFields='+s+' # 0 - OFF; 1 - ON;';
+     f.Add(s);
 
-   // имена файлов в которых хранятся таблицы мощностей
-   // зависящие от температуры и смещения стока.
-   for i:=0 to (iltdp-1) do
-   begin
-      s:='tablename'+IntToStr(i)+'='+listtablename[i]+' ';
-      f.Add(s);
-   end;
+     // имена файлов в которых хранятся таблицы мощностей
+     // зависящие от температуры и смещения стока.
+     for i:=0 to (iltdp-1) do
+     begin
+        s:='tablename'+IntToStr(i)+'='+listtablename[i]+' ';
+        f.Add(s);
+     end;
 
-   s:='################################################################';
-   f.Add(s);
-   s:='# Matherial properties for this project configuration setting: #';
-   f.Add(s);
-   s:='################################################################';
-   f.Add(s);
+     s:='################################################################';
+     f.Add(s);
+     s:='# Matherial properties for this project configuration setting: #';
+     f.Add(s);
+     s:='################################################################';
+     f.Add(s);
 
    for i:=0 to (lmatmax-1) do
    begin
@@ -28185,6 +34471,10 @@ begin
                   end;
                end;
             end;
+
+            s:='body'+IntToStr(i)+'name='+name+' ';
+            f.Add(s);
+
             if (bf7) then
             begin
                s:=IntToStr(iunion)+' ';
@@ -28193,6 +34483,7 @@ begin
             begin
                s:='0 ';
             end;
+
             s:='body'+IntToStr(i)+'iunion='+s+' # 0 - cabinet. default 0.';
             f.Add(s);
             // 0 - Prism, 1 - Cylinder, 2 - Polygon.
@@ -28441,9 +34732,18 @@ begin
             f.Add(s);
             // для emissivity мы задаём не ноль а малое положительное число,
             // т.к. с нулём может возникнуть деление на ноль в программе.
-            s:=IntToStr(binternalRadiation)+' ';
-            s:='body'+IntToStr(i)+'binternalRadiation=' + s;
-            f.Add(s);
+            if (FormUnsteady.CheckBoxNo_vacuum_Prism.Checked) then
+            begin
+               // Вакуумная призма неактивна.
+               s:='body'+IntToStr(i)+'binternalRadiation=' + '0 ';
+               f.Add(s);
+            end
+            else
+            begin
+               s:=IntToStr(binternalRadiation)+' ';
+               s:='body'+IntToStr(i)+'binternalRadiation=' + s;
+               f.Add(s);
+            end;
             s:=IntToStr(imatid)+' ';
             s:='body'+IntToStr(i)+'imatid=' + s;
             f.Add(s);
@@ -28846,6 +35146,9 @@ begin
        i:=0;
        with (body[0]) do
          begin
+             s:='body'+IntToStr(i)+'name='+name+' ';
+             f.Add(s);
+
             s:=IntToStr(iunion)+' ';
             s:='body'+IntToStr(i)+'iunion='+s;
             f.Add(s);
@@ -29195,6 +35498,9 @@ begin
        i:=0;
        with (body[0]) do
          begin
+
+             s:='body'+IntToStr(i+1)+'name='+name+' ';
+             f.Add(s);
             s:=IntToStr(iunion)+' ';
             s:='body'+IntToStr(i+1)+'iunion='+s;
             f.Add(s);
@@ -29546,6 +35852,9 @@ begin
       begin
          with (body[i]) do
          begin
+
+             s:='body'+IntToStr(i+1)+'name='+name+' ';
+             f.Add(s);
 
              // Принадлежность union (Асемблесу).
               for i3 := 0 to (lu-1) do
@@ -29988,6 +36297,9 @@ begin
    begin
       with (source[i]) do
       begin
+          s:='source'+IntToStr(i)+'name='+name+' ';
+          f.Add(s);
+
          // Принадлежность union (Асемблесу).
             for i3 := 0 to (lu-1) do
             begin
@@ -30078,6 +36390,9 @@ begin
               if (cabinet_depend=0) then
               begin
 
+                s:='wall'+IntToStr(i)+'name='+name+' ';
+                 f.Add(s);
+
                   // Принадлежность union (Асемблесу).
                   for i3 := 0 to (lu-1) do
                   begin
@@ -30098,12 +36413,21 @@ begin
                     s:='0 ';
                  end;
 
+
                  s:='wall'+IntToStr(i)+'iunion='+s;
                  f.Add(s);
 
                  // тип краевого условия, температура и тепловой поток,
                  //  плоскость и координаты:
                  //s:=s+IntToStr(family)+' '; // тип краевого условия
+                 s:='# 1 - Dirichlet boundary condition.';
+                 f.Add(s);
+                 s:='# 2 - Homogenius Neiman boundary condition.';
+                 f.Add(s);
+                 s:='# 3 - Newton Richman boundary condition.';
+                 f.Add(s);
+                 s:='# 4 - Stefan Bolcman boundary condition.';
+                 f.Add(s);
                  s:='wall'+IntToStr(i)+'family='+IntToStr(family)+' ';
                  f.Add(s);
                  //s:=s+FloatToStr(Tamb)+' '; // температура на идеальном теплооотводе
@@ -30121,6 +36445,8 @@ begin
                  s:='wall'+IntToStr(i)+'heat_transfer_coefficient_vs_emissivity='+s;
                  f.Add(s);
                 // s:=s+FloatToStr(HF)+' '; // для граничного условия 2 или 3 рода.
+                 s:='wall'+IntToStr(i)+'ViewFactor='+FloatToStr(ViewFactor)+' ';
+                 f.Add(s);
                  s:='wall'+IntToStr(i)+'HF='+ FloatToStr(HF)+' ';
                  f.Add(s);
                  if (bsymmetry) then s:='1 ' else s:='0 ';
@@ -30204,6 +36530,10 @@ begin
 
           with (wall[i]) do
           begin
+
+              s:='wall'+IntToStr(i)+'name='+name+' ';
+                 f.Add(s);
+
              // Принадлежность union (Асемблесу).
                   for i3 := 0 to (lu-1) do
                   begin
@@ -30228,6 +36558,14 @@ begin
              // тип краевого условия, температура и тепловой поток,
              //  плоскость и координаты:
              //s:=s+IntToStr(family)+' '; // тип краевого условия
+              s:='# 1 - Dirichlet boundary condition.';
+              f.Add(s);
+              s:='# 2 - Homogenius Neiman boundary condition.';
+              f.Add(s);
+              s:='# 3 - Newton-Richman boundary condition.';
+              f.Add(s);
+              s:='# 4 - Stefan-Bolcman boundary condition.';
+              f.Add(s);
              s:='wall'+IntToStr(i)+'family='+IntToStr(family)+' ';
              f.Add(s);
              //s:=s+FloatToStr(Tamb)+' '; // температура на идеальном теплооотводе
@@ -30235,16 +36573,18 @@ begin
              f.Add(s);
              if (family=3) then
              begin
-                  s:=FloatToStr(heat_transfer_coefficient)+' '; // коэффициент теплоотдачи.
+                s:=FloatToStr(heat_transfer_coefficient)+' '; // коэффициент теплоотдачи.
              end
               else
              begin
                 // 1,2,4
-                  s:=FloatToStr(emissivity)+' '; // излучательная способность
+                s:=FloatToStr(emissivity)+' '; // излучательная способность
              end;
              s:='wall'+IntToStr(i)+'heat_transfer_coefficient_vs_emissivity='+s;
              f.Add(s);
              //s:=s+FloatToStr(HF)+' '; // для граничного условия 2 или 3 рода.
+             s:='wall'+IntTostr(i)+'ViewFactor='+FloatToStr(ViewFactor)+' '; // Фактор видимости.
+             f.Add(s);
              s:='wall'+IntToStr(i)+'HF='+FloatToStr(HF)+' ';
              f.Add(s);
              if (bsymmetry) then s:='1 ' else s:='0 ';
@@ -30605,7 +36945,7 @@ begin
 
    // Запись информации о решаемых уравнениях.
    s:=IntToStr(egddata.itemper)+' ';
-   s:='egddata_itemper='+s+'# 0 - none, 1 - Finite Volume Method, 2 - Finite Element Method.';
+   s:='egddata_itemper='+s+'# 0 - none, 1 - Finite Volume Method, 2 - Finite Element Method, 3 - Network Method.';
    f.Add(s);
    s:=IntToStr(egddata.imaxflD)+' ';
    s:='egddata_imaxflD='+s;
@@ -30740,6 +37080,70 @@ begin
       end;
       s:='amg1r6_checker='+s;
       f.Add(s);
+       s:='1131 ';
+      case Formamg1r5Parameters.ComboBoxNumber_of_smootherssteps.ItemIndex of
+         0 : s[2]:='1';
+         1 : s[2]:='2';
+         2 : s[2]:='3';
+      end;
+      case Formamg1r5Parameters.ComboBoxTypeSmoother.ItemIndex of
+         0 : begin
+                s[3]:='3'; // C/F relaxation
+                s[4]:='1';
+             end;
+         1 : begin
+                s[3]:='2'; // Full GS SWEEP
+                s[4]:='2';
+             end;
+         2 : begin
+                s[3]:='4'; // Full MORE COLOR SWEEP
+                s[4]:='4';
+             end;
+         3 : begin
+                s:='11122 '; // ILU(lfil) smoother
+                case Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex of
+                 0 : s[3]:='1';
+                 1 : s[3]:='2';
+                 2 : s[3]:='3';
+                end;
+             end;
+      end;
+      s:='nrd='+s;
+      f.Add(s);
+      s:='1131 ';
+      case Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex of
+         0 : s[2]:='1';
+         1 : s[2]:='2';
+         2 : s[2]:='3';
+      end;
+      case Formamg1r5Parameters.ComboBoxTypePostSmoother.ItemIndex of
+         0 : begin
+                s[3]:='3'; // C/F relaxation
+                s[4]:='1';
+             end;
+         1 : begin
+                s[3]:='2'; // Full GS SWEEP
+                s[4]:='2';
+             end;
+         2 : begin
+                s[3]:='4'; // Full MORE COLOR SWEEP
+                s[4]:='4';
+             end;
+         3 : begin
+                s:='11122 '; // ILU(lfil) smoother
+                case Formamg1r5Parameters.ComboBoxNumber_of_post_smooth.ItemIndex of
+                 0 : s[3]:='1';
+                 1 : s[3]:='2';
+                 2 : s[3]:='3';
+                end;
+             end;
+      end;
+      s:='nru='+s;
+      f.Add(s);
+      s:='ecg2='+Trim(Formamg1r5Parameters.Editstrongthreshold.Text)+' ';
+      f.Add(s);
+      s:='ewt2='+Trim(Formamg1r5Parameters.EditF2F.Text)+' ';
+      f.Add(s);
 
       s:='number_processors='+IntToStr(1+FormSetting.ComboBoxNumberProcessors.ItemIndex)+' ';
       f.Add(s);
@@ -30747,7 +37151,7 @@ begin
       s:='number_iterations_SIMPLE_algorithm='+IntToStr(FormUnsteady.ComboBoxNumberIterationsSIMPLEAlgoritm.ItemIndex)+' ';
       f.Add(s);
 
-      // amg1r5 stabilization: 0 - none, 1 - bicgstab, 2 - fgmres.
+      // amg1r5 stabilization: 0 - none, 1 - bicgstab, 2 - fgmres, 3 - nonlinear.
       s:='stabilization_amg1r5_algorithm='+IntToStr(Formamg1r5Parameters.ComboBoxStabilization.ItemIndex)+' ';
       f.Add(s);
 
@@ -30789,7 +37193,9 @@ begin
       // модель прошла проверку на корректность.
 
    f.SaveToFile('premeshin.txt'); // сохранение результата
-   if ((egddata.imaxflD=0) or ((egddata.imaxflD=1) and (egddata.itemper>0) and(egddata.myflmod[0].iflow=0))) then
+   if ((egddata.imaxflD=0) or
+   ((egddata.imaxflD=1) and (egddata.itemper>0)
+   and(egddata.myflmod[0].iflow=0))) then
    begin
       // Есть одна Fluid зона но она не активна.
 
@@ -30970,11 +37376,23 @@ begin
           if (Laplas.egddata.itemper>0) then
           begin
                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+                begin
+                    // Standart K-epsilon Model на основе двухслойной модели [2001]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                    FormResidualStandart_k_epsilon_Temp.Show;
+                end
+                else
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                (Laplas.egddata.myflmod[0].iturbmodel=4)) then
                 begin
                     // K-Omega SST Menter [1993]
                     Formresidual2.brun_visible2:=false;
                     FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                     FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                     FormResidualSSTTemp.Show;
                 end
@@ -30985,6 +37403,7 @@ begin
                    // Спаларт Аллмарес
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    Formresidual2.brun_visible2:=false;
+                   FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=true;
                    FormResidualSATemp.Show;
                 end
@@ -30992,6 +37411,7 @@ begin
                 begin
                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                    FormResidualSATemp.brun_visibleSA2:=false;
+                   FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                    Formresidual2.brun_visible2:=true;
                    Formresidual2.Show;
                 end;
@@ -31000,6 +37420,14 @@ begin
           begin
              if (egddata.iStaticStructural=0) then
              begin
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+                begin
+                   // Standart K-Epsilon
+                   FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+                   FormResidualStandartKEpsilon.Show;
+                end
+                else
                 if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                 (Laplas.egddata.myflmod[0].iturbmodel=4)) then
                 begin
@@ -31095,11 +37523,23 @@ begin
           if (Laplas.egddata.itemper>0) then
           begin
               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+              (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+              begin
+                 // Standart K-Epsilon Model на основе двухслойной модели.
+                 FormResidualSATemp.brun_visibleSA2:=false;
+                 Formresidual2.brun_visible2:=false;
+                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                 FormResidualStandart_k_epsilon_Temp.Show;
+              end
+               else
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
                   (Laplas.egddata.myflmod[0].iturbmodel=4)) then
               begin
                  // K-Omega SST
                  FormResidualSATemp.brun_visibleSA2:=false;
                  Formresidual2.brun_visible2:=false;
+                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                  FormResidualSSTTemp.Show;
               end
@@ -31110,6 +37550,7 @@ begin
                  // Спаларт Аллмарес
                  FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                  Formresidual2.brun_visible2:=false;
+                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  FormResidualSATemp.brun_visibleSA2:=true;
                  FormResidualSATemp.Show;
               end
@@ -31117,14 +37558,23 @@ begin
               begin
                  FormResidualSATemp.brun_visibleSA2:=false;
                  FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                 FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                  Formresidual2.brun_visible2:=true;
                  Formresidual2.Show;
               end;
           end
            else
           begin
-              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
-              (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                   (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+                begin
+                   // Standart K-epsilon model
+                   FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+                   FormResidualStandartKEpsilon.Show;
+                end
+                else
+                 if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                    (Laplas.egddata.myflmod[0].iturbmodel=4)) then
                 begin
                    // SST Ментер
                    FormResidualSST.brun_visibleSST:=true;
@@ -31318,26 +37768,29 @@ begin
    // 26.07.2016
    if (Laplas.bonly_mesh_gen_call=false) then
    begin
-   if (FileExists('report_temperature.txt')) then
+      if (FileExists('report_temperature.txt')) then
       begin
-         f:=TStringList.Create();
+
+         WinExec('notepad.exe report_temperature.txt',sw_ShowNormal);
+         //ShellExecute(Handle, 'open', 'c:\ProgramFiles\Windows NT\Accessories\wordpad.exe', Pchar(ExtractFilePath(ParamStr(0))+'report_temperature.txt'), nil, SW_SHOWNORMAL); //открываем файл через WordPad
+         (*f:=TStringList.Create();
          f.LoadFromFile('report_temperature.txt');
          // Проверка на совместимость проверяется только по
          // равенству количества элементов модели каждого типа.
          if (f.Count=Laplas.ls+Laplas.lw+Laplas.lb+1) then
          begin
-            Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
+            Laplas.MainMemo.Lines.Add(f.Strings[0]);
             for i:=0 to Laplas.lb-1 do
             begin
-               Laplas.MainMemo.Lines.Add(body[i].name+'  '+f.Strings[i+1]);
+               Laplas.MainMemo.Lines.Add(f.Strings[i+1]);
             end;
             for i:=0 to Laplas.ls-1 do
             begin
-               Laplas.MainMemo.Lines.Add(source[i].name+'  '+f.Strings[i+Laplas.lb+1]);
+               Laplas.MainMemo.Lines.Add(f.Strings[i+Laplas.lb+1]);
             end;
             for i:=0 to Laplas.lw-1 do
             begin
-               Laplas.MainMemo.Lines.Add(wall[i].name+'  '+f.Strings[i+Laplas.lb+Laplas.ls+1]);
+               Laplas.MainMemo.Lines.Add(f.Strings[i+Laplas.lb+Laplas.ls+1]);
             end;
          end
           else
@@ -31349,6 +37802,7 @@ begin
          //DeleteFile('solver/solid_static/report_temperature.txt');
          f.Clear;
          f.Free;
+         *)
       end
       else
       begin
@@ -31360,46 +37814,170 @@ end;
 
 // Вызов tecplot360 и загрузка файла с решением.
 procedure TLaplas.LoadSolution1Click(Sender: TObject);
+var
+  FName : string;
+  i,j : Integer;
 begin
    // Загружает решение отдельно.
    // 22.07.2016.
-   if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
-              begin
-                 WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
-              end
-         else
-        begin
-   if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
-        begin
-           WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-        end
-         else
-        begin
-           if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
-           begin
-              WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-           end
-            else
-           begin
-              if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
-              begin
-                WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-              end
-               else
-              begin
-                 if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
-                 begin
-                    WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
-                 end
-                  else
-                 begin
-                    Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 unfound.');
-                 end;
-              end;
-           end;
-        end;
-        end;
 
+   if OpenDialog2.Execute then
+   begin
+
+      // Обрезаем полный путь к файлу.
+      // Оставляем только имя файла с расширением.
+      FName:=ExtractFileName(OpenDialog2.FileName);
+
+      j:=0; // инициализация.
+      for i := length(FName) downto 1  do
+      begin
+        if (FName[i]='\') then
+        begin
+           j:=i;
+           break;
+        end;
+      end;
+      FName:=Copy(FName, j+1, length(FName));
+
+      // Тестирование извлечения имени.
+      //MainMemo.Lines.Add(FName);
+
+       // Finite Element Method
+      if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+      begin
+         //WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe '+OpenDialog2.FileName),SW_SHOWNORMAL);
+      ShellExecute(Laplas.Handle, 'open', 'C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe',
+             PWideChar(FName), nil, SW_SHOWNORMAL);
+      end
+       else
+      begin
+         if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+         begin
+            //WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe '+OpenDialog2.FileName),SW_SHOWNORMAL);
+         ShellExecute(Laplas.Handle, 'open', 'C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe',
+             PWideChar(FName), nil, SW_SHOWNORMAL);
+         end
+          else
+         begin
+            if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+            begin
+               //WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe '+OpenDialog2.FileName),SW_SHOWNORMAL);
+            ShellExecute(Laplas.Handle, 'open', 'C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe',
+             PWideChar(FName), nil, SW_SHOWNORMAL);
+            end
+             else
+            begin
+               if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+               begin
+                  //WinExec(PAnsiChar('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe '+OpenDialog2.FileName),SW_SHOWNORMAL);
+               ShellExecute(Laplas.Handle, 'open', 'C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe',
+               PWideChar(FName), nil, SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                  begin
+                     //WinExec(PAnsiChar('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe '+OpenDialog2.FileName),SW_SHOWNORMAL);
+                      ShellExecute(Laplas.Handle, 'open', 'C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe',
+                      PWideChar(FName), nil, SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                  end;
+               end;
+            end;
+         end;
+      end;
+
+
+   end;
+
+
+
+
+   (*
+   if (egddata.itemper=2) then
+   begin
+      // Finite Element Method
+      if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+      begin
+         WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_08_temp.PLT'),SW_SHOWNORMAL);
+      end
+       else
+      begin
+         if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+         begin
+            WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+         end
+          else
+         begin
+            if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+            begin
+               WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+            end
+             else
+            begin
+               if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+               begin
+                  WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_08_temp.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                  end;
+               end;
+            end;
+         end;
+      end;
+   end
+    else
+   begin
+      // Control Volume Method
+      if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe')) then
+      begin
+         WinExec(PAnsiChar('C:\Program Files\Tecplot\Tecplot 360 EX 2017 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT'),SW_SHOWNORMAL);
+      end
+       else
+      begin
+         if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe')) then
+         begin
+            WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2015 R2\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+         end
+          else
+         begin
+            if (FileExists('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe')) then
+            begin
+               WinExec('C:\Program Files\Tecplot\Tecplot 360 EX 2014 R1\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+            end
+             else
+            begin
+               if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe')) then
+               begin
+                  WinExec('C:\Program Files (x86)\Tecplot\Tec360 2009\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+               end
+                else
+               begin
+                  if (FileExists('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe')) then
+                  begin
+                     WinExec('C:\Program Files (x86)\Tecplot\Tec360 2008\bin\tec360.exe ALICEFLOW0_07_temp.PLT',SW_SHOWNORMAL);
+                  end
+                   else
+                  begin
+                     Laplas.MainMemo.Lines.Add('Tecplot 2008 or 2009 or 2014 or 2015 or 2017 unfound.');
+                  end;
+               end;
+            end;
+         end;
+      end;
+   end;
+   *)
 end;
 
 // процедура корректировки имени объекта
@@ -34022,12 +40600,23 @@ var
 begin
     f:=TStringList.Create();
 
+      if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+        (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+    begin
+       // Standart K-Epsilon Model на основе двухслойной модели.
+       Formresidual2.brun_visible2:=false;
+       FormResidualSATemp.brun_visibleSA2:=false;
+       FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+       FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+    end
+     else
      if ((Laplas.egddata.myflmod[0].iflowregime=1)and
         (Laplas.egddata.myflmod[0].iturbmodel=4)) then
     begin
        // SST K-Omega
        Formresidual2.brun_visible2:=false;
        FormResidualSATemp.brun_visibleSA2:=false;
+       FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
        FormResidualSSTTemp.brun_visibleSSTTemp:=true;
     end
      else
@@ -34037,21 +40626,35 @@ begin
        // Спаларт Аллмарес
        FormResidualSSTTemp.brun_visibleSSTTemp:=false;
        Formresidual2.brun_visible2:=false;
+       FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
        FormResidualSATemp.brun_visibleSA2:=true;
     end
      else
     begin
         FormResidualSSTTemp.brun_visibleSSTTemp:=false;
         FormResidualSATemp.brun_visibleSA2:=false;
+        FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
         Formresidual2.brun_visible2:=true;
     end;
+      if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+     (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+     begin
+        // Standart K-epsilon model
+        Formresidual.brun_visible:=false;
+        FormResidualSpallart_Allmares.brun_visibleSA:=false;
+        FormResidualSST.brun_visibleSST:=false;
+        FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+     end
+     else
      if ((Laplas.egddata.myflmod[0].iflowregime=1)and
      (Laplas.egddata.myflmod[0].iturbmodel=4)) then
      begin
         // SST Ментер
         Formresidual.brun_visible:=false;
         FormResidualSpallart_Allmares.brun_visibleSA:=false;
+        FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
         FormResidualSST.brun_visibleSST:=true;
+
      end
      else
     if ((Laplas.egddata.myflmod[0].iflowregime=1)and
@@ -34059,13 +40662,17 @@ begin
     begin
         Formresidual.brun_visible:=false;
         FormResidualSST.brun_visibleSST:=false;
+        FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
         FormResidualSpallart_Allmares.brun_visibleSA:=true;
+
     end
     else
     begin
        FormResidualSST.brun_visibleSST:=false;
        FormResidualSpallart_Allmares.brun_visibleSA:=false;
+        FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
        Formresidual.brun_visible:=true;
+
     end;
 
 
@@ -34087,6 +40694,165 @@ begin
                end;
              end;
 
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=5)) then
+            begin
+               // Standart K-epsilon model на основе двухслойной модели [2001].
+               // первые две строки нужно пропустить.
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[0].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[1].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[2].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[3].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[4].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[5].Clear;
+               FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[6].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandart_k_epsilon_Temp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandart_k_epsilon_Temp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandart_k_epsilon_Temp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=true;
+                FormResidualStandart_k_epsilon_Temp.Show;
+            end
+            else
               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
              (Laplas.egddata.myflmod[0].iturbmodel=4)) then
             begin
@@ -34241,6 +41007,7 @@ begin
                 f.Free;
                 Formresidual2.brun_visible2:=false;
                 FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=true;
                 FormResidualSSTTemp.Show;
             end
@@ -34384,6 +41151,7 @@ begin
                 f.Free;
                 Formresidual2.brun_visible2:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                 FormResidualSATemp.brun_visibleSA2:=true;
                 FormResidualSATemp.Show;
             end
@@ -34498,6 +41266,7 @@ begin
                 f.Free;
                 FormResidualSATemp.brun_visibleSA2:=false;
                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualStandart_k_epsilon_Temp.brun_visibleStandartK_EpsilonTemp:=false;
                Formresidual2.brun_visible2:=true;
                Formresidual2.Show;
 
@@ -34527,9 +41296,145 @@ begin
                end;
              end;
 
+              if (Laplas.egddata.myflmod[0].iturbmodel=5) then
+            begin
+               // Standart K-epsilon model.
+               // первые две строки нужно пропустить.
+               FormResidualStandartKEpsilon.Chart1.SeriesList[0].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[1].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[2].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[3].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[4].Clear;
+               FormResidualStandartKEpsilon.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualStandartKEpsilon.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualStandartKEpsilon.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualStandartKEpsilon.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualStandartKEpsilon.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualStandartKEpsilon.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualStandartKEpsilon.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualStandartKEpsilon.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+                f.Free;
+                Formresidual.brun_visible:=false;
+                FormResidualSpallart_Allmares.brun_visibleSA:=false;
+                FormResidualSST.brun_visibleSST:=false;
+                FormResidualStandartKEpsilon.brun_visibleKEpsilon:=true;
+                FormResidualStandartKEpsilon.Show;
+            end
+            else
               if (Laplas.egddata.myflmod[0].iturbmodel=4) then
             begin
-               // Спаларт Аллмарес.
+               // SST K-Omega Menter.
                // первые две строки нужно пропустить.
                FormResidualSST.Chart1.SeriesList[0].Clear;
                FormResidualSST.Chart1.SeriesList[1].Clear;
@@ -34658,6 +41563,7 @@ begin
                 f.Free;
                 Formresidual.brun_visible:=false;
                 FormResidualSpallart_Allmares.brun_visibleSA:=false;
+                FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
                 FormResidualSST.brun_visibleSST:=true;
                 FormResidualSST.Show;
             end
@@ -34774,6 +41680,7 @@ begin
                 f.Free;
                 FormResidualSST.brun_visibleSST:=false;
                 Formresidual.brun_visible:=false;
+                FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
                 FormResidualSpallart_Allmares.brun_visibleSA:=true;
                 FormResidualSpallart_Allmares.Show;
             end
@@ -34874,6 +41781,7 @@ begin
                 f.Free;
                 FormResidualSST.brun_visibleSST:=false;
                 FormResidualSpallart_Allmares.brun_visibleSA:=false;
+                FormResidualStandartKEpsilon.brun_visibleKEpsilon:=false;
                 Formresidual.brun_visible:=true;
                 Formresidual.Show;
                end;
@@ -35382,7 +42290,8 @@ end;
 procedure TLaplas.Render;
 const
   epsilon = 1.0e-20;
-  dopusk = 0.01;// 0.005; // 0.01
+  bVisibleCount = 7;
+  //dopusk = 0.01;// 0.005; // 0.01
 
 var
     i, j, j3 : Integer;
@@ -35397,6 +42306,7 @@ var
     direction_spoot, direction_spoot1 : array [0..2] of GLfloat;
     global_ambient, mdiffpat, mambpat, mspecpat, memispat : array [0..3] of GLfloat;
     //position, direction, up, right : TGLVectorf3;
+    dopusk1, dopusk2 : GLfloat;   // 0.01;// 0.005; // 0.01
     radius, att, kQ, kL, kC, rmod : GLfloat;
     radius1, att1, kQ1, kL1, kC1, rmod1 : GLfloat;
     // для сглаживателя.
@@ -35411,7 +42321,44 @@ var
     icol : Integer;
     arr_ax : array of GLfloat;
     tmin, tmax : Real; // Локальный диапазхон для картинки.
+    // При прорисовке каркасной модели мы нарисуем кубик немножко
+    // большего размера для SOLID и FLUID и немножко меньшего
+    // размера для HOLLOW. Константа dopusk будет регулировать насколько
+    // больший (меньший) кубик будет нарисован.
+    xS1, xE1, yS1, yE1, zS1, zE1 : Real; // координаты рёбер для отрисовки.
 
+
+    function CheckLine(il1 : Integer; il2 : Integer) : Boolean;
+    begin
+       if ((il1<>4) and
+           (il1<>8) and
+           (il2<>4)and
+           (il2<>8)and
+           (il1=il2)) then
+      begin
+         Result:=true;
+      end
+       else
+      begin
+         if (((il1=1)and((il2=2)or(il2=3)))
+         or ((il2=1)and((il1=2)or(il1=3))))  then
+         begin
+            Result:=true;
+         end
+         else
+         begin
+            if (((il1=6)and(il2=7))or
+                ((il2=6)and(il1=7)))then
+                begin
+                   Result:=true;
+                end
+                else
+                begin
+                   Result:=false;
+                end;
+         end;
+      end;
+    end;
 
 // Пузырьковая сортировка по возрастанию ключа key.
 procedure BubbleSort;
@@ -35577,41 +42524,41 @@ begin
    // если r1 не ноль.
    if (Abs(r1)>0.001) then
    begin
-   b1:=3.141*arcsin(Ozc/r1)/180.0;
+      b1:=3.141*arcsin(Ozc/r1)/180.0;
 
-   if (Oxc>0.001) then
-   begin
-      a1:=ArcTan(Oyc/Oxc);
-   end;
-   if (Abs(Oxc)<=0.001) then
-   begin
-      if (Oyc>0.0) then
+      if (Oxc>0.001) then
       begin
-         a1:=3.141/2.0;
+         a1:=ArcTan(Oyc/Oxc);
       end;
-       if (Oyc<0.0) then
+      if (Abs(Oxc)<=0.001) then
       begin
-         a1:=-3.141/2.0;
+         if (Oyc>0.0) then
+         begin
+            a1:=3.141/2.0;
+         end;
+         if (Oyc<0.0) then
+         begin
+            a1:=-3.141/2.0;
+         end;
       end;
-   end;
-   if (Oxc<-0.001) then
-   begin
-      if (Oyc>0.001) then
+      if (Oxc<-0.001) then
       begin
-          a1:=3.141/2.0+ArcTan(Abs(Oxc)/Oyc);
+         if (Oyc>0.001) then
+         begin
+            a1:=3.141/2.0+ArcTan(Abs(Oxc)/Oyc);
+         end;
+         if (Oyc<-0.001) then
+         begin
+            a1:=-3.141/2.0-ArcTan(Abs(Oxc)/Abs(Oyc));
+         end;
+         if (Abs(Oyc)<0.001) then
+         begin
+            a1:=-3.141;
+         end;
       end;
-      if (Oyc<-0.001) then
-      begin
-          a1:=-3.141/2.0-ArcTan(Abs(Oxc)/Abs(Oyc));
-      end;
-      if (Abs(Oyc)<0.001) then
-      begin
-         a1:=-3.141;
-      end;
-   end;
 
 
-   case cnd of
+      case cnd of
       'x' : begin
                ret:=r1*cos(b1+Bet)*cos(a1+Alf);
             end;
@@ -35621,7 +42568,7 @@ begin
       'z' : begin
                ret:=r1*sin(b1+Bet);
             end;
-     end;
+      end;
    end
    else
    begin
@@ -35631,21 +42578,136 @@ begin
    Result:=ret;
 end;
 
+function binvisible_face_detect(nx : Real;
+ny : Real; nz : Real): Boolean;
+var
+   br : Boolean;
+   mx : array [1..3] of  array [1..3] of Real;
+   my : array [1..3] of  array [1..3] of Real;
+   mz0 : array [1..3] of  array [1..3] of Real;
+   mz : array [1..3] of  array [1..3] of Real;
+   mr : array [1..3] of  array [1..3] of Real;
+   mr1 : array [1..3] of  array [1..3] of Real;
+   i88, j88, k88 : Integer;
+   nx1,ny1,nz1 : Real;
+begin
+   // (nx,ny,nz) - нормаль.
+   //
+   br:=true;
 
+  // glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
+   //glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
+   //glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
+   //glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
+    // Матрица поворота вокруг оси Oz
+   mz0[1][1]:=cos(Gam0); mz0[1][2]:=-sin(Gam0); mz0[1][3]:=0.0;
+   mz0[2][1]:=sin(Gam0); mz0[2][2]:=cos(Gam0); mz0[2][3]:=0.0;
+   mz0[3][1]:=0.0; mz0[3][2]:=0.0; mz0[3][3]:=1.0;
+   // Матрица поворота вокруг оси Ox
+   mx[1][1]:=1.0; mx[1][2]:=0.0; mx[1][3]:=0.0;
+   mx[2][1]:=0.0; mx[2][2]:=cos(Alf); mx[2][3]:=-sin(Alf);
+   mx[3][1]:=0.0; mx[3][2]:=sin(Alf); mx[3][3]:=cos(Alf);
+   // Матрица поворота вокруг оси Oy
+   my[1][1]:=cos(Bet); my[1][2]:=0.0; my[1][3]:=sin(Bet);
+   my[2][1]:=0.0; my[2][2]:=1.0; my[2][3]:=0.0;
+   my[3][1]:=-sin(Bet); my[3][2]:=0.0; my[3][3]:=cos(Bet);
+   // Матрица поворота вокруг оси Oz
+   mz[1][1]:=cos(Gam); mz[1][2]:=-sin(Gam); mz[1][3]:=0.0;
+   mz[2][1]:=sin(Gam); mz[2][2]:=cos(Gam); mz[2][3]:=0.0;
+   mz[3][1]:=0.0; mz[3][2]:=0.0; mz[3][3]:=1.0;
+
+   mr[1][1]:=0.0; mr[1][2]:=0.0; mr[1][3]:=0.0;
+   mr[2][1]:=0.0; mr[2][2]:=0.0; mr[2][3]:=0.0;
+   mr[3][1]:=0.0; mr[3][2]:=0.0; mr[3][3]:=0.0;
+   for i88 := 1 to 3 do
+   begin
+     for j88 := 1 to 3 do
+     begin
+        for k88 := 1 to 3 do
+        begin
+           mr[i88][j88]:=mr[i88][j88]+mz0[i88][k88]*mx[k88][j88];
+        end;
+     end;
+   end;
+   mr1[1][1]:=0.0; mr1[1][2]:=0.0; mr1[1][3]:=0.0;
+   mr1[2][1]:=0.0; mr1[2][2]:=0.0; mr1[2][3]:=0.0;
+   mr1[3][1]:=0.0; mr1[3][2]:=0.0; mr1[3][3]:=0.0;
+   for i88 := 1 to 3 do
+   begin
+     for j88 := 1 to 3 do
+     begin
+        for k88 := 1 to 3 do
+        begin
+           mr1[i88][j88]:=mr1[i88][j88]+mr[i88][k88]*my[k88][j88];
+        end;
+     end;
+   end;
+   for i88 := 1 to 3 do
+   begin
+      for j88 := 1 to 3 do
+      begin
+         mr[i88][j88]:=mr1[i88][j88];
+         mr1[i88][j88]:=0.0;
+      end;
+   end;
+   for i88 := 1 to 3 do
+   begin
+     for j88 := 1 to 3 do
+     begin
+        for k88 := 1 to 3 do
+        begin
+           mr1[i88][j88]:=mr1[i88][j88]+mr[i88][k88]*mz[k88][j88];
+        end;
+     end;
+   end;
+   nx1:=0.0;
+   ny1:=0.0;
+   nz1:=0.0;
+   nx1:=mr1[1][1]*nx+mr1[1][2]*ny+mr1[1][3]*nz;
+   ny1:=mr1[2][1]*nx+mr1[2][2]*ny+mr1[2][3]*nz;
+   nz1:=mr1[3][1]*nx+mr1[3][2]*ny+mr1[3][3]*nz;
+
+   //if (nx*nx1+ny*ny1+nz*nz1>-1.0e-3) then
+   if (nz1>-1.0e-3) then
+   begin
+      br:=true;
+   end
+   else
+   begin
+      br:=false;
+   end;
+
+   if (br) then
+   begin
+      Result:=true;
+   end
+   else
+   begin
+       Result:=false;
+   end;
+end;
 
 
 begin
 
+    // 25.11.2019
+    // Значение допуска для z-буффера задается пользователем.
+    dopusk1:=dopusk_gl1; // для наибольшей протяженности объекта.
+    dopusk2:=dopusk_gl2; // для наименьшей протяженности объекта.
 
 
     // z буфер теперь используется для всех трёх режимов.
-    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); //очищаем буфер цвета и буфер глубины
+    //очищаем буфер цвета и буфер глубины
+    glEnable(GL_DEPTH_TEST);  // может надо выключить.
+    //glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
    (*
    if (rgview.ItemIndex>0) then
    begin
       glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT); //очищаем буфер цвета и буфер глубины
    end
-   else
+    else
    begin
       glClear(GL_COLOR_BUFFER_BIT);
    end;
@@ -35654,7 +42716,7 @@ begin
      glEnable(GL_COLOR_MATERIAL);
      glEnable(GL_NORMALIZE);// автоматическая нормировка нормалей под единичные.
 
-
+   (*
    if ((rgview.ItemIndex=2)) then
    begin
 
@@ -35928,7 +42990,7 @@ begin
 
 
    end;
-
+   *)
 
 
    //эти команды мы изучим позже
@@ -35982,12 +43044,18 @@ begin
 
    // откуда, куда, нормаль
     if (not(bvisiblepic)) then
-   begin
-       gluLookAt(Oxc,Oyc,Ozc,  Oxc,Oyc, Ozc-Hscale*sqrt(sqr(body[0].zE-body[0].zS)+sqr(body[0].yE-body[0].yS)+sqr(body[0].xE-body[0].xS)),0.0,0.05,0.95);
-   end
+    begin
+       gluLookAt(Oxc,Oyc,Ozc,  Oxc,Oyc,
+       Ozc-Hscale*sqrt(sqr(body[0].zE-body[0].zS)+
+       sqr(body[0].yE-body[0].yS)+
+       sqr(body[0].xE-body[0].xS)),0.0,0.05,0.95);
+    end
      else
     begin
-        gluLookAt(Oxc,Oyc,Ozc,  Oxc,Oyc, Ozc-Hscale*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic)),0.0,0.05,0.95);
+       gluLookAt(Oxc,Oyc,Ozc,  Oxc,Oyc,
+        Ozc-Hscale*sqrt(sqr(zmaxpic-zminpic)+
+        sqr(ymaxpic-yminpic)+
+        sqr(xmaxpic-xminpic)),0.0,0.05,0.95);
     end;
 
    (*
@@ -36054,42 +43122,56 @@ begin
 	glEnd;
   *)
 
-  if (not(bvisiblepic)) then
+  if ((not(bvisiblepic))and (rgview.ItemIndex<>2)) then
   begin
      // На дне мы нарисуем огромный квадрат.
      raddit:=5000.2*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS));
-     if  (rgview.ItemIndex<>-2) then
-     begin
+
         // Если это делать и при rgview.ItemIndex=2 то мы получим чёрный чёрный фон.
         glpushMatrix;
           glTranslatef(0,0,-6.2*((Hscale/5.0))*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
           glBegin(GL_QUADS); //рисуем квадрат
              // Цвет белый ! glColor3f(1,1,1);
-	           glColor3f(1,1,1);  glVertex3f(-raddit,-raddit,0.0); //первая вершина
-	           glColor3f(1,1,1);  glVertex3f(raddit,-raddit,0.0); //вторая вершина
-	           glColor3f(1,1,1);  glVertex3f(raddit,raddit,0.0); //третья вершина
-	           glColor3f(1,1,1);  glVertex3f(-raddit,raddit,0.0); //четвёртая вершина
+             // Белым цветом против часовой стрелки.
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(-raddit,-raddit,0.0); // первая вершина
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(raddit,-raddit,0.0); // вторая вершина
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(raddit,raddit,0.0); // третья вершина
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(-raddit,raddit,0.0); // четвёртая вершина
 	        glEnd;
         glPopmatrix;
-    end;
  end
  else
  begin
      raddit:=5000.2*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic));
-      if  (rgview.ItemIndex<>-2) then
-     begin
+
         // Если это делать и при rgview.ItemIndex=2 то мы получим чёрный чёрный фон.
         glpushMatrix;
           glTranslatef(0,0,-6.2*((Hscale/5.0))*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic)));
           glBegin(GL_QUADS); //рисуем квадрат
              // Цвет белый ! glColor3f(1,1,1);
-	           glColor3f(1,1,1);  glVertex3f(-raddit,-raddit,0.0); //первая вершина
-	           glColor3f(1,1,1);  glVertex3f(raddit,-raddit,0.0); //вторая вершина
-	           glColor3f(1,1,1);  glVertex3f(raddit,raddit,0.0); //третья вершина
-	           glColor3f(1,1,1);  glVertex3f(-raddit,raddit,0.0); //четвёртая вершина
+             // Белым цветом против часовой стрелки.
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(-raddit,-raddit,0.0); // первая вершина
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(raddit,-raddit,0.0); // вторая вершина
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(raddit,raddit,0.0); // третья вершина
+	           glColor3f(1,1,1);
+             glNormal3f(0.0,0.0,1.0);
+             glVertex3f(-raddit,raddit,0.0); // четвёртая вершина
 	        glEnd;
         glPopmatrix;
-    end;
  end;
 
 
@@ -36097,8 +43179,8 @@ begin
   0 : // Обычная стандартная прорисовка всех линий (это то что было раньше)
   begin
 
-  if (bvisiblepic) then
-  begin
+   if (bvisiblepic) then
+   begin
      //  Прорисовка расчётной сетки и если изометрия то трёхмерной геометрии
      // считанной из tecplot файла информации.
       // Прорисовка остальных блоков.
@@ -36300,12 +43382,1029 @@ begin
             case cbbview.ItemIndex of
              0 : // all
              begin
-                // TODO
+                // 23.05.2020  только внешние грани!!!
 
-                // Нельзя рисовать все грани подряд. Это чрезмерная нагрузка на движок.
-                // Надо Отобрать только внешние грани составляющие модель и рисовать только их.
-                // Для отбора граней нужно что то типа АВЛ дерева.
+                // Нельзя рисовать все грани подряд. Это чрезмерная
+                // нагрузка на движок OpenGL.
+                // Надо Отобрать только внешние грани составляющие
+                // модель и рисовать только их.
                 // TODO код изъят 06.09.2019.
+
+
+                glpushMatrix;
+                //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
+                //glTranslatef(0,0,-Hscale*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
+                //glTranslatef(0.5*(Laplas.body[0].xS+Laplas.body[0].xE),0.5*(Laplas.body[0].yS+Laplas.body[0].yE),0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+                glTranslatef(0,0,-Hscale*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic)));
+                glTranslatef(0.5*(xminpic+xmaxpic),0.5*(yminpic+ymaxpic),0.5*(zminpic+zmaxpic));
+
+                //-->glRotatef(180.0*Alf/3.141,0.0,0.0,1.0); // z
+                //glRotatef(180.0*Bet/3.141,1.0,0.0,0.0); // x
+                //--->glRotatef(180.0*Bet/3.141,0.7071,0.7071,0.0); // x && y
+                // Вращательное движение в 3D имеет три степени свободы.
+                glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
+                glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
+                glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
+                glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
+                //glTranslatef(-0.5*(Laplas.body[0].xS+Laplas.body[0].xE),-0.5*(Laplas.body[0].yS+Laplas.body[0].yE),-0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+                glTranslatef(-0.5*(xminpic+xmaxpic),-0.5*(yminpic+ymaxpic),-0.5*(zminpic+zmaxpic));
+
+
+                glColor3f(0.0,0.0,0.0);
+
+                if (binvisible_face_detect(0.0,0.0,-1.0)) then
+                               begin
+
+                // XY bottom
+                 if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i4-1]<=bVisibleCount)) then
+                  begin
+                      if (icurrentpic=0) then
+                            begin
+                               // Prism
+
+                                  glBegin(GL_LINE_LOOP);
+                                    glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                    glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                    glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                    glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glEnd;
+
+                            end
+                              else
+                            begin
+
+
+                                glBegin(GL_QUADS);
+
+                                icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i1-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,-1.0);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+
+                                  icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i4-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,-1.0);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i3-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,-1.0);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i2-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,-1.0);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+
+                                glEnd;
+
+                                glColor3f(0.0,0.0,0.0);
+                            end;
+
+                            glLineWidth(4);
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                    ipa_count[elmpic[j].i2-1])) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                    ipa_count[elmpic[j].i2-1]))  then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                    ipa_count[elmpic[j].i4-1]))  then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                    ipa_count[elmpic[j].i4-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                               glEnd;
+                            end;
+
+                            glLineWidth(1);
+
+                  end;
+                  end;
+
+                  if (binvisible_face_detect(0.0,0.0,1.0)) then
+                               begin
+                     // XY Top
+                  if ((ipa_count[elmpic[j].i5-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount)) then
+                  begin
+                      if (icurrentpic=0) then
+                            begin
+                               // Prism
+
+                                  glBegin(GL_LINE_LOOP);
+                                      glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                      glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                      glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                      glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glEnd;
+
+                            end
+                              else
+                            begin
+
+
+                                glBegin(GL_QUADS);
+
+                                icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i5-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,1.0);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+
+                                  icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i6-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,1.0);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i7-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,1.0);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i8-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,0.0,1.0);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+
+                                glEnd;
+
+                                glColor3f(0.0,0.0,0.0);
+                            end;
+
+                            glLineWidth(4);
+
+                            if (CheckLine(ipa_count[elmpic[j].i5-1],
+                                    ipa_count[elmpic[j].i6-1])) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i6-1],
+                                    ipa_count[elmpic[j].i7-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i7-1],
+                                    ipa_count[elmpic[j].i8-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i8-1],
+                                    ipa_count[elmpic[j].i5-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+                            end;
+
+                            glLineWidth(1);
+
+                  end;
+                  end;
+
+                   if (binvisible_face_detect(0.0,-1.0,0.0)) then
+                            begin
+                  // XZ SSIDE min Y
+                  if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i5-1]<=bVisibleCount)) then
+                  begin
+                     if (icurrentpic=0) then
+                         begin
+                            // Prism
+
+                               glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+
+                         end
+                         else
+                         begin
+                             glBegin(GL_QUADS);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i1-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+
+                                  icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i2-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i6-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i5-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+
+                                glEnd;
+
+                                glColor3f(0.0,0.0,0.0);
+
+                         end;
+
+                         glLineWidth(4);
+
+                          if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                    ipa_count[elmpic[j].i2-1])) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i2-1],
+                                    ipa_count[elmpic[j].i6-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i6-1],
+                                    ipa_count[elmpic[j].i5-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i5-1],
+                                    ipa_count[elmpic[j].i1-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                               glEnd;
+                            end;
+
+                             glLineWidth(1);
+                  end;
+                  end;
+
+                   if (binvisible_face_detect(0.0,1.0,0.0)) then
+                            begin
+                   // XZ SSIDE max Y
+                  if ((ipa_count[elmpic[j].i4-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount)) then
+                  begin
+                     if (icurrentpic=0) then
+                         begin
+                         // Prism
+
+                                glBegin(GL_LINE_LOOP);
+                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                glEnd;
+
+                         end
+                         else
+                         begin
+                             glBegin(GL_QUADS);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i4-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+
+                                  icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i8-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i7-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i3-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(0.0,1.0,0.01);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+
+                                glEnd;
+
+                                glColor3f(0.0,0.0,0.0);
+
+                         end;
+
+                         glLineWidth(4);
+
+                          if (CheckLine(ipa_count[elmpic[j].i4-1],
+                                    ipa_count[elmpic[j].i3-1])) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                    ipa_count[elmpic[j].i7-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i7-1],
+                                    ipa_count[elmpic[j].i8-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i8-1],
+                                    ipa_count[elmpic[j].i4-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                               glEnd;
+                            end;
+
+                           glLineWidth(1);
+                  end;
+                  end;
+
+                   if (binvisible_face_detect(1.0,0.0,0.0)) then
+                            begin
+                   // YZ SSIDE max X
+                  if ((ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount)) then
+                  begin
+                      if (icurrentpic=0) then
+                         begin
+                            // Prism
+
+                               glBegin(GL_LINE_LOOP);
+                                 glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                 glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                 glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                 glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                               glEnd;
+                         end
+                         else
+                         begin
+                            glBegin(GL_QUADS);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i2-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+
+                                  icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i3-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i7-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i6-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+
+                                glEnd;
+
+                                glColor3f(0.0,0.0,0.0);
+                         end;
+
+                         glLineWidth(4);
+
+                          if (CheckLine(ipa_count[elmpic[j].i2-1],
+                                    ipa_count[elmpic[j].i3-1])) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                    ipa_count[elmpic[j].i7-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i7-1],
+                                    ipa_count[elmpic[j].i6-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i6-1],
+                                    ipa_count[elmpic[j].i2-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                               glEnd;
+                            end;
+
+                            glLineWidth(1);
+
+                  end;
+                  end;
+
+                  if (binvisible_face_detect(-1.0,0.0,0.0)) then
+                            begin
+                  // YZ SSIDE min X
+                  if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i4-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i5-1]<=bVisibleCount)) then
+                  begin
+                      if (icurrentpic=0) then
+                         begin
+                            // Prism
+
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                glEnd;
+                         end
+                         else
+                         begin
+                            glBegin(GL_QUADS);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i1-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+
+                                  icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i5-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i8-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+
+
+                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i4-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                if ((0<=icol) and (icol<=255)) then
+                                begin // Синий голубой
+                                   glColor3f(0.0,(icol)/255.0,1.0);
+                                end
+                                else if ((256<=icol) and (icol<=510)) then
+                                begin
+                                   //голубой - зелёный
+                                   glColor3f(0,1.0,(255.0-(icol-255.0))/255.0);
+                                end
+                                else if ((511<=icol) and (icol<=765)) then
+                                begin
+                                   // зелёный - желтый
+                                   glColor3f((icol-510)/255.0,1.0,0.0);
+                                end
+                                else if ((766<= icol) and (icol<=1020)) then
+                                begin
+                                   // Жёлтый - красный
+                                   glColor3f(1.0,(255-(icol-765))/255.0,0.0);
+                                end;
+                                  glNormal3f(1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+
+                                glEnd;
+
+                                glColor3f(0.0,0.0,0.0);
+                         end;
+
+                         glLineWidth(4);
+
+                          if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                    ipa_count[elmpic[j].i4-1])) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i8-1],
+                                    ipa_count[elmpic[j].i4-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i8-1],
+                                    ipa_count[elmpic[j].i5-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                    ipa_count[elmpic[j].i5-1])) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                               glEnd;
+                            end;
+
+                             glLineWidth(1);
+                  end;
+                  end;
+
+                glPopmatrix;
 
              end;
 
@@ -36352,7 +44451,7 @@ begin
 
                                 glBegin(GL_QUADS);
 
-                                   icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i1-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
+                                icol:=round(1020*((temppicpotent[icurrentpic-1][elmpic[j].i1-1]-minimumpic[icurrentpic-1])/(maximumpic[icurrentpic-1]-minimumpic[icurrentpic-1])));
                                 if ((0<=icol) and (icol<=255)) then
                                 begin // Синий голубой
                                    glColor3f(0.0,(icol)/255.0,1.0);
@@ -36743,11 +44842,12 @@ begin
                  end;
             end;
      end;
-  end
+   end
     else
-  begin
+   begin
 
-     // Подсвечивание выделенного в дереве элемента красным цветом.
+     // Подсвечивание выделенного в
+     // дереве элемента красным цветом.
 
      bsel:=false;
      for i:=0 to MainTreeView.Items.Count-1 do
@@ -36758,7 +44858,7 @@ begin
         end;
      end;
 
-     if ( breadfinish and bsel) then
+     if (breadfinish and bsel) then
      begin
         // Мы прорисовываем геометрию в любое время кроме времени
         // в течение которого осуществляется построение модели
@@ -36833,9 +44933,9 @@ begin
            end;
 
 
-      end;
+        end;
 
-   end;
+     end;
 
 
        // прорисовка источников тепла
@@ -37011,48 +45111,65 @@ begin
                 begin
                    // Prism
                    //  GL_LINE_LOOP
+                   if (binvisible_face_detect(0.0,0.0,1.0)) then
+                   begin
                    glBegin(GL_LINE_LOOP);
                       glVertex3f(xE, yE, zE);
                       glVertex3f(xS, yE, zE);
                       glVertex3f(xS, yS, zE);
                       glVertex3f(xE, yS, zE);
                    glEnd;
+                   end;
 
+                   if (binvisible_face_detect(0.0,0.0,-1.0)) then
+                   begin
                    glBegin(GL_LINE_LOOP);
                      glVertex3f(xE, yE, zS);
                      glVertex3f(xE, yS, zS);
                      glVertex3f(xS, yS, zS);
                      glVertex3f(xS, yE, zS);
                    glEnd;
+                   end;
 
+                   if (binvisible_face_detect(-1.0,0.0,0.0)) then
+                   begin
                    glBegin(GL_LINE_LOOP);
                      glVertex3f(xS, yE, zE);
                      glVertex3f(xS, yE, zS);
                      glVertex3f(xS, yS, zS);
                      glVertex3f(xS, yS, zE);
                    glEnd;
+                   end;
 
+                   if (binvisible_face_detect(1.0,0.0,0.0)) then
+                   begin
                    glBegin(GL_LINE_LOOP);
                      glVertex3f(xE, yE, zE);
                      glVertex3f(xE, yS, zE);
                      glVertex3f(xE, yS, zS);
                      glVertex3f(xE, yE, zS);
                    glEnd;
+                   end;
 
+                   if (binvisible_face_detect(0.0,1.0,0.0)) then
+                   begin
                    glBegin(GL_LINE_LOOP);
                      glVertex3f(xS, yE, zS);
                      glVertex3f(xS, yE, zE);
                      glVertex3f(xE, yE, zE);
                      glVertex3f(xE, yE, zS);
                    glEnd;
+                   end;
 
-                   glBegin(GL_LINE_LOOP);
+                   if (binvisible_face_detect(0.0,-1.0,0.0)) then
+                   begin
+                    glBegin(GL_LINE_LOOP);
                      glVertex3f(xS, yS, zS);
                      glVertex3f(xE, yS, zS);
                      glVertex3f(xE, yS, zE);
                      glVertex3f(xS, yS, zE);
                    glEnd;
-
+                   end;
                 end;
 
                  if (igeometry_type=2) then
@@ -38857,16 +46974,32 @@ begin
 
 	   //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-     // 10 марта 2015 предложен более быстрый вариант для рендеринга, который прорисовывает
-     // только одинарные грани без пары, потомучто парные грани (общие для двух блоков невидны).
-      for j:=Length(vg)-1 downto 0 do
-     begin
+     // 10 марта 2015 предложен более быстрый вариант
+     // для рендеринга, который прорисовывает
+     // только одинарные грани без пары, потому что
+     // парные грани (общие для двух блоков невидны).
+     // for j:=Length(vg)-1 downto 0 do
 
-        with (vg[j]) do
+     for j := length(blockgraphics)-1 downto 0 do
+     begin
+        (*
+        MainMemo.Lines.Add(IntToStr(blockgraphics[0].igeometry_type)+' '+
+        IntToStr(blockgraphics[1].igeometry_type)+' '+
+        IntToStr(blockgraphics[2].igeometry_type)+' '+
+        IntToStr(blockgraphics[3].igeometry_type)+' '+
+        IntToStr(blockgraphics[4].igeometry_type)+' '+
+        IntToStr(blockgraphics[5].igeometry_type)+' '+
+        IntToStr(blockgraphics[6].igeometry_type)+' '+
+        IntToStr(blockgraphics[7].igeometry_type)+' '+
+        IntToStr(blockgraphics[8].igeometry_type)+' ');
+        *)
+
+        //with (blockgraphics[j]) do
+        if (blockgraphics[j].igeometry_type<>2) then
         begin
 
            // сначала прорисовываем непрозрачные объекты.
-          // if (transparency>0.95) then
+           // if (transparency>0.95) then
            begin
               glpushMatrix;
 	            //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
@@ -39437,107 +47570,408 @@ begin
 
                // С заливкой
               glColor3f(1,1,1);  // Цвет фона белый.
-              if (start_on) then
+              with (blockgraphics[j]) do
               begin
-                 // xS, yS, zS
-                 case iPlane of
-                  1 : begin
-                         // XY zS
-                         glBegin(GL_QUADS);
-                            //glNormal3f(0.0,0.0,-1.0);
-                            glVertex3f(xE, yE, zS);
-                            //glNormal3f(0.0,0.0,-1.0);
-                            glVertex3f(xE, yS, zS);
-                            //glNormal3f(0.0,0.0,-1.0);
-                            glVertex3f(xS, yS, zS);
-                           // glNormal3f(0.0,0.0,-1.0);
-                            glVertex3f(xS, yE, zS);
-                         glEnd;
-                      end;
-                  2 : begin
-                         // XZ yS
-                          glBegin(GL_QUADS);
-                            //glNormal3f(0.0,-1.0,0.0);
-                            glVertex3f(xS, yS, zS);
-                            //glNormal3f(0.0,-1.0,0.0);
-                            glVertex3f(xE, yS, zS);
-                            //glNormal3f(0.0,-1.0,0.0);
-                            glVertex3f(xE, yS, zE);
-                           // glNormal3f(0.0,-1.0,0.0);
-                            glVertex3f(xS, yS, zE);
-                          glEnd;
-                      end;
-                  3 : begin
-                         // YZ xS
-                         glBegin(GL_QUADS);
-                           //glNormal3f(-1.0,0.0,0.0);
-                           glVertex3f(xS, yE, zE);
-                           //glNormal3f(-1.0,0.0,0.0);
-                           glVertex3f(xS, yE, zS);
-                           //glNormal3f(-1.0,0.0,0.0);
-                           glVertex3f(xS, yS, zS);
-                          // glNormal3f(-1.0,0.0,0.0);
-                           glVertex3f(xS, yS, zE);
-                         glEnd;
-                      end;
-                 end;
-              end
-              else
+              // XY zS
+              if (binvisible_face_detect(0.0,0.0,-1.0)) then
               begin
-                 // xE, yE, zE
-                 case iPlane of
-                  1 : begin
-                         // XY zE
-                         glBegin(GL_QUADS);
-                          // glNormal3f(0.0,0.0,1.0);
-                           glVertex3f(xE, yE, zE);
-                          // glNormal3f(0.0,0.0,1.0);
-                           glVertex3f(xE, yS, zE);
-                           //glNormal3f(0.0,0.0,1.0);
-                           glVertex3f(xS, yS, zE);
-                           //glNormal3f(0.0,0.0,1.0);
-                           glVertex3f(xS, yE, zE);
-                         glEnd;
-                      end;
-                  2 : begin
-                         // XZ yE
-                          glBegin(GL_QUADS);
-                          //glNormal3f(0.0,1.0,0.0);
-                            glVertex3f(xE, yE, zE);
-                            //glNormal3f(0.0,1.0,0.0);
-                            glVertex3f(xE, yE, zS);
-                            //glNormal3f(0.0,1.0,0.0);
-                            glVertex3f(xS, yE, zS);
-                           // glNormal3f(0.0,1.0,0.0);
-                            glVertex3f(xS, yE, zE);
-                          glEnd;
-                      end;
-                  3 : begin
-                         // YZ xE
-                          glBegin(GL_QUADS);
-                            //glNormal3f(1.0,0.0,0.0);
-                            glVertex3f(xE, yE, zE);
-                            //glNormal3f(1.0,0.0,0.0);
-                            glVertex3f(xE, yE, zS);
-                            //glNormal3f(1.0,0.0,0.0);
-                            glVertex3f(xE, yS, zS);
-                           // glNormal3f(1.0,0.0,0.0);
-                            glVertex3f(xE, yS, zE);
-                          glEnd;
-                      end;
-                 end;
+                 glBegin(GL_QUADS);
+                    //glNormal3f(0.0,0.0,-1.0);
+                    glVertex3f(xE, yE, zS);
+                    //glNormal3f(0.0,0.0,-1.0);
+                    glVertex3f(xE, yS, zS);
+                    //glNormal3f(0.0,0.0,-1.0);
+                    glVertex3f(xS, yS, zS);
+                    // glNormal3f(0.0,0.0,-1.0);
+                    glVertex3f(xS, yE, zS);
+                 glEnd;
               end;
+
+              // XZ yS
+              if (binvisible_face_detect(0.0,-1.0,0.0)) then
+              begin
+                 glBegin(GL_QUADS);
+                    //glNormal3f(0.0,-1.0,0.0);
+                    glVertex3f(xS, yS, zS);
+                    //glNormal3f(0.0,-1.0,0.0);
+                    glVertex3f(xE, yS, zS);
+                    //glNormal3f(0.0,-1.0,0.0);
+                    glVertex3f(xE, yS, zE);
+                    // glNormal3f(0.0,-1.0,0.0);
+                    glVertex3f(xS, yS, zE);
+                 glEnd;
+              end;
+
+              // YZ xS
+              if (binvisible_face_detect(-1.0,0.0,0.0)) then
+              begin
+                 glBegin(GL_QUADS);
+                     //glNormal3f(-1.0,0.0,0.0);
+                     glVertex3f(xS, yE, zE);
+                     //glNormal3f(-1.0,0.0,0.0);
+                     glVertex3f(xS, yE, zS);
+                     //glNormal3f(-1.0,0.0,0.0);
+                     glVertex3f(xS, yS, zS);
+                     // glNormal3f(-1.0,0.0,0.0);
+                     glVertex3f(xS, yS, zE);
+                  glEnd;
+               end;
+
+
+               // xE, yE, zE
+
+               // XY zE
+               if (binvisible_face_detect(0.0,0.0,1.0)) then
+               begin
+                  glBegin(GL_QUADS);
+                    // glNormal3f(0.0,0.0,1.0);
+                    glVertex3f(xE, yE, zE);
+                    // glNormal3f(0.0,0.0,1.0);
+                    glVertex3f(xS, yE, zE);
+                    //glNormal3f(0.0,0.0,1.0);
+                    glVertex3f(xS, yS, zE);
+                    //glNormal3f(0.0,0.0,1.0);
+                    glVertex3f(xE, yS, zE);
+                  glEnd;
+               end;
+
+               // XZ yE
+               if (binvisible_face_detect(0.0,1.0,0.0)) then
+               begin
+                  glBegin(GL_QUADS);
+                    //glNormal3f(0.0,1.0,0.0);
+                    glVertex3f(xE, yE, zE);
+                    //glNormal3f(0.0,1.0,0.0);
+                    glVertex3f(xE, yE, zS);
+                    //glNormal3f(0.0,1.0,0.0);
+                    glVertex3f(xS, yE, zS);
+                    // glNormal3f(0.0,1.0,0.0);
+                    glVertex3f(xS, yE, zE);
+                  glEnd;
+               end;
+
+               // YZ xE
+               if (binvisible_face_detect(1.0,0.0,0.0)) then
+               begin
+                  glBegin(GL_QUADS);
+                    //glNormal3f(1.0,0.0,0.0);
+                    glVertex3f(xE, yE, zE);
+                    //glNormal3f(1.0,0.0,0.0);
+                    glVertex3f(xE, yS, zE);
+                    //glNormal3f(1.0,0.0,0.0);
+                    glVertex3f(xE, yS, zS);
+                    // glNormal3f(1.0,0.0,0.0);
+                    glVertex3f(xE, yE, zS);
+                  glEnd;
+               end;
+              end;
+
+              glPopMatrix();
+           end;
+        end;
+     end;
+
+
+
+     for j:=1 to Laplas.lb-1 do
+     begin
+        with (Laplas.body[j]) do
+        begin
+           if (bvisible) then
+           begin
+
+            case cbbview.ItemIndex of
+             0 : // all
+             begin
+                glpushMatrix;
+	              //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
+                glTranslatef(0,0,-Hscale*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
+                glTranslatef(0.5*(Laplas.body[0].xS+Laplas.body[0].xE),0.5*(Laplas.body[0].yS+Laplas.body[0].yE),0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+                //-->glRotatef(180.0*Alf/3.141,0.0,0.0,1.0); // z
+                //glRotatef(180.0*Bet/3.141,1.0,0.0,0.0); // x
+                //---->glRotatef(180.0*Bet/3.141,0.7071,0.7071,0.0); // x && y
+                // Вращательное движение в 3D имеет три степени свободы.
+                glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
+                glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
+                glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
+                glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
+                glTranslatef(-0.5*(Laplas.body[0].xS+Laplas.body[0].xE),-0.5*(Laplas.body[0].yS+Laplas.body[0].yE),-0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+
+                 if (True) then
+                 begin
+                    //glLineWidth(1.0);
+                    glLineWidth(ComboBoxlineWidth.ItemIndex+1.0);
+                    glColor3f(0.0,0.0,0.0);// черный цвет
+                 end
+                  else
+                 begin
+                 //if ((ch='b') and (itekpaint=j)) then
+                 //begin
+                    //glLineWidth(4.0);
+                    //glColor3f(1.0,0.0,0.0);
+                 //end
+                  //else
+                 //begin
+                    //glLineWidth(1.0);
+                    //glLineWidth(body[j].BodyLineWidth);
+                    glLineWidth(3.0);
+                    if (itype=2) then
+                    begin
+                       // HOLLOW
+                       glLineWidth(6.0);
+                    end;
+                    //glColor3f(0.0,0.0,0.0);
+                    glColor3f(body[j].redcolor,body[j].greencolor,body[j].bluecolor);
+
+                 //end;
+                 end;
+
+
+                 xE1:=xE;
+                 xS1:=xS;
+                 yE1:=yE;
+                 yS1:=yS;
+                 zE1:=zE;
+                 zS1:=zS;
+
+                 //if (j=0) then
+                 //begin
+                    // кабинет.
+                   // glColor3f(0.0,0.0,1.0); // синий цвет.
+                 //end;
+
+                if (igeometry_type=0) then //PRISM
+                begin
+                   if (itype<>2) then
+                   begin
+                      // Prism
+                      // SOLID or FLUID
+
+                      // рисуем на dopusk больший объём.
+                      if ((abs(xE-xS)>=abs(yE-yS))and(abs(xE-xS)>=abs(zE-zS))) then
+                      begin
+                         xE1:=xE1+dopusk1*abs(xE-xS);
+                         xS1:=xS1-dopusk1*abs(xE-xS);
+                      end
+                      else
+                      begin
+                         xE1:=xE1+dopusk2*abs(xE-xS);
+                         xS1:=xS1-dopusk2*abs(xE-xS);
+                      end;
+                      if ((abs(yE-yS)>=abs(xE-xS))and(abs(yE-yS)>=abs(zE-zS))) then
+                      begin
+                         yE1:=yE1+dopusk1*abs(yE-yS);
+                         yS1:=yS1-dopusk1*abs(yE-yS);
+                      end
+                      else
+                      begin
+                         yE1:=yE1+dopusk2*abs(yE-yS);
+                         yS1:=yS1-dopusk2*abs(yE-yS);
+                      end;
+                      if ((abs(zE-zS)>=abs(xE-xS))and(abs(zE-zS)>=abs(yE-yS))) then
+                      begin
+                         zE1:=zE1+dopusk1*abs(zE-zS);
+                         zS1:=zS1-dopusk1*abs(zE-zS);
+                      end
+                      else
+                      begin
+                         zE1:=zE1+dopusk2*abs(zE-zS);
+                         zS1:=zS1-dopusk2*abs(zE-zS);
+                      end;
+
+                      //  GL_LINE_LOOP
+                      if (binvisible_face_detect(0.0,0.0,1.0)) then
+                      begin
+                         glBegin(GL_LINE_LOOP);
+                           glVertex3f(xE1, yE1, zE1);
+                           glVertex3f(xS1, yE1, zE1);
+                           glVertex3f(xS1, yS1, zE1);
+                           glVertex3f(xE1, yS1, zE1);
+                         glEnd;
+                      end;
+
+                      if (binvisible_face_detect(0.0,0.0,-1.0)) then
+                      begin
+                         glBegin(GL_LINE_LOOP);
+                           glVertex3f(xE1, yE1, zS1);
+                           glVertex3f(xE1, yS1, zS1);
+                           glVertex3f(xS1, yS1, zS1);
+                           glVertex3f(xS1, yE1, zS1);
+                         glEnd;
+                      end;
+
+                      if (binvisible_face_detect(-1.0,0.0,0.0)) then
+                      begin
+                         glBegin(GL_LINE_LOOP);
+                           glVertex3f(xS1, yE1, zE1);
+                           glVertex3f(xS1, yE1, zS1);
+                           glVertex3f(xS1, yS1, zS1);
+                           glVertex3f(xS1, yS1, zE1);
+                         glEnd;
+                      end;
+
+                      if (binvisible_face_detect(1.0,0.0,0.0)) then
+                      begin
+                         glBegin(GL_LINE_LOOP);
+                           glVertex3f(xE1, yE1, zE1);
+                           glVertex3f(xE1, yS1, zE1);
+                           glVertex3f(xE1, yS1, zS1);
+                           glVertex3f(xE1, yE1, zS1);
+                         glEnd;
+                      end;
+
+                      if (binvisible_face_detect(0.0,1.0,0.0)) then
+                      begin
+                         glBegin(GL_LINE_LOOP);
+                           glVertex3f(xS1, yE1, zS1);
+                           glVertex3f(xS1, yE1, zE1);
+                           glVertex3f(xE1, yE1, zE1);
+                           glVertex3f(xE1, yE1, zS1);
+                         glEnd;
+                      end;
+
+                      if (binvisible_face_detect(0.0,-1.0,0.0)) then
+                      begin
+                         glBegin(GL_LINE_LOOP);
+                           glVertex3f(xS1, yS1, zS1);
+                           glVertex3f(xE1, yS1, zS1);
+                           glVertex3f(xE1, yS1, zE1);
+                           glVertex3f(xS1, yS1, zE1);
+                         glEnd;
+                      end;
+
+
+                         glPopMatrix();
+
+                   end
+                    else
+                   begin
+                      // Prism HOLLOW
+                      //  GL_LINE_LOOP
+
+                      // рисуем на dopusk меньший объём.
+                      if ((abs(xE-xS)>=abs(yE-yS))and(abs(xE-xS)>=abs(zE-zS))) then
+                      begin
+                         xE1:=xE1-dopusk1*abs(xE-xS);
+                         xS1:=xS1+dopusk1*abs(xE-xS);
+                      end
+                      else
+                      begin
+                         xE1:=xE1-dopusk2*abs(xE-xS);
+                         xS1:=xS1+dopusk2*abs(xE-xS);
+                      end;
+                      if ((abs(yE-yS)>=abs(xE-xS))and(abs(yE-yS)>=abs(zE-zS))) then
+                      begin
+                         yE1:=yE1-dopusk1*abs(yE-yS);
+                         yS1:=yS1+dopusk1*abs(yE-yS);
+                      end
+                      else
+                      begin
+                         yE1:=yE1-dopusk2*abs(yE-yS);
+                         yS1:=yS1+dopusk2*abs(yE-yS);
+                      end;
+                      if ((abs(zE-zS)>=abs(xE-xS))and(abs(zE-zS)>=abs(yE-yS))) then
+                      begin
+                         zE1:=zE1-dopusk1*abs(zE-zS);
+                         zS1:=zS1+dopusk1*abs(zE-zS);
+                      end
+                      else
+                      begin
+                         zE1:=zE1-dopusk2*abs(zE-zS);
+                         zS1:=zS1+dopusk2*abs(zE-zS);
+                      end;
+
+
+                      glBegin(GL_LINE_LOOP);
+                        glVertex3f(xE1, yE1, zE1);
+                        glVertex3f(xS1, yE1, zE1);
+                        glVertex3f(xS1, yS1, zE1);
+                        glVertex3f(xE1, yS1, zE1);
+                      glEnd;
+
+                      glBegin(GL_LINE_LOOP);
+                        glVertex3f(xE1, yE1, zS1);
+                        glVertex3f(xE1, yS1, zS1);
+                        glVertex3f(xS1, yS1, zS1);
+                        glVertex3f(xS1, yE1, zS1);
+                      glEnd;
+
+                      glBegin(GL_LINE_LOOP);
+                        glVertex3f(xS1, yE1, zE1);
+                        glVertex3f(xS1, yE1, zS1);
+                        glVertex3f(xS1, yS1, zS1);
+                        glVertex3f(xS1, yS1, zE1);
+                      glEnd;
+
+                      glBegin(GL_LINE_LOOP);
+                        glVertex3f(xE1, yE1, zE1);
+                        glVertex3f(xE1, yS1, zE1);
+                        glVertex3f(xE1, yS1, zS1);
+                        glVertex3f(xE1, yE1, zS1);
+                      glEnd;
+
+                      glBegin(GL_LINE_LOOP);
+                        glVertex3f(xS1, yE1, zS1);
+                        glVertex3f(xS1, yE1, zE1);
+                        glVertex3f(xE1, yE1, zE1);
+                        glVertex3f(xE1, yE1, zS1);
+                      glEnd;
+
+                      glBegin(GL_LINE_LOOP);
+                        glVertex3f(xS1, yS1, zS1);
+                        glVertex3f(xE1, yS1, zS1);
+                        glVertex3f(xE1, yS1, zE1);
+                        glVertex3f(xS1, yS1, zE1);
+                      glEnd;
+
+
+                      glPopMatrix();
+
+                   end;
+                end;
+
+                glLineWidth(body[j].BodyLineWidth);
+             end;
+            end;
+           end;
+        end;
+     end;
+    (*
+       for j:=Length(vg)-1 downto 0 do
+     begin
+
+        with (vg[j]) do
+        begin
+
+           // сначала прорисовываем непрозрачные объекты.
+           // if (transparency>0.95) then
+           begin
+              glpushMatrix;
+	            //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
+              glTranslatef(0,0,-Hscale*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
+              glTranslatef(0.5*(Laplas.body[0].xS+Laplas.body[0].xE),0.5*(Laplas.body[0].yS+Laplas.body[0].yE),0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+              //--->glRotatef(180.0*Alf/3.141,0.0,0.0,1.0); // z
+              //  glRotatef(180.0*Bet/3.141,1.0,0.0,0.0); // x
+              //--->glRotatef(180.0*Bet/3.141,0.7071,0.7071,0.0); // x && y
+              // Вращательное движение в 3D имеет три степени свободы.
+              glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
+              glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
+              glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
+              glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
+              glTranslatef(-0.5*(Laplas.body[0].xS+Laplas.body[0].xE),-0.5*(Laplas.body[0].yS+Laplas.body[0].yE),-0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+
 
               glLineWidth(4.0);
               glColor3f(0,0,0);  // Чёрные линии.
 
-               if (start_on) then
-              begin
+              // if (start_on) then
+              //begin
                  // xS, yS, zS
-                 case iPlane of
-                  1 : begin
+                // case iPlane of
+                 // 1 : begin
+
                          // XY zS
-                          // *** zS ***
+                         // *** zS ***
                          if (zS_yE2yS) then
                          begin
                             glBegin(GL_LINE_LOOP);
@@ -39569,8 +48003,8 @@ begin
                                glVertex3f(xE+dopusk*median_size, yE+dopusk*median_size, zS-dopusk*median_size);
                             glEnd;
                          end;
-                      end;
-                  2 : begin
+                    //  end;
+                 // 2 : begin
                          // XZ yS
 
                           // *** yS ***
@@ -39607,8 +48041,8 @@ begin
                              glEnd;
                           end;
 
-                      end;
-                  3 : begin
+                     // end;
+                 // 3 : begin
                          // YZ xS
 
                           // *** xS ***
@@ -39648,14 +48082,14 @@ begin
                           end;
 
 
-                      end;
-                 end;
-              end
-              else
-              begin
+                     // end;
+                 //end;
+             // end
+             // else
+             // begin
                  // xE, yE, zE
-                 case iPlane of
-                  1 : begin
+                // case iPlane of
+                //  1 : begin
                          // XY zE
 
                          // *** zE ***
@@ -39691,8 +48125,8 @@ begin
                             glEnd;
                          end;
 
-                      end;
-                  2 : begin
+                    //  end;
+                  //2 : begin
                          // XZ yE
 
                          // *** yE ***
@@ -39728,8 +48162,8 @@ begin
                                glVertex3f(xS-dopusk*median_size, yE+dopusk*median_size, zS-dopusk*median_size);
                             glEnd;
                          end;
-                      end;
-                  3 : begin
+                     // end;
+                 // 3 : begin
                          // YZ xE
 
                          // *** xE ***
@@ -39766,16 +48200,16 @@ begin
                             glEnd;
                          end;
 
-                      end;
-                 end;
-              end;
+                     // end;
+                // end;
+              //end;
 
               // Для прорисовки контуров отверстий.
-              if (start_on) then
-              begin
+             // if (start_on) then
+             // begin
                  // xS, yS, zS
-                 case iPlane of
-                  1 : begin
+               //  case iPlane of
+                 // 1 : begin
                          // XY zS
                           // *** zS ***
                          if (zS_yE2yS) then
@@ -39809,8 +48243,8 @@ begin
                                glVertex3f(xE-dopusk*median_size, yE-dopusk*median_size, zS-dopusk*median_size);
                             glEnd;
                          end;
-                      end;
-                  2 : begin
+                     // end;
+                  //2 : begin
                          // XZ yS
 
                           // *** yS ***
@@ -39847,8 +48281,8 @@ begin
                              glEnd;
                           end;
 
-                      end;
-                  3 : begin
+                    //  end;
+                 // 3 : begin
                          // YZ xS
 
                           // *** xS ***
@@ -39888,14 +48322,14 @@ begin
                           end;
 
 
-                      end;
-                 end;
-              end
-              else
-              begin
+                   //   end;
+                // end;
+             // end
+             // else
+            //  begin
                  // xE, yE, zE
-                 case iPlane of
-                  1 : begin
+               //  case iPlane of
+               //   1 : begin
                          // XY zE
 
                          // *** zE ***
@@ -39931,8 +48365,8 @@ begin
                             glEnd;
                          end;
 
-                      end;
-                  2 : begin
+                  //    end;
+                 // 2 : begin
                          // XZ yE
 
                          // *** yE ***
@@ -39968,8 +48402,8 @@ begin
                                glVertex3f(xS+dopusk*median_size, yE+dopusk*median_size, zS+dopusk*median_size);
                             glEnd;
                          end;
-                      end;
-                  3 : begin
+                   //   end;
+                 // 3 : begin
                          // YZ xE
 
                          // *** xE ***
@@ -40006,9 +48440,9 @@ begin
                             glEnd;
                          end;
 
-                      end;
-                 end;
-              end;
+                    //  end;
+                // end;
+             // end;
 
               glLineWidth(1.0);
               //glDisable(GL_CULL_FACE);
@@ -40018,10 +48452,11 @@ begin
 
         end;
      end;
+     *)
 
   end;
   2 : // Режим заливки с освещением и с прозрачностью.
-  begin
+   begin
 
 
      // также должен работать режим прозрачности при его активации.
@@ -40071,6 +48506,7 @@ begin
       // сортировку делать нельзя т.к. с ней время рендеринга возрастает недопустимо.
      //QuickSort2(0,Length(blockgraphics)-1); // быстрая сортировка.
 
+     (*// закоментировано 23,05,2020
      rdivision:=3.0;//20.0;
      idivision:=round(rdivision);
 
@@ -40203,8 +48639,9 @@ begin
         end;
      end;
 
+     *)
      // теперь рисуем только прозрачные объекты отсортированные по глубине.
-
+     (*  // закоментировано 23,05,2020
      // включаем смешивание.
      glEnable(GL_BLEND);
      glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -40343,8 +48780,523 @@ begin
      glDepthMask(true);
      // выключаем смешивание :
      glDisable(GL_BLEND);
+     *)
 
-  end;
+      for j:=0 to epic-1 do
+      begin
+              //todo***
+
+            case cbbview.ItemIndex of
+             0 : // all
+             begin
+                // 23.05.2020  только внешние грани!!!
+
+                // Нельзя рисовать все грани подряд. Это чрезмерная
+                // нагрузка на движок OpenGL.
+                // Надо Отобрать только внешние грани составляющие
+                // модель и рисовать только их.
+                // TODO код изъят 06.09.2019.
+
+
+                glpushMatrix;
+                //glTranslatef(0,0,-Hscale*(Laplas.body[0].zE-Laplas.body[0].zS));
+                //glTranslatef(0,0,-Hscale*sqrt(sqr(Laplas.body[0].zE-Laplas.body[0].zS)+sqr(Laplas.body[0].yE-Laplas.body[0].yS)+sqr(Laplas.body[0].xE-Laplas.body[0].xS)));
+                //glTranslatef(0.5*(Laplas.body[0].xS+Laplas.body[0].xE),0.5*(Laplas.body[0].yS+Laplas.body[0].yE),0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+                glTranslatef(0,0,-Hscale*sqrt(sqr(zmaxpic-zminpic)+sqr(ymaxpic-yminpic)+sqr(xmaxpic-xminpic)));
+                glTranslatef(0.5*(xminpic+xmaxpic),0.5*(yminpic+ymaxpic),0.5*(zminpic+zmaxpic));
+
+                //-->glRotatef(180.0*Alf/3.141,0.0,0.0,1.0); // z
+                //glRotatef(180.0*Bet/3.141,1.0,0.0,0.0); // x
+                //--->glRotatef(180.0*Bet/3.141,0.7071,0.7071,0.0); // x && y
+                // Вращательное движение в 3D имеет три степени свободы.
+                glRotatef(180.0*Gam0/3.141,0.0,0.0,1.0); // z apriory
+                glRotatef(180.0*Alf/3.141,1.0,0.0,0.0); // x
+                glRotatef(180.0*Bet/3.141,0.0,1.0,0.0); // y
+                glRotatef(180.0*Gam/3.141,0.0,0.0,1.0); // z
+                //glTranslatef(-0.5*(Laplas.body[0].xS+Laplas.body[0].xE),-0.5*(Laplas.body[0].yS+Laplas.body[0].yE),-0.5*(Laplas.body[0].zS+Laplas.body[0].zE));
+                glTranslatef(-0.5*(xminpic+xmaxpic),-0.5*(yminpic+ymaxpic),-0.5*(zminpic+zmaxpic));
+
+
+                //glColor3f(0.0,0.0,0.0);
+
+                if (binvisible_face_detect(0.0,0.0,-1.0)) then
+                               begin
+
+                // XY bottom
+                 if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i4-1]<=bVisibleCount)) then
+                    begin
+
+                    //glColor3f(0.84,0.84,0.84);
+
+
+
+                    glBegin(GL_QUADS);
+                    glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,0.0,-1.0);
+                                    glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                    glColor3f(1.0,1.0,1.0);
+                                    glNormal3f(0.0,0.0,-1.0);
+                                    glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                    glColor3f(1.0,1.0,1.0);
+                                     glNormal3f(0.0,0.0,-1.0);
+                                    glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                    glColor3f(1.0,1.0,1.0);
+                                    glNormal3f(0.0,0.0,-1.0);
+                                    glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glColor3f(0.0,0.0,0.0);
+                                  glEnd;
+
+
+                       glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                ipa_count[elmpic[j].i2-1])
+                                ) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                ipa_count[elmpic[j].i2-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                ipa_count[elmpic[j].i4-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                ipa_count[elmpic[j].i4-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                               glEnd;
+                            end;
+
+                            //glLineWidth(1);
+                            glColor3f(1.0,1.0,1.0);
+                            glLineWidth(1);
+
+                    end;
+                  end;
+
+                  if (binvisible_face_detect(0.0,0.0,1.0)) then
+                               begin
+                     // XY Top
+                  if ((ipa_count[elmpic[j].i5-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount)) then
+                    begin
+
+                    //glColor3f(0.84,0.84,0.84);
+
+
+                    glBegin(GL_QUADS);
+                    glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,0.0,1.0);
+                                      glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                      glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,0.0,1.0);
+                                      glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                     glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,0.0,1.0);
+                                      glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                      glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,0.0,1.0);
+                                      glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                      glColor3f(0.0,0.0,0.0);
+                                  glEnd;
+
+
+                      glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+
+                            if (CheckLine(ipa_count[elmpic[j].i5-1],
+                                ipa_count[elmpic[j].i6-1])
+                                ) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i6-1],
+                                ipa_count[elmpic[j].i7-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i7-1],
+                                ipa_count[elmpic[j].i8-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i5-1],
+                                ipa_count[elmpic[j].i8-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+                            end;
+
+                           // glLineWidth(1);
+                           glColor3f(1.0,1.0,1.0);
+                           glLineWidth(1);
+
+                    end;
+                  end;
+
+                   if (binvisible_face_detect(0.0,-1.0,0.0)) then
+                            begin
+                  // XZ SSIDE min Y
+                  if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i5-1]<=bVisibleCount)) then
+                    begin
+
+                    //glColor3f(0.84,0.84,0.84);
+
+                    glBegin(GL_QUADS);
+                    glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,-1.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,-1.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,-1.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                    glNormal3f(0.0,-1.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glColor3f(0.0,0.0,0.0);
+                               glEnd;
+
+
+                       glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+
+                          if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                ipa_count[elmpic[j].i2-1])
+                                ) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i2-1],
+                                ipa_count[elmpic[j].i6-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i6-1],
+                                ipa_count[elmpic[j].i5-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                ipa_count[elmpic[j].i5-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                               glEnd;
+                            end;
+
+                             //glLineWidth(1);
+                             glColor3f(1.0,1.0,1.0);
+                             glLineWidth(1);
+                    end;
+                  end;
+
+                   if (binvisible_face_detect(0.0,1.0,0.0)) then
+                            begin
+                   // XZ SSIDE max Y
+                  if ((ipa_count[elmpic[j].i4-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount)) then
+                    begin
+
+                    //glColor3f(0.84,0.84,0.84);
+
+                    glBegin(GL_QUADS);
+                    glColor3f(1.0,1.0,1.0);
+                   glNormal3f(0.0,1.0,0.0);
+                                   glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                   glNormal3f(0.0,1.0,0.0);
+                                   glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                   glNormal3f(0.0,1.0,0.0);
+                                   glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                   glNormal3f(0.0,1.0,0.0);
+                                   glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                    glColor3f(0.0,0.0,0.0);
+                                glEnd;
+
+
+                           glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+
+                          if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                ipa_count[elmpic[j].i4-1])
+                                ) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                ipa_count[elmpic[j].i7-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i7-1],
+                                ipa_count[elmpic[j].i8-1])
+                                )then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i8-1],
+                                ipa_count[elmpic[j].i4-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                               glEnd;
+                            end;
+
+                          // glLineWidth(1);
+                          glColor3f(1.0,1.0,1.0);
+                          glLineWidth(1);
+                    end;
+                  end;
+
+                   if (binvisible_face_detect(1.0,0.0,0.0)) then
+                            begin
+                   // YZ SSIDE max X
+                  if ((ipa_count[elmpic[j].i2-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i3-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i7-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i6-1]<=bVisibleCount)) then
+                    begin
+
+                    //glColor3f(0.84,0.84,0.84);
+
+
+                    glBegin(GL_QUADS);
+                                 glColor3f(1.0,1.0,1.0);
+                    glNormal3f(1.0,0.0,0.0);
+                                 glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                glColor3f(1.0,1.0,1.0);
+                    glNormal3f(1.0,0.0,0.0);
+                                 glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                 glColor3f(1.0,1.0,1.0);
+                    glNormal3f(1.0,0.0,0.0);
+                                 glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                 glColor3f(1.0,1.0,1.0);
+                    glNormal3f(1.0,0.0,0.0);
+                                 glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                              glColor3f(0.0,0.0,0.0);
+                               glEnd;
+
+
+                          glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+
+                          if (CheckLine(ipa_count[elmpic[j].i3-1],
+                                ipa_count[elmpic[j].i2-1])
+                                ) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                              glEnd;
+                            end;
+
+                            if(CheckLine(ipa_count[elmpic[j].i3-1],
+                                ipa_count[elmpic[j].i7-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i3-1], ypic[elmpic[j].i3-1], zpic[elmpic[j].i3-1]);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i7-1],
+                                ipa_count[elmpic[j].i6-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i7-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i6-1],
+                                ipa_count[elmpic[j].i2-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i6-1], ypic[elmpic[j].i6-1], zpic[elmpic[j].i6-1]);
+                                  glVertex3f(xpic[elmpic[j].i2-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                               glEnd;
+                            end;
+
+                            //glLineWidth(1);
+                            glColor3f(1.0,1.0,1.0);
+                            glLineWidth(1);
+
+                    end;
+                  end;
+
+                  if (binvisible_face_detect(-1.0,0.0,0.0)) then
+                            begin
+                  // YZ SSIDE min X
+                  if ((ipa_count[elmpic[j].i1-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i5-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i8-1]<=bVisibleCount) and
+                 (ipa_count[elmpic[j].i4-1]<=bVisibleCount)) then
+                    begin
+
+                    //glColor3f(0.84,0.84,0.84);
+
+
+                    glBegin(GL_QUADS);
+                                  glColor3f(1.0,1.0,1.0);
+                    glNormal3f(-1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i2-1], zpic[elmpic[j].i2-1]);
+                                   glColor3f(1.0,1.0,1.0);
+                    glNormal3f(-1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                    glNormal3f(-1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i7-1], zpic[elmpic[j].i7-1]);
+                                  glColor3f(1.0,1.0,1.0);
+                    glNormal3f(-1.0,0.0,0.0);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                glColor3f(0.0,0.0,0.0);
+                                glEnd;
+
+
+
+                          glLineWidth(ComboBoxlineWidth.ItemIndex+1);
+
+                          if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                ipa_count[elmpic[j].i4-1])
+                                ) then
+                            begin
+                              glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                              glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i4-1],
+                                ipa_count[elmpic[j].i8-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i4-1], ypic[elmpic[j].i4-1], zpic[elmpic[j].i4-1]);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i5-1],
+                                ipa_count[elmpic[j].i8-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i8-1], ypic[elmpic[j].i8-1], zpic[elmpic[j].i8-1]);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                               glEnd;
+                            end;
+
+                            if (CheckLine(ipa_count[elmpic[j].i1-1],
+                                ipa_count[elmpic[j].i5-1])
+                                ) then
+                            begin
+                                glBegin(GL_LINE_LOOP);
+                                  glVertex3f(xpic[elmpic[j].i5-1], ypic[elmpic[j].i5-1], zpic[elmpic[j].i5-1]);
+                                  glVertex3f(xpic[elmpic[j].i1-1], ypic[elmpic[j].i1-1], zpic[elmpic[j].i1-1]);
+                               glEnd;
+                            end;
+
+                             //glLineWidth(1);
+                             glColor3f(1.0,1.0,1.0);
+                             glLineWidth(1);
+                    end;
+                  end;
+
+                glPopmatrix;
+
+             end;
+          end;
+      end;
+
+    end;
   end;
 
   (*
@@ -40589,7 +49541,14 @@ begin
     end;
   end;
 
-
+  if (rgview.ItemIndex=2) then
+  begin
+    on_visible_karkas();
+  end
+  else
+  begin
+     off_visible_karkas();
+  end;
 
  // Application.OnIdle:=IdleHandler;
   
@@ -40618,6 +49577,9 @@ begin
          end;
      2 : begin // Метод крнечных элементов.
             EGDForm.ComboBoxTemperature.ItemIndex:=2;
+         end;
+     3 : begin // Метод крнечных элементов.
+            EGDForm.ComboBoxTemperature.ItemIndex:=3;// network_T
          end;
    end;
    case egddata.iStaticStructural of
@@ -40689,11 +49651,15 @@ begin
                     EGDForm.BEditTurb.Visible:=false;
                  end;
              3 : begin
-                    // Spalart - Allmares
+                    // Spalart - Allmares (RANS)
                     EGDForm.BEditTurb.Visible:=false;
                  end;
              4 : begin
-                    // K - Omega SST
+                    // K - Omega SST (RANS)
+                    EGDForm.BEditTurb.Visible:=false;
+                 end;
+             5 : begin
+                    // Standart K-Epsilon (RANS)
                     EGDForm.BEditTurb.Visible:=false;
                  end;
             end;
@@ -40748,16 +49714,20 @@ begin
    // для температуры МКО и для гидродинамики.
    FormSetting.ComboBoxSolverSetting.Visible:=true;
 
-   if (EGDForm.ComboBoxTemperature.ItemIndex<>2) then
+   if (egddata.itemper<>2) then
    begin
+      // none, МКО или графовый метод.
       FormSetting.GroupBox2.Visible:=false;
    end
    else
    begin
+      // Метод Конечных Элементов (МКЭ).
       FormSetting.GroupBox2.Visible:=true;
    end;
-   if (EGDForm.CBFlow.Checked) then
+   if (egddata.myflmod[0].iflow=1) then
    begin
+      // Гидродинамический расчёт.
+
       FormSetting.Height:=566;
       FormSetting.PanelSolverSetting.Visible:=true;
 
@@ -40783,15 +49753,16 @@ begin
    else
    begin
       FormSetting.PanelSolverSetting.Visible:=true;
-      if (EGDForm.ComboBoxTemperature.ItemIndex<>2) then
+      if (egddata.itemper<>2) then
       begin
          // MKO Temperature solver or none solution Temperature
+         // or NetWork T Solver.
          FormSetting.Height:=566;
       end
       else
       begin
          // Finite Element Temperature Solver is active
-         if (EGDForm.CBFlow.Checked=false) then
+         if (egddata.myflmod[0].iflow=0) then
          begin
             // Мы решаем температуру вторым температурным солвером
             // На основе метода конечных элементов и мы скрыли
@@ -41433,6 +50404,519 @@ begin
     end;
 end;
 
+
+// Каркасная модель рисуется.
+procedure TLaplas.on_visible_karkas();
+var
+   f : TStringList; // переменная типа объект TStringList
+   s, sub : string;
+   i, istr, ielm, j, istrnow : Integer;
+   xa, xb, xc : Real;
+begin
+   //npic, epic : Integer;
+    //xpic, ypic, zpic : array of Real;
+    //temppic,lampic,hxpic, hypic, hzpic, hmagpic : array of Real;
+    f:=TStringList.Create();
+    // читает файл с геометрией и тепловыми полями и сохраняет эту
+    // информацию в теле компьютерной программы-визуализатора.
+    OpenDialog1.Filter:='Текстовые файлы|*.PLT';
+    if (OpenDialog1.Execute and FileExists(OpenDialog1.FileName)) then
+    begin
+      // Результат успешный - пользователь выбрал файл.
+      // Загружаем файл.
+      istrnow:=0;
+      f.LoadFromFile(OpenDialog1.FileName);
+
+      if (FormatSettings.DecimalSeparator=',') then
+      begin
+         // заменить все точки в файле на запятые.
+         for i:=0 to f.Count-1 do
+         begin
+            s:=f.Strings[i];
+            f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
+         end;
+      end;
+
+
+      s:=f.Strings[istrnow];
+      inc(istrnow);
+       while ((length(s)=0)) do
+      begin
+         s:=Trim(f.Strings[istrnow]);
+         inc(istrnow);
+      end;
+      sub:=Copy(Trim(s),Pos('"',s)+1,Length(s)-1-Pos('"',s));
+      Caption:=sub;
+
+      s:=Trim(f.Strings[istrnow]);
+      inc(istrnow);
+      while ((length(s)=0)) do
+      begin
+         s:=Trim(f.Strings[istrnow]);
+         inc(istrnow);
+      end;
+
+      //ShowMessage(s);
+      nvalpic:=0;
+      for i := 1 to length(s) do
+      begin
+          if (s[i]=',') then
+          begin
+             inc(nvalpic);
+          end;
+      end;
+      // ShowMessage('ok');
+      nvalpic:=nvalpic-2;
+      icurrentpic:=0; // Mesh
+      //ShowMessage(IntToStr(nvalpic));
+      SetLength(temppicname,nvalpic+1);
+      temppicname[0]:='Mesh';
+      SetLength(temppicpotent,nvalpic);
+      SetLength(minimumpic,nvalpic);
+      SetLength(maximumpic,nvalpic);
+
+
+      sub:=Copy(Trim(s),Pos('=',s)+1,Length(s)-Pos('=',s));
+      s:=Trim(sub);
+      sub:=Copy(s,1,Pos(',',s)-1);
+
+      sub:=Copy(Trim(s),Pos(',',s)+1,Length(s));
+      s:=Trim(sub);
+      sub:=Copy(Trim(s),Pos(',',s)+1,Length(s));
+      s:=Trim(sub);
+      for j := 1 to nvalpic do
+      begin
+         sub:=Copy(Trim(s),Pos(',',s)+1,Length(s));
+         s:=Trim(sub);
+         if (Pos(',',s)<>0) then
+         begin
+             temppicname[j]:=Trim(Copy(s,1,Pos(',',s)-1));
+         end
+         else
+         begin
+            temppicname[j]:=Trim(s);
+         end;
+        // ShowMessage(temppicname[j]);
+      end;
+
+     // ComboBoxVisibleVariable.Items.Clear;
+      MainMemo.Lines.Add('Load geometry:');
+      //for j := 0 to nvalpic do
+      //begin
+        // MainMemo.Lines.Add(temppicname[j]);
+         //ComboBoxVisibleVariable.Items.Add(temppicname[j]);
+      //end;
+      //ComboBoxVisibleVariable.Items.Add('Geom');
+      //ComboBoxVisibleVariable.ItemIndex:=0;
+
+
+      s:=Trim(f.Strings[istrnow]);
+      inc(istrnow);
+       while ((length(s)=0)) do
+      begin
+         s:=Trim(f.Strings[istrnow]);
+         inc(istrnow);
+      end;
+
+      sub:=Copy(Trim(s),Pos('N=',s)+2,Length(s)-1-Pos('N=',s));
+      s:=Trim(sub);
+      sub:=Copy(s,1,Pos(',',s)-1);
+      npic:=StrToInt(sub);
+
+      for j := 0 to nvalpic-1 do
+        begin
+           SetLength(temppicpotent[j],npic);
+        end;
+
+      sub:=Copy(Trim(s),Pos('E=',s)+2,Length(s)-1-Pos('E=',s));
+      s:=Trim(sub);
+      sub:=Copy(s,1,Pos(',',s)-1);
+      epic:=StrToInt(sub);
+
+      SetLength(xpic,npic);
+      SetLength(ypic,npic);
+      SetLength(zpic,npic);
+      SetLength(ipa_count,npic);
+      for j := 0 to npic-1 do
+      begin
+         ipa_count[j]:=0; // инициализация
+      end;
+
+      // Мы ориентированы на файл с АЛИС сеткой.
+
+     // ShowMessage('ok');
+      SetLength(elmpic,epic);
+
+      istr:=istrnow;
+      // Считывание x.
+      s:=Trim(f.Strings[istr]);
+
+      for i:=1 to npic do
+      begin
+            while (Length(Trim(s))=0) do
+             begin
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+             end;
+
+          if (Pos(' ',s)=0) then
+          begin
+              xpic[i-1]:=StrToFloat(s);
+              inc(istr);
+              s:=Trim(f.Strings[istr]);
+              while (Length(Trim(s))=0) do
+              begin
+                 inc(istr);
+                 s:=Trim(f.Strings[istr]);
+              end;
+          end
+          else
+          begin
+             sub:=Trim(Copy(s,1,Pos(' ',s)-1));
+             xpic[i-1]:=StrToFloat(sub);
+             s:=Trim(Copy(s,Pos(' ',s)+1,Length(s)));
+             while (Length(Trim(s))=0) do
+             begin
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+             end;
+          end;
+      end;
+     // ShowMessage('ok');
+      // Считывание y.
+      for i:=1 to npic do
+      begin
+             while (Length(Trim(s))=0) do
+             begin
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+             end;
+
+          if (Pos(' ',s)=0) then
+          begin
+              ypic[i-1]:=StrToFloat(s);
+              inc(istr);
+              s:=Trim(f.Strings[istr]);
+              while (Length(Trim(s))=0) do
+              begin
+                 inc(istr);
+                 s:=Trim(f.Strings[istr]);
+              end;
+          end
+          else
+          begin
+             sub:=Trim(Copy(s,1,Pos(' ',s)-1));
+             ypic[i-1]:=StrToFloat(sub);
+             s:=Trim(Copy(s,Pos(' ',s)+1,Length(s)));
+             while (Length(Trim(s))=0) do
+             begin
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+             end;
+          end;
+      end;
+     // ShowMessage('ok');
+      // Считывание z.
+      for i:=1 to npic do
+      begin
+          while (Length(Trim(s))=0) do
+          begin
+             inc(istr);
+             s:=Trim(f.Strings[istr]);
+          end;
+
+          if (Pos(' ',s)=0) then
+          begin
+              zpic[i-1]:=StrToFloat(s);
+              inc(istr);
+              s:=Trim(f.Strings[istr]);
+              while (Length(Trim(s))=0) do
+              begin
+                 inc(istr);
+                 s:=Trim(f.Strings[istr]);
+              end;
+          end
+          else
+          begin
+             sub:=Trim(Copy(s,1,Pos(' ',s)-1));
+             zpic[i-1]:=StrToFloat(sub);
+             s:=Trim(Copy(s,Pos(' ',s)+1,Length(s)));
+             while (Length(Trim(s))=0) do
+             begin
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+             end;
+          end;
+      end;
+     // ShowMessage('ok');
+
+      if (ComboBoxlength.ItemIndex=1) then
+      begin
+         // mm
+         for i:=1 to npic do
+         begin
+            xpic[i-1]:=1000.0*xpic[i-1];
+            ypic[i-1]:=1000.0*ypic[i-1];
+            zpic[i-1]:=1000.0*zpic[i-1];
+         end;
+      end;
+       if (ComboBoxlength.ItemIndex=2) then
+      begin
+         // micron
+         for i:=1 to npic do
+         begin
+            xpic[i-1]:=1000000.0*xpic[i-1];
+            ypic[i-1]:=1000000.0*ypic[i-1];
+            zpic[i-1]:=1000000.0*zpic[i-1];
+         end;
+      end;
+
+
+      // Считывание temperature.
+      // При геометрическом считывании это неактивно.
+      for j := 0 to nvalpic-1 do
+      begin
+
+         for i:=1 to npic do
+         begin
+            while (Length(Trim(s))=0) do
+            begin
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+            end;
+
+            if (Pos(' ',s)=0) then
+            begin
+               temppicpotent[j][i-1]:=StrToFloat(s);
+               inc(istr);
+               s:=Trim(f.Strings[istr]);
+               while (Length(Trim(s))=0) do
+               begin
+                  inc(istr);
+                  s:=Trim(f.Strings[istr]);
+               end;
+            end
+             else
+            begin
+               sub:=Trim(Copy(s,1,Pos(' ',s)-1));
+               temppicpotent[j][i-1]:=StrToFloat(sub);
+               s:=Trim(Copy(s,Pos(' ',s)+1,Length(s)));
+               while (Length(Trim(s))=0) do
+               begin
+                  inc(istr);
+                  s:=Trim(f.Strings[istr]);
+               end;
+            end;
+         end;
+
+         // Определение максимального и минимального значения.
+         minimumpic[j]:=1.0e30;
+         maximumpic[j]:=-1.0e30;
+         for i:=1 to npic do
+         begin
+           if (temppicpotent[j][i-1]<minimumpic[j]) then
+           begin
+              minimumpic[j]:=temppicpotent[j][i-1];
+           end;
+           if (temppicpotent[j][i-1]>maximumpic[j]) then
+           begin
+              maximumpic[j]:=temppicpotent[j][i-1];
+           end;
+
+         end;
+      end;
+
+
+
+      // Считывание конечных элементов.
+       ielm:=0;
+       for i := 1 to 8*epic do
+       begin
+          s:=Trim(s);
+          if ((Pos(' ',s)=0)and(length(s)>0)) then
+          begin
+             elmpic[ielm].i8:=StrToInt(Trim(s));
+             inc(istr);
+             if (istr<f.Count) then
+             begin
+                s:=Trim(f.Strings[istr]);
+             end;
+             inc(ielm);
+          end
+          else
+          begin
+              if (length(s)>0) then
+              begin
+              sub:=Trim(Copy(s,1,Pos(' ',s)-1));
+              if ((i-1) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i1:=StrToInt(sub);
+              end;
+              if ((i-2) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i2:=StrToInt(sub);
+              end;
+              if ((i-3) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i3:=StrToInt(sub);
+              end;
+              if ((i-4) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i4:=StrToInt(sub);
+              end;
+               if ((i-5) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i5:=StrToInt(sub);
+              end;
+              if ((i-6) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i6:=StrToInt(sub);
+              end;
+              if ((i-7) mod 8 = 0) then
+              begin
+                 elmpic[ielm].i7:=StrToInt(sub);
+              end;
+              if ((i-8) mod 8 =0) then
+              begin
+                 elmpic[ielm].i8:=StrToInt(sub);
+                 inc(ielm);
+              end;
+
+              s:=Trim(Copy(s,Pos(' ',s)+1,Length(s)));
+
+              if (Length(Trim(s))=0) then
+              begin
+                inc(istr);
+                if (istr<f.Count) then
+                begin
+                    s:=Trim(f.Strings[istr]);
+                    while (length(s)=0) do
+                    begin
+                       inc(istr);
+                       if (istr<f.Count) then
+                       begin
+                          s:=Trim(f.Strings[istr]);
+                       end;
+                    end;
+                end;
+              end;
+              end
+              else
+              begin
+              epic:=ielm;
+                  break;
+              end;
+          end;
+       end;
+
+       for ielm:=0 to epic-1 do
+         begin
+           inc(ipa_count[elmpic[ielm].i1-1]);
+           inc(ipa_count[elmpic[ielm].i2-1]);
+           inc(ipa_count[elmpic[ielm].i3-1]);
+           inc(ipa_count[elmpic[ielm].i4-1]);
+           inc(ipa_count[elmpic[ielm].i5-1]);
+           inc(ipa_count[elmpic[ielm].i6-1]);
+           inc(ipa_count[elmpic[ielm].i7-1]);
+           inc(ipa_count[elmpic[ielm].i8-1]);
+         end;
+
+
+       // Определение максимума и минимума за одно линейное сканирование.
+       xminpic:=1.0e30;
+       yminpic:=1.0e30;
+       zminpic:=1.0e30;
+       xmaxpic:=-1.0e30;
+       ymaxpic:=-1.0e30;
+       zmaxpic:=-1.0e30;
+
+       for i := 1 to npic do
+         begin
+           if (xpic[i-1]<xminpic) then
+           begin
+             xminpic:=xpic[i-1];
+           end;
+           if (ypic[i-1]<yminpic) then
+           begin
+             yminpic:=ypic[i-1];
+           end;
+           if (zpic[i-1]<zminpic) then
+           begin
+             zminpic:=zpic[i-1];
+           end;
+            if (xpic[i-1]>xmaxpic) then
+           begin
+             xmaxpic:=xpic[i-1];
+           end;
+           if (ypic[i-1]>ymaxpic) then
+           begin
+             ymaxpic:=ypic[i-1];
+           end;
+           if (zpic[i-1]>zmaxpic) then
+           begin
+             zmaxpic:=zpic[i-1];
+           end;
+         end;
+
+          perspectiveangle:=2.0*180.0*(arctan((0.25)/(Hscale)))/1.57079632679;
+   xa:=-7990;
+   xb:=7990;
+   xc:=0;
+   while (abs(perspectiveangle-return_Perspective_angle(xc))>0.01) do
+   begin
+     if ((perspectiveangle-return_Perspective_angle(xa))*(perspectiveangle-return_Perspective_angle(xc))<0) then
+     begin
+       xb:=xc;
+       xc:=0.5*(xa+xb);
+     end
+     else
+     begin
+         xa:=xc;
+         xc:=0.5*(xa+xb);
+     end;
+   end;
+    perspectiveangle_counter:=xc;
+
+
+
+       // центры двух систем координат совпадают
+       //Oxc:=0.0;
+       //Oyc:=0.0;
+       //Ozc:=0.0;
+       Oxc:=0.5*(xminpic+xmaxpic);
+       Oyc:=0.5*(yminpic+ymaxpic);
+       Ozc:=0.5*(zminpic+zmaxpic);
+
+       f.Free;
+       MainMemo.Lines.Add('Load geometry is Done.');
+
+
+
+
+
+  end;
+end;
+
+// Каркасная модель не рисуется.
+procedure TLaplas.off_visible_karkas();
+begin
+   // Освобождаем оперативную память.
+   npic:=0;
+   epic:=0;
+   SetLength(xpic,npic);
+   SetLength(ypic,npic);
+   SetLength(zpic,npic);
+   SetLength(ipa_count,npic);
+
+
+
+   // Мы ориентированы на файл с АЛИС сеткой.
+
+
+   SetLength(elmpic,epic);
+
+end;
+
 // простейшая статистика о расчётной модели.
 procedure TLaplas.Check1Click(Sender: TObject);
 var
@@ -41440,6 +50924,19 @@ var
   total_power, total_power_s : Real;
 
 begin
+   MainMemo.Lines.Add('Already loaded material library: ');
+   MainMemo.Lines.Add('SOLID : Al-Duralumin, GaN, SiC4H, Au80Sn20, Cu, MD40, GaAs, Au');
+   MainMemo.Lines.Add('SiO2, Si, kovar (Co 17% Ni 29% Fe), Alumina (Polycor) ');
+   MainMemo.Lines.Add('Brass (59-1-L), Polyimide (PI), Sapphire (Al2O3), Glue ECHES');
+   MainMemo.Lines.Add('BeO, Ag, Diamond, Si3N4, KPT8, Polyurethane_foam');
+   MainMemo.Lines.Add('SOLDER_PbSn2Ag2.5, SOLDER_SnAg25Sb10, SOLDER_SnPb36Ag2, GLUE_Ablebond_3230');
+   MainMemo.Lines.Add('GLUE_Ablebond_8290, SOLDER_Au88Ge12, kanifoul, Polystyrene_rigid_R12');
+   MainMemo.Lines.Add('FR4, Polystyrene_Typical, air_solid');
+   MainMemo.Lines.Add('Gas : Dry_Air, Hydrogen_H2, Helium_He, Argon_Ar, Carbon_dioxide');
+   MainMemo.Lines.Add('Liquid : Water280K, Water320K, Water360K.');
+   MainMemo.Lines.Add('Reopen project, Orthotropy thermal conductivity, change priority blocks is supported.');
+
+
    ih:=0;
    ip:=0;
    ifl:=0;
@@ -41452,6 +50949,38 @@ begin
 
    for i := 1 to lb-1 do
    begin
+      // 30.07.2020
+      if ((body[i].binternalRadiation=1)and(Laplas.egddata.itemper=3)) then
+      begin  // network T solver
+         // Вакуумные призмы работают только с методом Контрольного объёма.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add(body[i].name+' internal Radiation ON.');
+         MainMemo.Lines.Add('Temperature solver network T solver.');
+         MainMemo.Lines.Add('Please select Temperature solver Control Volume Method.');
+         MainMemo.Lines.Add('or turn OFF internal Radiation in body block '+ body[i].name);
+         MainMemo.Lines.Add('synopsis: not compatible with user settings.');
+      end;
+      if ((body[i].binternalRadiation=1)and(Laplas.egddata.itemper=0)) then
+      begin // off T solver
+         // Вакуумные призмы работают только с методом Контрольного объёма.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add(body[i].name+' internal Radiation ON.');
+         MainMemo.Lines.Add('Temperature solver is none (OFF).');
+         MainMemo.Lines.Add('Please select Temperature solver Control Volume Method.');
+         MainMemo.Lines.Add('or turn OFF internal Radiation in body block '+ body[i].name);
+         MainMemo.Lines.Add('synopsis: not compatible with user settings.');
+      end;
+      if ((body[i].binternalRadiation=1)and(Laplas.egddata.itemper=2)) then
+      begin // Finite Element T solver
+         // Вакуумные призмы работают только с методом Контрольного объёма.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add(body[i].name+' internal Radiation ON.');
+         MainMemo.Lines.Add('Temperature solver is Finite Element Method.');
+         MainMemo.Lines.Add('Please select Temperature solver Control Volume Method.');
+         MainMemo.Lines.Add('or turn OFF internal Radiation in body block '+ body[i].name);
+         MainMemo.Lines.Add('synopsis: not compatible with user settings.');
+      end;
+
       if (body[i].igeometry_type=0) then
       begin
          // PRISM
@@ -41497,10 +51026,12 @@ begin
       end;
        total_power:= total_power+body[i].arr_power[0];
    end;
-    for i := 1 to ls-1 do
+   for i := 0 to ls-1 do
    begin
        total_power_s:= total_power_s+source[i].Power;
    end;
+
+
 
    MainMemo.Lines.Add('Apriory quick model statistics:');
    MainMemo.Lines.Add('number of thermal power blocks lb_p='+IntToStr(ip));
@@ -41519,6 +51050,101 @@ begin
    MainMemo.Lines.Add('Blocks integral power ='+FloatToStr(total_power)+' W');
    MainMemo.Lines.Add('Sources integral power ='+FloatToStr(total_power_s)+' W');
    MainMemo.Lines.Add('Full total power ='+FloatToStr(total_power+total_power_s)+' W');
+
+   for i := 1 to lw-1 do
+   begin
+      if ((wall[i].bopening)and(wall[i].family=3)) then
+      begin
+         // family
+         // 1 изотермическая стенка идеальный теплоотвод.
+         // 3 Newton-Richman,
+         // 4 Stefan Bolcman.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add('wall.name='+wall[i].name);
+         MainMemo.Lines.Add('wall flow condition bopening.');
+         MainMemo.Lines.Add('wall thermal condition  Newton-Richman.');
+         MainMemo.Lines.Add('synopsis: incompatible custom wall boundary conditions.');
+      end;
+       if ((wall[i].bopening)and(wall[i].family=4)) then
+      begin
+         // family
+         // 1 изотермическая стенка идеальный теплоотвод.
+         // 3 Newton-Richman,
+         // 4 Stefan Bolcman.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add('wall.name='+wall[i].name);
+         MainMemo.Lines.Add('wall flow condition bopening.');
+         MainMemo.Lines.Add('wall thermal condition  Stefan Bolcman.');
+         MainMemo.Lines.Add('synopsis: incompatible custom wall boundary conditions.');
+      end;
+      if ((wall[i].bsymmetry)and(wall[i].family=1)) then
+      begin
+         // family
+         // 1 изотермическая стенка идеальный теплоотвод.
+         // 3 Newton-Richman,
+         // 4 Stefan Bolcman.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add('wall.name='+wall[i].name);
+         MainMemo.Lines.Add('wall flow condition bsymmetry.');
+         MainMemo.Lines.Add('wall thermal condition  Dirichlet.');
+         MainMemo.Lines.Add('synopsis: incompatible custom wall boundary conditions.');
+      end;
+       if ((wall[i].bsymmetry)and(wall[i].family=3)) then
+      begin
+         // family
+         // 1 изотермическая стенка идеальный теплоотвод.
+         // 3 Newton-Richman,
+         // 4 Stefan Bolcman.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add('wall.name='+wall[i].name);
+         MainMemo.Lines.Add('wall flow condition bsymmetry.');
+         MainMemo.Lines.Add('wall thermal condition  Newton-Richman.');
+         MainMemo.Lines.Add('synopsis: incompatible custom wall boundary conditions.');
+      end;
+       if ((wall[i].bsymmetry)and(wall[i].family=4)) then
+      begin
+         // family
+         // 1 изотермическая стенка идеальный теплоотвод.
+         // 3 Newton-Richman,
+         // 4 Stefan Bolcman.
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add('wall.name='+wall[i].name);
+         MainMemo.Lines.Add('wall flow condition bsymmetry.');
+         MainMemo.Lines.Add('wall thermal condition  Stefan Bolcman.');
+         MainMemo.Lines.Add('synopsis: incompatible custom wall boundary conditions.');
+      end;
+   end;
+
+   // 24.07.2020  Дополнительные предупреждения связанные с пользовательскими несовместимыми
+   //  параметрами решателя. Ограничения включенного неконформного сеточного интерфейса
+   // mesh_assembles_separately.
+    for i := 0 to lu-1 do
+   begin
+      if (myassembles[i].bmesh_assembles_separately and (EGDForm.CBFlow.Checked=true)) then
+      begin
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add(myassembles[i].name +' is active and CFD computation is ON. ERROR!!!');
+         MainMemo.Lines.Add('You should be turn OFF '+  myassembles[i].name +' bmesh_assembles_separately must be false');
+         MainMemo.Lines.Add('synopsis: not compatible with user settings.');
+      end;
+
+       if (myassembles[i].bmesh_assembles_separately and (MeshForm.CheckBoxALICE.Checked=true)) then
+      begin
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add(myassembles[i].name +' is active and Adaptive Local Refinement Mesh is ON. ERROR!!!');
+         MainMemo.Lines.Add('You should be turn OFF '+  myassembles[i].name +' bmesh_assembles_separately must be false');
+         MainMemo.Lines.Add('synopsis: not compatible with user settings.');
+      end;
+
+        if (myassembles[i].bmesh_assembles_separately and (EGDForm.ComboBoxTemperature.ItemIndex<>2)) then
+      begin
+         MainMemo.Lines.Add('ERROR!!! Model is incorrect.');
+         MainMemo.Lines.Add(myassembles[i].name +' is active and Temperature solver not equal Finite Element Method. ERROR!!!');
+         MainMemo.Lines.Add('You should be turn OFF '+  myassembles[i].name +' bmesh_assembles_separately must be false OR');
+         MainMemo.Lines.Add('You should be Temperature solver selected Finite Element Method only.');
+         MainMemo.Lines.Add('synopsis: not compatible with user settings.');
+      end;
+   end;
 
 end;
 
@@ -41634,13 +51260,34 @@ begin
                          begin
                            //XY->XZ
                            body[i].iPlane:=2;
+
+                           if (body[i].yE-body[i].yS>0.0) then
+                           begin
+                              body[i].Hcyl:=abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end
+                           else
+                           begin
+                              body[i].Hcyl:=-abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end;
                          end
                          else if (body[i].iPlane=2) then
                          begin
                            // XZ->XY
                            body[i].iPlane:=1;
-                           body[i].Hcyl:=-body[i].Hcyl;
-                           body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+
+
+                           if (body[i].zE-body[i].zS>0.0) then
+                           begin
+                              body[i].Hcyl:=abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end
+                           else
+                           begin
+                              body[i].Hcyl:=-abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end;
                          end;
 
                          // polygon
@@ -41653,10 +51300,31 @@ begin
                             //body[i].zi[j]:=zceo - (ybuf-yceo)*sin(3.141*90/180)+(zbuf-zceo)*cos(3.141*90/180);
                             body[i].yi[j]:=yceo+ (zbuf-zceo);
                             body[i].zi[j]:=zceo - (ybuf-yceo);
+
+                            if (body[i].iPlane_obj2=1) then
+                            begin
+                              //XY->XZ
+                               if (body[i].yE-body[i].yS>0.0) then
+                               begin
+                                  body[i].hi[j]:=abs(body[i].hi[j]);
+                               end
+                               else
+                               begin
+                                  body[i].hi[j]:=-abs(body[i].hi[j]);
+                               end;
+                            end;
+
                             if (body[i].iPlane_obj2=2) then
                             begin
                                // XZ->XY
-                               body[i].hi[j]:=-body[i].hi[j];
+                               if (body[i].zE-body[i].zS>0.0) then
+                               begin
+                                  body[i].hi[j]:=abs(body[i].hi[j]);
+                               end
+                               else
+                               begin
+                                  body[i].hi[j]:=-abs(body[i].hi[j]);
+                               end;
                             end;
                          end;
                          if (body[i].iPlane_obj2=1) then
@@ -41856,13 +51524,33 @@ begin
                          begin
                            //YZ->XY
                            body[i].iPlane:=1;
+
+                            if (body[i].zE-body[i].zS>0.0) then
+                           begin
+                              body[i].Hcyl:=abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end
+                           else
+                           begin
+                              body[i].Hcyl:=-abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end;
                          end
                          else if (body[i].iPlane=1) then
                          begin
                            // XY->YZ
                            body[i].iPlane:=3;
-                           body[i].Hcyl:=-body[i].Hcyl;
-                           body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+
+                           if (body[i].xE-body[i].xS>0.0) then
+                           begin
+                              body[i].Hcyl:=abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end
+                           else
+                           begin
+                              body[i].Hcyl:=-abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end;
                          end;
 
                           // polygon
@@ -41875,10 +51563,30 @@ begin
                            // body[i].zi[j]:=zceo - (xbuf-xceo)*sin(3.141*90/180)+(zbuf-zceo)*cos(3.141*90/180);
                             body[i].xi[j]:=xceo+ (zbuf-zceo);
                             body[i].zi[j]:=zceo - (xbuf-xceo);
+                            if (body[i].iPlane_obj2=3) then
+                            begin
+                               //YZ->XY
+                               if (body[i].zE-body[i].zS>0.0) then
+                               begin
+                                  body[i].hi[j]:=abs(body[i].hi[j]);
+                               end
+                               else
+                               begin
+                                  body[i].hi[j]:=-abs(body[i].hi[j]);
+                               end;
+                            end;
+
                             if (body[i].iPlane_obj2=1) then
                             begin
                                // XY->YZ
-                               body[i].hi[j]:=-body[i].hi[j];
+                               if (body[i].xE-body[i].xS>0.0) then
+                               begin
+                                  body[i].hi[j]:=abs(body[i].hi[j]);
+                               end
+                               else
+                               begin
+                                  body[i].hi[j]:=-abs(body[i].hi[j]);
+                               end;
                             end;
                          end;
                          if (body[i].iPlane_obj2=3) then
@@ -42079,13 +51787,33 @@ begin
                          begin
                            //XZ->YZ
                            body[i].iPlane:=3;
+
+                           if (body[i].xE-body[i].xS>0.0) then
+                           begin
+                              body[i].Hcyl:=abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end
+                           else
+                           begin
+                              body[i].Hcyl:=-abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end;
                          end
                          else if (body[i].iPlane=3) then
                          begin
                            // YZ->XZ
                            body[i].iPlane:=2;
-                           body[i].Hcyl:=-body[i].Hcyl;
-                           body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+
+                            if (body[i].yE-body[i].yS>0.0) then
+                           begin
+                              body[i].Hcyl:=abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end
+                           else
+                           begin
+                              body[i].Hcyl:=-abs(body[i].Hcyl);
+                              body[i].sHcyl:=FormatFloat('0.0000000',body[i].Hcyl);
+                           end;
                          end;
 
                           // polygon
@@ -42098,10 +51826,30 @@ begin
                             //body[i].yi[j]:=yceo - (xbuf-xceo)*sin(3.141*90/180)+(ybuf-yceo)*cos(3.141*90/180);
                             body[i].xi[j]:=xceo+ (ybuf-yceo);
                             body[i].yi[j]:=yceo - (xbuf-xceo);
+                            if (body[i].iPlane_obj2=2) then
+                            begin
+                               //XZ->YZ
+                               if (body[i].xE-body[i].xS>0.0) then
+                               begin
+                                  body[i].hi[j]:=abs(body[i].hi[j]);
+                               end
+                               else
+                               begin
+                                  body[i].hi[j]:=-abs(body[i].hi[j]);
+                               end;
+                            end;
+
                             if (body[i].iPlane_obj2=3) then
                             begin
                                 // YZ->XZ
-                               body[i].hi[j]:=-body[i].hi[j];
+                               if (body[i].yE-body[i].yS>0.0) then
+                               begin
+                                  body[i].hi[j]:=abs(body[i].hi[j]);
+                               end
+                               else
+                               begin
+                                  body[i].hi[j]:=-abs(body[i].hi[j]);
+                               end;
                             end;
                          end;
                          if (body[i].iPlane_obj2=2) then
@@ -42581,7 +52329,7 @@ procedure TLaplas.ButtonApplyVisualizationManagmentClick(Sender: TObject);
 begin
    bVisualization_Management_now:=true;
    RunSolution1Click(Sender);
-   bVisualization_Management_now:=false;
+
    MainMemo.Lines.Add('ALICEFlow0_07_Visualisation_Magement succsefully written. Ok.');
 
    (*
@@ -43176,17 +52924,22 @@ var
 begin
    if (FormatSettings.DecimalSeparator='.') then
    begin
+      s:=Editdopusk.Text;
+      Editdopusk.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
+       s:=Editdopusk2.Text;
+      Editdopusk2.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
+
       s:=Editmatt.Text;
       Editmatt.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
       s:=Editmr.Text;
       Editmr.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
 
       s:=EditLamb0.Text;
-     EditLamb0.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
+      EditLamb0.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
       s:=EditSpecularL.Text;
-     EditSpecularL.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
+      EditSpecularL.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
       s:=EditLdifuse.Text;
-     EditLdifuse.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
+      EditLdifuse.Text:=Trim(StringReplace(s,',','.',[rfReplaceAll]));
 
 
 
@@ -43204,6 +52957,11 @@ begin
 
    if (FormatSettings.DecimalSeparator=',') then
    begin
+      s:=Editdopusk.Text;
+      Editdopusk.Text:=Trim(StringReplace(s,'.',',',[rfReplaceAll]));
+      s:=Editdopusk2.Text;
+      Editdopusk2.Text:=Trim(StringReplace(s,'.',',',[rfReplaceAll]));
+
       s:=Editmatt.Text;
       Editmatt.Text:=Trim(StringReplace(s,'.',',',[rfReplaceAll]));
       s:=Editmr.Text;
@@ -43230,7 +52988,8 @@ begin
      EditY.Text:=Trim(StringReplace(s,'.',',',[rfReplaceAll]));
    end;
 
-
+   dopusk_gl1:=abs(StrToFloat(Editdopusk.Text));
+   dopusk_gl2:=abs(StrToFloat(Editdopusk2.Text));
    matt:=abs(StrToFloat(Editmatt.Text));
    mr:=abs(StrToFloat(Editmr.Text));
 
@@ -43460,16 +53219,16 @@ begin
    xc:=0;
    while (abs(perspectiveangle-return_Perspective_angle(xc))>0.01) do
    begin
-     if ((perspectiveangle-return_Perspective_angle(xa))*(perspectiveangle-return_Perspective_angle(xc))<0) then
+     if ((perspectiveangle-return_Perspective_angle(xa))*
+     (perspectiveangle-return_Perspective_angle(xc))<0) then
      begin
-       xb:=xc;
-       xc:=0.5*(xa+xb);
+        xb:=xc;
      end
      else
      begin
-         xa:=xc;
-         xc:=0.5*(xa+xb);
+        xa:=xc;
      end;
+     xc:=0.5*(xa+xb);
    end;
     perspectiveangle_counter:=xc;
 
