@@ -996,12 +996,12 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 		// которые соседствуют с данным внутренним КО.
 		//
 		// 25 сентября 2016 gran_prop теперь работает на АЛИС сетке. 
-		gran_prop(t, f, b, lb, iP, ESIDE, ib, matlist); // East Side
-		gran_prop(t, f, b, lb, iP, WSIDE, ib, matlist); // West Side
-		gran_prop(t, f, b, lb, iP, NSIDE, ib, matlist); // North Side
-		gran_prop(t, f, b, lb, iP, SSIDE, ib, matlist); // South Side
-		gran_prop(t, f, b, lb, iP, TSIDE, ib, matlist); // Top Side
-		gran_prop(t, f, b, lb, iP, BSIDE, ib, matlist); // Bottom Side
+		gran_prop(t, f, b, lb, iP, E_SIDE, ib, matlist); // East Side
+		gran_prop(t, f, b, lb, iP, W_SIDE, ib, matlist); // West Side
+		gran_prop(t, f, b, lb, iP, N_SIDE, ib, matlist); // North Side
+		gran_prop(t, f, b, lb, iP, S_SIDE, ib, matlist); // South Side
+		gran_prop(t, f, b, lb, iP, T_SIDE, ib, matlist); // Top Side
+		gran_prop(t, f, b, lb, iP, B_SIDE, ib, matlist); // Bottom Side
 
 	}
 	if (bswitch_print_message) {
@@ -1117,12 +1117,12 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 		// которые соседствуют с данным внутренним КО.
 		//
 		// 25 сентября 2016 gran_prop теперь работает на АЛИС сетке. 
-		gran_prop(t, f, b, lb, iP - iadd, ESIDE, ib, matlist); // East Side
-		gran_prop(t, f, b, lb, iP - iadd, WSIDE, ib, matlist); // West Side
-		gran_prop(t, f, b, lb, iP - iadd, NSIDE, ib, matlist); // North Side
-		gran_prop(t, f, b, lb, iP - iadd, SSIDE, ib, matlist); // South Side
-		gran_prop(t, f, b, lb, iP - iadd, TSIDE, ib, matlist); // Top Side
-		gran_prop(t, f, b, lb, iP - iadd, BSIDE, ib, matlist); // Bottom Side
+		gran_prop(t, f, b, lb, iP - iadd, E_SIDE, ib, matlist); // East Side
+		gran_prop(t, f, b, lb, iP - iadd, W_SIDE, ib, matlist); // West Side
+		gran_prop(t, f, b, lb, iP - iadd, N_SIDE, ib, matlist); // North Side
+		gran_prop(t, f, b, lb, iP - iadd, S_SIDE, ib, matlist); // South Side
+		gran_prop(t, f, b, lb, iP - iadd, T_SIDE, ib, matlist); // Top Side
+		gran_prop(t, f, b, lb, iP - iadd, B_SIDE, ib, matlist); // Bottom Side
 
 	}
 	if (bswitch_print_message) {
@@ -1253,9 +1253,9 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 						doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 						volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
 						switch (G) {
-						case ESIDE: case WSIDE: fgplus = dx / fabs(p1.x - p2.x); break;
-						case NSIDE: case SSIDE: fgplus = dy / fabs(p1.y - p2.y); break;
-						case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
+						case E_SIDE: case W_SIDE: fgplus = dx / fabs(p1.x - p2.x); break;
+						case N_SIDE: case S_SIDE: fgplus = dy / fabs(p1.y - p2.y); break;
+						case T_SIDE: case B_SIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 						}
 
 						temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE1];
@@ -1293,7 +1293,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 			}
 		    // Свойства граничного контрольного объёма:
 		    f[iflow].prop_b[RHO][iG-f[iflow].maxelm]=rho;
-		    f[iflow].prop_b[MU][iG-f[iflow].maxelm]=mu;
+		    f[iflow].prop_b[MU_DYNAMIC_VISCOSITY][iG-f[iflow].maxelm]=mu;
 		    f[iflow].prop_b[BETA_T][iG-f[iflow].maxelm]=beta_t;
 
 	   } // G Side
@@ -1321,9 +1321,9 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 					   volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
 					   switch (G) {
-					   case ESIDE: case WSIDE: fgplus = dx / fabs(p1.x - p2.x); break;
-					   case NSIDE: case SSIDE: fgplus = dy / fabs(p1.y - p2.y); break;
-					   case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
+					   case E_SIDE: case W_SIDE: fgplus = dx / fabs(p1.x - p2.x); break;
+					   case N_SIDE: case S_SIDE: fgplus = dy / fabs(p1.y - p2.y); break;
+					   case T_SIDE: case B_SIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 					   }
 
 					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE2];
@@ -1361,7 +1361,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 		   }
 		   // Свойства граничного контрольного объёма:
 		   f[iflow].prop_b[RHO][iG - f[iflow].maxelm] = rho;
-		   f[iflow].prop_b[MU][iG - f[iflow].maxelm] = mu;
+		   f[iflow].prop_b[MU_DYNAMIC_VISCOSITY][iG - f[iflow].maxelm] = mu;
 		   f[iflow].prop_b[BETA_T][iG - f[iflow].maxelm] = beta_t;
 
 	   } // G Side
@@ -1389,9 +1389,9 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 					   volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
 					   switch (G) {
-					   case ESIDE: case WSIDE: fgplus = dx / fabs(p1.x - p2.x); break;
-					   case NSIDE: case SSIDE: fgplus = dy / fabs(p1.y - p2.y); break;
-					   case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
+					   case E_SIDE: case W_SIDE: fgplus = dx / fabs(p1.x - p2.x); break;
+					   case N_SIDE: case S_SIDE: fgplus = dy / fabs(p1.y - p2.y); break;
+					   case T_SIDE: case B_SIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 					   }
 
 					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE3];
@@ -1430,7 +1430,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 		   }
 		   // Свойства граничного контрольного объёма:
 		   f[iflow].prop_b[RHO][iG - f[iflow].maxelm] = rho;
-		   f[iflow].prop_b[MU][iG - f[iflow].maxelm] = mu;
+		   f[iflow].prop_b[MU_DYNAMIC_VISCOSITY][iG - f[iflow].maxelm] = mu;
 		   f[iflow].prop_b[BETA_T][iG - f[iflow].maxelm] = beta_t;
 
 	   } // G Side
@@ -1459,9 +1459,9 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   doublereal dx = 0.0, dy = 0.0, dz = 0.0;
 					   volume3D(f[iflow].ptr[iP], t.nvtx, t.pa, dx, dy, dz);
 					   switch (G) {
-					   case ESIDE: case WSIDE: fgplus = dx / fabs(p1.x - p2.x); break;
-					   case NSIDE: case SSIDE: fgplus = dy / fabs(p1.y - p2.y); break;
-					   case TSIDE: case BSIDE: fgplus = dz / fabs(p1.z - p2.z); break;
+					   case E_SIDE: case W_SIDE: fgplus = dx / fabs(p1.x - p2.x); break;
+					   case N_SIDE: case S_SIDE: fgplus = dy / fabs(p1.y - p2.y); break;
+					   case T_SIDE: case B_SIDE: fgplus = dz / fabs(p1.z - p2.z); break;
 					   }
 
 					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.neighbors_for_the_internal_node[G][f[iflow].ptr[iP]].iNODE4];
@@ -1499,7 +1499,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 		   }
 		   // Свойства граничного контрольного объёма:
 		   f[iflow].prop_b[RHO][iG - f[iflow].maxelm] = rho;
-		   f[iflow].prop_b[MU][iG - f[iflow].maxelm] = mu;
+		   f[iflow].prop_b[MU_DYNAMIC_VISCOSITY][iG - f[iflow].maxelm] = mu;
 		   f[iflow].prop_b[BETA_T][iG - f[iflow].maxelm] = beta_t;
 
 	   } // G Side
@@ -1559,7 +1559,7 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 			if (mu > dmax) dmax = mu;
 			if (mu < dmin) dmin = mu;
 			f[ifi].prop[RHO][iP]=rho;
-			f[ifi].prop[MU][iP]=mu;
+			f[ifi].prop[MU_DYNAMIC_VISCOSITY][iP]=mu;
 			f[ifi].prop[BETA_T][iP]=beta_t;
 			//printf("rho=%e, mu=%e",f[ifi].prop[RHO][iP],f[ifi].prop[MU][iP]); // debug
 			//getchar();
@@ -1567,12 +1567,12 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 			// Теперь требуется обработать граничные контрольные объёмы,
 			// которые соседствуют с данным внутренним КО.
 			//
-			gran_prop_flow(t, f, b, lb, ifi, iP, ESIDE, ib, matlist, bfirst_start); // East Side
-            gran_prop_flow(t, f, b, lb, ifi, iP, WSIDE, ib, matlist, bfirst_start); // West Side
-			gran_prop_flow(t, f, b, lb, ifi, iP, NSIDE, ib, matlist, bfirst_start); // North Side
-            gran_prop_flow(t, f, b, lb, ifi, iP, SSIDE, ib, matlist, bfirst_start); // South Side
-			gran_prop_flow(t, f, b, lb, ifi, iP, TSIDE, ib, matlist, bfirst_start); // Top Side
-            gran_prop_flow(t, f, b, lb, ifi, iP, BSIDE, ib, matlist, bfirst_start); // Bottom Side
+			gran_prop_flow(t, f, b, lb, ifi, iP, E_SIDE, ib, matlist, bfirst_start); // East Side
+            gran_prop_flow(t, f, b, lb, ifi, iP, W_SIDE, ib, matlist, bfirst_start); // West Side
+			gran_prop_flow(t, f, b, lb, ifi, iP, N_SIDE, ib, matlist, bfirst_start); // North Side
+            gran_prop_flow(t, f, b, lb, ifi, iP, S_SIDE, ib, matlist, bfirst_start); // South Side
+			gran_prop_flow(t, f, b, lb, ifi, iP, T_SIDE, ib, matlist, bfirst_start); // Top Side
+            gran_prop_flow(t, f, b, lb, ifi, iP, B_SIDE, ib, matlist, bfirst_start); // Bottom Side
 		}
 
 		if (!b_on_adaptive_local_refinement_mesh) {
@@ -1608,7 +1608,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 		fprintf(fp,"solid user_geom.stl\n");
 
 		for (integer iP = 0; iP < t.maxelm; iP++) {
-			if (t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1 >= t.maxelm) {
 				// По часовой стрелке
 
 				// Пишем две треугольных грани
@@ -1637,7 +1637,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1 >= t.maxelm) {
 				// Против часовой стрелки.
 
 				// Пишем две треугольных грани
@@ -1666,7 +1666,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение по часовой стрелке.
 
 				// Пишем две треугольных грани
@@ -1695,7 +1695,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение против часовой стрелки.
 
 				// Пишем две треугольных грани
@@ -1725,7 +1725,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 			}
 
 
-			if (t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение по часовой стрелке.
 
 				// Пишем две треугольных грани
@@ -1754,7 +1754,7 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 				fprintf(fp, "endfacet\n");
 			}
 
-			if (t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1 >= t.maxelm) {
+			if (t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1 >= t.maxelm) {
 				// Вращение против часовой стрелки.
 
 				// Пишем две треугольных грани
@@ -1792,8 +1792,8 @@ void export_User_Geom_in_STL_format(TEMPER& t) {
 
 // Вычисляет массу рассчитываемой модели.
 // 12.03.2017
-doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integer &inz,
-	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &flow_interior,
+doublereal massa_cabinet(TEMPER &t, FLOW* &f, 
+	integer &flow_interior,
 	BLOCK* b, integer lb, doublereal temp_ref,
 	TPROP* matlist) {
 
@@ -1851,6 +1851,117 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 	TPROP* &matlist, doublereal Tamb) 
 {
 
+	integer* number_control_volume_on_wall = new integer[lw];
+	doublereal* wall_power = new doublereal[lw];
+	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+		wall_power[iwall_scan] = 0.0;
+		number_control_volume_on_wall[iwall_scan] = 0;
+		for (integer j = 0; j < t.maxbound; j++) {
+
+			if (t.border_neighbor[j].MCB == (ls + iwall_scan)) {
+
+				number_control_volume_on_wall[iwall_scan]++;
+
+				integer iP = t.border_neighbor[j].iI;// f.maxelm + j;
+
+				TOCHKA p;
+				center_cord3D(iP, t.nvtx, t.pa, p, 100);
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;
+				volume3D(iP, t.nvtx, t.pa, dx, dy, dz);
+				dx = fabs(dx);
+				dy = fabs(dy);
+				dz = fabs(dz);
+				doublereal dx1 = 0.0, dy1 = 0.0, dz1 = 0.0;
+				volume3D(t.border_neighbor[j].iII, t.nvtx, t.pa, dx1, dy1, dz1);
+				dx1 = fabs(dx1);
+				dy1 = fabs(dy1);
+				dz1 = fabs(dz1);
+				integer ib; // номер искомого блока
+				in_model_temp(p, ib, b, lb);
+
+				doublereal lam= t.prop[LAM][iP]; // значения не используются но требуются
+				doublereal temperature_i = t.potent[iP]; // но на самом деле давление требуется с предыдущего временного слоя.
+				doublereal temperature_ii = t.potent[t.border_neighbor[j].iII];
+				doublereal temperature_w=t.potent[t.border_neighbor[j].iB];
+
+				switch (w[iwall_scan].iPlane) {
+				case XY_PLANE: if (t.border_neighbor[j].Norm == T_SIDE) {// Низ, внутренняя номаль.
+					//+ втекает
+					if (fabs((lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1))) >
+						fabs((lam * (temperature_i-temperature_w) * dx * dy) / (0.5 * (dz)))) {
+					wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1));
+					}
+					else {
+						wall_power[iwall_scan] += (lam * (temperature_i-temperature_w) * dx * dy) / (0.5 * (dz));
+					}
+				}
+				if (t.border_neighbor[j].Norm == B_SIDE) {// Верх, внутренняя номаль.
+					//+ втекает
+					if (fabs((lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1)))>
+						fabs((lam * (temperature_i-temperature_w) * dx * dy) / (0.5 * (dz)))) {
+					    wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1));
+					}
+					else {
+						wall_power[iwall_scan] += (lam * (temperature_i-temperature_w) * dx * dy) / (0.5 * (dz));
+					}
+				}
+				break;
+				case XZ_PLANE: 
+				if (t.border_neighbor[j].Norm == N_SIDE) {// Юг, внутренняя номаль.
+					//+ втекает
+					if (fabs((lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1)))>
+						fabs((lam * (temperature_i-temperature_w) * dx * dz) / (0.5 * (dy)))) {
+					    wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1));
+					}
+					else {
+						wall_power[iwall_scan] += (lam * (temperature_i-temperature_w) * dx * dz) / (0.5 * (dy));
+					}
+				}
+				if (t.border_neighbor[j].Norm == S_SIDE) {// Север, внутренняя номаль.
+					//+ втекает
+					if (fabs((lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1))) >
+						fabs((lam * (temperature_i-temperature_w) * dx * dz) / (0.5 * (dy)))) {
+					wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1));
+					}
+					else {
+						wall_power[iwall_scan] += (lam * (temperature_i-temperature_w) * dx * dz) / (0.5 * (dy));
+					}
+				}
+				break;
+				case YZ_PLANE:  if (t.border_neighbor[j].Norm == E_SIDE) {// запад, внутренняя номаль.
+					//+ втекает
+					if (fabs((lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1)))>
+						fabs((lam * (temperature_i-temperature_w) * dy * dz) / (0.5 * (dx)))) {
+						wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1));
+					}
+					else {
+						wall_power[iwall_scan] += (lam * (temperature_i-temperature_w) * dy * dz) / (0.5 * (dx));
+					}
+				}
+				if (t.border_neighbor[j].Norm == W_SIDE) {// Восток, внутренняя номаль.
+					//+ втекает
+					if (fabs((lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1))) >
+						fabs((lam * (temperature_i-temperature_w) * dy * dz) / (0.5 * (dx)))) {
+						wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1));
+					}
+					else {
+						wall_power[iwall_scan] += (lam * (temperature_i-temperature_w) * dy * dz) / (0.5 * (dx));
+					}
+				}
+				break;
+				}
+			}
+		}
+	}
+
+	printf("\n");
+	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+		printf("wall[%d].name = %s power is %e W. Number control volume in wall=%lld\n", iwall_scan, w[iwall_scan].name,  wall_power[iwall_scan], number_control_volume_on_wall[iwall_scan]);
+	}
+
+	delete[] number_control_volume_on_wall;
+	delete[] wall_power;
+
 	int idlw = 0;
 	if (lw > 0) {
 		for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
@@ -1868,7 +1979,7 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
 		// Определяем минимальную заданную температуру.
 		if ((!w[iwall_scan].bpressure) && (!w[iwall_scan].bsymmetry)) {
-			if (w[iwall_scan].ifamily == 1) {
+			if (w[iwall_scan].ifamily == DIRICHLET_FAMILY) {
 				Tamb0 = fmin(Tamb0, w[iwall_scan].Tamb);
 			}
 		}
@@ -1910,10 +2021,10 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 
 				
 					switch (w[iwall_scan].iPlane) {
-					case XY:
+					case XY_PLANE:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.border_neighbor[j].Norm == TSIDE) {
+						if (f.border_neighbor[j].Norm == T_SIDE) {
 							rashod += -f.border_neighbor[j].dS * f.potent[VZCOR][f.maxelm + j];
 							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j];
 							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j] *
@@ -1927,10 +2038,10 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
-					case XZ:
+					case XZ_PLANE:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.border_neighbor[j].Norm == NSIDE) {
+						if (f.border_neighbor[j].Norm == N_SIDE) {
 							rashod += -f.border_neighbor[j].dS * f.potent[VYCOR][f.maxelm + j];
 							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j];
 							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j] *
@@ -1943,10 +2054,10 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
-					case YZ:
+					case YZ_PLANE:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.border_neighbor[j].Norm == ESIDE) {
+						if (f.border_neighbor[j].Norm == E_SIDE) {
 							rashod += -f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
 							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
 							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j] *
@@ -2011,10 +2122,10 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 				//system("pause"); // debug
 				
 					switch (w[iwall_scan].iPlane) {
-					case XY:
+					case XY_PLANE:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.border_neighbor[j].Norm == TSIDE) {
+						if (f.border_neighbor[j].Norm == T_SIDE) {
 							rashod += -f.border_neighbor[j].dS * f.potent[VZCOR][f.maxelm + j];
 							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j];
 							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VZCOR][f.maxelm + j] *
@@ -2030,10 +2141,10 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
-					case XZ:
+					case XZ_PLANE:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.border_neighbor[j].Norm == NSIDE) {
+						if (f.border_neighbor[j].Norm == N_SIDE) {
 							rashod += -f.border_neighbor[j].dS * f.potent[VYCOR][f.maxelm + j];
 							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j];
 							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VYCOR][f.maxelm + j] *
@@ -2046,10 +2157,10 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 								cp * ( t.potent[f.ptr[f.border_neighbor[j].iI]] - Tamb0);
 						}
 						break;
-					case YZ:
+					case YZ_PLANE:
 						// Нормаль внутренняя
 						// Расход: то что вытекает то с плюсом.
-						if (f.border_neighbor[j].Norm == ESIDE) {
+						if (f.border_neighbor[j].Norm == E_SIDE) {
 							rashod += -f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
 							rashod2 += -f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j];
 							Qout += f.prop_b[RHO][j] * f.border_neighbor[j].dS*f.potent[VXCOR][f.maxelm + j] *

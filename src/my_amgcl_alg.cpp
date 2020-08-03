@@ -269,9 +269,266 @@ conv_info STDCALL amgcl_solver_solve_mtx(
 	return cnv;
 }
 
+
+void amgcl_networkT_solver(doublereal* &val, integer* &col_ind, integer* &row_ptr,
+	integer n,	doublereal *dV, doublereal* &dX0,
+	bool bprintmessage)
+{
+	// размерность квадратной матрицы.
+	// n
+
+#ifdef _OPENMP 
+	// Узнаёт количество ядер в системе.
+	// 15млн неизвестных время параллельного кода 21мин 39с.
+	// Время однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
+	 // Разреженная матрица СЛАУ
+	 // в CRS формате.
+	 // val; col_ind; row_ptr;
+
+
+	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
+									   //typedef float    ScalarType;
+	typedef int indextype;
+
+	integer nnu = n;
+	integer nna = row_ptr[n];
+	if (bprintmessage) {
+		std::cout << "nna=" << nna << " " << row_ptr[n - 1] << "\n";
+	}
+	//system("pause");
+
+	/**
+	* Set up the matrices and vectors for the iterative solvers (cf. iterative.cpp)
+	**/
+	indextype rows = static_cast<indextype>(nnu);
+	indextype cols = static_cast<indextype>(nnu);
+	indextype nonzeros = static_cast<indextype>(nna);
+
+	// Прочитать матрицу:
+	if (bprintmessage) {
+		std::cout << "Reading matrix..." << std::endl;
+	}
+
+	//integer* row_jumper = new integer[nnu + 1];
+	//integer* col_buffer = new integer[nna];
+	//ScalarType* elements = new ScalarType[nna];
+
+	std::vector<int> row_jumper(nnu + 1); // только тип int !!!
+	std::vector<int> col_buffer(nna); // только тип int !!!
+	std::vector<double> elements(nna);
+	std::vector<double> rhs(nnu);
+
+	for (integer i = 0; i < nnu; i++) {
+		rhs[i] = dV[i];
+	}
+
+	row_jumper[nnu] = static_cast<indextype>(nna);
+	// initialize matrix entries on host
+	nna = 0;
+	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
+	integer iscan = 0;
+	for (integer i = 0; i < n; i++) {
+
+		row_jumper[i] = static_cast<indextype>(row_ptr[i]);
+
+
+		for (integer j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
+			if (col_ind[j] == i) {
+				elements[iscan] = static_cast<ScalarType>(val[j]);
+				col_buffer[iscan] = static_cast<indextype>(col_ind[j]);
+				iscan++;
+				//debug
+				//std::cout << "col_buffer[j]=" << col_ind[j] << std::endl;
+				//system("pause");
+			}
+		}
+		for (integer j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
+			if (col_ind[j] != i) {
+				elements[iscan] = static_cast<ScalarType>(val[j]);
+				col_buffer[iscan] = static_cast<indextype>(col_ind[j]);
+				iscan++;
+				// debug
+				//std::cout << "col_buffer[j]=" << col_ind[j] << std::endl;
+				//system("pause");
+			}
+		}
+
+	}
+
+	row_jumper[n] = static_cast<indextype>(row_ptr[n]);
+
+	
+
+	if (bprintmessage) {
+		printf("Matrix load succsefull...\n");
+	}
+
+	amgclHandle prm = amgcl_params_create();
+
+	// число ячеек на самом грубом уровне.
+	amgcl_params_seti(prm, "precond.coarse_enough", 40);// Для графовой модели.
+
+	switch (my_amg_manager.amgcl_selector) {
+	case 0: // Ruge - Stueben (аналог amg1r5)
+		amgcl_params_sets(prm, "precond.coarsening.type", "ruge_stuben");
+		amgcl_params_setf(prm, "precond.coarsening.eps_strong", 0.9f);
+		//{type = ruge_stuben, eps_strong = 0.9}
+		break;
+	case 1: // smoothed aggregation
+		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+		break;
+	default: // smoothed aggregation
+		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+		break;
+	}
+
+	switch (my_amg_manager.amgcl_smoother) {
+	case 0: // spai0
+		amgcl_params_sets(prm, "precond.relax.type", "spai0");
+		break;
+	case 1: // ilu0
+		amgcl_params_sets(prm, "precond.relax.type", "ilu0");
+		break;
+	case 2: // gauss_seidel
+		amgcl_params_sets(prm, "precond.relax.type", "gauss_seidel");
+		break;
+	case 3: // damped_jacobi
+		amgcl_params_sets(prm, "precond.relax.type", "damped_jacobi");
+		amgcl_params_setf(prm, "precond.relax.damping", 0.8f);
+		break;
+	case 4: // spai1
+		amgcl_params_sets(prm, "precond.relax.type", "spai1");
+		break;
+	case 5: // chebyshev
+		amgcl_params_sets(prm, "precond.relax.type", "chebyshev");
+		break;
+	case 6: // ilu1
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 1);
+		break;
+	case 7: // ilu2
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 2);
+		break;
+	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
+		break;
+	}
+	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
+	//amgcl_params_seti(prm, "solver.L", 1);
+	switch (my_amg_manager.amgcl_iterator) {
+	case 0: // BiCGStab
+		amgcl_params_sets(prm, "solver.type", "bicgstab");
+		break;
+	case 1: // FGMRes
+		amgcl_params_sets(prm, "solver.type", "fgmres");
+		break;
+	default:
+		amgcl_params_sets(prm, "solver.type", "bicgstab");
+		break;
+	}
+
+	if (bglobal_unsteady_temperature_determinant) {
+		// Нестационарные задачи требуется считать до меньших значений невязки.
+		// 14.05.2019
+		// 1.0e-12 точность достаточна.
+		if (my_amg_manager.amgcl_iterator == 1) {
+			amgcl_params_setf(prm, "solver.tol", 1.0e-12f);// пробовал 1e-7 для fgmres полотно АФАР расходится.
+		}
+		else {
+			amgcl_params_setf(prm, "solver.tol", 1.0e-12f);
+		}
+		// Нестационарные задачи требуется считать до меньших значений невязки.
+		// Может локально не сойтись поэтому не надо делать очень большого числа итераций.
+		// 14.05.2019
+		amgcl_params_seti(prm, "solver.maxiter", 3000);
+	}
+
+	if (bprintmessage) {
+		printf("Setup phase start...\n");
+	}
+
+	bool bprint_preconditioner = bprintmessage;
+
+	//****
+	if (bprint_preconditioner) {
+		// Библиотека Дениса Демидова работает только с 32 битным 
+		// типом int. Его хватает даже для числа неизвестных 80 млн
+		// контрольных объемов.
+		int n_loc = (int)(n);
+		amgclHandle amg_precond = amgcl_precond_create(
+			n_loc, row_jumper.data(), col_buffer.data(), elements.data(), prm
+		);
+		amgcl_precond_report(amg_precond);//печать samg предобуславливателя.
+		amgcl_precond_destroy(amg_precond);
+	}
+	//*****
+
+	// Библиотека Дениса Демидова работает только с 32 битным 
+	// типом int. Его хватает даже для числа неизвестных 80 млн
+	// контрольных объемов.
+	int n_loc = (int)(n);
+	amgclHandle solver = amgcl_solver_create(
+		n_loc, row_jumper.data(), col_buffer.data(), elements.data(), prm
+	);
+
+
+
+	amgcl_params_destroy(prm);
+
+	if (bprintmessage) {
+		printf("Solution phase start...\n");
+	}
+
+	std::vector<double> x(n, 0);
+
+	if (1) {
+		// Инициализация
+		for (integer i = 0; i < n; i++) {
+			x[i] = dX0[i];
+		}
+	}
+
+	conv_info cnv = amgcl_solver_solve(solver, rhs.data(), x.data());
+
+	// Solve same problem again, but explicitly provide the matrix this time:
+	//std::fill(x.begin(), x.end(), 0);
+	//cnv = amgcl_solver_solve_mtx(
+	//solver, row_jumper.data(), col_buffer.data(), elements.data(),
+	//rhs.data(), x.data()
+	//);
+
+	if (bprintmessage) {
+		std::cout << "Iterations: " << cnv.iterations << std::endl
+			<< "Error:      " << cnv.residual << std::endl;
+	}
+
+	amgcl_solver_destroy(solver);
+
+
+	for (integer i = 0; i < nnu; i++) {
+		dX0[i] = x[i];
+	}
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
+
+	if (bprintmessage) {
+		getchar();
+	}
+
+} //amgcl_network_T_solver
+
+
 void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 	doublereal *dV, doublereal* &dX0, 
-	bool bprintmessage)
+	bool bprintmessage, WALL* &w, integer &lw, bool* &bondary)
 {
 	// размерность квадратной матрицы.
 	// n
@@ -328,6 +585,36 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 		rhs[i] = dV[i];
 	}
 
+	std::vector<double> x(n, 0);
+
+	if (1) {
+		// Инициализация
+		for (integer i = 0; i < n; i++) {
+			x[i] = dX0[i];
+		}
+	}
+
+	doublereal alpharelax = 1.0;
+
+	// Это не специальная нелинейная версия кода amg1r5 CAMG.
+	for (integer k = 0; k < lw; k++) {
+		if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+			(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
+			// 0.9999 - недостаточное значение, температуры не те получаются.
+		}
+	}
+	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		alpharelax = 0.99999;
+	}
+	//if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
+	//printf("ADIABATIC WALL BC"); getchar();
+	//}
+	
+	
+
 	row_jumper[nnu] = static_cast<indextype>(nna);
 	// initialize matrix entries on host
 	nna = 0;
@@ -340,7 +627,14 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 			
 			for (integer j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
 				if (col_ind[j] == i) {
-					elements[iscan] = static_cast<ScalarType>(val[j]);
+					if (((bondary!=nullptr)&&(!bondary[i]))&&(row_ptr[i + 1] > row_ptr[i] + 1)) {
+						// Релаксация к предыдущему значению.
+						elements[iscan] = static_cast<ScalarType>(val[j] / alpharelax);
+						rhs[i] += (1.0 - alpharelax)* val[j]*x[i] / alpharelax;
+					}
+					else {
+						elements[iscan] = static_cast<ScalarType>(val[j]); // Условие Дирихле.
+					}
 					col_buffer[iscan] = static_cast<indextype>(col_ind[j]);
 					iscan++;
 					//debug
@@ -363,18 +657,15 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 
 	row_jumper[n] = static_cast<indextype>(row_ptr[n]);
 
-	if (val != nullptr) {
-		delete[] val;
-		val = nullptr;
-	}
-	if (col_ind != nullptr) {
-		delete[] col_ind;
-		col_ind = nullptr;
-	}
-	if (row_ptr != nullptr) {
-		delete[] row_ptr;
-		row_ptr = nullptr;
-	}
+	delete[] val;
+	val = nullptr;
+	
+	delete[] col_ind;
+	col_ind = nullptr;
+		
+	delete[] row_ptr;
+	row_ptr = nullptr;
+	
 
 
 	printf("Matrix load succsefull...\n");
@@ -489,14 +780,7 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 	printf("Solution phase start...\n");
 
 
-	std::vector<double> x(n, 0);
-
-	if (1) {
-		// Инициализация
-		for (integer i = 0; i < n; i++) {
-			x[i] = dX0[i];
-		}
-	}
+	
 
 	conv_info cnv = amgcl_solver_solve(solver, rhs.data(), x.data());
 
@@ -525,6 +809,8 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 }
 
 
+doublereal* deltP_init = nullptr;
+
 // Это вызов библиотечного решателя систем линейных алгебраических уравнений.
 // Библиотека AMGCL Дениса Демидова. Это библиотека с открытым исходным кодом распространяющаяся 
 // по open Source лицензии MIT (X11) license. 
@@ -535,7 +821,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	doublereal alpharelax, integer iVar,
 	bool bprint_preconditioner, 
 	doublereal dgx, doublereal dgy, doublereal dgz, 
-	integer inumber_iteration_SIMPLE)
+	integer inumber_iteration_SIMPLE, WALL* &w, integer &lw)
 {
 
 	// maxit - не используется.
@@ -548,6 +834,13 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	unsigned int nthreads = number_cores();
 	omp_set_num_threads(nthreads); // установка числа потоков
 #endif
+
+	if (deltP_init == nullptr) {
+		deltP_init = new doublereal[maxelm+maxbound];
+		for (integer i = 0; i < maxelm + maxbound; i++) {
+			deltP_init[i] = 0.0;
+		}
+	}
 
 	if (dX0 == nullptr) {
 		dX0 = new doublereal[maxelm + maxbound];
@@ -739,6 +1032,55 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		rhs[i] = dV[i];
 	}
 
+	doublereal alpharelax1 = alpharelax; // Запоминаем первоначальное значение.
+	
+	if (iVar == TEMP) {
+
+		// Это не специальная нелинейная версия кода amg1r5 CAMG.
+		for (integer k = 0; k < lw; k++) {
+			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+				alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
+									  // 0.9999 - недостаточное значение, температуры не те получаются.
+				//printf("incomming\n");
+			}
+		}
+		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+			alpharelax = 0.99999;
+		}
+		//if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
+			//printf("ADIABATIC WALL BC"); getchar();
+		//}
+
+		if (bSIMPLErun_now_for_natural_convection) {
+			//alpharelax = alpharelax1;
+			//alpharelax = 0.99999;// 9995;// 9;
+			//alpharelax = 1.0;
+		}
+
+	}
+	
+	//if (inumber_iteration_SIMPLE <= 5) 
+	{
+		if (iVar == PAM) {
+
+			if (bSIMPLErun_now_for_natural_convection) {
+				//alpharelax = 0.99999;// 999;// 99;
+				//alpharelax = 0.3;
+			}
+		}
+	}
+	
+
+	//alpharelax = 0.99999;
+
+	printf("alpharelax=%e\n", alpharelax);
+	//system("PAUSE");
+
+	
+
 	row_jumper[nnu] = static_cast<indextype>(nna);
 	// initialize matrix entries on host
 	nna = 0;
@@ -751,7 +1093,40 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 			//Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iP; Ah.values[nna] = sl[i].ap / alpharelax;
 			//vcl_compressed_matrix1(sl[i].iP, sl[i].iP) = static_cast<ScalarType> (sl[i].ap / alpharelax);
 			col_buffer[nna] = static_cast<indextype> (sl[i].iP);
-			elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
+			if (/*(bSIMPLErun_now_for_natural_convection==false)&&*/(iVar == TEMP)) {
+				
+				if (bSIMPLErun_now_for_natural_convection) {
+					// Натуральная конвекция.
+					//rhs[i] += (1 - alpharelax) * sl[i].ap * dX0[i] / alpharelax;
+					elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
+					//elements[nna] = static_cast<ScalarType> (sl[i].ap);
+				}
+				else {
+					rhs[i] += (1 - alpharelax) * sl[i].ap * dX0[i] / alpharelax;
+					elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
+				}
+			}
+			else if (/*(inumber_iteration_SIMPLE <= 5)&&*/(iVar == PAM)) 
+			{
+				//if (iVar == PAM) {
+					//rhs[i] += (1 - alpharelax) * sl[i].ap * /*dX0[i]*/deltP_init[i] / alpharelax;
+					//elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
+				//}
+				//else {
+					//rhs[i] += (1 - alpharelax) * sl[i].ap * dX0[i]/*deltP_init[i]*/ / alpharelax;
+					//elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
+					//elements[nna] = static_cast<ScalarType> (sl[i].ap );
+				//}
+				
+				elements[nna] = static_cast<ScalarType> (sl[i].ap);
+				//rhs[i] += (1 - alpharelax) * sl[i].ap * deltP_init[i] / alpharelax;
+				//elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
+				
+			}
+			else
+			{
+				elements[nna] = static_cast<ScalarType> (sl[i].ap/ alpharelax);
+			}
 			(nna)++;
 		}
 		if ((sl[i].iB > -1) && (fabs(sl[i].ab) > nonzeroEPS)) {
@@ -1053,7 +1428,17 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	if (iVar == PAM) {
 		// Поправка давления.
-		amgcl_params_seti(prm, "solver.maxiter", 1000);
+		if (bSIMPLErun_now_for_natural_convection) {
+			if (inumber_iteration_SIMPLE < 3) {
+				amgcl_params_seti(prm, "solver.maxiter", 3);
+			}
+			else {
+				amgcl_params_seti(prm, "solver.maxiter", 30);
+			}
+		}
+		else {
+			amgcl_params_seti(prm, "solver.maxiter", 1000);
+		}
 		//if (inumber_iteration_SIMPLE < 20) {
 		// Не получается подобны образом для amgcl добиться 
 		// сходимости при решении системы уравнений Навье-Стокса
@@ -1076,8 +1461,15 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 				if (bSIMPLErun_now_for_temperature) {
 					// Натуральная конвекция в cfd.
 					//amgcl_params_setf(prm, "solver.tol", 1.0e-3f);
-					amgcl_params_seti(prm, "solver.maxiter", 1000);
-					amgcl_params_setf(prm, "solver.tol", 1.0e-12f);
+					if (bSIMPLErun_now_for_natural_convection) {
+						amgcl_params_seti(prm, "solver.maxiter", 100);
+						amgcl_params_setf(prm, "solver.tol", 1.0e-9f);
+					}
+					else {
+						amgcl_params_seti(prm, "solver.maxiter", 1000);
+						amgcl_params_setf(prm, "solver.tol", 1.0e-12f);
+					}
+					
 				}
 			}
 			else {
@@ -1087,16 +1479,30 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else {
 		
-		// K-Omega SST Turbulence Model
-		if (iVar == TURBULENT_KINETIK_ENERGY) {
-			amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
-		}
-		if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
+		if ((bSIMPLErun_now_for_natural_convection) && ((iVar == VELOCITY_X_COMPONENT) ||
+			(iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT))) {
 			amgcl_params_setf(prm, "solver.tol", 1.0e-20f);
+			if (inumber_iteration_SIMPLE < 10) {
+				amgcl_params_seti(prm, "solver.maxiter", 1);
+			}
+			else {
+				amgcl_params_seti(prm, "solver.maxiter", 10);
+			}
+		}
+		else {
+
+			// K-Omega SST Turbulence Model
+			if (iVar == TURBULENT_KINETIK_ENERGY) {
+				amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
+			}
+			if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
+				amgcl_params_setf(prm, "solver.tol", 1.0e-20f);
+			}
+
+			// Velocity or Spallart Allmares.
+			amgcl_params_seti(prm, "solver.maxiter", 100);
 		}
 
-		// Velocity or Spallart Allmares.
-		amgcl_params_seti(prm, "solver.maxiter", 100);
 	}
 
 	printf("Setup phase start...\n");
@@ -1143,11 +1549,23 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	std::cout << "Iterations: " << cnv.iterations << std::endl
 		<< "Error:      " << cnv.residual << std::endl;
 
+	if (cnv.residual < 0.1) {
+
+		for (integer i = 0; i < nnu; i++) {
+			dX0[i] = x[i];
+		}
+
+		if (iVar == PAM) {
+			for (integer i = 0; i < maxelm + maxbound; i++) {
+				deltP_init[i] = x[i];
+			}
+		}
+	}
+
+
 	amgcl_solver_destroy(solver);
 
-	for (integer i = 0; i < nnu; i++) {
-		dX0[i] = x[i];
-	}
+	
 
 #ifdef _OPENMP 
 	omp_set_num_threads(1); // установка числа потоков

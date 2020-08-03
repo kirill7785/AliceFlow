@@ -229,11 +229,11 @@ class PQ
 {
 private:
 	// ’ранение binary heap.
-	Item *pq=nullptr;
+	Item *pq;
 	// ќбратный доступ по номеру в qp на €чейку в hash.
-	integer *qp=nullptr; // —сылка на хеш-таблицу.
+	integer *qp; // —сылка на хеш-таблицу.
 	// ƒоступ по ключу к полю в pq.
-	integer *hash=nullptr; // ’еш-таблица !!!
+	integer *hash; // ’еш-таблица !!!
 	integer N;
 	integer isize;
 	integer ihash_size;
@@ -241,6 +241,9 @@ private:
 public:
 	PQ(integer maxN, integer max_key_size)
 	{
+		pq=nullptr;
+		qp=nullptr;
+		hash=nullptr;
 		this->isize = maxN;
 		if (this->pq != nullptr) delete[] this->pq;
 		this->pq = new Item[maxN + 1];
@@ -738,7 +741,7 @@ public:
 		node<V>* find_ = find(value);
 		if (find_ != nullptr) {
 #if doubleintprecision == 1
-				decreaseKey(find_, -4294967296);
+				decreaseKey(find_, -big_FIBO_integer_Value);
 #else
 				decreaseKey(find_, -2147483645);
 #endif
@@ -1068,7 +1071,7 @@ void deleteKey(V value) {
 		if (find_ != nullptr) {
 			hash_index[-value] = nullptr;
 #if doubleintprecision == 1
-				decreaseKey(find_, -4294967296);
+				decreaseKey(find_, -big_FIBO_integer_Value);
 #else
 				decreaseKey(find_, -2147483645);
 #endif
@@ -1313,17 +1316,17 @@ template <class V> class FibonacciHeap;
 template <class V> struct node {
 private:
 	// ”казатель на левый сестринский узел.
-	node<V>* prev=nullptr;
+	node<V>* prev;
 	// указатель на правый сестринский узел.
-	node<V>* next=nullptr;
+	node<V>* next;
 	// указатель на один из дочерних узлов.
-	node<V>* child=nullptr;
+	node<V>* child;
 	// указатель на родительский узел.
-	node<V>* parent=nullptr;
-	V value=0;
+	node<V>* parent;
+	V value;
 
 	// количество дочерних узлов.
-	int degree=0;
+	int degree;
 
 
 	//логическое значение, которое указывает,
@@ -1331,7 +1334,31 @@ private:
 	//начина€ с момента, когда  x стал дочерним
 	//узлом какого-то другого узла.
 	//FIBONNACCI_HEAP
-	bool marked = false;
+	bool marked;
+
+	node<V>() {
+		// ”казатель на левый сестринский узел.
+		prev=nullptr;
+		// указатель на правый сестринский узел.
+		next=nullptr;
+		// указатель на один из дочерних узлов.
+		child=nullptr;
+		// указатель на родительский узел.
+		parent=nullptr;
+		value=0;
+
+		// количество дочерних узлов.
+		degree=0;
+
+
+		//логическое значение, которое указывает,
+		//были ли потери узлом x дочерних узлов,
+		//начина€ с момента, когда  x стал дочерним
+		//узлом какого-то другого узла.
+		//FIBONNACCI_HEAP
+		marked = false;
+	}
+
 public:
 	friend class FibonacciHeap<V>;
 	node<V>* getPrev() { return prev; }
@@ -1346,15 +1373,20 @@ public:
 };
 
 template <class V> struct FiboHashNode {
-	node<V>* link=nullptr;
-	integer count_neighbour=0;
+	node<V>* link;
+	integer count_neighbour;
+
+	FiboHashNode() {
+		link=nullptr;
+		count_neighbour=0;
+	}
 };
 
 template <class V> class FibonacciHeap {
 protected:
-	node<V>* heap=nullptr;
-	FiboHashNode<V>* hash_index=nullptr; // ’еш-таблица !!!
-	integer isize;
+	node<V>* heap; // указатель на минимальный элемент в ‘ибоначчиевой пирамиде.
+	FiboHashNode<V>* hash_index; // ’еш-таблица !!!
+	integer isize; // рзмер хеш таблицы.
 public:
 
 	void put_out_a_link(integer i) {
@@ -1395,6 +1427,7 @@ public:
 	void Clear() {
 		if (heap) {
 			if (hash_index != nullptr) {
+				// ѕам€ть из под хеш таблицы не освобождаетс€.
 				for (integer i = 0; i < isize; i++) {
 					put_out_a_link(i);
 				}
@@ -1406,6 +1439,7 @@ public:
 	// ѕрисваиваем размеру хеш-таблицы новое значение.
     // ѕам€ть не перевыдел€ем.
 	void UpdateSize(integer isize_loc) {
+		// ќбъЄм пам€ти выделенный под хеш таблицу остаетс€ неизменным.
 		isize = isize_loc;
 	}
 
@@ -1441,8 +1475,8 @@ public:
 		node<V>* ret = _singleton(value);
 		heap = _merge(heap, ret);
 
-		integer i = ((-value) % (isize));
-		integer count_neighbour = ((-value) / (isize));
+		integer i = ((abs(value)) % (isize));
+		integer count_neighbour = ((abs(value)) / (isize));
 		hash_index[i].link = ret;
 		hash_index[i].count_neighbour = count_neighbour;
 
@@ -1468,10 +1502,12 @@ public:
 
 	// ”даление минимального элемента из кучи.
 	V removeMinimum() {
-		node<V>* old = heap;
+		node<V>* old = heap;	
 		integer i= -getMinimum();
-		i=((i)% (isize));
-		put_out_a_link(i);
+		if (abs(i) != big_FIBO_integer_Value) {
+			i = ((abs(i)) % (isize));
+			put_out_a_link(i);
+		}
 		heap = _removeMinimum(heap);
 		V ret = old->value;
 		delete old;
@@ -1492,8 +1528,7 @@ public:
         // параметры составного ключа (i, count_neighbour).
         // i Ц номер узла сетки.  
         // count_neighbour Ц число соседних узлов.
-		integer i = ((-value) % (isize));
-		integer count_neighbour = ((-value) / (isize));
+		integer i = ((abs(value)) % (isize));
 
 		if (hash_index != nullptr) {
 			node<V>* find_ = hash_index[i].link;
@@ -1508,11 +1543,15 @@ public:
                 // ”дал€ем минимальный элемент в куче,
                 // тем самым удал€€ запрашиваемый при вызове 
                 // функции deleteKey узел.
+				//if (isign == -1)
+				{
 #if doubleintprecision == 1
-				decreaseKey(find_, -4294967296);
+					decreaseKey(find_, -big_FIBO_integer_Value);
 #else
-				decreaseKey(find_, -2147483645);
+					decreaseKey(find_, -2147483645);
 #endif
+				}
+				
 				removeMinimum();
 			}
 		}
@@ -1536,7 +1575,7 @@ public:
                 // тем самым удал€€ запрашиваемый при вызове 
                 // функции deleteKey узел.
 #if doubleintprecision == 1
-				decreaseKey(find_, -4294967296);
+				decreaseKey(find_, -big_FIBO_integer_Value);
 #else
 				decreaseKey(find_, -2147483645);
 #endif
@@ -1567,8 +1606,9 @@ public:
         // параметры составного ключа (i, count_neighbour).
         // i Ц номер узла сетки.  
         // count_neighbour Ц число соседних узлов.
-		integer i = ((-value_search) % (isize));
-		integer count_neighbour = ((-value_search) / (isize));
+		
+		integer i = ((abs(value_search)) % (isize));
+		
 
 		// ≈сли пирамида пуста то просто добавление ключа.
 		if (hash_index == nullptr) {
@@ -1591,8 +1631,9 @@ public:
                     // параметры составного ключа (i, count_neighbour).
                     // i Ц номер узла сетки.  
                     // count_neighbour Ц число соседних узлов.
-					i = ((-value_add) % (isize));
-					count_neighbour = ((-value_add) / (isize));
+					
+					i = ((abs(value_add)) % (isize));
+					integer count_neighbour = ((abs(value_add)) / (isize));
 
 					hash_index[i].link = find_;
 					hash_index[i].count_neighbour = count_neighbour;
@@ -1955,4 +1996,8 @@ private:
 		} while (n != heap);
 		return nullptr;
 	}
+
+	
+
+
 };

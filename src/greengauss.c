@@ -34,20 +34,20 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -1133,7 +1133,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iE > -1) {
 			if (!bE) {
 				if (bRCh) {
-					fe = mf[ESIDE] / (rhoe*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу 1983г.
+					fe = mf[E_SIDE] / (rhoe*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу 1983г.
 				}
 				else {
 					fe = feplus*potent[VXCOR][iE] + (1.0 - feplus)*potent[VXCOR][iP];
@@ -1144,7 +1144,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iW > -1) {
 			if (!bW) {
 				if (bRCh) {
-					fw = mf[WSIDE] / (rhow*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу 1983г.
+					fw = mf[W_SIDE] / (rhow*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу 1983г.
 				}
 				else {
 					fw = fwplus*potent[VXCOR][iW] + (1.0 - fwplus)*potent[VXCOR][iP];
@@ -1156,7 +1156,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iE2 > -1) {
 			if (!bE2) {
 				if (bRCh) {
-					fe2 = mf[ESIDE] / (rhoe2*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					fe2 = mf[E_SIDE] / (rhoe2*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
 				}
 				else {
 					fe2 = feplus2*potent[VXCOR][iE2] + (1.0 - feplus2)*potent[VXCOR][iP];
@@ -1167,7 +1167,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iW2 > -1) {
 			if (!bW2) {
 				if (bRCh) {
-					fw2 = mf[WSIDE] / (rhow2*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					fw2 = mf[W_SIDE] / (rhow2*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
 				}
 				else {
 					fw2 = fwplus2*potent[VXCOR][iW2] + (1.0 - fwplus2)*potent[VXCOR][iP];
@@ -1179,7 +1179,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iE3 > -1) {
 			if (!bE3) {
 				if (bRCh) {
-					fe3 = mf[ESIDE] / (rhoe3*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					fe3 = mf[E_SIDE] / (rhoe3*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
 				}
 				else {
 					fe3 = feplus3*potent[VXCOR][iE3] + (1.0 - feplus3)*potent[VXCOR][iP];
@@ -1190,7 +1190,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iW3 > -1) {
 			if (!bW3) {
 				if (bRCh) {
-					fw3 = mf[WSIDE] / (rhow3*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					fw3 = mf[W_SIDE] / (rhow3*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
 				}
 				else {
 					fw3 = fwplus3*potent[VXCOR][iW3] + (1.0 - fwplus3)*potent[VXCOR][iP];
@@ -1202,7 +1202,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iE4 > -1) {
 			if (!bE4) {
 				if (bRCh) {
-					fe4 = mf[ESIDE] / (rhoe4*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+					fe4 = mf[E_SIDE] / (rhoe4*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
 				}
 				else {
 					fe4 = feplus4*potent[VXCOR][iE4] + (1.0 - feplus4)*potent[VXCOR][iP];
@@ -1213,7 +1213,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iW4 > -1) {
 			if (!bW4) {
 				if (bRCh) {
-					fw4 = mf[WSIDE] / (rhow4*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+					fw4 = mf[W_SIDE] / (rhow4*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
 				}
 				else {
 					fw4 = fwplus4*potent[VXCOR][iW4] + (1.0 - fwplus4)*potent[VXCOR][iP];
@@ -1316,7 +1316,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iN > -1) {
 			if (!bN) {
 				if (bRCh) {
-					fn = mf[NSIDE] / (rhon*dx*dz);
+					fn = mf[N_SIDE] / (rhon*dx*dz);
 				}
 				else {
 					fn = fnplus*potent[VYCOR][iN] + (1.0 - fnplus)*potent[VYCOR][iP];
@@ -1327,7 +1327,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iS > -1) {
 			if (!bS) {
 				if (bRCh) {
-					fs = mf[SSIDE] / (rhos*dx*dz);
+					fs = mf[S_SIDE] / (rhos*dx*dz);
 				}
 				else {
 					fs = fsplus*potent[VYCOR][iS] + (1.0 - fsplus)*potent[VYCOR][iP];
@@ -1338,7 +1338,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iN2 > -1) {
 			if (!bN2) {
 				if (bRCh) {
-					fn2 = mf[NSIDE] / (rhon2*dx*dz);
+					fn2 = mf[N_SIDE] / (rhon2*dx*dz);
 				}
 				else {
 					fn2 = fnplus2*potent[VYCOR][iN2] + (1.0 - fnplus2)*potent[VYCOR][iP];
@@ -1349,7 +1349,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iS2 > -1) {
 			if (!bS2) {
 				if (bRCh) {
-					fs2 = mf[SSIDE] / (rhos2*dx*dz);
+					fs2 = mf[S_SIDE] / (rhos2*dx*dz);
 				}
 				else {
 					fs2 = fsplus2*potent[VYCOR][iS2] + (1.0 - fsplus2)*potent[VYCOR][iP];
@@ -1360,7 +1360,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iN3 > -1) {
 			if (!bN3) {
 				if (bRCh) {
-					fn3 = mf[NSIDE] / (rhon3*dx*dz);
+					fn3 = mf[N_SIDE] / (rhon3*dx*dz);
 				}
 				else {
 					fn3 = fnplus3*potent[VYCOR][iN3] + (1.0 - fnplus3)*potent[VYCOR][iP];
@@ -1371,7 +1371,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iS3 > -1) {
 			if (!bS3) {
 				if (bRCh) {
-					fs3 = mf[SSIDE] / (rhos3*dx*dz);
+					fs3 = mf[S_SIDE] / (rhos3*dx*dz);
 				}
 				else {
 					fs3 = fsplus3*potent[VYCOR][iS3] + (1.0 - fsplus3)*potent[VYCOR][iP];
@@ -1382,7 +1382,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iN4 > -1) {
 			if (!bN4) {
 				if (bRCh) {
-					fn4 = mf[NSIDE] / (rhon4*dx*dz);
+					fn4 = mf[N_SIDE] / (rhon4*dx*dz);
 				}
 				else {
 					fn4 = fnplus4*potent[VYCOR][iN4] + (1.0 - fnplus4)*potent[VYCOR][iP];
@@ -1393,7 +1393,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iS4 > -1) {
 			if (!bS4) {
 				if (bRCh) {
-					fs4 = mf[SSIDE] / (rhos4*dx*dz);
+					fs4 = mf[S_SIDE] / (rhos4*dx*dz);
 				}
 				else {
 					fs4 = fsplus4*potent[VYCOR][iS4] + (1.0 - fsplus4)*potent[VYCOR][iP];
@@ -1492,7 +1492,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iT > -1) {
 			if (!bT) {
 				if (bRCh) {
-					ft = mf[TSIDE] / (rhot*dx*dy);
+					ft = mf[T_SIDE] / (rhot*dx*dy);
 				}
 				else {
 					ft = ftplus*potent[VZCOR][iT] + (1.0 - ftplus)*potent[VZCOR][iP];
@@ -1503,7 +1503,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iB > -1) {
 			if (!bB) {
 				if (bRCh) {
-					fb = mf[BSIDE] / (rhob*dx*dy);
+					fb = mf[B_SIDE] / (rhob*dx*dy);
 				}
 				else {
 					fb = fbplus*potent[VZCOR][iB] + (1.0 - fbplus)*potent[VZCOR][iP];
@@ -1514,7 +1514,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iT2 > -1) {
 			if (!bT2) {
 				if (bRCh) {
-					ft2 = mf[TSIDE] / (rhot2*dx*dy);
+					ft2 = mf[T_SIDE] / (rhot2*dx*dy);
 				}
 				else {
 					ft2 = ftplus2*potent[VZCOR][iT2] + (1.0 - ftplus2)*potent[VZCOR][iP];
@@ -1525,7 +1525,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iB2 > -1) {
 			if (!bB2) {
 				if (bRCh) {
-					fb2 = mf[BSIDE] / (rhob2*dx*dy);
+					fb2 = mf[B_SIDE] / (rhob2*dx*dy);
 				}
 				else {
 					fb2 = fbplus2*potent[VZCOR][iB2] + (1.0 - fbplus2)*potent[VZCOR][iP];
@@ -1536,7 +1536,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iT3 > -1) {
 			if (!bT3) {
 				if (bRCh) {
-					ft3 = mf[TSIDE] / (rhot3*dx*dy);
+					ft3 = mf[T_SIDE] / (rhot3*dx*dy);
 				}
 				else {
 					ft3 = ftplus3*potent[VZCOR][iT3] + (1.0 - ftplus3)*potent[VZCOR][iP];
@@ -1547,7 +1547,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iB3 > -1) {
 			if (!bB3) {
 				if (bRCh) {
-					fb3 = mf[BSIDE] / (rhob3*dx*dy);
+					fb3 = mf[B_SIDE] / (rhob3*dx*dy);
 				}
 				else {
 					fb3 = fbplus3*potent[VZCOR][iB3] + (1.0 - fbplus3)*potent[VZCOR][iP];
@@ -1558,7 +1558,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iT4 > -1) {
 			if (!bT4) {
 				if (bRCh) {
-					ft4 = mf[TSIDE] / (rhot4*dx*dy);
+					ft4 = mf[T_SIDE] / (rhot4*dx*dy);
 				}
 				else {
 					ft4 = ftplus4*potent[VZCOR][iT4] + (1.0 - ftplus4)*potent[VZCOR][iP];
@@ -1569,7 +1569,7 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iB4 > -1) {
 			if (!bB4) {
 				if (bRCh) {
-					fb4 = mf[BSIDE] / (rhob4*dx*dy);
+					fb4 = mf[B_SIDE] / (rhob4*dx*dy);
 				}
 				else {
 					fb4 = fbplus4*potent[VZCOR][iB4] + (1.0 - fbplus4)*potent[VZCOR][iP];
@@ -2585,20 +2585,20 @@ void green_gauss_SpallartAllmares(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -4293,20 +4293,20 @@ void green_gauss_turbulent_kinetik_energy_MenterSST(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -5995,20 +5995,20 @@ void green_gauss_turbulent_kinetik_energy_standart_k_epsilon(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -7697,20 +7697,20 @@ void green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(integer i
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -9401,20 +9401,20 @@ void green_gauss_specific_dissipation_rate_omega_MenterSST(integer iP,
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -11092,20 +11092,20 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -13923,20 +13923,20 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; 
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -15233,12 +15233,12 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for
 	   // iP - номер внутреннего контрольного объёма
 	   // iP изменяется от 0 до maxelm-1.
 	   integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	   iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	   iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	   // минимаксное ограничение против появления ложных максимумов.
-	   minmaxlimitergrad[VX][iP]=fmax(fmin(fmax(potent[GRADXPAM][iE],potent[GRADXPAM][iW]),potent[GRADXPAM][iP]),fmin(potent[GRADXPAM][iE],potent[GRADXPAM][iW]));
-	   minmaxlimitergrad[VY][iP]=fmax(fmin(fmax(potent[GRADYPAM][iN],potent[GRADYPAM][iS]),potent[GRADYPAM][iP]),fmin(potent[GRADYPAM][iN],potent[GRADYPAM][iS]));
-	   minmaxlimitergrad[VZ][iP]=fmax(fmin(fmax(potent[GRADZPAM][iT],potent[GRADZPAM][iB]),potent[GRADZPAM][iP]),fmin(potent[GRADZPAM][iT],potent[GRADZPAM][iB]));
+	   minmaxlimitergrad[VELOCITY_X_COMPONENT][iP]=fmax(fmin(fmax(potent[GRADXPAM][iE],potent[GRADXPAM][iW]),potent[GRADXPAM][iP]),fmin(potent[GRADXPAM][iE],potent[GRADXPAM][iW]));
+	   minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP]=fmax(fmin(fmax(potent[GRADYPAM][iN],potent[GRADYPAM][iS]),potent[GRADYPAM][iP]),fmin(potent[GRADYPAM][iN],potent[GRADYPAM][iS]));
+	   minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP]=fmax(fmin(fmax(potent[GRADZPAM][iT],potent[GRADZPAM][iB]),potent[GRADZPAM][iP]),fmin(potent[GRADZPAM][iT],potent[GRADZPAM][iB]));
 	}
 
 	for (integer iP=0; iP<maxelm; iP++) {
@@ -15246,7 +15246,7 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for
 		// iP - номер внутреннего контрольного объёма
 	    // iP изменяется от 0 до maxelm-1.
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 		// Если с одной из сторон стоит граница расчётной области
 	    // то соответствующая переменная равна true
@@ -15263,47 +15263,47 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &neighbors_for
 		// градиенты в граничных узлах восстанавливаются простым снесением из ближайшего внутреннего узла.
 
 		if (bE) {
-			minmaxlimitergrad[VX][iE]=minmaxlimitergrad[VX][iP];
-			minmaxlimitergrad[VY][iE]=minmaxlimitergrad[VY][iP];
-			minmaxlimitergrad[VZ][iE]=minmaxlimitergrad[VZ][iP];
+			minmaxlimitergrad[VELOCITY_X_COMPONENT][iE]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Y_COMPONENT][iE]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Z_COMPONENT][iE]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 		}
 
 		if (bW) {
-			minmaxlimitergrad[VX][iW]=minmaxlimitergrad[VX][iP];
-			minmaxlimitergrad[VY][iW]=minmaxlimitergrad[VY][iP];
-			minmaxlimitergrad[VZ][iW]=minmaxlimitergrad[VZ][iP];
+			minmaxlimitergrad[VELOCITY_X_COMPONENT][iW]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Y_COMPONENT][iW]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Z_COMPONENT][iW]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 		}
 
 		if (bN) {
-			minmaxlimitergrad[VX][iN]=minmaxlimitergrad[VX][iP];
-			minmaxlimitergrad[VY][iN]=minmaxlimitergrad[VY][iP];
-			minmaxlimitergrad[VZ][iN]=minmaxlimitergrad[VZ][iP];
+			minmaxlimitergrad[VELOCITY_X_COMPONENT][iN]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Y_COMPONENT][iN]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Z_COMPONENT][iN]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 		}
 
 		if (bS) {
-			minmaxlimitergrad[VX][iS]=minmaxlimitergrad[VX][iP];
-			minmaxlimitergrad[VY][iS]=minmaxlimitergrad[VY][iP];
-			minmaxlimitergrad[VZ][iS]=minmaxlimitergrad[VZ][iP];
+			minmaxlimitergrad[VELOCITY_X_COMPONENT][iS]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Y_COMPONENT][iS]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Z_COMPONENT][iS]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 		}
 
 		if (bT) {
-			minmaxlimitergrad[VX][iT]=minmaxlimitergrad[VX][iP];
-			minmaxlimitergrad[VY][iT]=minmaxlimitergrad[VY][iP];
-			minmaxlimitergrad[VZ][iT]=minmaxlimitergrad[VZ][iP];
+			minmaxlimitergrad[VELOCITY_X_COMPONENT][iT]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Y_COMPONENT][iT]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Z_COMPONENT][iT]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 		}
 
 		if (bB) {
-			minmaxlimitergrad[VX][iB]=minmaxlimitergrad[VX][iP];
-			minmaxlimitergrad[VY][iB]=minmaxlimitergrad[VY][iP];
-			minmaxlimitergrad[VZ][iB]=minmaxlimitergrad[VZ][iP];
+			minmaxlimitergrad[VELOCITY_X_COMPONENT][iB]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Y_COMPONENT][iB]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+			minmaxlimitergrad[VELOCITY_Z_COMPONENT][iB]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 		}
 	}
 
 	// обратное копирование.
 	for (integer iP=0; iP<maxelm+maxbound; iP++) {
-		potent[GRADXPAM][iP]=minmaxlimitergrad[VX][iP];
-		potent[GRADYPAM][iP]=minmaxlimitergrad[VY][iP];
-		potent[GRADZPAM][iP]=minmaxlimitergrad[VZ][iP];
+		potent[GRADXPAM][iP]=minmaxlimitergrad[VELOCITY_X_COMPONENT][iP];
+		potent[GRADYPAM][iP]=minmaxlimitergrad[VELOCITY_Y_COMPONENT][iP];
+		potent[GRADZPAM][iP]=minmaxlimitergrad[VELOCITY_Z_COMPONENT][iP];
 	}
 
 	// Освобождение памяти.
@@ -15336,20 +15336,20 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -17673,7 +17673,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -17703,18 +17703,18 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		doublereal VYP, VYW, VYE, VYN, VYS, VYT, VYB;
 		doublereal VZP, VZW, VZE, VZN, VZS, VZT, VZB;
 
-		VXP=potent[VX][iP]; VYP=potent[VY][iP]; VZP=potent[VZ][iP]; // значения скоростей в центральном контрольном объёме.
-		VXW=potent[VX][iW]; VYW=potent[VY][iW]; VZW=potent[VZ][iW];
-		VXE=potent[VX][iE]; VYE=potent[VY][iE]; VZE=potent[VZ][iE];
-		VXS=potent[VX][iS]; VYS=potent[VY][iS]; VZS=potent[VZ][iS]; 
-		VXN=potent[VX][iN]; VYN=potent[VY][iN]; VZN=potent[VZ][iN]; 
-		VXB=potent[VX][iB]; VYB=potent[VY][iB]; VZB=potent[VZ][iB];  
-		VXT=potent[VX][iT]; VYT=potent[VY][iT]; VZT=potent[VZ][iT];
+		VXP=potent[VELOCITY_X_COMPONENT][iP]; VYP=potent[VELOCITY_Y_COMPONENT][iP]; VZP=potent[VELOCITY_Z_COMPONENT][iP]; // значения скоростей в центральном контрольном объёме.
+		VXW=potent[VELOCITY_X_COMPONENT][iW]; VYW=potent[VELOCITY_Y_COMPONENT][iW]; VZW=potent[VELOCITY_Z_COMPONENT][iW];
+		VXE=potent[VELOCITY_X_COMPONENT][iE]; VYE=potent[VELOCITY_Y_COMPONENT][iE]; VZE=potent[VELOCITY_Z_COMPONENT][iE];
+		VXS=potent[VELOCITY_X_COMPONENT][iS]; VYS=potent[VELOCITY_Y_COMPONENT][iS]; VZS=potent[VELOCITY_Z_COMPONENT][iS]; 
+		VXN=potent[VELOCITY_X_COMPONENT][iN]; VYN=potent[VELOCITY_Y_COMPONENT][iN]; VZN=potent[VELOCITY_Z_COMPONENT][iN]; 
+		VXB=potent[VELOCITY_X_COMPONENT][iB]; VYB=potent[VELOCITY_Y_COMPONENT][iB]; VZB=potent[VELOCITY_Z_COMPONENT][iB];  
+		VXT=potent[VELOCITY_X_COMPONENT][iT]; VYT=potent[VELOCITY_Y_COMPONENT][iT]; VZT=potent[VELOCITY_Z_COMPONENT][iT];
 
 		if (!bW) {
 			TOCHKA pp, pb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iW, nvtx, pa, pb,WSIDE);
+		    center_cord3D(iW, nvtx, pa, pb,W_SIDE);
 		    hxminus=fabs(pp.x-pb.x);		    
 	    } else {
 		    // узел W граничный
@@ -17723,7 +17723,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	    if (!bE) {
 		    TOCHKA pp, pb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iE, nvtx, pa, pb,ESIDE);
+		    center_cord3D(iE, nvtx, pa, pb,E_SIDE);
 		    hxplus=fabs(pb.x-pp.x);		
 	    } else {
             // узел E граничный
@@ -17732,7 +17732,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	    if (!bS) {
 		    TOCHKA pp, pb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iS, nvtx, pa, pb,SSIDE);
+		    center_cord3D(iS, nvtx, pa, pb,S_SIDE);
 		    hyminus=fabs(pp.y-pb.y);
 	    } else {
 		    // узел S граничный
@@ -17741,7 +17741,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	    if (!bN) {
 		    TOCHKA pp, pb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iN, nvtx, pa, pb,NSIDE);
+		    center_cord3D(iN, nvtx, pa, pb,N_SIDE);
 		    hyplus=fabs(pb.y-pp.y);		
 	    } else {
 		    // узел N граничный
@@ -17750,7 +17750,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (!bB) {
 		    TOCHKA pp, pb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iB, nvtx, pa, pb,BSIDE);
+		    center_cord3D(iB, nvtx, pa, pb,B_SIDE);
 		    hzminus=fabs(pp.z-pb.z);
 		} else {
 		    // узел B граничный
@@ -17759,7 +17759,7 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	    if (!bT) { 
 		    TOCHKA pp, pb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iT, nvtx, pa, pb,TSIDE);
+		    center_cord3D(iT, nvtx, pa, pb,T_SIDE);
 		    hzplus=fabs(pb.z-pp.z);
 	    } else {
 		    // узел T граничный
@@ -17790,20 +17790,20 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 			TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iW, nvtx, pa, pb,WSIDE);
-			center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
+		    center_cord3D(iW, nvtx, pa, pb,W_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb,WW_SIDE);
 					
-			potent[GRADXVX][iE] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADXVX][iW], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVX][iE] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADYVX][iW], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVX][iE] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADZVX][iW], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVX][iE] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADXVX][iW], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVX][iE] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADYVX][iW], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVX][iE] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADZVX][iW], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 
-			potent[GRADXVY][iE] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADXVY][iW], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVY][iE] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADYVY][iW], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVY][iE] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADZVY][iW], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVY][iE] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADXVY][iW], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVY][iE] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADYVY][iW], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVY][iE] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADZVY][iW], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 
-			potent[GRADXVZ][iE] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADXVZ][iW], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADYVZ][iE] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADYVZ][iW], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
-			potent[GRADZVZ][iE] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[GRADZVZ][iW], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADXVZ][iE] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADXVZ][iW], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADYVZ][iE] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADYVZ][iW], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+			potent[GRADZVZ][iE] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[GRADZVZ][iW], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 		}
 
 		if (bW) {
@@ -17812,20 +17812,20 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 			TOCHKA pp, pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iE, nvtx, pa, pb,ESIDE);
-			center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
+		    center_cord3D(iE, nvtx, pa, pb,E_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb,EE_SIDE);
 
-			potent[GRADXVX][iW] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADXVX][iE], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVX][iW] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADYVX][iE], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVX][iW] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADZVX][iE], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVX][iW] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADXVX][iE], potent[GRADXVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVX][iW] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADYVX][iE], potent[GRADYVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVX][iW] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADZVX][iE], potent[GRADZVX][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 
-			potent[GRADXVY][iW] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADXVY][iE], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVY][iW] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADYVY][iE], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVY][iW] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADZVY][iE], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVY][iW] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADXVY][iE], potent[GRADXVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVY][iW] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADYVY][iE], potent[GRADYVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVY][iW] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADZVY][iE], potent[GRADZVY][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 
-			potent[GRADXVZ][iW] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADXVZ][iE], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADYVZ][iW] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADYVZ][iE], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
-			potent[GRADZVZ][iW] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[GRADZVZ][iE], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADXVZ][iW] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADXVZ][iE], potent[GRADXVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADYVZ][iW] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADYVZ][iE], potent[GRADYVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+			potent[GRADZVZ][iW] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[GRADZVZ][iE], potent[GRADZVZ][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 		}
 
 		if (bN) {
@@ -17834,20 +17834,20 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iS, nvtx, pa, pb,SSIDE);
-			center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
+		    center_cord3D(iS, nvtx, pa, pb,S_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb,SS_SIDE);
 
-			potent[GRADXVX][iN] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADXVX][iS], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVX][iN] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADYVX][iS], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVX][iN] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADZVX][iS], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVX][iN] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADXVX][iS], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVX][iN] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADYVX][iS], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVX][iN] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADZVX][iS], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 
-			potent[GRADXVY][iN] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADXVY][iS], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVY][iN] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADYVY][iS], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVY][iN] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADZVY][iS], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVY][iN] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADXVY][iS], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVY][iN] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADYVY][iS], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVY][iN] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADZVY][iS], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 
-			potent[GRADXVZ][iN] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADXVZ][iS], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADYVZ][iN] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADYVZ][iS], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
-			potent[GRADZVZ][iN] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[GRADZVZ][iS], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADXVZ][iN] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADXVZ][iS], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADYVZ][iN] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADYVZ][iS], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+			potent[GRADZVZ][iN] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[GRADZVZ][iS], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 		}
 
 		if (bS) {
@@ -17856,20 +17856,20 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp, 100);
-		    center_cord3D(iN, nvtx, pa, pb, NSIDE);
-			center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+		    center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-			potent[GRADXVX][iS] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADXVX][iN], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVX][iS] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADYVX][iN], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVX][iS] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADZVX][iN], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVX][iS] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADXVX][iN], potent[GRADXVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVX][iS] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADYVX][iN], potent[GRADYVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVX][iS] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADZVX][iN], potent[GRADZVX][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
-			potent[GRADXVY][iS] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADXVY][iN], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVY][iS] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADYVY][iN], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVY][iS] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADZVY][iN], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVY][iS] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADXVY][iN], potent[GRADXVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVY][iS] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADYVY][iN], potent[GRADYVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVY][iS] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADZVY][iN], potent[GRADZVY][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
-			potent[GRADXVZ][iS] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADXVZ][iN], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADYVZ][iS] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADYVZ][iN], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
-			potent[GRADZVZ][iS] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[GRADZVZ][iN], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADXVZ][iS] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADXVZ][iN], potent[GRADXVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADYVZ][iS] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADYVZ][iN], potent[GRADYVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+			potent[GRADZVZ][iS] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[GRADZVZ][iN], potent[GRADZVZ][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 		}
 
 		if (bT) {
@@ -17878,20 +17878,20 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iB, nvtx, pa, pb,BSIDE);
-			center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
+		    center_cord3D(iB, nvtx, pa, pb,B_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb,BB_SIDE);
 					
-			potent[GRADXVX][iT] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADXVX][iB], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVX][iT] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADYVX][iB], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVX][iT] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADZVX][iB], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVX][iT] = my_quadratic_interpolation('+', potent[GRADXVX][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADXVX][iB], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVX][iT] = my_quadratic_interpolation('+', potent[GRADYVX][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADYVX][iB], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVX][iT] = my_quadratic_interpolation('+', potent[GRADZVX][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADZVX][iB], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 
-			potent[GRADXVY][iT] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADXVY][iB], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVY][iT] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADYVY][iB], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVY][iT] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADZVY][iB], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVY][iT] = my_quadratic_interpolation('+', potent[GRADXVY][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADXVY][iB], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVY][iT] = my_quadratic_interpolation('+', potent[GRADYVY][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADYVY][iB], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVY][iT] = my_quadratic_interpolation('+', potent[GRADZVY][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADZVY][iB], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 
-			potent[GRADXVZ][iT] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADXVZ][iB], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADYVZ][iT] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADYVZ][iB], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
-			potent[GRADZVZ][iT] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[GRADZVZ][iB], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADXVZ][iT] = my_quadratic_interpolation('+', potent[GRADXVZ][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADXVZ][iB], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADYVZ][iT] = my_quadratic_interpolation('+', potent[GRADYVZ][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADYVZ][iB], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+			potent[GRADZVZ][iT] = my_quadratic_interpolation('+', potent[GRADZVZ][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[GRADZVZ][iB], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 		}
 
 		if (bB) {
@@ -17900,21 +17900,21 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
             TOCHKA pp,pb,pbb;
 		    center_cord3D(iP, nvtx, pa, pp,100);
-		    center_cord3D(iT, nvtx, pa, pb,TSIDE);
-			center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+		    center_cord3D(iT, nvtx, pa, pb,T_SIDE);
+			center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
 
-			potent[GRADXVX][iB] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADXVX][iT], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVX][iB] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADYVX][iT], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVX][iB] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADZVX][iT], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVX][iB] = my_quadratic_interpolation('-', potent[GRADXVX][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADXVX][iT], potent[GRADXVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVX][iB] = my_quadratic_interpolation('-', potent[GRADYVX][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADYVX][iT], potent[GRADYVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVX][iB] = my_quadratic_interpolation('-', potent[GRADZVX][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADZVX][iT], potent[GRADZVX][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 
-			potent[GRADXVY][iB] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADXVY][iT], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVY][iB] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADYVY][iT], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVY][iB] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADZVY][iT], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVY][iB] = my_quadratic_interpolation('-', potent[GRADXVY][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADXVY][iT], potent[GRADXVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVY][iB] = my_quadratic_interpolation('-', potent[GRADYVY][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADYVY][iT], potent[GRADYVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVY][iB] = my_quadratic_interpolation('-', potent[GRADZVY][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADZVY][iT], potent[GRADZVY][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 
-			potent[GRADXVZ][iB] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADXVZ][iT], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADYVZ][iB] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADYVZ][iT], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
-			potent[GRADZVZ][iB] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[GRADZVZ][iT], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADXVZ][iB] = my_quadratic_interpolation('-', potent[GRADXVZ][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADXVZ][iT], potent[GRADXVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADYVZ][iB] = my_quadratic_interpolation('-', potent[GRADYVZ][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADYVZ][iT], potent[GRADYVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+			potent[GRADZVZ][iB] = my_quadratic_interpolation('-', potent[GRADZVZ][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[GRADZVZ][iT], potent[GRADZVZ][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 		}
 	}
 

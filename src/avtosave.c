@@ -65,19 +65,19 @@ void avtosave(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber_iter
 		for (j=0; j<flow_interior; j++) {
 			// VX
 			for (i=0; i<(f[j].maxelm+f[j].maxbound); i++) {
-                fprintf(fp_avtosave,"%+.16f ",f[j].potent[VX][i]);
+                fprintf(fp_avtosave,"%+.16f ",f[j].potent[VELOCITY_X_COMPONENT][i]);
 		        if ((i+1)%20==0) fprintf(fp_avtosave,"\n");
 		    }
 		    if ((f[j].maxelm+f[j].maxbound)%20 != 0) fprintf(fp_avtosave,"\n");
 			// VY
             for (i=0; i<(f[j].maxelm+f[j].maxbound); i++) {
-                fprintf(fp_avtosave,"%+.16f ",f[j].potent[VY][i]);
+                fprintf(fp_avtosave,"%+.16f ",f[j].potent[VELOCITY_Y_COMPONENT][i]);
 		        if ((i+1)%20==0) fprintf(fp_avtosave,"\n");
 		    }
 		    if ((f[j].maxelm+f[j].maxbound)%20 != 0) fprintf(fp_avtosave,"\n");
 			// VZ
 			for (i=0; i<(f[j].maxelm+f[j].maxbound); i++) {
-                fprintf(fp_avtosave,"%+.16f ",f[j].potent[VZ][i]);
+                fprintf(fp_avtosave,"%+.16f ",f[j].potent[VELOCITY_Z_COMPONENT][i]);
 		        if ((i+1)%20==0) fprintf(fp_avtosave,"\n");
 		    }
 		    if ((f[j].maxelm+f[j].maxbound)%20 != 0) fprintf(fp_avtosave,"\n");
@@ -263,7 +263,7 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
 #endif
 
 					
-					f[i].potent[VX][j]=fin;
+					f[i].potent[VELOCITY_X_COMPONENT][j]=fin;
 					f[i].potent[VXCOR][j]=fin;
 				}
 				// VY
@@ -277,7 +277,7 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
 #endif
 
 					
-					f[i].potent[VY][j]=fin;
+					f[i].potent[VELOCITY_Y_COMPONENT][j]=fin;
 					f[i].potent[VYCOR][j]=fin;
 				}
 				// VZ
@@ -291,7 +291,7 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
 #endif
 
 					
-					f[i].potent[VZ][j]=fin;
+					f[i].potent[VELOCITY_Z_COMPONENT][j]=fin;
 					f[i].potent[VZCOR][j]=fin;
 				}
 				// PRESSURE

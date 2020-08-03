@@ -4755,9 +4755,15 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 
 
 typedef struct TDATA_BASE_GMRES {
-	doublereal* val = nullptr;
-	integer* col_ind = nullptr;
-	integer* row_ptr = nullptr;
+	doublereal* val;
+	integer* col_ind;
+	integer* row_ptr;
+
+	TDATA_BASE_GMRES() {
+		val = nullptr;
+		col_ind = nullptr;
+		row_ptr = nullptr;
+	}
 } DATA_BASE_GMRES;
 
 DATA_BASE_GMRES* dbgmres_smoother = nullptr;
@@ -6633,7 +6639,7 @@ template <typename doublerealT>
 void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_flow_logic, integer* &row_ptr_start,
 	integer* &row_ptr_end, doublerealT** &residual_fine, doublerealT** &diag, integer* n_a, bool bonly_serial,
 	doublerealT process_flow_beta, bool* &F_false_C_true, integer &nu1, integer &nu2, integer bILU2smoother,
-	integer ilevel, integer inumberVcyclelocbicgstab, integer imyinit, const integer idim_diag,
+	integer ilevel, integer inumberVcyclelocbicgstab, INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit, const integer idim_diag,
 	LEVEL_ADDITIONAL_DATA* &milu2, LEVEL_ADDITIONAL_DATA0* milu0, bool** &nested_desection, 
 	Ak1* &P, // prolongation он же restriction (метод не чувствителен к сортировке).
 	integer* nnz_aRP, doublerealT** &residual_coarse, integer igam, integer* nnz_a,
@@ -6644,8 +6650,7 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 	// Один V - цикл алгебраического многосеточного метода.
 	// A*z76=s76;
 
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
 
 	for (integer i_13 = 0; i_13 < inumberVcyclelocbicgstab; i_13++)
 	{
@@ -7538,7 +7543,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 	integer*& row_ptr_end, doublerealT**& residual_fine, doublerealT**& diag, 
 	doublerealT**& diag_minus_one, integer* n_a, bool bonly_serial,
 	doublerealT process_flow_beta, bool*& F_false_C_true, integer& nu1, integer& nu2, integer bILU2smoother,
-	integer ilevel, integer inumberVcyclelocbicgstab, integer imyinit, const integer idim_diag,
+	integer ilevel, integer inumberVcyclelocbicgstab, INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit, const integer idim_diag,
 	LEVEL_ADDITIONAL_DATA*& milu2, LEVEL_ADDITIONAL_DATA0* milu0, bool**& nested_desection,
 	Ak1*& P, // prolongation он же restriction (метод не чувствителен к сортировке).
 	integer* nnz_aRP, doublerealT**& residual_coarse, integer igam, integer* nnz_a,
@@ -7549,8 +7554,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 	// Один V - цикл алгебраического многосеточного метода.
 	// A*z76=s76;
 
-	const integer ZERO_INIT = 0;
-	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
 
 	for (integer i_13 = 0; i_13 < inumberVcyclelocbicgstab; i_13++)
 	{

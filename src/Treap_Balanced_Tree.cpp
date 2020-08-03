@@ -15,9 +15,15 @@
 // Amat Treap Node
 struct TreapNode
 {
-	integer  priority = -1;
-	data_BalTree key = data_BalTree(-1, -1);
-	TreapNode* left = nullptr, * right = nullptr;
+	integer  priority;
+	data_BalTree key;
+	TreapNode* left, * right;
+
+	TreapNode() {
+		priority = -1;
+		key = data_BalTree(-1, -1);
+		left = nullptr;  right = nullptr;
+	}
 };
 
 /* T1, T2 and T3 are subtrees of the tree rooted with y

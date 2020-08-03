@@ -46,19 +46,24 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			if (imakesource("only_solid_visible", idin)) {
 				// Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
-					ionly_solid_visible = (integer)(idin);
-					printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
+					switch (idin) {
+						case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+						case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
+						default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+					}
+					//ionly_solid_visible = (integer)(idin);
+					std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
 				}
 				else {
 					printf("ionly_solid_visible must be equal 0 or 1. now value=%d\n", idin);
 					system("pause");
-					ionly_solid_visible = 0;
+					ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
 				}
 			}
 			else {
 				printf("WARNING!!! only_solid_visible not found in file premeshin.txt\n");
-				ionly_solid_visible = 0; // Показываем всё
-				printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
+				ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE; // Показываем всё
+				std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -369,12 +374,18 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			if (imakesource("line_directional", idin)) {
 				// Найдено успешно.
-				idirectional_for_XY_Plot = (integer)(idin);
+				switch (idin) {
+					case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
+					case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
+					case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
+					default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+				}
+				//idirectional_for_XY_Plot = (integer)(idin);
 				//printf("iny =%lld\n", iny);
 			}
 			else {
 				printf("WARNING!!! line_directional not found in file premeshin.txt\n");
-				idirectional_for_XY_Plot = 0; // нет информации о количестве узлов сетки в направлении оси Оy.
+				idirectional_for_XY_Plot = X_LINE_DIRECTIONAL; // нет информации о количестве узлов сетки в направлении оси Оy.
 				printf("idirectional_for_XY_Plot =%lld\n", idirectional_for_XY_Plot);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -476,12 +487,20 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			// Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 			if (imakesource("StaticStructuralSolverSetting", idin)) {
 				// Найдено успешно.
-				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
+				switch (((integer)(idin))) {
+					case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+					case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
+					case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+					case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
+					case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
+					default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+				}
+				//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
 				//printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU6);
 			}
 			else {
 				printf("WARNING!!! StaticStructuralSolverSetting not found in file premeshin.txt\n");
-				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = 0; //BiCGStab +ILU* solver.
+				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; //BiCGStab +ILU* solver.
 				printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU6);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -583,22 +602,29 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			if (imakesource("mesh_generator_algorithm", idin)) {
 				// Найдено успешно.
 				// Выбор сеточного генератора.
-				iswitchMeshGenerator = (integer)(idin);
+				switch (idin) {
+					case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
+					case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
+					case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+					default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				}
+				//iswitchMeshGenerator = (integer)(idin);
 				//printf("iswitchMeshGenerator =%lld\n", iswitchMeshGenerator);
 			}
 			else {
 				printf("WARNING!!! mesh_generator_algorithm not found in file premeshin.txt\n");
-				iswitchMeshGenerator = 2; // Coarse Mesh.
-				printf("iswitchMeshGenerator =CoarseMesh(2)\n");
+				iswitchMeshGenerator = COARSEMESHGEN_MESHER; // Coarse Mesh.
+				printf("iswitchMeshGenerator = COARSEMESHGEN_MESHER\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 
 			if (imakesource("Schedule", idin)) {
 				// Найдено успешно.
-				steady_or_unsteady_global_determinant = 2;
+				steady_or_unsteady_global_determinant = MESHER_ONLY;
 				din = (integer)(idin);
-				if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8) || (din == 9)) {
+				if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || 
+					(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
 					// 0 - thermal only steady state calculation,
 					// 1 - thermal only unsteady calculation,
 					// 2 - mesh generator only.
@@ -608,7 +634,23 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					// 7 - Unsteady thermal solver #2
 					// 8 - Visualisation only
 					// 9 - cfd unsteady fluid dynamic.
-					steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
+					// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
+				    // 11 - UNSTEADY NETWORK_T Нестационврный графовый метод решения уравнения теплопроводности.
+					switch(din) {
+						case 0: steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; break;
+						case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
+						case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+						case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
+						case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
+						case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+						case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
+						case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
+						case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
+						case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
+						case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
+						default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+					}
+					//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
 					//printf("steady_or_unsteady_global_determinant =%lld\n",din);
 					//system("PAUSE");
 				}
@@ -621,7 +663,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 			else {
 				printf("WARNING!!! Schedule not found in file premeshin.txt\n");
-				steady_or_unsteady_global_determinant = 2; // Mesh Generator only
+				steady_or_unsteady_global_determinant = MESHER_ONLY; // Mesh Generator only
 				printf("steady_or_unsteady_global_determinant =Mesh Generator only\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -839,19 +881,27 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			if (imakesource("adiabatic_vs_heat_transfer_coeff", idin)) {
 				// Найдено успешно.
 				if ((idin == 0) || (idin == 1) || (idin == 2) || (idin == 3)) {
-					// 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
-					adiabatic_vs_heat_transfer_coeff = (integer)(idin);
-					//printf("adiabatic_vs_heat_transfer_coeff =%lld\n", adiabatic_vs_heat_transfer_coeff);
+					// 0 - adiabatic wall, 1 - Newton Richman condition,
+					// 2 - Stefan Bolcman condition, 3 - mix condition.
+					switch (idin) {
+						case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+						case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
+						case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
+						case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
+						default :adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+					}
+					//adiabatic_vs_heat_transfer_coeff = (integer)(idin);
+					//printf("adiabatic_vs_heat_transfer_coeff =%lld\n", idin);
 				}
 				else {
 					printf("Error!!! adiabatic_vs_heat_transfer_coeff must be equal 0 or 1 or 2 or 3. Current value %d\n", idin);
 					system("pause");
-					adiabatic_vs_heat_transfer_coeff = 0; // adiabatic wall
+					adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; // adiabatic wall
 				}
 			}
 			else {
 				printf("WARNING!!! adiabatic_vs_heat_transfer_coeff not found in file premeshin.txt\n");
-				adiabatic_vs_heat_transfer_coeff = 0; //  0 - adiabatic wall.
+				adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; //  0 - adiabatic wall.
 				printf("adiabatic_vs_heat_transfer_coeff =%lld\n", adiabatic_vs_heat_transfer_coeff);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -891,13 +941,18 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			if (imakesource("version_ALICE_Mesh", idin)) {
 				// Найдено успешно.
-				itype_ALICE_Mesh = (integer)(idin);
+				switch (idin) {
+					case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+					case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
+					default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+				}
+				//itype_ALICE_Mesh = (integer)(idin);
 				//printf("itype_ALICE_Mesh =%lld\n", itype_ALICE_Mesh);
 			}
 			else {
 				printf("WARNING!!! version_ALICE_Mesh not found in file premeshin.txt\n");
-				itype_ALICE_Mesh = 0; // Coarse Mesh.
-				printf("itype_ALICE_Mesh =%lld\n", itype_ALICE_Mesh);
+				itype_ALICE_Mesh = ONE_PASS_COARSE_ALICE_MESH; // Coarse Mesh.
+				printf("itype_ALICE_Mesh =ONE_PASS_COARSE_ALICE_MESH\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -2689,6 +2744,22 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				char name0[1000] = "body";
 				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				strcat(name0, "name");
+
+				if (smakesource(name0, b[i].name)) {
+					// Найдено успешно.
+
+					//printf(" b[%lld].name=%s\n", i, b[i].name);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					b[i].name[0] = '\0'; // уникальное текстовое объёмного геометрического тела.
+					printf(" b[%d].name=unknown\n", i);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat(name0, "body");
+				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
 				strcat(name0, "iunion");
 
 				if (imakesource(name0, idin)) {
@@ -2932,13 +3003,13 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (b[i].g.Hcyl <= 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.zC += b[i].g.Hcyl;
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.yC += b[i].g.Hcyl;
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.xC += b[i].g.Hcyl;
 						break;
 					}
@@ -3087,13 +3158,13 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (b[i].g.hi[i73] < 0.0) {
 						// ликвидируем отрицательную высоту цилиндра.
 						switch (b[i].g.iPlane_obj2) {
-						case XY:
+						case XY_PLANE:
 							b[i].g.zi[i73] += b[i].g.hi[i73];
 							break;
-						case XZ:
+						case XZ_PLANE:
 							b[i].g.yi[i73] += b[i].g.hi[i73];
 							break;
-						case YZ:
+						case YZ_PLANE:
 							b[i].g.xi[i73] += b[i].g.hi[i73];
 							break;
 						}
@@ -3126,7 +3197,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
 					}
 					switch (b[i].g.iPlane_obj2) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.yS = ymin53;
@@ -3134,7 +3205,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						b[i].g.zS = zmin53;
 						b[i].g.zE = zmin53 + b[i].g.hi[0];
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.zS = zmin53;
@@ -3142,7 +3213,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymin53 + b[i].g.hi[0];
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymax53;
 						b[i].g.zS = zmin53;
@@ -3462,6 +3533,22 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				char name0[1000] = "source";
 				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				strcat(name0, "name");
+
+				if (smakesource(name0, s[i].name)) {
+					// Найдено успешно.
+
+					//printf(" s[%lld].name=%s\n", i, s[i].name);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					s[i].name[0] = '\0'; // уникальное текстовое имя источника тепла.
+					printf(" s[%d].name=unknown\n", i);
+					if (bSTOP_Reading) system("pause");
+				}
+								
+				name0[0] = '\0'; strcat(name0, "source");
+				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
 				strcat(name0, "iunion");
 
 				if (imakesource(name0, idin)) {
@@ -3709,9 +3796,9 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					s[i].g.zE = dbuf;
 				}
 				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case XY_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
+				case XZ_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case YZ_PLANE: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
 				//printf("source %e %lld %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
@@ -3722,6 +3809,22 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			for (i = 0; i < lw; i++) {
 
 				char name0[1000] = "wall";
+				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				strcat(name0, "name");
+
+				if (smakesource(name0, w[i].name)) {
+					// Найдено успешно.
+
+					//printf(" w[%lld].name=%s\n", i, w[i].name);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					w[i].name[0] = '\0'; // уникальное текстовое имя твёрдой стенки.
+					printf(" w[%d].name=unknown\n", i);
+					if (bSTOP_Reading) system("pause");
+				}				
+				
+				name0[0] = '\0'; strcat(name0, "wall");
 				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
 				strcat(name0, "iunion");
 
@@ -3743,13 +3846,21 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					w[i].ifamily = (integer)(idin);
+					switch (idin) {
+						case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
+						case 2: w[i].ifamily=NEIMAN_FAMILY; break;
+						case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
+						case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
+						default: w[i].ifamily=NEIMAN_FAMILY; break;
+					}
+					//w[i].ifamily = (integer)(idin);
 					din = (integer)(idin); // for switch() см. далее.
 					//printf("w[%lld].ifamily =%lld\n", i, w[i].ifamily);
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					w[i].ifamily = 2; // Однородное условие Неймана.
+					w[i].ifamily = NEIMAN_FAMILY; // Однородное условие Неймана.
+					din=2; // NEIMAN_FAMILY;
 					printf("w[%d].ifamily =%lld\n", i, w[i].ifamily);
 					if (bSTOP_Reading) system("pause");
 				}
@@ -3775,10 +3886,15 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
 					strcat(name0, "heat_transfer_coefficient_vs_emissivity");
 
+					name0[0] = '\0'; strcat(name0, "wall");
+					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					strcat(name0, "ViewFactor");
+
 					// Stefan Bolcman
 					// termostability wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
+					w[i].ViewFactor = 1.0;  // Фактор видимости.
 
 
 
@@ -3810,11 +3926,15 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
 					strcat(name0, "heat_transfer_coefficient_vs_emissivity");
 
+					name0[0] = '\0'; strcat(name0, "wall");
+					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					strcat(name0, "ViewFactor");
+
 					// Stefan Bolcman
 					// adiabatic wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
-
+					w[i].ViewFactor = 1.0; // Фактор видимости.
 
 					name0[0] = '\0'; strcat(name0, "wall");
 					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
@@ -3860,8 +3980,14 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 					name0[0] = '\0'; strcat(name0, "wall");
 					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
-					strcat(name0, "HF");
+					strcat(name0, "ViewFactor");
 
+					w[i].ViewFactor = 1.0; // Фактор видимости.
+
+					name0[0] = '\0'; strcat(name0, "wall");
+					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					strcat(name0, "HF");
+										
 
 					w[i].hf = 0.0;
 
@@ -3898,6 +4024,22 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].emissivity = 0.0; // .
 						printf("w[%d].emissivity =%e\n", i, w[i].emissivity);
+						if (bSTOP_Reading) system("pause");
+					}
+
+					name0[0] = '\0'; strcat(name0, "wall");
+					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					strcat(name0, "ViewFactor");
+
+					if (fmakesource(name0, fin)) {
+						// Найдено успешно.
+						w[i].ViewFactor = (doublereal)(fin); // Фактор видимости.
+						w[i].ViewFactor = fmax(0.0, fmin(w[i].ViewFactor,1.0));
+					}
+					else {
+						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+						w[i].ViewFactor = 1.0; // .
+						printf("w[%d].ViewFactor =%e\n", i, w[i].ViewFactor);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -4243,7 +4385,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -4841,12 +4983,18 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				if (imakesource("report_directional", idin)) {
 					// Найдено успешно.
-					pfpir.idir = (integer)(idin);
+					switch (idin) {
+					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					}
+					//pfpir.idir = (integer)(idin);
 					//printf(" pfpir.idir=%lld\n", pfpir.idir);
 				}
 				else {
 					printf("WARNING!!! report_directional not found in file premeshin.txt\n");
-					pfpir.idir = 0; // XY.
+					pfpir.idir = Y_LINE_DIRECTIONAL; 
 					printf(" pfpir.idir=%lld\n", pfpir.idir);
 					if (bSTOP_Reading) system("pause");
 				}
@@ -4877,7 +5025,13 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				if (imakesource("number_iterations_SIMPLE_algorithm", idin)) {
 					// Найдено успешно.
-					number_iteration_SIMPLE_algorithm = (int)(idin);
+					if (idin>=0) {
+						number_iteration_SIMPLE_algorithm = (unsigned int)(idin);
+					}
+					else {
+						number_iteration_SIMPLE_algorithm =0;
+						std::cout<<"WARNING : number_iteration_SIMPLE_algorithm =0;"<<std::endl;
+					}
 					//printf(" number_iterations_SIMPLE_algorithm=%lld\n",number_iteration_SIMPLE_algorithm );
 				}
 				else {
@@ -4949,8 +5103,13 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			doublereal dbuf; // для упорядочивания в порядке возрастания
 
 			fscanf(fp, "%d", &din);
-			ionly_solid_visible = din;
-			printf("ionly_solid_visible =%d\n", ionly_solid_visible);
+			switch (din) {
+				case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+				case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
+				default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			}
+			//ionly_solid_visible = din;
+			std::cout<<"ionly_solid_visible =" << ionly_solid_visible << std::endl;
 			fscanf(fp, "%f", &fin);
 			scale = fin;
 			fscanf(fp, "%d", &din);
@@ -5006,7 +5165,13 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			// одной из осей декартовой прямоугольной системы координат:
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			fscanf(fp, "%d", &din);
-			idirectional_for_XY_Plot = din;
+			switch (din) {
+					case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
+					case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
+					case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
+					default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+			}
+			//idirectional_for_XY_Plot = din;
 
 			fscanf(fp, "%f", &fin);
 			etalon_max_size_ratio = fin; // подробность расчётной сетки.
@@ -5034,7 +5199,15 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
+			switch (din) {
+					case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+					case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
+					case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+					case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
+					case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
+					default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			}
+			//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf(fp, "%d", &din);
 			if (din == 1) {
@@ -5095,12 +5268,19 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			// Выбор сеточного генератора.
 			fscanf(fp, "%d", &din);
-			iswitchMeshGenerator = din;
+			switch (idin) {
+				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+			}
+			//iswitchMeshGenerator = din;
 
 
 			fscanf(fp, "%d", &din);
-			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8) || (din == 9)) {
+			steady_or_unsteady_global_determinant = MESHER_ONLY;
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || 
+				(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
 				// 0 - thermal only steady state calculation,
 				// 1 - thermal only unsteady calculation,
 				// 2 - mesh generator only.
@@ -5110,7 +5290,23 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// 7 - Unsteady thermal solver #2
 				// 8 - Visualisation only
 				// 9 - cfd unsteady fluid dynamic.
-				steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
+				// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
+				// 11 - UNSTEADY NETWORK_T Нестационврный графовый метод решения уравнения теплопроводности.
+				switch(din) {
+						case 0: steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; break;
+						case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
+						case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+						case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
+						case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
+						case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+						case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
+						case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
+						case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
+						case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
+						case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
+						default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+					}
+				//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
 			}
 			else {
 				printf("error input parametr steady or unsteady calculation\n");
@@ -5203,7 +5399,14 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			// Newton-Richman condition.
 			fscanf(fp, "%d", &din);
-			adiabatic_vs_heat_transfer_coeff = din;  // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
+			switch (din) {
+						case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+						case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
+						case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
+						case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
+						default :adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+			}
+			//adiabatic_vs_heat_transfer_coeff = din;  // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 			fscanf(fp, "%f", &fin);
 			film_coefficient = fin;
 			// AЛИС сетка
@@ -5217,7 +5420,12 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				b_on_adaptive_local_refinement_mesh = true;
 			}
 			fscanf(fp, "%d", &din);
-			itype_ALICE_Mesh = din;
+			switch (din) {
+					case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+					case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
+					default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			}
+			//itype_ALICE_Mesh = din;
 			fscanf(fp, "%d", &din);
 			my_amg_manager.m_restart = din;
 			// classical algebraic multigrid parameters:
@@ -5693,13 +5901,13 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (b[i].g.Hcyl < 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.zC += b[i].g.Hcyl;
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.yC += b[i].g.Hcyl;
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.xC += b[i].g.Hcyl;
 						break;
 					}
@@ -5733,13 +5941,13 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (b[i].g.hi[i73] < 0.0) {
 						// ликвидируем отрицательную высоту цилиндра.
 						switch (b[i].g.iPlane_obj2) {
-						case XY:
+						case XY_PLANE:
 							b[i].g.zi[i73] += b[i].g.hi[i73];
 							break;
-						case XZ:
+						case XZ_PLANE:
 							b[i].g.yi[i73] += b[i].g.hi[i73];
 							break;
-						case YZ:
+						case YZ_PLANE:
 							b[i].g.xi[i73] += b[i].g.hi[i73];
 							break;
 						}
@@ -5764,7 +5972,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
 					}
 					switch (b[i].g.iPlane_obj2) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.yS = ymin53;
@@ -5772,7 +5980,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 						b[i].g.zS = zmin53;
 						b[i].g.zE = zmin53 + b[i].g.hi[0];
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.zS = zmin53;
@@ -5780,7 +5988,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymin53 + b[i].g.hi[0];
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymax53;
 						b[i].g.zS = zmin53;
@@ -5987,9 +6195,9 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					s[i].g.zE = dbuf;
 				}
 				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case XY_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
+				case XZ_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case YZ_PLANE: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
 				//printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
@@ -6006,7 +6214,14 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
 
 				fscanf(fp, "%d", &din);
-				w[i].ifamily = din;
+				switch (din) {
+						case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
+						case 2: w[i].ifamily=NEIMAN_FAMILY; break;
+						case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
+						case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
+						default: w[i].ifamily=NEIMAN_FAMILY; break;
+					}
+				//w[i].ifamily = din;
 				switch (din) {
 				case 1:  fscanf(fp, "%f", &fin);
 					w[i].Tamb = fin;
@@ -6014,6 +6229,8 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					// termostability wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
+					fscanf(fp, "%f", &fin);
+					w[i].ViewFactor = 1.0;
 					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // первого рода
@@ -6024,6 +6241,8 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
 					fscanf(fp, "%f", &fin);
+					w[i].ViewFactor = 1.0;
+					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // однородное условие Неймана
 				case 3:  fscanf(fp, "%f", &fin);
@@ -6033,6 +6252,8 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = fin;
 					fscanf(fp, "%f", &fin);
+					w[i].ViewFactor = 1.0;
+					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // Ньютон-Рихман.
 				case 4:  fscanf(fp, "%f", &fin);
@@ -6041,6 +6262,8 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					// Stefan - Bolcman condition
 					w[i].emissivity = fin;
 					w[i].film_coefficient = 0.0;
+					fscanf(fp, "%f", &fin);
+					w[i].ViewFactor = fmax(0.0,fmin(fin,1.0));
 					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // Стефан-Больцман.
@@ -6123,7 +6346,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -6254,7 +6477,13 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 #else
 					fscanf(fp, "%d", &din);
 #endif
-					pfpir.idir = din;
+					switch (din) {
+					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					}
+					//pfpir.idir = din;
 
 #if doubleintprecision == 1
 					fscanf(fp, "%lld", &din);
@@ -6275,7 +6504,13 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 #else
 					fscanf(fp, "%d", &din);
 #endif
-					number_iteration_SIMPLE_algorithm = (integer)(din);
+					if (din>=0) {
+						number_iteration_SIMPLE_algorithm = (unsigned int)(din);
+					}
+					else {
+						number_iteration_SIMPLE_algorithm =0;
+						std::cout<<"WARNING : number_iteration_SIMPLE_algorithm =0;"<<std::endl;
+					}
 
 #if doubleintprecision == 1
 					fscanf(fp, "%lld", &din);
@@ -6364,7 +6599,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 			// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 			switch (b[i_1].g.iPlane) {
-			case XY:
+			case XY_PLANE:
 				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.Hcyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -6374,7 +6609,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
 				}
 				break;
-			case XZ:
+			case XZ_PLANE:
 				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.Hcyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -6384,7 +6619,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
 				}
 				break;
-			case YZ:
+			case YZ_PLANE:
 				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.Hcyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -6401,8 +6636,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			if (b[i_1].n_Sc > 0) {
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				doublereal vol = 0.0;
-				const doublereal MPI0 = 3.1415926;
-				vol = b[i_1].g.Hcyl * MPI0 * (b[i_1].g.R_out_cyl * b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl * b[i_1].g.R_in_cyl);
+				vol = b[i_1].g.Hcyl * M_PI * (b[i_1].g.R_out_cyl * b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl * b[i_1].g.R_in_cyl);
 				if (vol < 1.0e-40) {
 					printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
 					system("PAUSE");

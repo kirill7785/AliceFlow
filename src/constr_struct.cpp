@@ -217,12 +217,12 @@ const unsigned char LAMBDA_LAME = 7; // Коэффициент Ламе.
 const unsigned char BETA_T_MECHANICAL = 8; // коэффициент линейного теплового расширения для Механики.
 
 
-const unsigned char MU = 1; // динамическая вязкость
+const unsigned char MU_DYNAMIC_VISCOSITY = 1; // динамическая вязкость
 const unsigned char BETA_T = 2; // коэффициент линейного температурного расширения
 
-const unsigned char VX = 0; // горизонтальная скорость (обязательно должен начинаться с нуля)
-const unsigned char VY = 1; // вертикальная скорость
-const unsigned char VZ = 2;
+const unsigned char VELOCITY_X_COMPONENT = 0; // горизонтальная скорость (обязательно должен начинаться с нуля)
+const unsigned char VELOCITY_Y_COMPONENT = 1; // вертикальная скорость
+const unsigned char VELOCITY_Z_COMPONENT = 2;
 const unsigned char PRESS = 3; // давление
 const unsigned char PAM = 4; // поправка давления
 const unsigned char NUSHA_SL = 5; // модифицированная кинематическая турбулентная вязкость. Спаларт-Аллмарес.
@@ -313,7 +313,10 @@ const unsigned char RANS_STANDART_K_EPS = 6; // Двухслойная k-epsilon
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
 
 typedef struct TTOCKA_INT {
-	integer i=0, j=0, k=0;
+	integer i, j, k;
+	TTOCKA_INT() {
+		i=0, j=0, k=0;
+	}
 } TOCKA_INT;
 
 // Объявление функции код которой будет реализован ниже.
@@ -551,6 +554,15 @@ void free_level2_temp(TEMPER &t) {
 } // free_level2_temp
 
 // вычисление центральной точки центрального контрольного объёма
+void center_cord3D_ray_tracing(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA& p, integer id) {
+	// 0 1
+	// координаты центра контрольного объёма
+	p.x = 0.5 * (pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	p.y = 0.5 * (pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	p.z = 0.5 * (pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+}
+
+// вычисление центральной точки центрального контрольного объёма
 void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id) {
 	// вычисление центральной точки центрального контрольного объёма
 	if (iP < 0) {
@@ -559,18 +571,18 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		p.z = 0.0;
 		printf("fatall error in center_cord3D !!! ");
 		switch (id) {
-		case WSIDE: printf("W"); break;
-		case ESIDE: printf("E"); break;
-		case NSIDE: printf("N"); break;
-		case SSIDE: printf("S"); break;
-		case BSIDE: printf("B"); break;
-		case TSIDE: printf("T"); break;
-		case WW: printf("WW"); break;
-		case EE: printf("EE"); break;
-		case NN: printf("NN"); break;
-		case SS: printf("SS"); break;
-		case BB: printf("BB"); break;
-		case TTSIDE: printf("TT"); break;
+		case W_SIDE: printf("W"); break;
+		case E_SIDE: printf("E"); break;
+		case N_SIDE: printf("N"); break;
+		case S_SIDE: printf("S"); break;
+		case B_SIDE: printf("B"); break;
+		case T_SIDE: printf("T"); break;
+		case WW_SIDE: printf("WW"); break;
+		case EE_SIDE: printf("EE"); break;
+		case NN_SIDE: printf("NN"); break;
+		case SS_SIDE: printf("SS"); break;
+		case BB_SIDE: printf("BB"); break;
+		case TT_SIDE: printf("TT"); break;
 		default: printf("P"); break;
 		}
 		system("PAUSE");
@@ -606,15 +618,8 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 			printf("ERROR Z: INCORRECT NUMERATION IN NVTX MAY BE...\n");
 			//printf("error: center cord 3D slipanie po Z. delta < shorter_length_for_simplificationZ\n");
 			printf("error: center cord 3D slipanie po Z. delta < 1.0e-40\n");
-#if doubleintprecision == 1
-			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#else
-			printf("iP=%d dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#endif
-
-				//system("PAUSE");
+			std::cout << "iP=" << iP << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
+			std::cout << "nvtx[" << iP << "]: " << nvtx[0][iP] - 1 << " " << nvtx[1][iP] - 1 << " " << nvtx[2][iP] - 1 << " " << nvtx[3][iP] - 1 << " " << nvtx[4][iP] - 1 << " " << nvtx[5][iP] - 1 << " " << nvtx[6][iP] - 1 << " " << nvtx[7][iP] - 1 << std::endl;
 			system("PAUSE");
 		}
 		//if (dx < shorter_length_for_simplificationX(p.x)) {
@@ -622,14 +627,8 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		    printf("ERROR X: INCORRECT NUMERATION IN NVTX MAY BE...\n");
 			//printf("error: center cord 3D slipanie po X. delta < shorter_length_for_simplificationX\n");
 			printf("error: center cord 3D slipanie po X. delta < 1.0e-40\n");
-#if doubleintprecision == 1
-			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#else
-			printf("iP=%d dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#endif
-				//system("PAUSE");
+            std::cout << "iP=" << iP << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
+			std::cout << "nvtx[" << iP << "]: " << nvtx[0][iP] - 1 << " " << nvtx[1][iP] - 1 << " " << nvtx[2][iP] - 1 << " " << nvtx[3][iP] - 1 << " " << nvtx[4][iP] - 1 << " " << nvtx[5][iP] - 1 << " " << nvtx[6][iP] - 1 << " " << nvtx[7][iP] - 1 << std::endl;
 			system("PAUSE");
 		}
 		//if (dy < shorter_length_for_simplificationY(p.y)) {
@@ -637,14 +636,8 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		    printf("ERROR Y: INCORRECT NUMERATION IN NVTX MAY BE...\n");
 			//printf("error: center cord 3D slipanie po Y. delta < shorter_length_for_simplificationY\n");
 			printf("error: center cord 3D slipanie po Y. delta <1.0e-40\n");
-#if doubleintprecision == 1
-			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#else
-			printf("iP=%d dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#endif
-				//system("PAUSE");
+            std::cout << "iP=" << iP << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
+			std::cout << "nvtx[" << iP << "]: " << nvtx[0][iP] - 1 << " " << nvtx[1][iP] - 1 << " " << nvtx[2][iP] - 1 << " " << nvtx[3][iP] - 1 << " " << nvtx[4][iP] - 1 << " " << nvtx[5][iP] - 1 << " " << nvtx[6][iP] - 1 << " " << nvtx[7][iP] - 1 << std::endl;
 			system("PAUSE");
 		}
 	}
@@ -681,14 +674,8 @@ void volume3D(integer iP, integer** nvtx, TOCHKA* pa, doublereal &dx, doublereal
 			printf("ERROR 23.03.2019 NVTX perenumeration is ERROR!!!\n");
 			//printf("error: volume 3D slipanie po Z. delta < shorter_length_for_simplificationZ\n");
 			printf("error: volume 3D slipanie po Z. delta < 1.0e-40\n");
-#if doubleintprecision == 1
-			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#else
-			printf("iP=%d dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#endif
-			//system("PAUSE");
+            std::cout << "iP=" << iP << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
+			std::cout << "nvtx[" << iP << "]: " << nvtx[0][iP] - 1 << " " << nvtx[1][iP] - 1 << " " << nvtx[2][iP] - 1 << " " << nvtx[3][iP] - 1 << " " << nvtx[4][iP] - 1 << " " << nvtx[5][iP] - 1 << " " << nvtx[6][iP] - 1 << " " << nvtx[7][iP] - 1 << std::endl;
 			system("PAUSE");
 		}
 		//if (fabs(pa[nvtx[1][iP] - 1].x - pa[nvtx[0][iP] - 1].x) < 1.0e-40) {
@@ -697,14 +684,8 @@ void volume3D(integer iP, integer** nvtx, TOCHKA* pa, doublereal &dx, doublereal
 			printf("ERROR 23.03.2019 NVTX perenumeration is ERROR!!!\n");
 			//printf("error: volume 3D slipanie po X. delta < shorter_length_for_simplificationX\n");
 			printf("error: volume 3D slipanie po X. delta <  1.0e-40\n");
-#if doubleintprecision == 1
-			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#else
-			printf("iP=%d dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#endif
-			//system("PAUSE");
+            std::cout << "iP=" << iP << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
+			std::cout << "nvtx[" << iP << "]: " << nvtx[0][iP] - 1 << " " << nvtx[1][iP] - 1 << " " << nvtx[2][iP] - 1 << " " << nvtx[3][iP] - 1 << " " << nvtx[4][iP] - 1 << " " << nvtx[5][iP] - 1 << " " << nvtx[6][iP] - 1 << " " << nvtx[7][iP] - 1 << std::endl;
 			system("PAUSE");
 		}
 		//if (fabs(pa[nvtx[3][iP] - 1].y - pa[nvtx[0][iP] - 1].y) < 1.0e-40) {
@@ -713,20 +694,23 @@ void volume3D(integer iP, integer** nvtx, TOCHKA* pa, doublereal &dx, doublereal
 			printf("ERROR 23.03.2019 NVTX perenumeration is ERROR!!!\n");
 			//printf("error: volume 3D slipanie po Y. delta < shorter_length_for_simplificationY\n");
 			printf("error: volume 3D slipanie po Y. delta < 1.0e-40\n");
-#if doubleintprecision == 1
-			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%lld]: %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#else
-			printf("iP=%d dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
-			printf("nvtx[%d]: %d %d %d %d %d %d %d %d \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
-#endif
-			//system("PAUSE");
+            std::cout << "iP=" << iP << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
+			std::cout << "nvtx[" << iP << "]: " << nvtx[0][iP] - 1 << " " << nvtx[1][iP] - 1 << " " << nvtx[2][iP] - 1 << " " << nvtx[3][iP] - 1 << " " << nvtx[4][iP] - 1 << " " << nvtx[5][iP] - 1 << " " << nvtx[6][iP] - 1 << " " << nvtx[7][iP] - 1 << std::endl;
 			system("PAUSE");
 		}
 		//printf("%e %e %e\n",dx,dy,dz); // debug GOOD
 		//system("PAUSE");
 	}
 } // volume3D 
+
+// для трассировки лучей.
+doublereal volume3D_ray_tracing(integer iP, integer** nvtx, TOCHKA* pa) {
+	doublereal dx, dy, dz;
+	dx = pa[nvtx[1][iP] - 1].x - pa[nvtx[0][iP] - 1].x;
+	dy = pa[nvtx[2][iP] - 1].y - pa[nvtx[0][iP] - 1].y;
+	dz = pa[nvtx[4][iP] - 1].z - pa[nvtx[0][iP] - 1].z;
+	return (dx * dx + dy * dy + dz * dz);
+}
 
 // 1 october 2016
 // минимум из двух целых чисел
@@ -742,12 +726,21 @@ integer min(integer i1, integer i2) {
 
 // 01.05.2015
 typedef struct TQuickSearchBlockid {
-	doublereal *x11=nullptr, *y11=nullptr, *z11=nullptr;
-	integer ix11 = 0, iy11 = 0, iz11 = 0;
-	integer *ijk_block_id = nullptr;
-	doublereal epsTolx = 1.0e40, epsToly = 1.0e40, epsTolz = 1.0e40;
-	integer *b_non_prism=nullptr;
-	integer lb_non_prism=0;
+	doublereal *x11, *y11, *z11;
+	integer ix11, iy11, iz11;
+	integer *ijk_block_id;
+	doublereal epsTolx, epsToly, epsTolz;
+	integer *b_non_prism;
+	integer lb_non_prism;
+
+	TQuickSearchBlockid() {
+		x11=nullptr; y11=nullptr; z11=nullptr;
+		ix11 = 0; iy11 = 0; iz11 = 0;
+		ijk_block_id = nullptr;
+		epsTolx = 1.0e40; epsToly = 1.0e40; epsTolz = 1.0e40;
+		b_non_prism=nullptr;
+		lb_non_prism=0;
+	}
 } QuickSearchBlockid;
 
 QuickSearchBlockid QSBid; 
@@ -788,11 +781,11 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 		if (b[i].g.itypegeom == PRISM) {
 			doublereal x_1 = b[i].g.xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ,b,lb, w, lw, s, ls);
+				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ_PLANE,b,lb, w, lw, s, ls);
 			}
 			x_1 = b[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ, b, lb, w, lw, s, ls);
+				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
 			}
 		}
 	}
@@ -811,11 +804,11 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 		if (b[i].g.itypegeom == PRISM) {
 			doublereal y_1 = b[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(QSBid.y11, QSBid.iy11, y_1,XZ, b, lb, w, lw, s, ls);
+				addboundary(QSBid.y11, QSBid.iy11, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
 			}
 			y_1 = b[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(QSBid.y11, QSBid.iy11, y_1, XZ, b, lb, w, lw, s, ls);
+				addboundary(QSBid.y11, QSBid.iy11, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
 			}
 		}
 	}
@@ -834,11 +827,11 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 		if (b[i].g.itypegeom == PRISM) {
 			doublereal z_1 = b[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(QSBid.z11, QSBid.iz11, z_1,XY, b, lb, w, lw, s, ls);
+				addboundary(QSBid.z11, QSBid.iz11, z_1,XY_PLANE, b, lb, w, lw, s, ls);
 			}
 			z_1 = b[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(QSBid.z11, QSBid.iz11, z_1,XY, b, lb, w, lw, s, ls);
+				addboundary(QSBid.z11, QSBid.iz11, z_1,XY_PLANE, b, lb, w, lw, s, ls);
 			}
 		}
 	}
@@ -1264,8 +1257,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 				(block_indexes[i].iL >= block_indexes[i].iR)) {
 				printf("init_QSBid function\n");
 				printf("violation of the order\n");
-				printf("i=%lld iL=%lld iR=%lld delta=%e\n", i, block_indexes[i].iL,
-					block_indexes[i].iR, shorter_length_for_simplificationX(QSBid.x11[block_indexes[i].iR], b, lb, w, lw, s, ls));
+				std::cout << "i=" << i << " iL=" << block_indexes[i].iL << " iR=" << block_indexes[i].iR << " delta=" << shorter_length_for_simplificationX(QSBid.x11[block_indexes[i].iR], b, lb, w, lw, s, ls) << std::endl;
 				system("pause");
 			}
 
@@ -1281,8 +1273,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 				(block_indexes[i].jL >= block_indexes[i].jR)) {
 				printf("init_QSBid function\n");
 				printf("violation of the order\n");
-				printf("i=%lld jL=%lld jR=%lld delta=%e\n", i, block_indexes[i].jL,
-					block_indexes[i].jR, shorter_length_for_simplificationY(QSBid.y11[block_indexes[i].jR], b, lb, w, lw, s, ls));
+				std::cout << "i=" << i << " jL=" << block_indexes[i].jL << " jR=" <<  block_indexes[i].jR << " delta=" << shorter_length_for_simplificationY(QSBid.y11[block_indexes[i].jR], b, lb, w, lw, s, ls) << std::endl;
 				system("pause");
 			}
 
@@ -1359,7 +1350,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 
 	if ((iX_one_CELL_count_statistic > 0) || (iY_one_CELL_count_statistic > 0) || (iZ_one_CELL_count_statistic > 0)) {
 		printf("WARNING ONE CELL ON BLOCK...\n");
-		printf("STATISTICS: X=%lld Y=%lld Z=%lld\n", iX_one_CELL_count_statistic, iY_one_CELL_count_statistic, iZ_one_CELL_count_statistic);
+		std::cout << "STATISTICS: X=" << iX_one_CELL_count_statistic << " Y=" << iY_one_CELL_count_statistic <<" Z=" << iZ_one_CELL_count_statistic <<"\n";
 		// Работает и при такой ситуации. Проверено на одной из моделей.
 		//system("pause");
 	}
@@ -1381,19 +1372,42 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 
 
 
-
+	// integer iP_k1, iP_j1, iP;
 	for (m8 = lb - 1; m8 >= 0; m8--) {
 		m7 = m8;
 		if (b[m8].g.itypegeom == PRISM)
 		{
 			//#pragma omp parallel for
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+			{
+				integer iP_k1 =k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
+				if ((k1 < 0) || (k1 > QSBid.iz11)) {
+					// ERROR
+					printf("ERROR PRISM\n");
+					printf("inx=%lld iny=%lld inz=%lld \n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
+					printf("k1=%lld \n",  k1);
+					printf("iP_k1=%lld m8=%lld", iP_k1, m8);
+					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+					system("PAUSE");
+				}
 				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
-					for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+				{
+					integer iP_j1=j1 * (QSBid.ix11 + 1) +iP_k1;
+					if ((j1 < 0) || (j1 > QSBid.iy11)) {
+							// ERROR
+							printf("ERROR PRISM\n");
+							printf("inx=%lld iny=%lld inz=%lld \n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
+							printf("j1=%lld k1=%lld \n", j1, k1);
+							printf("iP_j1=%lld m8=%lld", iP_j1, m8);
+							printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+							system("PAUSE");
+					}					
+					for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
 					{
-						integer iP = i1 + j1 * (QSBid.ix11 + 1) + k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
 
-						if ((i1 < 0) || (i1 > QSBid.ix11) || (j1 < 0) || (j1 > QSBid.iy11) || (k1 < 0) || (k1 > QSBid.iz11)) {
+						integer iP = i1 +  iP_j1;
+
+						if ((i1 < 0) || (i1 > QSBid.ix11)) {
 							// ERROR
 							printf("ERROR PRISM\n");
 							printf("inx=%lld iny=%lld inz=%lld \n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
@@ -1411,6 +1425,8 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 							QSBid.ijk_block_id[iP] = m8;
 						}
 					}
+				}
+			}
 			//m7--;
 		}
 	}
@@ -1420,13 +1436,15 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 	// Поэтому какие-то позиции из ijk_block_id[iP] останутся равными lb т.е. незаполненными.
 	// Это нормально. НО!!! здесь мы добавили проверку if (bvisit[iP] == true)  и поэтому гарантируется
 	// Что блоки только призматические и только.
-	for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+	for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
 	{
+		integer iP_k1=k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
 		for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
 		{
-			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+			integer iP_j1=j1 * (QSBid.ix11 + 1) +iP_k1;
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
 			{
-				integer iP = i1 + j1 * (QSBid.ix11 + 1) + k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
+				integer iP = i1 +  iP_j1;
 				if (bvisit[iP] == true) {
 					// Если мы ранее посещали данную ячейку при обходе призматических объектов.
 					if (QSBid.ijk_block_id[iP] == lb) {
@@ -1923,7 +1941,7 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 	   if (b[i].g.itypegeom == CYLINDER) {
 		   // Cylinder
 		   switch (b[i].g.iPlane) {
-		   case XY:
+		   case XY_PLANE:
 			   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
 				   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
 
@@ -1944,7 +1962,7 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 				   }
 			   }
 			   break;
-		   case XZ:
+		   case XZ_PLANE:
 			   if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
 				   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 
@@ -1967,7 +1985,7 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 				   }
 			   }
 			   break;
-		   case YZ:
+		   case YZ_PLANE:
 			   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
 				   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
 
@@ -2243,7 +2261,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					if (b[i1].g.itypegeom == CYLINDER) {
 						// Cylinder
 						switch (b[i1].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (fabs(b[i1].g.R_in_cyl) < 1.0e-40) {
 								if ((p.z > b[i1].g.zC) && (p.z < b[i1].g.zC + b[i1].g.Hcyl)) {
 									if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.yC - p.y)*(b[i1].g.yC - p.y)) < b[i1].g.R_out_cyl) {
@@ -2261,7 +2279,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (fabs(b[i1].g.R_in_cyl) < 1.0e-40) {
 								if ((p.y > b[i1].g.yC) && (p.y < b[i1].g.yC + b[i1].g.Hcyl)) {
 									if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) < b[i1].g.R_out_cyl) {
@@ -2279,7 +2297,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (fabs(b[i1].g.R_in_cyl) < 1.0e-40) {
 								if ((p.x > b[i1].g.xC) && (p.x < b[i1].g.xC + b[i1].g.Hcyl)) {
 									if (sqrt((b[i1].g.yC - p.y)*(b[i1].g.yC - p.y) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) < b[i1].g.R_out_cyl) {
@@ -2326,7 +2344,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					if (b[i2].g.itypegeom == CYLINDER) {
 						// Cylinder
 						switch (b[i2].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (fabs(b[i2].g.R_in_cyl) < 1.0e-40) {
 								if ((p.z > b[i2].g.zC) && (p.z < b[i2].g.zC + b[i2].g.Hcyl)) {
 									if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.yC - p.y)*(b[i2].g.yC - p.y)) < b[i2].g.R_out_cyl) {
@@ -2344,7 +2362,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (fabs(b[i2].g.R_in_cyl) < 1.0e-40) {
 								if ((p.y > b[i2].g.yC) && (p.y < b[i2].g.yC + b[i2].g.Hcyl)) {
 									if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) < b[i2].g.R_out_cyl) {
@@ -2362,7 +2380,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (fabs(b[i2].g.R_in_cyl) < 1.0e-40) {
 								if ((p.x > b[i2].g.xC) && (p.x < b[i2].g.xC + b[i2].g.Hcyl)) {
 									if (sqrt((b[i2].g.yC - p.y)*(b[i2].g.yC - p.y) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) < b[i2].g.R_out_cyl) {
@@ -2409,7 +2427,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					if (b[i3].g.itypegeom == CYLINDER) {
 						// Cylinder
 						switch (b[i3].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (fabs(b[i3].g.R_in_cyl) < 1.0e-40) {
 								if ((p.z > b[i3].g.zC) && (p.z < b[i3].g.zC + b[i3].g.Hcyl)) {
 									if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.yC - p.y)*(b[i3].g.yC - p.y)) < b[i3].g.R_out_cyl) {
@@ -2427,7 +2445,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (fabs(b[i3].g.R_in_cyl) < 1.0e-40) {
 								if ((p.y > b[i3].g.yC) && (p.y < b[i3].g.yC + b[i3].g.Hcyl)) {
 									if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) < b[i3].g.R_out_cyl) {
@@ -2445,7 +2463,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (fabs(b[i3].g.R_in_cyl) < 1.0e-40) {
 								if ((p.x > b[i3].g.xC) && (p.x < b[i3].g.xC + b[i3].g.Hcyl)) {
 									if (sqrt((b[i3].g.yC - p.y)*(b[i3].g.yC - p.y) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) < b[i3].g.R_out_cyl) {
@@ -2492,7 +2510,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					if (b[i4].g.itypegeom == CYLINDER) {
 						// Cylinder
 						switch (b[i4].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (fabs(b[i4].g.R_in_cyl) < 1.0e-40) {
 								if ((p.z > b[i4].g.zC) && (p.z < b[i4].g.zC + b[i4].g.Hcyl)) {
 									if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.yC - p.y)*(b[i4].g.yC - p.y)) < b[i4].g.R_out_cyl) {
@@ -2510,7 +2528,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (fabs(b[i4].g.R_in_cyl) < 1.0e-40) {
 								if ((p.y > b[i4].g.yC) && (p.y < b[i4].g.yC + b[i4].g.Hcyl)) {
 									if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) < b[i4].g.R_out_cyl) {
@@ -2528,7 +2546,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (fabs(b[i4].g.R_in_cyl) < 1.0e-40) {
 								if ((p.x > b[i4].g.xC) && (p.x < b[i4].g.xC + b[i4].g.Hcyl)) {
 									if (sqrt((b[i4].g.yC - p.y)*(b[i4].g.yC - p.y) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) < b[i4].g.R_out_cyl) {
@@ -2592,7 +2610,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (b[i].g.itypegeom == CYLINDER) {
 			// Cylinder
 			switch (b[i].g.iPlane) {
-			case XY:
+			case XY_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
@@ -2614,7 +2632,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					}
 				}
 				break;
-			case XZ:
+			case XZ_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
@@ -2636,7 +2654,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					}
 				}
 				break;
-			case YZ:
+			case YZ_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
@@ -2704,7 +2722,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (b[i].g.itypegeom == CYLINDER) {
 			// Cylinder
 			switch (b[i].g.iPlane) {
-			case XY:
+			case XY_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
@@ -2726,7 +2744,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					}
 				}
 				break;
-			case XZ:
+			case XZ_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
@@ -2748,7 +2766,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					}
 				}
 				break;
-			case YZ:
+			case YZ_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
@@ -2801,7 +2819,7 @@ OUTOF_IN_MODEL_TEMP1:
 // гидродинамической модели.
 // Возвращает параметр ib равный номеру блока
 // которому принадлежит контрольный объём.
-bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* &b, integer lb) {
 	integer i = 0, k = 0;
 	bool ret = true;// по умолчанию принадлежит модели
 
@@ -2846,7 +2864,7 @@ bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (b[i].g.itypegeom == CYLINDER) {
 			// Cylinder
 			switch (b[i].g.iPlane) {
-			case XY:
+			case XY_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
@@ -2868,7 +2886,7 @@ bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					}
 				}
 				break;
-			case XZ:
+			case XZ_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
@@ -2890,7 +2908,7 @@ bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 					}
 				}
 				break;
-			case YZ:
+			case YZ_PLANE:
 				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
 						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
@@ -2942,8 +2960,8 @@ OUTOF_IN_MODEL_FLOW:
 // данный метод ускорения быстродействия работает только для прямоугольных призм.
 // 2.04.2017 распараллеленная версия.
 void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
-	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb,
+	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer* &whot_is_block,
+	integer inx, integer iny, integer inz, BLOCK* &b, integer lb,
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
 #ifdef _OPENMP
@@ -3144,51 +3162,78 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 		}
 	}
 	*/
+const integer isize_xyz=inx*iny*inz;
 
 #pragma omp parallel for
-	for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-		evt[i1 + j1*inx + k1*inx*iny] = -1;// -1
+	for (integer iP=0; iP<isize_xyz; iP++) {
+	//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+		//evt[i1 + j1*inx + k1*inx*iny] = -1;// -1
+		evt[iP]=-1; // -1
 	}
+
+	// integer iP_k1, iP_j1, iP;
+
 	for (m7 = 0; m7 < lb; m7++) {
 
 #pragma omp parallel for
-		for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-			switch (iflag) {
-			case TEMPERATURE:
-				if (b[m7].itype == HOLLOW) {
-					evt[i1 + j1*inx + k1*inx*iny] = -1;
+		for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+		{
+			integer iP_k1=k1*inx*iny;
+			for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+			{
+				integer iP_j1=j1*inx +iP_k1;
+				 for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+				{
+                    integer iP=i1+iP_j1;
+					switch (iflag) {
+						case TEMPERATURE:
+						if (b[m7].itype == HOLLOW) {
+							evt[iP] = -1;
+						}
+						else {
+							evt[iP] = m7;
+						}
+						break;
+						case HYDRODINAMIC:
+						if ((b[m7].itype == SOLID) || (b[m7].itype == HOLLOW)) {
+							evt[iP] = -1;
+						}
+						else {
+							evt[iP] = m7;
+						}
+						break;
+					}
+			
 				}
-				else {
-					evt[i1 + j1*inx + k1*inx*iny] = m7;
-				}
-					break;
-			case HYDRODINAMIC:
-				if ((b[m7].itype == SOLID) || (b[m7].itype == HOLLOW)) {
-					evt[i1 + j1*inx + k1*inx*iny] = -1;
-				}
-				else {
-					evt[i1 + j1*inx + k1*inx*iny] = m7;
-				}
-				break;
 			}
-		
 		}
 	}
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
 	integer l = 1, ib;
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		if (evt[i + j*inx + k*inx*iny] > -1) {
-			ib = evt[i + j*inx + k*inx*iny]; // номер блока был сохранён ранее.
-			// Это очень нужно для записи репорта.
-			whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-			evt[i + j*inx + k*inx*iny] = l;
-			l++;
-		}
-		else
-		{   // не принадлежит расчётной области
-			evt[i + j*inx + k*inx*iny] = 0;
+    //  integer iP_k, iP_j;
+	for (k = 0; k < inz; k++)
+	{
+		integer iP_k = k * inx * iny;
+		for (j = 0; j < iny; j++)
+		{
+			integer iP_j = j * inx + iP_k;
+			for (i = 0; i < inx; i++)
+			{
+				integer iP = i + iP_j;
+				if (evt[iP] > -1) {
+					ib = evt[iP]; // номер блока был сохранён ранее.
+					// Это очень нужно для записи репорта.
+					whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					evt[iP] = l;
+					l++;
+				}
+				else
+				{   // не принадлежит расчётной области
+					evt[iP] = 0;
+				}
+			}
 		}
 	}
 	maxelm = l - 1;
@@ -3239,8 +3284,8 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 // Цилиндры и полигоны обрабатываются обычным образом.
 // 2.04.2017 распараллеленная версия.
 void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, integer iflag,
-	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list,
+	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer* &whot_is_block,
+	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, TOCKA_INT* &tck_int_list,
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
 #ifdef _OPENMP
@@ -3250,7 +3295,9 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	int i_my_num_core_parallelesation = 1;
 #endif
 
-	tck_int_list = new TOCKA_INT[inx*iny*inz];
+	const integer isize_xyz=inx*iny*inz;
+
+	tck_int_list = new TOCKA_INT[isize_xyz];
 	// оператор new не требует проверки на null.
 	//if (tck_int_list == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -3260,7 +3307,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	//}
 
 	bool* bvisit = nullptr;
-	bvisit = new bool[inx*iny*inz];
+	bvisit = new bool[isize_xyz];
 	// оператор new не требует проверки на null.
 	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -3270,7 +3317,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	//}
 
 	evt = nullptr;
-	evt = new integer[inx*iny*inz];
+	evt = new integer[isize_xyz];
 	// оператор new не требует проверки на null.
 	//if (evt == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -3279,7 +3326,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		//exit(1);
 	//}
 	whot_is_block = nullptr;
-	whot_is_block = new integer[inx*iny*inz];
+	whot_is_block = new integer[isize_xyz];
 	// оператор new не требует проверки на null.
 	//if (whot_is_block == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -3331,10 +3378,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			//  (b[i].g.itypegeom == CYLINDER) cylinder
 
 			doublereal x4 = b[i].g.xS;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == XZ_PLANE))) {
 				x4 = b[i].g.xC - b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.xC;
 				}
@@ -3395,10 +3442,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.xE;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == XZ_PLANE))) {
 				x4 = b[i].g.xC + b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.xC + b[i].g.Hcyl;
 				}
@@ -3458,10 +3505,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.yS;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.yC - b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.yC;
 				}
@@ -3511,10 +3558,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.yE;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.yC + b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.yC + b[i].g.Hcyl;
 				}
@@ -3565,10 +3612,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.zS;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.zC - b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.zC;
 				}
@@ -3618,10 +3665,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.zE;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.zC + b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.zC + b[i].g.Hcyl;
 				}
@@ -3776,51 +3823,81 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 		//integer iP = i1 + j1 * inx + k1 * inx*iny;
 #pragma omp parallel for
-	for (integer iP=0; iP<inx*iny*inz; iP++) {
+	for (integer iP=0; iP < isize_xyz; iP++) {
 		evt[iP] = -1;
 		bvisit[iP] = false;
 	}
+
+// integer iP_k1, iP_j1, iP;
+
    // for (m8 = 0; m8 < lb; m8++) {
 	for (m8 = lb-1; m8 >= 0; m8--) {
 		// Сначала идет блок с наивысшим приоритетом, мы не рассматриваем ячейки дважды.
 		if (b[m8].g.itypegeom == PRISM) {
 #pragma omp parallel for
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				integer iP = i1 + j1 * inx + k1 * inx*iny;
-
-				if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) 
+			{	
+				integer iP_k1 = k1 * inx * iny;
+				if ((k1 < 0) || (k1 > inz)) {
 					// ERROR
 					printf("ERROR PRISM\n");
 					printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
-					printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
-					printf("iP=%lld m8=%lld", iP, m8);
-					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+					printf(" k1=%lld \n",  k1);
+					printf("iP_k1=%lld m8=%lld", iP_k1, m8);
+					printf("kL=%lld kR=%lld\n",  block_indexes[m7].kL, block_indexes[m7].kR);
 					system("PAUSE");
 				}
-
-
-				if (bvisit[iP] == false)
+				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) 
 				{
+					integer iP_j1 = j1 * inx + iP_k1;
+					if ((j1 < 0) || (j1 > iny)) {
+						// ERROR
+						printf("ERROR PRISM\n");
+						printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+						printf(" j1=%lld k1=%lld\n", j1, k1);
+						printf("iP_j1=%lld m8=%lld", iP_j1, m8);
+						printf("jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						system("PAUSE");
+					}
+					for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+					{
+						integer iP = i1 + iP_j1;
 
-					bvisit[iP] = true;
+						if ((i1 < 0) || (i1 > inx)) {
+							// ERROR
+							printf("ERROR PRISM\n");
+							printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+							printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
+							printf("iP=%lld m8=%lld", iP, m8);
+							printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+							system("PAUSE");
+						}
 
-					switch (iflag) {
-					case TEMPERATURE:
-						if (b[m8].itype == HOLLOW) {
-							evt[iP] = -1;
+
+						if (bvisit[iP] == false)
+						{
+
+							bvisit[iP] = true;
+
+							switch (iflag) {
+							case TEMPERATURE:
+								if (b[m8].itype == HOLLOW) {
+									evt[iP] = -1;
+								}
+								else {
+									evt[iP] = m8;
+								}
+								break;
+							case HYDRODINAMIC:
+								if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+									evt[iP] = -1;
+								}
+								else {
+									evt[iP] = m8;
+								}
+								break;
+							}
 						}
-						else {
-							evt[iP] = m8;
-						}
-						break;
-					case HYDRODINAMIC:
-						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-							evt[iP] = -1;
-						}
-						else {
-							evt[iP] = m8;
-						}
-						break;
 					}
 				}
 			}
@@ -3835,7 +3912,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 //#pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				integer iP = i1 + j1 * inx + k1 * inx*iny;
+				integer  iP = i1 + j1 * inx + k1 * inx*iny;
 				
 				if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 					// ERROR
@@ -3860,7 +3937,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 					p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
 
 					switch (b[m8].g.iPlane) {
-					case XY:
+					case XY_PLANE:
 						if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 							if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
@@ -3918,7 +3995,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							}
 						}
 						break;
-					case XZ:
+					case XZ_PLANE:
 						if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 							if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
@@ -3976,7 +4053,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							}
 						}
 						break;
-					case YZ:
+					case YZ_PLANE:
 						if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 							if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
@@ -4049,7 +4126,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
             #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
-				integer iP = i1 + j1 * inx + k1 * inx*iny;
+				integer  iP = i1 + j1 * inx + k1 * inx*iny;
 
 				if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 					// ERROR
@@ -4116,21 +4193,31 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	// если не принадлежит расчётной области то стоит 0.
 	integer l = 1;
 	integer ib;
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		integer iP = i + j * inx + k * inx * iny;
-		if (evt[iP] > -1) {
-			ib = evt[iP]; // номер блока был сохранён ранее.
-						 // Это очень нужно для записи репорта.
-			whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-			tck_int_list[l - 1].i = i;
-			tck_int_list[l - 1].j = j;
-			tck_int_list[l - 1].k = k;
-			evt[iP] = l;
-			l++;
-		}
-		else
-		{   // не принадлежит расчётной области
-			evt[iP] = 0;
+	// integer iP_k, iP_j;
+	for (k = 0; k < inz; k++)
+	{
+		integer iP_k = k * inx * iny;
+		for (j = 0; j < iny; j++)
+		{
+			integer iP_j = j * inx + iP_k;
+			for (i = 0; i < inx; i++)
+			{
+				integer  iP = i + iP_j;
+				if (evt[iP] > -1) {
+					ib = evt[iP]; // номер блока был сохранён ранее.
+								 // Это очень нужно для записи репорта.
+					whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					tck_int_list[l - 1].i = i;
+					tck_int_list[l - 1].j = j;
+					tck_int_list[l - 1].k = k;
+					evt[iP] = l;
+					l++;
+				}
+				else
+				{   // не принадлежит расчётной области
+					evt[iP] = 0;
+				}
+			}
 		}
 	}	
 	maxelm = l - 1;
@@ -4182,8 +4269,8 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 // глобальная нумерация контрольных объёмов
 // для задач теплопроводности
 void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
-	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb, 
+	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer* &whot_is_block,
+	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, 
 	integer lu, UNION* &my_union, integer &iunion_id_p1, TOCKA_INT* &tck_int_list,
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
@@ -4231,58 +4318,71 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
 			// нумерация в evt начиная с единицы.
 			// если не принадлежит расчётной области то стоит 0.
 			integer l = 1, ib;
-			integer i, j, k;
+			//integer i, j, k;
 			bool inDomain = false;
 			// нумерация контрольных объёмов начинается с единицы
 			// если контрольный объём не принадлежит расчётной области то ставится 0.
-			for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-				p.x = 0.5*(xpos[i] + xpos[i + 1]);
-				p.y = 0.5*(ypos[j] + ypos[j + 1]);
-				p.z = 0.5*(zpos[k] + zpos[k + 1]);
-				switch (iflag) {
-				case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
-				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
-				}
-				if (iunion_id_p1 == 0) {
-					for (integer iu = 0; iu < lu; iu++) {
-						if ((p.x > my_union[iu].xS) && (p.x < my_union[iu].xE) &&
-							(p.y > my_union[iu].yS) && (p.y < my_union[iu].yE) &&
-							(p.z > my_union[iu].zS) && (p.z < my_union[iu].zE)) {
-							// Если рассматривать кабинет с асемблесами, то область внутри
-							// Асемблесов есть Hollow блок.
-							inDomain = false;
+			
+			// integer iP_k, iP_j, iP;
+			for (integer k = 0; k < inz; k++)
+			{
+				integer iP_k = k * inx * iny;
+				for (integer j = 0; j < iny; j++)
+				{
+					integer iP_j = j * inx + iP_k;
+					for (integer i = 0; i < inx; i++)
+					{
+						integer iP = i + iP_j;
+
+						p.x = 0.5 * (xpos[i] + xpos[i + 1]);
+						p.y = 0.5 * (ypos[j] + ypos[j + 1]);
+						p.z = 0.5 * (zpos[k] + zpos[k + 1]);
+						switch (iflag) {
+						case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
+						case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
 						}
-					}
-				}
-				else {
-					if ((p.x > my_union[iunion_id_p1-1].xS) && (p.x < my_union[iunion_id_p1-1].xE) &&
-						(p.y > my_union[iunion_id_p1-1].yS) && (p.y < my_union[iunion_id_p1-1].yE) &&
-						(p.z > my_union[iunion_id_p1-1].zS) && (p.z < my_union[iunion_id_p1-1].zE)) {
-						// Если рассматривать кабинет с асемблесами, то область внутри
-						// Асемблесов есть Hollow блок.
-						//inDomain = false;
-						// Оставляем так всё верно.
+						if (iunion_id_p1 == 0) {
+							for (integer iu = 0; iu < lu; iu++) {
+								if ((p.x > my_union[iu].xS) && (p.x < my_union[iu].xE) &&
+									(p.y > my_union[iu].yS) && (p.y < my_union[iu].yE) &&
+									(p.z > my_union[iu].zS) && (p.z < my_union[iu].zE)) {
+									// Если рассматривать кабинет с асемблесами, то область внутри
+									// Асемблесов есть Hollow блок.
+									inDomain = false;
+								}
+							}
+						}
+						else {
+							if ((p.x > my_union[iunion_id_p1 - 1].xS) && (p.x < my_union[iunion_id_p1 - 1].xE) &&
+								(p.y > my_union[iunion_id_p1 - 1].yS) && (p.y < my_union[iunion_id_p1 - 1].yE) &&
+								(p.z > my_union[iunion_id_p1 - 1].zS) && (p.z < my_union[iunion_id_p1 - 1].zE)) {
+								// Если рассматривать кабинет с асемблесами, то область внутри
+								// Асемблесов есть Hollow блок.
+								//inDomain = false;
+								// Оставляем так всё верно.
+								if (inDomain) {
+									//	printf("in our assembles\n");
+									//	system("PAUSE");
+								}
+							}
+						}
+
+
 						if (inDomain) {
-						//	printf("in our assembles\n");
-						//	system("PAUSE");
+							// принадлежит расчётной области
+							evt[iP] = l;
+							// Это очень нужно для записи репорта.
+							whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+							tck_int_list[l - 1].i = i;
+							tck_int_list[l - 1].j = j;
+							tck_int_list[l - 1].k = k;
+							l++;
+						}
+						else
+						{   // не принадлежит расчётной области
+							evt[iP] = 0;
 						}
 					}
-				}
-
-
-				if (inDomain) {
-					// принадлежит расчётной области
-					evt[i + j*inx + k*inx*iny] = l;
-					// Это очень нужно для записи репорта.
-					whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-					tck_int_list[l - 1].i = i;
-					tck_int_list[l - 1].j = j;
-					tck_int_list[l - 1].k = k;
-					l++;
-				}
-				else
-				{   // не принадлежит расчётной области
-					evt[i + j*inx + k*inx*iny] = 0;
 				}
 			}
 
@@ -4327,31 +4427,45 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
 				// нумерация в evt начиная с единицы.
 				// если не принадлежит расчётной области то стоит 0.
 				integer l = 1, ib;
-				integer i, j, k;
+				//integer i, j, k;
 				bool inDomain = false;
 				// нумерация контрольных объёмов начинается с единицы
 				// если контрольный объём не принадлежит расчётной области то ставится 0.
-				for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-					p.x = 0.5*(xpos[i] + xpos[i + 1]);
-					p.y = 0.5*(ypos[j] + ypos[j + 1]);
-					p.z = 0.5*(zpos[k] + zpos[k + 1]);
-					switch (iflag) {
-					case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
-					case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
-					}
-					if (inDomain) {
-						// принадлежит расчётной области
-						evt[i + j*inx + k*inx*iny] = l;
-						// Это очень нужно для записи репорта.
-						whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-						tck_int_list[l - 1].i = i;
-						tck_int_list[l - 1].j = j;
-						tck_int_list[l - 1].k = k;
-						l++;
-					}
-					else
-					{   // не принадлежит расчётной области
-						evt[i + j*inx + k*inx*iny] = 0;
+				
+				// integer iP_k, iP_j, iP;
+
+				for (integer k = 0; k < inz; k++)
+				{
+					integer iP_k = k * inx * iny;
+					for (integer j = 0; j < iny; j++)
+					{
+						integer iP_j = j * inx + iP_k;
+						for (integer i = 0; i < inx; i++)
+						{
+							integer iP = i + iP_j;
+							p.x = 0.5 * (xpos[i] + xpos[i + 1]);
+							p.y = 0.5 * (ypos[j] + ypos[j + 1]);
+							p.z = 0.5 * (zpos[k] + zpos[k + 1]);
+							switch (iflag) {
+							case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
+							case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
+							}
+
+							if (inDomain) {
+								// принадлежит расчётной области
+								evt[iP] = l;
+								// Это очень нужно для записи репорта.
+								whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+								tck_int_list[l - 1].i = i;
+								tck_int_list[l - 1].j = j;
+								tck_int_list[l - 1].k = k;
+								l++;
+							}
+							else
+							{   // не принадлежит расчётной области
+								evt[iP] = 0;
+							}
+						}
 					}
 				}
 
@@ -4367,7 +4481,8 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
   // Инициализация evt_f. Он нужен для заливки, через которую определяется функция цвета.
   // А функция цвета нужна обязательным образом для корректировки массового баланса при нескольких
   // FLUID областях связанных лишь уравнением теплопередачи, иначе не будет сходимости.
-void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos,
+void init_evt_f_alice_improved(integer* &evt, integer iflag,
+	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list,
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
@@ -4410,46 +4525,46 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 		block_indexes[i].kR = -2;
 	}
 
-	integer i=0, j=0, k=0;
+	//integer i=0, j=0, k=0;
 
-	for (i = 0; i < lb; i++) {
+	for (integer i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
-		for (j = 0; j <= inx; j++) {
+		for (integer j = 0; j <= inx; j++) {
 			if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX(x4, b, lb, w, lw, s, ls)) {
 				block_indexes[i].iL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.xE;
-		for (j = 0; j <= inx; j++) {
+		for (integer j = 0; j <= inx; j++) {
 			if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX(x4, b, lb, w, lw, s, ls)) {
 				block_indexes[i].iR = j;
 				break;
 			}
 		}
 		x4 = b[i].g.yS;
-		for (j = 0; j <= iny; j++) {
+		for (integer j = 0; j <= iny; j++) {
 			if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY(x4, b, lb, w, lw, s, ls)) {
 				block_indexes[i].jL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.yE;
-		for (j = 0; j <= iny; j++) {
+		for (integer j = 0; j <= iny; j++) {
 			if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY(x4, b, lb, w, lw, s, ls)) {
 				block_indexes[i].jR = j;
 				break;
 			}
 		}
 		x4 = b[i].g.zS;
-		for (j = 0; j <= inz; j++) {
+		for (integer j = 0; j <= inz; j++) {
 			if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ(x4, b, lb, w, lw, s, ls)) {
 				block_indexes[i].kL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.zE;
-		for (j = 0; j <= inz; j++) {
+		for (integer j = 0; j <= inz; j++) {
 			if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ(x4, b, lb, w, lw, s, ls)) {
 				block_indexes[i].kR = j;
 				break;
@@ -4535,52 +4650,76 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
-	integer m7;
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		evt[i + j*inx + k*inx*iny] = -1;
+	//integer m7;
+	const integer size_xyz = inx * iny * inz;
+	for (integer i = 0; i < size_xyz; i++) {
+		evt[i] = -1;
 	}
-	for (m7 = 0; m7 < lb; m7++) {
-		for (i = block_indexes[m7].iL; i < block_indexes[m7].iR; i++) for (j = block_indexes[m7].jL; j < block_indexes[m7].jR; j++) for (k = block_indexes[m7].kL; k < block_indexes[m7].kR; k++) {
-			switch (iflag) {
-			case TEMPERATURE:
-				if (b[m7].itype == HOLLOW) {
-					evt[i + j*inx + k*inx*iny] = -1;
-				}
-				else {
-					evt[i + j*inx + k*inx*iny] = m7;
-				}
-				break;
-			case HYDRODINAMIC:
-				if ((b[m7].itype == SOLID) || (b[m7].itype == HOLLOW)) {
-					evt[i + j*inx + k*inx*iny] = -1;
-				}
-				else {
-					evt[i + j*inx + k*inx*iny] = m7;
-				}
-				break;
-			}
 
+	// integer iP_k, iP_j, iP;
+
+	for (integer m7 = 0; m7 < lb; m7++) {
+		for (integer k = block_indexes[m7].kL; k < block_indexes[m7].kR; k++)
+		{
+			integer iP_k = k * inx * iny;
+			for (integer j = block_indexes[m7].jL; j < block_indexes[m7].jR; j++)
+			{
+				integer iP_j = j * inx + iP_k;
+				for (integer i = block_indexes[m7].iL; i < block_indexes[m7].iR; i++)
+				{
+					integer iP = i + iP_j;
+					switch (iflag) {
+					case TEMPERATURE:
+						if (b[m7].itype == HOLLOW) {
+							evt[iP] = -1;
+						}
+						else {
+							evt[iP] = m7;
+						}
+						break;
+					case HYDRODINAMIC:
+						if ((b[m7].itype == SOLID) || (b[m7].itype == HOLLOW)) {
+							evt[iP] = -1;
+						}
+						else {
+							evt[iP] = m7;
+						}
+						break;
+					}
+
+				}
+			}
 		}
 	}
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
 	integer l = 1, ib;
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		if (evt[i + j*inx + k*inx*iny] > -1) {
-			ib = evt[i + j*inx + k*inx*iny]; // номер блока был сохранён ранее.
-											 // Это очень нужно для записи репорта.
-											 //whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-			evt[i + j*inx + k*inx*iny] = l;
+	for (integer k = 0; k < inz; k++)
+	{
+		integer iP_k = k * inx * iny;
+		for (integer j = 0; j < iny; j++)
+		{
+			integer iP_j = j * inx + iP_k;
+			for (integer i = 0; i < inx; i++)
+			{
+				integer iP = i + iP_j;
+				if (evt[iP] > -1) {
+					ib = evt[iP]; // номер блока был сохранён ранее.
+													 // Это очень нужно для записи репорта.
+													 //whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					evt[iP] = l;
 
-			tck_int_list[l - 1].i = i;
-			tck_int_list[l - 1].j = j;
-			tck_int_list[l - 1].k = k;
-			l++;
-		}
-		else {
-			// не принадлежит расчётной области
-			evt[i + j*inx + k*inx*iny] = 0;
+					tck_int_list[l - 1].i = i;
+					tck_int_list[l - 1].j = j;
+					tck_int_list[l - 1].k = k;
+					l++;
+				}
+				else {
+					// не принадлежит расчётной области
+					evt[iP] = 0;
+				}
+			}
 		}
 	}
 
@@ -4702,10 +4841,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 		{
 
 			doublereal x4 = b[i].g.xS;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == XZ_PLANE))) {
 				x4 = b[i].g.xC - b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.xC;
 				}
@@ -4739,10 +4878,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 				}
 			}
 			x4 = b[i].g.xE;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == XZ_PLANE))) {
 				x4 = b[i].g.xC + b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.xC + b[i].g.Hcyl;
 				}
@@ -4776,10 +4915,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 				}
 			}
 			x4 = b[i].g.yS;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.yC - b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.yC;
 				}
@@ -4813,10 +4952,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 				}
 			}
 			x4 = b[i].g.yE;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.yC + b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.yC + b[i].g.Hcyl;
 				}
@@ -4851,10 +4990,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 				}
 			}
 			x4 = b[i].g.zS;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.zC - b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.zC;
 				}
@@ -4888,10 +5027,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 				}
 			}
 			x4 = b[i].g.zE;
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 				x4 = b[i].g.zC + b[i].g.R_out_cyl;
 			}
-			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
+			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE))) {
 				if (b[i].g.Hcyl > 0.0) {
 					x4 = b[i].g.zC + b[i].g.Hcyl;
 				}
@@ -5021,10 +5160,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			// Проблема признана, теперь работаем с каждым проявлением индивидуально.
 			if (block_indexes[i_a].iL == -1) {
 				doublereal x4 = b[i_a].g.xS;
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 					x4 = b[i_a].g.xC - b[i_a].g.R_out_cyl;
 				}
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE))) {
 					if (b[i_a].g.Hcyl > 0.0) {
 						x4 = b[i_a].g.xC;
 					}
@@ -5047,10 +5186,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			}
 			if (block_indexes[i_a].iR == -1) {
 				doublereal x4 = b[i_a].g.xE;
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 					x4 = b[i_a].g.xC + b[i_a].g.R_out_cyl;
 				}
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE))) {
 					if (b[i_a].g.Hcyl > 0.0) {
 						x4 = b[i_a].g.xC + b[i_a].g.Hcyl;
 					}
@@ -5074,10 +5213,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			}
 			if (block_indexes[i_a].jL == -1) {
 				doublereal x4 = b[i_a].g.yS;
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == YZ_PLANE))) {
 					x4 = b[i_a].g.yC - b[i_a].g.R_out_cyl;
 				}
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ_PLANE))) {
 					if (b[i_a].g.Hcyl > 0.0) {
 						x4 = b[i_a].g.yC;
 					}
@@ -5100,10 +5239,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			}
 			if (block_indexes[i_a].jR == -1) {
 				doublereal x4 = b[i_a].g.yE;
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == YZ_PLANE))) {
 					x4 = b[i_a].g.yC + b[i_a].g.R_out_cyl;
 				}
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ_PLANE))) {
 					if (b[i_a].g.Hcyl > 0.0) {
 						x4 = b[i_a].g.yC + b[i_a].g.Hcyl;
 					}
@@ -5127,10 +5266,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			}
 			if (block_indexes[i_a].kL == -1) {
 				doublereal x4 = b[i_a].g.zS;
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 					x4 = b[i_a].g.zC - b[i_a].g.R_out_cyl;
 				}
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE))) {
 					if (b[i_a].g.Hcyl > 0.0) {
 						x4 = b[i_a].g.zC;
 					}
@@ -5153,10 +5292,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			}
 			if (block_indexes[i_a].kR == -1) {
 				doublereal x4 = b[i_a].g.zE;
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 					x4 = b[i_a].g.zC + b[i_a].g.R_out_cyl;
 				}
-				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE))) {
 					if (b[i_a].g.Hcyl > 0.0) {
 						x4 = b[i_a].g.zC + b[i_a].g.Hcyl;
 					}
@@ -5181,41 +5320,54 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 		}
 	}
 	
+	const integer size_xyz=inx*iny*inz;
 #pragma omp parallel for
-	for (integer iP = 0; iP<inx*iny*inz; iP++) {
+	for (integer iP = 0; iP < size_xyz; iP++) {
 		evt[iP] = -1;
 		bvisit[iP] = false;
 	}
-	integer m7 = lb-1, m8;
+	 integer m7 = lb-1;
+	// integer iP_k1, iP_j1, iP, m8;
 
-	for (m8 = lb-1; m8 >= 0; m8--) {
+
+	for (integer m8 = lb-1; m8 >= 0; m8--) {
 		if (b[m8].g.itypegeom == PRISM) {
 #pragma omp parallel for
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				integer iP = i1 + j1 * inx + k1 * inx*iny;
-
-				if (bvisit[iP] == false)
+			
+			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+			{
+				integer iP_k1 = k1 * inx*iny;
+				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
 				{
+					integer iP_j1 = j1 * inx +iP_k1;
+					for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+					{
+						integer iP = i1 +  iP_j1;
 
-					bvisit[iP] = true;
+						if (bvisit[iP] == false)
+						{
 
-					switch (iflag) {
-					case TEMPERATURE:
-						if (b[m8].itype == HOLLOW) {
-							evt[iP] = -1;
+							bvisit[iP] = true;
+
+							switch (iflag) {
+							case TEMPERATURE:
+								if (b[m8].itype == HOLLOW) {
+									evt[iP] = -1;
+								}
+								else {
+									evt[iP] = m8;
+								}
+								break;
+							case HYDRODINAMIC:
+								if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+									evt[iP] = -1;
+								}
+								else {
+									evt[iP] = m8;
+								}
+								break;
+							}
 						}
-						else {
-							evt[iP] = m8;
-						}
-						break;
-					case HYDRODINAMIC:
-						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-							evt[iP] = -1;
-						}
-						else {
-							evt[iP] = m8;
-						}
-						break;
 					}
 
 				}
@@ -5229,8 +5381,15 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 			// Cylinder
 			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-					integer iP = i1 + j1 * inx + k1 * inx*iny;
+			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) 
+			{
+				integer iP_k1 = k1 * inx*iny;
+				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+				{
+					integer  iP_j1 = j1 * inx + iP_k1;
+					for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)	
+					{
+					integer  iP = i1 +  iP_j1;
 
 					if (bvisit[iP] == false)
 					{
@@ -5241,7 +5400,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 						p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
 
 						switch (b[m8].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 								if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
@@ -5301,7 +5460,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 								if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
@@ -5360,7 +5519,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 								if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
@@ -5424,6 +5583,8 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 							}
 							break;
 						}
+						}
+						}
 					}
 			}
 			m7--;
@@ -5437,43 +5598,52 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 
 #pragma omp parallel for
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-
-				integer iP = i1 + j1 * inx + k1 * inx*iny;
-
-				if (bvisit[iP] == false)
+			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+			{
+				integer  iP_k1=k1 * inx*iny;
+				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
 				{
+					integer  iP_j1=j1 * inx +iP_k1;
+					for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+					{
 
-					//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-					TOCHKA p;
-					p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
-					p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
-					p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+						integer  iP = i1 +  iP_j1;
 
-					integer k74 = -1;
-					if (in_polygon(p, b[m8].g.nsizei, b[m8].g.xi, b[m8].g.yi, b[m8].g.zi, b[m8].g.hi, b[m8].g.iPlane_obj2, k74, m8)) {
-						//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
-						//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						if (bvisit[iP] == false)
+						{
 
-						bvisit[iP] = true;
+							//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+							TOCHKA p;
+							p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
+							p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
+							p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
 
-						switch (iflag) {
-						case TEMPERATURE:
-							if (b[m8].itype == HOLLOW) {
-								evt[iP] = -1;
+							integer k74 = -1;
+							if (in_polygon(p, b[m8].g.nsizei, b[m8].g.xi, b[m8].g.yi, b[m8].g.zi, b[m8].g.hi, b[m8].g.iPlane_obj2, k74, m8)) {
+								//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
+								//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+
+								bvisit[iP] = true;
+
+								switch (iflag) {
+									case TEMPERATURE:
+										if (b[m8].itype == HOLLOW) {
+											evt[iP] = -1;
+										}
+										else {
+											evt[iP] = m8;
+										}
+									break;
+									case HYDRODINAMIC:
+										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											evt[iP] = -1;
+										}
+										else {
+											evt[iP] = m8;
+										}
+									break;
+								}
 							}
-							else {
-								evt[iP] = m8;
-							}
-							break;
-						case HYDRODINAMIC:
-							if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-								evt[iP] = -1;
-							}
-							else {
-								evt[iP] = m8;
-							}
-							break;
 						}
 					}
 				}
@@ -5492,22 +5662,32 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
-	integer l = 1, ib;
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		integer iP = i + j * inx + k * inx*iny;
-		if (evt[iP] > -1) {
-			ib = evt[iP]; // номер блока был сохранён ранее.
-											 // Это очень нужно для записи репорта.
-			//whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-			evt[iP] = l;
-			tck_int_list[l - 1].i = i;
-			tck_int_list[l - 1].j = j;
-			tck_int_list[l - 1].k = k;
-			l++;
-		}
-		else {
-			// не принадлежит расчётной области
-			evt[iP] = 0;
+	//  integer iP_k, iP_j;
+	 integer l = 1, ib;
+	for (k = 0; k < inz; k++)
+	{
+		integer  iP_k = k * inx * iny;
+		for (j = 0; j < iny; j++)
+		{
+			integer  iP_j = j * inx + iP_k;
+			for (i = 0; i < inx; i++)
+			{
+				integer  iP = i + iP_j;
+				if (evt[iP] > -1) {
+					ib = evt[iP]; // номер блока был сохранён ранее.
+													 // Это очень нужно для записи репорта.
+					//whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					evt[iP] = l;
+					tck_int_list[l - 1].i = i;
+					tck_int_list[l - 1].j = j;
+					tck_int_list[l - 1].k = k;
+					l++;
+				}
+				else {
+					// не принадлежит расчётной области
+					evt[iP] = 0;
+				}
+			}
 		}
 	}
 
@@ -5561,8 +5741,8 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 		}
 	}
 
-
-	if (1) {
+	//if (1) {
+	if (!CAD_GEOMETRY_OCTREE_MESHGEN) {
 		// 2.01.2018
 		// Обобщение, работающее не только на прямоугольных призмах.
 		// Работает на цилиндрах, прямоугольных призмах и полигонах.
@@ -5597,30 +5777,41 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 			TOCHKA p;
 			// нумерация в evt начиная с единицы.
 			// если не принадлежит расчётной области то стоит 0.
-			integer l = 1, ib;
-			integer i, j, k;
+			  integer l = 1, ib;
+			// integer i, j, k;
+			// integer iP_k, iP_j, iP;
 			bool inDomain = false;
 			// нумерация контрольных объёмов начинается с единицы
 			// если контрольный объём не принадлежит расчётной области то ставится 0.
-			for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-				p.x = 0.5*(xpos[i] + xpos[i + 1]);
-				p.y = 0.5*(ypos[j] + ypos[j + 1]);
-				p.z = 0.5*(zpos[k] + zpos[k + 1]);
-				switch (iflag) {
-				case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
-				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
-				}
-				if (inDomain) {
-					// принадлежит расчётной области
-					evt[i + j*inx + k*inx*iny] = l;
-					tck_int_list[l - 1].i = i;
-					tck_int_list[l - 1].j = j;
-					tck_int_list[l - 1].k = k;
-					l++;
-				}
-				else
-				{   // не принадлежит расчётной области
-					evt[i + j*inx + k*inx*iny] = 0;
+			for (integer  k = 0; k < inz; k++)
+			{
+				integer  iP_k=k*inx*iny;
+				for (integer  j = 0; j < iny; j++) 
+				{
+					 integer  iP_j=j*inx +iP_k;
+					 for (integer  i = 0; i < inx; i++)
+					{
+						integer  iP=i +iP_j;
+						p.x = 0.5*(xpos[i] + xpos[i + 1]);
+						p.y = 0.5*(ypos[j] + ypos[j + 1]);
+						p.z = 0.5*(zpos[k] + zpos[k + 1]);
+						switch (iflag) {
+							case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
+							case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
+						}
+						if (inDomain) {
+							// принадлежит расчётной области
+							evt[iP] = l;
+							tck_int_list[l - 1].i = i;
+							tck_int_list[l - 1].j = j;
+							tck_int_list[l - 1].k = k;
+							l++;
+						}
+						else
+						{   // не принадлежит расчётной области
+							evt[iP] = 0;
+						}
+					}
 				}
 			}
 		}
@@ -5632,30 +5823,30 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 
 // находит соседей для каждого внутреннего контрольного
 // объёма или 0 если соседа нет.
-void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
+void constr_neighbour(integer* evt, integer* ent, integer** &neighbour, integer maxelm,
 				  integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
     integer i;
-	sosed=nullptr;
-	sosed = new integer*[12];
-	if (sosed==nullptr) {
+	neighbour=nullptr;
+	neighbour = new integer*[12];
+	if (neighbour==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for sosed constr struct...\n");
+		printf("Problem: not enough memory on your equipment for neighbour constr struct...\n");
 		printf("Please any key to exit...\n");
 		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
 	for (i=0; i<12; i++) {
-		sosed[i]=nullptr;
+		neighbour[i]=nullptr;
 	}
 	for (i=0; i<12; i++) {
-		sosed[i]=new integer[maxelm];
-		if (sosed[i]==nullptr) {
+		neighbour[i]=new integer[maxelm];
+		if (neighbour[i]==nullptr) {
 	       // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for sosed[%lld] constr struct...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbour[%lld] constr struct...\n", i);
 #else
-			printf("Problem: not enough memory on your equipment for sosed[%d] constr struct...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbour[%d] constr struct...\n", i);
 #endif
 		   
 		   printf("Please any key to exit...\n");
@@ -5691,65 +5882,65 @@ void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
 
 					//iE = (i + 1) + j*inx + k*inx*iny + 1;
 					iE = ic + 2;
-					if (((i + 1) < inx) && (iE > 0) && (iE <= iend_size) && (evt[iE - 1] > 0)) sosed[ESIDE][l] = evt[iE - 1];
+					if (((i + 1) < inx) && (iE > 0) && (iE <= iend_size) && (evt[iE - 1] > 0)) neighbour[E_SIDE][l] = evt[iE - 1];
 					else {
-						sosed[ESIDE][l] = 0; // точка не принадлежит расчётной области
+						neighbour[E_SIDE][l] = 0; // точка не принадлежит расчётной области
 					}
 					//iW = (i - 1) + j*inx + k*inx*iny + 1;
 					iW = ic;
-					if (((i - 1) >= 0) && (iW > 0) && (iW <= iend_size) && (evt[iW - 1] > 0)) sosed[WSIDE][l] = evt[iW - 1];
+					if (((i - 1) >= 0) && (iW > 0) && (iW <= iend_size) && (evt[iW - 1] > 0)) neighbour[W_SIDE][l] = evt[iW - 1];
 					else {
-						sosed[WSIDE][l] = 0; // точка не принадлежит расчётной области
+						neighbour[W_SIDE][l] = 0; // точка не принадлежит расчётной области
 					}
 					//iN = i + (j + 1)*inx + k*inx*iny + 1;
 					iN = ic + 1 + inx;
-					if (((j + 1) < iny) && (iN > 0) && (iN <= iend_size) && (evt[iN - 1] > 0)) sosed[NSIDE][l] = evt[iN - 1];
+					if (((j + 1) < iny) && (iN > 0) && (iN <= iend_size) && (evt[iN - 1] > 0)) neighbour[N_SIDE][l] = evt[iN - 1];
 					else {
-						sosed[NSIDE][l] = 0; // точка не принадлежит расчётной области
+						neighbour[N_SIDE][l] = 0; // точка не принадлежит расчётной области
 					}
 					//iS = i + (j - 1)*inx + k*inx*iny + 1;
 					iS = ic - inx + 1;
-					if (((j - 1) >= 0) && (iS > 0) && (iS <= iend_size) && (evt[iS - 1] > 0)) sosed[SSIDE][l] = evt[iS - 1];
+					if (((j - 1) >= 0) && (iS > 0) && (iS <= iend_size) && (evt[iS - 1] > 0)) neighbour[S_SIDE][l] = evt[iS - 1];
 					else {
-						sosed[SSIDE][l] = 0; // точка не принадлежит расчётной области
+						neighbour[S_SIDE][l] = 0; // точка не принадлежит расчётной области
 					}
 					//iT = i + j*inx + (k + 1)*inx*iny + 1;
 					iT = ic + iend_size1 + 1;
-					if (((k + 1) < inz) && (iT > 0) && (iT <= iend_size) && (evt[iT - 1] > 0)) sosed[TSIDE][l] = evt[iT - 1];
+					if (((k + 1) < inz) && (iT > 0) && (iT <= iend_size) && (evt[iT - 1] > 0)) neighbour[T_SIDE][l] = evt[iT - 1];
 					else {
-						sosed[TSIDE][l] = 0; // точка не принадлежит расчётной области
+						neighbour[T_SIDE][l] = 0; // точка не принадлежит расчётной области
 					}
 					//iB = i + j*inx + (k - 1)*inx*iny + 1;
 					iB = ic - iend_size1 + 1;
-					if (((k - 1) >= 0) && (iB > 0) && (iB <= iend_size) && (evt[iB - 1] > 0)) sosed[BSIDE][l] = evt[iB - 1];
+					if (((k - 1) >= 0) && (iB > 0) && (iB <= iend_size) && (evt[iB - 1] > 0)) neighbour[B_SIDE][l] = evt[iB - 1];
 					else {
-						sosed[BSIDE][l] = 0; // точка не принадлежит расчётной области
+						neighbour[B_SIDE][l] = 0; // точка не принадлежит расчётной области
 					}
 
 					//iEE = (i + 2) + j*inx + k*inx*iny + 1;
 					iEE = ic + 3;
-					if (((i + 2) < inx) && (iEE > 0) && (iEE <= iend_size) && (evt[iEE - 1] > 0)) sosed[EE][l] = evt[iEE - 1];
-					else sosed[EE][l] = 0; // точка не принадлежит расчётной области
+					if (((i + 2) < inx) && (iEE > 0) && (iEE <= iend_size) && (evt[iEE - 1] > 0)) neighbour[EE_SIDE][l] = evt[iEE - 1];
+					else neighbour[EE_SIDE][l] = 0; // точка не принадлежит расчётной области
 					//iWW = (i - 2) + j*inx + k*inx*iny + 1;
 					iWW = ic - 1;
-					if (((i - 2) >= 0) && (iWW > 0) && (iWW <= iend_size) && (evt[iWW - 1] > 0)) sosed[WW][l] = evt[iWW - 1];
-					else sosed[WW][l] = 0; // точка не принадлежит расчётной области
+					if (((i - 2) >= 0) && (iWW > 0) && (iWW <= iend_size) && (evt[iWW - 1] > 0)) neighbour[WW_SIDE][l] = evt[iWW - 1];
+					else neighbour[WW_SIDE][l] = 0; // точка не принадлежит расчётной области
 					//iNN = i + (j + 2)*inx + k*inx*iny + 1;
 					iNN = ic + 2 * inx + 1;
-					if (((j + 2) < iny) && (iNN > 0) && (iNN <= iend_size) && (evt[iNN - 1] > 0)) sosed[NN][l] = evt[iNN - 1];
-					else sosed[NN][l] = 0; // точка не принадлежит расчётной области
+					if (((j + 2) < iny) && (iNN > 0) && (iNN <= iend_size) && (evt[iNN - 1] > 0)) neighbour[NN_SIDE][l] = evt[iNN - 1];
+					else neighbour[NN_SIDE][l] = 0; // точка не принадлежит расчётной области
 					//iSS = i + (j - 2)*inx + k*inx*iny + 1;
 					iSS = ic - 2 * inx + 1;
-					if (((j - 2) >= 0) && (iSS > 0) && (iSS <= iend_size) && (evt[iSS - 1] > 0)) sosed[SS][l] = evt[iSS - 1];
-					else sosed[SS][l] = 0; // точка не принадлежит расчётной области
+					if (((j - 2) >= 0) && (iSS > 0) && (iSS <= iend_size) && (evt[iSS - 1] > 0)) neighbour[SS_SIDE][l] = evt[iSS - 1];
+					else neighbour[SS_SIDE][l] = 0; // точка не принадлежит расчётной области
 					//iTT = i + j*inx + (k + 2)*inx*iny + 1;
 					iTT = ic + 2 * iend_size1 + 1;
-					if (((k + 2) < inz) && (iTT > 0) && (iTT <= iend_size) && (evt[iTT - 1] > 0)) sosed[TTSIDE][l] = evt[iTT - 1];
-					else sosed[TTSIDE][l] = 0; // точка не принадлежит расчётной области
+					if (((k + 2) < inz) && (iTT > 0) && (iTT <= iend_size) && (evt[iTT - 1] > 0)) neighbour[TT_SIDE][l] = evt[iTT - 1];
+					else neighbour[TT_SIDE][l] = 0; // точка не принадлежит расчётной области
 					//iBB = i + j*inx + (k - 2)*inx*iny + 1;
 					iBB = ic - 2 * iend_size1 + 1;
-					if (((k - 2) >= 0) && (iBB > 0) && (iBB <= iend_size) && (evt[iBB - 1] > 0)) sosed[BB][l] = evt[iBB - 1];
-					else sosed[BB][l] = 0; // точка не принадлежит расчётной области
+					if (((k - 2) >= 0) && (iBB > 0) && (iBB <= iend_size) && (evt[iBB - 1] > 0)) neighbour[BB_SIDE][l] = evt[iBB - 1];
+					else neighbour[BB_SIDE][l] = 0; // точка не принадлежит расчётной области
 
 					l++;
 				}
@@ -5761,33 +5952,33 @@ void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
 		}
 	}
 
-} // constr_sosed
+} // constr_neighbour
 
 // находит соседей для каждого внутреннего контрольного
 // объёма или 0 если соседа нет.
-void constr_sosed_flow(integer **evt_f2, integer iDom, 
-					   integer** &sosed, integer maxelm,
+void constr_neighbour_flow(integer **evt_f2, integer iDom, 
+					   integer** &neighbour, integer maxelm,
 				       integer inx, integer iny, integer inz) {
-    integer i,j,k;	
-	sosed=nullptr;
-	sosed = new integer*[12];
-	if (sosed==nullptr) {
+    //integer i,j,k;	
+	neighbour=nullptr;
+	neighbour = new integer*[12];
+	if (neighbour==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for sosed constr struct...\n");
+		printf("Problem: not enough memory on your equipment for neighbour constr struct...\n");
 		printf("Please any key to exit...\n");
 		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
-	for (i=0; i<12; i++) sosed[i]=nullptr;
-	for (i=0; i<12; i++) {
-		sosed[i]=new integer[maxelm];
-		if (sosed[i]==nullptr) {
+	for (integer i=0; i<12; i++) neighbour[i]=nullptr;
+	for (integer i=0; i<12; i++) {
+		neighbour[i]=new integer[maxelm];
+		if (neighbour[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for sosed[%lld] constr struct...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbour[%lld] constr struct...\n", i);
 #else
-			printf("Problem: not enough memory on your equipment for sosed[%d] constr struct...\n", i);
+			printf("Problem: not enough memory on your equipment for neighbour[%d] constr struct...\n", i);
 #endif
 		    
 		    printf("Please any key to exit...\n");
@@ -5800,75 +5991,97 @@ void constr_sosed_flow(integer **evt_f2, integer iDom,
 	// Константа для ускорения проверок.
 	const integer iend_size = inx*iny*inz;
 
-	integer ic,l=0;
-	integer iE, iN, iT, iW, iS, iB;
-    integer iEE, iNN, iTT, iWW, iSS, iBB;
+	 integer l=0;
+	//integer ic;
+	// integer iE, iN, iT, iW, iS, iB;
+    // integer iEE, iNN, iTT, iWW, iSS, iBB;
+	// integer ic_k, ic_k_m1, ic_k_p1, ic_k_m2, ic_k_p2;
+	// integer ic_j, ic_j_p1, ic_j_m1, ic_j_p2, ic_j_m2;
 	// проход по всем контрольным объёмам принадлежащим
 	// расчётной области.
-    for (i=0; i<(inx); i++) for (j=0; j<(iny); j++) for (k=0; k<(inz); k++) {
-		ic=i+j*inx+k*inx*iny;
-			if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
+	for (integer  k=0; k<(inz); k++)
+	{
+		integer ic_k=k*inx*iny;
+		integer ic_k_m1=(k-1)*inx*iny;
+        integer ic_k_p1=(k+1)*inx*iny;
+		integer ic_k_m2=(k-2)*inx*iny;
+        integer ic_k_p2=(k+2)*inx*iny;
+		for (integer  j=0; j<(iny); j++)
+		{
+			 integer ic_j=j*inx+ic_k;
+			 integer ic_j_p1=ic_k_p1+j*inx+1;
+			 integer ic_j_m1=ic_k_m1+j*inx+1;
+			 integer ic_j_p2=ic_k_p2+j*inx+1;
+			 integer ic_j_m2=ic_k_m2+j*inx+1;
+			 for (integer  i=0; i<(inx); i++)  
+			 {
 
-
-				
+				integer ic=i+ic_j;
+				if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
+			
 					if (l < maxelm) {
+							 integer iE, iN, iT, iW, iS, iB;
+							 integer iEE, iNN, iTT, iWW, iSS, iBB;
+
 							//iE = (i + 1) + j*inx + k*inx*iny + 1;
 							iE = ic + 2;
-							if (((i + 1) < inx) && (iE > 0) && (iE <= iend_size) && (evt_f2[0][iE - 1] > 0) && (evt_f2[1][iE - 1] == (iDom + 1))) sosed[ESIDE][l] = evt_f2[0][iE - 1];
-							else sosed[ESIDE][l] = 0; // точка не принадлежит расчётной области
+							if (((i + 1) < inx) && (iE > 0) && (iE <= iend_size) && (evt_f2[0][iE - 1] > 0) && (evt_f2[1][iE - 1] == (iDom + 1))) neighbour[E_SIDE][l] = evt_f2[0][iE - 1];
+							else neighbour[E_SIDE][l] = 0; // точка не принадлежит расчётной области
 							//iW = (i - 1) + j*inx + k*inx*iny + 1;
 							iW = ic;
-							if (((i - 1) >= 0) && (iW > 0) && (iW <= iend_size) && (evt_f2[0][iW - 1] > 0) && (evt_f2[1][iW - 1] == (iDom + 1))) sosed[WSIDE][l] = evt_f2[0][iW - 1];
-							else sosed[WSIDE][l] = 0; // точка не принадлежит расчётной области
+							if (((i - 1) >= 0) && (iW > 0) && (iW <= iend_size) && (evt_f2[0][iW - 1] > 0) && (evt_f2[1][iW - 1] == (iDom + 1))) neighbour[W_SIDE][l] = evt_f2[0][iW - 1];
+							else neighbour[W_SIDE][l] = 0; // точка не принадлежит расчётной области
 							//iN = i + (j + 1)*inx + k*inx*iny + 1;
 							iN = ic + inx + 1;
-							if (((j + 1) < iny) && (iN > 0) && (iN <= iend_size) && (evt_f2[0][iN - 1] > 0) && (evt_f2[1][iN - 1] == (iDom + 1))) sosed[NSIDE][l] = evt_f2[0][iN - 1];
-							else sosed[NSIDE][l] = 0; // точка не принадлежит расчётной области
+							if (((j + 1) < iny) && (iN > 0) && (iN <= iend_size) && (evt_f2[0][iN - 1] > 0) && (evt_f2[1][iN - 1] == (iDom + 1))) neighbour[N_SIDE][l] = evt_f2[0][iN - 1];
+							else neighbour[N_SIDE][l] = 0; // точка не принадлежит расчётной области
 							//iS = i + (j - 1)*inx + k*inx*iny + 1;
 							iS = ic - inx + 1;
-							if (((j - 1) >= 0) && (iS > 0) && (iS <= iend_size) && (evt_f2[0][iS - 1] > 0) && (evt_f2[1][iS - 1] == (iDom + 1))) sosed[SSIDE][l] = evt_f2[0][iS - 1];
-							else sosed[SSIDE][l] = 0; // точка не принадлежит расчётной области
-							iT = i + j*inx + (k + 1)*inx*iny + 1;
-							if (((k + 1) < inz) && (iT > 0) && (iT <= iend_size) && (evt_f2[0][iT - 1] > 0) && (evt_f2[1][iT - 1] == (iDom + 1))) sosed[TSIDE][l] = evt_f2[0][iT - 1];
-							else sosed[TSIDE][l] = 0; // точка не принадлежит расчётной области
-							iB = i + j*inx + (k - 1)*inx*iny + 1;
-							if (((k - 1) >= 0) && (iB > 0) && (iB <= iend_size) && (evt_f2[0][iB - 1] > 0) && (evt_f2[1][iB - 1] == (iDom + 1))) sosed[BSIDE][l] = evt_f2[0][iB - 1];
-							else sosed[BSIDE][l] = 0; // точка не принадлежит расчётной области
+							if (((j - 1) >= 0) && (iS > 0) && (iS <= iend_size) && (evt_f2[0][iS - 1] > 0) && (evt_f2[1][iS - 1] == (iDom + 1))) neighbour[S_SIDE][l] = evt_f2[0][iS - 1];
+							else neighbour[S_SIDE][l] = 0; // точка не принадлежит расчётной области
+							iT = i + ic_j_p1;
+							if (((k + 1) < inz) && (iT > 0) && (iT <= iend_size) && (evt_f2[0][iT - 1] > 0) && (evt_f2[1][iT - 1] == (iDom + 1))) neighbour[T_SIDE][l] = evt_f2[0][iT - 1];
+							else neighbour[T_SIDE][l] = 0; // точка не принадлежит расчётной области
+							iB = i + ic_j_m1;
+							if (((k - 1) >= 0) && (iB > 0) && (iB <= iend_size) && (evt_f2[0][iB - 1] > 0) && (evt_f2[1][iB - 1] == (iDom + 1))) neighbour[B_SIDE][l] = evt_f2[0][iB - 1];
+							else neighbour[B_SIDE][l] = 0; // точка не принадлежит расчётной области
 
 							//iEE = (i + 2) + j*inx + k*inx*iny + 1;
 							iEE = ic + 3;
-							if (((i + 2) < inx) && (iEE > 0) && (iEE <= iend_size) && (evt_f2[0][iEE - 1] > 0) && (evt_f2[1][iEE - 1] == (iDom + 1))) sosed[EE][l] = evt_f2[0][iEE - 1];
-							else sosed[EE][l] = 0; // точка не принадлежит расчётной области
+							if (((i + 2) < inx) && (iEE > 0) && (iEE <= iend_size) && (evt_f2[0][iEE - 1] > 0) && (evt_f2[1][iEE - 1] == (iDom + 1))) neighbour[EE_SIDE][l] = evt_f2[0][iEE - 1];
+							else neighbour[EE_SIDE][l] = 0; // точка не принадлежит расчётной области
 							//iWW = (i - 2) + j*inx + k*inx*iny + 1;
 							iWW = ic - 1;
-							if (((i - 2) >= 0) && (iWW > 0) && (iWW <= iend_size) && (evt_f2[0][iWW - 1] > 0) && (evt_f2[1][iWW - 1] == (iDom + 1))) sosed[WW][l] = evt_f2[0][iWW - 1];
-							else sosed[WW][l] = 0; // точка не принадлежит расчётной области
+							if (((i - 2) >= 0) && (iWW > 0) && (iWW <= iend_size) && (evt_f2[0][iWW - 1] > 0) && (evt_f2[1][iWW - 1] == (iDom + 1))) neighbour[WW_SIDE][l] = evt_f2[0][iWW - 1];
+							else neighbour[WW_SIDE][l] = 0; // точка не принадлежит расчётной области
 							//iNN = i + (j + 2)*inx + k*inx*iny + 1;
 							iNN = ic + 2 * inx + 1;
-							if (((j + 2) < iny) && (iNN > 0) && (iNN <= iend_size) && (evt_f2[0][iNN - 1] > 0) && (evt_f2[1][iNN - 1] == (iDom + 1))) sosed[NN][l] = evt_f2[0][iNN - 1];
-							else sosed[NN][l] = 0; // точка не принадлежит расчётной области
+							if (((j + 2) < iny) && (iNN > 0) && (iNN <= iend_size) && (evt_f2[0][iNN - 1] > 0) && (evt_f2[1][iNN - 1] == (iDom + 1))) neighbour[NN_SIDE][l] = evt_f2[0][iNN - 1];
+							else neighbour[NN_SIDE][l] = 0; // точка не принадлежит расчётной области
 							//iSS = i + (j - 2)*inx + k*inx*iny + 1;
 							iSS = ic - 2 * inx + 1;
-							if (((j - 2) >= 0) && (iSS > 0) && (iSS <= iend_size) && (evt_f2[0][iSS - 1] > 0) && (evt_f2[1][iSS - 1] == (iDom + 1))) sosed[SS][l] = evt_f2[0][iSS - 1];
-							else sosed[SS][l] = 0; // точка не принадлежит расчётной области
-							iTT = i + j*inx + (k + 2)*inx*iny + 1;
-							if (((k + 2) < inz) && (iTT > 0) && (iTT <= iend_size) && (evt_f2[0][iTT - 1] > 0) && (evt_f2[1][iTT - 1] == (iDom + 1))) sosed[TTSIDE][l] = evt_f2[0][iTT - 1];
-							else sosed[TTSIDE][l] = 0; // точка не принадлежит расчётной области
-							iBB = i + j*inx + (k - 2)*inx*iny + 1;
-							if (((k - 2) >= 0) && (iBB > 0) && (iBB <= iend_size) && (evt_f2[0][iBB - 1] > 0) && (evt_f2[1][iBB - 1] == (iDom + 1))) sosed[BB][l] = evt_f2[0][iBB - 1];
-							else sosed[BB][l] = 0; // точка не принадлежит расчётной области
+							if (((j - 2) >= 0) && (iSS > 0) && (iSS <= iend_size) && (evt_f2[0][iSS - 1] > 0) && (evt_f2[1][iSS - 1] == (iDom + 1))) neighbour[SS_SIDE][l] = evt_f2[0][iSS - 1];
+							else neighbour[SS_SIDE][l] = 0; // точка не принадлежит расчётной области
+							iTT = i + ic_j_p2;
+							if (((k + 2) < inz) && (iTT > 0) && (iTT <= iend_size) && (evt_f2[0][iTT - 1] > 0) && (evt_f2[1][iTT - 1] == (iDom + 1))) neighbour[TT_SIDE][l] = evt_f2[0][iTT - 1];
+							else neighbour[TT_SIDE][l] = 0; // точка не принадлежит расчётной области
+							iBB = i + ic_j_m2;
+							if (((k - 2) >= 0) && (iBB > 0) && (iBB <= iend_size) && (evt_f2[0][iBB - 1] > 0) && (evt_f2[1][iBB - 1] == (iDom + 1))) neighbour[BB_SIDE][l] = evt_f2[0][iBB - 1];
+							else neighbour[BB_SIDE][l] = 0; // точка не принадлежит расчётной области
 
 							l++;
 						}
 						else {
-							printf("model is incorrect: constr struct sosed index >= maxelm\n");
+							printf("model is incorrect: constr struct neighbour index >= maxelm\n");
 							system("pause");
 							exit(1);
 						}
+					}
+				}
+			}
 		}
-	}
 
-} // constr_sosed_flow
+} // constr_neighbour_flow
 
 // Всем соседям присваивается идентификатор центрального узла 
 void my_fill_Domain(integer* &evt_f, integer i, integer j, integer k, 
@@ -5924,6 +6137,12 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 	        integer i;
 	        integer j;
 	        integer k;
+
+			TSTEK() {
+				i=-1;
+				j=-1;
+				k=-1;
+			}
         } STEK;
 		
 		STEK *stek=nullptr;
@@ -5954,13 +6173,19 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 		       k=stek[itop-1].k;
 			   itop--;
 
-	           iP=i+j*inx+k*inx*iny;
-               iE=(i+1)+j*inx+k*inx*iny+1;
-		       iW=(i-1)+j*inx+k*inx*iny+1;
-               iN=i+(j+1)*inx+k*inx*iny+1;
-		       iS=i+(j-1)*inx+k*inx*iny+1;
-		       iT=i+j*inx+(k+1)*inx*iny+1;
-		       iB=i+j*inx+(k-1)*inx*iny+1;
+			   const integer size_xyz=inx*iny*inz;
+               const integer iP_k=k*inx*iny;
+			   const integer iP_j=iP_k+1+j*inx;
+			   const integer iP_k_p1=(k+1)*inx*iny;
+			   const integer iP_k_m1=(k-1)*inx*iny;
+
+	           iP=i+j*inx+iP_k;
+               iE=(i+1)+iP_j;
+		       iW=(i-1)+iP_j;
+               iN=i+(j+1)*inx+iP_k+1;
+		       iS=i+(j-1)*inx+iP_k+1;
+		       iT=i+j*inx+iP_k_p1+1;
+		       iB=i+j*inx+iP_k_m1+1;
 
 
 
@@ -5972,7 +6197,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 
 					 // Узел принадлежит зоне FLUID.
 					// Всем существующим соседям присвоить этот номер. 
-					if (((i+1)<inx) && (iE>0) && (iE<=inx*iny*inz) && (evt_f[iE-1]>0)&&(evt_f[iE-1]!=evt_f[iP])) {
+					if (((i+1)<inx) && (iE>0) && (iE<=size_xyz) && (evt_f[iE-1]>0)&&(evt_f[iE-1]!=evt_f[iP])) {
 						evt_f[iE-1]=evt_f[iP];
 						//my_fill_Domain_recursive(evt_f, i+1, j, k, inx, iny, inz);
 						// PUSH вставить в стек.
@@ -5981,7 +6206,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 						stek[itop].k=k;
 						itop++;
 					}
-					if (((i-1)>=0) && (iW>0) && (iW<=inx*iny*inz) && (evt_f[iW-1]>0)&&(evt_f[iW-1]!=evt_f[iP])) {
+					if (((i-1)>=0) && (iW>0) && (iW<=size_xyz) && (evt_f[iW-1]>0)&&(evt_f[iW-1]!=evt_f[iP])) {
 						evt_f[iW-1]=evt_f[iP];
 						//my_fill_Domain_recursive(evt_f, i-1, j, k, inx, iny, inz);
 						// PUSH вставить в стек.
@@ -5990,7 +6215,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 						stek[itop].k=k;
 						itop++;			
 					}
-					if (((j+1)<iny) && (iN>0) && (iN<=inx*iny*inz) && (evt_f[iN-1]>0)&&(evt_f[iN-1]!=evt_f[iP])) {
+					if (((j+1)<iny) && (iN>0) && (iN<=size_xyz) && (evt_f[iN-1]>0)&&(evt_f[iN-1]!=evt_f[iP])) {
 						evt_f[iN-1]=evt_f[iP];
 						//my_fill_Domain_recursive(evt_f, i, j+1, k, inx, iny, inz);
 						// PUSH вставить в стек.
@@ -5999,7 +6224,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 						stek[itop].k=k;
 						itop++;
 					}
-					if (((j-1)>=0) && (iS>0) && (iS<=inx*iny*inz) && (evt_f[iS-1]>0)&&(evt_f[iS-1]!=evt_f[iP])) {
+					if (((j-1)>=0) && (iS>0) && (iS<=size_xyz) && (evt_f[iS-1]>0)&&(evt_f[iS-1]!=evt_f[iP])) {
 						evt_f[iS-1]=evt_f[iP];
 						//my_fill_Domain_recursive(evt_f, i, j-1, k, inx, iny, inz);
 						// PUSH вставить в стек.
@@ -6008,7 +6233,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 						stek[itop].k=k;
 						itop++;			
 					}
-					if (((k+1)<inz) && (iT>0) && (iT<=inx*iny*inz) && (evt_f[iT-1]>0)&&(evt_f[iT-1]!=evt_f[iP])) {
+					if (((k+1)<inz) && (iT>0) && (iT<=size_xyz) && (evt_f[iT-1]>0)&&(evt_f[iT-1]!=evt_f[iP])) {
 						evt_f[iT-1]=evt_f[iP];
 						//my_fill_Domain_recursive(evt_f, i, j, k+1, inx, iny, inz);
 						// PUSH вставить в стек.
@@ -6017,7 +6242,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 						stek[itop].k=k+1;
 						itop++;
 					}
-					if (((k-1)>=0) && (iB>0) && (iB<=inx*iny*inz) && (evt_f[iB-1]>0)&&(evt_f[iB-1]!=evt_f[iP])) {
+					if (((k-1)>=0) && (iB>0) && (iB<=size_xyz) && (evt_f[iB-1]>0)&&(evt_f[iB-1]!=evt_f[iP])) {
 						evt_f[iB-1]=evt_f[iP];
 						//my_fill_Domain_recursive(evt_f, i, j, k-1, inx, iny, inz);
 						// PUSH вставить в стек.
@@ -6026,8 +6251,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 	         			stek[itop].k=k-1;
 						itop++;
 					}
-				}
-			
+				}	
 
 		}
 
@@ -6076,30 +6300,46 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	bool brecursiv_algorithm = true; // 01.03.2019.
 	bool bfirst_visit = true;
 	integer iPgold = 0; // модификация 26,03,2019
+	const integer size_xyz=inx*iny*inz;
+
 
 	if (brecursiv_algorithm) {
 		// Рекурсивный алгоритм.
 		// Рекурсия имитируется СТЕКОМ. Там теперь свой стековый алгоритм внутри.
 		// Проблемы на геометрии 1ТТ113 26,03,2019.
+		// integer iP_k,iP_k_p1,iP_k_m1;
+        // integer iP_j, iP;
+       
 
-		for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
-			integer iP= i + j*inx + k*inx*iny;
+		 for ( integer k = 0; k<inz; k++)
+		{
+			integer  iP_k=k*inx*iny;
+            integer  iP_k_p1=(k+1)*inx*iny;
+            integer  iP_k_m1=(k-1)*inx*iny;
+
+			for (integer  j = 0; j<iny; j++) 
+			{
+				 integer  iP_j=j*inx +iP_k;
+				 for (integer  i = 0; i<inx; i++)
+				{
+
+					integer  iP= i + iP_j;
 			//if (bfirst_visit)
 			if (bfirst_visit||(evt_f[iP]!= evt_f[iPgold])) {
-				integer iE, iW, iN, iS, iT, iB;
-				iE = (i + 1) + j*inx + k*inx*iny + 1;
-				iW = (i - 1) + j*inx + k*inx*iny + 1;
-				iN = i + (j + 1)*inx + k*inx*iny + 1;
-				iS = i + (j - 1)*inx + k*inx*iny + 1;
-				iT = i + j*inx + (k + 1)*inx*iny + 1;
-				iB = i + j*inx + (k - 1)*inx*iny + 1;
-				if ((iP >= 0) && (iP<inx*iny*inz) && (evt_f[iP]>0)) {
-					if (((i + 1)<inx) && (iE>0) && (iE <= inx*iny*inz) && (evt_f[iE - 1]>0)) {
-						if (((i - 1) >= 0) && (iW>0) && (iW <= inx*iny*inz) && (evt_f[iW - 1]>0)) {
-							if (((j + 1)<iny) && (iN>0) && (iN <= inx*iny*inz) && (evt_f[iN - 1]>0)) {
-								if (((j - 1) >= 0) && (iS>0) && (iS <= inx*iny*inz) && (evt_f[iS - 1]>0)) {
-									if (((k + 1)<inz) && (iT>0) && (iT <= inx*iny*inz) && (evt_f[iT - 1]>0)) {
-										if (((k - 1) >= 0) && (iB>0) && (iB <= inx*iny*inz) && (evt_f[iB - 1]>0)) {
+				  integer iE, iW, iN, iS, iT, iB;
+				iE = iP +2; //(i + 1) + j*inx + k*inx*iny + 1;
+				iW = iP; //(i - 1) + j*inx + k*inx*iny + 1;
+				iN = iP+inx+1; //i + (j + 1)*inx + k*inx*iny + 1;
+				iS = iP-inx+1; //i + (j - 1)*inx + k*inx*iny + 1;
+				iT = i+j*inx+iP_k_p1+1; //i + j*inx + (k + 1)*inx*iny + 1;
+				iB = i+j*inx+iP_k_m1+1;//i + j*inx + (k - 1)*inx*iny + 1;
+				if ((iP >= 0) && (iP<size_xyz) && (evt_f[iP]>0)) {
+					if (((i + 1)<inx) && (iE>0) && (iE <= size_xyz) && (evt_f[iE - 1]>0)) {
+						if (((i - 1) >= 0) && (iW>0) && (iW <= size_xyz) && (evt_f[iW - 1]>0)) {
+							if (((j + 1)<iny) && (iN>0) && (iN <= size_xyz) && (evt_f[iN - 1]>0)) {
+								if (((j - 1) >= 0) && (iS>0) && (iS <= size_xyz) && (evt_f[iS - 1]>0)) {
+									if (((k + 1)<inz) && (iT>0) && (iT <= size_xyz) && (evt_f[iT - 1]>0)) {
+										if (((k - 1) >= 0) && (iB>0) && (iB <= size_xyz) && (evt_f[iB - 1]>0)) {
 #if doubleintprecision == 1
 											// printf("in comming %lld\n",evt_f[iP]); // debug.
 #else
@@ -6121,13 +6361,15 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					}
 				}
 			}
+				}
+			}
 		}
 	}
 	else {
 
 		bfirst_visit = false;
 		bool *evt_etalon = nullptr;
-		evt_etalon = new bool[inx*iny*inz+2];
+		evt_etalon = new bool[size_xyz+2];
 		if (evt_etalon == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem: not enough memory on your equipment for evt_etalon constr struct...\n");
@@ -6136,7 +6378,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		}
 
 		bool *evt_etalon1 = nullptr;
-		evt_etalon1 = new bool[inx*iny*inz+2];
+		evt_etalon1 = new bool[size_xyz+2];
 		if (evt_etalon1 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem: not enough memory on your equipment for evt_etalon1 constr struct...\n");
@@ -6145,14 +6387,14 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		}
 
 #pragma omp parallel for
-		for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+		for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 			evt_etalon[i_1] = false; // initialisation.
 			evt_etalon1[i_1] = false; // initialisation.
 		}
 
 		evt_etalon[0] = true;
 #pragma omp parallel for
-		for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+		for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 			if (evt_f[i_1] > 0) {
 				evt_etalon[evt_f[i_1]] = true;
 			}
@@ -6190,21 +6432,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b");
 			printf("/");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6214,7 +6456,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6230,21 +6472,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b");
 			printf("--");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6254,7 +6496,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6269,21 +6511,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b\b");
 			printf("\\");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6293,7 +6535,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6308,21 +6550,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b");
 			printf("|");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6332,7 +6574,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6347,21 +6589,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b");
 			printf("/");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6371,7 +6613,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6387,21 +6629,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b");
 			printf("--");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6411,7 +6653,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6426,21 +6668,21 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			printf("\b\b");
 			printf("\\");
-			if (inx*iny*inz > 9000000) {
+			if (size_xyz > 9000000) {
 				// Очень большая модель, следовательно надо проверять досрочное прерывание.
 				// Код досрочного прерывателя, если всё готово.
 				// Иначе процесс сканирования может занять слишком много времени.
 				// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
 				evt_etalon1[0] = true;
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_f[i_1] > 0) {
 						evt_etalon1[evt_f[i_1]] = true;
 					}
 				}
 
 				bisequal = true;
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 						bisequal = false;
 						break;
@@ -6450,7 +6692,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 					break;
 				}
 #pragma omp parallel for
-				for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+				for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 					evt_etalon[i_1] = evt_etalon1[i_1];
 					evt_etalon1[i_1] = false;// initialization.
 				}
@@ -6629,12 +6871,12 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			// Код досрочного прерывателя, если всё готово.
 			// Иначе процесс сканирования может занять слишком много времени.
 			// Недостаток в том что он требует 2*inx*iny*inz целых ячеек памяти.
-			for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+			for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 				evt_etalon1[evt_f[i_1]]=true;
 			}
 
 			bisequal = true;
-			for (integer i_1 = 0; i_1 < inx*iny*inz; i_1++) {
+			for (integer i_1 = 0; i_1 < size_xyz; i_1++) {
 				if (evt_etalon[i_1] != evt_etalon1[i_1]) {
 					bisequal = false;
 				}
@@ -6658,9 +6900,8 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		printf("\n");
 		//system("PAUSE");
 
-		if (evt_etalon != nullptr) {
-			delete[] evt_etalon;
-		}
+		
+		delete[] evt_etalon;
 		evt_etalon = nullptr;
 
 		if (evt_etalon1 != nullptr) {
@@ -6719,7 +6960,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	// подобласти иначе не будет сходимости.
 	// Чтобы распознать цвет связаной подобласти он будет хранится в evt_f2[2][iP] позиции. 
 	integer* evt_f_shadow = nullptr;
-	evt_f_shadow = new integer[inx*iny*inz];
+	evt_f_shadow = new integer[size_xyz];
 	// оператор new не требует проверки на null
 	//if (evt_f_shadow == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -6733,7 +6974,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	//for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
 		//iP = i + j*inx + k*inx*iny;
 #pragma omp parallel for
-	for (integer iP_loc=0; iP_loc < inx * iny*inz; iP_loc++) {
+	for (integer iP_loc=0; iP_loc < size_xyz; iP_loc++) {
 		evt_f_shadow[iP_loc] = evt_f[iP_loc];
 	}
 
@@ -6765,76 +7006,84 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		//system("pause");
 		//exit(1);
 	//}
-	for (i = 0; i<max_domain; i++) domain_id_shadow[i] = 0; // инициализация
+	for (integer  i = 0; i<max_domain; i++) domain_id_shadow[i] = 0; // инициализация
 
 
 	integer id;
 	bool bfind = false;
 	bool bfind_shadow = false;
 	//integer l;
-	integer ic = 0; // счётчик по domain_id
+	 integer ic = 0; // счётчик по domain_id
 	integer ic_shadow = 0; // счётчик по domain_id_shadow
 	flow_interior = 0;
 	// Если жидкие ячейки вообще были.
 	if (!bfirst_visit) {
-		for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-			iP = i + j * inx + k * inx * iny;
-			if (evt_f[iP] > 0) {
-				id = evt_f[iP]; // идентификатор связанной FLUID зоны.
-				bfind = false;
-				// Внимание!!! возможно это медленный участок кода!.
-				for (integer l = 0; ((l < ic) && (l < max_domain)); l++) if (domain_id[l] == id) bfind = true;
-				if (!bfind) {
-					// Пробуем выполнить дозаливку. Добавка 29.04.2019.
-					my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
+		// integer iP_k, iP_j;
 
-					printf("patch 29.04.2019. fluid zone id number = %lld. start zone control volume number = %lld \n", ic, id);
-					if (ic >= max_domain - 1) {
-						printf("error! nado uvelichit max_domain count...\n");
-						printf("icount domain ==%lld\n", ic);
-						//system("PAUSE");
-						system("PAUSE");
-						exit(1);
+		for (integer  k = 0; k < inz; k++)
+		{
+			integer  iP_k=k * inx * iny;
+			for (integer  j = 0; j < iny; j++)
+			{
+				integer  iP_j=iP_k+j * inx;
+				for (integer  i = 0; i < inx; i++) 
+				{
+
+					integer  iP = i + iP_j;
+					if (evt_f[iP] > 0) {
+						id = evt_f[iP]; // идентификатор связанной FLUID зоны.
+						bfind = false;
+						// Внимание!!! возможно это медленный участок кода!.
+						for (integer l = 0; ((l < ic) && (l < max_domain)); l++) if (domain_id[l] == id) bfind = true;
+						if (!bfind) {
+							// Пробуем выполнить дозаливку. Добавка 29.04.2019.
+							my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
+
+							std::cout << "patch 29.04.2019. fluid zone id number = " << ic <<". start zone control volume number = "<< id <<" "<<std::endl; 
+							if (ic >= max_domain - 1) {
+								std::cout <<  "error! nado uvelichit max_domain count..." << std::endl;
+								std::cout <<  "icount domain =="<< ic << std::endl; 
+								//system("PAUSE");
+								system("PAUSE");
+								exit(1);
+							}
+							// Запоминаем идентификатор связанной FLUID зоны.
+							domain_id[ic++] = id;
+							// Количество изолированных FLUID зон.
+							flow_interior = ic;
+						}
+						bfind_shadow = false;
+						// Внимание!!! возможно это медленный участок кода!.
+						for (integer l = 0; ((l < ic_shadow) && (l < max_domain)); l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
+						if (!bfind_shadow) {
+						if (ic_shadow >= max_domain - 1) {
+							std::cout <<  "error! nado uvelichit max_domain count..." << std::endl;
+							std::cout <<  "icount domain ==" << ic << std::endl;
+							//system("PAUSE");
+							system("PAUSE");
+							exit(1);
+						}
+						domain_id_shadow[ic_shadow++] = id;
+						//flow_interior = ic;
+						}
 					}
-					// Запоминаем идентификатор связанной FLUID зоны.
-					domain_id[ic++] = id;
-					// Количество изолированных FLUID зон.
-					flow_interior = ic;
-				}
-				bfind_shadow = false;
-				// Внимание!!! возможно это медленный участок кода!.
-				for (integer l = 0; ((l < ic_shadow) && (l < max_domain)); l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
-				if (!bfind_shadow) {
-					if (ic_shadow >= max_domain - 1) {
-						printf("error! nado uvelichit max_domain count...\n");
-						printf("icount domain ==%lld\n", ic);
-						//system("PAUSE");
-						system("PAUSE");
-						exit(1);
-					}
-					domain_id_shadow[ic_shadow++] = id;
-					//flow_interior = ic;
 				}
 			}
 		}
 	}
 	if (flow_interior > 1) {
-		printf("WARNING: flow_interior count = %lld\n", flow_interior);
-		printf("Your model contains multiple fluid zones.\n");
+		std::cout <<  "WARNING: flow_interior count = " << flow_interior << std::endl;
+		std::cout <<  "Your model contains multiple fluid zones." << std::endl;
 		//system("PAUSE");
 	}
 	//printf("part 12\n");
-#if doubleintprecision == 1
-	printf("part %lld my fill Domain recursive constr_ptr_temp_part1 \n", icount_part++); //22
-#else
-	printf("part %d  my fill Domain recursive constr_ptr_temp_part1 \n", icount_part++); //22
-#endif
+	std::cout <<  "part "<< icount_part++ <<"  my fill Domain recursive constr_ptr_temp_part1 " << std::endl; //22
 
 	if (1) {
 		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
 
 
-		printf("5_08_2016: several fluid domain combine into one fluid domain.\n");
+		std::cout << "5_08_2016: several fluid domain combine into one fluid domain." << std::endl;
 		// Смысл в том что даже если у нас несколько гидрдинамических подобластей то мы делаем одну единственную.
 		//ic = 0;
 		/*
@@ -6859,13 +7108,14 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		    }
 		}
 		*/
+		const integer size_xyz=inx * iny*inz;
 		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
 		// Если жидкие ячейки вообще были.
 		if (!bfirst_visit) {
 			//for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
 				//iP = i + j * inx + k * inx * iny;
 #pragma omp parallel for
-            for (integer iP_loc=0; iP_loc< inx * iny*inz; iP_loc++)
+            for (integer iP_loc=0; iP_loc< size_xyz; iP_loc++)
 			{
 				if (evt_f[iP_loc] > 0) {
 					evt_f[iP_loc] = 2;
@@ -6878,12 +7128,9 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		domain_id[ic++] = 2;
 		flow_interior = ic;
 
-#if doubleintprecision == 1
-		printf("part %lld evt_f init  constr_ptr_temp_part1 ", icount_part++); 
-#else
-		printf("part %d  evt_f init  constr_ptr_temp_part1 ", icount_part++); 
-#endif
-		printf(" 05_08_2016; 22_09_2016.\n");
+
+		std::cout << "part "<< icount_part++ <<"  evt_f init  constr_ptr_temp_part1 "; 
+		std::cout <<  " 05_08_2016; 22_09_2016." << std::endl;
 	}
 
 
@@ -6962,11 +7209,11 @@ void constr_ptr_temp_part2(integer &flow_interior,
 				// 2
 				my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
 
-				printf("patch 29.04.2019. fluid zone id number = %lld. start zone control volume number = %lld \n", ic, id);
+				std::cout << "patch 29.04.2019. fluid zone id number = " << ic << ". start zone control volume number = "<< id <<" " << std::endl;
 				
 				if (ic >= max_domain - 1) {
-					printf("error! nado uvelichit max_domain count...\n");
-					printf("icount domain ==%lld\n", ic);
+					std::cout << "error! nado uvelichit max_domain count..." << std::endl;
+					std::cout << "icount domain ==" << ic << std::endl;
 					system("PAUSE");
 					exit(1);
 				}
@@ -6980,23 +7227,19 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	}
 
 	if (flow_interior > 1) {
-		printf("WARNING: flow_interior count = %lld\n", flow_interior);
-		printf("Your model contains multiple fluid zones.\n");
+		std::cout << "WARNING: flow_interior count = " << flow_interior << std::endl;
+		std::cout << "Your model contains multiple fluid zones." << std::endl;
 		//system("PAUSE");
 	}
 
 	//printf("part 12.2\n");
-#if doubleintprecision == 1
-	printf("part %lld constr domain_id constr_ptr_temp_part2 \n", icount_part++);
-#else
-	printf("part %d constr domain_id constr_ptr_temp_part2 \n", icount_part++);
-#endif
+	std::cout <<  "part "<< icount_part++ <<" constr domain_id constr_ptr_temp_part2 " << std::endl; 
 
 	if (1) {
 		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
 
 
-		printf("5_08_2016: several fluid domain combine into one fluid domain.\n");
+		std::cout <<  "5_08_2016: several fluid domain combine into one fluid domain." << std::endl;
 		// Смысл в том что даже если у нас несколько гидрдинамических подобластей то мы делаем одну единственную.
 		
 		
@@ -7005,7 +7248,7 @@ void constr_ptr_temp_part2(integer &flow_interior,
 		
 			
 #pragma omp parallel for
-		for (integer iP_loc = 0; iP_loc < inx * iny*inz; iP_loc++)
+		for (integer iP_loc = 0; iP_loc < isize; iP_loc++)
 		{
 			if (evt_f[iP_loc] > 0) {
 				evt_f[iP_loc] = 2;
@@ -7018,12 +7261,8 @@ void constr_ptr_temp_part2(integer &flow_interior,
 		domain_id[ic++] = 2;
 		flow_interior = ic;
 
-#if doubleintprecision == 1
-		printf("part %lld evt_f init  constr_ptr_temp_part2 ", icount_part++);
-#else
-		printf("part %d  evt_f init  constr_ptr_temp_part2 ", icount_part++);
-#endif
-		printf(" 05_08_2016; 22_09_2016.\n");
+		std::cout << "part "<< icount_part++ <<"  evt_f init  constr_ptr_temp_part2 ";
+		std::cout << " 05_08_2016; 22_09_2016." << std::endl;
 	}
 
 
@@ -7042,23 +7281,19 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	evt_f2 = new integer*[2];
 	if (evt_f2 == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for evt_f2 constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout <<  "Problem: not enough memory on your equipment for evt_f2 constr struct..." << std::endl;
+		std::cout <<  "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
 	for (i = 0; i<2; i++) evt_f2[i] = nullptr;
 	for (i = 0; i<2; i++) {
-		evt_f2[i] = new integer[inx*iny*inz];
+		evt_f2[i] = new integer[isize];
 		if (evt_f2[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for evt_f2[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for evt_f2[%d] constr struct...\n", i);
-#endif
-			printf("Please any key to exit...\n");
+			std::cout <<  "Problem: not enough memory on your equipment for evt_f2["<< i <<"] constr struct..." << std::endl;
+			std::cout <<  "Please any key to exit..." << std::endl;
 			// system("PAUSE");
 			system("pause");
 			exit(1);
@@ -7086,11 +7321,8 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	}
 
 	//printf("part 13\n");
-#if doubleintprecision == 1
-	printf("part %lld constr evt_f2 constr_ptr_temp_part2 \n", icount_part++);
-#else
-	printf("part %d  constr evt_f2 constr_ptr_temp_part2 \n", icount_part++);
-#endif
+	std::cout <<  "part "<< icount_part++ <<"  constr evt_f2 constr_ptr_temp_part2 " << std::endl;
+
 
 	/*
 	// debug GOOD
@@ -7134,7 +7366,7 @@ void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f, i
 {
 	if (f == nullptr) {
 		if (flow_interior != 1) {
-			printf("error!!! flow_interior!=1\n");
+			std::cout <<  "error!!! flow_interior!=1" << std::endl;
 			system("PAUSE");
 			exit(1);
 		}
@@ -7188,28 +7420,16 @@ void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f, i
 		}
 	}
 	else {
-		printf("error!!! realloc f\n");
+		std::cout <<  "error!!! realloc f" << std::endl;
 		system("PAUSE");
 		exit(1);
 	}
 	//printf("part 14\n");
 	//printf("part 15\n");
 	//printf("part 16\n");
-#if doubleintprecision == 1
-	printf("part %lld constr_ptr_temp_allocation_memory_alice\n", icount_part++);
-#else
-	printf("part %d constr_ptr_temp_allocation_memory_alice\n", icount_part++);
-#endif
-#if doubleintprecision == 1
-	printf("part %lld constr_ptr_temp_allocation_memory_alice\n", icount_part++);
-#else
-	printf("part %d constr_ptr_temp_allocation_memory_alice\n", icount_part++);
-#endif
-#if doubleintprecision == 1
-	printf("part %lld constr_ptr_temp_allocation_memory_alice\n", icount_part++);
-#else
-	printf("part %d constr_ptr_temp_allocation_memory_alice\n", icount_part++);
-#endif
+	std::cout <<  "part "<< icount_part++ <<" constr_ptr_temp_allocation_memory_alice" << std::endl; 
+	std::cout <<  "part "<< icount_part++ << " constr_ptr_temp_allocation_memory_alice" << std::endl; 
+	std::cout << "part " << icount_part++ << " constr_ptr_temp_allocation_memory_alice" << std::endl;
 } // constr_ptr_temp_allocation_memory_alice
 
 
@@ -7222,7 +7442,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
     
 
 	
-	integer iP;
+	//integer iP;
 
 	// Если возникает ошибка, то значение max_domain нужно увеличить.
 	integer max_domain = 256; // максимальное количество зон FLUID
@@ -7263,8 +7483,8 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
     ptr = new integer*[2];
 	if (ptr==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for ptr constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout <<  "Problem: not enough memory on your equipment for ptr constr struct..." << std::endl;
+		std::cout <<  "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -7295,7 +7515,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 		}
 	}
 
-	integer i = 0, j = 0, k = 0;
+	//integer i = 0, j = 0, k = 0;
 
 
     //#define ENUMERATECONTVOL 0 // слой нумерации КО
@@ -7306,65 +7526,72 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 		// Третий проход. Маркировка отдельных зон FLUID:
 		l = 0;
 		ipos = -1;
-		for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-			iP = i + j*inx + k*inx*iny;
-			if (evt_t[iP] > 0) {
-				// Если КО принадлежит модели теплопроводности.
-				if (evt_f[iP] > 0) {
-					// FLUID Domain
-					id = evt_f[iP];
-					// Внимание !!! осторожно возможно медленный участок кода.
-					for (i1 = 0; i1 < max_domain; i1++) if (domain_id[i1] == id) {
-						ipos = i1; // нумерация начинается с нуля.
-						break;
-					}
-					if (l < maxelm_t) {
-						// там инициализировано -1, поэтому нумерация начинается с 0.
-						ptr[MASKDOMAINFLUID][l] = ipos;// нумерация начинается с нуля.
-					}
-					else {
-						printf("perepolnenie ptr[MASKDOMAINFLUID][l] l>=maxelm_t\n");
-						system("pause");
-						exit(1);
-					}
-				}
-				else {
-					// не fluid но солид (и не холлоу)
-					if (ptr != nullptr) {
-						if (ptr[MASKDOMAINFLUID] != nullptr) {
+		//  integer iP_k, iP_j;
+		for (integer  k = 0; k < inz; k++)
+		{
+			integer  iP_k = k * inx * iny;
+			for (integer  j = 0; j < iny; j++)
+			{
+				integer  iP_j = j * inx + iP_k;
+				for (integer  i = 0; i < inx; i++)
+				{
+
+					integer iP = i + iP_j;
+					if (evt_t[iP] > 0) {
+						// Если КО принадлежит модели теплопроводности.
+						if (evt_f[iP] > 0) {
+							// FLUID Domain
+							id = evt_f[iP];
+							// Внимание !!! осторожно возможно медленный участок кода.
+							for (i1 = 0; i1 < max_domain; i1++) if (domain_id[i1] == id) {
+								ipos = i1; // нумерация начинается с нуля.
+								break;
+							}
 							if (l < maxelm_t) {
-								ptr[MASKDOMAINFLUID][l] = -1;
+								// там инициализировано -1, поэтому нумерация начинается с 0.
+								ptr[MASKDOMAINFLUID][l] = ipos;// нумерация начинается с нуля.
 							}
 							else {
-								printf("perepolnenie 2 ptr[MASKDOMAINFLUID][l] l>=maxelm_t\n");
+								std::cout << "perepolnenie ptr[MASKDOMAINFLUID][l] l>=" << maxelm_t << std::endl;
 								system("pause");
 								exit(1);
 							}
 						}
 						else {
-							printf("error: null ptr[MASKDOMAINFLUID] in constr_ptr_temp.\n");
-							system("pause");
-							exit(1);
+							// не fluid но солид (и не холлоу)
+							if (ptr != nullptr) {
+								if (ptr[MASKDOMAINFLUID] != nullptr) {
+									if (l < maxelm_t) {
+										ptr[MASKDOMAINFLUID][l] = -1;
+									}
+									else {
+										std::cout << "perepolnenie 2 ptr[MASKDOMAINFLUID][l] l>=" << maxelm_t << std::endl;
+										system("pause");
+										exit(1);
+									}
+								}
+								else {
+									std::cout << "error: null ptr[MASKDOMAINFLUID] in constr_ptr_temp." << std::endl;
+									system("pause");
+									exit(1);
+								}
+							}
+							else {
+								//ptr == nullptr;
+								std::cout << "error: null ptr in constr_ptr_temp." << std::endl;
+								system("pause");
+								exit(1);
+							}
 						}
-					}
-					else {
-						//ptr == nullptr;
-						printf("error: null ptr in constr_ptr_temp.\n");
-						system("pause");
-						exit(1);
+
+						l++;
 					}
 				}
-
-				l++;
 			}
 		}
 
 		//printf("part 14\n");
-#if doubleintprecision == 1
-		printf("part %lld construct ptr[MASKDOMAINFLUID][] constr_ptr_temp \n", icount_part++);
-#else
-		printf("part %d  construct ptr[MASKDOMAINFLUID][] constr_ptr_temp \n", icount_part++);
-#endif
+		std::cout << "part "<< icount_part++ <<"  construct ptr[MASKDOMAINFLUID][] constr_ptr_temp " << std::endl;
 
 		// Счётчик внутренних КО в каждой из domain FLUID.
 		integer *domain_counter = nullptr;
@@ -7381,11 +7608,11 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 		//else 
 		{
 
-			for (i = 0; i < max_domain; i++) domain_counter[i] = 0; // инициализация
+			for (integer  i = 0; i < max_domain; i++) domain_counter[i] = 0; // инициализация
 
 			if (ptr != nullptr) {
 				if ((ptr[MASKDOMAINFLUID] != nullptr)&&(ptr[ENUMERATECONTVOL]!=nullptr)) {
-					for (i = 0; i < maxelm_t; i++) {
+					for (integer  i = 0; i < maxelm_t; i++) {
 						if (ptr[MASKDOMAINFLUID][i] == -1) {
 							ptr[ENUMERATECONTVOL][i] = -1;
 						}
@@ -7396,15 +7623,15 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 					}
 				}
 				else {
-					printf("memory for ptr[MASKDOMAINFLUID] no allocate. error.\n");
-					printf("see function constr_ptr_temp in module constr struct\n");
+					std::cout <<  "memory for ptr[MASKDOMAINFLUID] no allocate. error." << std::endl;
+					std::cout <<  "see function constr_ptr_temp in module constr struct" << std::endl;
 					system("pause");
 					exit(1);
 				}
 			}
 			else {
-				printf("memory for ptr no allocate. error.\n");
-				printf("see function constr_ptr_temp in module constr struct\n");
+				std::cout <<  "memory for ptr no allocate. error." << std::endl;
+				std::cout <<  "see function constr_ptr_temp in module constr struct." << std::endl;
 				system("pause");
 				exit(1);
 			}
@@ -7416,10 +7643,10 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 						f = new FLOW[flow_interior];						
 					}
 					else {
-						printf("error: f != nullptr\n");
-						printf("file constr_struct. function constr_ptr_temp.\n");
-						printf("There will be no reallocation of RAM. What is\n");
-						printf("already highlighted will be used.\n");
+						std::cout <<  "error: f != nullptr" << std::endl;
+						std::cout <<  "file constr_struct. function constr_ptr_temp." << std::endl;
+						std::cout <<  "There will be no reallocation of RAM. What is" << std::endl;
+						std::cout <<  "already highlighted will be used." << std::endl;
 						delete[] f;
 						f = new FLOW[flow_interior];
 						//system("PAUSE");
@@ -7461,11 +7688,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 					// Самое простое это не использовать информацию whot_is_block для гидродинамических подобластей.
 					f[l].whot_is_block = nullptr;
 					f[l].maxelm = domain_counter[l];
-#if doubleintprecision == 1
-					printf("FLUID%lld maxelm=%lld\n", l, f[l].maxelm);
-#else
-					printf("FLUID%d maxelm=%d\n", l, f[l].maxelm);
-#endif
+					std::cout <<  "FLUID" << l << " maxelm=" << f[l].maxelm << std::endl;
 					
 					// Выделение оперативной памяти.
 					if (f[l].ptr != nullptr) {
@@ -7473,25 +7696,19 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 					}
 					f[l].ptr = nullptr;
 					f[l].ptr = new integer[f[l].maxelm];
-#if doubleintprecision == 1
-					printf("delete flow %lld ptr\n", l);
-#else
-					printf("delete flow %d ptr\n", l);
-#endif
+
+					std::cout << "delete flow "<< l << " ptr" << std::endl;
 					
 					if (f[l].ptr == nullptr) { // -2N
 						// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-						printf("Problem: not enough memory on your equipment for ptr flow%lld constr struct...\n", l);
-#else
-						printf("Problem: not enough memory on your equipment for ptr flow%d constr struct...\n", l);
-#endif
-						printf("Please any key to exit...\n");
+
+						std::cout << "Problem: not enough memory on your equipment for ptr flow" << l << " constr struct..." << std::endl;
+						std::cout << "Please any key to exit..." << std::endl;
 						//system("PAUSE");
 						system("pause");
 						exit(1);
 					}
-					for (j = 0; j < maxelm_t; j++) {
+					for (integer j = 0; j < maxelm_t; j++) {
 						if (ptr[MASKDOMAINFLUID][j] == l) {
 							f[l].ptr[ptr[ENUMERATECONTVOL][j]] = j;
 						}
@@ -7500,25 +7717,32 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 			}
 
 			//printf("part 15\n");
-#if doubleintprecision == 1
-			printf("part %lld construct ptr[ENUMERATECONTVOL][] constr_ptr_temp \n", icount_part++);
-#else
-			printf("part %d construct ptr[ENUMERATECONTVOL][] constr_ptr_temp \n", icount_part++);
-#endif
+			std::cout << "part " << icount_part++ <<" construct ptr[ENUMERATECONTVOL][] constr_ptr_temp " << std::endl;
 
 			// Счётчик внутренних КО на дополнительной структуре.
-			for (i = 0; i < max_domain; i++) domain_counter[i] = 0; // инициализация
+			for (integer  i = 0; i < max_domain; i++) domain_counter[i] = 0; // инициализация
 
-			for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-				iP = i + j*inx + k*inx*iny;
-				if (evt_f2[MASKDOMAINFLUID][iP] <= 0) {
-					evt_f2[ENUMERATECONTVOL][iP] = 0; // не принадлежит расчётной области
-				}
-				else {
-					// Уникальная нумерация узлов гидродинамической подобласти.
-					// Нумерация начинается с единицы.
-					evt_f2[ENUMERATECONTVOL][iP] = domain_counter[evt_f2[MASKDOMAINFLUID][iP] - 1] + 1;
-					domain_counter[evt_f2[MASKDOMAINFLUID][iP] - 1] = domain_counter[evt_f2[MASKDOMAINFLUID][iP] - 1] + 1;
+			//  integer iP_k, iP_j;
+
+			for (integer  k = 0; k < inz; k++)
+			{
+				integer  iP_k = k * inx * iny;
+				for (integer  j = 0; j < iny; j++)
+				{
+					integer  iP_j = j * inx + iP_k;
+					for (integer  i = 0; i < inx; i++)
+					{
+						integer  iP = i + iP_j;
+						if (evt_f2[MASKDOMAINFLUID][iP] <= 0) {
+							evt_f2[ENUMERATECONTVOL][iP] = 0; // не принадлежит расчётной области
+						}
+						else {
+							// Уникальная нумерация узлов гидродинамической подобласти.
+							// Нумерация начинается с единицы.
+							evt_f2[ENUMERATECONTVOL][iP] = domain_counter[evt_f2[MASKDOMAINFLUID][iP] - 1] + 1;
+							domain_counter[evt_f2[MASKDOMAINFLUID][iP] - 1] = domain_counter[evt_f2[MASKDOMAINFLUID][iP] - 1] + 1;
+						}
+					}
 				}
 			}
 
@@ -7562,16 +7786,9 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 		
 
 		//printf("part 16\n");
-#if doubleintprecision == 1
-			printf("part %lld construct evt_f2 constr_ptr_temp \n", icount_part++);
-#else
-			printf("part %d  construct evt_f2  constr_ptr_temp \n", icount_part++);
-#endif
+		std::cout <<  "part " << icount_part++ <<"  construct evt_f2  constr_ptr_temp " << std::endl;
 
 	}
-
-	
-
 } // constr_ptr_temp
 
 // реализация функции SetLength из Delphi 
@@ -7696,9 +7913,11 @@ void addpoint(TOCHKA* &pa, integer &maxnode, TOCHKA pnew, integer* &ent, integer
 
 
 // создаёт массив узлов принадлежащих расчётной области
-void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, integer* &whot_is_block, integer* &evt,
+void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent,
+				  integer iflag, integer* &whot_is_block, integer* &evt,
 	integer inx, integer iny, integer inz,
-	doublereal *xpos, doublereal *ypos, doublereal *zpos, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list, integer &maxelm) {
+	doublereal *xpos, doublereal *ypos, doublereal *zpos, 
+	BLOCK* b, integer lb, TOCKA_INT* &tck_int_list, integer &maxelm) {
 	// iflag - принимает два значения: TEMPERATURE или HYDRODINAMIC и 
 	// указывает с какие уравнения будут решаться и в какой расчётной области.
 
@@ -7743,7 +7962,7 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 	//}
 
 
-	TOCHKA p, pnew;
+	//TOCHKA p;
 #pragma omp parallel for
 	for (integer i = 0; i<iSIZE; i++) {
 		ent[i] = 0;
@@ -7754,22 +7973,32 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 	integer ib, node;
 	maxnode = 0;// maxnode - текущая длина массива pa
 	// Цикл по всем контрольным объёмам
-	//for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
+	//for (k = 0; k<inz; k++) for (j = 0; j<iny; j++)  for (i = 0; i<inx; i++) {
 	for (integer iscan = 0; iscan<maxelm; iscan++) {
 
 			integer i = tck_int_list[iscan].i;
 			integer j = tck_int_list[iscan].j;
 			integer k = tck_int_list[iscan].k;
 
-		p.x = 0.5*(xpos[i] + xpos[i + 1]);
-		p.y = 0.5*(ypos[j] + ypos[j + 1]);
-		p.z = 0.5*(zpos[k] + zpos[k + 1]);
+			integer k_1 = k*inx*iny;
+			integer k_2 = k*(inx + 1)*(iny + 1);
+			integer k_3= (k + 1)*(inx + 1)*(iny + 1);
+			integer j_2 = k_2 + j*(inx + 1);
+			integer j_3 = (j + 1)*(inx + 1) + k_2;
+			integer j_4 = j*(inx + 1) + k_3;
+			integer j_5 = (j + 1)*(inx + 1) + k_3;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+		//p.x = 0.5*(xpos[i] + xpos[i + 1]);
+		//p.y = 0.5*(ypos[j] + ypos[j + 1]);
+		//p.z = 0.5*(zpos[k] + zpos[k + 1]);
 		integer iP = 0;
 		switch (iflag) {
 		case TEMPERATURE:
 			// закомментирован медленный участок кода.
 			//inDomain = in_model_temp(p, ib, b, lb);
-		    iP = evt[i + j*inx + k*inx*iny];
+		    iP = evt[i_1];
 			if (iP > 0) {
 				ib = whot_is_block[iP-1];
 				if (b[ib].itype == HOLLOW) {
@@ -7782,7 +8011,7 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 		case HYDRODINAMIC: 
 			// закомментирован медленный участок кода.
 			//inDomain = in_model_flow(p, ib, b, lb);
-			iP = evt[i + j*inx + k*inx*iny];
+			iP = evt[i_1];
 			if (iP > 0) {
 				ib = whot_is_block[iP - 1];
 				if (b[ib].itype != FLUID) {
@@ -7795,49 +8024,479 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 		}
 
 		if (inDomain) {
+			TOCHKA pnew;
 			// контрольный объём принадлежит модели
 			pnew.x = xpos[i];
 			pnew.y = ypos[j];
 			pnew.z = zpos[k];
-			node = i + j*(inx + 1) + k*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = i + j_2;
+			// На вызов функции тратится немного времени. Сделаем операции явно без вызова функции.
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i + 1];
 			pnew.y = ypos[j];
 			pnew.z = zpos[k];
-			node = (i + 1) + j*(inx + 1) + k*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = (i + 1) + j_2;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i];
 			pnew.y = ypos[j + 1];
 			pnew.z = zpos[k];
-			node = i + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = i + j_3;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i + 1];
 			pnew.y = ypos[j + 1];
 			pnew.z = zpos[k];
-			node = (i + 1) + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = (i + 1) + j_3;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i];
 			pnew.y = ypos[j];
 			pnew.z = zpos[k + 1];
-			node = i + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = i + j_4;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i + 1];
 			pnew.y = ypos[j];
 			pnew.z = zpos[k + 1];
-			node = (i + 1) + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = (i + 1) + j_4;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i];
 			pnew.y = ypos[j + 1];
 			pnew.z = zpos[k + 1];
-			node = i + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = i + j_5;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 			pnew.x = xpos[i + 1];
 			pnew.y = ypos[j + 1];
 			pnew.z = zpos[k + 1];
-			node = (i + 1) + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			node = (i + 1) + j_5;
+			//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+			if (!bvisit[node]) {
+				// добавление, точка ещё не встречалась
+
+				pa[maxnode++] = pnew;
+				ent[node] = maxnode; // нумерация начинается с единицы
+				bvisit[node] = true; // индексация хеша.
+
+			}
+
 		}
 	}
+
+	// Освобождение памяти 
+	// уменьшение размера массива
+	SetLength_point(pa, (inx + 1)*(iny + 1)*(inz + 1), maxnode);
+	
+	delete[] bvisit;
+	bvisit = nullptr;
+	
+} // constr_nodes
+
+
+  // создаёт массив узлов принадлежащих расчётной области
+void constr_nodes_not_optimaze(TOCHKA* &pa, integer &maxnode, integer* &ent,
+	integer iflag, integer* &whot_is_block, integer* &evt,
+	integer inx, integer iny, integer inz,
+	doublereal *xpos, doublereal *ypos, doublereal *zpos,
+	BLOCK* b, integer lb, TOCKA_INT* &tck_int_list, integer &maxelm) {
+	// iflag - принимает два значения: TEMPERATURE или HYDRODINAMIC и 
+	// указывает с какие уравнения будут решаться и в какой расчётной области.
+
+	// ent - глобальная нумерация узлов.
+	// нумерация узлов начинается с единицы, если узел не принадлежит
+	// расчётной области то ставится значение 0.
+	const integer iSIZE = (inx + 1)*(iny + 1)*(inz + 1);
+
+	bool *in_dom = new bool[iSIZE];
+
+	ent = nullptr;
+	ent = new integer[iSIZE];
+	// Оператор new не требует после себя проверки на null.
+	//if (ent == nullptr) {
+	// недостаточно памяти на данном оборудовании.
+	//printf("Problem: not enough memory on your equipment for ent constr struct...\n");
+	//printf("Please any key to exit...\n");
+	//system("PAUSE");
+	//system("pause");
+	//exit(1);
+	//}
+	// был ли добавлен узел с номером node
+	bool *bvisit = nullptr;
+	bvisit = new bool[iSIZE];
+	// Оператор new не требует после себя проверки на null.
+	//if (bvisit == nullptr) {
+	// недостаточно памяти на данном оборудовании.
+	//printf("Problem: not enough memory on your equipment for bvisit constr struct...\n");
+	//printf("Please any key to exit...\n");
+	//system("PAUSE");
+	//system("pause");
+	//exit(1);
+	//}
+	// Выделение памяти. Сразу много для наискорейшего выполнения:
+	pa = nullptr;
+	pa = new TOCHKA[iSIZE];
+	// Оператор new не требует после себя проверки на null.
+	//if (pa == nullptr) {
+	// недостаточно памяти на данном оборудовании.
+	//printf("Problem: not enough memory on your equipment for pa constr struct...\n");
+	//printf("Please any key to exit...\n");
+	//system("PAUSE");
+	//system("pause");
+	//exit(1);
+	//}
+
+
+	//TOCHKA p;
+#pragma omp parallel for
+	for (integer i = 0; i<iSIZE; i++) {
+		ent[i] = 0;
+		bvisit[i] = false;
+		in_dom[i] = false;
+	}
+
+	bool inDomain = false;
+	integer ib, node;
+	maxnode = 0;// maxnode - текущая длина массива pa
+				// Цикл по всем контрольным объёмам
+				//for (k = 0; k<inz; k++) for (j = 0; j<iny; j++)  for (i = 0; i<inx; i++) {
+
+
+	for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+		integer i = tck_int_list[iscan].i;
+		integer j = tck_int_list[iscan].j;
+		integer k = tck_int_list[iscan].k;
+
+		integer k_1 = k*inx*iny;
+		integer j_1 = k_1 + j*inx;
+		integer i_1 = i + j_1;
+
+		integer iP = 0;
+		switch (iflag) {
+		case TEMPERATURE:
+			// закомментирован медленный участок кода.
+			//inDomain = in_model_temp(p, ib, b, lb);
+			iP = evt[i_1];
+			if (iP > 0) {
+				ib = whot_is_block[iP - 1];
+				if (b[ib].itype == HOLLOW) {
+					inDomain = false;
+				}
+				else inDomain = true;
+			}
+			else inDomain = false;
+			break;
+		case HYDRODINAMIC:
+			// закомментирован медленный участок кода.
+			//inDomain = in_model_flow(p, ib, b, lb);
+			iP = evt[i_1];
+			if (iP > 0) {
+				ib = whot_is_block[iP - 1];
+				if (b[ib].itype != FLUID) {
+					inDomain = false;
+				}
+				else inDomain = true;
+			}
+			else inDomain = false;
+			break;
+		}
+
+		if (inDomain) {
+			in_dom[i_1] = true;
+		}
+	}
+
+	
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;			
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				
+					// контрольный объём принадлежит модели
+					pnew.x = xpos[i];
+					pnew.y = ypos[j];
+					pnew.z = zpos[k];
+					node = i + j*(inx + 1)+ k*(inx + 1)*(iny + 1);
+					//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+					// Раскрываем вызов функции. Есть гипотеза что на вызов функции 
+					// тратися время.
+					if (!bvisit[node]) {
+						// добавление, точка ещё не встречалась
+
+						pa[maxnode++] = pnew;
+						ent[node] = maxnode; // нумерация начинается с единицы
+						bvisit[node] = true; // индексация хеша.
+
+					}
+
+			}
+		}
+	
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i + 1];
+				pnew.y = ypos[j];
+				pnew.z = zpos[k];
+				node = (i + 1) + j*(inx + 1) + k*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i];
+				pnew.y = ypos[j + 1];
+				pnew.z = zpos[k];
+				node = i + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i + 1];
+				pnew.y = ypos[j + 1];
+				pnew.z = zpos[k];
+				node = (i + 1) + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i];
+				pnew.y = ypos[j];
+				pnew.z = zpos[k + 1];
+				node = i + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i + 1];
+				pnew.y = ypos[j];
+				pnew.z = zpos[k + 1];
+				node = (i + 1) + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i];
+				pnew.y = ypos[j + 1];
+				pnew.z = zpos[k + 1];
+				node = i + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+		for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
+			integer k_1 = k*inx*iny;
+			integer j_1 = k_1 + j*inx;
+			integer i_1 = i + j_1;
+
+			if (in_dom[i_1]) {
+				TOCHKA pnew;
+				pnew.x = xpos[i + 1];
+				pnew.y = ypos[j + 1];
+				pnew.z = zpos[k + 1];
+				node = (i + 1) + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
+				//addpoint(pa, maxnode, pnew, ent, node, bvisit);
+				if (!bvisit[node]) {
+					// добавление, точка ещё не встречалась
+
+					pa[maxnode++] = pnew;
+					ent[node] = maxnode; // нумерация начинается с единицы
+					bvisit[node] = true; // индексация хеша.
+
+				}
+			}
+		}
+
+	delete[] in_dom;
 
 	// Освобождение памяти 
 	// уменьшение размера массива
@@ -7846,10 +8505,7 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 		delete[] bvisit;
 		bvisit = nullptr;
 	}
-} // constr_nodes
-
-
-
+} // constr_nodes_not_optimaze
 
 
 // создаёт массив узлов принадлежащих расчётной области
@@ -7912,7 +8568,7 @@ void constr_nodes_flow(TOCHKA* &pa, integer &maxnode, integer* &ent,
 	TOCHKA pnew;
 	maxnode = 0;// maxnode - текущая длина массива pa
 	// Цикл по всем контрольным объёмам
-	for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
+	for (k = 0; k<inz; k++) for (j = 0; j<iny; j++) for (i = 0; i<inx; i++) {
 
 		ivol = i + j*inx + k*inx*iny; // номер контрольного объёма
 		if (evt_f2[1][ivol] == (iDom + 1)) inDomain = true;
@@ -7985,8 +8641,8 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 	// расчётной области
 	// maxelm - число контрольных объёмов принадлежащих расчётной области
 	//maxelm = 0;
-	integer ic, l = 0;
-	integer i1, i2, i3, i4, i5, i6, i7, i8;
+	integer l = 0;
+	
 	// подсчёт количества контрольных объёмов 
 	// принадлежащих расчётной области.
 	/*
@@ -8027,22 +8683,30 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 	//for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
 		//ic = i + j*inx + k*inx*iny;
 		//if (evt[ic]>0) {
+	// integer i,j,k;
+   //  integer iP_k, iP_j, iP_k_p1, iP_j_p1;
 	for (integer iscan=0; iscan<maxelm; iscan++) {
 		{
-			integer i = tck_int_list[iscan].i;
-			integer j = tck_int_list[iscan].j;
-			integer k = tck_int_list[iscan].k;
-			ic = i + j * inx + k * inx*iny;
+			 integer i = tck_int_list[iscan].i;
+			 integer j = tck_int_list[iscan].j;
+			 integer  k = tck_int_list[iscan].k;
+			integer ic = i + j * inx + k * inx*iny;
 
 			// контрольный объём принадлежит расчётной области.
-			i1 = i + j*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i2 = (i + 1) + j*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i3 = i + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i4 = (i + 1) + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i5 = i + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			i6 = (i + 1) + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			i7 = i + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			i8 = (i + 1) + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
+			 integer iP_k=k*(inx + 1)*(iny + 1);
+			 integer iP_j=j*(inx + 1);
+             integer iP_k_p1=(k+1)*(inx + 1)*(iny + 1);
+             integer iP_j_p1=(j+1)*(inx + 1);
+			 //integer i1, i2, i3, i4, i5, i6, i7, i8;
+
+			integer i1 = i + iP_j + iP_k;
+			integer i2 = (i + 1) + iP_j + iP_k;
+			integer i3 = i + iP_j_p1 + iP_k;
+			integer i4 = (i + 1) + iP_j_p1 + iP_k;
+			integer i5 = i + iP_j + iP_k_p1;
+			integer i6 = (i + 1) + iP_j + iP_k_p1;
+			integer i7 = i + iP_j_p1 + iP_k_p1;
+			integer i8 = (i + 1) + iP_j_p1 + iP_k_p1;
 			// Добавка 15 апреля 2017.
 			// ent - нумерация начинается с единицы.
 			if ((ent[i1] > 0) && (ent[i2] > 0) && (ent[i3] > 0) && (ent[i4] > 0) && (ent[i5] > 0) && (ent[i6] > 0) && (ent[i7] > 0) && (ent[i8] > 0)) {
@@ -8086,8 +8750,11 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 
 // Функция с быстрым временем выполнения.
 // 9.08.2017.
-void walk_in_octree_icolor_different_fluid_domain(octree* &oc, integer inx, integer iny, integer inz,
-	integer* &icolor_different_fluid_domain, integer** evt_f2, integer maxelm_flow, TOCKA_INT*& tck_int_list) {
+void walk_in_octree_icolor_different_fluid_domain(octree* &oc,
+	integer inx, integer iny, integer inz,
+	integer* &icolor_different_fluid_domain,
+	integer** evt_f2, integer maxelm_flow, 
+	TOCKA_INT*& tck_int_list) {
 
 	integer idiagnostic_error_coloc_counter1 = 0, idiagnostic_error_coloc_counter2 = 0;
 	top_ALICE_STACK = 0;
@@ -8314,8 +8981,8 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 	icolor_different_fluid_domain = new integer[maxelm_flow];
 	if (icolor_different_fluid_domain == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for icolor_different_fluid_domain constr_nvtx_flow in constr_struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for icolor_different_fluid_domain constr_nvtx_flow in constr_struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		exit(1);
 	}
 
@@ -8326,11 +8993,7 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 	}
 	i = 0;
 
-#if doubleintprecision == 1
-	printf("maxelm_flow=%lld inx=%lld, iny=%lld inz=%lld\n", maxelm_flow, inx, iny, inz);
-#else
-	printf("maxelm_flow=%d inx=%d, iny=%d inz=%d\n", maxelm_flow, inx, iny, inz);
-#endif
+	std::cout << "maxelm_flow="<< maxelm_flow <<" inx="<< inx <<", iny="<< iny << " inz=" << inz << std::endl;
 
 	/*
 	// УСТАРЕЛО. Полностью заменено на функцию walk_in_octree_icolor_different_fluid_domain.
@@ -8428,9 +9091,9 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 		}
 	}
 	if ((ic_err1 > 0)||(ic_err2>0)) {
-		printf("file constr_struct. function constr_icolor_different_fluid_domain\n");
-		printf("ERROR!!! icolor_different_fluid_domain[i] == -1 value is empty\n");
-		printf("number errors <=-1=%lld 0=%lld sum=%lld\n",ic_err1,ic_err2, ic_err1+ ic_err2);
+		std::cout <<  "file constr_struct. function constr_icolor_different_fluid_domain" << std::endl;
+		std::cout <<  "ERROR!!! icolor_different_fluid_domain[i] == -1 value is empty" << std::endl;
+		std::cout <<  "number errors <=-1="<< ic_err1 <<" 0="<< ic_err2 <<" sum="<< ic_err1+ ic_err2 << std::endl;
 		//system("PAUSE");
 	}
 	//i = 0;
@@ -8441,14 +9104,23 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 void calculate_max_elm(integer &maxelm, integer** evt_f2, 
 	integer inx, integer iny, integer inz, integer iDom) {
 	maxelm = 0;
-	integer i, j, k;
-	integer ic;
+	// integer i, j, k;
+	// integer ic, ic_k, ic_j;
 	// подсчёт количества контрольных объёмов 
 	// принадлежащих расчётной области.
-	for (i = 0; i < (inx); i++) for (j = 0; j < (iny); j++) for (k = 0; k < (inz); k++) {
-		ic = i + j * inx + k * inx * iny;
-		if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
-			maxelm++;
+	for (integer k = 0; k < inz; k++) 
+	{
+		integer  ic_k=k * inx * iny;
+		for (integer  j = 0; j < iny; j++)
+		{
+			integer  ic_j=j * inx +ic_k;
+			for (integer i = 0; i < inx; i++)
+	        {
+				integer ic = i +  ic_j;
+				if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
+					maxelm++;
+				}
+			}
 		}
 	}
 }//calculate_max_elm
@@ -8456,25 +9128,27 @@ void calculate_max_elm(integer &maxelm, integer** evt_f2,
 
 // для каждого контрольного объёма принадлежащему
 // расчётной области определяет номера его вершин.
-void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
-	integer iDom, integer* ent,
+void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain,
+	integer iDom, integer* &ent,
 	integer** &nvtx, integer maxelm,
 	integer inx, integer iny, integer inz) {
 	// проити по всем контрольным объёмам принадлежащим
 	// расчётной области
 	// maxelm - число контрольных объёмов принадлежащих расчётной области
 	//maxelm = 0;
-	integer i, j, k;
-	integer ic, l = 0;
-	integer i1, i2, i3, i4, i5, i6, i7, i8;
+	//integer i, j, k, ic;
+	integer l = 0;
+	
 	
 	// Выделение памяти.
 	icolor_different_fluid_domain = nullptr;
 	icolor_different_fluid_domain = new integer[maxelm];
 	if (icolor_different_fluid_domain == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for icolor_different_fluid_domain constr_nvtx_flow in constr_struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment ";
+		std::cout << "for icolor_different_fluid_domain constr_nvtx_flow";
+		std::cout << "in constr_struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		exit(1);
 	}
 
@@ -8482,97 +9156,119 @@ void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
 		// Для структурированной сетки.
 		icolor_different_fluid_domain[i] = -1;// заглушка инициализация не существующим значением.
 	}
+	// integer ic_k, ic_j;
 
 	integer ic64 = 0;
-	for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
-		ic = i + j*inx + k*inx*iny;
-		if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
-			// Это точно активная жидкая ячейка. У нас только одна слитая воедино гидродинамическая подобласть, поэтому просто присвоим 1.
-			icolor_different_fluid_domain[ic64] = 1;
-			ic64++;
+	 for (integer  k = 0; k<inz; k++)
+	 {
+		integer  ic_k=k*inx*iny;
+		for (integer  j = 0; j<iny; j++)
+		{
+            integer ic_j=j*inx +ic_k;
+			for (integer  i = 0; i<inx; i++)
+			{
+
+				integer  ic = i +  ic_j;
+				if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
+					// Это точно активная жидкая ячейка. У нас только одна слитая воедино гидродинамическая подобласть, поэтому просто присвоим 1.
+					icolor_different_fluid_domain[ic64] = 1;
+					ic64++;
+				}
+			}
 		}
 	}
 	nvtx = nullptr;
 	nvtx = new integer*[8];
 	if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for nvtx flow constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for nvtx flow constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
-	for (i = 0; i<8; i++) nvtx[i] = nullptr;
-	for (i = 0; i<8; i++) {
+	for (integer  i = 0; i<8; i++) nvtx[i] = nullptr;
+	for (integer   i = 0; i<8; i++) {
 		nvtx[i] = new integer[maxelm];
 		if (nvtx[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for nvtx[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for nvtx[%d] constr struct...\n", i);
-#endif
+			std::cout <<  "Problem: not enough memory on your equipment for nvtx[" << i << "] constr struct..." << std::endl; 
 			
-			printf("Please any key to exit...\n");
+			std::cout <<  "Please any key to exit..." << std::endl;
 			//system("PAUSE");
 			system("pause");
 			exit(1);
 		}
 	}
+	// integer ic_k1, ic_k_p1, ic_j1, ic_j_P1;
 	// Обход по всем контрольным объёмам.
-	for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
-		ic = i + j*inx + k*inx*iny;
-		if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
-			// контрольный объём принадлежит расчётной области.
-			i1 = i + j*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i2 = (i + 1) + j*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i3 = i + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i4 = (i + 1) + (j + 1)*(inx + 1) + k*(inx + 1)*(iny + 1);
-			i5 = i + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			i6 = (i + 1) + j*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			i7 = i + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
-			i8 = (i + 1) + (j + 1)*(inx + 1) + (k + 1)*(inx + 1)*(iny + 1);
+	for (integer   k = 0; k<(inz); k++)
+	 {
+		integer   ic_k=k*inx*iny;
+		integer  ic_k1=k*(inx+1)*(iny+1);
+		integer  ic_k_p1=(k+1)*(inx+1)*(iny+1);
+		for (integer  j = 0; j<(iny); j++)
+		{
+            integer  ic_j=j*inx +ic_k;
+			integer  ic_j1=j*(inx+1);
+			integer  ic_j_P1=(j+1)*(inx+1);
+			for (integer   i = 0; i<(inx); i++)
+			{
+
+				integer  ic = i +  ic_j;
+				if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
+					// контрольный объём принадлежит расчётной области.
+					//integer i1, i2, i3, i4, i5, i6, i7, i8;
+					integer  i1 = i + ic_j1 + ic_k1;
+					integer  i2 = (i + 1) + ic_j1 + ic_k1;
+					integer  i3 = i + ic_j_P1 + ic_k1;
+					integer  i4 = (i + 1) + ic_j_P1 + ic_k1;
+					integer  i5 = i + ic_j1 + ic_k_p1;
+					integer  i6 = (i + 1) + ic_j1 + ic_k_p1;
+					integer  i7 = i + ic_j_P1 + ic_k_p1;
+					integer  i8 = (i + 1) + ic_j_P1 + ic_k_p1;
 
 			
 
-			// Добавка 15 апреля 2017.
-			// ent - нумерация начинается с единицы.
-			if ((ent[i1] > 0) && (ent[i2] > 0) && (ent[i3] > 0) && (ent[i4] > 0) && (ent[i5] > 0) && (ent[i6] > 0) && (ent[i7] > 0) && (ent[i8] > 0)) {
+					// Добавка 15 апреля 2017.
+					// ent - нумерация начинается с единицы.
+					if ((ent[i1] > 0) && (ent[i2] > 0) && (ent[i3] > 0) && 
+						(ent[i4] > 0) && (ent[i5] > 0) && (ent[i6] > 0) && 
+						(ent[i7] > 0) && (ent[i8] > 0)) {
 
 
-					nvtx[0][l] = ent[i1];
-					nvtx[1][l] = ent[i2];
-					nvtx[2][l] = ent[i3];
-					nvtx[3][l] = ent[i4];
-					nvtx[4][l] = ent[i5];
-					nvtx[5][l] = ent[i6];
-					nvtx[6][l] = ent[i7];
-					nvtx[7][l] = ent[i8];
-					l++;
+						nvtx[0][l] = ent[i1];
+						nvtx[1][l] = ent[i2];
+						nvtx[2][l] = ent[i3];
+						nvtx[3][l] = ent[i4];
+						nvtx[4][l] = ent[i5];
+						nvtx[5][l] = ent[i6];
+						nvtx[6][l] = ent[i7];
+						nvtx[7][l] = ent[i8];
+						l++;
 
-					/*
-					// Этого условия не может быть. Проверка сделана выше.
-					if ((ent[i1] == 0) || (ent[i2] == 0) || (ent[i3] == 0) || (ent[i4] == 0) || (ent[i5] == 0) || (ent[i6] == 0) || (ent[i7] == 0) || (ent[i8] == 0)) {
+						/*
+						// Этого условия не может быть. Проверка сделана выше.
+						if ((ent[i1] == 0) || (ent[i2] == 0) || (ent[i3] == 0) || (ent[i4] == 0) || (ent[i5] == 0) || (ent[i6] == 0) || (ent[i7] == 0) || (ent[i8] == 0)) {
 #if doubleintprecision == 1
-						printf("error: ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld \n", i1, ent[i1], i2, ent[i2], i3, ent[i3], i4, ent[i4], i5, ent[i5], i6, ent[i6], i7, ent[i7], i8, ent[i8]);
+							printf("error: ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld \n", i1, ent[i1], i2, ent[i2], i3, ent[i3], i4, ent[i4], i5, ent[i5], i6, ent[i6], i7, ent[i7], i8, ent[i8]);
 #else
-						printf("error: ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d \n", i1, ent[i1], i2, ent[i2], i3, ent[i3], i4, ent[i4], i5, ent[i5], i6, ent[i6], i7, ent[i7], i8, ent[i8]);
+							printf("error: ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d \n", i1, ent[i1], i2, ent[i2], i3, ent[i3], i4, ent[i4], i5, ent[i5], i6, ent[i6], i7, ent[i7], i8, ent[i8]);
 #endif
+							//system("PAUSE");
+							system("pause");
+						}
+						*/
+					}
+					else {
+						std::cout <<  "error FLOW ent <= 0: ent[" <<i1<<"]="<<ent[i1]<<" ent["<<i2<<"]="<<ent[i2]<<" ent["<<13<<"]=";
+						std::cout << ent[i3] <<"ent["<<i4<<"]="<<ent[i4]<<" ent["<<i5<<"]="<<ent[i5]<<" ent["<<i6<<"]="<<ent[i6]<<" ent["<<i7<<"]="<<ent[i7]<<" ent["<<i8<<"]="<<ent[i8]<<" "<<std::endl;
 						//system("PAUSE");
 						system("pause");
 					}
-					*/
-			}
-			else {
-#if doubleintprecision == 1
-				printf("error FLOW ent <= 0: ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld ent[%lld]=%lld \n", i1, ent[i1], i2, ent[i2], i3, ent[i3], i4, ent[i4], i5, ent[i5], i6, ent[i6], i7, ent[i7], i8, ent[i8]);
-#else
-				printf("error FLOW ent <= 0: ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d ent[%d]=%d \n", i1, ent[i1], i2, ent[i2], i3, ent[i3], i4, ent[i4], i5, ent[i5], i6, ent[i6], i7, ent[i7], i8, ent[i8]);
-#endif
-				//system("PAUSE");
-				system("pause");
-			}
 
+				}
+			}
 		}
 	}
 } // constr_nvtx_flow
@@ -8586,8 +9282,8 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 	prop=new doublereal*[9];
 	if (prop==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for prop constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for prop constr struct..."<<std::endl;
+		std::cout << "Please any key to exit..."<<std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -8597,13 +9293,9 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 		prop[i]=new doublereal[maxelm];
 		if (prop[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for prop[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for prop[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for prop["<< i <<"] constr struct..."<<std::endl;
 		    
-		    printf("Please any key to exit...\n");
+		    std::cout << "Please any key to exit..."<<std::endl;
 			//system("PAUSE");
 			system("pause");
 			exit(1);
@@ -8613,8 +9305,8 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 	Sc=new doublereal[maxelm];
 	if (Sc==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for Sc constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for Sc constr struct..."<<std::endl;
+		std::cout << "Please any key to exit..."<<std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -8623,8 +9315,8 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 	ipower_time_depend = new integer[maxelm];
 	if (ipower_time_depend == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for ipower_time_depend constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for ipower_time_depend constr struct..."<<std::endl;
+		std::cout << "Please any key to exit..."<<std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -8660,7 +9352,7 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 				case TEMPERATURE:
 					// закомментирован медленный участок кода.
 					//inDomain = in_model_temp(p, ib, b, lb);
-					iP = evt[i + j*inx + k*inx*iny];
+					iP = evt[ic];
 					if (iP > 0) {
 						ib = whot_is_block[iP - 1];
 						if (b[ib].itype == HOLLOW) {
@@ -8673,7 +9365,7 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 				case HYDRODINAMIC:
 					// закомментирован медленный участок кода.
 					//inDomain = in_model_flow(p, ib, b, lb);
-					iP = evt[i + j*inx + k*inx*iny];
+					iP = evt[ic];
 					if (iP > 0) {
 						ib = whot_is_block[iP - 1];
 						if (b[ib].itype != FLUID) {
@@ -8688,39 +9380,52 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 				if (inDomain) {
 					if (l < maxelm)
 					{
+
+						integer imat_id_loc = b[ib].imatid;
 						switch (iflag) {
-						case TEMPERATURE:  prop[RHO][l] = matlist[b[ib].imatid].rho;
+						case TEMPERATURE:  prop[RHO][l] = matlist[imat_id_loc].rho;
 							//prop[HEAT_CAPACITY][l] = matlist[b[ib].imatid].cp;
 							//prop[LAM][l] = matlist[b[ib].imatid].lam;
-							prop[HEAT_CAPACITY][l] = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, 25.0);
-							prop[LAM][l] = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, 25.0);
+							
+							if (matlist[imat_id_loc].n_cp == 1) {
+								prop[HEAT_CAPACITY][l] = matlist[imat_id_loc].arr_cp[0];
+							}
+							else {
+								prop[HEAT_CAPACITY][l] = get_cp(matlist[imat_id_loc].n_cp, matlist[imat_id_loc].temp_cp, matlist[imat_id_loc].arr_cp, 25.0);
+							}
+							prop[LAM][l] = get_lam(matlist[imat_id_loc].n_lam, matlist[imat_id_loc].temp_lam, matlist[imat_id_loc].arr_lam, 25.0);
 
-							prop[MULT_LAM_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x;
-							prop[MULT_LAM_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y;
-							prop[MULT_LAM_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z;
+							prop[MULT_LAM_X][l] = matlist[imat_id_loc].orthotropy_multiplyer_x;
+							prop[MULT_LAM_Y][l] = matlist[imat_id_loc].orthotropy_multiplyer_y;
+							prop[MULT_LAM_Z][l] = matlist[imat_id_loc].orthotropy_multiplyer_z;
 							// Коэффициенты Ламе.
-							prop[MU_LAME][l] = matlist[b[ib].imatid].mu_Lame;
-							prop[LAMBDA_LAME][l] = matlist[b[ib].imatid].lambda_Lame;
-							prop[BETA_T_MECHANICAL][l] = matlist[b[ib].imatid].beta_t_solid;
+							prop[MU_LAME][l] = matlist[imat_id_loc].mu_Lame;
+							prop[LAMBDA_LAME][l] = matlist[imat_id_loc].lambda_Lame;
+							prop[BETA_T_MECHANICAL][l] = matlist[imat_id_loc].beta_t_solid;
 
-							//Sc[evt[i + j*inx + k*inx*iny] - 1] = b[ib].Sc;
-							Sc[evt[i + j*inx + k*inx*iny] - 1] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, 20.0);
-							ipower_time_depend[evt[i + j*inx + k*inx*iny] - 1] = b[ib].ipower_time_depend;
+							//Sc[evt[ic] - 1] = b[ib].Sc;
+							if (b[ib].n_Sc == 1) {
+								Sc[evt[ic] - 1] = b[ib].arr_Sc[0];
+							}
+							else {
+								Sc[evt[ic] - 1] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, 20.0);
+							}
+							ipower_time_depend[evt[ic] - 1] = b[ib].ipower_time_depend;
 
 							//Sc[l]= get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, 20.0);
 							//ipower_time_depend[l] = b[ib].ipower_time_depend;
 							break;
-						case HYDRODINAMIC: prop[RHO][l] = matlist[b[ib].imatid].rho;
-							prop[MU][l] = matlist[b[ib].imatid].mu;
-							prop[BETA_T][l] = matlist[b[ib].imatid].beta_t;
+						case HYDRODINAMIC: prop[RHO][l] = matlist[imat_id_loc].rho;
+							prop[MU_DYNAMIC_VISCOSITY][l] = matlist[imat_id_loc].mu;
+							prop[BETA_T][l] = matlist[imat_id_loc].beta_t;
 							break;
 						}
 
 						l++;
 					}
 					else {
-						printf("model is incorrect: prop indx >=maxelm\n");
-						printf("see constr struct file.\n");
+						std::cout << "model is incorrect: prop indx >=maxelm"<<std::endl;
+						std::cout << "see constr struct file."<<std::endl;
 						system("pause");
 						exit(1);
 					}
@@ -8731,18 +9436,19 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 
 // Заносит свойства материалов в структуру
 // для жидкой зоны с номером iDom.
-void constr_prop_flow(integer* evt, integer* &whot_is_block, 
-	integer** evt_f2, integer iDom, doublereal** &prop,
-					  integer maxelm, BLOCK* b, integer lb, 
+void constr_prop_flow(integer* &evt, integer* &whot_is_block, 
+	integer** &evt_f2, integer iDom, doublereal** &prop,
+					  integer maxelm, BLOCK* &b, integer lb, 
 					  integer inx, integer iny, integer inz, 
-				      doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist) {
+				      doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
+					  TPROP* &matlist) {
 	integer i;
 	prop=nullptr;
 	prop=new doublereal*[3];
 	if (prop==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for prop flow constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for prop flow constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -8752,63 +9458,70 @@ void constr_prop_flow(integer* evt, integer* &whot_is_block,
 		prop[i]=new doublereal[maxelm];
 		if (prop[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for prop[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for prop[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for prop["<< i <<"] constr struct..." << std::endl;
 		    
-		    printf("Please any key to exit...\n");
+		    std::cout << "Please any key to exit..." << std::endl;
 			//system("PAUSE");
 			system("pause");
 		    exit(1);
 	    }
 	}
 
-	integer j,k,ic;
+	//integer j,k,ic;
 	//TOCHKA p;
     bool inDomain=false;
-	integer ib,l=0; 
-	
+	 integer ib,l=0; 
+	// integer ic_k, ic_j;
+
 	// Проход по всем контрольным объёмам в порядке обхода:
-	for (i=0; i<inx; i++) for (j=0; j<iny; j++) for (k=0; k<inz; k++) {
-		ic=i+j*inx+k*inx*iny; // номер КО
+	for (integer   k=0; k<inz; k++)
+	{
+		integer  ic_k=k*inx*iny;
+		for (integer  j=0; j<iny; j++) 
+		{
+			integer   ic_j=j*inx+ic_k;
+			for (integer  i=0; i<inx; i++) 
+			{
+
+				integer  ic=i+ic_j; // номер КО
         
-		if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic]==(iDom+1))) {
+				if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic]==(iDom+1))) {
 
-					//p.x = 0.5*(xpos[i] + xpos[i + 1]);
-					//p.y = 0.5*(ypos[j] + ypos[j + 1]);
-					//p.z = 0.5*(zpos[k] + zpos[k + 1]);
+						//p.x = 0.5*(xpos[i] + xpos[i + 1]);
+						//p.y = 0.5*(ypos[j] + ypos[j + 1]);
+						//p.z = 0.5*(zpos[k] + zpos[k + 1]);
 
-					//inDomain = in_model_flow(p, ib, b, lb); // определяем номер блока жидкой зоны
+						//inDomain = in_model_flow(p, ib, b, lb); // определяем номер блока жидкой зоны
 
-					integer iP = evt[i + j*inx + k*inx*iny];
-					if (iP > 0) {
-						ib = whot_is_block[iP - 1];
-						if (b[ib].itype != FLUID) {
-							inDomain = false;
+						integer iP = evt[ic];
+						if (iP > 0) {
+							ib = whot_is_block[iP - 1];
+							if (b[ib].itype != FLUID) {
+								inDomain = false;
+							}
+							else inDomain = true;
 						}
-						else inDomain = true;
-					}
-					else inDomain = false;
+						else inDomain = false;
 
 
-					if (inDomain) {
-						if (l < maxelm) {
-							prop[RHO][l] = matlist[b[ib].imatid].rho;
-							prop[MU][l] = matlist[b[ib].imatid].mu;
-							prop[BETA_T][l] = matlist[b[ib].imatid].beta_t;
+						if (inDomain) {
+							if (l < maxelm) {
+								prop[RHO][l] = matlist[b[ib].imatid].rho;
+								prop[MU_DYNAMIC_VISCOSITY][l] = matlist[b[ib].imatid].mu;
+								prop[BETA_T][l] = matlist[b[ib].imatid].beta_t;
 
-							l++;
-						}
-						else {
-							printf("model is incorrect: prop 2 indx>=maxelm\n");
-							printf("see file constr struct in function constr_prop_flow\n");
-							system("pause");
-							exit(1);
-						}
+								l++;
+							}
+							else {
+								std::cout << "model is incorrect: prop 2 indx>=maxelm" << std::endl;
+								std::cout << "see file constr struct in function constr_prop_flow" << std::endl;
+								system("pause");
+								exit(1);
+							}
 					}
 				}
+			}
+		}
 	}
 } // constr_prop_flow
 
@@ -8817,9 +9530,9 @@ void constr_prop_flow(integer* evt, integer* &whot_is_block,
 // принадлежащая расчётной области имеет
 // уникальный номер.
 // Внимание !!! Грани внутренних источников тепла также пронумерованы.
-void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
-						 integer &maxbound, integer **sosed, TOCHKA* pa,
-						 SOURCE* s, integer ls) {
+void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
+						 integer &maxbound, integer** &neighbour, TOCHKA* &pa,
+						 SOURCE* &s, integer ls) {
 	// Выделение оперативной памяти.
 	if (gran != nullptr) {
 		for (integer i = 0; i < 6; i++) {
@@ -8836,8 +9549,8 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 	gran=new integer*[6];
 	if (gran==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for gran constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for gran constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -8848,13 +9561,9 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 		gran[i]=new integer[maxelm];
 		if (gran[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for gran[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for gran[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for gran[" << i <<"] constr struct..." << std::endl;
 		    
-		    printf("Please any key to exit...\n");
+		    std::cout << "Please any key to exit..." << std::endl;
 			//system("PAUSE");
 			system("pause");
 		    exit(1);
@@ -8885,7 +9594,7 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 	for (i=0; i<maxelm; i++) {
 		// цикл по всем соседям
 		for (G=0; G<6; G++) {
-			if (sosed[G][i]==0) {
+			if (neighbour[G][i]==0) {
 				// сосед не существует
 				gran[G][i]=maxbound++;
 				// записываем идентификатор грани и
@@ -8893,63 +9602,63 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 			}
 			else {
 				// сосед существует, грань внутренняя
-				if (bvisit[sosed[G][i]-1]) {
+				if (bvisit[neighbour[G][i]-1]) {
 					// узел уже был посещён
 					switch (G) {
-						case ESIDE: GR=WSIDE; break;
-						case WSIDE: GR=ESIDE; break;
-						case NSIDE: GR=SSIDE; break;
-						case SSIDE: GR=NSIDE; break;
-						case TSIDE: GR=BSIDE; break;
-						case BSIDE: GR=TSIDE; break;
+						case E_SIDE: GR=W_SIDE; break;
+						case W_SIDE: GR=E_SIDE; break;
+						case N_SIDE: GR=S_SIDE; break;
+						case S_SIDE: GR=N_SIDE; break;
+						case T_SIDE: GR=B_SIDE; break;
+						case B_SIDE: GR=T_SIDE; break;
 					}
-					gran[G][i]=gran[GR][sosed[G][i]-1];
+					gran[G][i]=gran[GR][neighbour[G][i]-1];
 				}
 				else {
 					// узнать координаты центра грани и ориентацию в пространстве
 					switch (G) {
-						case ESIDE: x_c=pa[nvtx[1][i]-1].x;
+						case E_SIDE: x_c=pa[nvtx[1][i]-1].x;
 							     y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 								 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
-								 iplane=YZ;
+								 iplane=YZ_PLANE;
 							     break;
-						case WSIDE: x_c=pa[nvtx[0][i]-1].x;
+						case W_SIDE: x_c=pa[nvtx[0][i]-1].x;
 							     y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 								 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
-								 iplane=YZ;
+								 iplane=YZ_PLANE;
 							     break;
-						case NSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+						case N_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 							     y_c=pa[nvtx[2][i]-1].y;
 								 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
-								 iplane=XZ;
+								 iplane=XZ_PLANE;
 							     break;
-						case SSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+						case S_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 							     y_c=pa[nvtx[0][i]-1].y;
 								 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
-								 iplane=XZ;
+								 iplane=XZ_PLANE;
 							     break;
-						case TSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+						case T_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
                                  y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 								 z_c=pa[nvtx[4][i]-1].z;
-                                 iplane=XY;
+                                 iplane=XY_PLANE;
 							     break;
-						case BSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+						case B_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
                                  y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 								 z_c=pa[nvtx[0][i]-1].z;
-                                 iplane=XY;
+                                 iplane=XY_PLANE;
 							     break;
 					} // end case
 					bfind=false;
 					for (j=0; j<ls; j++) {
 						if (s[j].iPlane==iplane) {
 							switch (iplane) {
-							case XY: s[j].g.zE = s[j].g.zS;
+							case XY_PLANE: s[j].g.zE = s[j].g.zS;
 									      if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) bfind=true;
 									      break;
-							case XZ:  s[j].g.yE = s[j].g.yS;
+							case XZ_PLANE:  s[j].g.yE = s[j].g.yS;
 									if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (fabs(y_c-s[j].g.yE)<admission)) bfind=true;
 									      break;
-							case YZ: s[j].g.xE = s[j].g.xS;
+							case YZ_PLANE: s[j].g.xE = s[j].g.xS;
 									if ((z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(x_c-s[j].g.xE)<admission)) bfind=true;
 									      break;
 							}	
@@ -8979,15 +9688,15 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 // В результате каждая граничная грань,
 // принадлежащая расчётной области имеет
 // уникальный номер.
-void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
-						 integer &maxbound, integer **sosed, TOCHKA* pa) {
+void enumerate_gran_flow(integer** &gran, integer maxelm, integer** &nvtx,
+						 integer &maxbound, integer** &neighbour, TOCHKA* &pa) {
 	// Выделение оперативной памяти.
 	gran=nullptr;
 	gran=new integer*[6];
 	if (gran==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for gran flow constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for gran flow constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -8998,13 +9707,9 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 		gran[i]=new integer[maxelm];
 		if (gran[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for gran[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for gran[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for gran["<< i << "] constr struct..." << std::endl;
 		   
-		    printf("Please any key to exit...\n");
+		    std::cout << "Please any key to exit..." << std::endl;
 			//system("PAUSE");
 			system("pause");
 			exit(1);
@@ -9019,7 +9724,7 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 	for (i=0; i<maxelm; i++) {
 		// цикл по всем соседям
 		for (G=0; G<6; G++) {
-			if (sosed[G][i]==0) {
+			if (neighbour[G][i]==0) {
 				// сосед не существует
 				gran[G][i]=maxbound++;
 				// записываем идентификатор грани и
@@ -9038,10 +9743,17 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 // Причём множество соседей выбирается и среди внутренних КО и 
 // среди граничных КО.
 // Универсальность: подходит и для TEMPER и для FLOW
-void constr_neighbors_for_the_internal_node(ALICE_PARTITION** &neighbors_for_the_internal_node, integer maxelm, integer** gran,
-						integer** sosed) {
+void constr_neighbors_for_the_internal_node(
+	ALICE_PARTITION** &neighbors_for_the_internal_node,
+	integer maxelm, integer** &gran,
+						integer** &neighbour) 
+{
 	int inumcor = number_cores();
 	omp_set_num_threads(inumcor); // установка числа потоков
+
+	// Многократное выделение оперативной памяти для neighbors_for_the_internal_node занимает очень много времени.
+	//printf("incomming maxelm=%lld\n",maxelm);
+	//getchar();
 
 	//integer i=0;
 	// Выделение оперативной памяти.
@@ -9049,25 +9761,23 @@ void constr_neighbors_for_the_internal_node(ALICE_PARTITION** &neighbors_for_the
 	neighbors_for_the_internal_node = new ALICE_PARTITION*[12];
 	if (neighbors_for_the_internal_node==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for neighbors_for_the_internal_node constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
 	for (integer i=0; i<12; i++) neighbors_for_the_internal_node[i]=nullptr;
-#pragma omp parallel for
+	// Возможно выделение оперативной памяти параллельно не самая лучшая идея из-за гонки за ресурс.
+	// Распределением ресурса должна заниматься операционная система.
+//#pragma omp parallel for
 	for (integer i=0; i<12; i++) {
 		neighbors_for_the_internal_node[i] = new ALICE_PARTITION[maxelm];
 		if (neighbors_for_the_internal_node[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for neighbors_for_the_internal_node[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for neighbors_for_the_internal_node["<< i <<"] constr struct..." << std::endl;
 		   
-		    printf("Please any key to exit...\n");
+			std::cout << "Please any key to exit..." << std::endl;
 			//system("PAUSE");
 			system("pause");
 		    exit(1);
@@ -9075,70 +9785,48 @@ void constr_neighbors_for_the_internal_node(ALICE_PARTITION** &neighbors_for_the
 	}
 
 	
-	// Обход в цикле по всем внутренним КО принадлежащим расчётной области
-#pragma omp parallel for
-	for (integer i=0; i<maxelm; i++) {
+	
 
-		integer G, GG; // текущая грань
+
+		//integer G, GG; // текущая грань
 		// проход по всем граням принадлежащим текущему КО в определённом порядке.
-		for (G=0; G<6; G++) {
+		for (integer G=0; G<6; G++) {
+
+			integer GG;
+
+			// Вычисление дальнего соседа
+			switch (G) {
+			case E_SIDE: GG = EE_SIDE; break; // E
+			case N_SIDE: GG = NN_SIDE; break; // N
+			case T_SIDE: GG = TT_SIDE; break; // T
+			case W_SIDE: GG = WW_SIDE; break; // W
+			case S_SIDE: GG = SS_SIDE; break; // S
+			case B_SIDE: GG = BB_SIDE; break; // B
+			}
+
+			// Обход в цикле по всем внутренним КО принадлежащим расчётной области
+#pragma omp parallel for
+			for (integer i = 0; i<maxelm; i++) {
+
 			if (gran[G][i]>-1) {
 				// граничная грань:
-				neighbors_for_the_internal_node[G][i].iNODE1=maxelm+gran[G][i]; // граничные КО нумеруются в последнюю очередь,
-				neighbors_for_the_internal_node[G][i].bdroblenie4 = false;
-				neighbors_for_the_internal_node[G][i].iNODE2 = -1;
-				neighbors_for_the_internal_node[G][i].iNODE3 = -1;
-				neighbors_for_the_internal_node[G][i].iNODE4 = -1;
+				neighbors_for_the_internal_node[G][i].define_structural_mesh_neighbour(maxelm+gran[G][i]); // граничные КО нумеруются в последнюю очередь,
 				// после maxelm внутренних КО.
-
-				// Вычисление дальнего соседа
-				switch (G) {
-					case ESIDE: GG=EE; break; // E
-					case NSIDE: GG=NN; break; // N
-					case TSIDE: GG=TTSIDE; break; // T
-					case WSIDE: GG=WW; break; // W
-					case SSIDE: GG=SS; break; // S
-					case BSIDE: GG=BB; break; // B
-				}
-				neighbors_for_the_internal_node[GG][i].iNODE1=-1; // соседа нет.
-				neighbors_for_the_internal_node[GG][i].bdroblenie4 = false;
-				neighbors_for_the_internal_node[GG][i].iNODE2 = -1;
-				neighbors_for_the_internal_node[GG][i].iNODE3 = -1;
-				neighbors_for_the_internal_node[GG][i].iNODE4 = -1;
+								
+				neighbors_for_the_internal_node[GG][i].define_structural_mesh_neighbour(-1); // соседа нет.
 
 			}
 			else {
 				// соседом является внутренний КО.
-				neighbors_for_the_internal_node[G][i].iNODE1=sosed[G][i]-1;
-				neighbors_for_the_internal_node[G][i].bdroblenie4 = false;
-				neighbors_for_the_internal_node[G][i].iNODE2 = -1;
-				neighbors_for_the_internal_node[G][i].iNODE3 = -1;
-				neighbors_for_the_internal_node[G][i].iNODE4 = -1;
+				neighbors_for_the_internal_node[G][i].define_structural_mesh_neighbour(neighbour[G][i]-1);
+				
 
-				// Вычисление дальнего соседа
-				switch (G) {
-					case ESIDE: GG=EE; break; // E
-					case NSIDE: GG=NN; break; // N
-					case TSIDE: GG=TTSIDE; break; // T
-					case WSIDE: GG=WW; break; // W
-					case SSIDE: GG=SS; break; // S
-					case BSIDE: GG=BB; break; // B
-				}
-
-				if (gran[G][sosed[G][i]-1]>-1) {
+				if (gran[G][neighbour[G][i]-1]>-1) {
 					// граничный КО
-					neighbors_for_the_internal_node[GG][i].iNODE1=maxelm+gran[G][sosed[G][i]-1];
-					neighbors_for_the_internal_node[GG][i].bdroblenie4 = false;
-					neighbors_for_the_internal_node[GG][i].iNODE2 = -1;
-					neighbors_for_the_internal_node[GG][i].iNODE3 = -1;
-					neighbors_for_the_internal_node[GG][i].iNODE4 = -1;
+					neighbors_for_the_internal_node[GG][i].define_structural_mesh_neighbour(maxelm+gran[G][neighbour[G][i]-1]);
 				}
 				else {
-					neighbors_for_the_internal_node[GG][i].iNODE1 = sosed[GG][i] - 1; // внутренний КО.
-					neighbors_for_the_internal_node[GG][i].bdroblenie4 = false;
-					neighbors_for_the_internal_node[GG][i].iNODE2 = -1;
-					neighbors_for_the_internal_node[GG][i].iNODE3 = -1;
-					neighbors_for_the_internal_node[GG][i].iNODE4 = -1;
+					neighbors_for_the_internal_node[GG][i].define_structural_mesh_neighbour(neighbour[GG][i] - 1); // внутренний КО.
 				}
 
 			}
@@ -9157,7 +9845,11 @@ void constr_neighbors_for_the_internal_node(ALICE_PARTITION** &neighbors_for_the
 // соседи в плоскости границы для граничных
 // узлов. Это требуется для симметризации 
 // портрета матрицы СЛАУ.
-void constr_boundary_sosed(integer G, integer i, BOUND* &border_neighbor, integer** gran, integer** sosed, ALICE_PARTITION **neighbors_for_the_internal_node, integer maxelm) {
+void constr_boundary_neighbour(integer G, integer i,
+						   BOUND* &border_neighbor, 
+						   integer** &gran, integer** &neighbour,
+						   ALICE_PARTITION** &neighbors_for_the_internal_node,
+						   integer maxelm) {
 	integer j=0; // счётчик цикла for
 
     for (j=0; j<6; j++) border_neighbor[gran[G][i]].iW[j]=-1; // инициализация 
@@ -9166,48 +9858,50 @@ void constr_boundary_sosed(integer G, integer i, BOUND* &border_neighbor, intege
 	/*
 	// Эти значения требуются для симметризации портрета матрицы СЛАУ:
 	switch (G) {
-	case ESIDE: if ((sosed[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
-		if ((sosed[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
-		if ((sosed[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
-		if ((sosed[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
+	case ESIDE: if ((neighbour[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
+		if ((neighbour[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
+		if ((neighbour[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
+		if ((neighbour[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
 			  break;
-	case WSIDE: if ((sosed[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
-		if ((sosed[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
-		if ((sosed[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
-		if ((sosed[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
+	case WSIDE: if ((neighbour[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
+		if ((neighbour[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
+		if ((neighbour[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
+		if ((neighbour[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
 			  break;
-	case NSIDE: if ((sosed[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
-		if ((sosed[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
-		if ((sosed[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
-		if ((sosed[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
+	case NSIDE: if ((neighbour[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
+		if ((neighbour[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
+		if ((neighbour[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
+		if ((neighbour[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
 			  break;
-	case SSIDE: if ((sosed[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
-		if ((sosed[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
-		if ((sosed[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
-		if ((sosed[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
+	case SSIDE: if ((neighbour[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
+		if ((neighbour[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
+		if ((neighbour[TSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[TSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[TSIDE][i].iNODE1];
+		if ((neighbour[BSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[BSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[BSIDE][i].iNODE1];
 			  break;
-	case TSIDE: if ((sosed[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
-		if ((sosed[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
-		if ((sosed[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
-		if ((sosed[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
+	case TSIDE: if ((neighbour[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
+		if ((neighbour[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
+		if ((neighbour[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
+		if ((neighbour[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
 		      break;
-	case BSIDE: if ((sosed[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
-		if ((sosed[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
-		if ((sosed[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
-		if ((sosed[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
+	case BSIDE: if ((neighbour[ESIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[ESIDE] = maxelm + gran[G][neighbors_for_the_internal_node[ESIDE][i].iNODE1];
+		if ((neighbour[WSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[WSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[WSIDE][i].iNODE1];
+		if ((neighbour[NSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[NSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[NSIDE][i].iNODE1];
+		if ((neighbour[SSIDE][i]>0) && (gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1]>-1)) border_neighbor[gran[G][i]].iW[SSIDE] = maxelm + gran[G][neighbors_for_the_internal_node[SSIDE][i].iNODE1];
 		      break;
 	} // end сбор информации для симметризации СЛАУ.
 
 	*/
 
-} // constr_boundary_sosed
+} // constr_boundary_neighbour
 
 // Заполнение информации о граничных узлах:
 // Заполняются border_neighbor и binternalsource.
 void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_block,
 	bool* &binternalsource, integer maxelm, integer maxbound, 
-	integer** gran, integer** sosed, ALICE_PARTITION **neighbors_for_the_internal_node, integer **nvtx, TOCHKA* pa,
-	BLOCK* b, integer lb, integer lw, WALL* w, SOURCE* s, integer ls,
+	integer** &gran, integer** &neighbour,
+	ALICE_PARTITION** &neighbors_for_the_internal_node,
+	integer** &nvtx, TOCHKA* &pa,
+	BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls,
 	TOCHKA pavg) {
 
 	// Алгоритм:
@@ -9263,7 +9957,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 
 	//integer il=0; // debug
     //for (i=0; i<maxelm; i++) for (G=0; G<6; G++) if (gran[G][i]>-1) il++;
-    //for (i=0; i<maxelm; i++) for (G=0; G<6; G++) if (sosed[G][i]==0) il++;
+    //for (i=0; i<maxelm; i++) for (G=0; G<6; G++) if (neighbour[G][i]==0) il++;
 #if doubleintprecision == 1
 	//printf("il=%lld\n",il); system("PAUSE");
 #else
@@ -9292,73 +9986,73 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 
 	for (j = 0; j < lw; j++) {
 		switch (w[j].iPlane) {
-		case XY:
+		case XY_PLANE:
 			if (w[j].g.xS <= pavg.x) {
 				if (w[j].g.yS <= pavg.y) {
-					wlist[XY][0][iwsize[XY][0]] = j;
-					iwsize[XY][0]++;
+					wlist[XY_PLANE][0][iwsize[XY_PLANE][0]] = j;
+					iwsize[XY_PLANE][0]++;
 				}
 				if (w[j].g.yE >= pavg.y) {
-					wlist[XY][1][iwsize[XY][1]] = j;
-					iwsize[XY][1]++;
+					wlist[XY_PLANE][1][iwsize[XY_PLANE][1]] = j;
+					iwsize[XY_PLANE][1]++;
 				}
 			}
 			if (w[j].g.xE >= pavg.x)  {
 				if (w[j].g.yS <= pavg.y) {
-					wlist[XY][2][iwsize[XY][2]] = j;
-					iwsize[XY][2]++;
+					wlist[XY_PLANE][2][iwsize[XY_PLANE][2]] = j;
+					iwsize[XY_PLANE][2]++;
 				}
 				if (w[j].g.yE >= pavg.y) {
-					wlist[XY][3][iwsize[XY][3]] = j;
-					iwsize[XY][3]++;
+					wlist[XY_PLANE][3][iwsize[XY_PLANE][3]] = j;
+					iwsize[XY_PLANE][3]++;
 				}
 			}
 
 			
 			break;
-		case YZ:
+		case YZ_PLANE:
 			if (w[j].g.yS <= pavg.y) {
 				if (w[j].g.zS <= pavg.z) {
-					wlist[YZ][0][iwsize[YZ][0]] = j;
-					iwsize[YZ][0]++;
+					wlist[YZ_PLANE][0][iwsize[YZ_PLANE][0]] = j;
+					iwsize[YZ_PLANE][0]++;
 				}
 				if (w[j].g.zE >= pavg.z)  {
-					wlist[YZ][1][iwsize[YZ][1]] = j;
-					iwsize[YZ][1]++;
+					wlist[YZ_PLANE][1][iwsize[YZ_PLANE][1]] = j;
+					iwsize[YZ_PLANE][1]++;
 				}
 			}
 			if (w[j].g.yE >= pavg.y) {
 				if (w[j].g.zS <= pavg.z) {
-					wlist[YZ][2][iwsize[YZ][2]] = j;
-					iwsize[YZ][2]++;
+					wlist[YZ_PLANE][2][iwsize[YZ_PLANE][2]] = j;
+					iwsize[YZ_PLANE][2]++;
 				}
 				if (w[j].g.zE >= pavg.z) {
-					wlist[YZ][3][iwsize[YZ][3]] = j;
-					iwsize[YZ][3]++;
+					wlist[YZ_PLANE][3][iwsize[YZ_PLANE][3]] = j;
+					iwsize[YZ_PLANE][3]++;
 				}
 			}
 
 			
 			break;
-		case XZ:
+		case XZ_PLANE:
 			if (w[j].g.xS <= pavg.x) {
 				if (w[j].g.zS <= pavg.z) {
-					wlist[XZ][0][iwsize[XZ][0]] = j;
-					iwsize[XZ][0]++;
+					wlist[XZ_PLANE][0][iwsize[XZ_PLANE][0]] = j;
+					iwsize[XZ_PLANE][0]++;
 				}
 				if (w[j].g.zE >= pavg.z) {
-					wlist[XZ][1][iwsize[XZ][1]] = j;
-					iwsize[XZ][1]++;
+					wlist[XZ_PLANE][1][iwsize[XZ_PLANE][1]] = j;
+					iwsize[XZ_PLANE][1]++;
 				}
 			}
 			if (w[j].g.xE >= pavg.x) {
 				if (w[j].g.zS <= pavg.z) {
-					wlist[XZ][2][iwsize[XZ][2]] = j;
-					iwsize[XZ][2]++;
+					wlist[XZ_PLANE][2][iwsize[XZ_PLANE][2]] = j;
+					iwsize[XZ_PLANE][2]++;
 				}
 				if (w[j].g.zE >= pavg.z)  {
-					wlist[XZ][3][iwsize[XZ][3]] = j;
-					iwsize[XZ][3]++;
+					wlist[XZ_PLANE][3][iwsize[XZ_PLANE][3]] = j;
+					iwsize[XZ_PLANE][3]++;
 				}
 			}
 			
@@ -9372,74 +10066,81 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 			if (gran[G][i]>-1) {
 				// граничная грань
 				doublereal dS = 0.0;
+				TOCHKA control_volume_size_dopusk;
                 // узнать координаты центра грани и ориентацию в пространстве
 				switch (G) {
-					case ESIDE: x_c=pa[nvtx[1][i]-1].x;
+					case E_SIDE: x_c=pa[nvtx[1][i]-1].x;
 						     y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
+							 control_volume_size_dopusk.x = 0.25*fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x);
 							 dS = fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=YZ;
+							 iplane=YZ_PLANE;
 						     break;
-					case WSIDE: x_c=pa[nvtx[0][i]-1].x;
+					case W_SIDE: x_c=pa[nvtx[0][i]-1].x;
 						     y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
+							 control_volume_size_dopusk.x = 0.25*fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x);
 							 dS = fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=YZ;
+							 iplane=YZ_PLANE;
 						     break;
-					case NSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+					case N_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 						     y_c=pa[nvtx[2][i]-1].y;
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
+							 control_volume_size_dopusk.y = 0.25*fabs(pa[nvtx[0][i] - 1].y- pa[nvtx[2][i] - 1].y);
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=XZ;
+							 iplane=XZ_PLANE;
 						     break;
-					case SSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+					case S_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 						     y_c=pa[nvtx[0][i]-1].y;
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
+							 control_volume_size_dopusk.y = 0.25*fabs(pa[nvtx[0][i] - 1].y - pa[nvtx[2][i] - 1].y);
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=XZ;
+							 iplane=XZ_PLANE;
 						     break;
-					case TSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+					case T_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
                              y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 							 z_c=pa[nvtx[4][i]-1].z;
-                             iplane=XY;
+							 control_volume_size_dopusk.z = 0.25*fabs(pa[nvtx[4][i] - 1].z- pa[nvtx[0][i] - 1].z);
+                             iplane=XY_PLANE;
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y);
 						     break;
-				    case BSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+				    case B_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
                              y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 					    	 z_c=pa[nvtx[0][i]-1].z;
+							 control_volume_size_dopusk.z = 0.25*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y);
-                             iplane=XY;
+                             iplane=XY_PLANE;
 						     break;
 				} // end case
 
-				if (sosed[G][i]==0) { // грань лежит на границе расчётной области.
+				if (neighbour[G][i]==0) { // грань лежит на границе расчётной области.
 
 					// соседи в плоскости границы для граничных
                     // узлов. Это требуется для симметризации 
                     // портрета матрицы СЛАУ.
-                    constr_boundary_sosed(G,i,border_neighbor, gran, sosed, neighbors_for_the_internal_node, maxelm);
+                    constr_boundary_neighbour(G,i,border_neighbor, gran, neighbour, neighbors_for_the_internal_node, maxelm);
 
 					
 
 					// грань лежит на границе расчётной области.
 					switch (G) {
-						case ESIDE: border_neighbor[gran[G][i]].Norm=WSIDE;
-							     border_neighbor[gran[G][i]].iII=neighbors_for_the_internal_node[WSIDE][i].iNODE1;
+						case E_SIDE: border_neighbor[gran[G][i]].Norm=W_SIDE;
+							     border_neighbor[gran[G][i]].iII=neighbors_for_the_internal_node[W_SIDE][i].iNODE1;
 							     break;
-						case WSIDE: border_neighbor[gran[G][i]].Norm=ESIDE;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[ESIDE][i].iNODE1;
+						case W_SIDE: border_neighbor[gran[G][i]].Norm=E_SIDE;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[E_SIDE][i].iNODE1;
 							     break;
-						case NSIDE: border_neighbor[gran[G][i]].Norm=SSIDE;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[SSIDE][i].iNODE1;
+						case N_SIDE: border_neighbor[gran[G][i]].Norm=S_SIDE;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[S_SIDE][i].iNODE1;
 							     break;
-						case SSIDE: border_neighbor[gran[G][i]].Norm = NSIDE;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[NSIDE][i].iNODE1;
+						case S_SIDE: border_neighbor[gran[G][i]].Norm = N_SIDE;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[N_SIDE][i].iNODE1;
 							     break;
-						case TSIDE: border_neighbor[gran[G][i]].Norm=BSIDE; 
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[BSIDE][i].iNODE1;
+						case T_SIDE: border_neighbor[gran[G][i]].Norm=B_SIDE; 
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[B_SIDE][i].iNODE1;
 							     break;
-						case BSIDE: border_neighbor[gran[G][i]].Norm=TSIDE; 
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[TSIDE][i].iNODE1;
+						case B_SIDE: border_neighbor[gran[G][i]].Norm=T_SIDE; 
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[T_SIDE][i].iNODE1;
 							     break;
 					} // end определение внутренней нормали
                     border_neighbor[gran[G][i]].iB=maxelm+gran[G][i];
@@ -9459,22 +10160,22 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						// блок найден.
 						// Определяем внутреннюю нормаль:
 						switch (border_neighbor[gran[G][i]].Norm) {
-						case WSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
+						case W_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
 							break;
-						case ESIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
+						case E_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
 							break;
-						case SSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
+						case S_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
 							break;
-						case NSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
+						case N_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
 							break;
-						case BSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
+						case B_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
 							break;
-						case TSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
+						case T_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
 							break;
 						}
 					}
 					else {
-						printf("error: emissivity calculation block unfound. in constr_border_neighbor_temp.\n");
+						std::cout << "error: emissivity calculation block unfound. in constr_border_neighbor_temp." << std::endl;
 						system("PAUSE");
 						exit(1);
 					}
@@ -9484,9 +10185,9 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						if (s[j].iPlane==iplane) {
 							// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 							switch (iplane) {
-								case XY: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) { bfind=true; jpos=j; } break;
-								case YZ: if ((z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(x_c-s[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
-								case XZ: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (fabs(y_c-s[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
+								case XY_PLANE: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) { bfind=true; jpos=j; } break;
+								case YZ_PLANE: if ((z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(x_c-s[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
+								case XZ_PLANE: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (fabs(y_c-s[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
 							}
 						}
 					}
@@ -9502,7 +10203,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						if (1) {
 							// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 							switch (iplane) {
-							case XY:
+							case XY_PLANE:
 								if (x_c <= pavg.x) {
 									if (y_c <= pavg.y) {
 										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
@@ -9513,7 +10214,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(z_c - w[j_ind].g.zE) < admission))
+													(fabs(z_c - w[j_ind].g.zE) < control_volume_size_dopusk.z))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9529,7 +10230,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(z_c - w[j_ind].g.zE) < admission))
+													(fabs(z_c - w[j_ind].g.zE) < control_volume_size_dopusk.z))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9547,7 +10248,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(z_c - w[j_ind].g.zE) < admission))
+													(fabs(z_c - w[j_ind].g.zE) < control_volume_size_dopusk.z))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9563,7 +10264,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(z_c - w[j_ind].g.zE) < admission))
+													(fabs(z_c - w[j_ind].g.zE) < control_volume_size_dopusk.z))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9574,7 +10275,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 
 
 								break;
-							case YZ:
+							case YZ_PLANE:
 								if (y_c <= pavg.y) {
 									if (z_c <= pavg.z) {
 										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
@@ -9586,7 +10287,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(z_c < w[j_ind].g.zE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(x_c - w[j_ind].g.xE) < admission))
+													(fabs(x_c - w[j_ind].g.xE) < control_volume_size_dopusk.x))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9604,7 +10305,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(z_c < w[j_ind].g.zE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(x_c - w[j_ind].g.xE) < admission))
+													(fabs(x_c - w[j_ind].g.xE) < control_volume_size_dopusk.x))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9624,7 +10325,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(z_c < w[j_ind].g.zE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(x_c - w[j_ind].g.xE) < admission))
+													(fabs(x_c - w[j_ind].g.xE) < control_volume_size_dopusk.x))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9642,7 +10343,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(z_c < w[j_ind].g.zE) &&
 													(y_c > w[j_ind].g.yS) &&
 													(y_c < w[j_ind].g.yE) &&
-													(fabs(x_c - w[j_ind].g.xE) < admission))
+													(fabs(x_c - w[j_ind].g.xE) < control_volume_size_dopusk.x))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9654,7 +10355,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 
 
 								break;
-							case XZ:
+							case XZ_PLANE:
 								if (x_c <= pavg.x) {
 									if (z_c <= pavg.z) {
 										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
@@ -9665,7 +10366,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(z_c > w[j_ind].g.zS) &&
 													(z_c < w[j_ind].g.zE) &&
-													(fabs(y_c - w[j_ind].g.yE) < admission))
+													(fabs(y_c - w[j_ind].g.yE) < control_volume_size_dopusk.y))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9681,7 +10382,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(z_c > w[j_ind].g.zS) &&
 													(z_c < w[j_ind].g.zE) &&
-													(fabs(y_c - w[j_ind].g.yE) < admission))
+													(fabs(y_c - w[j_ind].g.yE) < control_volume_size_dopusk.y))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9699,7 +10400,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(z_c > w[j_ind].g.zS) &&
 													(z_c < w[j_ind].g.zE) &&
-													(fabs(y_c - w[j_ind].g.yE) < admission))
+													(fabs(y_c - w[j_ind].g.yE) < control_volume_size_dopusk.y))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9715,7 +10416,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 													(x_c < w[j_ind].g.xE) &&
 													(z_c > w[j_ind].g.zS) &&
 													(z_c < w[j_ind].g.zE) &&
-													(fabs(y_c - w[j_ind].g.yE) < admission))
+													(fabs(y_c - w[j_ind].g.yE) < control_volume_size_dopusk.y))
 												{
 													bfind = true; jpos = j_ind;
 												}
@@ -9733,9 +10434,9 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 								if (w[j].iPlane == iplane) {
 									// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 									switch (iplane) {
-									case XY: if ((x_c > w[j].g.xS) && (x_c < w[j].g.xE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(z_c - w[j].g.zE) < admission)) { bfind = true; jpos = j; } break;
-									case YZ: if ((z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(x_c - w[j].g.xE) < admission)) { bfind = true; jpos = j; } break;
-									case XZ: if ((x_c > w[j].g.xS) && (x_c < w[j].g.xE) && (z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (fabs(y_c - w[j].g.yE) < admission)) { bfind = true; jpos = j; } break;
+									case XY_PLANE: if ((x_c > w[j].g.xS) && (x_c < w[j].g.xE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(z_c - w[j].g.zE) < admission)) { bfind = true; jpos = j; } break;
+									case YZ_PLANE: if ((z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(x_c - w[j].g.xE) < admission)) { bfind = true; jpos = j; } break;
+									case XZ_PLANE: if ((x_c > w[j].g.xS) && (x_c < w[j].g.xE) && (z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (fabs(y_c - w[j].g.yE) < admission)) { bfind = true; jpos = j; } break;
 									}
 								}
 							}
@@ -9778,9 +10479,9 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							// с противоположной от жидкого КО стороны рассматриваемой грани.
                             border_neighbor[gran[G][i]].Norm=G; // внутренняя нормаль
 							border_neighbor[gran[G][i]].iB=maxelm+gran[G][i];
-							border_neighbor[gran[G][i]].iI=sosed[G][i]-1;
-							border_neighbor[gran[G][i]].iI1 = sosed[G][i] - 1;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[G][sosed[G][i] - 1].iNODE1;
+							border_neighbor[gran[G][i]].iI=neighbour[G][i]-1;
+							border_neighbor[gran[G][i]].iI1 = neighbour[G][i] - 1;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[G][neighbour[G][i] - 1].iNODE1;
 							border_neighbor[gran[G][i]].dS = dS;
 							// координаты центра грани.
 							border_neighbor[gran[G][i]].p_c.x = x_c;
@@ -9790,27 +10491,27 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 
 							// Вычисляем emissivity:
 							integer ibfound = -1;
-							ibfound = whot_is_block[sosed[G][i] - 1];
+							ibfound = whot_is_block[neighbour[G][i] - 1];
 							if (ibfound >= 0) {
 								// блок найден.
 								// Определяем внутреннюю нормаль:
 								switch (border_neighbor[gran[G][i]].Norm) {
-								case WSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
+								case W_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
 									break;
-								case ESIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
+								case E_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
 									break;
-								case SSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
+								case S_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
 									break;
-								case NSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
+								case N_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
 									break;
-								case BSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
+								case B_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
 									break;
-								case TSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
+								case T_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
 									break;
 								}
 							}
 							else {
-								printf("error: emissivity calculation block unfound. in constr_border_neighbor_temp.\n");
+								std::cout << "error: emissivity calculation block unfound. in constr_border_neighbor_temp." << std::endl;
 								system("PAUSE");
 								exit(1);
 							}
@@ -9826,23 +10527,23 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							// КО i принадлежит SOLID
 
 							switch (G) {
-						       case ESIDE: border_neighbor[gran[G][i]].Norm=WSIDE;
-								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[WSIDE][i].iNODE1;
+						       case E_SIDE: border_neighbor[gran[G][i]].Norm=W_SIDE;
+								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[W_SIDE][i].iNODE1;
 							            break;
-						       case WSIDE: border_neighbor[gran[G][i]].Norm=ESIDE;
-								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[ESIDE][i].iNODE1;
+						       case W_SIDE: border_neighbor[gran[G][i]].Norm=E_SIDE;
+								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[E_SIDE][i].iNODE1;
 							            break;
-						       case NSIDE: border_neighbor[gran[G][i]].Norm=SSIDE;
-								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[SSIDE][i].iNODE1;
+						       case N_SIDE: border_neighbor[gran[G][i]].Norm=S_SIDE;
+								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[S_SIDE][i].iNODE1;
 							            break;
-						       case SSIDE: border_neighbor[gran[G][i]].Norm=NSIDE;
-								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[NSIDE][i].iNODE1;
+						       case S_SIDE: border_neighbor[gran[G][i]].Norm=N_SIDE;
+								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[N_SIDE][i].iNODE1;
 							            break;
-						       case TSIDE: border_neighbor[gran[G][i]].Norm=BSIDE; 
-								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[BSIDE][i].iNODE1;
+						       case T_SIDE: border_neighbor[gran[G][i]].Norm=B_SIDE; 
+								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[B_SIDE][i].iNODE1;
 							            break;
-						       case BSIDE: border_neighbor[gran[G][i]].Norm=TSIDE; 
-								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[TSIDE][i].iNODE1;
+						       case B_SIDE: border_neighbor[gran[G][i]].Norm=T_SIDE; 
+								   border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[T_SIDE][i].iNODE1;
 							            break;
 					         } // end определение внутренней нормали
                             border_neighbor[gran[G][i]].iB=maxelm+gran[G][i];
@@ -9864,22 +10565,22 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 								// блок найден.
 								// Определяем внутреннюю нормаль:
 								switch (border_neighbor[gran[G][i]].Norm) {
-								case WSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
+								case W_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
 									break;
-								case ESIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
+								case E_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
 									break;
-								case SSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
+								case S_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
 									break;
-								case NSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
+								case N_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
 									break;
-								case BSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
+								case B_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
 									break;
-								case TSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
+								case T_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
 									break;
 								}
 							}
 							else {
-								printf("error: emissivity calculation block unfound. in constr_border_neighbor_temp.\n");
+								std::cout << "error: emissivity calculation block unfound. in constr_border_neighbor_temp." << std::endl;
 								system("PAUSE");
 								exit(1);
 							}
@@ -9889,16 +10590,16 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						// соседи в плоскости границы для граничных
                         // узлов. Это требуется для симметризации 
                         // портрета матрицы СЛАУ.
-                        constr_boundary_sosed(G,i,border_neighbor, gran, sosed, neighbors_for_the_internal_node, maxelm);
+                        constr_boundary_neighbour(G,i,border_neighbor, gran, neighbour, neighbors_for_the_internal_node, maxelm);
 
 						// Нужно определить MCB:
                         bfind=false;
 					    for (j=0; j<ls; j++) {
 						   if (s[j].iPlane==iplane) {
 							  switch (iplane) {
-									case XY: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) { bfind=true; jpos=j; } break;
-								    case YZ: if ((z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(x_c-s[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
-								    case XZ: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (fabs(y_c-s[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
+									case XY_PLANE: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) { bfind=true; jpos=j; } break;
+								    case YZ_PLANE: if ((z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(x_c-s[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
+								    case XZ_PLANE: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (fabs(y_c-s[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
 							  }
 						   }
 					    }
@@ -9912,7 +10613,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						}
 						else {
 							// Ошибка внутренний источник тепла не обнаружен!
-							printf("Error !!! internal source not found...\n");
+							std::cout << "Error !!! internal source not found..." << std::endl;
 							//system("PAUSE");
 							system("pause");
 							exit(0);
@@ -9936,7 +10637,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							// Записываем в соседи тот КО который принадлежит твёрдому телу
 							// с противоположной от жидкого КО стороны рассматриваемой грани.
 							
-							border_neighbor[gran[G][i]].iI2 = sosed[G][i] - 1;
+							border_neighbor[gran[G][i]].iI2 = neighbour[G][i] - 1;
 							
 
 						}
@@ -9978,9 +10679,13 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 } // constr_border_neighbor_temp 
 
 // Заполнение информации о граничных узлах:
-void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_block, integer* ptr, integer maxelm, integer maxbound,
-	                     integer** gran, integer** sosed, ALICE_PARTITION **neighbors_for_the_internal_node, integer **nvtx, TOCHKA* pa,
-						integer lw, WALL* w, integer ls, BLOCK* b) {
+void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_block,
+								 integer* &ptr, integer maxelm, integer maxbound,
+	                     integer** &gran, integer** &neighbour, 
+						 ALICE_PARTITION** &neighbors_for_the_internal_node,
+						 integer** &nvtx, TOCHKA* &pa,
+						integer lw, WALL* &w, integer ls, BLOCK* &b) 
+{
 
 	// Алгоритм:
     // Выделение оперативной памяти:
@@ -9989,8 +10694,8 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 	border_neighbor= new BOUND[maxbound];
 	if (border_neighbor==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for border_neighbor constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for border_neighbor constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -10013,71 +10718,71 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 				doublereal dS = 0.0;
                 // узнать координаты центра грани и ориентацию в пространстве
 				switch (G) {
-					case ESIDE: x_c=pa[nvtx[1][i]-1].x;
+					case E_SIDE: x_c=pa[nvtx[1][i]-1].x;
 						     y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
 							 dS = fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=YZ;
+							 iplane=YZ_PLANE;
 						     break;
-					case WSIDE: x_c=pa[nvtx[0][i]-1].x;
+					case W_SIDE: x_c=pa[nvtx[0][i]-1].x;
 						     y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
 							 dS = fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=YZ;
+							 iplane=YZ_PLANE;
 						     break;
-					case NSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+					case N_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 						     y_c=pa[nvtx[2][i]-1].y;
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=XZ;
+							 iplane=XZ_PLANE;
 						     break;
-					case SSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+					case S_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 						     y_c=pa[nvtx[0][i]-1].y;
 							 z_c=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[4][i] - 1].z - pa[nvtx[0][i] - 1].z);
-							 iplane=XZ;
+							 iplane=XZ_PLANE;
 						     break;
-					case TSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+					case T_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
                              y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 							 z_c=pa[nvtx[4][i]-1].z;
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y);
-                             iplane=XY;
+                             iplane=XY_PLANE;
 						     break;
-				    case BSIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
+				    case B_SIDE: x_c=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
                              y_c=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 					    	 z_c=pa[nvtx[0][i]-1].z;
 							 dS = fabs(pa[nvtx[1][i] - 1].x - pa[nvtx[0][i] - 1].x)*fabs(pa[nvtx[3][i] - 1].y - pa[nvtx[0][i] - 1].y);
-                             iplane=XY;
+                             iplane=XY_PLANE;
 						     break;
 				} // end case
 
-				if (sosed[G][i]==0) {
+				if (neighbour[G][i]==0) {
 
                     // соседи в плоскости границы для граничных
                     // узлов. Это требуется для симметризации 
                     // портрета матрицы СЛАУ.
-                    constr_boundary_sosed(G,i,border_neighbor, gran, sosed, neighbors_for_the_internal_node, maxelm);
+                    constr_boundary_neighbour(G,i,border_neighbor, gran, neighbour, neighbors_for_the_internal_node, maxelm);
 
 
 					// грань лежит на границе расчётной области.
 					switch (G) {
-						case ESIDE: border_neighbor[gran[G][i]].Norm=WSIDE;
-							     border_neighbor[gran[G][i]].iII=neighbors_for_the_internal_node[WSIDE][i].iNODE1;
+						case E_SIDE: border_neighbor[gran[G][i]].Norm=W_SIDE;
+							     border_neighbor[gran[G][i]].iII=neighbors_for_the_internal_node[W_SIDE][i].iNODE1;
 							     break;
-						case WSIDE: border_neighbor[gran[G][i]].Norm=ESIDE;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[ESIDE][i].iNODE1;
+						case W_SIDE: border_neighbor[gran[G][i]].Norm=E_SIDE;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[E_SIDE][i].iNODE1;
 							     break;
-						case NSIDE: border_neighbor[gran[G][i]].Norm=SSIDE;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[SSIDE][i].iNODE1;
+						case N_SIDE: border_neighbor[gran[G][i]].Norm=S_SIDE;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[S_SIDE][i].iNODE1;
 							     break;
-						case SSIDE: border_neighbor[gran[G][i]].Norm=NSIDE;
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[NSIDE][i].iNODE1;
+						case S_SIDE: border_neighbor[gran[G][i]].Norm=N_SIDE;
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[N_SIDE][i].iNODE1;
 							     break;
-						case TSIDE: border_neighbor[gran[G][i]].Norm=BSIDE; 
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[BSIDE][i].iNODE1;
+						case T_SIDE: border_neighbor[gran[G][i]].Norm=B_SIDE; 
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[B_SIDE][i].iNODE1;
 							     break;
-						case BSIDE: border_neighbor[gran[G][i]].Norm=TSIDE; 
-							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[TSIDE][i].iNODE1;
+						case B_SIDE: border_neighbor[gran[G][i]].Norm=T_SIDE; 
+							border_neighbor[gran[G][i]].iII = neighbors_for_the_internal_node[T_SIDE][i].iNODE1;
 							     break;
 					} // end определение внутренней нормали
                     border_neighbor[gran[G][i]].iB=maxelm+gran[G][i];
@@ -10094,22 +10799,22 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 						// блок найден.
 						// Определяем внутреннюю нормаль:
 						switch (border_neighbor[gran[G][i]].Norm) {
-						case WSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
+						case W_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissE;
 							break;
-						case ESIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
+						case E_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissW;
 							break;
-						case SSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
+						case S_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissN;
 							break;
-						case NSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
+						case N_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissS;
 							break;
-						case BSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
+						case B_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissT;
 							break;
-						case TSIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
+						case T_SIDE: border_neighbor[gran[G][i]].emissivity = b[ibfound].radiation.emissB;
 							break;
 						}
 					}
 					else {
-						printf("error: emissivity calculation block unfound. in constr_border_neighbor_temp.\n");
+						std::cout << "error: emissivity calculation block unfound. in constr_border_neighbor_temp." << std::endl;
 						system("PAUSE");
 						exit(1);
 					}
@@ -10119,15 +10824,15 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 					for (j=0; j<lw; j++) {
 						if (w[j].iPlane==iplane) {
 							switch (iplane) {
-								case XY: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(z_c-w[j].g.zE)<admission)) 
+								case XY_PLANE: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(z_c-w[j].g.zE)<admission)) 
 										  {
 											  //printf("z_c=%f, zE=%f\n",z_c, w[j].g.zE);
 											  //system("PAUSE"); // debug
 											  bfind=true; jpos=j;
 										  }
 										  break;
-								case YZ: if ((z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(x_c-w[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
-								case XZ: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (fabs(y_c-w[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
+								case YZ_PLANE: if ((z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(x_c-w[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
+								case XZ_PLANE: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (fabs(y_c-w[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
 							}
 						}
 					}
@@ -10159,16 +10864,16 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 } // constr_border_neighbor_flow
 
 // Свойства материала на границе твердотельной области.
-void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, integer maxbound,
-					   integer **gran, integer **sosed, integer **nvtx, TOCHKA* pa,
-					   BLOCK* b, integer lb) {
+void constr_prop_bound(doublereal** &prop, doublereal** &prop_b, integer maxelm, integer maxbound,
+					   integer** &gran, integer** &neighbour, integer** &nvtx, TOCHKA* &pa,
+					   BLOCK* &b, integer lb) {
 	// Выделение оперативной памяти:
 	prop_b=nullptr;
 	prop_b=new doublereal*[6];
 	if (prop_b==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for prop_b constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for prop_b constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -10179,13 +10884,8 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 		prop_b[i]=new doublereal[maxbound];
 		if (prop_b[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for prop_b[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for prop_b[%d] constr struct...\n", i);
-#endif
-		   
-		    printf("Please any key to exit...\n");
+			std::cout << "Problem: not enough memory on your equipment for prop_b["<< i <<"] constr struct..."<< std::endl;
+		    std::cout << "Please any key to exit..."<< std::endl;
 			//system("PAUSE");
 			system("pause");
 		    exit(1);
@@ -10216,7 +10916,7 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 		for (int G = 0; G < 6; G++) {
 			if (gran[G][i] > -1) {
 				// граничная грань
-				if (sosed[G][i] == 0) {
+				if (neighbour[G][i] == 0) {
 					// грань лежит на границе расчётной области
 
 					// В граничный узел сносятся свойства прилегающего КО:
@@ -10247,12 +10947,12 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 						bi_fluid = in_model_flow(p_c, ib, b, lb);
 
 						if (bi_fluid) {
-							prop_b[RHO][gran[G][i]] = prop[RHO][sosed[G][i] - 1];
-							prop_b[HEAT_CAPACITY][gran[G][i]] = prop[HEAT_CAPACITY][sosed[G][i] - 1];
-							prop_b[LAM][gran[G][i]] = prop[LAM][sosed[G][i] - 1];
-							prop_b[MULT_LAM_X][gran[G][i]] = prop[MULT_LAM_X][sosed[G][i] - 1];
-							prop_b[MULT_LAM_Y][gran[G][i]] = prop[MULT_LAM_Y][sosed[G][i] - 1];
-							prop_b[MULT_LAM_Z][gran[G][i]] = prop[MULT_LAM_Z][sosed[G][i] - 1];
+							prop_b[RHO][gran[G][i]] = prop[RHO][neighbour[G][i] - 1];
+							prop_b[HEAT_CAPACITY][gran[G][i]] = prop[HEAT_CAPACITY][neighbour[G][i] - 1];
+							prop_b[LAM][gran[G][i]] = prop[LAM][neighbour[G][i] - 1];
+							prop_b[MULT_LAM_X][gran[G][i]] = prop[MULT_LAM_X][neighbour[G][i] - 1];
+							prop_b[MULT_LAM_Y][gran[G][i]] = prop[MULT_LAM_Y][neighbour[G][i] - 1];
+							prop_b[MULT_LAM_Z][gran[G][i]] = prop[MULT_LAM_Z][neighbour[G][i] - 1];
 						}
 						else {
 							prop_b[RHO][gran[G][i]] = prop[RHO][i];
@@ -10280,15 +10980,17 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 } // constr_prop_bound 
 
 // Свойства материала на границе жидкой области.
-void constr_prop_bound_flow(doublereal **prop, doublereal** &prop_b, integer maxelm, integer maxbound,
-					   integer **gran, integer **sosed) {
+void constr_prop_bound_flow(doublereal** &prop, doublereal** &prop_b, 
+							integer maxelm, integer maxbound,
+					   integer** &gran, integer** &neighbour)
+{
 	// Выделение оперативной памяти:
 	prop_b=nullptr;
 	prop_b=new doublereal*[3];
 	if (prop_b==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for prop_b constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for prop_b constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 	//	system("PAUSE");
 		system("pause");
 		exit(1);
@@ -10299,13 +11001,8 @@ void constr_prop_bound_flow(doublereal **prop, doublereal** &prop_b, integer max
 		prop_b[i]=new doublereal[maxbound];
 		if (prop_b[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for prop_b[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for prop_b[%d] constr struct...\n", i);
-#endif
-		   
-		    printf("Please any key to exit...\n");
+			std::cout << "Problem: not enough memory on your equipment for prop_b["<< i<<"] constr struct..." << std::endl;		   
+		    std::cout << "Please any key to exit..." << std::endl;
 			//system("PAUSE");
 			system("pause");
 		    exit(1);
@@ -10321,12 +11018,12 @@ void constr_prop_bound_flow(doublereal **prop, doublereal** &prop_b, integer max
 		for (G=0; G<6; G++) {
 			if (gran[G][i]>-1) {
 				// граничная грань
-				if (sosed[G][i]==0) {
+				if (neighbour[G][i]==0) {
 					// грань лежит на границе расчётной области
 
 					// В граничный узел сносятся свойства прилегающего КО:
 					prop_b[RHO][gran[G][i]]=prop[RHO][i];
-					prop_b[MU][gran[G][i]]=prop[MU][i];
+					prop_b[MU_DYNAMIC_VISCOSITY][gran[G][i]]=prop[MU_DYNAMIC_VISCOSITY][i];
 					prop_b[BETA_T][gran[G][i]]=prop[BETA_T][i];
 
 				}
@@ -10341,9 +11038,10 @@ void constr_prop_bound_flow(doublereal **prop, doublereal** &prop_b, integer max
 // По умолчанию используется последняя граничная точка.
 // Данная функция универсальна и работает также и на АЛИС сетке.
 // 24 сентября 2016.
-void determination_of_activity_flow(BOUND* border_neighbor, integer maxbound, 
-									integer ls, integer lw, WALL* w, 
-									bool &bactiv, bool &bpressure_fix, bool &bLR1free) {
+void determination_of_activity_flow(BOUND* &border_neighbor, integer maxbound, 
+									integer ls, integer lw, WALL* &w, 
+									bool &bactiv, bool &bpressure_fix, bool &bLR1free) 
+{
 	integer i=0; // счётчик цикла for
 	bool bpfix=true; // по умолчанию давление нужно фиксировать в одной точке
 
@@ -10352,7 +11050,8 @@ void determination_of_activity_flow(BOUND* border_neighbor, integer maxbound,
 	
 	for (i=0; i<maxbound; i++) {
 		if ((border_neighbor[i].MCB>=ls) && (border_neighbor[i].MCB<(ls+lw))) {
-			if (w[border_neighbor[i].MCB - ls].bpressure || w[border_neighbor[i].MCB - ls].bopening) {
+			if (w[border_neighbor[i].MCB - ls].bpressure || 
+				w[border_neighbor[i].MCB - ls].bopening) {
 				// давление фиксировать ненужно
 				bpfix=false;
 				break; // досрочный выход из цикла for
@@ -10387,8 +11086,8 @@ void determination_of_activity_flow(BOUND* border_neighbor, integer maxbound,
 
 // выделение оперативной памяти для задачи теплопроводности.
 void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation, 
-	equation3D* &sl, equation3D_bon* &slb, BOUND* border_neighbor, 
-	integer maxelm, integer maxbound, integer ls, integer lw, WALL* w,
+	equation3D* &sl, equation3D_bon* &slb, BOUND* &border_neighbor, 
+	integer maxelm, integer maxbound, integer ls, integer lw, WALL* &w,
 	doublereal operatingtemperature) {
 
     // выделение памяти под искомые полевые величины.
@@ -10434,7 +11133,9 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
        if (lw>0) {
           Tamb=1.0e+20;
 	      for (integer i=0; i<maxbound; i++) {
-		      if (((border_neighbor[i].MCB<(ls+lw))&&(border_neighbor[i].MCB>=ls)) && (w[border_neighbor[i].MCB-ls].ifamily==1)) {
+		      if (((border_neighbor[i].MCB<(ls+lw))&&
+				  (border_neighbor[i].MCB>=ls)) && 
+				  (w[border_neighbor[i].MCB-ls].ifamily==DIRICHLET_FAMILY)) {
 			      // на границе задана температура
 			      Tamb=fmin(Tamb,w[border_neighbor[i].MCB-ls].Tamb);
                   bTamb=true;
@@ -10543,14 +11244,15 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	integer* ilevel_alice, integer* ptr);
 
 // выделение оперативной памяти для задачи гидродинамики.
-void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_bon** &slb,
-	BOUND* border_neighbor, integer maxelm, integer maxbound,
-	doublereal* &alpha, integer ls, integer lw, WALL* w,
-	doublereal dgx, doublereal dgy, doublereal dgz, integer** nvtx,
-	TOCHKA* pa, doublereal** prop, ALICE_PARTITION** neighbors_for_the_internal_node,
+void allocation_memory_flow(doublereal** &potent, 
+							equation3D** &sl, equation3D_bon** &slb,
+	BOUND* &border_neighbor, integer maxelm, integer maxbound,
+	doublereal* &alpha, integer ls, integer lw, WALL* &w,
+	doublereal dgx, doublereal dgy, doublereal dgz, integer** &nvtx,
+	TOCHKA* &pa, doublereal** prop, ALICE_PARTITION** &neighbors_for_the_internal_node,
 	doublereal eps_minx, doublereal eps_miny, doublereal eps_minz,
 	doublereal eps_maxx, doublereal eps_maxy, doublereal eps_maxz,
-	integer &iflowregime, doublereal** prop_b) {
+	integer &iflowregime, doublereal** &prop_b) {
 
 	int inumcor = number_cores();
 	omp_set_num_threads(inumcor); // установка числа потоков
@@ -10630,12 +11332,12 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		integer iE3, iN3, iT3, iW3, iS3, iB3;
 		integer iE4, iN4, iT4, iW4, iS4, iB4;
 
-		iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4;
-		iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4;
-		iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-		iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4;
-		iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4;
-		iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+		iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+		iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+		iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+		iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+		iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 		/*
 		// Так делать ни в коем случае нельзя т.к. возникает нефизичность скорости на границе расчётной области.
@@ -10788,9 +11490,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			// Инициализация компонент скорости во внутренности расчётной области.
 			// 26 марта 2017.
 			for (integer i = 0; i < maxelm; i++) {
-				potent[VX][i] = starting_speed_Vx;
-				potent[VY][i] = starting_speed_Vy;
-				potent[VZ][i] = starting_speed_Vz;
+				potent[VELOCITY_X_COMPONENT][i] = starting_speed_Vx;
+				potent[VELOCITY_Y_COMPONENT][i] = starting_speed_Vy;
+				potent[VELOCITY_Z_COMPONENT][i] = starting_speed_Vz;
 				// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
 				potent[VXCOR][i] = starting_speed_Vx;
 				potent[VYCOR][i] = starting_speed_Vy;
@@ -10809,9 +11511,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				// Инициализация компонент скорости во внутренности расчётной области.
 			    // 26 марта 2017.
 				for (integer i = 0; i < maxelm; i++) {
-					potent[VX][i] = starting_speed_Vx;
-					potent[VY][i] = starting_speed_Vy;
-					potent[VZ][i] = starting_speed_Vz;
+					potent[VELOCITY_X_COMPONENT][i] = starting_speed_Vx;
+					potent[VELOCITY_Y_COMPONENT][i] = starting_speed_Vy;
+					potent[VELOCITY_Z_COMPONENT][i] = starting_speed_Vz;
 					// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
 					potent[VXCOR][i] = starting_speed_Vx;
 					potent[VYCOR][i] = starting_speed_Vy;
@@ -11866,9 +12568,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 					printf("NAN pri interpolation Mut %lld in allocation_memory_flow in constr_struct.cpp\n", i);
 				}
 
-				potent[VX][i] = starting_speed_Vx_47;
-				potent[VY][i] = starting_speed_Vy_47;
-				potent[VZ][i] = starting_speed_Vz_47;
+				potent[VELOCITY_X_COMPONENT][i] = starting_speed_Vx_47;
+				potent[VELOCITY_Y_COMPONENT][i] = starting_speed_Vy_47;
+				potent[VELOCITY_Z_COMPONENT][i] = starting_speed_Vz_47;
 				potent[MUT][i] = starting_Mut_47;
 				// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
 				potent[VXCOR][i] = starting_speed_Vx_47;
@@ -11879,7 +12581,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 			doublereal Speed_min1 = 1.0e60, Speed_max1 = -1.0e60;
 			for (integer i_47 = 0; i_47 < maxelm; i_47++) {
-				doublereal mag_speed = sqrt((potent[VX][i_47])*(potent[VX][i_47]) + (potent[VY][i_47])*(potent[VY][i_47]) + (potent[VZ][i_47])*(potent[VZ][i_47]));
+				doublereal mag_speed = sqrt((potent[VELOCITY_X_COMPONENT][i_47])*(potent[VELOCITY_X_COMPONENT][i_47]) + (potent[VELOCITY_Y_COMPONENT][i_47])*(potent[VELOCITY_Y_COMPONENT][i_47]) + (potent[VELOCITY_Z_COMPONENT][i_47])*(potent[VELOCITY_Z_COMPONENT][i_47]));
 				if (mag_speed < Speed_min1) {
 					Speed_min1 = mag_speed;
 				}
@@ -11892,9 +12594,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 			for (integer i_47 = 0; i_47 < maxelm; i_47++) {
 				// Сохраняем модуль скорости неизменным. 29.03.2019
-				potent[VX][i_47] *= Speed_max / Speed_max1;
-				potent[VY][i_47] *= Speed_max / Speed_max1;
-				potent[VZ][i_47] *= Speed_max / Speed_max1;
+				potent[VELOCITY_X_COMPONENT][i_47] *= Speed_max / Speed_max1;
+				potent[VELOCITY_Y_COMPONENT][i_47] *= Speed_max / Speed_max1;
+				potent[VELOCITY_Z_COMPONENT][i_47] *= Speed_max / Speed_max1;
 			}
 
 			for (integer i_1 = 0; i_1 < 8; i_1++) {
@@ -11953,17 +12655,18 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 			// Добавил УСЛОВИЕ СИММЕТРИИ 02.04.2019.
 
-			if ((w[border_neighbor[i].MCB - ls].bpressure) || (w[border_neighbor[i].MCB - ls].bopening)) {
+			if ((w[border_neighbor[i].MCB - ls].bpressure) || 
+				(w[border_neighbor[i].MCB - ls].bopening)) {
 				// Выходная граница потока на которой стоит условие Неймана.
 				// Присваиваем скорость из ближайшей внутренней точки расчётной области.
-				potent[VX][border_neighbor[i].iB] = potent[VX][border_neighbor[i].iI];
-				potent[VY][border_neighbor[i].iB] = potent[VY][border_neighbor[i].iI];
-				potent[VZ][border_neighbor[i].iB] = potent[VZ][border_neighbor[i].iI];
+				potent[VELOCITY_X_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_X_COMPONENT][border_neighbor[i].iI];
+				potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iI];
+				potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iI];
 				potent[MUT][border_neighbor[i].iB] = potent[MUT][border_neighbor[i].iI];
 				// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
-				potent[VXCOR][border_neighbor[i].iB] = potent[VX][border_neighbor[i].iI];
-				potent[VYCOR][border_neighbor[i].iB] = potent[VY][border_neighbor[i].iI];
-				potent[VZCOR][border_neighbor[i].iB] = potent[VZ][border_neighbor[i].iI];
+				potent[VXCOR][border_neighbor[i].iB] = potent[VELOCITY_X_COMPONENT][border_neighbor[i].iI];
+				potent[VYCOR][border_neighbor[i].iB] = potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iI];
+				potent[VZCOR][border_neighbor[i].iB] = potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iI];
 				//printf("Vx=%e, Vy=%e, Vz=%e\n",w[border_neighbor[i].MCB-ls].Vx, w[border_neighbor[i].MCB-ls].Vy, w[border_neighbor[i].MCB-ls].Vz);
 				//system("PAUSE"); // debug
 			}
@@ -11974,29 +12677,29 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				potent[MUT][border_neighbor[i].iB] = potent[MUT][border_neighbor[i].iI];
 
 				switch (w[border_neighbor[i].MCB - ls].iPlane) {
-				case XY:
-					potent[VX][border_neighbor[i].iB] = potent[VX][border_neighbor[i].iI];
-					potent[VY][border_neighbor[i].iB] = potent[VY][border_neighbor[i].iI];
-					potent[VXCOR][border_neighbor[i].iB] = potent[VX][border_neighbor[i].iI];
-					potent[VYCOR][border_neighbor[i].iB] = potent[VY][border_neighbor[i].iI];
-					potent[VZ][border_neighbor[i].iB] = 0.0;
+				case XY_PLANE:
+					potent[VELOCITY_X_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_X_COMPONENT][border_neighbor[i].iI];
+					potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iI];
+					potent[VXCOR][border_neighbor[i].iB] = potent[VELOCITY_X_COMPONENT][border_neighbor[i].iI];
+					potent[VYCOR][border_neighbor[i].iB] = potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iI];
+					potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iB] = 0.0;
 					potent[VZCOR][border_neighbor[i].iB] = 0.0;
 					break;
-				case XZ:
-					potent[VY][border_neighbor[i].iB] = 0.0;
+				case XZ_PLANE:
+					potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iB] = 0.0;
 					potent[VYCOR][border_neighbor[i].iB] = 0.0;
-					potent[VX][border_neighbor[i].iB] = potent[VX][border_neighbor[i].iI];
-					potent[VZ][border_neighbor[i].iB] = potent[VZ][border_neighbor[i].iI];
-					potent[VXCOR][border_neighbor[i].iB] = potent[VX][border_neighbor[i].iI];
-					potent[VZCOR][border_neighbor[i].iB] = potent[VZ][border_neighbor[i].iI];
+					potent[VELOCITY_X_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_X_COMPONENT][border_neighbor[i].iI];
+					potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iI];
+					potent[VXCOR][border_neighbor[i].iB] = potent[VELOCITY_X_COMPONENT][border_neighbor[i].iI];
+					potent[VZCOR][border_neighbor[i].iB] = potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iI];
 					break;
-				case YZ: 
-					potent[VX][border_neighbor[i].iB] = 0.0;
+				case YZ_PLANE: 
+					potent[VELOCITY_X_COMPONENT][border_neighbor[i].iB] = 0.0;
 					potent[VXCOR][border_neighbor[i].iB] = 0.0;
-					potent[VY][border_neighbor[i].iB] = potent[VY][border_neighbor[i].iI];
-					potent[VZ][border_neighbor[i].iB] = potent[VZ][border_neighbor[i].iI];
-					potent[VYCOR][border_neighbor[i].iB] = potent[VY][border_neighbor[i].iI];
-					potent[VZCOR][border_neighbor[i].iB] = potent[VZ][border_neighbor[i].iI];
+					potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iI];
+					potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iB] = potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iI];
+					potent[VYCOR][border_neighbor[i].iB] = potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iI];
+					potent[VZCOR][border_neighbor[i].iB] = potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iI];
 					break;
 				default:
 					printf("ERROR: Undefined iPlane wall...\n");
@@ -12007,11 +12710,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			}
 			else {
 				// на границе задана скорость
-				potent[VX][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vx;
-				potent[VY][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vy;
-				potent[VZ][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vz;
-				potent[MUT][border_neighbor[i].iB] = 2.0*prop_b[MU][i] / prop_b[RHO][i];
-				// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
+				potent[VELOCITY_X_COMPONENT][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vx;
+				potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vy;
+				potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vz;
+				potent[MUT][border_neighbor[i].iB] = 2.0*prop_b[MU_DYNAMIC_VISCOSITY][i] / prop_b[RHO][i];
+				// скорректированное поле скорости должно удовлетворять уравнению неразрывности.
 				potent[VXCOR][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vx;
 				potent[VYCOR][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vy;
 				potent[VZCOR][border_neighbor[i].iB] = w[border_neighbor[i].MCB - ls].Vz;
@@ -12023,11 +12726,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			// Абсолютно твёрдая неподвижная стенка на которой выполнено условие прилипания,
 			// скорость равна нулю.
 			// 02.04.2019
-			potent[VX][border_neighbor[i].iB] = 0.0;
-			potent[VY][border_neighbor[i].iB] = 0.0;
-			potent[VZ][border_neighbor[i].iB] = 0.0;
+			potent[VELOCITY_X_COMPONENT][border_neighbor[i].iB] = 0.0;
+			potent[VELOCITY_Y_COMPONENT][border_neighbor[i].iB] = 0.0;
+			potent[VELOCITY_Z_COMPONENT][border_neighbor[i].iB] = 0.0;
 			potent[MUT][border_neighbor[i].iB] = 0.0;
-			// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
+			// скорректированное поле скорости должно удовлетворять уравнению неразрывности.
 			potent[VXCOR][border_neighbor[i].iB] = 0.0;
 			potent[VYCOR][border_neighbor[i].iB] = 0.0;
 			potent[VZCOR][border_neighbor[i].iB] = 0.0;
@@ -12048,9 +12751,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	}
 	
 	// Патанкар Fluent Гаврилов Андрей
-    alpha[VX]=0.7; // 0.5 0.7 0.8
-    alpha[VY]=0.7;
-    alpha[VZ]=0.7;
+    alpha[VELOCITY_X_COMPONENT]=0.7; // 0.5 0.7 0.8
+    alpha[VELOCITY_Y_COMPONENT]=0.7;
+    alpha[VELOCITY_Z_COMPONENT]=0.7;
     alpha[PRESS]=0.3; //0.8 0.3 (0.2, но вообще говоря он использует SIMPLEC по умолчанию).
 	alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; // Модифицированная кинематическая турбулентная вязкость.
 	alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;// 1.0;// 0.7; // Кинетическая энергия турбулентных пульсаций.
@@ -12077,8 +12780,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 #pragma omp parallel for
    for (integer i=0; i<10; i++) {
 	   switch (i) {
-		   case VX: sl[VX]=new equation3D[maxelm]; 
-			         if (sl[VX]==nullptr) {
+		   case VELOCITY_X_COMPONENT: sl[VELOCITY_X_COMPONENT]=new equation3D[maxelm]; 
+			         if (sl[VELOCITY_X_COMPONENT]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem: not enough memory on your equipment for slau[VX] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -12087,8 +12790,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 }
 			         break;
-		   case VY: sl[VY]=new equation3D[maxelm];
-			         if (sl[VY]==nullptr) {
+		   case VELOCITY_Y_COMPONENT: sl[VELOCITY_Y_COMPONENT]=new equation3D[maxelm];
+			         if (sl[VELOCITY_Y_COMPONENT]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem: not enough memory on your equipment for slau[VY] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -12097,8 +12800,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 } 
 			         break;
-		   case VZ: sl[VZ]=new equation3D[maxelm]; 
-			         if (sl[VZ]==nullptr) {
+		   case VELOCITY_Z_COMPONENT: sl[VELOCITY_Z_COMPONENT]=new equation3D[maxelm]; 
+			         if (sl[VELOCITY_Z_COMPONENT]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem: not enough memory on your equipment for slau[VZ] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -12200,8 +12903,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 #pragma omp parallel for
    for (int i=0; i<10; i++) {
 	   switch (i) {
-		   case VX: slb[VX]=new equation3D_bon[maxbound];
-			         if (slb[VX]==nullptr) {
+		   case VELOCITY_X_COMPONENT: slb[VELOCITY_X_COMPONENT]=new equation3D_bon[maxbound];
+			         if (slb[VELOCITY_X_COMPONENT]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem: not enough memory on your equipment for slau_bon[VX] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -12210,8 +12913,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 } 
 			         break;
-		   case VY: slb[VY]=new equation3D_bon[maxbound]; 
-			         if (slb[VY]==nullptr) {
+		   case VELOCITY_Y_COMPONENT: slb[VELOCITY_Y_COMPONENT]=new equation3D_bon[maxbound]; 
+			         if (slb[VELOCITY_Y_COMPONENT]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem: not enough memory on your equipment for slau_bon[VY] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -12220,8 +12923,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 }
 			         break;
-		   case VZ: slb[VZ]=new equation3D_bon[maxbound]; 
-			         if (slb[VZ]==nullptr) {
+		   case VELOCITY_Z_COMPONENT: slb[VELOCITY_Z_COMPONENT]=new equation3D_bon[maxbound]; 
+			         if (slb[VELOCITY_Z_COMPONENT]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem: not enough memory on your equipment for slau_bon[VZ] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -12330,11 +13033,7 @@ void allocation_memory_flow_2(
 		diag_coef[i] = new doublereal[maxelm + maxbound];
 		if (diag_coef[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for diag_coef[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for diag_coef[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for diag_coef["<< i <<"] constr struct..." << std::endl;
 			
 			printf("Please any key to exit...\n");
 			//system("PAUSE");
@@ -12365,8 +13064,8 @@ void allocation_memory_flow_2(
 	mf = new doublereal*[maxelm];
 	if (mf == nullptr) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for mf constr struct...\n");
-		printf("Please any key to exit...\n");
+		std::cout << "Problem: not enough memory on your equipment for mf constr struct..."<< std::endl;
+		std::cout << "Please any key to exit..."<< std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
@@ -12377,13 +13076,9 @@ void allocation_memory_flow_2(
 		mf[i] = new doublereal[6];
 		if (mf[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for mf[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for mf[%d] constr struct...\n", i);
-#endif
+			std::cout << "Problem: not enough memory on your equipment for mf["<< i <<"] constr struct..." << std::endl;
 			
-			printf("Please any key to exit...\n");
+			std::cout << "Please any key to exit..."<< std::endl;
 			//system("PAUSE");
 			system("pause");
 			exit(1);
@@ -12395,13 +13090,12 @@ void allocation_memory_flow_2(
 			mf[i][j] = 0.0;
 		}
 	}
-
 }
 
 // создаёт связи между контрольными объёмами для графической 
 // визуализации.
 // универсальна: подходит и для температуры и для течения
-void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound, 
+void constr_nvtxcell(integer* &evt, BOUND* &border_neighbor, integer maxbound, 
 	integer maxelm, bool bextendedprint, integer** &nvtxcell, integer &ncell_gl,
 	integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
 
@@ -12412,7 +13106,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 	// ncell - количество связей для контрольных объёмов.
 	ncell_gl = 0;
 	// ncell > maxelm.
-	integer i1, i2, i3, i4, i5, i6, i7, i8;
+	//integer i1, i2, i3, i4, i5, i6, i7, i8;
 	//for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
 	// Сокращает число просмотров на больших моделях.
 
@@ -12420,8 +13114,10 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 	omp_set_num_threads(incore); // установка числа потоков
 
 	integer ncell = 0;
+	// integer i,j,k;
+	// integer iP_k, iP_k_p1, iP_j, iP_j_p1;
 
-#pragma omp parallel for reduction(+:ncell)
+//#pragma omp parallel for reduction(+:ncell)
 	for (integer iscan = 0; iscan < maxelm; iscan++) {
 
 		integer i = tck_int_list[iscan].i;
@@ -12432,31 +13128,28 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 		{
 
 			// Подсчёт количества связей между внутренними КО в цикле
-			i1 = i + j * inx + k * inx*iny;
-		i2 = (i + 1) + j * inx + k * inx*iny;
-		i3 = (i + 1) + (j + 1)*inx + k * inx*iny;
-		i4 = i + (j + 1)*inx + k * inx*iny;
-		i5 = i + j * inx + (k + 1)*inx*iny;
-		i6 = (i + 1) + j * inx + (k + 1)*inx*iny;
-		i7 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
-		i8 = i + (j + 1)*inx + (k + 1)*inx*iny;
-		/*i1 = i + j*inx + (k+1)*inx*iny;
-		i2 = (i + 1) + j*inx + (k+1)*inx*iny;
-		i3 = (i + 1) + (j + 1)*inx + (k+1)*inx*iny;
-		i4 = i + (j + 1)*inx + (k+1)*inx*iny;
-		i5 = i + j*inx + (k + 2)*inx*iny;
-		i6 = (i + 1) + j*inx + (k + 2)*inx*iny;
-		i7 = (i + 1) + (j + 1)*inx + (k + 2)*inx*iny;
-		i8 = i + (j + 1)*inx + (k + 2)*inx*iny;
-		*/
+			 integer iP_k=k * inx*iny;
+			 integer iP_k_p1=(k+1) * inx*iny;
+			 integer iP_j=j * inx;
+			 integer iP_j_p1=(j+1) * inx;
+
+			integer i1 = i + iP_j + iP_k;
+			integer i2 = (i + 1) + iP_j + iP_k;
+			integer i3 = (i + 1) + iP_j_p1 + iP_k;
+			integer i4 = i + iP_j_p1 + iP_k;
+			integer i5 = i + iP_j + iP_k_p1;
+			integer i6 = (i + 1) + iP_j + iP_k_p1;
+			integer i7 = (i + 1) + iP_j_p1 + iP_k_p1;
+			integer i8 = i + iP_j_p1 + iP_k_p1;
+		
 		if ((evt[i1] > 0) && (evt[i2] > 0) && (evt[i3] > 0) && (evt[i4] > 0) && (evt[i5] > 0) && (evt[i6] > 0) && (evt[i7] > 0) && (evt[i8] > 0)) {
 			ncell++;
 
 			if (bextendedprint) {
 
 				// сканируем каждую внутреннюю нормаль в поисках граничных 
-				// плоских бесконечно-тонких объёмов на которых вытавлено граничное условие.
-				integer inorm = ESIDE;
+				// плоских бесконечно-тонких объёмов на которых выставлено граничное условие.
+				integer inorm = E_SIDE;
 				bool bfound1 = false, bfound2 = false, bfound3 = false, bfound4 = false;
 
 				// поиск.
@@ -12483,7 +13176,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 				bfound3 = false;
 				bfound4 = false;
 
-				inorm = WSIDE;
+				inorm = W_SIDE;
 				// поиск.
 				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i2] - 1)) {
@@ -12509,7 +13202,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 				bfound3 = false;
 				bfound4 = false;
 
-				inorm = NSIDE;
+				inorm = N_SIDE;
 				// поиск.
 				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i1] - 1)) {
@@ -12534,7 +13227,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 				bfound2 = false;
 				bfound3 = false;
 				bfound4 = false;
-				inorm = SSIDE;
+				inorm = S_SIDE;
 				// поиск.
 				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i3] - 1)) {
@@ -12559,7 +13252,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 				bfound2 = false;
 				bfound3 = false;
 				bfound4 = false;
-				inorm = TSIDE;
+				inorm = T_SIDE;
 				// поиск.
 				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i1] - 1)) {
@@ -12584,7 +13277,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 				bfound2 = false;
 				bfound3 = false;
 				bfound4 = false;
-				inorm = BSIDE;
+				inorm = B_SIDE;
 				// поиск.
 				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i5] - 1)) {
@@ -12643,36 +13336,32 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 	//for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
 	// Сокращает число просмотров на больших моделях.
 
-
+	
 	for (integer iscan = 0; iscan < maxelm; iscan++) {
 
-		integer i = tck_int_list[iscan].i;
-		integer j = tck_int_list[iscan].j;
-		integer k = tck_int_list[iscan].k;
+		 integer i = tck_int_list[iscan].i;
+		 integer j = tck_int_list[iscan].j;
+		 integer k = tck_int_list[iscan].k;
 
 		if ((i < (inx - 1)) && (j < (iny - 1)) && (k < (inz - 1)))
 		{
 
+			integer iP_k=k * inx*iny;
+			integer iP_k_p1=(k+1) * inx*iny;
+			integer iP_j=j * inx;
+			integer iP_j_p1=(j+1) * inx;
 
 			// Установка восьмиточечных связей для связывания КО.
-			i1 = i + j * inx + k * inx*iny;
-			i2 = (i + 1) + j * inx + k * inx*iny;
-			i3 = (i + 1) + (j + 1)*inx + k * inx*iny;
-			i4 = i + (j + 1)*inx + k * inx*iny;
-			i5 = i + j * inx + (k + 1)*inx*iny;
-			i6 = (i + 1) + j * inx + (k + 1)*inx*iny;
-			i7 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
-			i8 = i + (j + 1)*inx + (k + 1)*inx*iny;
+			integer i1 = i + iP_j + iP_k;
+			integer i2 = (i + 1) + iP_j + iP_k;
+			integer i3 = (i + 1) + iP_j_p1 + iP_k;
+			integer i4 = i + iP_j_p1 + iP_k;
+			integer i5 = i + iP_j + iP_k_p1;
+			integer i6 = (i + 1) + iP_j + iP_k_p1;
+			integer i7 = (i + 1) + iP_j_p1 + iP_k_p1;
+			integer i8 = i + iP_j_p1 + iP_k_p1;
 
-			/*i1 = i + j*inx + (k + 1)*inx*iny;
-			i2 = (i + 1) + j*inx + (k + 1)*inx*iny;
-			i3 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
-			i4 = i + (j + 1)*inx + (k + 1)*inx*iny;
-			i5 = i + j*inx + (k + 2)*inx*iny;
-			i6 = (i + 1) + j*inx + (k + 2)*inx*iny;
-			i7 = (i + 1) + (j + 1)*inx + (k + 2)*inx*iny;
-			i8 = i + (j + 1)*inx + (k + 2)*inx*iny;
-			*/
+			
 			if ((evt[i1] > 0) && (evt[i2] > 0) && (evt[i3] > 0) && (evt[i4] > 0) && (evt[i5] > 0) && (evt[i6] > 0) && (evt[i7] > 0) && (evt[i8] > 0)) {
 				nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
 				nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
@@ -12682,7 +13371,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 
 					// сканируем каждую внутреннюю нормаль в поисках граничных 
 					// плоских бесконечно-тонких объёмов на которых вытавлено граничное условие.
-					integer inorm = ESIDE;
+					integer inorm = E_SIDE;
 					bool bfound1 = false, bfound2 = false, bfound3 = false, bfound4 = false;
 					integer im1 = -1, im2 = -1, im3 = -1, im4 = -1;
 
@@ -12722,7 +13411,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 					bfound3 = false;
 					bfound4 = false;
 
-					inorm = WSIDE;
+					inorm = W_SIDE;
 					// поиск.
 					for (integer isel = 0; isel < maxbound; isel++) {
 						if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i2] - 1)) {
@@ -12756,7 +13445,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 					bfound3 = false;
 					bfound4 = false;
 
-					inorm = NSIDE;
+					inorm = N_SIDE;
 					// поиск.
 					for (integer isel = 0; isel < maxbound; isel++) {
 						if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i1] - 1)) {
@@ -12787,7 +13476,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 					bfound2 = false;
 					bfound3 = false;
 					bfound4 = false;
-					inorm = SSIDE;
+					inorm = S_SIDE;
 					// поиск.
 					for (integer isel = 0; isel < maxbound; isel++) {
 						if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i3] - 1)) {
@@ -12818,7 +13507,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 					bfound2 = false;
 					bfound3 = false;
 					bfound4 = false;
-					inorm = TSIDE;
+					inorm = T_SIDE;
 					// поиск.
 					for (integer isel = 0; isel < maxbound; isel++) {
 						if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i1] - 1)) {
@@ -12849,7 +13538,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 					bfound2 = false;
 					bfound3 = false;
 					bfound4 = false;
-					inorm = BSIDE;
+					inorm = B_SIDE;
 					// поиск.
 					for (integer isel = 0; isel < maxbound; isel++) {
 						if ((border_neighbor[isel].Norm == inorm) && (border_neighbor[isel].iI == evt[i5] - 1)) {
@@ -12886,7 +13575,7 @@ void constr_nvtxcell(integer* evt, BOUND* border_neighbor, integer maxbound,
 } // constr_nvtxcell
 
 // Вычисление расстояния до ближайшей стенки
-void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
+void calcdistwall(FLOW &f, integer ls, integer lw, WALL* &w) {
 	// Вычисление расстояния до ближайшей стенки требуется во многих моделях турбулентности.
     f.rdistWall=nullptr;
 	f.rdistWall=new doublereal[f.maxelm+f.maxbound];
@@ -12915,8 +13604,8 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 	rposition=new doublereal*[3];
 	if (rposition==nullptr) {
 	      // недостаточно памяти на данном оборудовании.
-		  printf("Problem: not enough memory on your equipment for rposition constr struct...\n");
-		  printf("Please any key to exit...\n");
+		   std::cout << "Problem: not enough memory on your equipment for rposition constr struct..." << std::endl;
+		   std::cout << "Please any key to exit..." << std::endl;
 		  //system("PAUSE");
 		  system("pause");
 		  exit(1);
@@ -12926,13 +13615,9 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 		rposition[i]=new doublereal[f.maxbound];
 		if (rposition[i]==nullptr) {
 	      // недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem: not enough memory on your equipment for rposition[%lld] constr struct...\n", i);
-#else
-			printf("Problem: not enough memory on your equipment for rposition[%d] constr struct...\n", i);
-#endif
+          std::cout << "Problem: not enough memory on your equipment for rposition[" << i <<"] constr struct..." << std::endl;
 		  
-		  printf("Please any key to exit...\n");
+		  std::cout << "Please any key to exit..." << std::endl;
 		  //system("PAUSE");
 		  system("pause");
 		  exit(1);
@@ -12961,11 +13646,18 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 	            //doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	           // volume3D(i, f.nvtx, f.pa, dx, dy, dz);
 
-				if ((f.border_neighbor[inumber].MCB==(ls+lw))||(f.border_neighbor[inumber].MCB<ls)) {
+				if ((f.border_neighbor[inumber].MCB==(ls+lw))||
+					(f.border_neighbor[inumber].MCB<ls)) 
+				{
 					bwall[inumber]=true;					
 				}
 
-				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && (!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[f.border_neighbor[inumber].MCB - ls].bopening) && (!w[f.border_neighbor[inumber].MCB - ls].bpressure)) {
+				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && 
+					(f.border_neighbor[inumber].MCB >= ls) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bopening) &&
+					(!w[f.border_neighbor[inumber].MCB - ls].bpressure)) 
+				{
 					doublereal Magnitude=fabs(w[f.border_neighbor[inumber].MCB-ls].Vx)+fabs(w[f.border_neighbor[inumber].MCB-ls].Vy)+fabs(w[f.border_neighbor[inumber].MCB-ls].Vz);
 					if (Magnitude<admission) {
 						// Стенка на которой задана нулевая скорость
@@ -13005,7 +13697,6 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 					rposition[X][inumber]= f.border_neighbor[inumber].p_c.x;
 					rposition[Y][inumber]= f.border_neighbor[inumber].p_c.y;
 					rposition[Z][inumber]= f.border_neighbor[inumber].p_c.z;
-
 					
 			}
 		
@@ -13018,11 +13709,18 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 				//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 				//volume3D(i, f.nvtx, f.pa, dx, dy, dz);
 
-				if ((f.border_neighbor[inumber].MCB == (ls + lw)) || (f.border_neighbor[inumber].MCB<ls)) {
+				if ((f.border_neighbor[inumber].MCB == (ls + lw)) || 
+					(f.border_neighbor[inumber].MCB<ls)) 
+				{
 					bwall[inumber] = true;
 				}
 
-				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && (!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[f.border_neighbor[inumber].MCB - ls].bopening) && (!w[f.border_neighbor[inumber].MCB - ls].bpressure)) {
+				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && 
+					(f.border_neighbor[inumber].MCB >= ls) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bopening) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bpressure)) 
+				{
 					doublereal Magnitude = fabs(w[f.border_neighbor[inumber].MCB - ls].Vx) + fabs(w[f.border_neighbor[inumber].MCB - ls].Vy) + fabs(w[f.border_neighbor[inumber].MCB - ls].Vz);
 					if (Magnitude<admission) {
 						// Стенка на которой задана нулевая скорость
@@ -13048,11 +13746,16 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 																	//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 																	//volume3D(i, f.nvtx, f.pa, dx, dy, dz);
 
-				if ((f.border_neighbor[inumber].MCB == (ls + lw)) || (f.border_neighbor[inumber].MCB<ls)) {
+				if ((f.border_neighbor[inumber].MCB == (ls + lw)) ||
+					(f.border_neighbor[inumber].MCB<ls)) {
 					bwall[inumber] = true;
 				}
 
-				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && (!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[f.border_neighbor[inumber].MCB - ls].bopening) && (!w[f.border_neighbor[inumber].MCB - ls].bpressure)) {
+				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && 
+					(f.border_neighbor[inumber].MCB >= ls) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bopening) && 
+					(!w[f.border_neighbor[inumber].MCB - ls].bpressure)) {
 					doublereal Magnitude = fabs(w[f.border_neighbor[inumber].MCB - ls].Vx) + fabs(w[f.border_neighbor[inumber].MCB - ls].Vy) + fabs(w[f.border_neighbor[inumber].MCB - ls].Vz);
 					if (Magnitude<admission) {
 						// Стенка на которой задана нулевая скорость
@@ -13079,11 +13782,18 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 																	//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 																	//volume3D(i, f.nvtx, f.pa, dx, dy, dz);
 
-				if ((f.border_neighbor[inumber].MCB == (ls + lw)) || (f.border_neighbor[inumber].MCB<ls)) {
+				if ((f.border_neighbor[inumber].MCB == (ls + lw)) || 
+					(f.border_neighbor[inumber].MCB<ls)) 
+				{
 					bwall[inumber] = true;
 				}
 
-				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && (!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) && (!w[f.border_neighbor[inumber].MCB - ls].bopening) && (!w[f.border_neighbor[inumber].MCB - ls].bpressure)) {
+				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && 
+					(f.border_neighbor[inumber].MCB >= ls) &&
+					(!w[f.border_neighbor[inumber].MCB - ls].bsymmetry) &&
+					(!w[f.border_neighbor[inumber].MCB - ls].bopening) &&
+					(!w[f.border_neighbor[inumber].MCB - ls].bpressure)) 
+				{
 					doublereal Magnitude = fabs(w[f.border_neighbor[inumber].MCB - ls].Vx) + fabs(w[f.border_neighbor[inumber].MCB - ls].Vy) + fabs(w[f.border_neighbor[inumber].MCB - ls].Vz);
 					if (Magnitude<admission) {
 						// Стенка на которой задана нулевая скорость
@@ -13111,7 +13821,10 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 		center_cord3D(i, f.nvtx, f.pa, p,100); // вычисление координат центра КО.
 		for (integer j=0; j<f.maxbound; j++) {
 			if (bwall[j]) {
-				doublereal dist=sqrt((p.x-rposition[X][j])*(p.x-rposition[X][j])+(p.y-rposition[Y][j])*(p.y-rposition[Y][j])+(p.z-rposition[Z][j])*(p.z-rposition[Z][j]));
+				doublereal dist=sqrt((p.x-rposition[X][j])*
+					(p.x-rposition[X][j])+(p.y-rposition[Y][j])*
+					(p.y-rposition[Y][j])+(p.z-rposition[Z][j])*
+					(p.z-rposition[Z][j]));
 				if (dist<f.rdistWall[i]) f.rdistWall[i]=dist;
 			}
 		}
@@ -13128,7 +13841,12 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 		else {
             for (integer j=0; j<f.maxbound; j++) {
 		 	    if (bwall[j]) {
-                    doublereal dist=sqrt((rposition[X][inumber]-rposition[X][j])*(rposition[X][inumber]-rposition[X][j])+(rposition[Y][inumber]-rposition[Y][j])*(rposition[Y][inumber]-rposition[Y][j])+(rposition[Z][inumber]-rposition[Z][j])*(rposition[Z][inumber]-rposition[Z][j]));
+                    doublereal dist=sqrt((rposition[X][inumber]-rposition[X][j])*
+						(rposition[X][inumber]-rposition[X][j])+
+						(rposition[Y][inumber]-rposition[Y][j])*
+						(rposition[Y][inumber]-rposition[Y][j])+
+						(rposition[Z][inumber]-rposition[Z][j])*
+						(rposition[Z][inumber]-rposition[Z][j]));
 				    if (dist<f.rdistWall[i]) f.rdistWall[i]=dist;
 			    }
 			}
@@ -13217,7 +13935,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 
 			// нужно расположить жидкие зоны заданные пользователем в том порядке в котором они были 
 			// распознаны программой. Это можно сделать с помощью матрицы расстояний от опорной точки заданной пользователем
-			// до каждой програмной жидкой зоны (минимальное расстояние).
+			// до каждой программной жидкой зоны (минимальное расстояние).
 			if (flow_interior==1) {
 				// всё впорядке т.к. имеем только одну жидкую зону.
 				
@@ -13328,7 +14046,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 			else {
 				// имеем две жидкие зоны или больше.
 			    doublereal** distzone=nullptr;
-				// distzone[i][j] - кратчайшее расстояние от опорной точки i-ого жидкого отсека пользователя до j-ой распознаной программой жидкой зоны.
+				// distzone[i][j] - кратчайшее расстояние от опорной точки i-ого жидкого отсека пользователя до j-ой распознанной программой жидкой зоны.
 				// выделение памяти оперативной памяти
 				distzone=new doublereal*[flow_interior];
 				if (distzone==nullptr) {
@@ -13565,21 +14283,27 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_is_block, ALICE_PARTITION** neighbors_for_the_internal_node,
 	                                            integer** nvtx, TOCHKA* pa,  BLOCK* &b, integer lb)
 {
+
+	MY_PAIR* list = new MY_PAIR[maxelm];
+
 	for (integer i = 0; i < lb; i++) {
 		if (b[i].radiation.binternalRadiation) {
 			integer itek = i;
 
-			MY_PAIR* list = new MY_PAIR[maxelm];
-			integer ic = 0;
-
 			
+			integer ic = 0;			
 
 			for (integer iP = 0; iP < maxelm; iP++) {
 				integer ib = whot_is_block[iP];
 				if (ib == itek) 
 				{
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+					iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -13622,12 +14346,9 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 
 			b[itek].radiation.nodelistW = new MY_PAIR[ic];
 			b[itek].radiation.nodelistWsize = ic;
-			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistW[j] = list[j];
+			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistW[j] = list[j];	
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -13635,7 +14356,12 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 				if (ib == itek)
 				{
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+					iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+					iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -13678,10 +14404,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			b[itek].radiation.nodelistEsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistE[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -13689,7 +14412,12 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 				if (ib == itek)
 				{
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
+					iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -13732,10 +14460,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			b[itek].radiation.nodelistSsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistS[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -13743,7 +14468,12 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 				if (ib == itek)
 				{
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
+					iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+					iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+					iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -13786,11 +14516,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			b[itek].radiation.nodelistNsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistN[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -13798,7 +14524,12 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 				if (ib == itek)
 				{
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+					iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
+					iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
+					iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+					iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -13841,10 +14572,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			b[itek].radiation.nodelistBsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistB[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -13852,7 +14580,12 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 				if (ib == itek)
 				{
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
+					iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 
 					// вычисление размеров текущего контрольного объёма:
@@ -13896,12 +14629,12 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			b[itek].radiation.nodelistTsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistT[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-
 		}
 	}
+
+	delete[] list;
+	list = nullptr;
+
 } // constr_link_on_surface_for_radiation_model
 
 
@@ -13914,14 +14647,15 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &border_neighbor, integer* &whot_is_block, ALICE_PARTITION** neighbors_for_the_internal_node,
 	integer** nvtx, TOCHKA* pa, BLOCK* &b, integer lb)
 {
+
+	MY_PAIR* list = new MY_PAIR[maxelm];
+
 	for (integer i = 0; i < lb; i++) {
 		if (b[i].radiation.binternalRadiation) {
 			integer itek = i;
 
-			MY_PAIR* list = new MY_PAIR[maxelm];
+			
 			integer ic = 0;
-
-
 
 			for (integer iP = 0; iP < maxelm; iP++) {
 				integer ib = whot_is_block[iP];
@@ -13936,17 +14670,33 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1; 
-					iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
+					iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
+					iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
+					iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
-					iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-					iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+					iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2;
+					iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+					iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+					iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; 
+					iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2;
+					iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
-					iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-					iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+					iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+					iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+					iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+					iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; 
+					iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3;
+					iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-					iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-					iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+					iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+					iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+					iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+					iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+					iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+					iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 					// вычисление размеров текущего контрольного объёма:
 					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -14107,10 +14857,6 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 			b[itek].radiation.nodelistWsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistW[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -14128,17 +14874,33 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-					iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+					iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+					iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
-					iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-					iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+					iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; 
+					iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+					iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+					iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+					iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2;
+					iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
-					iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-					iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+					iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+					iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; 
+					iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+					iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3;
+					iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; 
+					iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-					iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-					iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+					iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+					iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; 
+					iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+					iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; 
+					iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; 
+					iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 					bool binc = false;
@@ -14294,10 +15056,6 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 			b[itek].radiation.nodelistEsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistE[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -14314,17 +15072,33 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-					iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
+					iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
-					iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-					iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+					iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2;
+					iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+					iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+					iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+					iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2;
+					iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
-					iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-					iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+					iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+					iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+					iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+					iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3;
+					iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3;
+					iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-					iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-					iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+					iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+					iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+					iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+					iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+					iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+					iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 					bool binc = false;
@@ -14477,10 +15251,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 			b[itek].radiation.nodelistSsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistS[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -14497,17 +15268,33 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-					iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+					iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+					iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
-					iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-					iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+					iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; 
+					iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; 
+					iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+					iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+					iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; 
+					iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
-					iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-					iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+					iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+					iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+					iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+					iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3;
+					iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; 
+					iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-					iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-					iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+					iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; 
+					iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+					iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+					iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+					iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+					iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 					bool binc = false;
@@ -14662,11 +15449,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 			b[itek].radiation.nodelistNsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistN[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-
-			list = new MY_PAIR[maxelm];
+			
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -14683,17 +15466,33 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-					iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
-					iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-					iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+					iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2;
+					iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+					iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+					iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+					iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2;
+					iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
-					iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-					iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+					iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+					iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+					iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+					iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; 
+					iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3;
+					iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-					iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-					iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+					iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+					iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+					iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+					iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4;
+					iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+					iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 					bool binc = false;
@@ -14838,10 +15637,6 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 			b[itek].radiation.nodelistBsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistB[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-			list = new MY_PAIR[maxelm];
 			ic = 0;
 
 			for (integer iP = 0; iP < maxelm; iP++) {
@@ -14858,17 +15653,33 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 					// 0 .. maxelm-1 - строго внутренний узел.
 					// maxelm .. maxelm + maxbound-1 - граничный узел.
 
-					iE1 = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN1 = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT1 = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-					iW1 = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS1 = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB1 = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE1 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN1 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT1 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW1 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+					iS1 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB1 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
-					iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-					iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+					iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; 
+					iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2;
+					iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+					iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2;
+					iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; 
+					iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
-					iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-					iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+					iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3;
+					iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3;
+					iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+					iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; 
+					iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; 
+					iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
-					iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-					iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+					iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4;
+					iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4;
+					iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+					iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; 
+					iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4;
+					iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 					bool binc = false;
@@ -15013,16 +15824,16 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &bo
 			b[itek].radiation.nodelistTsize = ic;
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistT[j] = list[j];
 
-			delete[] list;
-			list = nullptr;
-
-
 		}
 	}
+
+	delete[] list;
+	list = nullptr;
+
 } // constr_link_on_surface_for_radiation_model_alice
 
 
-  // освобожение памяти уровня 1
+  // освобождение памяти уровня 1
   // для уравнений гидродинамики.
 void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 	integer iflow = 0;
@@ -15287,7 +16098,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 } // free_level1_flow
 
 
-  // освобожение памяти уровня 2
+  // освобождение памяти уровня 2
   // для уравнений гидродинамики.
 void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 	integer iflow = 0;
@@ -15381,9 +16192,9 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 */
 void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integer &inz,
 				 doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &flow_interior,
-				 BLOCK* b, integer lb, integer lw, WALL* w, SOURCE* s, integer ls, 
+				 BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls, 
 	             integer lu, UNION* &my_union, doublereal temp_ref,
-				 TPROP* matlist,  bool bextendedprint,
+				 TPROP* &matlist,  bool bextendedprint,
 				 doublereal dgx, doublereal dgy, doublereal dgz, bool bALICEflag,
 	             bool breconstruct, integer &iunion_id_p1) {
 
@@ -15452,8 +16263,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// Построено t.nvtx. Замена constr_nvtx.
 		// Построено t.prop, t.Sc, t.ipower_time_depend. Замена constr_prop.
 		// Это закодировано 8 сентября 2016.
-		// Осуществляет уникальную нумерацию листьев принадлежащих модели. Замена constr_sosed.
-		// Оставляет пустым sosed=nullptr.
+		// Осуществляет уникальную нумерацию листьев принадлежащих модели. Замена constr_neighbour.
+		// Оставляет пустым neighbour=nullptr.
 		// Эта функция за раз вычисляет части 1-6. part 1..6.
 		constr_nodes_nvtx_prop_alice(oc_global, inx, iny, inz, t.maxelm, xpos, ypos, zpos, TEMPERATURE, b, lb, t.whot_is_block, t.pa, t.maxnod, t.nvtx,
 			t.prop, t.Sc, t.ipower_time_depend, matlist, t.ilevel_alice);
@@ -15466,11 +16277,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		}
 	}
 	//printf("part 1\n");
-#if doubleintprecision == 1
-	printf("part %lld enumerate_volume\n", icount_part++); //22
-#else
-	printf("part %d enumerate_volume\n", icount_part++); //22
-#endif
+	std::cout << "part "<< icount_part++ <<" enumerate_volume" << std::endl; //22
 	 
 	integer *ent_t = nullptr; // глобальная нумерация узлов.
 	if (!bALICEflag) {
@@ -15479,14 +16286,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	}
    
 	//printf("part 2\n");    
-#if doubleintprecision == 1
-	printf("part %lld constr_nodes\n", icount_part++); //22
-#else
-	printf("part %d constr_nodes\n", icount_part++); //22
-#endif
+	std::cout << "part "<< icount_part++ <<" constr_nodes" << std::endl; //22
 
 	
-	integer **sosed = nullptr;
+	integer **neighbour = nullptr;
 	if (!bALICEflag) {
 #ifdef _OPENMP 
 		int inumcor = number_cores();
@@ -15503,8 +16306,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					// находит соседей только среди внутренних КО 
 	                // для каждого внутреннего контрольного
 	                // объёма или 0 если соседа нет.
-	                // sosed[0..11][0..maxelm-1]
-					constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
+	                // neighbour[0..11][0..maxelm-1]
+					constr_neighbour(evt_t, ent_t, neighbour, t.maxelm, inx, iny, inz, tck_int_list);
 				}
 
 #pragma omp section
@@ -15538,12 +16341,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 		//omp_set_num_threads(1); // установка числа потоков
 #else
-		// однопоток
+		// один поток
         // находит соседей только среди внутренних КО 
 		// для каждого внутреннего контрольного
 		// объёма или 0 если соседа нет.
-		// sosed[0..11][0..maxelm-1]
-		constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
+		// neighbour[0..11][0..maxelm-1]
+		constr_neighbour(evt_t, ent_t, neighbour, t.maxelm, inx, iny, inz, tck_int_list);
 		// для каждого контрольного объёма принадлежащему
 		// расчётной области определяет номера его вершин.
 		// nvtx[0..7][0..maxelm-1]
@@ -15569,22 +16372,14 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #endif
 	}
 	//printf("part 3\n");
-#if doubleintprecision == 1
-	printf("part %lld constr_neighbours\n", icount_part++); //22
-#else
-	printf("part %d constr_neighbours\n", icount_part++); //22
-#endif
+	std::cout << "part " << icount_part++ << " constr_neighbours" << std::endl; //22
 
     
 	//if (!bALICEflag) {
 		
 	//}
 	//printf("part 4\n");
-#if doubleintprecision == 1
-	printf("part %lld constr_nvtx\n", icount_part++); //22
-#else
-	printf("part %d constr_nvtx\n", icount_part++); //22
-#endif
+	std::cout << "part " << icount_part++ <<" constr_nvtx" << std::endl; //22
 	
 
    
@@ -15609,7 +16404,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
     // уникальный номер.
 	integer **gran_t=nullptr;
 	if (!bALICEflag) {
-		enumerate_gran_temp(gran_t, t.maxelm, t.nvtx, t.maxbound, sosed, t.pa, s, ls);
+		enumerate_gran_temp(gran_t, t.maxelm, t.nvtx, t.maxbound, neighbour, t.pa, s, ls);
 	}
 	else {
 		// calculate_max_bound_temp закодирована 10 сентября 2016. в 10_34.
@@ -15649,7 +16444,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// Вычисление соседей для каждого внутреннего узла. 
 		// Причём множество соседей выбирается и среди  
 		// внутренних КО и среди граничных КО.
-		constr_neighbors_for_the_internal_node(t.neighbors_for_the_internal_node, t.maxelm, gran_t, sosed);
+		constr_neighbors_for_the_internal_node(t.neighbors_for_the_internal_node, t.maxelm, gran_t, neighbour);
 	}
 	
 	//printf("part 8\n");
@@ -15688,7 +16483,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
         // Внимание !!! не заполнено поле dS.
 		// pavg - середина расчётной области. 
 		// Требуется для ускорения вычислений.
-		constr_border_neighbor_temp(t.border_neighbor, t.whot_is_block, t.binternalsource, t.maxelm, t.maxbound, gran_t, sosed, t.neighbors_for_the_internal_node, t.nvtx, t.pa, b, lb, lw, w, s, ls, pavg);
+		constr_border_neighbor_temp(t.border_neighbor, t.whot_is_block, t.binternalsource, t.maxelm, t.maxbound, gran_t, neighbour, t.neighbors_for_the_internal_node, t.nvtx, t.pa, b, lb, lw, w, s, ls, pavg);
 	
 
 	}
@@ -15716,14 +16511,14 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			{
 #pragma omp section
 				{
-					constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, sosed, t.nvtx, t.pa, b, lb);
+					constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, neighbour, t.nvtx, t.pa, b, lb);
 				}
 #pragma omp section
 				{
 					// Нужно не забыть выделить память под potent.
 		            //t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
 		            // На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
-		            // должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
+		            // должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помощью константы 
 		            // bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
 					t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
 
@@ -15760,12 +16555,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #else
 
 
-		constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, sosed, t.nvtx, t.pa, b, lb);
+		constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, neighbour, t.nvtx, t.pa, b, lb);
 	
 		// Нужно не забыть выделить память под potent.
 	    //t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
 	    // На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
-	    // должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
+	    // должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помощью константы 
 	    // bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
 		t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
 
@@ -15818,7 +16613,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			// Нужно не забыть выделить память под potent.
 			//t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
 			// На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
-			// должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
+			// должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помощью константы 
 			// bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
 			t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
 
@@ -15842,6 +16637,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #else
 	printf("part %d constr_link_on_surface_for_radiation_model\n", icount_part++); //12
 #endif
+	
+
 	
 
 	if (!bALICEflag) {
@@ -15953,7 +16750,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		{
 			bcondition = bglobal_restart_06_10_2018;
 		}
-		if (/*(bcondition)&&*/(iPnodes_count > 0)&&(ipolygon_count_limit<iGLOBAL_RESTART_LIMIT)/*&&(!bpolygon)*/) {
+		if (/*(bcondition)&&*/(iPnodes_count > 0)&&(((ireconstruction_free_construct_alloc==1)&&(ipolygon_count_limit<iGLOBAL_RESTART_LIMIT))||
+			((ireconstruction_free_construct_alloc == 0)&&(ipolygon_count_limit<2))/*&&(!bpolygon)*/)) {
 
 			for (integer i = 1; i <= t.maxelm; i++) {
 				if (!found_hash_table[i]) {
@@ -15961,12 +16759,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					// iP - номер центрального контрольного объёма
 					// iP внутренний КО 0..maxelm-1
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
-					iN = t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
-					iT = t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-					iW = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; 
-					iS = t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1;
-					iB = t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iE = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+					iN = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+					iT = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+					iW = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
+					iS = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+					iB = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -15977,11 +16775,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 					if ((iE >= t.maxelm) && (iW >= t.maxelm)) {
 						// добавить в xpos
-						addboundary(xpos, inx, pointP.x, YZ, b, lb, w, lw, s, ls);
+						addboundary(xpos, inx, pointP.x, YZ_PLANE, b, lb, w, lw, s, ls);
 					}
 					if ((iN >= t.maxelm) && (iS >= t.maxelm)) {
 						// добавить в ypos
-						addboundary(ypos, iny, pointP.y, XZ, b, lb, w, lw, s, ls);
+						addboundary(ypos, iny, pointP.y, XZ_PLANE, b, lb, w, lw, s, ls);
 					}
 					//if (!b_one_cell_z)
 					{
@@ -15989,7 +16787,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 						// код не готов к одной клетке.
 						if ((iT >= t.maxelm) && (iB >= t.maxelm)) {
 							// добавить в zpos
-							addboundary(zpos, inz, pointP.z, XY, b, lb, w, lw, s, ls);
+							addboundary(zpos, inz, pointP.z, XY_PLANE, b, lb, w, lw, s, ls);
 						}
 					}
 
@@ -16010,16 +16808,16 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			delete[] found_hash_table;
 
 			// 22.01.2017
-			if (sosed != nullptr) {
+			if (neighbour != nullptr) {
 				for (integer i_97 = 0; i_97 < 12; i_97++) {
-					if (sosed[i_97] != nullptr) {
-						delete[] sosed[i_97];
-						sosed[i_97] = nullptr;
+					if (neighbour[i_97] != nullptr) {
+						delete[] neighbour[i_97];
+						neighbour[i_97] = nullptr;
 					}
 				}
-				delete[] sosed;
+				delete[] neighbour;
 			}
-			sosed = nullptr;
+			neighbour = nullptr;
 
 			if (gran_t != nullptr) {
 				for (integer i_97 = 0; i_97 < 6; i_97++) {
@@ -16044,10 +16842,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 			iPnodes_count_shadow_memo = iPnodes_count;
 
-			printf("progon number is ipolygon_count_limit=%lld\n", ipolygon_count_limit);
-			printf("iPnodes_count = %lld=%lld, x= %lld=%lld, y= %lld=%lld, z= %lld=%lld\n",
-				iPnodes_count_shadow, iPnodes_count, inx_shadow,inx, iny_shadow,iny, inz_shadow, inz);
-
+			std::cout << "progon number is ipolygon_count_limit=" <<  ipolygon_count_limit << std::endl;
+			std::cout << "iPnodes_count = " << iPnodes_count_shadow << "=" << iPnodes_count << ", x= " << inx_shadow << "=" << inx <<", y= " << iny_shadow << "=" << iny << ", z= " << inz_shadow << "=" << inz << "\n";
+				
 			if (abs(iPnodes_count_shadow - iPnodes_count) +
 				abs(inx_shadow - inx) + abs(iny_shadow - iny) + abs(inz_shadow - inz) == 0) {
 				bglobal_restart_06_10_2018_stagnation[ipolygon_count_limit] = true;
@@ -16095,7 +16892,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 	integer maxelm_global_flow=0; // максимальное суммарное количество внутренних КО принадлежащих расчётной области.
 	integer *evt_f=nullptr; // глобальная нумерация контрольных объёмов
-	integer *whot_is_block_fl=nullptr; // побочная инормация.
+	integer *whot_is_block_fl=nullptr; // побочная информация.
 
 	//printf("part 13\n");
 #if doubleintprecision == 1
@@ -16212,16 +17009,16 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   t.nvtxcell = nullptr; // если указатель равен nullptr то это предохраняет от повторного удаления памяти.
 
 
-		if (sosed != nullptr) {
+		if (neighbour != nullptr) {
 			for (i = 0; i < 12; i++) {
-				if (sosed[i] != nullptr) {
-					delete[] sosed[i];
-					sosed[i] = nullptr;
+				if (neighbour[i] != nullptr) {
+					delete[] neighbour[i];
+					neighbour[i] = nullptr;
 				}
 			}
-			delete[] sosed;
+			delete[] neighbour;
 		}
-		sosed = nullptr;
+		neighbour = nullptr;
 
 		// освобождение оперативной памяти TEMPER
 		if (ent_t != nullptr) {
@@ -16232,16 +17029,16 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			//delete evt_t;
 		//}
 		//evt_t = nullptr;
-		if (sosed != nullptr) {
+		if (neighbour != nullptr) {
 			for (i = 0; i < 12; i++) {
-				if (sosed[i] != nullptr) {
-					delete[] sosed[i];
-					sosed[i] = nullptr;
+				if (neighbour[i] != nullptr) {
+					delete[] neighbour[i];
+					neighbour[i] = nullptr;
 				}
 			}
-			delete[] sosed;
+			delete[] neighbour;
 		}
-		sosed = nullptr;
+		neighbour = nullptr;
 
 		if (gran_t != nullptr) {
 			for (i = 0; i < 6; i++) {
@@ -16263,16 +17060,16 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		}
 		ent_t=nullptr;
 		
-		if (sosed != nullptr) {
+		if (neighbour != nullptr) {
 			for (i = 0; i < 12; i++) {
-				if (sosed[i] != nullptr) {
-					delete[] sosed[i];
-					sosed[i] = nullptr;
+				if (neighbour[i] != nullptr) {
+					delete[] neighbour[i];
+					neighbour[i] = nullptr;
 				}
 			}
-			delete[] sosed;
+			delete[] neighbour;
 		}
-		sosed=nullptr;
+		neighbour=nullptr;
 
 		if (gran_t != nullptr) {
 			for (i = 0; i < 6; i++) {
@@ -16287,7 +17084,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 		integer j=0; // счётчики
         integer *ent_f=nullptr; // глобальная нумерация узлов.
-		integer **sosed_f=nullptr; // соседи для внутренних КО только среди внутренних КО.
+		integer **neighbour_f=nullptr; // соседи для внутренних КО только среди внутренних КО.
 		integer **gran_f=nullptr; // уникальная нумерация граней
 
 		
@@ -16377,9 +17174,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 						// находит соседей для каждого внутреннего контрольного
 									// объёма или 0 если соседа нет.
 						if (!bALICEflag) {
-							// Это просто пропускаем т.к. информация о sosed_f
+							// Это просто пропускаем т.к. информация о neighbour_f
 							//при сетках АЛИС не требуется, она хранится в octree дереве.
-							constr_sosed_flow(evt_f2, i, sosed_f, f[i].maxelm, inx, iny, inz);
+							constr_neighbour_flow(evt_f2, i, neighbour_f, f[i].maxelm, inx, iny, inz);
 						}
 					}
 #pragma omp section
@@ -16408,9 +17205,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			// находит соседей для каждого внутреннего контрольного
 			// объёма или 0 если соседа нет.
 			if (!bALICEflag) {
-				// Это просто пропускаем т.к. информация о sosed_f
+				// Это просто пропускаем т.к. информация о neighbour_f
 				//при сетках АЛИС не требуется, она хранится в octree дереве.
-				constr_sosed_flow(evt_f2, i, sosed_f, f[i].maxelm, inx, iny, inz);
+				constr_neighbour_flow(evt_f2, i, neighbour_f, f[i].maxelm, inx, iny, inz);
 			}
 
 			if (!bALICEflag) {
@@ -16425,9 +17222,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			printf("part %d constr_nvtx_flow\n", icount_part++); //20
 #endif
 
-			// использует sosed_f
+			// использует neighbour_f
 			if (!bALICEflag) {
-				enumerate_gran_flow(gran_f, f[i].maxelm, f[i].nvtx, f[i].maxbound, sosed_f, f[i].pa);
+				enumerate_gran_flow(gran_f, f[i].maxelm, f[i].nvtx, f[i].maxbound, neighbour_f, f[i].pa);
 			}
 
 	        
@@ -16523,11 +17320,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 				/*
 				// 26.09.2016 Добавок для АЛИС сетки.
-				// Убрано 26.03.2019 Как  безсмысленная проверка.
+				// Убрано 26.03.2019 Как  бессмысленная проверка.
 				integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
 				integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
 				integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-				integer iP = 13; // !!!! внимание почему именно 13. Проверка безсмысленна.
+				integer iP = 13; // !!!! внимание почему именно 13. Проверка бессмысленна.
 
 				// -1 если не используется и [0..maxelm+maxbound-1] если используется.
 
@@ -16556,7 +17353,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
             // Причём множество соседей выбирается и среди внутренних КО и 
             // среди граничных КО.
 			if (!bALICEflag) {
-				constr_neighbors_for_the_internal_node(f[i].neighbors_for_the_internal_node, f[i].maxelm, gran_f, sosed_f);
+				constr_neighbors_for_the_internal_node(f[i].neighbors_for_the_internal_node, f[i].maxelm, gran_f, neighbour_f);
 			}
 #if doubleintprecision == 1
 			printf("part %lld constr_neighbour\n", icount_part++); //24
@@ -16578,7 +17375,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					{
 						// Заполнение информации о граничных узлах:
 						if (!bALICEflag) {
-							constr_border_neighbor_flow(f[i].border_neighbor, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, sosed_f, f[i].neighbors_for_the_internal_node, f[i].nvtx, f[i].pa, lw, w, ls, b);
+							constr_border_neighbor_flow(f[i].border_neighbor, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, neighbour_f, f[i].neighbors_for_the_internal_node, f[i].nvtx, f[i].pa, lw, w, ls, b);
 						}
 
 						// 24 сентября 2016 (данная функция универсальна и подходит также и для АЛИС сетки).
@@ -16591,7 +17388,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					{
 						// Свойства жидкого материала на границе жидкой области.
 						if (!bALICEflag) {
-							constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, sosed_f);
+							constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, neighbour_f);
 						}
 
 					}
@@ -16602,12 +17399,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #else
 			  // Заполнение информации о граничных узлах:
 			if (!bALICEflag) {
-				constr_border_neighbor_flow(f[i].border_neighbor, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, sosed_f, f[i].neighbors_for_the_internal_node, f[i].nvtx, f[i].pa, lw, w, ls, b);
+				constr_border_neighbor_flow(f[i].border_neighbor, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, neighbour_f, f[i].neighbors_for_the_internal_node, f[i].nvtx, f[i].pa, lw, w, ls, b);
 			}
 
 			// Свойства жидкого материала на границе жидкой области.
 			if (!bALICEflag) {
-				constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, sosed_f);
+				constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, neighbour_f);
 			}
 
 			// 24 сентября 2016 (данная функция универсальна и подходит также и для АЛИС сетки).
@@ -16681,7 +17478,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					((starting_speed_Vx*starting_speed_Vx +
 						starting_speed_Vy * starting_speed_Vy + 
 						starting_speed_Vz * starting_speed_Vz > 1.0e-30) &&
-						(steady_or_unsteady_global_determinant != 3)))) {
+						(steady_or_unsteady_global_determinant != CFD_STEADY)))) {
 					// Только если присутствуют жидкие ячейки.
 
 
@@ -16762,16 +17559,16 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				 delete[] ent_f;
 			 }
 			ent_f=nullptr;
-			if (sosed_f != nullptr) {
+			if (neighbour_f != nullptr) {
 				for (j = 0; j < 12; j++) {
-					if (sosed_f[j] != nullptr) {
-						delete[] sosed_f[j];
-						sosed_f[j] = nullptr;
+					if (neighbour_f[j] != nullptr) {
+						delete[] neighbour_f[j];
+						neighbour_f[j] = nullptr;
 					}
 				}
-				delete[] sosed_f;
+				delete[] neighbour_f;
 			}
-			sosed_f=nullptr;
+			neighbour_f=nullptr;
 
 			if (gran_f != nullptr) {
 				for (j = 0; j < 6; j++) {
@@ -16917,16 +17714,16 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			delete[] evt_t;
 		}
 		evt_t=nullptr;
-		if (sosed != nullptr) {
+		if (neighbour != nullptr) {
 			for (i = 0; i < 6; i++) {
-				if (sosed[i] != nullptr) {
-					delete[] sosed[i];
-					sosed[i] = nullptr;
+				if (neighbour[i] != nullptr) {
+					delete[] neighbour[i];
+					neighbour[i] = nullptr;
 				}
 			}
-			delete[] sosed;
+			delete[] neighbour;
 		}
-		sosed=nullptr;
+		neighbour=nullptr;
 		if (gran_t != nullptr) {
 			for (i = 0; i < 6; i++) {
 				if (gran_t[i] != nullptr) {

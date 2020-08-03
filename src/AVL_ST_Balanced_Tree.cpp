@@ -15,8 +15,12 @@
 struct data_BalTreeST
 {
 	// --> high priority --> for operation <,>
-	integer  i = -1;
+	integer  i;
 	// i есть key.
+
+	data_BalTreeST() {
+		i = -1;
+	}
 };
 
 //отношения порядка только в insert и remove
@@ -26,11 +30,18 @@ struct node_AVLST
 {
 	data_BalTreeST key;
 	// Высота поддерева с корнем в данном узле.
-	unsigned char height = 1;
-	node_AVLST* left = nullptr;
-	node_AVLST* right = nullptr;
+	unsigned char height;
+	node_AVLST* left;
+	node_AVLST* right;
 	// Конструктор.
 	node_AVLST(data_BalTreeST k) { key = k; left = right = nullptr; height = 1; }
+
+	node_AVLST() {
+		height = 1;
+		left = nullptr;
+		right = nullptr;
+	}
+
 };
 
 // Работает также и с пустыми деревьями.

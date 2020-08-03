@@ -188,8 +188,7 @@
 //#include <omp.h>
 #include <windows.h>
 //#pragma comment(linker, "/STACK:16777216") // увеличение размера стека для быстрой сортировки
-#include <stdlib.h> // for библиотечной qsort
-#include <algorithm> // sort (IntroSort)
+
 
 #include "gmres.cpp" // Алгоритм Юсефа Саада и Мартина Г. Шульца FGMRes [1986]
 
@@ -249,19 +248,33 @@ typedef struct TAk1 {
 // Разреженная матрица СЛАУ в CRS или COO форматах.
 typedef struct TAk2 {
 	// Раздельное хранение массивов.
-	integer *i=nullptr, *j=nullptr;
-	doublereal *aij=nullptr;
-	doublereal *abs_aij=nullptr; // Для ускорения вычислений предварительно вычисляем модуль.
+	integer *i, *j;
+	doublereal *aij;
+	doublereal *abs_aij; // Для ускорения вычислений предварительно вычисляем модуль.
 	//float *aij;
 	//integer *row_ptr_start, *row_ptr_end;
+
+	TAk2() {
+		// Раздельное хранение массивов.
+		i=nullptr; j=nullptr;
+		aij=nullptr;
+		abs_aij=nullptr; // Для ускорения вычислений предварительно вычисляем модуль.
+		//float *aij;
+		//integer *row_ptr_start, *row_ptr_end;
+	}
 } Ak2;
 
 
 #include "My_Handle_Error.cpp"
 
 typedef struct Taccumulqtor_list {
-	integer ikey=-1;
-	Taccumulqtor_list* next=nullptr;
+	integer ikey;
+	Taccumulqtor_list* next;
+
+	Taccumulqtor_list() {
+		ikey=-1;
+		next=nullptr;
+	}
 } accumulqtor_list;
 
 // Найти в линейном односвязном списке значение.
@@ -311,8 +324,17 @@ void clear_list(Taccumulqtor_list* &root) {
 
 typedef struct Thashlist {
 	Ak Amat;
-	Thashlist* next=nullptr;
-	Thashlist* prev=nullptr;
+	Thashlist* next;
+	Thashlist* prev;
+
+	Thashlist() {
+		Amat.aij = 0.0;
+		Amat.i = -1;
+		Amat.j = -1;
+		Amat.ind = -1;
+		next=nullptr;
+		prev=nullptr;
+	}
 } hashlist;
 
 // вставка ключа в список
@@ -375,8 +397,14 @@ void clear_hash(hashlist* p) {
 
 typedef struct TList {
 	integer ii, i, count_neighbour;
-	TList* next=nullptr;
-	TList* prev=nullptr;
+	TList* next;
+	TList* prev;
+
+	TList() {
+        ii=-1; i=-1; count_neighbour=-1;
+	    next=nullptr;
+	    prev=nullptr;
+	}
 } List;
 
 // Сбалансированные двоичные деревья поиска.
@@ -872,7 +900,7 @@ template <typename doublerealT>
 void optimal_omega(doublerealT rn, doublerealT &omega) {
 	
 	doublerealT rarg = powf((float)(rn), 0.333333f);
-	doublerealT ksi = cosf(3.1415926535f / ((float)( rarg)));
+	doublerealT ksi = cosf((float)(M_PI) / ((float)( rarg)));
 	ksi *= ksi; // pow(ksi,2.0);
 	if (ksi < 1.0) {
 		omega = 2.0*(1.0 - sqrtf((float)(1.0 - ksi))) / ksi;// лучший выбор.
@@ -14125,7 +14153,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	Ak1* &P, // prolongation
 	doublereal* &x, doublereal* &b,
 	doublerealT &theta,
-	integer imyinit = ZERO_INIT
+	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT
 	) {
 
 	// Параметры отвечающие за автоматическую настройку SOR.
@@ -21831,7 +21859,7 @@ handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglom
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
 	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	//integer imyinit =  ZERO_INIT; // ZERO_INIT optimum
+	//INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit =  ZERO_INIT; // ZERO_INIT optimum
 
 	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
@@ -24868,7 +24896,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	Ak1* &P, // prolongation
 	doublereal* &x, doublereal* &b,
 	doublerealT &theta, 
-	integer imyinit = ZERO_INIT
+	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT
 	) {
 
 	const bool bprint_mesage_diagnostic = true;
@@ -32401,7 +32429,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
 	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	//const integer imyinit = ZERO_INIT; // ZERO_INIT optimum
+	//const INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT; // ZERO_INIT optimum
 
 
 
@@ -36754,7 +36782,7 @@ template <typename doublerealT>
 void V_cycle_solve(Ak1* &Amat, doublereal* &z76, doublereal* &s76, bool process_flow_logic, integer* &row_ptr_start, 
 	integer* &row_ptr_end, doublerealT** &residual_fine, doublerealT** &diag, integer* n_a, bool bonly_serial, 
 	doublerealT process_flow_beta, bool* &F_false_C_true, integer &nu1, integer &nu2, integer bILU2smoother, 
-	integer ilevel, integer inumberVcyclelocbicgstab, integer imyinit, const integer idim_diag, 
+	integer ilevel, integer inumberVcyclelocbicgstab, INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit, const integer idim_diag, 
 	LEVEL_ADDITIONAL_DATA* &milu2, LEVEL_ADDITIONAL_DATA0* milu0, bool** &nested_desection,
 	Ak1* &R, // restriction
 	Ak1* &P, // prolongation
@@ -36766,8 +36794,7 @@ void V_cycle_solve(Ak1* &Amat, doublereal* &z76, doublereal* &s76, bool process_
 	// Один V - цикл алгебраического многосеточного метода.
 	// A*z76=s76;
 
-	//const integer ZERO_INIT = 0;
-	//const integer RANDOM_INIT = 1;
+	
 
 	for (integer i_13 = 0; i_13<inumberVcyclelocbicgstab; i_13++)
 	{
@@ -46134,6 +46161,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 	 
 } // my_interpolation_procedure_number6
 
+
 #include "classic_aglomerative_amg6_2018year.cpp" // amg6 версия кода 2018 года.
 
 // 25.04.2018 Версия четыре classic_aglomerative_amg4 это основная поддерживаемая версия.
@@ -46212,7 +46240,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	doublerealT &ret74,	integer iVar,
 	bool bmemory_savings,
 	BLOCK* &my_body, integer &lb, integer maxelm_out,
-	integer imyinit = ZERO_INIT
+	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT
 ) {
 
 
@@ -53821,9 +53849,9 @@ if (bweSholdbeContinue_arr) {
 								printf("error: diagonal element is negative...\n");
 								switch (iVar) {
 								case PAM: printf("PAM equation\n"); break;
-								case VX: printf("VX equation\n"); break;
-								case VY: printf("VY equation\n"); break;
-								case VZ: printf("VZ equation\n"); break;
+								case VELOCITY_X_COMPONENT: printf("VX equation\n"); break;
+								case VELOCITY_Y_COMPONENT: printf("VY equation\n"); break;
+								case VELOCITY_Z_COMPONENT: printf("VZ equation\n"); break;
 								case TEMP: printf("TEMP equation\n"); break;
 								case TOTALDEFORMATIONVAR: printf("STRESS system equation\n"); break;
 								}
@@ -54324,9 +54352,9 @@ if (bweSholdbeContinue_arr) {
 								printf("error: diagonal element is negative...\n");
 								switch (iVar) {
 								case PAM: printf("PAM equation\n"); break;
-								case VX: printf("VX equation\n"); break;
-								case VY: printf("VY equation\n"); break;
-								case VZ: printf("VZ equation\n"); break;
+								case VELOCITY_X_COMPONENT: printf("VX equation\n"); break;
+								case VELOCITY_Y_COMPONENT: printf("VY equation\n"); break;
+								case VELOCITY_Z_COMPONENT: printf("VZ equation\n"); break;
 								case TEMP: printf("TEMP equation\n"); break;
 								case TOTALDEFORMATIONVAR: printf("STRESS system equation\n"); break;
 								}
@@ -57198,9 +57226,7 @@ if (bweSholdbeContinue_arr) {
 
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
-	//const integer ZERO_INIT = 0;
-	//const integer RANDOM_INIT = 1;
-	//integer imyinit = ZERO_INIT; // ZERO_INIT optimum
+	//INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT; // ZERO_INIT optimum
 
 	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
@@ -57247,7 +57273,7 @@ if (bweSholdbeContinue_arr) {
 
 	residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0]);
 	doublerealT dres_initial = norma(residual_fine[0], n_a[0]);
-	if (((iVar == VX) || (iVar == VY) || (iVar == VZ)) && (dres_initial > 20.0)) {
+	if (((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) && (dres_initial > 20.0)) {
 		// Это признак ошибки в сборке матрицы СЛАУ на компоненты скорости.
 		printf("my be problem convergence: very big dres0=%e\n", dres_initial);
 		printf("run residualq2 analysys.\n");
@@ -57359,7 +57385,7 @@ if (bweSholdbeContinue_arr) {
 
 		// Только алгебраический многосеточный метод.
 		
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) tolerance *= 1e-11;
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) tolerance *= 1e-11;
 		if (iVar == PAM) tolerance *= 1e-14;
 		if (iVar == TEMP) tolerance *= 1e-6;
 		if (iVar == TOTALDEFORMATIONVAR) tolerance = 1.0e-17;
@@ -57380,7 +57406,7 @@ if (bweSholdbeContinue_arr) {
 
 				
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 					if (dres < 1.0e-3*dres_initial) {
 						break;
 					}
@@ -57492,8 +57518,8 @@ if (bweSholdbeContinue_arr) {
 							rthdsd_loc123[i23] = rthdsd_no_radiosity_patch[i23];
 							if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on)) {
 								doublerealT alpha_relax142 = 0.25;
-								rthdsd_loc123[i23] = alpha_relax142 *(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*5.670367e-8*((273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb))) +
-									(1.0 - alpha_relax142)*(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*5.670367e-8*((273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
+								rthdsd_loc123[i23] = alpha_relax142 *(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*STEFAN_BOLCMAN_CONST*((273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb))) +
+									(1.0 - alpha_relax142)*(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*STEFAN_BOLCMAN_CONST*((273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
 								rthdsd_loc123[i23] *= qnbc[i23 - iadd_qnbc_maxelm].dS;
 							}
 						}
@@ -57509,9 +57535,8 @@ if (bweSholdbeContinue_arr) {
 							b[i23 + 1] = rthdsd_loc123[i23];
 						}
 
-						if (rthdsd_loc123 != nullptr) {
-							free(rthdsd_loc123);
-						}
+						
+						free(rthdsd_loc123);
 						rthdsd_loc123 = nullptr;
 
 						if (x_temper != nullptr) {
@@ -57559,8 +57584,8 @@ if (bweSholdbeContinue_arr) {
 							if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on) && (qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on==false)) {
 								// Стефан Больцман.
 								doublerealT alpha_relax142 = 0.25;
-								rthdsd_loc123[i23] = alpha_relax142 *(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*5.670367e-8*((273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb))) +
-									(1.0 - alpha_relax142)*(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*5.670367e-8*((273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
+								rthdsd_loc123[i23] = alpha_relax142 *(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*STEFAN_BOLCMAN_CONST*((273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb))) +
+									(1.0 - alpha_relax142)*(-qnbc[i23 - iadd_qnbc_maxelm].emissivity*STEFAN_BOLCMAN_CONST*((273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1])*(273.15 + x_old[i23 + 1]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
 								rthdsd_loc123[i23] *= qnbc[i23 - iadd_qnbc_maxelm].dS;
 							}
 							if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on == false)) {
@@ -57572,7 +57597,7 @@ if (bweSholdbeContinue_arr) {
 							if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on)) {
 								// Условие смешанного типа.
 								//doublerealT alpha_relax142 = 0.25;
-								rthdsd_loc123[i23] = (-qnbc[i23 - iadd_qnbc_maxelm].emissivity*5.670367e-8*((273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
+								rthdsd_loc123[i23] = (-qnbc[i23 - iadd_qnbc_maxelm].emissivity*STEFAN_BOLCMAN_CONST*((273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23])*(273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)*(273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
 								rthdsd_loc123[i23] += -qnbc[i23 - iadd_qnbc_maxelm].film_coefficient*(x_temper[i23] - qnbc[i23 - iadd_qnbc_maxelm].Tamb);
 								rthdsd_loc123[i23] *= qnbc[i23 - iadd_qnbc_maxelm].dS;
 							}
@@ -57608,7 +57633,7 @@ if (bweSholdbeContinue_arr) {
 		count_iter_for_film_coef++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>1250)) break;
+		if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>1250)) break;
 
 		// 1 dec 2016.
 		//  Прерывание после 2 или 5 V циклов обязательно необходимо иначе не будет сходимости.
@@ -57695,7 +57720,7 @@ if (bweSholdbeContinue_arr) {
 				bfirst_divergence = false;
 			}
 			else {
-				if ((fabs(res_best_search / res0start) < 0.23) && (fabs(res_best_search) < 1.0e-3*sqrt(n_a[0]))) {
+				if ((fabs((doublereal)(res_best_search / res0start)) < 0.23) && (fabs(res_best_search) < 1.0e-3*sqrt((doublereal)(n_a[0])))) {
 					// Если невязка меньше первоначальной на два порядка.
 					// Обратное копирование и выход и алгоритма.
 #pragma omp parallel for
@@ -57704,7 +57729,7 @@ if (bweSholdbeContinue_arr) {
 					}
 					break;
 				}
-				else if ((fabs(res_best_search / res0start) <= 1.0) && (fabs(res_best_search) < 1.0e-4*sqrt(n_a[0]))) {
+				else if ((fabs((doublereal)(res_best_search / res0start)) <= 1.0) && (fabs(res_best_search) < 1.0e-4*sqrt((doublereal)(n_a[0])))) {
 					// Если невязка меньше первоначальной на два порядка.
 					// Обратное копирование и выход и алгоритма.
 #pragma omp parallel for
@@ -57771,12 +57796,12 @@ if (bweSholdbeContinue_arr) {
 		// 24 10 2016
 		if (icount_bad_convergence_Vcycles > 40) break;
 
-		if ((icount_bad_convergence_Vcycles >= istop_porog_reconst) || (fabs(dres) / sqrt(n_a[0]) > 1.0e30)) {
+		if ((icount_bad_convergence_Vcycles >= istop_porog_reconst) || (fabs(dres) / sqrt((doublereal)(n_a[0])) > 1.0e30)) {
 			// детектировано 10 шагов расходимости подряд по-видимому метод расходится.
 			// Также о расходимости говорит невязка большая 1.0e30.
 
 			//if (fabs(dres) < 1.0e-3) break; // Будем считать сходимость достигнута успешно.
-			if ((fabs(res_best_search / res0start) < 1.0e-1) && (fabs(dres) / sqrt(n_a[0]) < 1.0e-3)) {
+			if ((fabs((doublereal)(res_best_search / res0start)) < 1.0e-1) && (fabs(dres) / sqrt((doublereal)(n_a[0])) < 1.0e-3)) {
 				// Если невязка меньше первоначальной на два порядка.
 				// Обратное копирование и выход и алгоритма.
 #pragma omp parallel for
@@ -58028,7 +58053,7 @@ if (bweSholdbeContinue_arr) {
 
 			// Это по умолчанию для поправки давления.
 			doublerealT dresfinish_probably = 0.1*norma(residual_fine[0], n_a[0]);
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				// Это по умолчанию для компонент скорости внутри SIMPLE алгоритма.
 				dresfinish_probably = 1.0e-3*norma(residual_fine[0], n_a[0]);
 			}
@@ -58318,7 +58343,7 @@ if (bweSholdbeContinue_arr) {
 		integer iN75 = 10;
 		if (n75<30000) {
 			// задача очень малой размерности !
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				iN75 = 1; // обязательно нужна хотя бы одна итерация.
 						// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -58360,7 +58385,7 @@ if (bweSholdbeContinue_arr) {
 			// поточнее, но это не повлияло.
 			// Главный вопрос в том что невязка по температуре почему-то не меняется.
 			// задача небольшой размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -58404,7 +58429,7 @@ if (bweSholdbeContinue_arr) {
 		}
 		else if ((n75 >= 100000) && (n75<300000)) {
 			// задача небольшой средней размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						// Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 						// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -58443,7 +58468,7 @@ if (bweSholdbeContinue_arr) {
 		}
 		else if ((n75 >= 300000) && (n75<1000000)) {
 			// задача истинно средней размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -58481,7 +58506,7 @@ if (bweSholdbeContinue_arr) {
 		}
 		else if ((n75 >= 1000000) && (n75<3000000)) {
 			// задача достаточно большой размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -58519,7 +58544,7 @@ if (bweSholdbeContinue_arr) {
 		}
 		else if (n75 >= 3000000) {
 			// задача очень большой размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -58552,7 +58577,7 @@ if (bweSholdbeContinue_arr) {
 		if (iVar == PAM) {
 			maxit75 = 2000; // 2000
 		}
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			maxit75 = 100;//100
 		}
 		if (iVar == TOTALDEFORMATIONVAR) {
@@ -58589,7 +58614,7 @@ if (bweSholdbeContinue_arr) {
 			count_iter_for_film_coef75++;
 			// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 			// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-			//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
+			//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 			roi75 = Scal(roc75, ri75, n75);
 			bet75 = (roi75 / roim175)*(al75 / wi75);
@@ -58705,27 +58730,13 @@ if (bweSholdbeContinue_arr) {
 			// печать невязки на консоль
 			if (bprint_mesage_diagnostic) {
 				if ((icount75 % 10) == 0) {
-					printf("iter  residual\n");
-					//fprintf(fp_log, "iter  residual\n");
+					std::cout << "iter  residual" << std::endl;					
 				}
-#if doubleintprecision == 1
-				printf("%lld %e\n", icount75, deltai75);
-				//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-				printf("%d %e\n", icount75, deltai75);
-				//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
-				
+				std::cout << icount75 <<" "<< deltai75 << std::endl;				
 			}
 
 			// 28.07.2016.
-#if doubleintprecision == 1
-			//printf("%lld %e\n", icount75, deltai75);
-			//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-			//printf("%d %e\n", icount75, deltai75);
-			//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
+			//std::cout << icount75 <<" " << deltai75 << std::endl;
 			
 			//getchar();
 			if (deltai75 > delta_old_iter75) i_signal_break_pam_opening75++;
@@ -58733,12 +58744,7 @@ if (bweSholdbeContinue_arr) {
 			if (iVar == PAM) {
 				if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
 					// досрочный выход из цикла.
-#if doubleintprecision == 1
-					printf("icount PAM=%lld\n", icount75);
-#else
-					printf("icount PAM=%d\n", icount75);
-#endif
-					
+					std::cout << "icount PAM="<< icount75<< std::endl;					
 					break;
 				}
 			}
@@ -59321,9 +59327,9 @@ FULL_DIVERGENCE_DETECTED:
 	if (bprint_mesage_diagnostic) {
 		switch (iVar) {
 		case PAM: printf("PAM\n");  break;
-		case VX:  printf("VX\n"); break;
-		case VY:  printf("VY\n"); break;
-		case VZ:  printf("VZ\n"); break;
+		case VELOCITY_X_COMPONENT:  printf("VX\n"); break;
+		case VELOCITY_Y_COMPONENT:  printf("VY\n"); break;
+		case VELOCITY_Z_COMPONENT:  printf("VZ\n"); break;
 		case TEMP:  printf("TEMP\n"); break;
 		case TOTALDEFORMATIONVAR: printf("Stress system\n"); break;
 		}
@@ -59359,9 +59365,9 @@ FULL_DIVERGENCE_DETECTED:
 			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%lld  CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
-		case VX:  printf("VX level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VY:  printf("VY level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VZ:  printf("VZ level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_X_COMPONENT:  printf("VX level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Y_COMPONENT:  printf("VY level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Z_COMPONENT:  printf("VZ level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TEMP:  printf("TEMP level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TOTALDEFORMATIONVAR:  printf("Stress system level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e %lld %lld %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
@@ -59370,9 +59376,9 @@ FULL_DIVERGENCE_DETECTED:
 			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%d  CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
-		case VX:  printf("VX level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VY:  printf("VY level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VZ:  printf("VZ level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_X_COMPONENT:  printf("VX level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Y_COMPONENT:  printf("VY level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Z_COMPONENT:  printf("VZ level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TEMP:  printf("TEMP level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TOTALDEFORMATIONVAR:  printf("Stress system  level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e %d %d %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
@@ -59442,14 +59448,11 @@ FULL_DIVERGENCE_DETECTED:
 		F_false_C_true = nullptr;
 	}
 
-	if (diag != nullptr) {
-		delete[] diag;
-		diag = nullptr;
-	}
-	if (nested_desection != nullptr) {
-		delete[] nested_desection;
-		nested_desection = nullptr;
-	}
+	delete[] diag;
+	diag = nullptr;
+	
+	delete[] nested_desection;
+	nested_desection = nullptr;
 
 //#ifdef	_NONAME_STUB29_10_2017
 #ifdef _OPENMP
@@ -59499,29 +59502,20 @@ FULL_DIVERGENCE_DETECTED:
 		residual_fine[0] = nullptr;
 	}
 
-	//delete[] residual_fine;
-	if (residual_fine != nullptr) {
-		delete[] residual_fine;
-		residual_fine = nullptr;
-	}
+	
+	delete[] residual_fine;
+	residual_fine = nullptr;	
 
-	//delete[] error_approx_fine;
-	if (error_approx_fine != nullptr) {
-		delete[] error_approx_fine;
-		error_approx_fine = nullptr;
-	}
+	delete[] error_approx_fine;
+	error_approx_fine = nullptr;
+	
+	delete[] error_approx_coarse;
+	error_approx_coarse = nullptr;
+	
 
-	//delete[] error_approx_coarse;
-	if (error_approx_coarse != nullptr) {
-		delete[] error_approx_coarse;
-		error_approx_coarse = nullptr;
-	}
-
-	//delete[] residual_coarse;
-	if (residual_coarse != nullptr) {
-		delete[] residual_coarse;
-		residual_coarse = nullptr;
-	}
+	delete[] residual_coarse;
+	residual_coarse = nullptr;
+	
 
 	//delete[] row_ptr_start;
 	//delete[] row_ptr_end;
@@ -59573,10 +59567,10 @@ FULL_DIVERGENCE_DETECTED:
 	}
 
 
-	if (x_jacoby_buffer != nullptr) {
-		delete[] x_jacoby_buffer;
-		x_jacoby_buffer = nullptr;
-	}
+	
+	delete[] x_jacoby_buffer;
+	x_jacoby_buffer = nullptr;
+	
 
 	if (btree_vs_hash == 1) {
 		free_hash_table_Gus_struct01();
@@ -59662,7 +59656,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	doublerealT &theta, doublerealT &theta83, doublerealT &magic82, doublerealT &magic83, doublerealT &ret74,
 	integer iVar,
 	bool bmemory_savings,
-	integer imyinit = ZERO_INIT
+	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT
 	) {
 
 	bfirst_jacoby_start = true;
@@ -69322,9 +69316,8 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 	// 2 jan 2016. 
 	integer igam = 1; // 1-V; 2-W
-	//const integer ZERO_INIT = 0;
-	//const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
-	//const integer imyinit = ZERO_INIT; // ZERO_INIT optimum
+	// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
+	//const INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT; // ZERO_INIT optimum
 
 	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
@@ -69402,9 +69395,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	if (bprint_mesage_diagnostic) {
 		switch (iVar) {
 		case PAM: printf("PAM\n");  break;
-		case VX:  printf("VX\n"); break;
-		case VY:  printf("VY\n"); break;
-		case VZ:  printf("VZ\n"); break;
+		case VELOCITY_X_COMPONENT:  printf("VX\n"); break;
+		case VELOCITY_Y_COMPONENT:  printf("VY\n"); break;
+		case VELOCITY_Z_COMPONENT:  printf("VZ\n"); break;
 		case TEMP:  printf("TEMP\n"); break;
 		}
 	}
@@ -69421,9 +69414,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
-		case VX:  printf("VX level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VY:  printf("VY level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VZ:  printf("VZ level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_X_COMPONENT:  printf("VX level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Y_COMPONENT:  printf("VY level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Z_COMPONENT:  printf("VZ level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TEMP:  printf("TEMP level=%lld CopA=%e CopP=%e %lld %lld %lld %lld %lld\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
 #else
@@ -69431,9 +69424,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		case PAM: printf("PAM level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
-		case VX:  printf("VX level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VY:  printf("VY level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
-		case VZ:  printf("VZ level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_X_COMPONENT:  printf("VX level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Y_COMPONENT:  printf("VY level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case VELOCITY_Z_COMPONENT:  printf("VZ level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TEMP:  printf("TEMP level=%d CopA=%e CopP=%e %d %d %d %d %d\n", ilevel, dr_grid_complexity, (1.0*nnz_P_memo_all / n_a[0]), n_a[ilevel - 4], n_a[ilevel - 3], n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
 #endif
@@ -69519,7 +69512,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
 		// Для космических задач этот прерыватель просто необходим 14 октября 2016.
-		if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>125)) break;
+		if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>125)) break;
 
 
 		if (iter_limit == 5000) {
@@ -75249,6 +75242,7 @@ ilevel = ilevel_memo;
 } // classic_aglomerative_amg5
 
 
+
 /*
   // 9 декабря 2015 для 3D повидимому требуется АВЛ дерево, т.к. в 3D 
   // очень большое число соседей. Начинаем разработку такого кода.
@@ -75516,10 +75510,10 @@ integer main()
 			for (integer i = 1; i <= m; i++) {
 				for (integer j = 1; j <= m; j++) {
 					if ((i > 1) && (j > 1) && (i < m) && (j < m)) {
-						b[ic++] = 8.0*3.141*3.141*sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h)*h2;
+						b[ic++] = 8.0*M_PI*M_PI*sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h)*h2;
 					}
 					if (((i == m) && (j == m)) || ((i == m) && (j == 1)) || ((i == 1) && (j == m)) || ((i == 1) && (j == 1)) || ((i == 1) && (j > 1) && (j < m)) || ((i == m) && (j>1) && (j < m)) || ((j == 1) && (i>1) && (i < m)) || ((j == m) && (i>1) && (i < m))) {
-						b[ic++] = sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h);
+						b[ic++] = sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h);
 					}
 				}
 			}
@@ -75622,11 +75616,11 @@ integer main()
 				for (integer j = 1; j <= m; j++) {
 					for (integer k = 1; k <= m; k++) {
 						if ((i > 1) && (j > 1) && (k > 1) && (i < m) && (j < m) && (k < m)) {
-							b[ic++] = 16.0*3.141*3.141*3.141*sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h)*sin(2 * 3.141*(k - 1)*h)*h2*h;
+							b[ic++] = 16.0*M_PI*M_PI*M_PI*sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h)*sin(2 * M_PI*(k - 1)*h)*h2*h;
 						}
 						else {
 							//if (((i == m) && (j == m)) || ((i == m) && (j == 1)) || ((i == 1) && (j == m)) || ((i == 1) && (j == 1)) || ((i == 1) && (j>1) && (j < m)) || ((i == m) && (j>1) && (j < m)) || ((j == 1) && (i>1) && (i < m)) || ((j == m) && (i>1) && (i < m))) {
-							b[ic++] = sin(2 * 3.141*(k - 1)*h)*sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h);
+							b[ic++] = sin(2 *M_PI*(k - 1)*h)*sin(2 * M_PI*(i - 1)*h)*sin(2 *M_PI*(j - 1)*h);
 						}
 					}
 				}
@@ -76075,7 +76069,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	// тор Докторович 2.89
 	// Концевой 3.05
 	// Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-	// Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+	// Вывод: максимальное значение 3.15 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
 	// Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
 	// Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
 	// Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -76435,7 +76429,8 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 // Нет сходимости. Дата успешного подключения 24 сентября 2017.
 void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	doublereal* &dV, doublereal* &dX0,
-	QuickMemVorst& m, BLOCK* &b, integer &lb)
+	QuickMemVorst& m, BLOCK* &b, integer &lb, WALL* &w, integer &lw,
+	bool* &bondary)
 {
 
 	// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
@@ -76784,7 +76779,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	// тор Докторович 2.89
 	// Концевой 3.05
 	// Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-	// Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+	// Вывод: максимальное значение 3.15 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
 	// Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
 	// Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
 	// Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -76938,11 +76933,51 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	//char c7[2] = "P";
 	//handle_error<Ak1>(P, c7, c2, ((nsizePR * nnu) + 1));
 
+	
+
+
+	doublereal alpharelax = 1.0;
+
+	// Это не специальная нелинейная версия кода amg1r5 CAMG.
+	for (integer k = 0; k < lw; k++) {
+		if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+			(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
+			// 0.9999 - недостаточное значение, температуры не те получаются.
+		}
+	}
+
+	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
+		// 0.9999 - недостаточное значение, температуры не те получаются.
+	}
+
+
+	for (integer i = 0; i < n; i++) {
+
+		for (integer j = m.row_ptr[i]; j < m.row_ptr[i + 1]; j++) {
+			if (m.col_ind[j] == i) {
+				// диагональ.
+				if (((bondary != nullptr) && (!bondary[i])) &&
+					(m.row_ptr[i + 1] > m.row_ptr[i] + 1)) {
+					// Релаксация к предыдущему значению.
+
+					dV[i] += (1.0 - alpharelax) * m.val[j] * dX0[i] / alpharelax;
+
+					m.val[j] = (m.val[j] / alpharelax);
+				}
+
+				//debug
+				//std::cout << "col_buffer[j]=" << col_ind[j] << std::endl;
+				//system("pause");
+			}
+		}
+	}
+
+
 	// Блок инициализации нулём, возможно будет работоспособно и без него.
-
-
-
-
 
 	// начальное приближение.
 	for (integer i = 0; i < nnu; i++) {
@@ -76960,7 +76995,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		rthdsd_amg[i + id] = dV[i];
 	}
 
-
+	
 
 
 	// см. equation3DtoCRS.
@@ -77063,11 +77098,18 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		//bdivergence_detected = classic_aglomerative_amg4<doublereal>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings, b, lb, maxelm_out);
 	bdivergence_detected = classic_aglomerative_amg6<doublereal>(Amat, nsizeA, nna, nnu,  x_copy, rthdsd_amg,  ret74, iVar, bmemory_savings, b, lb, maxelm_out);
 
+	if (bdivergence_detected) {
+		printf("Recomended: Setup one thread and Gauss-Seidel smoother.\n");
+		printf("amg solver divergence detected...\n");
+		system("PAUSE");
+		exit(1);
+	}
+
 	//}
-//else {
-	//bdivergence_detected = classic_aglomerative_amg5<float>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, bamg_bound, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings);
-	//bdivergence_detected = classic_aglomerative_amg5<doublereal>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, bamg_bound, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings);
-//}
+    //else {
+	    //bdivergence_detected = classic_aglomerative_amg5<float>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, bamg_bound, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings);
+	    //bdivergence_detected = classic_aglomerative_amg5<doublereal>(Amat, nsizeA, nsizePR, nna, nnu, R, P, x_copy, rthdsd_amg, bamg_bound, theta82, theta83, magic82, magic83, ret74, iVar, bmemory_savings);
+    //}
 
 
 
@@ -77168,7 +77210,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	doublereal &theta82, doublereal &theta83, doublereal &magic82,
 	doublereal &magic83, doublereal &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	SOURCE* &s_loc, integer &ls)
+	SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw)
 {
 #ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -77276,7 +77318,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	res_sum = sqrt(res_sum);
 	printf("input diagnostic residual =%e\n",res_sum);
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 		if (res_sum > 20.0) {
 			printf("Speed diagnostic problem analysys....\n");
 		}
@@ -77297,7 +77339,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if ((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
+	if ((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 		// Надо пересобирать матрицу и запускать всё по новой т.к. задача 
 		// существенно нелинейна.
 
@@ -77657,7 +77699,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
         // тор Докторович 2.89
         // Концевой 3.05
         // Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-        // Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+        // Вывод: максимальное значение 3.15 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
         // Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
         // Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
         // Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -78151,7 +78193,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 			integer maxit = 2000;
 			bool bprintmessage = false;
 			integer* icol_stub = nullptr;
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, 100000000,icol_stub, 0, false);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, 100000000,icol_stub, 0, false,w,lw);
 		}
 		else
 		{
@@ -78503,7 +78545,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
 	doublereal &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE)
+	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE,
+	WALL* &w, integer &lw)
 {
 
 	
@@ -78541,7 +78584,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		bmemory_savings = true;
 		break;
 	}
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||(iVar == PAM)||(iVar==TEMP)||
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)||(iVar == PAM)||(iVar==TEMP)||
 		(iVar== NUSHA)||(iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		// 4.05.2019 Обнаружено что гидродинамические невязки неправильно
@@ -78631,7 +78674,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	res_sum = sqrt(res_sum);
 	printf("input diagnostic residual =%e\n", res_sum);
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 		if (res_sum > 20.0) {
 			printf("Speed diagnostic problem analysys....\n");
 		}
@@ -78657,7 +78700,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if ((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
+	if ((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 		// Надо пересобирать матрицу и запускать всё по новой т.к. задача 
 		// существенно нелинейна.
 
@@ -78673,8 +78716,30 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		//yes_print_amg=false;
 		//yes_print_amg = false;
 
+		
 
+		if (iVar == TEMP) {
 
+			
+
+			// Это не специальная нелинейная версия кода amg1r5 CAMG.
+			for (integer k = 0; k < lw; k++) {
+				if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+					(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+					alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
+					// 0.9999 - недостаточное значение, температуры не те получаются.
+				}
+			}
+			if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+				(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+				(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+				alpharelax = 0.99999;
+			}
+			//if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
+			//printf("ADIABATIC WALL BC"); getchar();
+			//}			
+
+		}
 
 
 		integer ierr = 0;
@@ -79021,7 +79086,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		 // тор Докторович 2.89
 		 // Концевой 3.05
 		 // Концевой со столбиком 3.7М 2.97 (6.0 у amg1r5) 4110.6Мb.
-		 // Вывод: максимальное значение 3.14 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
+		 // Вывод: максимальное значение 3.15 а значит значения 4 должно хватить с запасом У amg1r5 максимальное значение 9.0.
 		 // Можно сказать что данный amg требует вдвое меньше памяти по сравнению с amg1r5.
 		 // Была найдена статья в интернете которая подтверждала что константа памяти у amg1r5 равна 8.
 		 // Также был найден ряд статей в которых подтверждается констата близкая к 3 для CAMG.
@@ -79061,6 +79126,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			nsizePR = 12;
 		}
 
+#ifndef VISUAL_TUDIO_2008_COMPILLER
+
 		MEMORYSTATUSEX statex;
 		statex.dwLength = sizeof(statex);
 		GlobalMemoryStatusEx(&statex);
@@ -79071,6 +79138,10 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024*1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024*1024))* nnu) + 1) * sizeof(Ak1))),divisor);
 			//system("pause");
 		}
+#endif
+
+//system("PAUSE");
+
 
 		char c1[22] = "my_agr_amg_loc_memory";
 		char c2[5] = "Amat";
@@ -79192,7 +79263,26 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			//system("pause");
 
 			if (fabs(sl[k].ap) > nonzeroEPS) {
-				Amat.aij[ik + id] = sl[k].ap / alpharelax;
+				if (iVar == TEMP) {
+					if (bSIMPLErun_now_for_natural_convection) {
+						// Гидродинамическая задача при alpharelax=1.0;
+						Amat.aij[ik + id] = sl[k].ap / alpharelax;
+						rthdsd_amg[sl[k].iP + 1] = dV[sl[k].iP];
+					}
+					else {
+						// Теплопередача в твёрдом теле.
+						dV[sl[k].iP] += (1.0 - alpharelax)*sl[k].ap*dX0[sl[k].iP] / alpharelax;
+						rthdsd_amg[sl[k].iP + 1] = dV[sl[k].iP];
+						Amat.aij[ik + id] = sl[k].ap / alpharelax;
+						sl[k].ap = sl[k].ap / alpharelax;
+					}
+				}
+				else {
+					// Скорость давление.
+					Amat.aij[ik + id] = sl[k].ap / alpharelax;
+					rthdsd_amg[sl[k].iP + 1] = dV[sl[k].iP];
+				}
+
 				Amat.j[ik + id] = sl[k].iP + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
 				if (icompression != nullptr) {
@@ -79200,7 +79290,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				}
 				iscan1++;
 				bamg_bound[Amat.i[ik + id]] = false;
-				rthdsd_amg[sl[k].iP + 1] = dV[sl[k].iP];
+				
 				result_amg[sl[k].iP + 1] = dX0[sl[k].iP];
 				ik++;
 			}
@@ -79531,7 +79621,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			integer maxit = 2000;
 			bool bprintmessage = false;
 			integer* icol_stub = nullptr;
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, icol_stub, 0, false);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, icol_stub, 0, false, w, lw);
 		}
 		else
 		{

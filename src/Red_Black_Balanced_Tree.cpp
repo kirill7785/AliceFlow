@@ -11,9 +11,20 @@
 // 22.06.2018.
 
 class RBtree {
-	struct node_st { node_st* p1 = nullptr, * p2 = nullptr; data_BalTree value = data_BalTree(-1, -1); bool red = true; }; // структура узла
-	node_st* tree_root = nullptr;                 //!< корень
-	integer nodes_count = 0;                    //!< число узлов дерева
+	struct node_st { 
+		node_st* p1, * p2; 
+		data_BalTree value;
+		bool red; 
+	
+		node_st() {
+             p1 = nullptr;  p2 = nullptr; 
+		     value = data_BalTree(-1, -1);
+		     red = true; 
+		}
+	}; // структура узла
+	node_st* tree_root;                 //!< корень
+	integer nodes_count; //!< число узлов дерева
+
 private:
 	node_st* NewNode(data_BalTree value);        //!< выделение новой вершины
 	void DelNode(node_st*);             //!< удаление вершины

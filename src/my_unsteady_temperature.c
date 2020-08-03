@@ -25,7 +25,10 @@
 void report_temperature(integer flow_interior,
 	FLOW* &fglobal, TEMPER &t,
 	BLOCK* b, integer lb, SOURCE* s, integer ls,
-	WALL* w, integer lw, integer ipref) {
+	WALL* w, integer lw, integer ipref, TPROP* matlist) {
+
+	doublereal pdiss = 0.0; // Суммарная тепловая мощность в Вт.
+	doublereal tmin1 = 1.0e30, tmax1 = -1.0e30; // Минимальная и максимальная температура в расчётной области.
 
 	doublereal* tmaxreportblock = nullptr;
 		tmaxreportblock = new doublereal[lb];
@@ -193,10 +196,10 @@ void report_temperature(integer flow_interior,
 
 #ifdef MINGW_COMPILLER
 		err = 0;
-		fp=fopen64(name, "w");
+		fp=fopen64(name, "a");
 		if (fp == NULL) err = 1;
 #else
-		err = fopen_s(&fp, name, "w");
+		err = fopen_s(&fp, name, "a");
 #endif
 
 		
@@ -214,17 +217,402 @@ void report_temperature(integer flow_interior,
 
 				name = nullptr;
 
-				fprintf(fp, "temperature, °C   power, W\n");
+				fprintf(fp, "object_name temperature, °C   power, W\n");
 				for (integer i = 0; i < lb; i++) {
 					doublereal Vol = fabs((b[i].g.xE - b[i].g.xS)*(b[i].g.yE - b[i].g.yS)*(b[i].g.zE - b[i].g.zS));
-					//fprintf(fp, "%e %e\n", tmaxreportblock[i], b[i].Sc*(Vol));
-					fprintf(fp, "%e %e\n", tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])*(Vol));
+					if (i == 0) {
+						// cabinet (кабинет).
+						if (tmaxreportblock[0] < -1.0e26) {
+							fprintf(fp, "%-30s \n", b[i].name);
+						}
+						else {
+							pdiss += get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol);
+							if (tmaxreportblock[i] < tmin1) tmin1 = tmaxreportblock[i];
+							if (tmaxreportblock[i] > tmax1) tmax1 = tmaxreportblock[i];
+							fprintf(fp, "%-30s %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])* (Vol));
+						}
+					}
+					else {
+						if (b[i].itype == HOLLOW) {
+							fprintf(fp, "%-30s HOLLOW Type\n", b[i].name);
+						}
+						else {
+							pdiss += get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol);
+							if (tmaxreportblock[i] < tmin1) tmin1 = tmaxreportblock[i];
+							if (tmaxreportblock[i] > tmax1) tmax1 = tmaxreportblock[i];
+							//fprintf(fp, "%-30s %e %e\n", b[i].name, tmaxreportblock[i], b[i].Sc*(Vol));
+							fprintf(fp, "%-30s %e %e\n", b[i].name, tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i]) * (Vol));
+						}
+					}
 				}
 				for (integer i = 0; i < ls; i++) {
-					fprintf(fp, "%e %e\n", tmaxreportsource[i], s[i].power);
+					pdiss += s[i].power;
+					if (tmaxreportsource[i] < tmin1) tmin1 = tmaxreportsource[i];
+					if (tmaxreportsource[i] > tmax1) tmax1 = tmaxreportsource[i];
+					fprintf(fp, "%-30s %e %e\n", s[i].name, tmaxreportsource[i], s[i].power);
 				}
 				for (integer i = 0; i < lw; i++) {
-					fprintf(fp, "%e %e\n", tmaxreportwall[i], 0.0);
+					if (tmaxreportwall[i] < tmin1) tmin1 = tmaxreportwall[i];
+					if (tmaxreportwall[i] > tmax1) tmax1 = tmaxreportwall[i];
+					fprintf(fp, "%-30s %e %e\n", w[i].name, tmaxreportwall[i], 0.0);
+				}
+
+				fprintf(fp, "\n\n Power dissipation=%e W\n", pdiss);
+				fprintf(fp, "Minimum temperature in default\n interior is equal = %e °C\n", tmin1);
+				fprintf(fp, "Maximum temperature in default\n interior is equal = %e °C\n", tmax1);
+
+				doublereal massa=massa_cabinet(t, f,  flow_interior,
+					b, lb, t.operatingtemperature,
+					matlist);
+
+				fprintf(fp, "\n\n massa = %e kg\n", massa);
+
+
+				{
+
+					fprintf(fp, "\n\n");
+
+					integer* number_control_volume_on_wall = new integer[lw];
+					doublereal* wall_power = new doublereal[lw];
+					for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+						wall_power[iwall_scan] = 0.0;
+						number_control_volume_on_wall[iwall_scan] = 0;
+						for (integer j = 0; j < t.maxbound; j++) {
+
+							if (t.border_neighbor[j].MCB == (ls + iwall_scan)) {
+
+								number_control_volume_on_wall[iwall_scan]++;
+
+								integer iP = t.border_neighbor[j].iI;// fglobal[0].maxelm + j;
+
+								TOCHKA p;
+								center_cord3D(iP, t.nvtx, t.pa, p, 100);
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;
+								volume3D(iP, t.nvtx, t.pa, dx, dy, dz);
+								dx = fabs(dx);
+								dy = fabs(dy);
+								dz = fabs(dz);
+								doublereal dx1 = 0.0, dy1 = 0.0, dz1 = 0.0;
+								volume3D(t.border_neighbor[j].iII, t.nvtx, t.pa, dx1, dy1, dz1);
+								dx1 = fabs(dx1);
+								dy1 = fabs(dy1);
+								dz1 = fabs(dz1);
+								integer ib; // номер искомого блока
+								in_model_temp(p, ib, b, lb);
+
+								doublereal lam = t.prop[LAM][iP]; // значения не используются но требуются
+								doublereal temperature_i = t.potent[iP]; // но на самом деле давление требуется с предыдущего временного слоя.
+								doublereal temperature_ii = t.potent[t.border_neighbor[j].iII];
+								doublereal temperature_w = t.potent[t.border_neighbor[j].iB];
+
+								switch (w[iwall_scan].iPlane) {
+								case XY_PLANE: if (t.border_neighbor[j].Norm == T_SIDE) {// Низ, внутренняя номаль.
+									//+ втекает
+									if (fabs((lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1))) >
+										fabs((lam * (temperature_i - temperature_w) * dx * dy) / (0.5 * (dz)))) {
+										wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1));
+									}
+									else {
+										wall_power[iwall_scan] += (lam * (temperature_i - temperature_w) * dx * dy) / (0.5 * (dz));
+									}
+								}
+											 if (t.border_neighbor[j].Norm == B_SIDE) {// Верх, внутренняя номаль.
+												 //+ втекает
+												 if (fabs((lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1))) >
+													 fabs((lam * (temperature_i - temperature_w) * dx * dy) / (0.5 * (dz)))) {
+													 wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dy) / (0.5 * (dz + dz1));
+												 }
+												 else {
+													 wall_power[iwall_scan] += (lam * (temperature_i - temperature_w) * dx * dy) / (0.5 * (dz));
+												 }
+											 }
+											 break;
+								case XZ_PLANE:
+									if (t.border_neighbor[j].Norm == N_SIDE) {// Юг, внутренняя номаль.
+										//+ втекает
+										if (fabs((lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1))) >
+											fabs((lam * (temperature_i - temperature_w) * dx * dz) / (0.5 * (dy)))) {
+											wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1));
+										}
+										else {
+											wall_power[iwall_scan] += (lam * (temperature_i - temperature_w) * dx * dz) / (0.5 * (dy));
+										}
+									}
+									if (t.border_neighbor[j].Norm == S_SIDE) {// Север, внутренняя номаль.
+										//+ втекает
+										if (fabs((lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1))) >
+											fabs((lam * (temperature_i - temperature_w) * dx * dz) / (0.5 * (dy)))) {
+											wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dx * dz) / (0.5 * (dy + dy1));
+										}
+										else {
+											wall_power[iwall_scan] += (lam * (temperature_i - temperature_w) * dx * dz) / (0.5 * (dy));
+										}
+									}
+									break;
+								case YZ_PLANE:  if (t.border_neighbor[j].Norm == E_SIDE) {// запад, внутренняя номаль.
+									//+ втекает
+									if (fabs((lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1))) >
+										fabs((lam * (temperature_i - temperature_w) * dy * dz) / (0.5 * (dx)))) {
+										wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1));
+									}
+									else {
+										wall_power[iwall_scan] += (lam * (temperature_i - temperature_w) * dy * dz) / (0.5 * (dx));
+									}
+								}
+											 if (t.border_neighbor[j].Norm == W_SIDE) {// Восток, внутренняя номаль.
+												 //+ втекает
+												 if (fabs((lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1))) >
+													 fabs((lam * (temperature_i - temperature_w) * dy * dz) / (0.5 * (dx)))) {
+													 wall_power[iwall_scan] += (lam * (temperature_ii - temperature_i) * dy * dz) / (0.5 * (dx + dx1));
+												 }
+												 else {
+													 wall_power[iwall_scan] += (lam * (temperature_i - temperature_w) * dy * dz) / (0.5 * (dx));
+												 }
+											 }
+											 break;
+								}
+							}
+						}
+					}
+
+					printf("\n");
+					for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+						fprintf(fp, "wall[%d].name = %s power is %e W. Number control volume in wall=%lld\n", iwall_scan, w[iwall_scan].name, wall_power[iwall_scan], number_control_volume_on_wall[iwall_scan]);
+					}
+
+					delete[] number_control_volume_on_wall;
+					delete[] wall_power;
+
+					int idlw = 0;
+					if (lw > 0) {
+						for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+							if (w[iwall_scan].bpressure) idlw = 1;
+							if (w[iwall_scan].bopening) idlw = 1;
+						}
+					}
+
+					if (idlw > 0) {
+						fprintf(fp, "\n");
+						fprintf(fp, "\n        rashod m!3/s;  rashod kg/s;  Power out, W;  type wall out; delta Tavg_wall, °C; Tmax_wall, °C.\n");
+					}
+
+					doublereal Tamb0 = 1.0e30;// Tamb; // Tamb
+					for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+						// Определяем минимальную заданную температуру.
+						if ((!w[iwall_scan].bpressure) && (!w[iwall_scan].bsymmetry)) {
+							if (w[iwall_scan].ifamily == DIRICHLET_FAMILY) {
+								Tamb0 = fmin(Tamb0, w[iwall_scan].Tamb);
+							}
+						}
+					}
+					if (Tamb0 > 1.0e10) Tamb0 = fglobal[0].OpTemp;
+
+					doublereal cp = 0.0;
+
+					for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+
+						doublereal Tmax_wall = -1.0e30;
+
+						//if (iwall_scan == 0) printf("\n");
+
+						if (w[iwall_scan].bpressure) {
+							doublereal rashod = 0.0; // m!3/s
+							doublereal rashod2 = 0.0; // kg/s
+													  // Мощность в Вт которая уносится через выходную границу потока.
+													  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосъёма
+													  // если внутри области заданы только условия Дирихле по температуре.
+							doublereal Qout = 0.0; // Вт
+							for (integer j = 0; j < fglobal[0].maxbound; j++) {
+
+								if (fglobal[0].border_neighbor[j].MCB == (ls + iwall_scan)) {
+
+									integer iP = fglobal[0].border_neighbor[j].iI;// fglobal[0].maxelm + j;
+
+									TOCHKA p;
+									center_cord3D(iP, fglobal[0].nvtx, fglobal[0].pa, p, 100);
+									integer ib; // номер искомого блока
+									in_model_flow(p, ib, b, lb);
+
+									doublereal rho, mu, beta_t, lam; // значения не используются но требуются
+									doublereal pressure = fglobal[0].potent[PRESS][iP]; // но на самом деле давление требуется с предыдущего временного слоя.
+									my_fluid_properties(t.potent[fglobal[0].ptr[iP]], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
+									Tmax_wall = fmax(Tmax_wall, t.potent[fglobal[0].ptr[iP]]);
+
+									// Внимание!!! fglobal[0].prop_b[HEAT_CAPACITY][j] использовать нельзя, т.к. для fluid это не определено.
+
+
+									switch (w[iwall_scan].iPlane) {
+									case XY_PLANE:
+										// Нормаль внутренняя
+										// Расход: то что вытекает то с плюсом.
+										if (fglobal[0].border_neighbor[j].Norm == T_SIDE) {
+											rashod += -fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											rashod2 += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											Qout += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+
+										}
+										else {
+											rashod += fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											rashod2 += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											Qout += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										break;
+									case XZ_PLANE:
+										// Нормаль внутренняя
+										// Расход: то что вытекает то с плюсом.
+										if (fglobal[0].border_neighbor[j].Norm == N_SIDE) {
+											rashod += -fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											rashod2 += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											Qout += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										else {
+											rashod += fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											rashod2 += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											Qout += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										break;
+									case YZ_PLANE:
+										// Нормаль внутренняя
+										// Расход: то что вытекает то с плюсом.
+										if (fglobal[0].border_neighbor[j].Norm == E_SIDE) {
+											rashod += -fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											rashod2 += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											Qout += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+
+										}
+										else {
+											rashod += fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											rashod2 += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											Qout += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										break;
+									}
+								}
+							}
+
+							//printf("wall[%lld] out of boundary (bpressure==true).\n", iwall_scan);
+							//printf("rashod = %e m!3/s; rashod = %e kg/s; Power out = %e W, Tavg_wall= %e, Tmax_wall= %e. \n", rashod, rashod2, Qout, Qout / (cp*rashod2), Tmax_wall);
+							if (rashod > 0) {
+								fprintf(fp, "wall[%d]  %e  %e %e bpressure %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp * rashod2)), Tmax_wall);
+							}
+							else {
+								fprintf(fp, "wall[%d] %e %e  %e bpressure %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp * rashod2)), Tmax_wall);
+							}
+						}
+						if (w[iwall_scan].bopening) {
+							doublereal rashod = 0.0; // m!3/s
+							doublereal rashod2 = 0.0; // kg/s
+													  // Мощность в Вт которая уносится через выходную границу потока.
+													  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосъёма
+													  // если внутри области заданы только условия Дирихле по температуре.
+							doublereal Qout = 0.0; // Вт
+							for (integer j = 0; j < fglobal[0].maxbound; j++) {
+
+								if (fglobal[0].border_neighbor[j].MCB == (ls + iwall_scan)) {
+
+									integer iP = fglobal[0].border_neighbor[j].iI;// fglobal[0].maxelm + j;
+
+
+
+									TOCHKA p;
+									center_cord3D(iP, fglobal[0].nvtx, fglobal[0].pa, p, 100);
+									integer ib; // номер искомого блока
+									in_model_flow(p, ib, b, lb);
+
+									doublereal rho, mu, beta_t, lam; // значения не используются но требуются
+									doublereal pressure = fglobal[0].potent[PRESS][iP]; // но на самом деле давление требуется с предыдущего временного слоя.
+									my_fluid_properties(t.potent[fglobal[0].ptr[iP]], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
+									Tmax_wall = fmax(Tmax_wall, t.potent[fglobal[0].ptr[iP]]);
+
+									// 1 - minx, 2-maxx; 3 - miny, 4-maxy; 5 - minz, 6-maxz;
+									//if ((iwall_scan == 2)||(iwall_scan == 5)) {
+										//printf("iP=%ld rho=%e cp=%e ptr=%d T=%e iPlane=%d Norm=%d\n", iP,rho,cp, fglobal[0].ptr[iP], t.potent[fglobal[0].ptr[iP]], w[iwall_scan].iPlane, fglobal[0].border_neighbor[j].Norm);
+										//printf("xE=%e xS=%e\n", w[iwall_scan].g.xE, w[iwall_scan].g.xS);
+										//getchar();
+									//}
+
+									// Внимание!!! fglobal[0].prop_b[HEAT_CAPACITY][j] использовать нельзя, т.к. для fluid это не определено.
+
+									//printf("HEAT_CAPACITY=%e\n", cp); // debug
+									//system("pause"); // debug
+
+									switch (w[iwall_scan].iPlane) {
+									case XY_PLANE:
+										// Нормаль внутренняя
+										// Расход: то что вытекает то с плюсом.
+										if (fglobal[0].border_neighbor[j].Norm == T_SIDE) {
+											rashod += -fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											rashod2 += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											Qout += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+
+										}
+										else {
+											//printf("VZ=%e dS=%e BSIDE internal normal TOP boundary\n", fglobal[0].potent[VZCOR][fglobal[0].maxelm + j], fglobal[0].border_neighbor[j].dS);
+											//if (j % 10 == 0) system("pause");
+											rashod += fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											rashod2 += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j];
+											Qout += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VZCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										break;
+									case XZ_PLANE:
+										// Нормаль внутренняя
+										// Расход: то что вытекает то с плюсом.
+										if (fglobal[0].border_neighbor[j].Norm == N_SIDE) {
+											rashod += -fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											rashod2 += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											Qout += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										else {
+											rashod += fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											rashod2 += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j];
+											Qout += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VYCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										break;
+									case YZ_PLANE:
+										// Нормаль внутренняя
+										// Расход: то что вытекает то с плюсом.
+										if (fglobal[0].border_neighbor[j].Norm == E_SIDE) {
+											rashod += -fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											rashod2 += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											Qout += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+
+										}
+										else {
+											rashod += fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											rashod2 += fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j];
+											Qout += -fglobal[0].prop_b[RHO][j] * fglobal[0].border_neighbor[j].dS * fglobal[0].potent[VXCOR][fglobal[0].maxelm + j] *
+												cp * (t.potent[fglobal[0].ptr[fglobal[0].border_neighbor[j].iI]] - Tamb0);
+										}
+										break;
+									}
+								}
+							}
+
+							//printf("wall[%lld] out of boundary (bopening==true).\n", iwall_scan);
+							//printf("rashod = %e m!3/s; rashod = %e kg/s; Power out = %e W, Tavg_wall= %e, Tmax_wall= %e. \n", rashod, rashod2, Qout, Qout / (cp*rashod2), Tmax_wall);
+							if (rashod > 0) {
+								fprintf(fp, "wall[%d]  %e  %e %e bopening  %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp * rashod2)), Tmax_wall);
+							}
+							else {
+								fprintf(fp, "wall[%d] %e %e  %e bopening  %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp * rashod2)), Tmax_wall);
+							}
+						}
+					}
+					if (idlw > 0) {
+						printf("\n");
+					}
+
 				}
 
 				fclose(fp);
@@ -1237,7 +1625,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 			printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 			if (ir > il) {
 				// если узел t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1247,7 +1635,7 @@ void calculate_color_for_temperature_new(integer* &color, TEMPER t, integer inx,
 			}
 			else if (ir < il) {
 				// если узел t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1353,7 +1741,7 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 			printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 			if (ir > il) {
 				// если узел t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1363,7 +1751,7 @@ void calculate_color_for_temperature_old(integer* &color, TEMPER t) {
 			}
 			else if (ir < il) {
 				// если узел t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-				integer icP = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+				integer icP = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 				if ((icP >= 0) && (icP < t.maxelm)) {
 					iP = icP;
 				}
@@ -1757,7 +2145,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				bool btimedep = true; // нестационарный солвер
 				if (bsecond_T_solver) {
 					solve_Thermal(t, fglobal, matlist,
-						w, lw, lu, b, lb,
+						w, lw, lu, b, lb, ls, 
 						my_memory_bicgstab,
 						false, operatingtemperature,
 						// для нестационарного температурного моделирования 10.11.2018
@@ -1795,9 +2183,37 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						}
 					}
 
-					if ((glTSL.id_law == 2) && (j == 1039)) {
+					if ((glTSL.id_law == 2) && ((j == 220) || (j == 490) || (j == 760) || (j == 1039))) {
 						// 29_11_2017
-						// Достигнут момент конца 6 включения на четвёртые сутки.
+						// Достигнут момент конца 6 включения на 1, 2, 3, 4 сутки.
+						if (!b_on_adaptive_local_refinement_mesh) {
+							bool bextendedprint_1 = false;
+							exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b);
+						}
+						else {
+							// Экспорт в АЛИС
+							// Экспорт в программу tecplot температуры.
+							//С АЛИС сетки.
+							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 1, b, lb);
+						}
+					}
+					if ((glTSL.id_law == 2) && ((j == 1300) || (j == 1570) || (j == 1840) || (j == 2110))) {
+						// 29_11_2017
+						// Достигнут момент конца 6 включения на 5, 6, 7, 8 сутки.
+						if (!b_on_adaptive_local_refinement_mesh) {
+							bool bextendedprint_1 = false;
+							exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b);
+						}
+						else {
+							// Экспорт в АЛИС
+							// Экспорт в программу tecplot температуры.
+							//С АЛИС сетки.
+							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 1, b, lb);
+						}
+					}
+					if ((glTSL.id_law == 2) && ((j == 2380) || (j == 2650) || (j==2920)||(j == 3190))) {
+						// 30_07_2020
+						// Достигнут момент конца 6 включения на 9, 10, 11, 12 сутки.
 						if (!b_on_adaptive_local_refinement_mesh) {
 							bool bextendedprint_1 = false;
 							exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b);
@@ -2130,6 +2546,4068 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 } // unsteady_temperature_calculation
 
 
+  // 24.06.2020 - начало разработки.
+  // Графовый метод решения стационарного уравнения теплопередачи.
+  // 27.06.2020 Поддерживается АЛИС.
+  // 29.06.2020 -12.07.2020 Нестационарная версия алгоритма.
+void calculate_Network_T_unsteady(TEMPER& t, FLOW* &fglobal,
+	BLOCK*& b, integer& lb,
+	WALL*& w, integer& lw,
+	SOURCE* &s, integer& ls, TPROP* &matlist)
+{
+
+	bool b_first_start_matrix_print = true;
+
+	// Объект source использовать нельзя !!!
+
+	// Замер времени.
+	unsigned int calculation_start_time = 0; // начало счёта мс.
+	unsigned int calculation_end_time = 0; // окончание счёта мс.
+	unsigned int calculation_seach_time = 0; // время выполнения участка кода в мс.
+
+	calculation_start_time = clock(); // момент начала счёта.
+
+	doublereal* Vol_block = new doublereal[lb]; // Объём блока с учётом его сложной формы и вырезов.
+	bool* block_is_active = new bool[lb]; // только активные блоки (true). Если один блок полностью перекрыт другим то он (false). cabinet всегда false.
+	for (integer i_4 = 0; i_4 < lb; i_4++) {
+		block_is_active[i_4] = false;
+		Vol_block[i_4] = 0.0;
+	}
+	for (integer i_4 = 0; i_4 < t.maxelm; i_4++) {
+		block_is_active[t.whot_is_block[i_4]] = true;
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0; // объём текущего контрольного объёма
+		volume3D(i_4, t.nvtx, t.pa, dx, dy, dz);
+		Vol_block[t.whot_is_block[i_4]] += dx*dy*dz;
+	}
+	block_is_active[0] = false;
+
+	integer maxelm = 0;
+	for (integer i = 1; i < lb; i++) {
+		if ((b[i].itype != HOLLOW) && (block_is_active[i])) maxelm++;
+	}
+	integer* id = new integer[maxelm + lw];
+	integer* id_reverse = new integer[lb + lw];
+	integer* wall2block_link = new integer[lw];
+	integer ic = 0;
+	for (integer i = 1; i < lb; i++) {
+		if ((b[i].itype != HOLLOW) && (block_is_active[i])) {
+			id[ic] = i; // идентификатор блока.
+			id_reverse[i] = ic;
+			ic++;
+		}
+	}
+	for (integer i = 0; i < lw; i++) {
+		id[ic] = i; // идентификатор стенки.
+		id_reverse[lb + i] = ic;
+		ic++;
+		wall2block_link[i] = -1; // инициализация.
+	}
+
+	integer* icount_internal_nodes = new integer[lb];
+	for (integer i_1 = 0; i_1 < lb; i_1++) {
+		icount_internal_nodes[i_1] = 0;
+	}
+
+	for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+		// Количество ячеек в данном блоке.
+		icount_internal_nodes[t.whot_is_block[j_1]]++;
+	}
+
+	integer** number_control_volume_list = new integer*[lb];
+	for (integer i_1 = 0; i_1 < lb; i_1++) {
+		number_control_volume_list[i_1] = new integer[icount_internal_nodes[i_1]];
+	}
+
+	for (integer i_1 = 0; i_1 < lb; i_1++) {
+		icount_internal_nodes[i_1] = 0;
+	}
+
+	for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+		// Количество ячеек в данном блоке.
+		number_control_volume_list[t.whot_is_block[j_1]][icount_internal_nodes[t.whot_is_block[j_1]]] = j_1;
+		icount_internal_nodes[t.whot_is_block[j_1]]++;
+	}
+
+	bool* hash = new bool[lb];
+	bool* hash_wall = new bool[lw];
+	integer** ilink = new integer *[maxelm + lw];
+	integer** ilink_reverse = new integer *[maxelm + lw];
+	doublereal** dS = new doublereal *[maxelm + lw];
+	integer* inumber_neighbour = new integer[maxelm + lw];
+	integer* inumber_neighbour_only_body = new integer[maxelm + lw];
+	for (integer i = 0; i < maxelm + lw; i++) {
+		inumber_neighbour[i] = 0;// нет соседей.
+		inumber_neighbour_only_body[i] = 0;// нет соседей среди соседних блоков.
+		ilink[i] = nullptr;
+		ilink_reverse[i] = nullptr;
+		dS[i] = nullptr;
+	}
+	ic = 0;
+	for (integer i = 1; i < lb; i++) {
+		if ((b[i].itype != HOLLOW) && (block_is_active[i])) {
+			for (integer j_1 = 0; j_1 < lb; j_1++) {
+				hash[j_1] = false;
+			}
+			for (integer j_1 = 0; j_1 < lw; j_1++) {
+				hash_wall[j_1] = false;
+			}
+			hash[0] = true;
+			hash[i] = true;
+			integer ic1 = 0;
+			// Находим количество соседей блока i, в массиве id он имеет номер ic.
+			//for (integer j_1 = 0; j_1 < t.maxelm; j_1++) 
+			for (integer j_7=0; j_7< icount_internal_nodes[i]; j_7++)
+			{
+				integer j_1 = number_control_volume_list[i][j_7];
+				if (t.whot_is_block[j_1] == i)
+				{
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ic1++;
+							}
+						}
+					}
+
+
+				}
+			}
+			integer ic_block = ic1;
+			//printf("Number of count block 2 block neighbours %lld.\n",ic1);
+			//system("PAUSE");
+			inumber_neighbour_only_body[ic] = ic_block;
+			// Стенки с условием Дирихле, Ньютона-Рихмана или Стефана-Больцмана.
+			//for (integer j_1 = 0; j_1 < t.maxelm; j_1++)
+			for (integer j_7 = 0; j_7 < icount_internal_nodes[i]; j_7++)
+			{
+				integer j_1 = number_control_volume_list[i][j_7];
+				if (t.whot_is_block[j_1] == i) {
+					//стенки 
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ic1++;
+							}
+						}
+					}
+
+				}
+			}
+
+			//printf("Number of count block 2 block and wall neighbours %lld.\n", ic1);
+			//system("PAUSE");
+			ilink[ic] = new integer[ic1];
+			for (integer j_1 = 0; j_1 < ic1; j_1++) {
+				ilink[ic][j_1] = -1; // инициализация несуществующим индексом.
+			}
+			// обратное преобразование требует проиндексировать все блоки и все стенки.
+			ilink_reverse[ic] = new integer[lb + lw + 1];
+			for (integer j_1 = 0; j_1 < lb + lw + 1; j_1++) {
+				ilink_reverse[ic][j_1] = -1;// инициализация несуществующим индексом.
+			}
+
+			inumber_neighbour[ic] = ic1; // количество блоков соседей.
+			for (integer j_1 = 0; j_1 < lb; j_1++) {
+				hash[j_1] = false;
+			}
+
+			hash[0] = true;
+			hash[i] = true;
+			ic1 = 0;
+			// Записываем всех соседей блока i, в массиве id он имеет номер ic.
+			//for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+			for (integer j_7 = 0; j_7 < icount_internal_nodes[i]; j_7++)
+			{
+				integer j_1 = number_control_volume_list[i][j_7];
+				if (t.whot_is_block[j_1] == i) {
+
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						if (hash[t.whot_is_block[i_1]] == false) {
+							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+								hash[t.whot_is_block[i_1]] = true;
+								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
+								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
+								ic1++;
+							}
+						}
+					}
+				}
+			}
+
+			//printf("Additional internal neighbourhuuds on block %lld.\n", ic1);
+			//system("PAUSE");
+
+			for (integer j_1 = 0; j_1 < lw; j_1++) {
+				hash_wall[j_1] = false;
+			}
+
+			ic_block = ic1;
+			// Стенки с условием Дирихле, Ньютона-Рихмана или Стефана-Больцмана.
+			//for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+			for (integer j_7 = 0; j_7 < icount_internal_nodes[i]; j_7++)
+			{
+				integer j_1 = number_control_volume_list[i][j_7];
+				if (t.whot_is_block[j_1] == i) {
+					//стенки 
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							// стенка с условием Дирихле.
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле которая еще не встречалась.
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
+								// Это стенка с условием Дирихле
+								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
+								ilink[ic][ic1] = t.border_neighbor[inumber].MCB - ls;
+								ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls] = ic1;
+								wall2block_link[t.border_neighbor[inumber].MCB - ls] = i;// идентификатор блока с которым связана стенка.
+								ic1++;
+							}
+						}
+					}
+
+				}
+			}
+
+			//printf("Additional internal and boundary neighbourhuuds on block %lld.\n", ic1);
+			//system("PAUSE");
+
+			dS[ic] = new doublereal[ic1];
+			for (integer j_1 = 0; j_1 < ic1; j_1++) {
+				dS[ic][j_1] = 0.0; // инициализация
+			}
+
+			// Вычисление общей площади контакта у блоков.
+			//for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+			for (integer j_7 = 0; j_7 < icount_internal_nodes[i]; j_7++)
+			{
+				integer j_1 = number_control_volume_list[i][j_7];
+
+				if (t.whot_is_block[j_1] == i) {
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "E_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "E_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "E_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "E_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "E_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "E_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "E_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "E_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "W_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "W_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "W_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "W_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "W_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "W_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "W_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "W_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hy * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "N_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "N_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "N_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "N_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "N_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "N_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "N_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "N_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "S_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "S_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "S_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "S_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "S_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "S_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "S_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "S_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hz;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "T_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "T_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "T_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "T_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "T_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "T_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "T_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "T_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "B_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "B_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "B_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "B_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "B_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "B_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+					if ((t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 > -1) &&
+						(t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 < t.maxelm))
+					{
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						if ((t.whot_is_block[i_1] != i) && (t.whot_is_block[i_1] != 0) && (block_is_active[t.whot_is_block[i_1]])) {
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] == -1)
+							{
+								std::cout << "B_SIDE problem ilink_reverse block2block" << std::endl;
+								system("PAUSE");
+							}
+							if (ilink_reverse[ic][t.whot_is_block[i_1]] > ic1) {
+								std::cout << "B_SIDE problem ilink_reverse block2block ic1 limit" << std::endl;
+								system("PAUSE");
+							}
+							dS[ic][ilink_reverse[ic][t.whot_is_block[i_1]]] += hx * hy;
+						}
+					}
+
+					// Стенки.
+
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hy * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							//std::cout << "ic_block = " << ic_block << "; t.border_neighbor[inumber].MCB=" << t.border_neighbor[inumber].MCB << "; ls=" << ls << std::endl;
+							//std::cout << "inumber_neighbour[ic]=" << inumber_neighbour[ic]<<std::endl;
+							//getchar();
+							//dS[ic][ilink_reverse[ic][ic_block + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							//std::cout << "ic_block = " << ic_block << "; t.border_neighbor[inumber].MCB=" << t.border_neighbor[inumber].MCB << "; ls=" << ls << std::endl;
+							//std::cout << "inumber_neighbour[ic]=" << inumber_neighbour[ic]<<std::endl;
+							//getchar();
+							//dS[ic][ilink_reverse[ic][ic_block + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							//std::cout << "ic_block = " << ic_block << "; t.border_neighbor[inumber].MCB=" << t.border_neighbor[inumber].MCB << "; ls=" << ls << std::endl;
+							//std::cout << "inumber_neighbour[ic]=" << inumber_neighbour[ic]<<std::endl;
+							//getchar();
+							//dS[ic][ilink_reverse[ic][ic_block + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							//std::cout << "ic_block = " << ic_block << "; t.border_neighbor[inumber].MCB=" << t.border_neighbor[inumber].MCB << "; ls=" << ls << std::endl;
+							//std::cout << "inumber_neighbour[ic]=" << inumber_neighbour[ic]<<std::endl;
+							//getchar();
+							//dS[ic][ilink_reverse[ic][ic_block + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hz;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+					if (t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4 >= t.maxelm) {
+						// граничный узел
+						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
+						integer inumber = i_1 - t.maxelm;
+						// идентификатор граничного узла.
+						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
+							(t.border_neighbor[inumber].MCB >= ls) &&
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
+							(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)
+								|| (w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+						{
+							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+							dS[ic][ilink_reverse[ic][lb + t.border_neighbor[inumber].MCB - ls]] += hx * hy;
+						}
+
+					}
+
+				}
+			}
+
+			//printf("Square calculate Ok.");
+			//system("PAUSE");
+
+			ic++;
+		}
+	}
+
+
+	delete[] icount_internal_nodes;
+
+	for (integer i_1 = 0; i_1 < lb; i_1++) {
+		delete[] number_control_volume_list[i_1];
+	}
+	delete[] number_control_volume_list;
+
+	doublereal* potent = new doublereal[maxelm + lw]; // вектор решения.
+	doublereal* rthdsd = new doublereal[maxelm + lw]; // правая часть.
+
+
+	bool bmyconvective = false;
+
+
+	// при тестировании рекомендуется обязательно печатать.
+	bool bprintmessage = true; // печатать ли сообщения на консоль.
+
+	doublereal Tamb = t.operatingtemperature; // комнатная температура
+											//printf("Tamb==%e\n",Tamb);
+											//getchar(); // debug;
+	doublereal* toldtimestep = nullptr;
+
+	toldtimestep = new doublereal[maxelm + lw]; // поле температур на предыдущем временном слое
+												//integer i=0; // счётчик цикла for
+	for (integer i = 0; i < maxelm + lw; i++) {
+		potent[i] = Tamb; // инициализация
+		toldtimestep[i] = potent[i]; // copy
+	}
+
+	integer iN = 0; // количество шагов по времени
+	doublereal* timestep_sequence = nullptr; // последовательность шагов по времени.
+											 // информация о подаче мощности на каждом временном шаге
+	doublereal* poweron_multiplier_sequence = nullptr; // (множитель который вызывает отличие от постоянной).
+	doublereal StartTime = 0.0, EndTime = globalEndTimeUnsteadyTemperatureCalculation; // длительность 
+	doublereal TimeStepIncrement = 1.0e-7; // начальный шаг по времени 1мкс. (используется в постоянном шаге по времени.)
+	doublereal Initial_Time_Step = 1e-7; // т.к. греется по экспоненте.
+	doublereal Factor_a = 0.4; // фактор увеличения шага по времени
+	Factor_a = glTSL.Factor_a_for_Linear;
+	doublereal** evdokimova_report = nullptr;
+	if (glTSL.id_law == 0) {
+		// Задание шагов по времени и информации о подаваемой мощности.
+		// постоянный шаг по времени:
+		//--->//uniform_timestep_seq(StartTime, EndTime, TimeStepIncrement, iN, timestep_sequence, poweron_multiplier_sequence);
+		// переменный линейный шаг по времени (в соответствии с геометрической прогрессией):
+		linear_timestep_seq(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence);
+		// во второй модификации присутствует также и участок остывания.
+		//linear_timestep_seq2(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence);
+
+		// Кривые из статьи: Тепловой анализ полупроводниковых структур. Евдокимова Н.Л., Ежов В.С., Минин В.Ф.
+		evdokimova_report = new doublereal*[iN + 1];
+		for (integer i = 0; i < iN + 1; i++) {
+			// время, температура канала, тепловое сопротивление канала, теплоёмкость, отношения dC/dRt и C/Rt.
+			// time, Tch, Rtch, C=Tch/Rt, dC/dRt, C/Rt (и так для каждой из трёх температур канала Tch);
+			evdokimova_report[i] = new doublereal[18];
+		}
+	}
+	if (glTSL.id_law == 1) {
+		Initial_Time_Step = glTSL.tau / 10.0;
+		square_wave_timestep(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+	}
+	// Термоциклирование для АППАРАТ.
+	if (glTSL.id_law == 2) {
+		Initial_Time_Step = glTSL.tau1 / 10.0;
+		square_wave_timestep_APPARAT(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+	}
+	// Двойной логарифмический шаг по времени: нагрев-остывание.
+	if (glTSL.id_law == 3) {
+		// 18.11.2017
+		linear_timestep_seq_hot_cold(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence, glTSL.on_time_double_linear);
+	}
+	if (glTSL.id_law == 4) {
+		// Таблично заданный закон изменения шагов по времени piecewise constant
+		// 20.12.2019
+		Initial_Time_Step = glTSL.table_law_piecewise_constant[0].timestep;
+		piecewise_const_timestep_law(EndTime, iN, timestep_sequence, poweron_multiplier_sequence);
+	}
+
+	FILE *fpcurvedata = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+	errno_t err;
+
+	FILE *fpKras = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+	errno_t err23 = 0;
+#ifdef MINGW_COMPILLER
+	fpKras = fopen64("inputKras.txt", "w");
+	if (fpKras == NULL) err23 = 1;
+#else
+	err23 = fopen_s(&fpKras, "inputKras.txt", "w");
+#endif
+
+
+	FILE *fpKras_max = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+	errno_t err23_max = 0;
+#ifdef MINGW_COMPILLER
+	fpKras_max = fopen64("inputKras_max.txt", "w");
+	if (fpKras_max == NULL) err23_max = 1;
+#else
+	err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "w");
+#endif
+
+	FILE *fpKras_min = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+	errno_t err23_min = 0;
+#ifdef MINGW_COMPILLER
+	fpKras_min = fopen64("inputKras_min.txt", "w");
+	if (fpKras_min == NULL) err23_min = 1;
+#else
+	err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "w");
+#endif
+
+	if ((err23) != 0) {
+		printf("Create File heating_curves.txt Error\n");
+		//getchar();
+		system("pause");
+		exit(0);
+	}
+	else {
+		if (fpKras != NULL) {
+			if (glTSL.id_law == 0) {
+				// Linear
+				fprintf(fpKras, "1 \n");
+				fprintf(fpKras, "0 \n");
+			}
+			else {
+				// Square Wave and Square Wave 2.
+				fprintf(fpKras, "0 \n");
+				fprintf(fpKras, "0 \n");
+			}
+			fprintf(fpKras, "Evalution maximum temperature in default interior \n");
+			fprintf(fpKras, "time[s] maximum_temperature[C] \n");
+			if (glTSL.id_law == 1) {
+				// Только если square wave.
+				if (fpKras_max != NULL) {
+					fprintf(fpKras_max, "0 \n");
+					fprintf(fpKras_max, "0 \n");
+					fprintf(fpKras_max, "Evalution maximum temperature in default interior \n");
+					fprintf(fpKras_max, "time[s] maximum_temperature[C] \n");
+				}
+				if (fpKras_min != NULL) {
+					fprintf(fpKras_min, "0 \n");
+					fprintf(fpKras_min, "0 \n");
+					fprintf(fpKras_min, "Evalution minimum temperature in default interior \n");
+					fprintf(fpKras_min, "time[s] maximum_temperature[C] \n");
+				}
+			}
+			if (fpKras_max != NULL) {
+				fclose(fpKras_max);
+			}
+			if (fpKras_min != NULL) {
+				fclose(fpKras_min);
+			}
+		}
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fpcurvedata = fopen64("heating_curves.txt", "w");
+		if (fpcurvedata == NULL) err = 1;
+#else
+		err = fopen_s(&fpcurvedata, "heating_curves.txt", "w");
+#endif
+
+		if ((err) != 0) {
+			printf("Create File heating_curves.txt Error\n");
+			//getchar();
+			system("pause");
+			exit(0);
+		}
+		else {
+			if (iN <= 0) {
+				printf("error in setting the time steps...\n");
+				printf("please press any key to exit...\n");
+				if (fpcurvedata != NULL) {
+					fprintf(fpcurvedata, "Error in setting the time steps...");
+				}
+				//getchar();
+				system("pause");
+				if (fpcurvedata != NULL) {
+					fclose(fpcurvedata);
+				}
+				if (fpKras != NULL) {
+					fclose(fpKras);
+				}
+
+				exit(0);
+			}
+			fprintf(fpcurvedata, " Heating Curves data\n");
+			// время в секундах, максимальная температура во всей расчётной области (внутренние + граничные узлы), 
+			// максимальная температура определённая только по строго внутренним КО.
+			fprintf(fpcurvedata, "time [s], temperature all interior [°C], RT all interior [°C/W], temperature only internal nodes [°C], RT internal nodes [°C/W], filtr temperature [°C], RT filtr [°C/W]\n");
+			fprintf(fpcurvedata, "%+.16f %+.16f %+.16f %+.16f  %+.16f %+.16f %+.16f\n", StartTime, Tamb, 0.0, Tamb, 0.0, Tamb, 0.0); // начальное состояние из которого стартует разогрев.
+			if (glTSL.id_law == 0) {
+				// Linear.
+				evdokimova_report[0][0] = StartTime; evdokimova_report[0][1] = Tamb; evdokimova_report[0][2] = 0.0;
+				evdokimova_report[0][6] = StartTime; evdokimova_report[0][7] = Tamb;  evdokimova_report[0][8] = 0.0;
+				evdokimova_report[0][12] = StartTime; evdokimova_report[0][13] = Tamb; evdokimova_report[0][14] = 0.0;
+			}
+			fprintf(fpKras, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+
+#ifdef MINGW_COMPILLER
+			fpKras_max = fopen64("inputKras_max.txt", "a");
+#else
+			err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
+#endif
+			if ((err23_max == 0) && (fpKras_max != NULL)) {
+				fprintf(fpKras_max, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+				fclose(fpKras_max);
+			}
+
+#ifdef MINGW_COMPILLER
+			fpKras_min = fopen64("inputKras_min.txt", "a");
+#else
+			err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
+#endif
+			if ((err23_min == 0) && (fpKras_min != NULL)) {
+				fprintf(fpKras_min, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+				fclose(fpKras_min);
+			}
+
+			doublereal phisicaltime = StartTime;
+
+			// Сохранение температуры на сетке.
+			for (integer i = 0; i < t.maxelm; i++) {
+				if (block_is_active[t.whot_is_block[i]]) {
+					t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+				}
+			}
+			for (integer i = 0; i < t.maxbound; i++) {
+				// Копируем температуру из ближайшего внутреннего узла.
+				t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+			}
+
+			// Формируем отчёт о температуре каждого объекта из которой состоит модель:
+			// Начальное распределение поля температур.
+			report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, 1.0, t.operatingtemperature);
+
+			bool bfirst_export = true;
+
+			// нестационарный расчёт:
+			for (integer j = 0; j < iN; j++) {
+
+
+				// Память освобождаем в конце нестационарного вычисления.
+
+				phisicaltime += timestep_sequence[j]; // полностью неявная дискретизация по времени, след момент времени уже наступил
+
+				doublereal tauparamold = timestep_sequence[j];
+				if (j > 0) {
+					// значение шага по времени с предыдущего шага по времени.
+					tauparamold = timestep_sequence[j - 1];
+				}
+
+				bool btimedep = true; // нестационарный солвер
+
+									  /*
+									  Решение СЛАУ на временном шаге:
+									  */
+				for (integer i = 0; i < maxelm + lw; i++) {
+					
+					if (i < maxelm) {
+						// Внутренний блок.
+						//doublereal Vol = (b[id[i]].g.xE - b[id[i]].g.xS) *
+							//(b[id[i]].g.yE - b[id[i]].g.yS) *
+							//(b[id[i]].g.zE - b[id[i]].g.zS);
+						doublereal Vol = Vol_block[id[i]];
+
+						doublereal rho, cp, lam;
+						rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
+						if (matlist[b[id[i]].imatid].blibmat == 1) {
+							// библиотечный, находящийся внутри программы AliceFlow материал.
+							if (b[id[i]].itype == SOLID) {
+								my_solid_properties(potent[i], rho, cp, lam, matlist[b[id[i]].imatid].ilibident);
+								// проверка на допустимость температур.
+								diagnostic_critical_temperature(potent[i], f, t, b, lb);
+							} // SOLID
+							if (b[id[i]].itype == FLUID) {
+								doublereal mu, beta_t; // значения не используются но требуются.
+								doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+
+								my_fluid_properties(potent[i], pressure, rho, cp, lam, mu, beta_t, matlist[b[id[i]].imatid].ilibident);
+							} // FLUID
+						}
+						else if (matlist[b[id[i]].imatid].blibmat == 0) {
+							// материал определённый пользователем:
+							// постоянные свойства.
+							rho = matlist[b[id[i]].imatid].rho;
+							//cp=matlist[b[id[i]].imatid].cp;
+							//lam=matlist[b[id[i]].imatid].lam;
+							cp = get_cp(matlist[b[id[i]].imatid].n_cp, matlist[b[id[i]].imatid].temp_cp, matlist[b[id[i]].imatid].arr_cp, potent[i]);
+							lam = get_lam(matlist[b[id[i]].imatid].n_lam, matlist[b[id[i]].imatid].temp_lam, matlist[b[id[i]].imatid].arr_lam, potent[i]);
+
+						}
+
+
+
+						rthdsd[i] = Vol * poweron_multiplier_sequence[j] *
+							get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+							(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+					}
+					else {
+						// стенка.
+						if (w[id[i]].ifamily == DIRICHLET_FAMILY) {
+							rthdsd[i] = w[id[i]].Tamb; // Только условия Дирихле.
+						}
+						else {
+							// Нелинейное граничное условие.
+							rthdsd[i] = 0.0;
+						}
+					}
+				}
+				// declarate matrix.
+
+				// Расчёт числа ненулевых значений в матрице СЛАУ.
+				integer nnz = maxelm + lw;
+				for (integer i = 0; i < maxelm + lw; i++) {
+					nnz += inumber_neighbour[i]; // количество связей с соседями.
+					if (i >= maxelm) {
+						if ((w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
+							(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)||
+							(w[id[i]].ifamily == NEIMAN_FAMILY)) {
+							nnz++; // двухточечное нелинейное граничное условие.
+						}
+					}
+				}
+				doublereal* val = new doublereal[nnz];
+				integer* col_ind = new integer[nnz];
+				integer* row_ptr = new integer[maxelm + lw + 1];
+
+				// Установка нелинейного флага.
+				bool b_nonlinear_network = false;
+				bool b_Newton_Richman = false;
+				bool b_Stefan_Bolcman = false;
+				for (integer i = maxelm; i < maxelm + lw; i++) {
+					if (w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) {
+						b_Newton_Richman = true; // Нелинейность Ньютона-Рихмана.
+						b_nonlinear_network = true; // Задача нелинейна. Нужно применять нижнюю релаксацию.
+					}
+				}
+
+				for (integer i = maxelm; i < maxelm + lw; i++) {
+					if (w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY) {
+						b_Stefan_Bolcman = true; // Нелинейность Стефана - Больцмана, нужна более сильная релаксация.
+						b_Newton_Richman = false;
+						b_nonlinear_network = true; // Задача нелинейна. Нужно применять нижнюю релаксацию.
+					}
+				}
+
+				//printf("Assemble matrix Ok.");
+				//system("PAUSE");
+
+				doublereal tmax_old = -1.0e30;
+
+				doublereal* potent_old = new doublereal[maxelm + lw];
+				for (integer i25 = 0; i25 < maxelm + lw; i25++) potent_old[i25] = potent[i25];
+
+				doublereal r1 = 1.0e-30;
+				doublereal r2 = 1.0e30;
+
+				integer iter = -1;
+				// solve SLAU
+				// Seidel method.
+				for ( ; ; ) { // бесконечный цикл.
+
+					iter++;
+
+					r1 = 1.0e-30;
+
+					doublereal tmax = -1.0e30;
+					doublereal tmin = 1.0e30;
+					for (integer i = 0; i < maxelm + lw; i++) {
+						if (potent[i] > tmax) tmax = potent[i];
+						if (potent[i] < tmin) tmin = potent[i];
+					}
+
+					if (fabs(tmax - tmin) < 1.0e-30) {
+						////printf("%4lld %e\n", iter, 10000.0);
+					}
+					else {
+						//0.00002
+						//if (fabs(tmax_old - tmax) < 0.00002 * fabs(tmax - tmin)) {
+						//	break; // досрочный выход из цикла for.
+						//}
+						//printf("%4lld %e %e\n", iter, fabs(tmax_old - tmax) / fabs(tmax - tmin),r2);
+					}
+					//if (r2 / r1 < 0.998) break;// думать
+					//1.005 14s 22.2C
+					//if ((iter>10)&&(r2 > 1.005*r1)) {
+						//printf("Stagnation. break;\n");
+						//break;
+					//}
+					if ((fabs(r2) < 1.0e-2) && (fabs(tmax_old - tmax) < 0.0005)) {
+						//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+						break;
+					}
+					if ((fabs(r2) < 1.4e-2) && (fabs(tmax_old - tmax) < 0.0005)) {
+						//std::cout << "break bPhysics_stop, dres<1e-2 && (fabs(maxnew - maxold) < 0.0005)" << std::endl;
+						break;
+					}
+					r1 = r2;
+					tmax_old = tmax;
+
+					// Update matrix:
+					// initializate matrix.
+					for (integer i = 0; i < nnz; i++) {
+						val[i] = 0.0;
+						col_ind[i] = -1;
+					}
+					for (integer i = 0; i < maxelm + lw + 1; i++) {
+						row_ptr[i] = nnz;
+					}
+					row_ptr[0] = 0;
+
+					for (integer i = 0; i < maxelm + lw; i++) {
+						if (i < maxelm) {
+							// Внутренний блок.
+
+							//doublereal Vol = (b[id[i]].g.xE - b[id[i]].g.xS) *
+								//(b[id[i]].g.yE - b[id[i]].g.yS) *
+								//(b[id[i]].g.zE - b[id[i]].g.zS);
+							doublereal Vol = Vol_block[id[i]];
+
+							doublereal rho, cp, lam;
+							rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
+							if (matlist[b[id[i]].imatid].blibmat == 1) {
+								// библиотечный, находящийся внутри программы AliceFlow материал.
+								if (b[id[i]].itype == SOLID) {
+									my_solid_properties(potent[i], rho, cp, lam, matlist[b[id[i]].imatid].ilibident);
+									// проверка на допустимость температур.
+									diagnostic_critical_temperature(potent[i], f, t, b, lb);
+								} // SOLID
+								if (b[id[i]].itype == FLUID) {
+									doublereal mu, beta_t; // значения не используются но требуются.
+									doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+
+									my_fluid_properties(potent[i], pressure, rho, cp, lam, mu, beta_t, matlist[b[id[i]].imatid].ilibident);
+								} // FLUID
+							}
+							else if (matlist[b[id[i]].imatid].blibmat == 0) {
+								// материал определённый пользователем:
+								// постоянные свойства.
+								rho = matlist[b[id[i]].imatid].rho;
+								//cp=matlist[b[id[i]].imatid].cp;
+								//lam=matlist[b[id[i]].imatid].lam;
+								cp = get_cp(matlist[b[id[i]].imatid].n_cp, matlist[b[id[i]].imatid].temp_cp, matlist[b[id[i]].imatid].arr_cp, potent[i]);
+								lam = get_lam(matlist[b[id[i]].imatid].n_lam, matlist[b[id[i]].imatid].temp_lam, matlist[b[id[i]].imatid].arr_lam, potent[i]);
+
+							}
+
+							rthdsd[i] = Vol *poweron_multiplier_sequence[j] *
+								get_power(b[id[i]].n_Sc, b[id[i]].temp_Sc, b[id[i]].arr_Sc, potent[i]) +
+								(rho*cp*Vol*toldtimestep[i]) / timestep_sequence[j];
+						}
+						else {
+							// стенка.
+							if (w[id[i]].ifamily == DIRICHLET_FAMILY) {
+								rthdsd[i] = w[id[i]].Tamb; // Только условия Дирихле.
+							}
+							else {
+								// Нелинейное граничное условие.
+								rthdsd[i] = 0.0;
+							}
+						}
+					}
+
+					// assemble heat transfer martrix
+					integer im = 1;
+					integer idiag = 0;
+					for (integer i = 0; i < maxelm + lw; i++) {
+						if (i < maxelm) {
+							// Внутренний блок.
+							doublereal sum = 0.0;
+							//printf("i==%lld inumber_neighbour[%lld]=%lld inumber_neighbour_only_body[%lld]=%lld\n", i, i, inumber_neighbour[i], i, inumber_neighbour_only_body[i]);
+							//getchar();
+							for (integer j_1 = 0; j_1 < inumber_neighbour[i]; j_1++) {
+
+								bool ortho_k1 = false;
+								bool ortho_k2 = false;
+								doublereal ortho_m1 = 1.0;
+								doublereal ortho_m2 = 1.0;
+
+								// блок id[i] граничит с блоком ilink[i][j_1].
+								doublereal distance = 0.0;
+								if (j_1 < inumber_neighbour_only_body[i]) {
+									// блок id[i] к блоку ilink[i][j_1].
+									TOCHKA bp0, bp1;
+									if (b[id[i]].g.itypegeom == PRISM) {
+										bp0.x = 0.5 * (b[id[i]].g.xS + b[id[i]].g.xE);
+										bp0.y = 0.5 * (b[id[i]].g.yS + b[id[i]].g.yE);
+										bp0.z = 0.5 * (b[id[i]].g.zS + b[id[i]].g.zE);
+									}
+									else if (b[id[i]].g.itypegeom == CYLINDER) {
+										switch (b[id[i]].g.iPlane) {
+										case XY_PLANE:
+											bp0.x = b[id[i]].g.xC;
+											bp0.y = b[id[i]].g.yC;
+											bp0.z = b[id[i]].g.zC + 0.5* b[id[i]].g.Hcyl;
+											break;
+										case XZ_PLANE:
+											bp0.x = b[id[i]].g.xC;
+											bp0.z = b[id[i]].g.zC;
+											bp0.y = b[id[i]].g.yC + 0.5 * b[id[i]].g.Hcyl;
+											break;
+										case YZ_PLANE:
+											bp0.y = b[id[i]].g.yC;
+											bp0.z = b[id[i]].g.zC;
+											bp0.x = b[id[i]].g.xC + 0.5 * b[id[i]].g.Hcyl;
+											break;
+										}
+									}
+									else if (b[id[i]].g.itypegeom == POLYGON) {
+										// Вычисляем геометрический центр полигона.
+										integer iscan = 0;
+										switch (b[id[i]].g.iPlane_obj2) {
+										case XY_PLANE:
+											bp0.x = 0.0; bp0.y = 0.0;
+											for (iscan = 0; iscan < b[id[i]].g.nsizei; iscan++) {
+												bp0.x += b[id[i]].g.xi[iscan];
+												bp0.y += b[id[i]].g.yi[iscan];
+											}
+											bp0.x /= 1.0 * b[id[i]].g.nsizei;
+											bp0.y /= 1.0 * b[id[i]].g.nsizei;
+											bp0.z = b[id[i]].g.zi[0] + 0.5 * b[id[i]].g.hi[0];
+											break;
+										case XZ_PLANE:
+											bp0.x = 0.0; bp0.z = 0.0;
+											for (iscan = 0; iscan < b[id[i]].g.nsizei; iscan++) {
+												bp0.x += b[id[i]].g.xi[iscan];
+												bp0.z += b[id[i]].g.zi[iscan];
+											}
+											bp0.x /= 1.0 * b[id[i]].g.nsizei;
+											bp0.z /= 1.0 * b[id[i]].g.nsizei;
+											bp0.y = b[id[i]].g.yi[0] + 0.5 * b[id[i]].g.hi[0];
+											break;
+										case YZ_PLANE:
+											bp0.y = 0.0; bp0.z = 0.0;
+											for (iscan = 0; iscan < b[id[i]].g.nsizei; iscan++) {
+												bp0.y += b[id[i]].g.yi[iscan];
+												bp0.z += b[id[i]].g.zi[iscan];
+											}
+											bp0.y /= 1.0 * b[id[i]].g.nsizei;
+											bp0.z /= 1.0 * b[id[i]].g.nsizei;
+											bp0.x = b[id[i]].g.xi[0] + 0.5 * b[id[i]].g.hi[0];
+											break;
+										}
+									}
+									else {
+										bp0.x = 0.5 * (b[id[i]].g.xS + b[id[i]].g.xE);
+										bp0.y = 0.5 * (b[id[i]].g.yS + b[id[i]].g.yE);
+										bp0.z = 0.5 * (b[id[i]].g.zS + b[id[i]].g.zE);
+									}
+									if (b[ilink[i][j_1]].g.itypegeom == PRISM) {
+										bp1.x = 0.5 * (b[ilink[i][j_1]].g.xS + b[ilink[i][j_1]].g.xE);
+										bp1.y = 0.5 * (b[ilink[i][j_1]].g.yS + b[ilink[i][j_1]].g.yE);
+										bp1.z = 0.5 * (b[ilink[i][j_1]].g.zS + b[ilink[i][j_1]].g.zE);
+									}
+									else if (b[ilink[i][j_1]].g.itypegeom == CYLINDER) {
+										switch (b[ilink[i][j_1]].g.iPlane) {
+										case XY_PLANE:
+											bp1.x = b[ilink[i][j_1]].g.xC;
+											bp1.y = b[ilink[i][j_1]].g.yC;
+											bp1.z = b[ilink[i][j_1]].g.zC + 0.5 * b[ilink[i][j_1]].g.Hcyl;
+											break;
+										case XZ_PLANE:
+											bp1.x = b[ilink[i][j_1]].g.xC;
+											bp1.z = b[ilink[i][j_1]].g.zC;
+											bp1.y = b[ilink[i][j_1]].g.yC + 0.5 * b[ilink[i][j_1]].g.Hcyl;
+											break;
+										case YZ_PLANE:
+											bp1.y = b[ilink[i][j_1]].g.yC;
+											bp1.z = b[ilink[i][j_1]].g.zC;
+											bp1.x = b[ilink[i][j_1]].g.xC + 0.5 * b[ilink[i][j_1]].g.Hcyl;
+											break;
+										}
+									}
+									else if (b[ilink[i][j_1]].g.itypegeom == POLYGON) {
+										// Вычисляем геометрический центр полигона.
+										integer iscan = 0;
+										switch (b[ilink[i][j_1]].g.iPlane_obj2) {
+										case XY_PLANE:
+											bp1.x = 0.0; bp1.y = 0.0;
+											for (iscan = 0; iscan < b[ilink[i][j_1]].g.nsizei; iscan++) {
+												bp1.x += b[ilink[i][j_1]].g.xi[iscan];
+												bp1.y += b[ilink[i][j_1]].g.yi[iscan];
+											}
+											bp1.x /= 1.0 * b[ilink[i][j_1]].g.nsizei;
+											bp1.y /= 1.0 * b[ilink[i][j_1]].g.nsizei;
+											bp1.z = b[ilink[i][j_1]].g.zi[0] + 0.5 * b[ilink[i][j_1]].g.hi[0];
+											break;
+										case XZ_PLANE:
+											bp1.x = 0.0; bp1.z = 0.0;
+											for (iscan = 0; iscan < b[ilink[i][j_1]].g.nsizei; iscan++) {
+												bp1.x += b[ilink[i][j_1]].g.xi[iscan];
+												bp1.z += b[ilink[i][j_1]].g.zi[iscan];
+											}
+											bp1.x /= 1.0 * b[ilink[i][j_1]].g.nsizei;
+											bp1.z /= 1.0 * b[ilink[i][j_1]].g.nsizei;
+											bp1.y = b[ilink[i][j_1]].g.yi[0] + 0.5 * b[ilink[i][j_1]].g.hi[0];
+											break;
+										case YZ_PLANE:
+											bp1.y = 0.0; bp1.z = 0.0;
+											for (iscan = 0; iscan < b[ilink[i][j_1]].g.nsizei; iscan++) {
+												bp1.y += b[ilink[i][j_1]].g.yi[iscan];
+												bp1.z += b[ilink[i][j_1]].g.zi[iscan];
+											}
+											bp1.y /= 1.0 * b[ilink[i][j_1]].g.nsizei;
+											bp1.z /= 1.0 * b[ilink[i][j_1]].g.nsizei;
+											bp1.x = b[ilink[i][j_1]].g.xi[0] + 0.5 * b[ilink[i][j_1]].g.hi[0];
+											break;
+										}
+									}
+									else {
+										bp1.x = 0.5 * (b[ilink[i][j_1]].g.xS + b[ilink[i][j_1]].g.xE);
+										bp1.y = 0.5 * (b[ilink[i][j_1]].g.yS + b[ilink[i][j_1]].g.yE);
+										bp1.z = 0.5 * (b[ilink[i][j_1]].g.zS + b[ilink[i][j_1]].g.zE);
+									}
+
+									distance = sqrt((bp0.x - bp1.x)*(bp0.x - bp1.x) +
+										(bp0.y - bp1.y)*(bp0.y - bp1.y) +
+										(bp0.z - bp1.z)*(bp0.z - bp1.z));
+									if (distance < 1.0e-12) {
+										// Защита от деления на ноль.
+										// Берется длина минимального ребра из двух блоков.
+										// Центры блоков случайным образом совпали
+										distance = fmin(fmin(fabs((b[id[i]].g.xS - b[id[i]].g.xE)),
+											fmin(fabs((b[id[i]].g.yS - b[id[i]].g.yE)),
+												fabs((b[id[i]].g.zS - b[id[i]].g.zE)))),
+											fmin(fabs(b[ilink[i][j_1]].g.xS - b[ilink[i][j_1]].g.xE),
+												fmin((fabs(b[ilink[i][j_1]].g.yS - b[ilink[i][j_1]].g.yE)),
+													(fabs(b[ilink[i][j_1]].g.zS - b[ilink[i][j_1]].g.zE)))));
+									}
+								}
+								else {
+									// блок id[i] к стенке MCB-ls==ilink[i][j_1].
+									//printf("ilink[i][j_1] = %lld, i==%lld j_1==%lld\n", ilink[i][j_1],i,j_1);
+									//getchar();
+
+									TOCHKA bp0;
+									if (b[id[i]].g.itypegeom == PRISM) {
+										bp0.x = 0.5 * (b[id[i]].g.xS + b[id[i]].g.xE);
+										bp0.y = 0.5 * (b[id[i]].g.yS + b[id[i]].g.yE);
+										bp0.z = 0.5 * (b[id[i]].g.zS + b[id[i]].g.zE);
+									}
+									else if (b[id[i]].g.itypegeom == CYLINDER) {
+										switch (b[id[i]].g.iPlane) {
+										case XY_PLANE:
+											bp0.x = b[id[i]].g.xC;
+											bp0.y = b[id[i]].g.yC;
+											bp0.z = b[id[i]].g.zC + 0.5 * b[id[i]].g.Hcyl;
+											break;
+										case XZ_PLANE:
+											bp0.x = b[id[i]].g.xC;
+											bp0.z = b[id[i]].g.zC;
+											bp0.y = b[id[i]].g.yC + 0.5 * b[id[i]].g.Hcyl;
+											break;
+										case YZ_PLANE:
+											bp0.y = b[id[i]].g.yC;
+											bp0.z = b[id[i]].g.zC;
+											bp0.x = b[id[i]].g.xC + 0.5 * b[id[i]].g.Hcyl;
+											break;
+										}
+									}
+									else if (b[id[i]].g.itypegeom == POLYGON) {
+										// Вычисляем геометрический центр полигона.
+										integer iscan = 0;
+										switch (b[id[i]].g.iPlane_obj2) {
+										case XY_PLANE:
+											bp0.x = 0.0; bp0.y = 0.0;
+											for (iscan = 0; iscan < b[id[i]].g.nsizei; iscan++) {
+												bp0.x += b[id[i]].g.xi[iscan];
+												bp0.y += b[id[i]].g.yi[iscan];
+											}
+											bp0.x /= 1.0 * b[id[i]].g.nsizei;
+											bp0.y /= 1.0 * b[id[i]].g.nsizei;
+											bp0.z = b[id[i]].g.zi[0] + 0.5 * b[id[i]].g.hi[0];
+											break;
+										case XZ_PLANE:
+											bp0.x = 0.0; bp0.z = 0.0;
+											for (iscan = 0; iscan < b[id[i]].g.nsizei; iscan++) {
+												bp0.x += b[id[i]].g.xi[iscan];
+												bp0.z += b[id[i]].g.zi[iscan];
+											}
+											bp0.x /= 1.0 * b[id[i]].g.nsizei;
+											bp0.z /= 1.0 * b[id[i]].g.nsizei;
+											bp0.y = b[id[i]].g.yi[0] + 0.5 * b[id[i]].g.hi[0];
+											break;
+										case YZ_PLANE:
+											bp0.y = 0.0; bp0.z = 0.0;
+											for (iscan = 0; iscan < b[id[i]].g.nsizei; iscan++) {
+												bp0.y += b[id[i]].g.yi[iscan];
+												bp0.z += b[id[i]].g.zi[iscan];
+											}
+											bp0.y /= 1.0 * b[id[i]].g.nsizei;
+											bp0.z /= 1.0 * b[id[i]].g.nsizei;
+											bp0.x = b[id[i]].g.xi[0] + 0.5 * b[id[i]].g.hi[0];
+											break;
+										}
+									}
+									else {
+										bp0.x = 0.5 * (b[id[i]].g.xS + b[id[i]].g.xE);
+										bp0.y = 0.5 * (b[id[i]].g.yS + b[id[i]].g.yE);
+										bp0.z = 0.5 * (b[id[i]].g.zS + b[id[i]].g.zE);
+									}
+
+									distance = sqrt((bp0.x - 0.5 * (w[ilink[i][j_1]].g.xS + w[ilink[i][j_1]].g.xE)) *
+										(bp0.x - 0.5 * (w[ilink[i][j_1]].g.xS + w[ilink[i][j_1]].g.xE)) +
+										(bp0.y - 0.5 * (w[ilink[i][j_1]].g.yS + w[ilink[i][j_1]].g.yE)) *
+										(bp0.y - 0.5 * (w[ilink[i][j_1]].g.yS + w[ilink[i][j_1]].g.yE)) +
+										(bp0.z - 0.5 * (w[ilink[i][j_1]].g.zS + w[ilink[i][j_1]].g.zE)) *
+										(bp0.z - 0.5 * (w[ilink[i][j_1]].g.zS + w[ilink[i][j_1]].g.zE)));
+								}
+								doublereal rho, cp, lam;
+								rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
+								if (matlist[b[id[i]].imatid].blibmat == 1) {
+									// библиотечный, находящийся внутри программы AliceFlow материал.
+									if (b[id[i]].itype == SOLID) {
+										my_solid_properties(potent[i], rho, cp, lam, matlist[b[id[i]].imatid].ilibident);
+										// проверка на допустимость температур.
+										diagnostic_critical_temperature(potent[i], f, t, b, lb);
+									} // SOLID
+									if (b[id[i]].itype == FLUID) {
+										doublereal mu, beta_t; // значения не используются но требуются.
+										doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+
+										my_fluid_properties(potent[i], pressure, rho, cp, lam, mu, beta_t, matlist[b[id[i]].imatid].ilibident);
+									} // FLUID
+								}
+								else if (matlist[b[id[i]].imatid].blibmat == 0) {
+									// материал определённый пользователем:
+									// постоянные свойства.
+									if (!((fabs(matlist[b[id[i]].imatid].orthotropy_multiplyer_x - 1.0) < 0.0001) &&
+										(fabs(matlist[b[id[i]].imatid].orthotropy_multiplyer_y - 1.0) < 0.0001) &&
+										(fabs(matlist[b[id[i]].imatid].orthotropy_multiplyer_z - 1.0) < 0.0001))) {
+										ortho_k1 = true;
+										ortho_m1 = fmax(matlist[b[id[i]].imatid].orthotropy_multiplyer_x, fmax(
+											matlist[b[id[i]].imatid].orthotropy_multiplyer_y,
+											matlist[b[id[i]].imatid].orthotropy_multiplyer_z));
+									}
+									rho = matlist[b[id[i]].imatid].rho;
+									//cp=matlist[b[ib].imatid].cp;
+									//lam=matlist[b[ib].imatid].lam;
+									cp = get_cp(matlist[b[id[i]].imatid].n_cp, matlist[b[id[i]].imatid].temp_cp, matlist[b[id[i]].imatid].arr_cp, potent[i]);
+									lam = get_lam(matlist[b[id[i]].imatid].n_lam, matlist[b[id[i]].imatid].temp_lam, matlist[b[id[i]].imatid].arr_lam, potent[i]);
+
+								}
+								doublereal lambda_G = lam;
+								if (j_1 < inumber_neighbour_only_body[i]) {
+									// Блок граничит с блоком.
+									if (matlist[b[ilink[i][j_1]].imatid].blibmat == 1) {
+										// библиотечный, находящийся внутри программы AliceFlow материал.
+										if (b[ilink[i][j_1]].itype == SOLID) {
+											my_solid_properties(potent[i], rho, cp, lam, matlist[b[ilink[i][j_1]].imatid].ilibident);
+											// проверка на допустимость температур.
+											diagnostic_critical_temperature(potent[i], f, t, b, lb);
+										} // SOLID
+										if (b[ilink[i][j_1]].itype == FLUID) {
+											doublereal mu, beta_t; // значения не используются но требуются.
+											doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+
+											my_fluid_properties(potent[i], pressure, rho, cp, lam, mu, beta_t, matlist[b[ilink[i][j_1]].imatid].ilibident);
+										} // FLUID
+									}
+									else if (matlist[b[ilink[i][j_1]].imatid].blibmat == 0) {
+										// материал определённый пользователем:
+										// постоянные свойства.
+										if (!((fabs(matlist[b[ilink[i][j_1]].imatid].orthotropy_multiplyer_x - 1.0) < 0.0001) &&
+											(fabs(matlist[b[ilink[i][j_1]].imatid].orthotropy_multiplyer_y - 1.0) < 0.0001) &&
+											(fabs(matlist[b[ilink[i][j_1]].imatid].orthotropy_multiplyer_z - 1.0) < 0.0001))) {
+											ortho_k2 = true;
+											ortho_m2 = fmax(matlist[b[ilink[i][j_1]].imatid].orthotropy_multiplyer_x, fmax(
+												matlist[b[ilink[i][j_1]].imatid].orthotropy_multiplyer_y,
+												matlist[b[ilink[i][j_1]].imatid].orthotropy_multiplyer_z));
+										}
+										rho = matlist[b[ilink[i][j_1]].imatid].rho;
+										//cp=matlist[b[ilink[i][j_1]].imatid].cp;
+										//lam=matlist[b[ilink[i][j_1]].imatid].lam;
+										cp = get_cp(matlist[b[ilink[i][j_1]].imatid].n_cp, matlist[b[ilink[i][j_1]].imatid].temp_cp, matlist[b[ilink[i][j_1]].imatid].arr_cp, potent[i]);
+										lam = get_lam(matlist[b[ilink[i][j_1]].imatid].n_lam, matlist[b[ilink[i][j_1]].imatid].temp_lam, matlist[b[ilink[i][j_1]].imatid].arr_lam, potent[i]);
+
+									}
+									lambda_G = 2.0 * lambda_G * lam / (lambda_G + lam);
+									if (ortho_k1 && ortho_k2) {// плата к плате.
+															   // учет ортотропности коэффициента теплопроводности.
+										lambda_G *= 2.0 * ortho_m1 * ortho_m2 / (ortho_m1 + ortho_m2);
+									}
+								}
+								val[im] = -((lambda_G * dS[i][j_1]) / distance);
+								if (j_1 < inumber_neighbour_only_body[i]) {
+									// блок id[i] к блоку ilink[i][j_1].
+									col_ind[im] = id_reverse[ilink[i][j_1]]; // номер столбца.
+								}
+								else {
+									col_ind[im] = id_reverse[lb + ilink[i][j_1]];
+								}
+								sum += ((lambda_G * dS[i][j_1]) / distance);
+								im++;
+							}
+
+
+							doublereal rho, cp, lam;
+							rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
+							if (matlist[b[id[i]].imatid].blibmat == 1) {
+								// библиотечный, находящийся внутри программы AliceFlow материал.
+								if (b[id[i]].itype == SOLID) {
+									my_solid_properties(potent[i], rho, cp, lam, matlist[b[id[i]].imatid].ilibident);
+									// проверка на допустимость температур.
+									diagnostic_critical_temperature(potent[i], f, t, b, lb);
+								} // SOLID
+								if (b[id[i]].itype == FLUID) {
+									doublereal mu, beta_t; // значения не используются но требуются.
+									doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+
+									my_fluid_properties(potent[i], pressure, rho, cp, lam, mu, beta_t, matlist[b[id[i]].imatid].ilibident);
+								} // FLUID
+							}
+							else if (matlist[b[id[i]].imatid].blibmat == 0) {
+								// материал определённый пользователем:
+								// постоянные свойства.
+								rho = matlist[b[id[i]].imatid].rho;
+								//cp=matlist[b[id[i]].imatid].cp;
+								//lam=matlist[b[id[i]].imatid].lam;
+								cp = get_cp(matlist[b[id[i]].imatid].n_cp, matlist[b[id[i]].imatid].temp_cp, matlist[b[id[i]].imatid].arr_cp, potent[i]);
+								lam = get_lam(matlist[b[id[i]].imatid].n_lam, matlist[b[id[i]].imatid].temp_lam, matlist[b[id[i]].imatid].arr_lam, potent[i]);
+
+							}
+
+							//doublereal Vol = (b[id[i]].g.xE - b[id[i]].g.xS) *
+								//(b[id[i]].g.yE - b[id[i]].g.yS) *
+								//(b[id[i]].g.zE - b[id[i]].g.zS);
+							doublereal Vol = Vol_block[id[i]];
+
+							val[idiag] = sum + (rho*cp*Vol) / timestep_sequence[j]; // диагональное преобладание.
+							col_ind[idiag] = i;
+							idiag = im;
+							row_ptr[i + 1] = im;
+							im++;
+						}
+						else {
+							// стенка
+							//((w[id[i]].ifamily == DIRICHLET_FAMILY) ||
+							//(w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
+							//(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)||
+							//(w[id[i]].ifamily == NEIMAN_FAMILY)))
+
+							if (w[id[i]].ifamily == DIRICHLET_FAMILY) {
+								val[idiag] = 1.0; // Только условия Дирихле.
+								col_ind[idiag] = i;
+								row_ptr[i + 1] = idiag + 1;
+								idiag++;
+							}
+							else if ((w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
+								(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)||
+								(w[id[i]].ifamily == NEIMAN_FAMILY)) {
+								// Находим номер блока ib с которым контактирует стенка.
+								integer ib = wall2block_link[id[i]];
+								integer ic = id_reverse[ib];
+
+								TOCHKA bp0;
+								if (b[ib].g.itypegeom == PRISM) {
+									bp0.x = 0.5 * (b[ib].g.xS + b[ib].g.xE);
+									bp0.y = 0.5 * (b[ib].g.yS + b[ib].g.yE);
+									bp0.z = 0.5 * (b[ib].g.zS + b[ib].g.zE);
+								}
+								else if (b[ib].g.itypegeom == CYLINDER) {
+									switch (b[ib].g.iPlane) {
+									case XY_PLANE:
+										bp0.x = b[ib].g.xC;
+										bp0.y = b[ib].g.yC;
+										bp0.z = b[ib].g.zC + 0.5 * b[ib].g.Hcyl;
+										break;
+									case XZ_PLANE:
+										bp0.x = b[ib].g.xC;
+										bp0.z = b[ib].g.zC;
+										bp0.y = b[ib].g.yC + 0.5 * b[ib].g.Hcyl;
+										break;
+									case YZ_PLANE:
+										bp0.y = b[ib].g.yC;
+										bp0.z = b[ib].g.zC;
+										bp0.x = b[ib].g.xC + 0.5 * b[ib].g.Hcyl;
+										break;
+									}
+								}
+								else if (b[ib].g.itypegeom == POLYGON) {
+									// Вычисляем геометрический центр полигона.
+									integer iscan = 0;
+									switch (b[ib].g.iPlane_obj2) {
+									case XY_PLANE:
+										bp0.x = 0.0; bp0.y = 0.0;
+										for (iscan = 0; iscan < b[ib].g.nsizei; iscan++) {
+											bp0.x += b[ib].g.xi[iscan];
+											bp0.y += b[ib].g.yi[iscan];
+										}
+										bp0.x /= 1.0 * b[ib].g.nsizei;
+										bp0.y /= 1.0 * b[ib].g.nsizei;
+										bp0.z = b[ib].g.zi[0] + 0.5 * b[ib].g.hi[0];
+										break;
+									case XZ_PLANE:
+										bp0.x = 0.0; bp0.z = 0.0;
+										for (iscan = 0; iscan < b[ib].g.nsizei; iscan++) {
+											bp0.x += b[ib].g.xi[iscan];
+											bp0.z += b[ib].g.zi[iscan];
+										}
+										bp0.x /= 1.0 * b[ib].g.nsizei;
+										bp0.z /= 1.0 * b[ib].g.nsizei;
+										bp0.y = b[ib].g.yi[0] + 0.5 * b[ib].g.hi[0];
+										break;
+									case YZ_PLANE:
+										bp0.y = 0.0; bp0.z = 0.0;
+										for (iscan = 0; iscan < b[ib].g.nsizei; iscan++) {
+											bp0.y += b[ib].g.yi[iscan];
+											bp0.z += b[ib].g.zi[iscan];
+										}
+										bp0.y /= 1.0 * b[ib].g.nsizei;
+										bp0.z /= 1.0 * b[ib].g.nsizei;
+										bp0.x = b[ib].g.xi[0] + 0.5 * b[ib].g.hi[0];
+										break;
+									}
+								}
+								else {
+									bp0.x = 0.5 * (b[ib].g.xS + b[ib].g.xE);
+									bp0.y = 0.5 * (b[ib].g.yS + b[ib].g.yE);
+									bp0.z = 0.5 * (b[ib].g.zS + b[ib].g.zE);
+								}
+
+								doublereal distance = sqrt((bp0.x - 0.5 * (w[id[i]].g.xS + w[id[i]].g.xE)) *
+									(bp0.x - 0.5 * (w[id[i]].g.xS + w[id[i]].g.xE)) +
+									(bp0.y - 0.5 * (w[id[i]].g.yS + w[id[i]].g.yE)) *
+									(bp0.y - 0.5 * (w[id[i]].g.yS + w[id[i]].g.yE)) +
+									(bp0.z - 0.5 * (w[id[i]].g.zS + w[id[i]].g.zE)) *
+									(bp0.z - 0.5 * (w[id[i]].g.zS + w[id[i]].g.zE)));
+								doublereal rho, cp, lam;
+								rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
+								if (matlist[b[ib].imatid].blibmat == 1) {
+									// библиотечный, находящийся внутри программы AliceFlow материал.
+									if (b[ib].itype == SOLID) {
+										my_solid_properties(potent[ic], rho, cp, lam, matlist[b[ib].imatid].ilibident);
+										// проверка на допустимость температур.
+										diagnostic_critical_temperature(potent[ic], f, t, b, lb);
+									} // SOLID
+									if (b[ib].itype == FLUID) {
+										doublereal mu, beta_t; // значения не используются но требуются.
+										doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+
+										my_fluid_properties(potent[ic], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
+									} // FLUID
+								}
+								else if (matlist[b[ib].imatid].blibmat == 0) {
+									// материал определённый пользователем:
+									// постоянные свойства.
+									rho = matlist[b[ib].imatid].rho;
+									//cp=matlist[b[ib].imatid].cp;
+									//lam=matlist[b[ib].imatid].lam;
+									cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, potent[ic]);
+									lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, potent[ic]);
+
+								}
+								doublereal lambda_G = lam;
+								// Гипотеза!!! Только одна стенка и она записана в конце списка.
+								//((lambda_G*dS[ic][inumber_neighbour[ic]-1]) / distance);
+								val[idiag] = ((lambda_G) / distance);
+								col_ind[idiag] = i;//стенка
+								idiag++;
+								val[idiag] = -((lambda_G) / distance);
+								col_ind[idiag] = ic;//блок
+								idiag++;
+								row_ptr[i + 1] = idiag;
+								im = idiag + 1;
+								if (w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) {
+
+									//printf("nonlinear:  potent[ic]=%e  potent[i]=%e Tamb=%e\n", potent[ic], potent[i], w[id[i]].Tamb);
+									//printf("lambda_G=%e distance=%e w[id[i]].film_coefficient=%e\n", lambda_G, distance, w[id[i]].film_coefficient);
+									//getchar();
+									if (potent[i] > w[id[i]].Tamb) {
+										rthdsd[i] = -w[id[i]].film_coefficient * (potent[i] - w[id[i]].Tamb); // Условия Ньютона-Рихмана.
+									}
+									else {
+										rthdsd[i] = 0.0;
+										//rthdsd[i] = -w[id[i]].film_coefficient * (2.0); // Условия Ньютона-Рихмана.
+									}
+								}
+								if (w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY) {
+									// Условие Стефана - Больцмана.
+									//printf("nonlinear:  potent[ic]=%e  potent[i]=%e Tamb=%e\n", potent[ic], potent[i], w[id[i]].Tamb);
+									//printf("lambda_G=%e distance=%e w[id[i]].emissivity=%e\n", lambda_G, distance, w[id[i]].emissivity);
+									//getchar();
+									//if (potent[i] > w[id[i]].Tamb) знак минус, охлаждение.
+									//if (potent[i] < w[id[i]].Tamb) знак плюс, подогрев.
+									{
+										rthdsd[i] = -w[id[i]].emissivity * w[id[i]].ViewFactor *STEFAN_BOLCMAN_CONST * (((273.15 + potent[i]) *
+											(273.15 + potent[i]) * (273.15 + potent[i]) * (273.15 + potent[i]) -
+											(273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb) *
+											(273.15 + w[id[i]].Tamb)));
+									}
+									
+								}
+
+								if (w[id[i]].ifamily == NEIMAN_FAMILY) {
+									// Однородное условие Неймана
+									rthdsd[i] = 0.0;
+								}
+							}
+						}
+					}
+
+					integer n = maxelm + lw;
+
+					// One iteration
+					r2=residual_network(n, maxelm, rthdsd, potent, val, col_ind, row_ptr, b_nonlinear_network, id, w);
+					//Seidel_network(n, maxelm, rthdsd, potent, val, col_ind, row_ptr, b_nonlinear_network, id, w);
+
+					//printf("nnz=%lld row_ptr[n]=%lld\n",nnz, row_ptr[n]);
+
+					/*
+					// Нормировка
+					for (integer i_1 = 0; i_1 < n; i_1++) {
+					for (integer j_2 = row_ptr[i_1] + 1; j_2 < row_ptr[i_1 + 1]; j_2++) {
+					val[j_2] /= val[row_ptr[i_1]];
+					}
+					rthdsd[i_1] /= val[row_ptr[i_1]];
+					val[row_ptr[i_1]] = 1.0;
+					}
+					*/
+
+					check_CRS_matrix(n, nnz, val, col_ind, row_ptr, rthdsd, potent, b, lb, id, w, lw, maxelm);
+					//print_CRS_matrix(n, nnz, val, col_ind, row_ptr, rthdsd, potent);
+					if (b_nonlinear_network) {
+						 
+						 
+
+						doublereal alpha = 0.98; // нижняя релаксация.
+						if (b_Newton_Richman) {
+							// граничное условие Ньютона - Рихмана
+							// Ok релаксация достаточна.
+						}
+
+						if (b_Stefan_Bolcman) {
+							// Нелинейность Стефана - Больцмана, нужна более сильная релаксация.
+							// Было (0.2 проверено) 0.1
+							// 0.7 Проверено подходит для нестационарных расчётов.
+							alpha = 0.78;// 0.7;//0.01; 0.1-BSK-Dmitrii работает; 0.8; 0.98;
+						}
+
+						// нижняя релаксация введённая в матрицу СЛАУ.
+						// 0.1
+						// 0.4 занижает.
+						// 0.8 близко.
+						// 0.95 BSK-Dmitrii работает.
+						// Если задача нелинейна.
+						if ((b_Newton_Richman) || (b_Stefan_Bolcman)) {
+							// Было 0.4
+							doublereal alphaA = 0.9; // 0.01; нижняя релаксация.
+							for (integer i_1 = 0; i_1 < maxelm; i_1++) {
+								// Это нужно чтобы сошелся солвер решения СЛАУ.
+								rthdsd[i_1] += (1 - alphaA) * (val[row_ptr[i_1]] / alphaA) * potent_old[i_1];
+								val[row_ptr[i_1]] = val[row_ptr[i_1]] / alphaA;
+							}
+						}
+						
+
+						for (integer i25 = 0; i25 < n; i25++) potent_old[i25] = potent[i25];
+
+						//bool worked_successfully;
+						//amg_loc_memory_networkT(val, col_ind, row_ptr, n, nnz,
+							//rthdsd, potent, 1.0, true, 0, worked_successfully,
+							//b, lb, ls, maxelm,false); // false - решаем до сходимости.
+						//Bi_CGStabCRS(n, val, col_ind, row_ptr, rthdsd, potent, 2000);
+
+						// Решатель Дениса Демидова.
+						amgcl_networkT_solver(val, col_ind, row_ptr, n, rthdsd, potent, false);
+
+						for (integer i25 = 0; i25 < n; i25++) {
+							potent[i25] = potent_old[i25] + alpha * (potent[i25] - potent_old[i25]);
+							//if (potent[i25] < t.operatingtemperature) potent[i25] = t.operatingtemperature;
+						}
+						//getchar();
+					}
+					else {
+						//Bi_CGStabCRS(n, val, col_ind, row_ptr, rthdsd, potent, 2000);
+						bool worked_successfully;
+						amg_loc_memory_networkT(val, col_ind, row_ptr, n, nnz,
+							rthdsd, potent, 1.0, true, 0, worked_successfully,
+							b, lb, ls, maxelm,false);
+					}
+					//getchar();
+
+				}
+
+				delete[] val;
+				delete[] col_ind;
+				delete[] row_ptr;
+
+
+				delete[] potent_old;
+
+				/*
+				Завершение решения СЛАУ на временном шаге:
+				*/
+
+				for (integer i = 0; i < maxelm + lw; i++) {
+					if (potent[i] < -273.15) {
+						potent[i] = -273.15; // Идентифицируем абсолютный ноль.
+					}
+				}
+
+				// Сохранение температуры на сетке.
+				for (integer i = 0; i < t.maxelm; i++) {
+					if (block_is_active[t.whot_is_block[i]]) {
+						t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+					}
+				}
+				for (integer i = 0; i < t.maxbound; i++) {
+					// Копируем температуру из ближайшего внутреннего узла.
+					t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+				}
+
+				if ((glTSL.id_law == 2) && (j == 1039)) {
+					// 29_11_2017
+
+				
+
+					// Достигнут момент конца 6 включения на четвёртые сутки.
+					// Экспорт в техплот.
+					if (!b_on_adaptive_local_refinement_mesh) {
+						bool bextendedprint_1 = false;
+						exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b);
+					}
+					else {
+						// Экспорт в АЛИС
+						// Экспорт в программу tecplot температуры.
+						//С АЛИС сетки.
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 1, b, lb);
+					}
+
+				}
+				for (integer i = 0; i < maxelm + lw; i++) toldtimestep[i] = potent[i]; // copy
+
+				if (!b_on_adaptive_local_refinement_mesh) {
+					if (bfirst_export && (phisicaltime > 287990)) {
+						bfirst_export = false;
+
+						// Сохранение температуры на сетке.
+						for (integer i = 0; i < t.maxelm; i++) {
+							if (block_is_active[t.whot_is_block[i]]) {
+								t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+							}
+						}
+						for (integer i = 0; i < t.maxbound; i++) {
+							// Копируем температуру из ближайшего внутреннего узла.
+							t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+						}
+
+						// Достигнут момент конца 6 включения на четвёртые сутки.
+						// Экспорт в техплот.
+						bool bextendedprint_1 = false;
+						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b, lb);
+
+					}
+				}
+
+				if (ianimation_write_on == 1) {
+
+					// Запись очередного анимационного кадра.
+					if (!b_on_adaptive_local_refinement_mesh) {
+
+						// Сохранение температуры на сетке.
+						for (integer i = 0; i < t.maxelm; i++) {
+							if (block_is_active[t.whot_is_block[i]]) {
+								t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+							}
+						}
+						for (integer i = 0; i < t.maxbound; i++) {
+							// Копируем температуру из ближайшего внутреннего узла.
+							t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+						}
+
+						// Запись анимационных кадров.
+						bool bextendedprint_1 = false;
+						integer inumbercadr = j;
+						exporttecplotxy360T_3D_part2_ianimation_series(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, inumbercadr, phisicaltime, b);
+					}
+
+				}
+
+				// Сохранение температуры на сетке.
+				for (integer i = 0; i < t.maxelm; i++) {
+					if (block_is_active[t.whot_is_block[i]]) {
+						t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+					}
+				}
+				for (integer i = 0; i < t.maxbound; i++) {
+					// Копируем температуру из ближайшего внутреннего узла.
+					t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+				}
+
+				// Формируем отчёт о температуре каждого объекта из которой состоит модель:
+				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], t.operatingtemperature);
+
+				doublereal tmaxi = -1.0e10; // максимальная температура для внутренних КО.
+
+				doublereal tmaxavg = -273.15;
+				doublereal *nullpointer = nullptr;
+
+				for (integer i = 0; i < maxelm; i++) tmaxavg = fmax(tmaxavg, potent[i]);
+
+				doublereal Pdiss = 0.0; // Мощность рассеиваемая в тепло.
+				doublereal tmaxall = tmaxi; // максимальная температура для всех КО внутренних и граничных.
+
+				integer ifindloc = 0; // позиция на сетке где найдена максимальная температура.
+				for (integer i = 0; i < maxelm; i++) {
+					//tmaxi=fmax(tmaxi,t.potent[i]);
+					if (potent[i] > tmaxi) {
+						tmaxi = potent[i];
+						ifindloc = i; // запоминаем позицию максимума.
+					}
+				}
+
+				for (integer i = maxelm; i < maxelm + lw; i++) tmaxall = fmax(tmaxall, potent[i]);
+
+
+				for (integer isource = 0; isource < ls; isource++) {
+					Pdiss += s[isource].power;
+				}
+
+				// 19 november 2016.
+				// Обновление мощности тепловыделения во всех внутренних узлах.
+
+				for (integer i47 = 0; i47 < t.maxelm; i47++) {
+					// Скорость в том что значение не вычисляется как раньше а просто хранится.
+					integer ib = t.whot_is_block[i47];
+					t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
+					// вычисление размеров текущего контрольного объёма:
+					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+					volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+					Pdiss += t.Sc[i47] * dx*dy*dz;
+				}
+
+				printf("Pdiss=%e\n", Pdiss); // мощность рассеиваемая в тепло и определяемая лишь по плоским источникам.
+				if (fabs(Pdiss) < 1.0e-30) {
+					Pdiss = 1.0; // будем печатать вместо RT перегрев.
+					printf("Warning !!! Pdissipation Energy is equal zero (calculation source object).\n");
+					printf("Pdiss_virtual:=1.0; RT==DeltaT==(Tmax-Tamb)/1.0;\n");
+					printf("Please, press any key to continue...\n");
+					//getchar();
+					system("pause");
+				}
+				//getchar();
+
+				fprintf(fpcurvedata, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", phisicaltime, tmaxall, (tmaxall - Tamb) / Pdiss, tmaxi, (tmaxi - Tamb) / Pdiss, tmaxavg, (tmaxavg - Tamb) / Pdiss);
+				if (glTSL.id_law == 0) {
+					// Linear.
+					if (evdokimova_report != nullptr) {
+						evdokimova_report[j + 1][0] = phisicaltime; evdokimova_report[j + 1][1] = tmaxall; evdokimova_report[j + 1][2] = (tmaxall - Tamb) / Pdiss;
+						evdokimova_report[j + 1][6] = phisicaltime; evdokimova_report[j + 1][7] = tmaxi;  evdokimova_report[j + 1][8] = (tmaxi - Tamb) / Pdiss;
+						evdokimova_report[j + 1][12] = phisicaltime; evdokimova_report[j + 1][13] = tmaxavg; evdokimova_report[j + 1][14] = (tmaxavg - Tamb) / Pdiss;
+					}
+				}
+				fprintf(fpKras, "%+.16f %+.16f\n", phisicaltime, tmaxi); // tmaxall
+				if (glTSL.id_law == 1) {
+					// Только если square wave.
+					if ((j + 1 - 10) % 20 == 0) {
+#ifdef MINGW_COMPILLER
+						fpKras_max = fopen64("inputKras_max.txt", "a");
+#else
+						err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
+#endif
+						if ((err23_max == 0) && (fpKras_max != NULL)) {
+							fprintf(fpKras_max, "%+.16f %+.16f\n", phisicaltime, tmaxi);
+							fclose(fpKras_max);
+						}
+					}
+					if ((j + 1) % 20 == 0) {
+#ifdef MINGW_COMPILLER
+						fpKras_min = fopen64("inputKras_min.txt", "a");
+#else
+						err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
+#endif
+						if ((err23_min == 0) && (fpKras_min != NULL)) {
+							fprintf(fpKras_min, "%+.16f %+.16f\n", phisicaltime, tmaxi);
+							fclose(fpKras_min);
+						}
+					}
+				}
+				printf("complete is: %3.0f %% \n", (doublereal)(100.0*(j + 1) / iN)); // показывает сколько процентов выполнено.
+			}
+
+			fclose(fpcurvedata); // закрытие файла для записи кривой прогрева.
+		}
+		fclose(fpKras); // закрытие файла для записи кривой прогрева в готовом для визуализации виде.
+	}
+
+
+	if (toldtimestep != nullptr) {
+		delete[] toldtimestep;
+	}
+	if (timestep_sequence != nullptr) {
+		delete[] timestep_sequence;
+	}
+	if (poweron_multiplier_sequence != nullptr) {
+		delete[] poweron_multiplier_sequence;
+	}
+
+	if (glTSL.id_law == 0) {
+		// Linear.
+		// Формирование отчёта Н.Л. Евдокимова.
+		// C dC/dRt C/Rt
+		evdokimova_report[0][3] = 0.0;  evdokimova_report[0][5] = 0.0;
+		evdokimova_report[0][9] = 0.0;  evdokimova_report[0][11] = 0.0;
+		evdokimova_report[0][15] = 0.0; evdokimova_report[0][17] = 0.0;
+		for (integer i = 1; i < iN; i++) {
+			// шаг 1.
+			evdokimova_report[i][3] = evdokimova_report[i][0] / evdokimova_report[i][2];  evdokimova_report[i][5] = evdokimova_report[i][3] / evdokimova_report[i][2];
+			evdokimova_report[i][9] = evdokimova_report[i][6] / evdokimova_report[i][8];  evdokimova_report[i][11] = evdokimova_report[i][9] / evdokimova_report[i][8];
+			evdokimova_report[i][15] = evdokimova_report[i][12] / evdokimova_report[i][14];  evdokimova_report[i][17] = evdokimova_report[i][15] / evdokimova_report[i][14];
+		}
+		for (integer i = 0; i < iN; i++) {
+			// шаг 2.
+			// данный код должен выполнятся после шага 1, т.к. он зависит от результатов шага1.
+			if (fabs(evdokimova_report[i + 1][2] - evdokimova_report[i][2]) < 1e-30) {
+				// если знаменатель равен нулю, то и числитель равен нулю и значит мы имеем неопределённость 0 на 0 которую разрешаем нулевым значением.
+				evdokimova_report[i][4] = 0.0;
+			}
+			else {
+				evdokimova_report[i][4] = (evdokimova_report[i + 1][3] - evdokimova_report[i][3]) / (evdokimova_report[i + 1][2] - evdokimova_report[i][2]);
+			}
+			if (fabs(evdokimova_report[i + 1][8] - evdokimova_report[i][8]) < 1.0e-30) {
+				evdokimova_report[i][10] = 0.0;
+			}
+			else {
+				evdokimova_report[i][10] = (evdokimova_report[i + 1][9] - evdokimova_report[i][9]) / (evdokimova_report[i + 1][8] - evdokimova_report[i][8]);
+			}
+			if (fabs(evdokimova_report[i + 1][14] - evdokimova_report[i][14]) < 1.0e-30) {
+				evdokimova_report[i][16] = 0.0;
+			}
+			else {
+				evdokimova_report[i][16] = (evdokimova_report[i + 1][15] - evdokimova_report[i][15]) / (evdokimova_report[i + 1][14] - evdokimova_report[i][14]);
+			}
+		}
+		evdokimova_report[iN][3] = evdokimova_report[iN][0] / evdokimova_report[iN][2];
+		evdokimova_report[iN][5] = evdokimova_report[iN][3] / evdokimova_report[iN][2];
+		if (fabs(evdokimova_report[iN][2] - evdokimova_report[iN - 1][2]) < 1.0e-30) {
+			// неопределённость ноль на ноль.
+			evdokimova_report[iN][4] = 0.0;
+		}
+		else {
+			evdokimova_report[iN][4] = (evdokimova_report[iN][3] - evdokimova_report[iN - 1][3]) / (evdokimova_report[iN][2] - evdokimova_report[iN - 1][2]);
+		}
+
+		evdokimova_report[iN][9] = evdokimova_report[iN][6] / evdokimova_report[iN][8];
+		evdokimova_report[iN][11] = evdokimova_report[iN][9] / evdokimova_report[iN][8];
+		if (fabs(evdokimova_report[iN][8] - evdokimova_report[iN - 1][8]) < 1.0e-30) {
+			// разрешение неопределённости ноль на ноль.
+			evdokimova_report[iN][10] = 0.0;
+		}
+		else {
+			evdokimova_report[iN][10] = (evdokimova_report[iN][9] - evdokimova_report[iN - 1][9]) / (evdokimova_report[iN][8] - evdokimova_report[iN - 1][8]);
+		}
+
+		evdokimova_report[iN][15] = evdokimova_report[iN][12] / evdokimova_report[iN][14]; // C==time/Rt;
+		evdokimova_report[iN][17] = evdokimova_report[iN][15] / evdokimova_report[iN][14];
+		if (fabs(evdokimova_report[iN][14] - evdokimova_report[iN - 1][14]) < 1.0e-30) {
+			// разрешаем неопределённость ноль на ноль.
+			evdokimova_report[iN][16] = 0.0;
+		}
+		else {
+			evdokimova_report[iN][16] = (evdokimova_report[iN][15] - evdokimova_report[iN - 1][15]) / (evdokimova_report[iN][14] - evdokimova_report[iN - 1][14]);
+		}
+
+		// Запись отчёта в текстовый файл:
+		FILE *fpevdokimova = NULL;
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fpevdokimova = fopen64("Evdokimova.txt", "w");
+		if (fpevdokimova == NULL) err = 1;
+#else
+		err = fopen_s(&fpevdokimova, "Evdokimova.txt", "w");
+#endif
+		if ((err) != 0) {
+			printf("Create File Evdokimova.txt Error\n");
+			// getchar();
+			system("pause");
+			exit(0);
+		}
+		else {
+			if (fpevdokimova != NULL) {
+				fprintf(fpevdokimova, "time Tch_all RTch_all Cchall dCchall/dRt_chall Cchall/Rtchall time Tch_in RTch_in Cchin dCchin/dRt_chin Cchin/Rtchin time Tch_avg RTch_avg Cchavg dCchavg/dRt_chavg Cchavg/Rtchavg \n");
+				for (integer i = 0; i <= iN; i++) {
+					fprintf(fpevdokimova, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][1], evdokimova_report[i][2], evdokimova_report[i][3], evdokimova_report[i][4], evdokimova_report[i][5], evdokimova_report[i][6], evdokimova_report[i][7], evdokimova_report[i][8], evdokimova_report[i][9], evdokimova_report[i][10], evdokimova_report[i][11], evdokimova_report[i][12], evdokimova_report[i][13], evdokimova_report[i][14], evdokimova_report[i][15], evdokimova_report[i][16], evdokimova_report[i][17]);
+				}
+				fclose(fpevdokimova); // закрываем файл.
+			}
+		}
+
+		if (evdokimova_report != nullptr) {
+			for (integer i = 0; i < iN + 1; i++) {
+				delete[] evdokimova_report[i];
+			}
+			delete[] evdokimova_report;
+			evdokimova_report = nullptr;
+		}
+
+	}
+
+	if (evdokimova_report != nullptr) {
+		for (integer i = 0; i < iN + 1; i++) {
+			delete[] evdokimova_report[i];
+		}
+		delete[] evdokimova_report;
+		evdokimova_report = nullptr;
+	}
+
+	// Сохранение температуры на сетке.
+	for (integer i = 0; i < t.maxelm; i++) {
+		if (block_is_active[t.whot_is_block[i]]) {
+			t.potent[i] = potent[id_reverse[t.whot_is_block[i]]];
+		}
+	}
+	for (integer i = 0; i < t.maxbound; i++) {
+		// Копируем температуру из ближайшего внутреннего узла.
+		t.potent[t.maxelm + i] = t.potent[t.border_neighbor[i].iI];
+	}
+
+	delete[] id;
+	delete[] id_reverse;
+	delete[] hash;
+	delete[] hash_wall;
+	delete[] wall2block_link;
+	delete[] block_is_active;
+	delete[] Vol_block; 
+	delete[] inumber_neighbour;
+	delete[] inumber_neighbour_only_body;
+	for (integer i = 0; i < maxelm + lw; i++) {
+		delete[] dS[i];
+		delete[] ilink[i];
+		delete[] ilink_reverse[i];
+	}
+	delete[] dS;
+	delete[] ilink;
+	delete[] ilink_reverse;
+
+	delete[] potent; // вектор решения.
+	delete[] rthdsd; // правая часть.
+
+					 // Добавлено в код 23 ноября 2016 года.
+	calculation_end_time = clock();
+	calculation_seach_time = calculation_end_time - calculation_start_time;
+	unsigned int im = 0, is = 0, ims = 0;
+	im = (unsigned int)(calculation_seach_time / 60000); // минуты
+	is = (unsigned int)((calculation_seach_time - 60000 * im) / 1000); // секунды
+	ims = (unsigned int)((calculation_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
+
+	printf("time calculation is:  %u minute %u second %u 10*millisecond\n", im, is, ims);
+
+} // calculate_Network_T_unsteady
+
 
 void my_malloc2(doublereal** &rhie_chow, integer maxelm) {
 	rhie_chow=new doublereal*[3];
@@ -2299,7 +6777,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 				if (ir > il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -2309,7 +6787,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				}
 				else if (ir < il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -2411,6 +6889,9 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 		if (flow_interior>0) {
 
+			// В файл statistic_convergence.txt будет записываться информация о работе
+            // линейных решателей СЛАУ.
+            FILE *fp_statistic_convergence=NULL;
 						
 			errno_t err_stat=0;
 #ifdef MINGW_COMPILLER
@@ -2548,11 +7029,11 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  for (integer i = 0; i < 3; i++) {
 							  for (integer j = 0; j < fglobal[iflow].maxelm + fglobal[iflow].maxbound; j++) {
 								  switch (i) {
-								  case VX: SpeedCorOld[VX][j] = fglobal[iflow].potent[VXCOR][j];
+								  case VELOCITY_X_COMPONENT: SpeedCorOld[VELOCITY_X_COMPONENT][j] = fglobal[iflow].potent[VXCOR][j];
 									  break;
-								  case VY: SpeedCorOld[VY][j] = fglobal[iflow].potent[VYCOR][j];
+								  case VELOCITY_Y_COMPONENT: SpeedCorOld[VELOCITY_Y_COMPONENT][j] = fglobal[iflow].potent[VYCOR][j];
 									  break;
-								  case VZ: SpeedCorOld[VZ][j] = fglobal[iflow].potent[VZCOR][j];
+								  case VELOCITY_Z_COMPONENT: SpeedCorOld[VELOCITY_Z_COMPONENT][j] = fglobal[iflow].potent[VZCOR][j];
 									  break;
 								  }
 							  }
@@ -2863,22 +7344,26 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных: 0.7; 0.3; 
 								  // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
 								  if (!b_on_adaptive_local_refinement_mesh) {
-									  fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
-									  fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
-									  fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_X_COMPONENT] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Y_COMPONENT] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Z_COMPONENT] = 0.7; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7;
 									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
 									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = 0.8;
 								  }
 								  else {
-									  fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
-									  fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
-									  fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_X_COMPONENT] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Y_COMPONENT] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Z_COMPONENT] = 0.8; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.8;
 									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
 									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = 0.8;
 								  }
 							  }
 							  else {
@@ -2887,22 +7372,26 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных: 0.7; 0.3; 
 								  // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
 								  if (!b_on_adaptive_local_refinement_mesh) {
-									  fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
-									  fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
-									  fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_X_COMPONENT] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Y_COMPONENT] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Z_COMPONENT] = 0.7; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
 									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
 									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = 0.8;
 								  }
 								  else {
-									  fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
-									  fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
-									  fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_X_COMPONENT] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Y_COMPONENT] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VELOCITY_Z_COMPONENT] = 0.8; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
 									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
 									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = 0.8;
 								  }
 							  }
 
@@ -3083,9 +7572,9 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  }
 									  }
 									  else if (eqin.itemper == 1) {
-										  doublereal tmax = 0.0;
+										  doublereal tmax = -1.0e30;
 										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
+										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, t.potent[i1]);
 										  // Считаем гидродинамику совместно с уравнением теплопроводности.
 										  if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
@@ -3286,9 +7775,9 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  }
 									  }
 									  else if (eqin.itemper == 1) {
-										  doublereal tmax = 0.0;
+										  doublereal tmax = -1.0e30;
 										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
+										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, t.potent[i1]);
 										  // Считаем гидродинамику совместно с уравнением теплопроводности.
 										  if (fglobal[0].iflowregime == RANS_STANDART_K_EPS) {
 											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
@@ -3936,10 +8425,33 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			}
 			else {
 				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
-			}
+			}			
+
 		}
 
-		
+		{
+		// последний параметр равный единице означает что мощность подаётся !
+		doublereal tmax = -1.0e30;
+		doublereal tmin = 1.0e30;
+		doublereal tmax_FLUID = -1.0e30;
+		for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
+			tmax = fmax(tmax, t.potent[i1]);
+			tmin = fmin(tmin, t.potent[i1]);
+			if (i1 < t.maxelm) {
+				if ((t.ptr != nullptr) && (t.ptr[1][i1] > -1)) {
+					// Это FLUID ячейка
+					tmax_FLUID = fmax(tmax_FLUID, t.potent[i1]);
+				}
+			}
+		}
+		printf("\n");
+		printf("1. minimum temperature in default interior is %1.4e\n", tmin);
+		printf("1. maximum temperature in default interior is %1.4e\n", tmax);
+		if (tmax_FLUID >= -273.15) {//30.10.2019
+			printf("1. maximum temperature in FLUID interior is %1.4e\n", tmax_FLUID);
+		}
+		printf("\n");
+		}
 
 		// Включать или нет последующий расчёт температуры:
 		bool bposttempsolve=false;
@@ -4210,7 +8722,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				printf("ileft=%lld center=%lld right=%lld\n", il, ic, ir);
 				if (ir > il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -4220,7 +8732,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				}
 				else if (ir < il) {
 					// если узел fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1; существует.
-					integer icP = fglobal[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+					integer icP = fglobal[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 					if ((icP >= 0) && (icP < fglobal[0].maxelm)) {
 						iP = icP;
 					}
@@ -4319,6 +8831,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 			// в модели присутствуют гидродинамические подобласти.
 
+			// В  файл statistic_convergence.txt будет записываться информация о работе
+            // линейных решателей СЛАУ.
+            FILE *fp_statistic_convergence=NULL;
 
 			errno_t err_stat=0;
 #ifdef MINGW_COMPILLER
@@ -4552,11 +9067,11 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						for (integer i = 0; i<3; i++) {
 							for (integer j = 0; j<fglobal[iflow].maxelm + fglobal[iflow].maxbound; j++) {
 								switch (i) {
-								case VX: SpeedCorOld[VX][j] = fglobal[iflow].potent[VXCOR][j];
+								case VELOCITY_X_COMPONENT: SpeedCorOld[VELOCITY_X_COMPONENT][j] = fglobal[iflow].potent[VXCOR][j];
 									break;
-								case VY: SpeedCorOld[VY][j] = fglobal[iflow].potent[VYCOR][j];
+								case VELOCITY_Y_COMPONENT: SpeedCorOld[VELOCITY_Y_COMPONENT][j] = fglobal[iflow].potent[VYCOR][j];
 									break;
-								case VZ: SpeedCorOld[VZ][j] = fglobal[iflow].potent[VZCOR][j];
+								case VELOCITY_Z_COMPONENT: SpeedCorOld[VELOCITY_Z_COMPONENT][j] = fglobal[iflow].potent[VZCOR][j];
 									break;
 								}
 							}
@@ -4798,18 +9313,18 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										// В книге Ferczinger and Peric обосновывается применение параметров релаксации равных: 0.7; 0.3; 
 										// для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
 										if (!b_on_adaptive_local_refinement_mesh) {
-											fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
-											fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
-											fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+											fglobal[iflow].alpha[VELOCITY_X_COMPONENT] = 0.7; // 0.8 0.5
+											fglobal[iflow].alpha[VELOCITY_Y_COMPONENT] = 0.7; // 0.8 0.5
+											fglobal[iflow].alpha[VELOCITY_Z_COMPONENT] = 0.7; // 0.8 0.5
 											fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
 											fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
 											fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
 											fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 										}
 										else {
-											fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
-											fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
-											fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+											fglobal[iflow].alpha[VELOCITY_X_COMPONENT] = 0.8; // 0.8 0.5
+											fglobal[iflow].alpha[VELOCITY_Y_COMPONENT] = 0.8; // 0.8 0.5
+											fglobal[iflow].alpha[VELOCITY_Z_COMPONENT] = 0.8; // 0.8 0.5
 											fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 											fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
 											fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
@@ -5793,9 +10308,9 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									// i1 - номер FLUID INTERIOR,
 									// i2 - VX, VY, VZ - одна из трёх компонент скорости,
 									// i3 - соответствующий номер контрольного объёма 
-									speedoldtimestep[VX][i3] = fglobal[iflow].potent[VX][i3]; // copy end time step
-									speedoldtimestep[VY][i3] = fglobal[iflow].potent[VY][i3]; // copy end time step
-									speedoldtimestep[VZ][i3] = fglobal[iflow].potent[VZ][i3]; // copy end time step
+									speedoldtimestep[VELOCITY_X_COMPONENT][i3] = fglobal[iflow].potent[VELOCITY_X_COMPONENT][i3]; // copy end time step
+									speedoldtimestep[VELOCITY_Y_COMPONENT][i3] = fglobal[iflow].potent[VELOCITY_Y_COMPONENT][i3]; // copy end time step
+									speedoldtimestep[VELOCITY_Z_COMPONENT][i3] = fglobal[iflow].potent[VELOCITY_Z_COMPONENT][i3]; // copy end time step
 								}
 							
 

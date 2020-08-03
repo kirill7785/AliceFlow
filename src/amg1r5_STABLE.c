@@ -2447,7 +2447,7 @@ L20:
 		count_iter_for_film_coef75++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
+		//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 		roi75 = Scal(roc75, ri75, n75);
 		bet75 = (roi75 / roim175)*(al75 / wi75);
@@ -2564,27 +2564,14 @@ L20:
 	bool bprint_mesage_diagnostic = true;
 	if (bprint_mesage_diagnostic) {
 		if ((icount75 % 10) == 0) {
-			printf("iter  residual\n");
-			//fprintf(fp_log, "iter  residual\n");
+			std::cout << "iter  residual" << std::endl;
+			
 		}
-#if doubleintprecision == 1
-		printf("%lld %e\n", icount75, deltai75);
-		//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-		printf("%d %e\n", icount75, deltai75);
-		//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
-
+		std::cout << icount75 << " " << deltai75 << std::endl; 
 	}
 
 	// 28.07.2016.
-#if doubleintprecision == 1
-	//printf("%lld %e\n", icount75, deltai75);
-	//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-	//printf("%d %e\n", icount75, deltai75);
-	//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
+	//std::cout << icount75 << " " << deltai75 << std::endl;
 
 	//getchar();
 	if (deltai75 > delta_old_iter75) i_signal_break_pam_opening75++;
@@ -2592,12 +2579,7 @@ L20:
 	if (iVar == PAM) {
 		if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
 			// досрочный выход из цикла.
-#if doubleintprecision == 1
-			printf("icount PAM=%lld\n", icount75);
-#else
-			printf("icount PAM=%d\n", icount75);
-#endif
-
+			std::cout << "icount PAM=" <<  icount75 << std::endl;
 			break;
 		}
 	}
@@ -4048,7 +4030,7 @@ L20:
 		count_iter_for_film_coef75++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
+		//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 		roi75 = Scal(roc75, ri75, n75);
 		bet75 = (roi75 / roim175)*(al75 / wi75);
@@ -4165,27 +4147,13 @@ L20:
 		bool bprint_mesage_diagnostic = true;
 		if (bprint_mesage_diagnostic) {
 			if ((icount75 % 10) == 0) {
-				printf("iter  residual\n");
-				//fprintf(fp_log, "iter  residual\n");
+				std::cout << "iter  residual" << std::endl;				
 			}
-#if doubleintprecision == 1
-			printf("%lld %e\n", icount75, deltai75);
-			//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-			printf("%d %e\n", icount75, deltai75);
-			//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
-
+			std::cout << icount75 <<" "<< deltai75 << std::endl;
 		}
 
 		// 28.07.2016.
-#if doubleintprecision == 1
-		//printf("%lld %e\n", icount75, deltai75);
-		//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-		//printf("%d %e\n", icount75, deltai75);
-		//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
+		//std::cout << icount75 <<" "<< deltai75 << std::endl;		
 
 		//getchar();
 		if (deltai75 > delta_old_iter75) i_signal_break_pam_opening75++;
@@ -4193,12 +4161,7 @@ L20:
 		if (iVar == PAM) {
 			if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
 				// досрочный выход из цикла.
-#if doubleintprecision == 1
-				printf("icount PAM=%lld\n", icount75);
-#else
-				printf("icount PAM=%d\n", icount75);
-#endif
-
+				std::cout << "icount PAM=" << icount75 << std::endl;
 				break;
 			}
 		}
@@ -11094,7 +11057,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == 1) {
+	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -11424,7 +11387,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	//matrix=11; // symmetric SPD.
 	matrix=22; 
 
-	if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == 1)) {
+	if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
 		ifirst = 10;// начальное приближение с предыдущего шага.
 		ncyc = 10101; // Всего один V цикл.
 		matrix = 11;
@@ -12062,7 +12025,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == 1) {
+	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -12362,7 +12325,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		//matrix=11; // symmetric SPD.
 		matrix = 22;
 		int iVar = TEMP;
-		if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == 1)) {
+		if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
 			ifirst = 10;// начальное приближение с предыдущего шага.
 			ncyc = 10101; // Всего один V цикл.
 			matrix = 11;
@@ -12680,7 +12643,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 		//printf("getready ...");
 		//getchar();
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
+		if ((AMG1R5_SECOND_T_SOLVER == iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		    (NONE_only_amg1r5 == stabilization_amg1r5_algorithm)){
 			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
 			// алгоритм 1985 года.
 			amg1r5_(a, ia, ja,
@@ -12692,7 +12656,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr);
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) {
+		else if ((AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		         (BiCGStab_plus_amg1r5 == stabilization_amg1r5_algorithm)){
 			// 23-24 декабря 2017.
 			//13.10.2018
 			// BiCGStab + amg1r5.
@@ -12709,7 +12674,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr,sparseM,n);
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5) {
+		else if ((AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		(FGMRes_plus_amg1r5 == stabilization_amg1r5_algorithm)){
 			// FGMres + amg1r5.
 			//31 декабря 2017.
 
@@ -12935,7 +12901,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == 1) {
+	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -13301,7 +13267,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	// с условием Ньютона-Рихмана на всей дефолтной границе. Пока с этой задачей 
 	// справляется только my_cl_agl_amg_v0_14 (РУМБА алгоритм).
 
-	if ((iVar==TEMP)&& (adiabatic_vs_heat_transfer_coeff == 1)) {
+	if ((iVar==TEMP)&& (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
 		ifirst = 13;// начальное приближение с предыдущего шага.
 		ncyc = 1019; // Всего 9 V циклов.
 		//if (blocker_Newton_Richman) {
@@ -14006,7 +13972,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	   }
 	   res_sum=sqrt(res_sum);
 
-	   if ((iVar == TEMP) && ((adiabatic_vs_heat_transfer_coeff == 1)||(breakRUMBAcalc_for_nonlinear_boundary_condition==true))) {
+	   if ((iVar == TEMP) && ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)||(breakRUMBAcalc_for_nonlinear_boundary_condition==true))) {
 		   // Если мы решаем Задачу с условием Ньютона Рихмана то у нас нету ни одного условия Дирихле.
 		   // Сходимость определяется на глобальном уровне в solve nonlinear temp.
 
@@ -14083,7 +14049,7 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 				   if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 					   bmemory_local = true;//4.08.2018
 				   }
-				   if (adiabatic_vs_heat_transfer_coeff == 1) {
+				   if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 					   // Нелинейное условие Ньютона - Рихмана 
 					   // матрица всё равно пересобирается каждый раз.
 					 //  bmemory_local = true;

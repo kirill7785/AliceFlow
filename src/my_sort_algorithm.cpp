@@ -255,7 +255,7 @@ void FixHeap(TMatrixElm*& Amat,
   // очень интересен.
   // Ограничение состоит в том, что нумерация массива должна начинаться с 1.
 template <typename TMatrixElm>
-void HeapSort(TMatrixElm*& Amat, integer first, integer last, bool (*compare)(TMatrixElm& Amat1, TMatrixElm& Amat2))
+void HeapSort(TMatrixElm* &Amat, integer first, integer last, bool (*(compare))(Ak1& Amat1, Ak1& Amat2))
 {
 
 	TMatrixElm maxelm; // элемент с наибольшим значением ключа
@@ -442,14 +442,36 @@ void Counting_Sort(Ak1*& Amat, integer first, integer last, bool bmemo, integer 
 	handle_error<integer>(the_original_order_of_values_buf, c7, c6, (last + 1));
 
 	if (bmemo) {
-		the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
-		char c5[29] = "the_original_order_of_values";
+		if (the_original_order_of_values == nullptr) {
+			the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
+			char c5[29] = "the_original_order_of_values";
 
-		handle_error<integer>(the_original_order_of_values, c5, c6, (last + 1));
+			handle_error<integer>(the_original_order_of_values, c5, c6, (last + 1));
+		}
+		else {
+			free(the_original_order_of_values);
+			the_original_order_of_values = nullptr;
 
-		the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
-		char c8[38] = "the_original_order_of_values_reverse";
-		handle_error<integer>(the_original_order_of_values_reverse, c8, c6, (last + 1));
+			the_original_order_of_values = (integer*)malloc((last + 1) * sizeof(integer));
+			char c5[29] = "the_original_order_of_values";
+
+			handle_error<integer>(the_original_order_of_values, c5, c6, (last + 1));
+		}
+
+		if (the_original_order_of_values_reverse == nullptr) {
+			the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
+			char c8[38] = "the_original_order_of_values_reverse";
+			handle_error<integer>(the_original_order_of_values_reverse, c8, c6, (last + 1));
+		}
+		else {
+			free(the_original_order_of_values_reverse);
+			the_original_order_of_values_reverse = nullptr;
+
+			the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
+			char c8[38] = "the_original_order_of_values_reverse";
+			handle_error<integer>(the_original_order_of_values_reverse, c8, c6, (last + 1));
+
+		}
 
 	}
 
@@ -608,7 +630,7 @@ integer qs_abbys_heigh = 0; // глубина уровня в быстрой сортировке.
 // Правильная версия сортировки Чарльза Хоара которая раз в 5 быстрее чем,
 // пирамидальная сортировка. Но ещё быстрее обещает быть TimSort (Futures).
 template <typename TMatrixElm>
-void qs(TMatrixElm*& Amat, integer first, integer last, integer (*indx_compare)(TMatrixElm& Amat)) {
+void qs(TMatrixElm*& Amat, integer first, integer last, integer (*indx_compare)(Ak1& Amat)) {
 	integer i = first, j = last;
 	TMatrixElm tmp;
 
@@ -738,5 +760,130 @@ void QuickSort(TMatrixElm*& Amat, integer first, integer last,
 		}
 	}
 } // QuickSort
+
+
+// comparator function to make min heap 
+struct greaters {
+	bool operator()(const std::pair<integer, integer>& a, const std::pair<integer, integer>& b) const {
+		return a.first < b.first;
+	}
+};
+
+/*
+// Сортировка по возрастанию по индексу i	
+void mySTDHeapSort2(Ak1*& Amat, integer first, integer last, 
+	integer (*indx_compare)(Ak1& Amat))
+{
+	integer n = last - first + 1;
+
+
+	//std::vector<std::pair<integer,integer>> v1(n);
+	std::vector<std::pair<integer, integer>> v1;
+
+	for (integer i = first; i <= last; i++) {
+
+		integer ind = i - first;
+
+		// нумерация Amat[i].i начинается с единицы.
+				
+		//v1[i - first] = std::make_pair(indx_compare(Amat[i]), ind);
+		v1.push_back(std::make_pair(indx_compare(Amat[i]), ind));
+	}
+
+	std::make_heap(v1.begin(), v1.end(), greaters());
+
+	doublereal* a = new doublereal[last - first + 1];
+	integer* i_a = new integer[last - first + 1];
+	integer* j_a = new integer[last - first + 1];	
+	for (integer i = first; i <= last; i++) {
+		a[i - first] = Amat[i].aij;
+		i_a[i - first] = Amat[i].i;
+		j_a[i - first] = Amat[i].j;		
+	}
+
+	//std::sort(v1.begin(), v1.end(), greaters());
+	std::sort_heap(v1.begin(), v1.end(), greaters());
+
+	integer i = first;
+	
+	for (auto it = v1.begin(); it != v1.end(); ++it)
+	{
+		//integer i_ = std::get<1>(*it);
+		integer i_ = (*it).second;
+		//integer i_ = (v1.back()).second; // посмотреть минимальный элемент.
+
+		Amat[i].i = i_a[i_];
+		Amat[i].j = j_a[i_];
+		Amat[i].aij = a[i_];
+		i++;
+
+	}
+	delete[] a;
+	delete[] j_a;
+	delete[] i_a;
+
+
+	//v1.erase(v1.begin(),v1.end());
+	v1.clear();
+}
+*/
+
+// Сортировка по возрастанию по индексу i	
+void mySTDHeapSort(Ak1*& Amat, integer first, integer last,
+	integer(*indx_compare)(Ak1& Amat))
+{
+	integer n = last - first + 1;
+
+	//std::vector<std::pair<integer,integer>> v1(n);
+	std::vector<std::pair<integer, integer>> v1;
+
+	for (integer i = first; i <= last; i++) {
+
+		integer ind = i - first;
+
+		// нумерация Amat[i].i начинается с единицы.
+		
+		//v1[i - first] = std::make_pair(indx_compare(Amat[i]),ind);
+		v1.push_back(std::make_pair(indx_compare(Amat[i]), ind));
+	}
+
+	std::make_heap(v1.begin(), v1.end(), greaters());
+
+	doublereal* a = new doublereal[last - first + 1];
+	integer* j_a = new integer[last - first + 1];
+	integer* i_a = new integer[last - first + 1];
+	for (integer i = first; i <= last; i++) {
+		integer ind = i - first;
+		a[ind] = Amat[i].aij;
+		j_a[ind] = Amat[i].j;
+		i_a[ind] = Amat[i].i;
+	}
+
+	integer i = last;
+	
+	while (!v1.empty())
+	{
+		std::pop_heap(v1.begin(), v1.end(), greaters()); // удалить максимальный элемент из кучи.
+
+		integer i_ = (v1.back()).second; // посмотреть максимальный элемент.
+		//printf("i==back=%lld front=%lld\n",(v1.back()).first, (v1.front()).first);
+
+		v1.pop_back();
+
+		Amat[i].i = i_a[i_];
+		Amat[i].j = j_a[i_];
+		Amat[i].aij = a[i_];
+		i--;
+
+	}
+	delete[] a;
+	delete[] j_a;
+	delete[] i_a;
+
+
+	//v1.erase(v1.begin(),v1.end());
+	v1.clear();
+
+}
 
 #endif

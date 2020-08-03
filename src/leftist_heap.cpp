@@ -15,12 +15,22 @@
 #define MY_LEFTIST_HEAP_CPP 1
 
 typedef struct Tleftist_heap {
-	integer key=0; // ключ сортировки.
-	integer link=-1; // ссылка на номер массива.
+	integer key; // ключ сортировки.
+	integer link; // ссылка на номер массива.
 	// Расстояние до ближайшего вакантного места в правом дереве.
-	int rank=-1;
-	Tleftist_heap* left = nullptr, * right = nullptr;
+	int rank;
+	Tleftist_heap* left, * right;
 	//Tleftist_heap* parent=nullptr; // для операции decrease_key
+
+	Tleftist_heap() {
+		key=0; // ключ сортировки.
+		link=-1; // ссылка на номер массива.
+		// Расстояние до ближайшего вакантного места в правом дереве.
+		 rank=-1;
+		 left = nullptr; 
+		 right = nullptr;
+		//Tleftist_heap* parent=nullptr; // для операции decrease_key
+	}
 } leftist_heap;
 
 // меняет местами кучи x и y.
@@ -40,8 +50,11 @@ leftist_heap* singlton(integer key, integer link) {
 	return x;
 }
 
+// leftist heap очень медленная операция merge.
+// leftist heap не подходит по быстродействию из-за медленной операции merge.
+// 28.04.2020.
 // Слияние двух левосторонних куч.
-leftist_heap* merge(leftist_heap* x, leftist_heap* y) {
+leftist_heap* merge(leftist_heap* &x, leftist_heap* &y) {
 	if (x == nullptr) return y;
 	if (y == nullptr) return x;
 	if (x->key > y->key) {
@@ -71,7 +84,7 @@ leftist_heap* insert(leftist_heap* heap, integer key, integer link) {
 // Таким образом, чтобы удалить минимальный элемент, корень удаляется,
 // и его поддеревья объединяются для формирования
 // новой левосторонней кучи с новым минимумом.
-leftist_heap* delete_min(leftist_heap* heap) {
+leftist_heap* delete_min(leftist_heap* &heap) {
 	//heap->left->parent = heap->right->parent = nullptr;
 	leftist_heap* z = merge(heap->left,heap->right);
 	heap->left = heap->right = nullptr;
@@ -81,12 +94,12 @@ leftist_heap* delete_min(leftist_heap* heap) {
 } // delete_min
 
 // посмотреть минимум
-integer get_min(leftist_heap* heap) {
+integer get_min(leftist_heap* &heap) {
 	return heap->key;
 } // get_min
 
 // посмотреть ссылку на минимум
-integer get_min_link(leftist_heap* heap) {
+integer get_min_link(leftist_heap* &heap) {
 	return heap->link;
 } // get_min
 
@@ -244,5 +257,210 @@ void LeftistHeapSort_j(Ak1* &Amat, integer first, integer last) {
 	delete[] a;
 	delete[] i_a;
 }
+
+/*
+// Не работает сортировка с помощью Фибоначчиевой кучи ??? 29,04,2020
+// Сортировка по возрастанию по индексу i
+	// с помощью Fibonacciheap пирамиды.
+void FibonacciHeapSort(Ak1*& Amat, integer first, integer last) {
+	integer n = last - first + 1;
+	
+	// Фибоначчиева куча.
+	FibonacciHeap<integer> fibo_heap;
+
+	fibo_heap.WakeUp2(n + 1);// alloc memory hash table
+	fibo_heap.UpdateSize(n + 1);
+
+	for (integer i = first; i <= last; i++) {
+		//heap = insert(heap, Amat[i].i, i - first);
+		integer ind = i - first+1;
+		//integer search_key = Amat[first].i * n + ind;
+		//integer add_key = Amat[first].i * n + ind;
+		//---->integer add_key = ind * (n+1) + Amat[first].i;
+		if (Amat[first].i == 0) {
+			printf("Amat[first].i == 0");
+			system("pause");
+		}
+		if (Amat[first].i > n) {
+			printf("Amat[first].i > n");
+			system("pause");
+		}
+		integer add_key = Amat[first].i * (n + 1) + ind;
+		fibo_heap.insert(-add_key);
+	}
+	doublereal* a = new doublereal[last - first + 1];
+	integer* j_a = new integer[last - first + 1];
+	integer* i_a = new integer[last - first + 1];
+	for (integer i = first; i <= last; i++) {
+		a[i - first] = Amat[i].aij;
+		j_a[i - first] = Amat[i].j;
+		i_a[i - first] = Amat[i].i;
+	}
+	integer i_prev = -1;
+	integer i = first;
+	while (!fibo_heap.isEmpty()) {
+		integer i_ = abs((integer)(fibo_heap.getMinimum() % (n+1)))-1;
+		if (i_a[i_] > i_prev) {
+			printf("NO SORT:i=%lld, last=%lld i_prev=%lld i_next=%lld i_=%lld n+1=%lld\n",i, last, i_prev, i_a[i_],i_,n+1);
+			system("PAUSE");
+		}
+		if (i_a[i_] == -1) {
+			printf("i_a[%lld]==%lld j_a=%lld val=%e\n",i_,i_a[i_], j_a[i_],a[i_]);
+		}
+		i_prev = i_a[i_];
+		Amat[i].i = i_a[i_]; //(integer)(fibo_heap.getMinimum() % (n+1));
+		Amat[i].j = j_a[i_];
+		Amat[i].aij = a[i_];
+		i++;
+		data_BalTree ddel;
+		ddel.i = abs((integer)(fibo_heap.getMinimum() % (n+1)));
+		ddel.count_neighbour = abs((integer)(fibo_heap.getMinimum() / (n+1)));
+		//fibo_heap.removeMinimum();
+		fibo_heap.deleteKey(ddel);
+		//printf("i==%lld i_=%lld row_ind==%lld col_ind==%lld aij=%e Nnz=%lld\n", i, i_, Amat[i-1].i, Amat[i - 1].j, Amat[i - 1].aij, last - first + 1);
+		//system("PAUSE");
+	}
+	delete[] a;
+	delete[] j_a;
+	delete[] i_a;
+	if (!fibo_heap.isEmpty()) {
+		printf("Error Fibonacci Heap not empty apostoriory FibonacciHeapSort\n");
+		system("PAUSE");
+		exit(1);
+	}
+
+	printf("Jk\n");
+	system("PAUSE");
+	exit(1);
+
+}
+*/
+/*
+typedef struct TElm_loc {
+public:
+	integer i, ind;
+	//TElm_loc::TElm_loc() { i = -1; ind = -1; }
+	//TElm_loc::TElm_loc(integer i_tmp, integer ind_tmp) { i = i_tmp; ind = ind_tmp; }
+} Elm_loc;
+
+bool compare_loc(Elm_loc a1, Elm_loc a2) 
+{
+	return (a1.i < a2.i); 
+}
+*/
+/*
+struct greater1 {
+	bool operator()(const Elm_loc& a, const Elm_loc& b) const {
+		return (a.i > b.i);
+	}
+};
+*/
+
+/*
+//#include <bits/stdc++.h>
+// Сортировка по возрастанию по индексу i	
+void mySTDHeapSort3(Ak1*& Amat, integer first, integer last,
+	integer (*indx_compare)(Ak1& Amat)) 
+{
+	integer n = last - first + 1;
+	
+
+	//std::vector<Elm_loc> v1(n);
+	//std::vector<std::pair<integer,integer>> v1(n);
+	std::vector<std::pair<integer, integer>> v1;
+
+	for (integer i = first; i <= last; i++) {
+		
+		integer ind = i - first;
+		
+		// нумерация Amat[i].i начинается с единицы.
+		if (indx_compare(Amat[i]) == 0) {
+			printf("Amat[i].i == 0");
+			system("pause");
+		}
+		if (indx_compare(Amat[i]) > n) {
+			printf("Amat[i].i > n");
+			system("pause");
+		}
+		
+		//Elm_loc tmp;
+		//tmp.i = indx_compare(Amat[first]);
+		//tmp.ind = ind;
+		//v1[i - first] = tmp;
+		//v1[i - first] = std::make_pair(indx_compare(Amat[i]),ind);
+		v1.push_back(std::make_pair(indx_compare(Amat[i]), ind));
+	}
+	
+	//greater1 compare_loc;
+	//std::make_heap(v1.begin(), v1.end(), compare_loc);// не работает
+	std::make_heap(v1.begin(), v1.end(), greaters());
+
+	doublereal* a = new doublereal[last - first + 1];
+	integer* j_a = new integer[last - first + 1];
+	integer* i_a = new integer[last - first + 1];
+	for (integer i = first; i <= last; i++) {
+		integer ind = i - first;
+		a[ind] = Amat[i].aij;
+		j_a[ind] = Amat[i].j;
+		i_a[ind] = Amat[i].i;
+	}
+	integer i_prev = -1;
+	
+	//std::sort(v1.begin(), v1.end());
+	//std::sort_heap(v1.begin(), v1.end(), greaters());
+
+	integer i = last;
+	//for (integer i = first; i <= last; i++) 
+	//for (auto it = v1.begin(); it != v1.end(); ++it)
+	while (!v1.empty())
+	{
+
+		std::pop_heap(v1.begin(), v1.end(), greaters()); // удалить максимальный элемент из кучи.
+
+		//integer i_ = std::get<1>(v1[i - first]);
+		//integer i_ = (*it).second;
+		integer i_ = (v1.back()).second; // посмотреть максимальный элемент.
+		//printf("i==back=%lld front=%lld\n",(v1.back()).first, (v1.front()).first);
+
+		v1.pop_back();
+		//printf("i==%lld\n", (*it).first);
+		//system("PAUSE");
+		//integer i_ = std::get<1>(v1.front());
+		
+		
+		
+		// только для i.
+		//if (i_a[i_] < i_prev) {
+			//printf("NO SORT:i-first=%lld, last=%lld i_prev=%lld i_next=%lld i_=%lld n+1=%lld\n", i-first, last, i_prev, i_a[i_], i_, n + 1);
+			//system("PAUSE");
+		//}
+		
+		if (i_ < 3) {
+		//	printf("i_a[%lld]==%lld j_a=%lld val=%e\n", i_, i_a[i_], j_a[i_], a[i_]);
+		}
+		//printf("i_a[%lld]==%lld j_a=%lld val=%e\n", i_, i_a[i_], j_a[i_], a[i_]);
+		//system("PAUSE");
+		i_prev = i_a[i_];
+		
+		Amat[i].i = i_a[i_]; 
+		Amat[i].j = j_a[i_];
+		Amat[i].aij = a[i_];
+		i--;
+		
+	}
+	delete[] a;
+	delete[] j_a;
+	delete[] i_a;
+	
+
+	//v1.erase(v1.begin(),v1.end());
+	v1.clear();
+
+	//printf("Jk\n");
+	//system("PAUSE");
+	//exit(1);
+
+}
+*/
 
 #endif // !MY_LEFTIST_HEAP_CPP

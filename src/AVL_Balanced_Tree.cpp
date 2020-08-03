@@ -48,10 +48,15 @@ struct node_AVL
 	data_BalTree key;
 	// Высота поддерева с корнем в данном узле.
 	unsigned char height;
-	node_AVL* left = nullptr;
-	node_AVL* right = nullptr;
+	node_AVL* left;
+	node_AVL* right;
 	// Конструктор.
 	node_AVL(data_BalTree k) { key = k; left = right = 0; height = 1; }
+	node_AVL() {
+		height=1;
+		left = nullptr;
+		right = nullptr;
+	}
 };
 
 // Работает также и с пустыми деревьями.

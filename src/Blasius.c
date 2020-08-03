@@ -57,12 +57,12 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	    volume3D(iP, f[0].nvtx, f[0].pa, dx, dy, dz);
 
 		rho_avg+=dx*dy*dz*f[0].prop[RHO][iP];
-		mu_avg+=dx*dy*dz*f[0].prop[MU][iP];
+		mu_avg+=dx*dy*dz*f[0].prop[MU_DYNAMIC_VISCOSITY][iP];
 		lam_avg+=dx*dy*dz*t.prop[LAM][f[0].ptr[iP]];
 		cp_avg+=dx*dy*dz*t.prop[HEAT_CAPACITY][f[0].ptr[iP]];
 		volume_default_interior+=dx*dy*dz;
 
-		VyMAX=fmax(VyMAX,f[0].potent[VY][iP]);
+		VyMAX=fmax(VyMAX,f[0].potent[VELOCITY_Y_COMPONENT][iP]);
 	}
 
 	rho_avg=rho_avg/volume_default_interior; // средняя по объёму плотность среды.
@@ -79,12 +79,12 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	TOCHKA p; // координаты центра текущего контрольного объёма.
 	integer iP=0;
 	doublereal minX, maxX, avgX;
-	while (f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
     // вычисление размеров текущего контрольного объёма:
 	volume3D(iP, f[0].nvtx, f[0].pa, dx, dy, dz);
 	center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 	minX=p.x-0.5*dx;
-	while (f[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 	volume3D(iP, f[0].nvtx, f[0].pa, dx, dy, dz);
 	center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 	maxX=p.x+0.5*dx;
@@ -93,8 +93,8 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 	doublereal mindist=fabs(p.x-avgX);
 	integer iPC=iP;
-	while (f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1<f[0].maxelm) {
-		iP=f[0].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1<f[0].maxelm) {
+		iP=f[0].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 		center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 		if (fabs(p.x-avgX)<mindist) {
 			iPC=iP;
@@ -107,12 +107,12 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 
 	// Вычисление количества контрольных объёмов расположенных по длине пластины:
 	integer iclength=0;
-	while (f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1;
+	while (f[0].neighbors_for_the_internal_node[S_SIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
 
 	while (iP<f[0].maxelm) {
 		center_cord3D(iP, f[0].nvtx, f[0].pa, p,100); // вычисление координат центра КО.
 		if ((p.y>0.0) && (p.y<1.0)) iclength++; // пластина расположена между 0.0 m и 1.0 m.
-		iP=f[0].neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
+		iP=f[0].neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
 	}
 
 	// Гидродинамический пограничный слой: (Boundary layer thickness).
@@ -140,7 +140,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	doublereal deltascal=0.95; // 95% пограничный слой.
 	doublereal deltaTscal=0.05; // 5% тепловой пограничный слой на нагретой пластине.
 	iP=iPC;
-	while (f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[SSIDE][iP].iNODE1; // перемотка в начало.
+	while (f[0].neighbors_for_the_internal_node[S_SIDE][iP].iNODE1<f[0].maxelm) iP=f[0].neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; // перемотка в начало.
 
 	integer ilengthcounter=0;
 	for (ilengthcounter=0; ilengthcounter<iclength; ilengthcounter++) {
@@ -161,25 +161,25 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 			yposition[ilengthcounter]=p.y; // абсцисса для толщины пограничного слоя.
 			
 			integer iBT=iP;
-			while (f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
+			while (f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1; // перемотка в начало пластины.
 			// вычисление распределения безразмерного локального коэффициента трения на стенке:
 			// см. А.В.Лыков  Тепломассообмен справочник Москва., "Энергия", 1978г. стр. 184.
-			Cx[ilengthcounter]=mu_avg*f[0].SInvariantStrainRateTensor[f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1]/(0.5*rho_avg*U_inf*U_inf);
+			Cx[ilengthcounter]=mu_avg*f[0].SInvariantStrainRateTensor[f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1]/(0.5*rho_avg*U_inf*U_inf);
 
 			// Вычисление толщины гидродинамического пограничного слоя.
 			doublereal VYB, VYT, zB, zT;
-			VYB=f[0].potent[VY][f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
-			VYT=f[0].potent[VY][iBT];
-			center_cord3D(iBT, f[0].nvtx, f[0].pa, p, BSIDE); // вычисление координат центра КО.
+			VYB=f[0].potent[VELOCITY_Y_COMPONENT][f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1];
+			VYT=f[0].potent[VELOCITY_Y_COMPONENT][iBT];
+			center_cord3D(iBT, f[0].nvtx, f[0].pa, p, B_SIDE); // вычисление координат центра КО.
 			volume3D(iBT, f[0].nvtx, f[0].pa, dx, dy, dz);
 			zB=p.z-0.5*dz;
 			zT=p.z;
-			while ((f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1<f[0].maxelm) && (VYT<deltascal*U_inf)) {
-				iBT=f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
-				VYB=f[0].potent[VY][f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
-			    VYT=f[0].potent[VY][iBT];
+			while ((f[0].neighbors_for_the_internal_node[T_SIDE][iBT].iNODE1<f[0].maxelm) && (VYT<deltascal*U_inf)) {
+				iBT=f[0].neighbors_for_the_internal_node[T_SIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
+				VYB=f[0].potent[VELOCITY_Y_COMPONENT][f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1];
+			    VYT=f[0].potent[VELOCITY_Y_COMPONENT][iBT];
 				zB=zT;
-				center_cord3D(iBT, f[0].nvtx, f[0].pa, p, TSIDE); // вычисление координат центра КО.
+				center_cord3D(iBT, f[0].nvtx, f[0].pa, p, T_SIDE); // вычисление координат центра КО.
 				zT=p.z;
 			}
 			doublereal a, b;
@@ -187,38 +187,38 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 			b=(zT*VYB-VYT*zB)/(zT-zB);
 			delta[ilengthcounter]=(deltascal*U_inf-b)/a; // искомая толщина гидродинамического пограничного слоя.
 
-			while (f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
+			while (f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1; // перемотка в начало пластины.
 			// Вычисление толщины вытеснения по скорости Uoperating (displacement thickness):
 			doublereal Uoperating=VyMAX; // U_inf - по скорости набегающего потока на бесконечности. (другой вариант по максимальной скорости - VyMAX)
-			while (f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1<f[0].maxelm) {
+			while (f[0].neighbors_for_the_internal_node[T_SIDE][iBT].iNODE1<f[0].maxelm) {
 				volume3D(iBT, f[0].nvtx, f[0].pa, dx, dy, dz);
-			    displacement_thickness[ilengthcounter]+=dz*(Uoperating-f[0].potent[VY][iBT]);
-                iBT=f[0].neighbors_for_the_internal_node[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
+			    displacement_thickness[ilengthcounter]+=dz*(Uoperating-f[0].potent[VELOCITY_Y_COMPONENT][iBT]);
+                iBT=f[0].neighbors_for_the_internal_node[T_SIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
 			}
 			displacement_thickness[ilengthcounter]/=Uoperating; // толщина вытеснения.
 
 			// Температурный пограничный слой.
-			while (f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[BSIDE][iBT].iNODE1; // перемотка в начало пластины.
+			while (f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1<f[0].maxelm) iBT=f[0].neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1; // перемотка в начало пластины.
 			doublereal TempB, TempT;
 			iBT=f[0].ptr[iBT];
-			TempB=t.potent[t.neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
+			TempB=t.potent[t.neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1];
 			TempT=t.potent[iBT];
-			center_cord3D(iBT, t.nvtx, t.pa, p, BSIDE); // вычисление координат центра КО.
+			center_cord3D(iBT, t.nvtx, t.pa, p, B_SIDE); // вычисление координат центра КО.
 			volume3D(iBT, t.nvtx, t.pa, dx, dy, dz);
 			zB=p.z-0.5*dz;
 			zT=p.z;
 
 			// Вычисляем локальное Число Нуссельта:
-			local_Nusselt_number[ilengthcounter]=(t.prop_b[LAM][t.neighbors_for_the_internal_node[BSIDE][iBT].iNODE1-t.maxelm]*((Twall-TempT)/(0.5*dz))*yposition[ilengthcounter])/((Twall-Tinf)*lam_avg);
+			local_Nusselt_number[ilengthcounter]=(t.prop_b[LAM][t.neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1-t.maxelm]*((Twall-TempT)/(0.5*dz))*yposition[ilengthcounter])/((Twall-Tinf)*lam_avg);
 
 			// Продолжение вычисления температурного пограничного слоя.
 			doublereal Temp_critical=Tinf+deltaTscal*(Twall-Tinf);
-			while ((t.neighbors_for_the_internal_node[TSIDE][iBT].iNODE1<t.maxelm)&&(t.potent[iBT]>Temp_critical)) {
-				iBT=t.neighbors_for_the_internal_node[TSIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
-				TempB=t.potent[t.neighbors_for_the_internal_node[BSIDE][iBT].iNODE1];
+			while ((t.neighbors_for_the_internal_node[T_SIDE][iBT].iNODE1<t.maxelm)&&(t.potent[iBT]>Temp_critical)) {
+				iBT=t.neighbors_for_the_internal_node[T_SIDE][iBT].iNODE1; // удаляемся от пластины перпендикулярно её плоскости.
+				TempB=t.potent[t.neighbors_for_the_internal_node[B_SIDE][iBT].iNODE1];
 			    TempT=t.potent[iBT];
 				zB=zT;
-                center_cord3D(iBT, t.nvtx, t.pa, p, TSIDE); // вычисление координат центра КО.
+                center_cord3D(iBT, t.nvtx, t.pa, p, T_SIDE); // вычисление координат центра КО.
 				zT=p.z;
 			}
 			a=(TempB-TempT)/(zB-zT);
@@ -227,7 +227,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 
             ilengthcounter++;
 		}
-		iP=f[0].neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
+		iP=f[0].neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
 	}
 
 	// Средний безразмерный коэффициент трения на стенке:

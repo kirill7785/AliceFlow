@@ -3227,10 +3227,10 @@ integer _tmain(integer argc, _TCHAR* argv[])
 		for (integer i = 1; i <= m; i++) {
 			for (integer j = 1; j <= m; j++) {
 				if ((i > 1) && (j > 1) && (i < m) && (j < m)) {
-					b[ic++] = 8.0*3.141*3.141*sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h)*h2;
+					b[ic++] = 8.0*M_PI*M_PI*sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h)*h2;
 				}
 				if (((i == m) && (j == m)) || ((i == m) && (j == 1)) || ((i == 1) && (j == m)) || ((i == 1) && (j == 1)) || ((i == 1) && (j>1) && (j < m)) || ((i == m) && (j>1) && (j < m)) || ((j == 1) && (i>1) && (i < m)) || ((j == m) && (i>1) && (i < m))) {
-					b[ic++] = sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h);
+					b[ic++] = sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h);
 				}
 			}
 		}
@@ -3311,11 +3311,11 @@ integer _tmain(integer argc, _TCHAR* argv[])
 			for (integer j = 1; j <= m; j++) {
 				for (integer k = 1; k <= m; k++) {
 					if ((i > 1) && (j > 1)&& (k > 1) && (i < m) && (j < m) && (k < m)) {
-						b[ic++] = 16.0*3.141*3.141*3.141*sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h)*sin(2 * 3.141*(k - 1)*h)*h2*h;
+						b[ic++] = 16.0*M_PI*M_PI*M_PI*sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h)*sin(2 * M_PI*(k - 1)*h)*h2*h;
 					}
 					else {
 					//if (((i == m) && (j == m)) || ((i == m) && (j == 1)) || ((i == 1) && (j == m)) || ((i == 1) && (j == 1)) || ((i == 1) && (j>1) && (j < m)) || ((i == m) && (j>1) && (j < m)) || ((j == 1) && (i>1) && (i < m)) || ((j == m) && (i>1) && (i < m))) {
-						b[ic++] = sin(2 * 3.141*(k - 1)*h)*sin(2 * 3.141*(i - 1)*h)*sin(2 * 3.141*(j - 1)*h);
+						b[ic++] = sin(2 * M_PI*(k - 1)*h)*sin(2 * M_PI*(i - 1)*h)*sin(2 * M_PI*(j - 1)*h);
 					}
 				}
 			}

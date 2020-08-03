@@ -9,8 +9,10 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <math.h> // математические функции
+#include <iostream>
+
 //#include <string.h> // функции обработки строк
-#include "power_temperature_depend.cpp" // сплайновая интерполяция таблично заданной функции (зависимость мощности от температуры).
+#include "power_temperature_depend.cpp" // сплайновая интерполяция таблично заданной функции (зависимость мощности от температуры)
 
 // передаваемый из файла параметр отвечающий за подробность расчётной сетки.
 doublereal etalon_max_size_ratio = 2.0;// Более реалистичный подход 10.0
@@ -56,9 +58,9 @@ const doublereal dbody_LGATE_situation_multiplyer = 5.2;
 
 
 // плоскости
-const unsigned char XY = 1;
-const unsigned char XZ = 2;
-const unsigned char YZ = 3;
+const unsigned char XY_PLANE = 1;
+const unsigned char XZ_PLANE = 2;
+const unsigned char YZ_PLANE = 3;
 
 // тип блока
 const unsigned char SOLID = 1;
@@ -72,29 +74,50 @@ const unsigned char POLYGON = 2;
 
 // точка в трёхмерном пространстве
 typedef struct TPOinteger {
-	doublereal x=0.0, y=0.0, z=0.0;
+	doublereal x, y, z;
+	TPOinteger() {
+		x=0.0, y=0.0, z=0.0;
+	}
 } TOCHKA;
 
 // только для enumerate_volume_improved
 // и для uniformsimplemeshgen.cpp
 // См. также заголовочный файл constr_struct.cpp
 typedef struct TBlock_indexes {
-	integer iL=-1, iR=-2, jL=-1, jR=-2, kL=-1, kR=-2;
+	integer iL, iR, jL, jR, kL, kR;
+	TBlock_indexes() {
+		iL=-1, iR=-2, jL=-1, jR=-2, kL=-1, kR=-2;
+	}
 } Block_indexes;
 
 // геометрическое описание
 typedef struct TGEOM {
-	integer itypegeom= PRISM; // 0 - Prism, 1 - Cylinder, 2 - Polygon
+	char name[80]; // имя объёмного геометрического объекта body.
+
+	integer itypegeom; // 0 - Prism, 1 - Cylinder, 2 - Polygon
 	// Prism
-	doublereal xS=0.0, yS=0.0, zS=0.0; // координаты начала объекта
-	doublereal xE=0.0, yE=0.0, zE=0.0; // координаты конца объекта
+	doublereal xS, yS, zS; // координаты начала объекта
+	doublereal xE, yE, zE; // координаты конца объекта
 	// Cylinder
-	integer iPlane=-2; // плоскость в которой лежит нижнее основание цилиндра.
-	doublereal xC=0.0, yC=0.0, zC=0.0, Hcyl=0.0, R_out_cyl=0.0, R_in_cyl=0.0;
+	integer iPlane; // плоскость в которой лежит нижнее основание цилиндра.
+	doublereal xC, yC, zC, Hcyl, R_out_cyl, R_in_cyl;
 	// Polygon
-	integer iPlane_obj2=-2; // плоскость в которой лежит нижнее основание полигона.
-	integer nsizei=-2; // Количество опорных точек образующих выпуклый полигон.
-	doublereal *hi=nullptr, *xi=nullptr, *yi=nullptr, *zi=nullptr;
+	integer iPlane_obj2; // плоскость в которой лежит нижнее основание полигона.
+	integer nsizei; // Количество опорных точек образующих выпуклый полигон.
+	doublereal *hi, *xi, *yi, *zi;
+	TGEOM() {
+		itypegeom= PRISM; // 0 - Prism, 1 - Cylinder, 2 - Polygon
+		// Prism
+		xS=0.0, yS=0.0, zS=0.0; // координаты начала объекта
+		xE=0.0, yE=0.0, zE=0.0; // координаты конца объекта
+		// Cylinder
+		iPlane=-2; // плоскость в которой лежит нижнее основание цилиндра.
+		xC=0.0, yC=0.0, zC=0.0, Hcyl=0.0, R_out_cyl=0.0, R_in_cyl=0.0;
+		// Polygon
+		iPlane_obj2=-2; // плоскость в которой лежит нижнее основание полигона.
+		nsizei=-2; // Количество опорных точек образующих выпуклый полигон.
+		hi=nullptr; xi=nullptr; yi=nullptr; zi=nullptr;
+	}
 } GEOM;
 
 // Мощность рассеиваемая в тепло зависит от
@@ -103,56 +126,102 @@ typedef struct TGEOM {
 // функция. Таблица взята из результатов расчёта в программе
 // Г.З. Гарбера.
 typedef struct TTEMP_DEP_POWER {
-	char* sname = nullptr; // имя текстового файла содержащего табличную функцию.
+	char* sname; // имя текстового файла содержащего табличную функцию.
 
-	integer intemp = 0; // количество различных дискретных значений температуры.
-	integer inoffset_drain = 0; // количество различных дискретных значений смещения стока.
+	integer intemp; // количество различных дискретных значений температуры.
+	integer inoffset_drain; // количество различных дискретных значений смещения стока.
 
 	// таблица: левый столбец температуры,
 	// верхняя строка без первого значения - смещения стока.
 	// Остальные значения в таблице соответствуют рассеиваемой мощности.
-	doublereal* rtemp = nullptr; // значения температуры
-	doublereal* roffset_drain = nullptr; // значения смещения стока
-	doublereal** rpower_table = nullptr; // таблица мощностей.
+	doublereal* rtemp; // значения температуры
+	doublereal* roffset_drain; // значения смещения стока
+	doublereal** rpower_table; // таблица мощностей.
 
+	TTEMP_DEP_POWER() {
+		 sname = nullptr; // имя текстового файла содержащего табличную функцию.
+
+		intemp = 0; // количество различных дискретных значений температуры.
+		inoffset_drain = 0; // количество различных дискретных значений смещения стока.
+
+		// таблица: левый столбец температуры,
+		// верхняя строка без первого значения - смещения стока.
+		// Остальные значения в таблице соответствуют рассеиваемой мощности.
+		rtemp = nullptr; // значения температуры
+		roffset_drain = nullptr; // значения смещения стока
+		rpower_table = nullptr; // таблица мощностей.
+	}
 } TEMP_DEP_POWER;
 
 // источник тепла
 typedef struct TSOURCE {
+	char name[80]; // имя источника тепла.
+
 	// мощность источника тепла
 	// в случае если мощность зависит от максимальной температуры и смещения стока то
 	// это значение автоматически пересчитывается перед сборкой матрицы, 
 	// так что в коде сборки граничного условия ничего менять не нужно.
-	doublereal power = 0.0;
+	doublereal power;
 	// Мощность может зависеть от температуры и смещения стока.
 	// Зависимость задаётся таблично на основе расчётов в программе Г.З. Гарбера.
-	bool bgarber_depend = false; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
+	bool bgarber_depend; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
 	// В случае bgarber_depend == true, значение power является коэффициентом на который домножается 
 	// истинное табличное значение мощности.
-	integer igarber_depend = -1; // уникальный номер табличной зависимости. (нумерация начинается с нуля).
-	doublereal roperation_offset_drain = 28.0; // рабочее значение смещения стока.
-	doublereal power_multiplyer = 1.0; // на эту константу домножается реальная мощность, это удобно для корректирования
+	integer igarber_depend; // уникальный номер табличной зависимости. (нумерация начинается с нуля).
+	doublereal roperation_offset_drain; // рабочее значение смещения стока.
+	doublereal power_multiplyer; // на эту константу домножается реальная мощность, это удобно для корректирования
 	// табличной мощности например когда нужно считать четверть транзистора.
 
-	doublereal square = 0.0; // площадь источника тепла
-	integer iPlane = XZ; // плоскость в которой лежит источник тепла
+	doublereal square; // площадь источника тепла
+	integer iPlane; // плоскость в которой лежит источник тепла
 	// 1 - XY, 2 - XZ, 3 - YZ.
 	GEOM g; // границы объекта.
 
 	// принадлежность объединению 
 	// 0 - не принадлежит (принадлежит кабинету),
 	// n > 0 принадлежит объединению с номером n.
-	integer iunion_id = 0;
+	integer iunion_id;
+	TSOURCE() {
+		name[0] = '\0';
+		// мощность источника тепла
+		// в случае если мощность зависит от максимальной температуры и смещения стока то
+		// это значение автоматически пересчитывается перед сборкой матрицы, 
+		// так что в коде сборки граничного условия ничего менять не нужно.
+		power = 0.0;
+		// Мощность может зависеть от температуры и смещения стока.
+		// Зависимость задаётся таблично на основе расчётов в программе Г.З. Гарбера.
+		 bgarber_depend = false; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
+		// В случае bgarber_depend == true, значение power является коэффициентом на который домножается 
+		// истинное табличное значение мощности.
+		igarber_depend = -1; // уникальный номер табличной зависимости. (нумерация начинается с нуля).
+		roperation_offset_drain = 28.0; // рабочее значение смещения стока.
+		power_multiplyer = 1.0; // на эту константу домножается реальная мощность, это удобно для корректирования
+		// табличной мощности например когда нужно считать четверть транзистора.
+
+		square = 0.0; // площадь источника тепла
+		iPlane = XZ_PLANE; // плоскость в которой лежит источник тепла
+		// 1 - XY, 2 - XZ, 3 - YZ.
+		//GEOM g; // границы объекта.
+
+		// принадлежность объединению 
+		// 0 - не принадлежит (принадлежит кабинету),
+		// n > 0 принадлежит объединению с номером n.
+		iunion_id = 0;
+	}
 } SOURCE;
 
 // стенка (идеальный теплоотвод)
 typedef struct TWALL {
-	// 1 - Дирихле, 2 - однородное условие Неймана.
-	integer ifamily = 2; // род краевого условия по температуре
-	doublereal Tamb = 20.0, hf = 0.0; // значение температуры на идеальном теплоотводе и тепловой поток.
-	doublereal emissivity = 0.8, film_coefficient = 3.0;
-	bool bsymmetry = false, bpressure = false, bopening = false;
-	doublereal Vx = 0.0, Vy = 0.0, Vz = 0.0, P = 0.0;
+	char name[80]; // имя стенки.
+
+	// 1 - Дирихле, 2 - однородное условие Неймана,
+	// 3 - Ньютон-Рихман, 4 - Стефан-Больцман.
+	WALL_BOUNDARY_CONDITION ifamily; // род краевого условия по температуре
+	doublereal Tamb, hf; // значение температуры на идеальном теплоотводе и тепловой поток.
+	doublereal emissivity, film_coefficient;
+	doublereal ViewFactor; // Фактор видимости.
+	bool bsymmetry, bpressure, bopening;
+	doublereal Vx, Vy, Vz, P;
 	// Thermal-Stress boundary condition
 	// 0 - free,
 	// 1 - x fixit,
@@ -165,9 +234,9 @@ typedef struct TWALL {
 	// 8 - x Force,
 	// 9 - y Force,
 	// 10 - z Force.
-	integer ithermal_Stress_boundary_condition = 0;
-	doublereal xForce = 0.0, yForce = 0.0, zForce = 0.0; // Три компоненты силы, приложенные к узлу в Ньютонах.
-	integer iPlane = XZ; // плоскость в которой лежит стенка
+	integer ithermal_Stress_boundary_condition;
+	doublereal xForce, yForce, zForce; // Три компоненты силы, приложенные к узлу в Ньютонах.
+	integer iPlane; // плоскость в которой лежит стенка
 	// 1 - XY, 2 - XZ, 3 - YZ.
 	GEOM g; // границы объекта.
 	// Фиксированная граница с нулевым смещением для
@@ -177,8 +246,50 @@ typedef struct TWALL {
 	// принадлежность объединению 
 	// 0 - не принадлежит (принадлежит кабинету),
 	// n > 0 принадлежит объединению с номером n.
-	integer iunion_id = 0;
+	integer iunion_id;
+
+	TWALL() {
+		name[0] = '\0';
+
+		// 1 - Дирихле, 2 - однородное условие Неймана(теплоизоляция),
+		// 3 - Ньютон-Рихман(конвекция),
+		// 4 - Стефан-Больцман(излучение).
+		ifamily = NEIMAN_FAMILY; // однородное условие Неймана по температуре (теплоизоляция).
+		Tamb = 20.0, hf = 0.0; // значение температуры на идеальном теплоотводе и тепловой поток.
+		emissivity = 0.8, film_coefficient = 3.0;
+		ViewFactor = 1.0;
+		bsymmetry = false, bpressure = false, bopening = false;
+		Vx = 0.0, Vy = 0.0, Vz = 0.0, P = 0.0;
+		// Thermal-Stress boundary condition
+		// 0 - free,
+		// 1 - x fixit,
+		// 2 - y fixit,
+		// 3 - z fixit,
+		// 4 - xy fixit,
+		// 5 - xz fixit,
+		// 6 - yz fixit,
+		// 7 - fixit all,
+		// 8 - x Force,
+		// 9 - y Force,
+		// 10 - z Force.
+		ithermal_Stress_boundary_condition = 0;
+		// Три компоненты силы, приложенные к узлу в Ньютонах.
+		xForce = 0.0, yForce = 0.0, zForce = 0.0; 
+		iPlane = XZ_PLANE; // плоскость в которой лежит стенка
+		// 1 - XY, 2 - XZ, 3 - YZ.
+		//GEOM g; // границы объекта.
+		// Фиксированная граница с нулевым смещением для
+		// расчёта прочности конструкции.
+		//bool bfixboundary; // true фиксированная, false свободная.
+
+		// принадлежность объединению 
+		// 0 - не принадлежит (принадлежит кабинету),
+		// n > 0 принадлежит объединению с номером n.
+		iunion_id = 0;
+	}
 } WALL;
+
+
 
 
 
@@ -206,25 +317,25 @@ typedef struct TPROP {
 	// mu - динамическая вязкость,
 	// beta_t - коэффициент линейного температурного расширения.
 	//doublereal rho, cp, lam;
-	doublereal rho=-1.0e30;
+	doublereal rho;
 	// 16_11_2016
 	// температура передаётся в градусах Цельсия.
 	// температурно - зависимые теплопроводность и теплоёмкость.
-	integer n_lam = -1, n_cp = -1; // число точек для линейной интерполяции.
+	integer n_lam, n_cp; // число точек для линейной интерполяции.
 	// arr_lam=f(temp_lam);
 	// arr_cp=f(temp_cp);
-	doublereal *temp_lam=nullptr, *temp_cp=nullptr, *arr_lam=nullptr, *arr_cp=nullptr;
+	doublereal *temp_lam, *temp_cp, *arr_lam, *arr_cp;
 	// Ортотропность теплопроводности:
 	// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью:
 	// CuMoCu, SiC и текстолитовые платы.
 	// теплопроводность в заданном координатном направлении домножается на этот множитель.
-	doublereal orthotropy_multiplyer_x=1.0, orthotropy_multiplyer_y = 1.0, orthotropy_multiplyer_z = 1.0;
-	doublereal mu = -1.0e30, beta_t = -1.0e30, beta_t_solid = -1.0e30;// beta_t_solid для Механики.
+	doublereal orthotropy_multiplyer_x, orthotropy_multiplyer_y, orthotropy_multiplyer_z;
+	doublereal mu,  beta_t, beta_t_solid;// beta_t_solid для Механики.
 	// Следующие два параметра относятся к внутренней библиотеке 
 	// материалов:
-	integer blibmat=-3; // 0 - материал пользователя и используются 
+	integer blibmat; // 0 - материал пользователя и используются 
 	// постоянные параметры предложенные выше. 1 - библиотечный материал.
-	integer ilibident=-3; // идентификатор библиотечного материала.
+	integer ilibident; // идентификатор библиотечного материала.
 	// идентификатор: 
 	// 0 - текучая среда которой нет в библиотеке, 
 	// 100 - твёрдое тело которого нет в библиотеке.
@@ -233,7 +344,7 @@ typedef struct TPROP {
 	// в этом случае blibmat - обязательно равен 0.
 	// 1-99 - библиотечная текучая среда: жидкости, газы и жидкие металлы.
 	// 101-<infinity библиотечное твёрдое тело.
-	bool bBussineskApproach=true; // нужно ли использовать приближение Обербека-Буссинеска
+	bool bBussineskApproach; // нужно ли использовать приближение Обербека-Буссинеска
 
 	// Также предусмотрено моделирование неньютоновских
 	// вязкопластических сред подчиняющихся некоторым простейшим законам:
@@ -246,98 +357,158 @@ typedef struct TPROP {
 	*  5            Пауэлл-Эйринг
 	*  6            Уильямсон
 	*/
-	integer ilawmu=-3; // номер закона
+	integer ilawmu; // номер закона
 
-	doublereal mumin = -1.0e30, mumax = -1.0e30; // ограничители динамической вязкости
-	doublereal Amu = -1.0e30, Bmu = -1.0e30, Cmu = -1.0e30, degreennmu = -1.0e30; // константы моделей для зависимости вязкости от напряжения сдвига.
+	doublereal mumin, mumax; // ограничители динамической вязкости
+	doublereal Amu, Bmu, Cmu, degreennmu; // константы моделей для зависимости вязкости от напряжения сдвига.
 
 	// 8.4.2017 
 	// Параметры прочности материала.
-	doublereal mu_Lame = -1.0e30, lambda_Lame = -1.0e30; // Коэффициенты Ламе.
+	doublereal mu_Lame, lambda_Lame; // Коэффициенты Ламе.
+	TPROP() {
+		// Постоянные значения заданные пользователем:
+		// rho - плотность,
+		// cp - теплоёмкость,
+		// lam - теплопроводность,
+		// mu - динамическая вязкость,
+		// beta_t - коэффициент линейного температурного расширения.
+		//doublereal rho, cp, lam;
+		rho=-1.0e30;
+		// 16_11_2016
+		// температура передаётся в градусах Цельсия.
+		// температурно - зависимые теплопроводность и теплоёмкость.
+		n_lam = -1, n_cp = -1; // число точек для линейной интерполяции.
+		// arr_lam=f(temp_lam);
+		// arr_cp=f(temp_cp);
+		temp_lam=nullptr; temp_cp=nullptr; arr_lam=nullptr;
+		arr_cp=nullptr;
+		// Ортотропность теплопроводности:
+		// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью:
+		// CuMoCu, SiC и текстолитовые платы.
+		// теплопроводность в заданном координатном направлении домножается на этот множитель.
+		orthotropy_multiplyer_x=1.0, orthotropy_multiplyer_y = 1.0, orthotropy_multiplyer_z = 1.0;
+		mu = -1.0e30, beta_t = -1.0e30, beta_t_solid = -1.0e30;// beta_t_solid для Механики.
+		// Следующие два параметра относятся к внутренней библиотеке 
+		// материалов:
+		blibmat=-3; // 0 - материал пользователя и используются 
+		// постоянные параметры предложенные выше. 1 - библиотечный материал.
+		ilibident=-3; // идентификатор библиотечного материала.
+		// идентификатор: 
+		// 0 - текучая среда которой нет в библиотеке, 
+		// 100 - твёрдое тело которого нет в библиотеке.
+		// В случае если идентификатор принимает значения 0 и 100 то
+		// используются постоянные параметры заданные пользователем, т.к.
+		// в этом случае blibmat - обязательно равен 0.
+		// 1-99 - библиотечная текучая среда: жидкости, газы и жидкие металлы.
+		// 101-<infinity библиотечное твёрдое тело.
+		bBussineskApproach=true; // нужно ли использовать приближение Обербека-Буссинеска
+
+		// Также предусмотрено моделирование неньютоновских
+		// вязкопластических сред подчиняющихся некоторым простейшим законам:
+		/* номер закона название закона
+		*  0            постоянное значение (ньютоновская жидкость) 
+		*  1            Оствальд-де Вель (power-law fluid)
+		*  2            Кессон
+		*  3            Прандтль
+		*  4            Carreau
+		*  5            Пауэлл-Эйринг
+		*  6            Уильямсон
+		*/
+		ilawmu=-3; // номер закона
+
+		mumin = -1.0e30, mumax = -1.0e30; // ограничители динамической вязкости
+		Amu = -1.0e30, Bmu = -1.0e30, Cmu = -1.0e30, degreennmu = -1.0e30; // константы моделей для зависимости вязкости от напряжения сдвига.
+
+		// 8.4.2017 
+		// Параметры прочности материала.
+		mu_Lame = -1.0e30, lambda_Lame = -1.0e30; // Коэффициенты Ламе.
+	}
 
 } PROP;
+
+const integer FULL_F_to_F_INTERPOLATION = 0; // Интерполяция по расширенному шаблону.
+const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
 
 // Управление алгебраическим многосеточным методом из интерфейса.
 typedef struct TMY_AMG_MANAGER {
 
 	// Алгоритм сортировки используемый в многосеточном методе РУМБА.
 	// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT, 4 - TimSort.
-	integer imySortAlgorithm = 0; // 0 - Counting Sort Default.
+	integer imySortAlgorithm; // 0 - Counting Sort Default.
 
 	// 0 - не печатать портрет матрицы, 
 	// 1 - печатать портрет матрицы.
-	integer bTemperatureMatrixPortrait = 0;
-	integer bSpeedMatrixPortrait = 0;
-	integer bPressureMatrixPortrait = 0;
-	integer bStressMatrixPortrait = 0;
-	integer bMatrixPortrait = 0;
+	integer bTemperatureMatrixPortrait;
+	integer bSpeedMatrixPortrait;
+	integer bPressureMatrixPortrait;
+	integer bStressMatrixPortrait;
+	integer bMatrixPortrait;
 
 	
 
 	// Temperature
-	doublereal theta_Temperature = 0.24;
-	integer maximum_delete_levels_Temperature = 0;
-	integer nFinnest_Temperature = 2, nu1_Temperature = 1, nu2_Temperature = 2;
-	integer memory_size_Temperature = 13; //13*size(matrix A)
-	integer ilu2_smoother_Temperature = 0; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Temperature;
+	integer maximum_delete_levels_Temperature;
+	integer nFinnest_Temperature, nu1_Temperature, nu2_Temperature;
+	integer memory_size_Temperature; //13*size(matrix A)
+	integer ilu2_smoother_Temperature; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Temperature = 2;
+	integer iCFalgorithm_and_data_structure_Temperature;
 	// Speed
-	doublereal theta_Speed = 0.24;
-	integer maximum_delete_levels_Speed = 0;
-	integer nFinnest_Speed = 2, nu1_Speed = 1, nu2_Speed = 2;
-	integer memory_size_Speed = 13;
-	integer ilu2_smoother_Speed = 0; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Speed;
+	integer maximum_delete_levels_Speed;
+	integer nFinnest_Speed, nu1_Speed, nu2_Speed;
+	integer memory_size_Speed;
+	integer ilu2_smoother_Speed; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Speed = 2;
+	integer iCFalgorithm_and_data_structure_Speed;
 	// Pressure
-	doublereal theta_Pressure = 0.24;
-	integer maximum_delete_levels_Pressure = 0;
-	integer nFinnest_Pressure = 2, nu1_Pressure = 1, nu2_Pressure = 2;
-	integer memory_size_Pressure = 15;
-	integer ilu2_smoother_Pressure = 0; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Pressure;
+	integer maximum_delete_levels_Pressure;
+	integer nFinnest_Pressure, nu1_Pressure, nu2_Pressure;
+	integer memory_size_Pressure;
+	integer ilu2_smoother_Pressure; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Pressure = 2;
+	integer iCFalgorithm_and_data_structure_Pressure;
 	// Stress
-	doublereal theta_Stress = 0.24;
-	integer maximum_delete_levels_Stress = 0;
-	integer nFinnest_Stress = 2, nu1_Stress = 1, nu2_Stress = 2;
-	integer memory_size_Stress = 22;
-	integer ilu2_smoother_Stress = 0; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Stress;
+	integer maximum_delete_levels_Stress;
+	integer nFinnest_Stress, nu1_Stress, nu2_Stress;
+	integer memory_size_Stress;
+	integer ilu2_smoother_Stress; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Stress = 2;
+	integer iCFalgorithm_and_data_structure_Stress;
 	// global
-	bool bCFJacoby = true; // C/F упорядочивание при сглаживании.
-	integer iRunge_Kutta_smoother = 0; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
-	integer iFinnest_ilu = 0; // 0 не используется, 1 - ilu0. Только на самой подробной сетке.
+	bool bCFJacoby; // C/F упорядочивание при сглаживании.
+	integer iRunge_Kutta_smoother; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
+	integer iFinnest_ilu; // 0 не используется, 1 - ilu0. Только на самой подробной сетке.
 	// Использование iluk разложения на глубоких уровнях вложенности для которых
 	// сеточный шаблон nnz/n имеет размер меньше либо равный 6 (шести).
-	bool b_ilu_smoothers_in_nnz_n_LE_6 = false;
-	doublereal theta = 0.24; // strength threshold
+	bool b_ilu_smoothers_in_nnz_n_LE_6;
+	doublereal theta; // strength threshold
 	//integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
-	integer maximum_delete_levels = 0; // Количество уровней отсекаемых снизу в области грубой сетки.
-	integer nFinnest = 2, nu1 = 1, nu2 = 2; // Количества сглаживаний.
+	integer maximum_delete_levels; // Количество уровней отсекаемых снизу в области грубой сетки.
+	integer nFinnest, nu1, nu2; // Количества сглаживаний.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 2.
-	integer iCFalgorithm_and_data_structure = 2;
-	integer memory_size = 13; // В размерах матрицы А.
+	integer iCFalgorithm_and_data_structure;
+	integer memory_size; // В размерах матрицы А.
 	// Для метода верхней релаксации в сглаживателе.
-	const integer FULL_F_to_F_INTERPOLATION = 0; // Интерполяция по расширенному шаблону.
-	const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
-	integer number_interpolation_procedure = AMG1R5_IN_HOUSE; // идентификатор процедуры интерполяции.
-	integer number_interpolation_procedure_Temperature = AMG1R5_IN_HOUSE;
-	integer number_interpolation_procedure_Speed = AMG1R5_IN_HOUSE;
-	integer number_interpolation_procedure_Pressure = AMG1R5_IN_HOUSE;
-	integer number_interpolation_procedure_Stress = AMG1R5_IN_HOUSE;
+	
+	integer number_interpolation_procedure; // идентификатор процедуры интерполяции.
+	integer number_interpolation_procedure_Temperature;
+	integer number_interpolation_procedure_Speed;
+	integer number_interpolation_procedure_Pressure;
+	integer number_interpolation_procedure_Stress;
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
@@ -347,29 +518,29 @@ typedef struct TMY_AMG_MANAGER {
 	// Принудительное усиление диагонали
 	// в случае обнаружения внедиагональных
 	// positive connections.
-	integer bdiagonal_dominant = 1;
+	integer bdiagonal_dominant;
 
 
 	// Параметры сглаживателя SOR Роуч.
-	doublereal gold_const = 0.24;
-	doublereal gold_const_Temperature = 0.24;
-	doublereal gold_const_Speed = 0.24;
-	doublereal gold_const_Pressure = 0.24;
-	doublereal gold_const_Stress = 0.24;
+	doublereal gold_const;
+	doublereal gold_const_Temperature;
+	doublereal gold_const_Speed;
+	doublereal gold_const_Pressure;
+	doublereal gold_const_Stress;
 
 	// Пороги отсечек
 	// Отсечка же называется theta threshold. 
 		
-	doublereal magic = 0.4;
-	doublereal F_to_F_Temperature = 0.4, F_to_F_Speed = 0.4, F_to_F_Pressure = 0.4, F_to_F_Stress = 0.4; // magic
-	integer ilu2_smoother = 0; // 0 - не использовать, 1 - использовать.
+	doublereal magic;
+	doublereal F_to_F_Temperature, F_to_F_Speed, F_to_F_Pressure, F_to_F_Stress; // magic
+	integer ilu2_smoother; // 0 - не использовать, 1 - использовать.
 	// AMG Splitting (coarsening)
 	// Способ построения C-F разбиения: 0 - standart, 1 - RS2, 2 - ST classical standart (по умолчанию), 3 - RS2 ST.	
 	// RS2 улучшенная версия построения C-F разбиения содержащая второй проход.
 	// ST - на основе STRONG Transpose.
 	// 8 - PMIS, 9 -HMIS.
-	integer icoarseningTemp = 2, icoarseningSpeed = 2, icoarseningPressure = 2, icoarseningStress = 2;
-	integer icoarseningtype = 2;
+	integer icoarseningTemp, icoarseningSpeed, icoarseningPressure, icoarseningStress;
+	integer icoarseningtype;
 	// Stabilization BiCGStab.
 	// 8.01.2017
 	// предобусловленный алгебраическим многосеточным методом.
@@ -377,46 +548,211 @@ typedef struct TMY_AMG_MANAGER {
 	// 1 - Используется алгоритм Хенка ван дер Ворста BiCGStab [1992], предобусловленный алгебраическим многосеточным методом.
 	// 2 - Используется алгоритм Юсефа Саада и Мартина Г. Шульца FGMRes [1986], предобусловленный алгебраическим многосеточным методом.
 	// 3 - Нелинейный многосеточный метод (обновление правой части на каждом V цикле). Для нелинейных граничных условий.
-	integer istabilizationTemp = 0, istabilizationSpeed = 0, istabilizationPressure = 0, istabilizationStress = 0; // 0 - none
-	integer istabilization = 0; // 0 - none
+	integer istabilizationTemp, istabilizationSpeed, istabilizationPressure, istabilizationStress; // 0 - none
+	integer istabilization; // 0 - none
 	// ipatch - номер патча.
-	integer ipatch_number = 7;
+	integer ipatch_number;
 
-	integer iprint_log = 1, iprint_log_Temperature = 1, iprint_log_Speed = 1, iprint_log_Pressure = 1, iprint_log_Stress = 1;
+	integer iprint_log, iprint_log_Temperature, iprint_log_Speed, iprint_log_Pressure, iprint_log_Stress;
 
 	// truncation for interpolation.
-	integer itruncation_interpolation = 0;
-	integer itruncation_interpolation_Temperature = 0;
-	integer itruncation_interpolation_Speed = 0;
-	integer itruncation_interpolation_Pressure = 0;
-	integer itruncation_interpolation_Stress = 0;
-	doublereal truncation_interpolation = 0.2;
-	doublereal truncation_interpolation_Temperature = 0.2;
-	doublereal truncation_interpolation_Speed = 0.2;
-	doublereal truncation_interpolation_Pressure = 0.2;
-	doublereal truncation_interpolation_Stress = 0.2;
+	integer itruncation_interpolation;
+	integer itruncation_interpolation_Temperature;
+	integer itruncation_interpolation_Speed;
+	integer itruncation_interpolation_Pressure;
+	integer itruncation_interpolation_Stress;
+	doublereal truncation_interpolation;
+	doublereal truncation_interpolation_Temperature;
+	doublereal truncation_interpolation_Speed;
+	doublereal truncation_interpolation_Pressure;
+	doublereal truncation_interpolation_Stress;
 
 	// gmres smoother
 	// Ю.Саад, Мартин Г. Шульц [1986].
-	bool b_gmresTemp = false, b_gmresSpeed = false, b_gmresPressure = false, b_gmresStress = false;
-	bool b_gmres = false;
+	bool b_gmresTemp, b_gmresSpeed, b_gmresPressure, b_gmresStress;
+	bool b_gmres;
 
 	// spai-0 smoother
-	bool b_spai0Temp = false, b_spai0Speed = false, b_spai0Pressure = false, b_spai0Stress = false;
-	bool b_spai0 = false;
+	bool b_spai0Temp, b_spai0Speed, b_spai0Pressure, b_spai0Stress;
+	bool b_spai0;
 
 	// fgmres(m_restart)
-	integer m_restart = 20;
+	integer m_restart;
 
 	// lfil for BiCGStab+ILU2 and fgmres.
-	integer lfil = 2;
+	integer lfil;
 
 	// AMGCL parameters
 	// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
 	// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
-	integer amgcl_smoother = 0; 
-	integer amgcl_selector = 0; // 0 - Ruge and Stuben (amg1r5 analog); 1 - smoother aggregation.
-	integer amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes;
+	integer amgcl_smoother; 
+	integer amgcl_selector; // 0 - Ruge and Stuben (amg1r5 analog); 1 - smoother aggregation.
+	integer amgcl_iterator; // 0 - BiCGStab; 1 - FGMRes;
+
+	TMY_AMG_MANAGER() {
+		// Алгоритм сортировки используемый в многосеточном методе РУМБА.
+		// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT, 4 - TimSort.
+		imySortAlgorithm = 0; // 0 - Counting Sort Default.
+
+		// 0 - не печатать портрет матрицы, 
+		// 1 - печатать портрет матрицы.
+		bTemperatureMatrixPortrait = 0;
+		bSpeedMatrixPortrait = 0;
+		bPressureMatrixPortrait = 0;
+		bStressMatrixPortrait = 0;
+		bMatrixPortrait = 0;
+
+	
+
+		// Temperature
+		theta_Temperature = 0.24;
+		maximum_delete_levels_Temperature = 0;
+		nFinnest_Temperature = 2; nu1_Temperature = 1; nu2_Temperature = 2;
+		memory_size_Temperature = 13; //13*size(matrix A)
+		ilu2_smoother_Temperature = 0; // 0 - не использовать, 1 - использовать.
+		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
+		// default - 3.
+		iCFalgorithm_and_data_structure_Temperature = 2;
+		// Speed
+		theta_Speed = 0.24;
+		maximum_delete_levels_Speed = 0;
+		nFinnest_Speed = 2; nu1_Speed = 1; nu2_Speed = 2;
+		memory_size_Speed = 13;
+		ilu2_smoother_Speed = 0; // 0 - не использовать, 1 - использовать.
+		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
+		// default - 3.
+		iCFalgorithm_and_data_structure_Speed = 2;
+		// Pressure
+		theta_Pressure = 0.24;
+		maximum_delete_levels_Pressure = 0;
+		nFinnest_Pressure = 2; nu1_Pressure = 1; nu2_Pressure = 2;
+		memory_size_Pressure = 15;
+		ilu2_smoother_Pressure = 0; // 0 - не использовать, 1 - использовать.
+		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
+		// default - 3.
+		iCFalgorithm_and_data_structure_Pressure = 2;
+		// Stress
+		theta_Stress = 0.24;
+		maximum_delete_levels_Stress = 0;
+		nFinnest_Stress = 2; nu1_Stress = 1; nu2_Stress = 2;
+		memory_size_Stress = 22;
+		ilu2_smoother_Stress = 0; // 0 - не использовать, 1 - использовать.
+		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
+		// default - 3.
+		iCFalgorithm_and_data_structure_Stress = 2;
+		// global
+		bCFJacoby = true; // C/F упорядочивание при сглаживании.
+		iRunge_Kutta_smoother = 0; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
+		iFinnest_ilu = 0; // 0 не используется, 1 - ilu0. Только на самой подробной сетке.
+		// Использование iluk разложения на глубоких уровнях вложенности для которых
+		// сеточный шаблон nnz/n имеет размер меньше либо равный 6 (шести).
+		b_ilu_smoothers_in_nnz_n_LE_6 = false;
+		theta = 0.24; // strength threshold
+		//integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
+		maximum_delete_levels = 0; // Количество уровней отсекаемых снизу в области грубой сетки.
+		nFinnest = 2; nu1 = 1; nu2 = 2; // Количества сглаживаний.
+		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
+		// default - 2.
+		iCFalgorithm_and_data_structure = 2;
+		memory_size = 13; // В размерах матрицы А.
+		// Для метода верхней релаксации в сглаживателе.
+		//const integer FULL_F_to_F_INTERPOLATION = 0; // Интерполяция по расширенному шаблону.
+		//const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
+		number_interpolation_procedure = AMG1R5_IN_HOUSE; // идентификатор процедуры интерполяции.
+		number_interpolation_procedure_Temperature = AMG1R5_IN_HOUSE;
+		number_interpolation_procedure_Speed = AMG1R5_IN_HOUSE;
+		number_interpolation_procedure_Pressure = AMG1R5_IN_HOUSE;
+		number_interpolation_procedure_Stress = AMG1R5_IN_HOUSE;
+
+		// 6 december 2016.
+		// Подлежит удалению Refactoring.
+		//integer itypemodifyinterpol=0; // номер модификации интерполяции. // Подлежит удалению Refactoring.
+		//integer inumberadaptpass=0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
+		//integer baglomeration_with_consistency_scaling = 0;
+		// Принудительное усиление диагонали
+		// в случае обнаружения внедиагональных
+		// positive connections.
+		bdiagonal_dominant = 1;
+
+
+		// Параметры сглаживателя SOR Роуч.
+		gold_const = 0.24;
+		gold_const_Temperature = 0.24;
+		gold_const_Speed = 0.24;
+		gold_const_Pressure = 0.24;
+		gold_const_Stress = 0.24;
+
+		// Пороги отсечек
+		// Отсечка же называется theta threshold. 
+		
+		magic = 0.4;
+		F_to_F_Temperature = 0.4; F_to_F_Speed = 0.4;
+		F_to_F_Pressure = 0.4; F_to_F_Stress = 0.4; // magic
+		ilu2_smoother = 0; // 0 - не использовать, 1 - использовать.
+		// AMG Splitting (coarsening)
+		// Способ построения C-F разбиения: 0 - standart, 1 - RS2, 2 - ST classical standart (по умолчанию), 3 - RS2 ST.	
+		// RS2 улучшенная версия построения C-F разбиения содержащая второй проход.
+		// ST - на основе STRONG Transpose.
+		// 8 - PMIS, 9 -HMIS.
+		icoarseningTemp = 2; icoarseningSpeed = 2;
+		icoarseningPressure = 2; icoarseningStress = 2;
+		icoarseningtype = 2;
+		// Stabilization BiCGStab.
+		// 8.01.2017
+		// предобусловленный алгебраическим многосеточным методом.
+		// 0 - используется просто алгебраический многосеточный метод без какого-либо привлечения алгоритмов подпространства Крылова,
+		// 1 - Используется алгоритм Хенка ван дер Ворста BiCGStab [1992], предобусловленный алгебраическим многосеточным методом.
+		// 2 - Используется алгоритм Юсефа Саада и Мартина Г. Шульца FGMRes [1986], предобусловленный алгебраическим многосеточным методом.
+		// 3 - Нелинейный многосеточный метод (обновление правой части на каждом V цикле). Для нелинейных граничных условий.
+		istabilizationTemp = 0; istabilizationSpeed = 0; istabilizationPressure = 0;
+		istabilizationStress = 0; // 0 - none
+		istabilization = 0; // 0 - none
+		// ipatch - номер патча.
+		ipatch_number = 7;
+
+		iprint_log = 1, iprint_log_Temperature = 1, iprint_log_Speed = 1, iprint_log_Pressure = 1, iprint_log_Stress = 1;
+
+		// truncation for interpolation.
+		itruncation_interpolation = 0;
+		itruncation_interpolation_Temperature = 0;
+		itruncation_interpolation_Speed = 0;
+		itruncation_interpolation_Pressure = 0;
+		itruncation_interpolation_Stress = 0;
+		truncation_interpolation = 0.2;
+		truncation_interpolation_Temperature = 0.2;
+		truncation_interpolation_Speed = 0.2;
+		truncation_interpolation_Pressure = 0.2;
+		truncation_interpolation_Stress = 0.2;
+
+		// gmres smoother
+		// Ю.Саад, Мартин Г. Шульц [1986].
+		b_gmresTemp = false; b_gmresSpeed = false;
+		b_gmresPressure = false; b_gmresStress = false;
+		b_gmres = false;
+
+		// spai-0 smoother
+		b_spai0Temp = false; b_spai0Speed = false; b_spai0Pressure = false;
+		b_spai0Stress = false;
+		b_spai0 = false;
+
+		// fgmres(m_restart)
+		m_restart = 20;
+
+		// lfil for BiCGStab+ILU2 and fgmres.
+		lfil = 2;
+
+		// AMGCL parameters
+		// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
+		// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
+		amgcl_smoother = 0; 
+		amgcl_selector = 0; // 0 - Ruge and Stuben (amg1r5 analog); 1 - smoother aggregation.
+		amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes;
+	}
 
 } MY_AMG_MANAGER;
 
@@ -708,79 +1044,153 @@ doublereal view_factor_aligned_parallel_rectangles(doublereal x34, doublereal y3
 // список узлов грани (два внутренних соседа для внутренней грани) и 
 // (граничный узел и ближайший к нему соседний внутренний для узлов на границе расчётной области).
 typedef struct TMY_PAIR {
-	integer node1=-1, node21=-1, node22=-1, node23=-1, node24=-1; // если отсутствует то стоит -1.
-	doublereal  dS1=0.0, dS2=0.0, dS3=0.0, dS4=0.0; // площадь ячейки.
+	integer node1, node21, node22, node23, node24; // если отсутствует то стоит -1.
+	doublereal  dS1, dS2, dS3, dS4; // площадь ячейки.
 	// 20 сентября 2016.
 	// dS должно быть позже полностью удалено.
 	//doublereal dS;
+	TMY_PAIR() {
+		node1=-1; node21=-1; node22=-1; node23=-1; node24=-1; // если отсутствует то стоит -1.
+		dS1=0.0; dS2=0.0; dS3=0.0; dS4=0.0; // площадь ячейки.
+		// 20 сентября 2016.
+		// dS должно быть позже полностью удалено.
+		//doublereal dS;
+	}
 } MY_PAIR;
 
 // Параметр нижней релаксации для вычисления плотностей радиационных потоков.
 const doublereal alpha_Radiation_block = 0.2;//0.1 optimum
 // Постоянная Стефана-Больцмана для вычисления плотностей радиационных потоков.
-const doublereal sigma_Radiation_block = 5.670367e-8; // W*m!-2*K!-4.
+// постоянная Стефана-Больцмана для расчёта теплообмена илучением.
+const doublereal STEFAN_BOLCMAN_CONST = 5.670367e-8; // W*m!-2*K!-4.
 // фиксированное число итераций для нахождения плотностей радиационных потоков.
 const integer maxiter_Radiation_block = 1000; // вообще хватает и 200, здесь с запасом.
 
 
 typedef struct TBLOCKRADIATION {
 	// emissivity:
-	doublereal emissW = -1.0e30, emissE = -1.0e30, emissS = -1.0e30, emissN = -1.0e30, emissB = -1.0e30, emissT = -1.0e30;
-	bool binternalRadiation=false;
+	doublereal emissW, emissE, emissS, emissN, emissB, emissT;
+	bool binternalRadiation;
 	// View Factors for Prism Object.
-	doublereal FWE = -1.0e30, FWS = -1.0e30, FWN = -1.0e30, FWB = -1.0e30, FWT = -1.0e30;
-	doublereal FEW = -1.0e30, FES = -1.0e30, FEN = -1.0e30, FEB = -1.0e30, FET = -1.0e30;
-	doublereal FSW = -1.0e30, FSE = -1.0e30, FSN = -1.0e30, FSB = -1.0e30, FST = -1.0e30;
-	doublereal FNW = -1.0e30, FNE = -1.0e30, FNS = -1.0e30, FNB = -1.0e30, FNT = -1.0e30;
-	doublereal FBW = -1.0e30, FBE = -1.0e30, FBS = -1.0e30, FBN = -1.0e30, FBT = -1.0e30;
-	doublereal FTW = -1.0e30, FTE = -1.0e30, FTS = -1.0e30, FTN = -1.0e30, FTB = -1.0e30;
+	doublereal FWE, FWS, FWN, FWB, FWT;
+	doublereal FEW, FES, FEN, FEB, FET;
+	doublereal FSW, FSE, FSN, FSB, FST;
+	doublereal FNW, FNE, FNS, FNB, FNT;
+	doublereal FBW, FBE, FBS, FBN, FBT;
+	doublereal FTW, FTE, FTS, FTN, FTB;
 	// Температуры в Кельвинах на гранях Prism Object:
 	// среднее арифметическое температуры на грани Prism Object.
-	doublereal TempW = -1.0e30, TempE = -1.0e30, TempS = -1.0e30, TempN = -1.0e30, TempB = -1.0e30, TempT = -1.0e30;
+	doublereal TempW, TempE, TempS, TempN, TempB, TempT;
 	// Плотности радиационных тепловых потоков на гранях Prism Object.
-	doublereal JW=0.0, JE=0.0, JS = 0.0, JN = 0.0, JB = 0.0, JT = 0.0;
+	doublereal JW, JE, JS, JN, JB, JT;
 	
 
 	// список узлов на каждой из граней и их количество:
-	MY_PAIR* nodelistW=nullptr;
-	integer nodelistWsize=-4;
-	MY_PAIR* nodelistE=nullptr;
-	integer nodelistEsize = -4;
-	MY_PAIR* nodelistS=nullptr;
-	integer nodelistSsize = -4;
-	MY_PAIR* nodelistN=nullptr;
-	integer nodelistNsize = -4;
-	MY_PAIR* nodelistB=nullptr;
-	integer nodelistBsize = -4;
-	MY_PAIR* nodelistT=nullptr;
-	integer nodelistTsize = -4;
+	MY_PAIR* nodelistW;
+	integer nodelistWsize;
+	MY_PAIR* nodelistE;
+	integer nodelistEsize ;
+	MY_PAIR* nodelistS;
+	integer nodelistSsize ;
+	MY_PAIR* nodelistN;
+	integer nodelistNsize ;
+	MY_PAIR* nodelistB;
+	integer nodelistBsize ;
+	MY_PAIR* nodelistT;
+	integer nodelistTsize;
+
+	TBLOCKRADIATION() {
+// emissivity:
+	 emissW = -1.0e30; emissE = -1.0e30; emissS = -1.0e30;
+	 emissN = -1.0e30; emissB = -1.0e30; emissT = -1.0e30;
+	 binternalRadiation=false;
+	// View Factors for Prism Object.
+	 FWE = -1.0e30; FWS = -1.0e30; FWN = -1.0e30; FWB = -1.0e30; FWT = -1.0e30;
+	 FEW = -1.0e30; FES = -1.0e30; FEN = -1.0e30; FEB = -1.0e30; FET = -1.0e30;
+	 FSW = -1.0e30; FSE = -1.0e30; FSN = -1.0e30; FSB = -1.0e30; FST = -1.0e30;
+	 FNW = -1.0e30; FNE = -1.0e30; FNS = -1.0e30; FNB = -1.0e30; FNT = -1.0e30;
+	 FBW = -1.0e30; FBE = -1.0e30; FBS = -1.0e30; FBN = -1.0e30; FBT = -1.0e30;
+	 FTW = -1.0e30; FTE = -1.0e30; FTS = -1.0e30; FTN = -1.0e30; FTB = -1.0e30;
+	// Температуры в Кельвинах на гранях Prism Object:
+	// среднее арифметическое температуры на грани Prism Object.
+	 TempW = -1.0e30; TempE = -1.0e30; TempS = -1.0e30;
+	 TempN = -1.0e30; TempB = -1.0e30; TempT = -1.0e30;
+	// Плотности радиационных тепловых потоков на гранях Prism Object.
+	 JW=0.0; JE=0.0; JS = 0.0; JN = 0.0; JB = 0.0; JT = 0.0;
+	
+
+	// список узлов на каждой из граней и их количество:
+	 nodelistW=nullptr;
+	 nodelistWsize=-4;
+	 nodelistE=nullptr;
+	 nodelistEsize = -4;
+	 nodelistS=nullptr;
+	 nodelistSsize = -4;
+	 nodelistN=nullptr;
+	 nodelistNsize = -4;
+	 nodelistB=nullptr;
+	 nodelistBsize = -4;
+	 nodelistT=nullptr;
+	 nodelistTsize = -4;
+	}
+
 } BLOCKRADIATION;
 
 // блок
 typedef struct TBLOCK {
-	integer itype = -4; // тип SOLID, HOLLOW или FLUID.
+	char name[80]; // имя объёмного геометрического объекта.
+
+	integer itype; // тип SOLID, HOLLOW или FLUID.
 	GEOM g;
-	integer imatid = -4; // идентификатор материала в библиотеке
+	integer imatid; // идентификатор материала в библиотеке
 	//doublereal Sc; // мощность тепловыделения на единицу объёма
 	// 19 11 2016 Температурно зависимая мощность тепловыделения.
-	integer n_Sc = -4;
-	doublereal *arr_Sc=nullptr, *temp_Sc=nullptr;
+	integer n_Sc;
+	doublereal *arr_Sc, *temp_Sc;
     // стиль зависимости мощности тепловыделения от времени.
 	// 0 - не зависит, 1 - square wave зависимость,
 	// 2 - square wave 2, 3 - hot cold режим,
 	// 4 - piecewise const.
-	integer ipower_time_depend = -4; 
+	integer ipower_time_depend; 
 	// Всё относящееся к теплообмену излучением:
 	// излучательные способности поверхностей, модель вакуумного промежутка.
 	BLOCKRADIATION radiation;
-	bool bvisible=true; // Виден ли блок при экспорте в tecplot.
+	bool bvisible; // Виден ли блок при экспорте в tecplot.
 
 	// принадлежность объединению 
 	// 0 - не принадлежит (принадлежит кабинету),
 	// n > 0 принадлежит объединению с номером n.
-	integer iunion_id = -4;
+	integer iunion_id;
 	// Фиксировать боковую стенку цилиндра ?
-	bool CylinderFixed=false;
+	bool CylinderFixed;
+
+	TBLOCK() {
+		name[0] = '\0';
+
+		itype = -4; // тип SOLID, HOLLOW или FLUID.
+		//GEOM g;
+		imatid = -4; // идентификатор материала в библиотеке
+		//doublereal Sc; // мощность тепловыделения на единицу объёма
+		// 19 11 2016 Температурно зависимая мощность тепловыделения.
+		n_Sc = -4;
+		arr_Sc=nullptr; temp_Sc=nullptr;
+		// стиль зависимости мощности тепловыделения от времени.
+		// 0 - не зависит, 1 - square wave зависимость,
+		// 2 - square wave 2, 3 - hot cold режим,
+		// 4 - piecewise const.
+		ipower_time_depend = -4; 
+		// Всё относящееся к теплообмену излучением:
+		// излучательные способности поверхностей, модель вакуумного промежутка.
+		//BLOCKRADIATION radiation;
+		bvisible=true; // Виден ли блок при экспорте в tecplot.
+
+		// принадлежность объединению 
+		// 0 - не принадлежит (принадлежит кабинету),
+		// n > 0 принадлежит объединению с номером n.
+		iunion_id = -4;
+		// Фиксировать боковую стенку цилиндра ?
+		CylinderFixed=false;
+	}
 } BLOCK;
 
 
@@ -824,7 +1234,7 @@ doublereal shorter_length_for_simplificationX(doublereal g, BLOCK* &b, integer l
 					}
 					if (b[i].g.itypegeom == CYLINDER) {
 						switch (b[i].g.iPlane) {
-						case XY: case XZ:
+						case XY_PLANE: case XZ_PLANE:
 							if (b[i].g.R_in_cyl < 1.0e-40) {
 								if ((g >= b[i].g.xC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.xC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
 									// g в зоне влияния блока с номером i.
@@ -840,7 +1250,7 @@ doublereal shorter_length_for_simplificationX(doublereal g, BLOCK* &b, integer l
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if ((g >= b[i].g.xC - dbody_Hcyl_multiplyer *b[i].g.Hcyl) && (g <= b[i].g.xC + b[i].g.Hcyl + dbody_Hcyl_multiplyer *b[i].g.Hcyl)) {
 								// g в зоне влияния блока с номером i.
 								if (((1.0 / rdivision_interval)*(b[i].g.Hcyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.Hcyl));
@@ -859,7 +1269,7 @@ doublereal shorter_length_for_simplificationX(doublereal g, BLOCK* &b, integer l
 				for (integer i = 0; i < lw; i++) {
 					doublereal dmult = dbody_R_out_multiplyer;
 					switch (w[i].g.iPlane) {						
-					case XY: case XZ:
+					case XY_PLANE: case XZ_PLANE:
 						if ((g >= w[i].g.xS - dmult * (w[i].g.xE - w[i].g.xS)) && (g <= w[i].g.xE + dmult * (w[i].g.xE - w[i].g.xS))) {
 							// g в зоне влияния стенки с номером i.
 							if (((1.0 / rdivision_interval)*(w[i].g.xE - w[i].g.xS)) < db) db = ((1.0 / rdivision_interval)*(w[i].g.xE - w[i].g.xS));
@@ -871,7 +1281,7 @@ doublereal shorter_length_for_simplificationX(doublereal g, BLOCK* &b, integer l
 				for (integer i = 0; i < ls; i++) {
 					doublereal dmult = dbody_R_out_multiplyer;
 					switch (s[i].g.iPlane) {						
-					case XY: case XZ:
+					case XY_PLANE: case XZ_PLANE:
 						if ((g >= s[i].g.xS - dmult * (s[i].g.xE - s[i].g.xS)) && (g <= s[i].g.xE + dmult * (s[i].g.xE - s[i].g.xS))) {
 							// g в зоне влияния источника с номером i.
 							if (((1.0 / rdivision_interval)*(s[i].g.xE - s[i].g.xS)) < db) db = ((1.0 / rdivision_interval)*(s[i].g.xE - s[i].g.xS));
@@ -925,7 +1335,7 @@ doublereal shorter_length_for_simplificationY(doublereal g, BLOCK* &b, integer l
 			}
 			if (b[i].g.itypegeom == CYLINDER) {
 				switch (b[i].g.iPlane) {
-				case XY: case YZ:
+				case XY_PLANE: case YZ_PLANE:
 					if (b[i].g.R_in_cyl < 1.0e-40) {
 						if ((g >= b[i].g.yC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.yC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
 							// g в зоне влияния блока с номером i.
@@ -941,7 +1351,7 @@ doublereal shorter_length_for_simplificationY(doublereal g, BLOCK* &b, integer l
 						}
 					}
 					break;
-				case XZ:
+				case XZ_PLANE:
 					if ((g >= b[i].g.yC- dbody_Hcyl_multiplyer *b[i].g.Hcyl) && (g <= b[i].g.yC + b[i].g.Hcyl+ dbody_Hcyl_multiplyer *b[i].g.Hcyl)) {
 						// g в зоне влияния блока с номером i.
 						if (((1.0 / rdivision_interval)*(b[i].g.Hcyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.Hcyl));
@@ -961,7 +1371,7 @@ doublereal shorter_length_for_simplificationY(doublereal g, BLOCK* &b, integer l
 		for (integer i = 0; i < lw; i++) {
 			doublereal dmult = dbody_R_out_multiplyer;
 			switch (w[i].g.iPlane) {				
-			case XY: case YZ:
+			case XY_PLANE: case YZ_PLANE:
 				if ((g >= w[i].g.yS - dmult * (w[i].g.yE - w[i].g.yS)) && (g <= w[i].g.yE + dmult * (w[i].g.yE - w[i].g.yS))) {
 					// g в зоне влияния стенки с номером i.
 					if (((1.0 / rdivision_interval)*(w[i].g.yE - w[i].g.yS)) < db) db = ((1.0 / rdivision_interval)*(w[i].g.yE - w[i].g.yS));
@@ -973,7 +1383,7 @@ doublereal shorter_length_for_simplificationY(doublereal g, BLOCK* &b, integer l
 		for (integer i = 0; i < ls; i++) {
 			doublereal dmult = dbody_R_out_multiplyer;
 			switch (s[i].g.iPlane) {				
-			case XY: case YZ:
+			case XY_PLANE: case YZ_PLANE:
 				if ((g >= s[i].g.yS - dmult * (s[i].g.yE - s[i].g.yS)) && (g <= s[i].g.yE + dmult * (s[i].g.yE - s[i].g.yS))) {
 					// g в зоне влияния источника с номером i.
 					if (((1.0 / rdivision_interval)*(s[i].g.yE - s[i].g.yS)) < db) db = ((1.0 / rdivision_interval)*(s[i].g.yE - s[i].g.yS));
@@ -1028,7 +1438,7 @@ doublereal shorter_length_for_simplificationZ(doublereal g, BLOCK* &b, integer l
 			}
 			if (b[i].g.itypegeom == CYLINDER) {
 				switch (b[i].g.iPlane) {
-				case XZ: case YZ:
+				case XZ_PLANE: case YZ_PLANE:
 					if (b[i].g.R_in_cyl < 1.0e-40) {
 						if ((g >= b[i].g.zC - dbody_R_out_multiplyer *b[i].g.R_out_cyl) && (g <= b[i].g.zC + dbody_R_out_multiplyer *b[i].g.R_out_cyl)) {
 							// g в зоне влияния блока с номером i.
@@ -1044,7 +1454,7 @@ doublereal shorter_length_for_simplificationZ(doublereal g, BLOCK* &b, integer l
 						}
 					}
 					break;
-				case XY:
+				case XY_PLANE:
 					if ((g >= b[i].g.zC- dbody_Hcyl_multiplyer *b[i].g.Hcyl) && (g <= b[i].g.zC + b[i].g.Hcyl+ dbody_Hcyl_multiplyer *b[i].g.Hcyl)) {
 						// g в зоне влияния блока с номером i.
 						if (((1.0 / rdivision_interval)*(b[i].g.Hcyl)) < db) db = ((1.0 / rdivision_interval)*(b[i].g.Hcyl));
@@ -1064,7 +1474,7 @@ doublereal shorter_length_for_simplificationZ(doublereal g, BLOCK* &b, integer l
 		for (integer i = 0; i < lw; i++) {
 			doublereal dmult = dbody_R_out_multiplyer;
 			switch (w[i].g.iPlane) {				
-			case YZ: case XZ:
+			case YZ_PLANE: case XZ_PLANE:
 				if ((g >= w[i].g.zS - dmult * (w[i].g.zE - w[i].g.zS)) && (g <= w[i].g.zE + dmult * (w[i].g.zE - w[i].g.zS))) {
 					// g в зоне влияния стенки с номером i.
 					if (((1.0 / rdivision_interval)*(w[i].g.zE - w[i].g.zS)) < db) db = ((1.0 / rdivision_interval)*(w[i].g.zE - w[i].g.zS));
@@ -1076,7 +1486,7 @@ doublereal shorter_length_for_simplificationZ(doublereal g, BLOCK* &b, integer l
 		for (integer i = 0; i < ls; i++) {
 			doublereal dmult = dbody_R_out_multiplyer;
 			switch (s[i].g.iPlane) {				
-			case YZ: case XZ:
+			case YZ_PLANE: case XZ_PLANE:
 				if ((g >= s[i].g.zS - dmult * (s[i].g.zE - s[i].g.zS)) && (g <= s[i].g.zE + dmult * (s[i].g.zE - s[i].g.zS))) {
 					// g в зоне влияния источника с номером i.
 					if (((1.0 / rdivision_interval)*(s[i].g.zE - s[i].g.zS)) < db) db = ((1.0 / rdivision_interval)*(s[i].g.zE - s[i].g.zS));
@@ -1331,27 +1741,27 @@ void calculation_density_radiation_heat_flux(BLOCK &b)
 
 			// ВНИМАНИЕ !!! b.radiation.Temp в Кельвинах.
 
-			JW_new = alpha_Radiation_block*((sigma_Radiation_block*b.radiation.TempW*b.radiation.TempW*b.radiation.TempW*b.radiation.TempW + ((1.0 - b.radiation.emissW) / b.radiation.emissW)*
+			JW_new = alpha_Radiation_block*((STEFAN_BOLCMAN_CONST*b.radiation.TempW*b.radiation.TempW*b.radiation.TempW*b.radiation.TempW + ((1.0 - b.radiation.emissW) / b.radiation.emissW)*
 				(b.radiation.FWE*b.radiation.JE + b.radiation.FWS*b.radiation.JS + b.radiation.FWN*b.radiation.JN + b.radiation.FWB*b.radiation.JB +
 				b.radiation.FWT*b.radiation.JT)) / apW) + (1.0 - alpha_Radiation_block)*b.radiation.JW;
 
-			JE_new = alpha_Radiation_block*((sigma_Radiation_block*b.radiation.TempE*b.radiation.TempE*b.radiation.TempE*b.radiation.TempE + ((1.0 - b.radiation.emissE) / b.radiation.emissE)*
+			JE_new = alpha_Radiation_block*((STEFAN_BOLCMAN_CONST*b.radiation.TempE*b.radiation.TempE*b.radiation.TempE*b.radiation.TempE + ((1.0 - b.radiation.emissE) / b.radiation.emissE)*
 				(b.radiation.FEW*b.radiation.JW + b.radiation.FES*b.radiation.JS + b.radiation.FEN*b.radiation.JN + b.radiation.FEB*b.radiation.JB +
 				b.radiation.FET*b.radiation.JT)) / apE) + (1.0 - alpha_Radiation_block)*b.radiation.JE;
 
-			JS_new = alpha_Radiation_block*((sigma_Radiation_block*b.radiation.TempS*b.radiation.TempS*b.radiation.TempS*b.radiation.TempS + ((1.0 - b.radiation.emissS) / b.radiation.emissS)*
+			JS_new = alpha_Radiation_block*((STEFAN_BOLCMAN_CONST*b.radiation.TempS*b.radiation.TempS*b.radiation.TempS*b.radiation.TempS + ((1.0 - b.radiation.emissS) / b.radiation.emissS)*
 				(b.radiation.FSW*b.radiation.JW + b.radiation.FSE*b.radiation.JE + b.radiation.FSN*b.radiation.JN + b.radiation.FSB*b.radiation.JB +
 				b.radiation.FST*b.radiation.JT)) / apS) + (1.0 - alpha_Radiation_block)*b.radiation.JS;
 
-			JN_new = alpha_Radiation_block*((sigma_Radiation_block*b.radiation.TempN*b.radiation.TempN*b.radiation.TempN*b.radiation.TempN + ((1.0 - b.radiation.emissN) / b.radiation.emissN)*
+			JN_new = alpha_Radiation_block*((STEFAN_BOLCMAN_CONST*b.radiation.TempN*b.radiation.TempN*b.radiation.TempN*b.radiation.TempN + ((1.0 - b.radiation.emissN) / b.radiation.emissN)*
 				(b.radiation.FNW*b.radiation.JW + b.radiation.FNE*b.radiation.JE + b.radiation.FNS*b.radiation.JS + b.radiation.FNB*b.radiation.JB +
 				b.radiation.FNT*b.radiation.JT)) / apN) + (1.0 - alpha_Radiation_block)*b.radiation.JN;
 
-			JB_new = alpha_Radiation_block*((sigma_Radiation_block*b.radiation.TempB*b.radiation.TempB*b.radiation.TempB*b.radiation.TempB + ((1.0 - b.radiation.emissB) / b.radiation.emissB)*
+			JB_new = alpha_Radiation_block*((STEFAN_BOLCMAN_CONST*b.radiation.TempB*b.radiation.TempB*b.radiation.TempB*b.radiation.TempB + ((1.0 - b.radiation.emissB) / b.radiation.emissB)*
 				(b.radiation.FBW*b.radiation.JW + b.radiation.FBE*b.radiation.JE + b.radiation.FBS*b.radiation.JS + b.radiation.FBN*b.radiation.JN +
 				b.radiation.FBT*b.radiation.JT)) / apB) + (1.0 - alpha_Radiation_block)*b.radiation.JB;
 
-			JT_new = alpha_Radiation_block*((sigma_Radiation_block*b.radiation.TempT*b.radiation.TempT*b.radiation.TempT*b.radiation.TempT + ((1.0 - b.radiation.emissT) / b.radiation.emissT)*
+			JT_new = alpha_Radiation_block*((STEFAN_BOLCMAN_CONST*b.radiation.TempT*b.radiation.TempT*b.radiation.TempT*b.radiation.TempT + ((1.0 - b.radiation.emissT) / b.radiation.emissT)*
 				(b.radiation.FTW*b.radiation.JW + b.radiation.FTE*b.radiation.JE + b.radiation.FTS*b.radiation.JS + b.radiation.FTN*b.radiation.JN +
 				b.radiation.FTB*b.radiation.JB)) / apT) + (1.0 - alpha_Radiation_block)*b.radiation.JT;
 
@@ -1468,58 +1878,1074 @@ bool b_is_intersect(doublereal x1, doublereal y1,
 	return bintersect;
 }
 
+
+
+// Параметры которые используются для 
+// настройки модели Смагоринского.
+typedef struct TSMAGORINSKYINFO {
+	doublereal Cs; // константа Смагоринского.
+	bool bDynamic_Stress; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
+	bool bLimiters_Cs; // ограничивать ли постоянную Смагоринского ?
+	doublereal minCs, maxCs; // минимальное и максимальное значения константы Смагоринского.
+	// 2-SIMPSON
+	integer itypeFiltrGermano; // тип фильтра который используется для осреднения в модели Германо.
+	// 10 micron
+	doublereal roughness; // значение шероховатости на твёрдой неподвижной стенке.
+						  // показатель степени для учёта шероховатости на стенке.
+	integer ipowerroughness; // может принимать значения только 1 или 2.
+	bool bfdelta; // использовать ли поправку дающую улучшение на неравномерной сетке ?
+	bool bSmagorinsky_Lilly; // использовать ли модель Смагоринского-Лиллу ?
+	bool bsurface_roughness; // использовать ли поправку учитывающую шероховатость стенки ?
+	bool bSelectiveSmagorinsky; // использовать ли Selective Smagorinsky Model ?
+	// 2-SIMPSON
+	integer itypeFILTRSelectiveSmagorinsky; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
+	doublereal SSangle; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
+	bool bRichardsonCorrect; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
+	doublereal rRichardsonMultiplyer; // коэффициент в поправочной формуле связанной с кривизной линий тока.
+	TSMAGORINSKYINFO() {
+		 Cs=0.151; // константа Смагоринского.
+		bDynamic_Stress=false; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
+		bLimiters_Cs=false; // ограничивать ли постоянную Смагоринского ?
+		minCs=-1.0e30; maxCs=1.0e30; // минимальное и максимальное значения константы Смагоринского.
+		// 2-SIMPSON
+		itypeFiltrGermano=2; // тип фильтра который используется для осреднения в модели Германо.
+		// 10 micron
+		roughness=10.0; // значение шероховатости на твёрдой неподвижной стенке.
+						  // показатель степени для учёта шероховатости на стенке.
+		ipowerroughness=1; // может принимать значения только 1 или 2.
+		bfdelta=true; // использовать ли поправку дающую улучшение на неравномерной сетке ?
+		bSmagorinsky_Lilly=false; // использовать ли модель Смагоринского-Лиллу ?
+		bsurface_roughness=false; // использовать ли поправку учитывающую шероховатость стенки ?
+		bSelectiveSmagorinsky=false; // использовать ли Selective Smagorinsky Model ?
+		// 2-SIMPSON
+		itypeFILTRSelectiveSmagorinsky=2; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
+		SSangle=15.0; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
+		bRichardsonCorrect=false; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
+		rRichardsonMultiplyer=1.0; // коэффициент в поправочной формуле связанной с кривизной линий тока.
+	}
+} SMAGORINSKYINFO;
+
+// Для полилинейного метода:
+typedef struct TNODELR {
+	integer id; // идентификатор внутреннего узла
+	struct TNODELR *next; // ссылка на следующий узел или nullptr
+	TNODELR() {
+		id=-1; // идентификатор внутреннего узла
+	    next = nullptr; // ссылка на следующий узел или nullptr
+	}
+} NODELR;
+
+typedef struct TNODELR_BASE {
+	integer ilineid; // идентификатор сеточной линии
+	integer iN; // количество узловых точек включая граничные
+	struct TNODELR *root; // корень новой сеточной линии
+	struct TNODELR_BASE *next; // указатель на следующую сеточную линию или nullptr
+
+	// Особый случай:
+	// обработка плоского бесконечно 
+	// тонкого источника тепла.
+	// Переменные равны истине если связь с источником 
+	// прервана (в случае если воздух граничит с плоским источником).
+	bool bNeimanStart;
+	bool bNeimanEnd;
+	TNODELR_BASE() {
+		ilineid=-1; // идентификатор сеточной линии
+		iN=-1; // количество узловых точек включая граничные
+		root = nullptr; // корень новой сеточной линии
+		next = nullptr; // указатель на следующую сеточную линию или nullptr
+
+		// Особый случай:
+		// обработка плоского бесконечно 
+		// тонкого источника тепла.
+		// Переменные равны истине если связь с источником 
+		// прервана (в случае если воздух граничит с плоским источником).
+		bNeimanStart=false;
+		bNeimanEnd=false;
+	}
+} NODELR_BASE;
+
+
+typedef struct TBOUND {
+	// граничный узел и узлы вглубь расчётной области
+	integer iB, iI, iII;
+	integer iI1, iI2;
+	integer Norm; // внутренняя нормаль
+				  // marker boundary:
+				  /*
+				  * О маркере границы:
+				  * if (MCB < ls) значит источник с номером MCB;
+				  * else if (MCB < ls+lw) значит стенка c номером MCB-ls;
+				  * else значение по умолчанию. MCB==ls+lw.
+				  */
+	integer MCB; // marker boundary
+
+				 // соседи на границе области,
+				 // их позиции нужны в матрице:
+				 // На этих позициях будут стоять нули.
+				 // Если позиция отсутствует, то стоит -1.
+				 // Всего возможно не более 4 позиций, но 
+				 // здесь сделано больше из-за 
+				 // алгоритмического удобства.
+				 // Позиции соответствуют сторонам света.
+	integer iW[6];
+
+	// Для внутреннего источника указывает
+	// на соседний внутренний узел с обратной стороны
+	// источника противоположной текущей стороне, или на -1
+	// если источник на границе hollow блока.
+	// TODO 6 мая 2016.
+
+	// для теплообмена излучением хранит emissivity.
+	doublereal emissivity; // излучательная способность границы.
+
+						   // Площадь грани.
+						   // Это новое поле введённое лишь 20 сентября 2016.
+	doublereal dS;
+
+	// координаты центра грани.
+	TOCHKA p_c;
+
+	TBOUND() {
+		// граничный узел и узлы вглубь расчётной области
+		iB=-1; iI=-1; iII=-1;
+		iI1=-1; iI2=-1;
+		Norm=-10000; // внутренняя нормаль
+		// marker boundary:
+		/*
+		* О маркере границы:
+		* if (MCB < ls) значит источник с номером MCB;
+		* else if (MCB < ls+lw) значит стенка c номером MCB-ls;
+		* else значение по умолчанию. MCB==ls+lw.
+		*/
+		MCB=-1; // marker boundary
+
+		 // соседи на границе области,
+		 // их позиции нужны в матрице:
+		 // На этих позициях будут стоять нули.
+		 // Если позиция отсутствует, то стоит -1.
+		 // Всего возможно не более 4 позиций, но 
+		 // здесь сделано больше из-за 
+		 // алгоритмического удобства.
+		 // Позиции соответствуют сторонам света.
+		iW[0] = -1;
+		iW[1] = -1;
+		iW[2] = -1;
+		iW[3] = -1;
+		iW[4] = -1;
+		iW[5] = -1;
+	
+
+		// Для внутреннего источника указывает
+		// на соседний внутренний узел с обратной стороны
+		// источника противоположной текущей стороне, или на -1
+		// если источник на границе hollow блока.
+		// TODO 6 мая 2016.
+
+		// для теплообмена излучением хранит emissivity.
+		emissivity=0.8; // излучательная способность границы.
+
+		// Площадь грани.
+		// Это новое поле введённое лишь 20 сентября 2016.
+		dS=0.0;
+
+		// координаты центра грани.
+		//TOCHKA p_c;
+	}
+} BOUND;
+
+
+// информация о жидкой зоне
+typedef struct TFLOWINFO {
+	// опорная точка
+	doublereal xc, yc, zc;
+	// нужно ли рассчитывать поле течения
+	integer iflow;
+	// режим течения: 0 - ламинарный, 1 - турбулентный
+	integer iflowregime;
+	// модель турбулентности
+	// 0 - Zero Equation Turbulence Model (RANS).
+	// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
+	// 2 - RNG (LES).
+	// 3 - Spalart-Allmares (RANS). 19.04.2019
+	// 4 - K - Omega SST (RANS). 06.10.2019
+	// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
+	integer iturbmodel;
+	// параметры модели Смагоринского:
+	doublereal Cs; // постоянная Смагоринского.
+	bool bDynamic_Stress ; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
+	bool bLimiters_Cs; // включает ограничение на постоянную Смагоринского: ограничение на минимальное и максимальное значения.
+	doublereal rminCs, rmaxCs; // минимальное и максимальное ограничение для константы Смагоринского.
+	// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
+	integer itypeFiltrGermano; // SIMPSON filter	
+	// поправка на неравномерной сетке,
+	// модель Смагоринского-Лиллу,
+	// учёт шероховатости стенки.
+	integer bfdelta;
+	integer bSmagorinskyLilly;
+	integer bsurface_roughness;
+	doublereal roughness; // шероховатость стенки 10micron.
+	integer ipowerroughness; // показатель степени в модели учёта шероховатости стенки.
+	doublereal rRi_mult; // корректирующий множитель подправляющий турбулентное число Ричардсона.
+	doublereal rSelectiveAngle; // пороговое значение угла в модели Selective Smagorinsky.
+	integer itypeSelectiveSmagorinsky_filtr; // SIMPSON тип фильтра в модели Смагоринского.
+	// поправка на течения с кривизной линий тока,
+	// избирательная модель Смагоринского.
+	bool bSwirlAmendment, bSelectiveSmagorinsky;
+
+	// Spalart-Allmares (RANS) [1992]. 19.04.2019
+	// Эмпирические константы, определяющие SA модель турбулентности.
+	doublereal sigma_nu;
+	doublereal c_b1;
+	doublereal c_b2;
+	doublereal karman;
+	doublereal c_w1;
+	doublereal c_w2;
+	doublereal c_w3;
+	doublereal c_nu1;
+	doublereal C_t3;
+	doublereal C_t4;
+
+	// SST Ментер (RANS) [1993]. 03.10.2019
+	// А.В. Гарбарук Моделирование турбулентности в расчётах сложных течений. Политех 2012.
+	// Эмпирические константы, определяющие SST Ментера модель турбулентности.
+	doublereal sigma_k1;
+	doublereal sigma_omega1;
+	doublereal beta1;
+	doublereal sigma_k2;
+	doublereal sigma_omega2;
+	doublereal beta2;
+	doublereal beta_zvezda;
+	doublereal menter_a1;
+	doublereal alpha1;
+	doublereal alpha2;
+
+	// Стандартная k-epsilon модель не работает вблизи стенок.
+	// Здесь используется двухслойная модель на основе стандартной
+	// k-epsilon модели которая работает также и в пристеночной области.
+	// А.В. Кузьминов, В.Н. Лапин, С.Г. Черный
+	// Метод расчёта турбулентных течений 
+	// несжимаемой жидкости на основе двухслойной (k-epsilon)-модели.
+	// Новосибирск, 2001.
+	// Граница между вязким подслоем 
+	// и развитым турбулентным течением
+	// характеризуется турбулентным числом Рейнольдса:
+	// Standart k-epsilon (RANS) [2001] 23.10.2019
+	doublereal Rey_zvezda;//100.0;
+	doublereal A_switch; // A_switch == 1.0 --- 10.0;
+	doublereal C_mu_std_ke;
+	doublereal kar_std_ke;
+	doublereal Cl_std_ke;
+	doublereal Aepsilon_std_ke;
+	doublereal CD_std_ke;
+	doublereal Anu_std_ke;
+	doublereal sigma_epsilon_std_ke;
+	doublereal C_epsilon1_std_ke;
+	doublereal C_epsilon2_std_ke;
+
+	TFLOWINFO() {
+		// опорная точка
+		xc=1.0e30; yc=1.0e30; zc=1.0e30;
+		// нужно ли рассчитывать поле течения
+		iflow=0;
+		// режим течения: 0 - ламинарный, 1 - турбулентный
+		iflowregime=0;
+		// модель турбулентности
+		// 0 - Zero Equation Turbulence Model (RANS).
+		// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
+		// 2 - RNG (LES).
+		// 3 - Spalart-Allmares (RANS). 19.04.2019
+		// 4 - K - Omega SST (RANS). 06.10.2019
+		// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
+		iturbmodel=0;
+		// параметры модели Смагоринского:
+		Cs=0.151; // постоянная Смагоринского.
+		bDynamic_Stress = false; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
+		bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского: ограничение на минимальное и максимальное значения.
+		rminCs=-1.0e20; rmaxCs=1.0e23; // минимальное и максимальное ограничение для константы Смагоринского.
+		// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
+		itypeFiltrGermano=2; // SIMPSON filter	
+		// поправка на неравномерной сетке,
+		// модель Смагоринского-Лиллу,
+		// учёт шероховатости стенки.
+		bfdelta=0; bSmagorinskyLilly=0; bsurface_roughness=0;
+		roughness=10.0e-6; // шероховатость стенки 10micron.
+		ipowerroughness=2; // показатель степени в модели учёта шероховатости стенки.
+		rRi_mult=1.0; // корректирующий множитель подправляющий турбулентное число Ричардсона.
+		rSelectiveAngle = 15.0; // пороговое значение угла в модели Selective Smagorinsky.
+		itypeSelectiveSmagorinsky_filtr = 2; // SIMPSON тип фильтра в модели Смагоринского.
+		// поправка на течения с кривизной линий тока,
+		// избирательная модель Смагоринского.
+		bSwirlAmendment = false; bSelectiveSmagorinsky=false;
+
+		// Spalart-Allmares (RANS) [1992]. 19.04.2019
+		// Эмпирические константы, определяющие SA модель турбулентности.
+		sigma_nu = 2.0 / 3.0;
+		c_b1 = 0.1355;
+		c_b2 = 0.622;
+		karman = 0.41;
+		c_w1 = (c_b1/(karman*karman))+((1.0+c_b2)/sigma_nu);
+		c_w2 = 0.3;
+		c_w3 = 2.0;
+		c_nu1 = 7.1;
+		C_t3 = 1.2;
+		C_t4 = 0.5;
+
+		// SST Ментер (RANS) [1993]. 03.10.2019
+		// А.В. Гарбарук Моделирование турбулентности в расчётах сложных течений. Политех 2012.
+		// Эмпирические константы, определяющие SST Ментера модель турбулентности.
+		sigma_k1 = 0.85;
+		sigma_omega1 = 0.5;
+		beta1 = 0.075;
+		sigma_k2 = 1.0;
+		sigma_omega2 = 0.856;
+		beta2 = 0.0828;
+		beta_zvezda = 0.09;
+		menter_a1 = 0.31;
+		alpha1 = 0.555;
+		alpha2 = 0.44;
+
+		// Стандартная k-epsilon модель не работает вблизи стенок.
+		// Здесь используется двухслойная модель на основе стандартной
+		// k-epsilon модели которая работает также и в пристеночной области.
+		// А.В. Кузьминов, В.Н. Лапин, С.Г. Черный
+		// Метод расчёта турбулентных течений 
+		// несжимаемой жидкости на основе двухслойной (k-epsilon)-модели.
+		// Новосибирск, 2001.
+		// Граница между вязким подслоем 
+		// и развитым турбулентным течением
+		// характеризуется турбулентным числом Рейнольдса:
+		// Standart k-epsilon (RANS) [2001] 23.10.2019
+		Rey_zvezda = 100.0;//100.0;
+		A_switch = 5.0; // A_switch == 1.0 --- 10.0;
+		C_mu_std_ke = 0.09;
+		kar_std_ke = 0.42;
+		Cl_std_ke = kar_std_ke*pow(C_mu_std_ke,-3.0/4.0);
+		Aepsilon_std_ke = 2.0*Cl_std_ke;
+		CD_std_ke = 1.0;
+		Anu_std_ke = 70.0;
+		sigma_epsilon_std_ke = 1.3;
+		C_epsilon1_std_ke = 1.44;
+		C_epsilon2_std_ke = 1.92;
+	}
+
+	// функция переключатель между пристеночной областью и 
+	// областью развитого турбулентного потока. 
+	doublereal lambda_switch(doublereal Re_y) {
+		/*if (Re_y > 10.0) {
+			printf("Re=%e\n", Re_y);
+			getchar();
+		}*/
+		return 0.5*(1.0+tanh((Re_y - Rey_zvezda)/ A_switch));
+	}
+
+} FLOWINFO;
+
+// вся информация о полном наборе решаемых уравнений
+typedef struct TEQUATIONINFO {
+	// нужно ли решать уравнение теплопроводности
+	// 0 - ненужно, 1 - нужно методом контрольного объема, 2  - методом конечных элементов.
+	integer itemper;
+	// максимальное количество изолированных по жидкости
+	// жидких зон (FLUID interior)
+	integer imaxflD;
+	// база данных с информацией о жидких зонах.
+	FLOWINFO* fluidinfo;
+
+	TEQUATIONINFO() {
+		// нужно ли решать уравнение теплопроводности
+		// 0 - ненужно, 1 - нужно методом контрольного объема, 2  - методом конечных элементов.
+		itemper=1;
+		// максимальное количество изолированных по жидкости
+		// жидких зон (FLUID interior)
+		imaxflD=0;
+		// база данных с информацией о жидких зонах.
+		fluidinfo=nullptr;
+	}
+} EQUATIONINFO;
+
+EQUATIONINFO eqin; // информация о наборе решаемых уравнений
+
+struct Tdatabase {
+	doublereal *x, *y, *z; // координаты узлов.
+	integer maxelm;
+	integer** nvtxcell;
+	integer ncell;
+	// связь теплопередачи с гидродинамикой.
+	integer **ptr;// для тестирования алгебраического многосеточного метода
+
+	Tdatabase() {
+		x = nullptr; y = nullptr; z = nullptr; // координаты узлов.
+		maxelm=0;
+		nvtxcell = nullptr;
+		ncell=0;
+		// связь теплопередачи с гидродинамикой.
+		ptr = nullptr;// для тестирования алгебраического многосеточного метода
+	}
+};
+
+// одна строка матрицы СЛАУ в 3D варианте
+// для внутреннего КО.
+typedef struct Tequation3D {
+	doublereal ap, ae, an, aw, as, at, ab, b;
+	integer iP, iE, iN, iT, iW, iS, iB;
+	// Расширение структуры данных под АЛИС сетку.
+	// На АЛИС сетке шаблон имеет переменное число связей и 
+	// их число колеблется от семиточечного шаблона до
+	// 25 точечного максимально.
+	// На АЛИС сетке даже чисто диффузионная матрица не имеет диагонального преобладания и 
+	// для решения СЛАУ с такой матрицей нужны специальные "робастые" методы типа BiCGStab + ILU2.
+	// Признак существования дополнительных связей:
+	// true если коэффициент существует.
+	bool bE2, bN2, bT2, bW2, bS2, bB2;
+	bool bE3, bN3, bT3, bW3, bS3, bB3;
+	bool bE4, bN4, bT4, bW4, bS4, bB4;
+	// Значение матричного коэффициента:
+	doublereal ae2, an2, aw2, as2, at2, ab2;
+	doublereal ae3, an3, aw3, as3, at3, ab3;
+	doublereal ae4, an4, aw4, as4, at4, ab4;
+	// индексация для дополнительных связей.
+	integer iE2, iN2, iT2, iW2, iS2, iB2;
+	integer iE3, iN3, iT3, iW3, iS3, iB3;
+	integer iE4, iN4, iT4, iW4, iS4, iB4;
+
+	Tequation3D() {
+		ap=0.0; ae=0.0; an=0.0; aw=0.0; as=0.0; at=0.0; ab=0.0; b=0.0;
+		iP = -1; iE = -1; iN = -1; iT = -1; iW = -1; iS = -1; iB = -1;
+		// Расширение структуры данных под АЛИС сетку.
+		// На АЛИС сетке шаблон имеет переменное число связей и 
+		// их число колеблется от семиточечного шаблона до
+		// 25 точечного максимально.
+		// На АЛИС сетке даже чисто диффузионная матрица не имеет диагонального преобладания и 
+		// для решения СЛАУ с такой матрицей нужны специальные "робастые" методы типа BiCGStab + ILU2.
+		// Признак существования дополнительных связей:
+		// true если коэффициент существует.
+		 bE2 = false; bN2 = false; bT2 = false; bW2 = false; bS2 = false; bB2 = false;
+		 bE3 = false; bN3 = false; bT3 = false; bW3 = false; bS3 = false; bB3 = false;
+		 bE4 = false; bN4 = false; bT4 = false; bW4 = false; bS4 = false; bB4 = false;
+		 // Значение матричного коэффициента:
+		 ae2 = 0.0; an2 = 0.0; aw2 = 0.0; as2 = 0.0; at2 = 0.0; ab2 = 0.0;
+		 ae3 = 0.0; an3 = 0.0; aw3 = 0.0; as3 = 0.0; at3 = 0.0; ab3 = 0.0;
+		 ae4 = 0.0; an4 = 0.0; aw4 = 0.0; as4 = 0.0; at4 = 0.0; ab4 = 0.0;
+		 // индексация для дополнительных связей.
+		 iE2 = -1; iN2 = -1; iT2 = -1; iW2 = -1; iS2 = -1; iB2 = -1;
+		 iE3 = -1; iN3 = -1; iT3 = -1; iW3 = -1; iS3 = -1; iB3 = -1;
+		 iE4 = -1; iN4 = -1; iT4 = -1; iW4 = -1; iS4 = -1; iB4 = -1;
+	}
+	
+} equation3D;
+
+// одна строка матрицы СЛАУ в 3D варианте
+// для граничного КО.
+typedef struct Tequation3D_bon {
+	doublereal aw, ai, b; // wall, internal, правая часть
+	integer iW, iI;
+
+	// соседи на границе области,
+	// их позиции нужны в матрице:
+	// На этих позициях будут стоять нули.
+	integer iW1, iW2, iW3, iW4;
+
+	Tequation3D_bon() {
+		aw = 0.0; ai = 0.0; b = 0.0; // wall, internal, правая часть
+		iW = -1; iI = -1;
+
+		// соседи на границе области,
+		// их позиции нужны в матрице:
+		// На этих позициях будут стоять нули.
+		iW1 = -1; iW2 = -1; iW3 = -1; iW4 = -1;
+	}
+} equation3D_bon;
+
+typedef struct TTEMPER {
+	// флаг отвечающий за освобождение 
+	// памяти первого уровня. Пояснение:
+	// После сборки матрицы СЛАУ можно 
+	// уничтожить почти все структуры необходимые
+	// для сборки матрицы. Это можно сделать 
+	// только в том случае если матрица собирается
+	// лишь единожды, как например в случае статики
+	// для уравнения чистой теплопроводности.
+	// true если освобождаем.
+	bool free_temper_level1;
+	// флаг отвечающий за освобождение памяти
+	// второго уровня. Когда матрица СЛАУ перезаписывается
+	// в формат SIMPLESPARSE. Исходную матрицу в формате 
+	// equation3D можно убрать из оперативной памяти компьютера.
+	bool free_temper_level2;
+
+	integer maxnod; // максимальный номер узла (размерность массива)
+					// pa[0..maxnod-1];
+	TOCHKA* pa; // координаты узлов сетки принадлежащие расчётной области
+
+	integer maxelm; // число ненулевых контрольных объёмов
+					// nvtx[0..7][0..maxelm-1]
+	integer **nvtx; // список узлов для каждого элемента (ненулевого контрольного объёма)
+						   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
+						   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
+						   // AliceMesh
+	ALICE_PARTITION **neighbors_for_the_internal_node;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
+	integer maxbound; // число граничных узлов
+	integer maxp; // maxp == maxelm + maxbound;
+				  // border_neighbor[0..maxbound-1];
+	BOUND* border_neighbor; // граничные узлы расчётной области 
+						  // для всех граничных КО. Равно истине если имеем дело с
+						  // границей строго внутри расчётной области причём на ней 
+						  // расположен именно плоский бесконечно тонкий источник и по 
+						  // одну его сторону расположена жидкость а по другую твёрдое тело.
+	bool* binternalsource;
+
+	// какому блоку принадлежит внутренний КО
+	integer* whot_is_block;
+
+	integer **ptr; // Связь с гидродинамикой.
+
+						  // для графической визуализации
+	integer ncell; // количество связей для контрольных объёмов.
+	integer **nvtxcell; // связи для контрольных объёмов.
+
+							   // Для АЛИС сетки хранит номер уровня ячейки, это 
+							   // потребуется при сборке матрицы.
+							   // ilevel_alice[0..maxelm-1].
+	integer *ilevel_alice;
+
+
+	doublereal *potent; // массив узловых потенциалов (искомых функций)
+	doublereal **total_deformation; // Полная деформация.
+
+										   // Свойства материалов разделяются для  
+										   // внутренних и для граничных КО.
+										   // сначала prop[0..2][0..maxelm-1]
+	doublereal **prop; // свойства материалов для внутренних КО.
+							  // сначала prop_b[0..2][0..maxbound-1]
+	doublereal **prop_b; // свойства для граничных КО.
+
+
+	doublereal *Sc; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
+	integer *ipower_time_depend; // закон зависимости мощности тепловыделения от времени.
+
+	doublereal alpha; // параметр релаксации для температуры
+	equation3D *slau; // коэффициенты матрицы СЛАУ для внутренних КО
+	equation3D_bon *slau_bon; // коэффициенты матрицы СЛАУ для граничных КО
+
+									 // для полилинейного метода:
+									 // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
+									 // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
+									 // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
+									 // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab.
+	NODELR_BASE *rootWE;
+	NODELR_BASE *rootSN;
+	NODELR_BASE *rootBT;
+
+	integer iWE, iSN, iBT; // число сеточных линий вдоль каждого из направлений.
+
+						   // Для полилинейного метода LR1:
+						   // память будет выделяться и 
+						   // уничтожаться один раз а не 
+						   // каждый раз в цикле. 
+						   // Это должно ускорить вычисления.
+						   // Т.к. вычисления требуется распараллелить то память будет выделяться
+						   // и уничтожаться многократно для каждой прогонки - одно выделение и одно
+						   // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
+						   // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
+						   // со временем вычисления.
+
+						   // выходная невязка для температуры
+						   // согласованная с точностью аппроксимации уравнения.
+	doublereal resLR1sk; // O(h!3)
+
+						 // Копия сеточных размеров для восстановления данных.
+	integer inx_copy, iny_copy, inz_copy;
+	doublereal operatingtemperature_copy;
+
+	doublereal *xpos_copy, *ypos_copy, *zpos_copy;
+
+	// 9 августа 2015.
+	// Для распараллеливания 
+	integer *ifrontregulationgl;
+	integer *ibackregulationgl; // обратное преобразование.
+
+	doublereal operatingtemperature;
+
+	Tdatabase database;
+
+	TTEMPER() {
+		// флаг отвечающий за освобождение 
+		// памяти первого уровня. Пояснение:
+		// После сборки матрицы СЛАУ можно 
+		// уничтожить почти все структуры необходимые
+		// для сборки матрицы. Это можно сделать 
+		// только в том случае если матрица собирается
+		// лишь единожды, как например в случае статики
+		// для уравнения чистой теплопроводности.
+		// true если освобождаем.
+		free_temper_level1=true;
+		// флаг отвечающий за освобождение памяти
+		// второго уровня. Когда матрица СЛАУ перезаписывается
+		// в формат SIMPLESPARSE. Исходную матрицу в формате 
+		// equation3D можно убрать из оперативной памяти компьютера.
+		 free_temper_level2=true;
+
+		 maxnod=0; // максимальный номер узла (размерность массива)
+					// pa[0..maxnod-1];
+		pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
+
+		maxelm=0; // число ненулевых контрольных объёмов
+					// nvtx[0..7][0..maxelm-1]
+		nvtx = nullptr; // список узлов для каждого элемента (ненулевого контрольного объёма)
+						   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
+						   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
+						   // AliceMesh
+		neighbors_for_the_internal_node = nullptr;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
+		maxbound=0; // число граничных узлов
+		maxp=0; // maxp == maxelm + maxbound;
+				  // border_neighbor[0..maxbound-1];
+		border_neighbor = nullptr; // граничные узлы расчётной области 
+						  // для всех граничных КО. Равно истине если имеем дело с
+						  // границей строго внутри расчётной области причём на ней 
+						  // расположен именно плоский бесконечно тонкий источник и по 
+						  // одну его сторону расположена жидкость а по другую твёрдое тело.
+		binternalsource = nullptr;
+
+		// какому блоку принадлежит внутренний КО
+		whot_is_block = nullptr;
+
+		ptr = nullptr; // Связь с гидродинамикой.
+
+						  // для графической визуализации
+		ncell=0; // количество связей для контрольных объёмов.
+		nvtxcell = nullptr; // связи для контрольных объёмов.
+
+							   // Для АЛИС сетки хранит номер уровня ячейки, это 
+							   // потребуется при сборке матрицы.
+							   // ilevel_alice[0..maxelm-1].
+		ilevel_alice = nullptr;
+
+
+		potent = nullptr; // массив узловых потенциалов (искомых функций)
+		total_deformation = nullptr; // Полная деформация.
+
+										   // Свойства материалов разделяются для  
+										   // внутренних и для граничных КО.
+										   // сначала prop[0..2][0..maxelm-1]
+		prop = nullptr; // свойства материалов для внутренних КО.
+							  // сначала prop_b[0..2][0..maxbound-1]
+		prop_b = nullptr; // свойства для граничных КО.
+
+
+		Sc = nullptr; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
+		ipower_time_depend = nullptr; // закон зависимости мощности тепловыделения от времени.
+
+		alpha=1.0; // параметр релаксации для температуры
+		slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО
+		slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
+
+									 // для полилинейного метода:
+									 // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
+									 // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
+									 // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
+									 // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab.
+		rootWE = nullptr;
+		rootSN = nullptr;
+		rootBT = nullptr;
+
+		iWE=-1000; iSN = -1000; iBT = -1000; // число сеточных линий вдоль каждого из направлений.
+
+						   // Для полилинейного метода LR1:
+						   // память будет выделяться и 
+						   // уничтожаться один раз а не 
+						   // каждый раз в цикле. 
+						   // Это должно ускорить вычисления.
+						   // Т.к. вычисления требуется распараллелить то память будет выделяться
+						   // и уничтожаться многократно для каждой прогонки - одно выделение и одно
+						   // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
+						   // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
+						   // со временем вычисления.
+
+						   // выходная невязка для температуры
+						   // согласованная с точностью аппроксимации уравнения.
+		resLR1sk=0.0; // O(h!3)
+
+						 // Копия сеточных размеров для восстановления данных.
+		inx_copy = 0; iny_copy = 0; inz_copy=0;
+		operatingtemperature_copy=0.0;
+
+		xpos_copy = nullptr; ypos_copy = nullptr; zpos_copy = nullptr;
+
+		// 9 августа 2015.
+		// Для распараллеливания 
+		ifrontregulationgl = nullptr;
+		ibackregulationgl = nullptr; // обратное преобразование.
+
+		operatingtemperature = 20.0;
+
+		//Tdatabase database;
+	}
+
+}  TEMPER;
+
+typedef struct TFLOW {
+	integer maxnod; // максимальный номер узла (размерность массива)
+	integer maxelm; // число внутренних контрольных объёмов
+					// nvtx[0..7][0..maxelm-1]
+	integer **nvtx; // список узлов для каждого внутреннего элемента (контрольного объёма)
+
+						   // pa[0..maxnod-1]
+	TOCHKA* pa; // координаты узлов сетки принадлежащие расчётной области
+
+					   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
+					   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего КО
+					   // Для ALICEMESH сетки.
+	ALICE_PARTITION **neighbors_for_the_internal_node;// соседние контрольные объёмы для каждого внутреннего КО
+	integer maxbound; // число граничных КО
+	integer maxp; // число уравнений
+				  // border_neighbor[0..maxbound-1];
+	BOUND* border_neighbor; // граничные узлы расчётной области
+
+	integer *ptr; // Связь с теплопроводностью
+
+
+						 // какому блоку принадлежит внутренний КО
+	integer* whot_is_block;
+
+	// potent[iVar][0..maxp-1]
+	doublereal **potent; // массив узловых потенциалов (искомых функций)
+								// prop[0..2][0..maxelm-1]
+	doublereal **prop; // свойства материалов
+							  // prop_b[0..2][0..maxbound-1]
+	doublereal **prop_b; // свойства материалов для граничных КО
+
+	doublereal *alpha; // параметры нижней релаксации
+	equation3D **slau; // коэффициенты матрицы СЛАУ для внутренних КО.
+	equation3D_bon **slau_bon; // коэффициенты матрицы СЛАУ для граничных КО
+									  // для реализации монотонизатора Рхи-Чоу 1983 требуется хранить диагональные коэффициенты.
+	doublereal **diag_coef;
+	doublereal OpTemp; // Operating Temperature
+
+
+	bool bactive; // нужно-ли рассчитывать поле течения
+	bool bPressureFix; // нужно ли фиксировать давление в одной точке
+	bool bLR1free; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
+
+				   // для полилинейного метода:
+				   // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
+				   // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
+				   // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
+				   // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab 1992.
+
+	integer iWE, iSN, iBT; // число сеточных линий вдоль каждого из направлений.
+	integer** iN; //iN[3][max3(iWE,iSN,iBT)];
+	integer*** id; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
+
+						  // Для полилинейного метода LR1:
+						  // память будет выделяться и 
+						  // уничтожаться один раз а не 
+						  // каждый раз в цикле. 
+						  // Это должно ускорить вычисления.
+						  // Т.к. вычисления требуется распараллелить то память будет выделяться
+						  // и уничтожаться многократно для каждой прогонки - одно выделение и одно
+						  // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
+						  // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
+						  // со временем вычисления.
+
+						  // В реальности большинство течений Турбулентны,
+						  // здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
+						  // режим течения для данной зоны FLUID
+	integer iflowregime; // default LAMINAR
+						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
+	doublereal* rdistWall; // расстояние до ближайшей твёрдой стенки.
+								  // Толщина пограничного слоя в формуле Эскудиера
+	doublereal rdistWallmax;
+	// S инвариант тензора скоростей-деформаций
+	doublereal* SInvariantStrainRateTensor; // [0..maxelm+maxbound-1]; // инициализируется нулём.
+
+												   // массовый поток через грани КО:
+	doublereal** mf;
+
+	SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
+
+							  // выходная невязка для поправки давления
+							  // согласованная с точностью аппроксимации уравнения.
+	doublereal resICCG; // O(h!2)
+	doublereal resLR1sk; // O(h!3)
+
+						 // Для правильной работы mass balance для естественно конвективных задач
+						 // нужен идентификатор разных по связности гидродинамических областей для
+						 // внутренних КО.
+	integer *icolor_different_fluid_domain; // Разные гидродинамические подобласти имеют разные цвета.
+
+												   // 9 августа 2015.
+												   // Для распараллеливания 
+	integer *ifrontregulationgl;
+	integer *ibackregulationgl; // обратное преобразование.
+
+	TFLOW() {
+		 maxnod=0; // максимальный номер узла (размерность массива)
+		maxelm = 0; // число внутренних контрольных объёмов
+					// nvtx[0..7][0..maxelm-1]
+		nvtx = nullptr; // список узлов для каждого внутреннего элемента (контрольного объёма)
+
+						   // pa[0..maxnod-1]
+		pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
+
+					   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
+					   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего КО
+					   // Для ALICEMESH сетки.
+		neighbors_for_the_internal_node = nullptr;// соседние контрольные объёмы для каждого внутреннего КО
+		maxbound = 0; // число граничных КО
+		maxp = 0; // число уравнений
+				  // border_neighbor[0..maxbound-1];
+		border_neighbor = nullptr; // граничные узлы расчётной области
+
+		ptr = nullptr; // Связь с теплопроводностью
+
+
+						 // какому блоку принадлежит внутренний КО
+		whot_is_block = nullptr;
+
+		// potent[iVar][0..maxp-1]
+		potent = nullptr; // массив узловых потенциалов (искомых функций)
+								// prop[0..2][0..maxelm-1]
+		prop = nullptr; // свойства материалов
+							  // prop_b[0..2][0..maxbound-1]
+		prop_b = nullptr; // свойства материалов для граничных КО
+
+		alpha = nullptr; // параметры нижней релаксации
+		slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО.
+		slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
+									  // для реализации монотонизатора Рхи-Чоу 1983 требуется хранить диагональные коэффициенты.
+		diag_coef = nullptr;
+		 OpTemp=0.0; // Operating Temperature
+
+
+		bactive=true; // нужно-ли рассчитывать поле течения
+		bPressureFix = false; // нужно ли фиксировать давление в одной точке
+		bLR1free=false; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
+
+				   // для полилинейного метода:
+				   // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
+				   // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
+				   // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
+				   // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab 1992.
+
+		iWE=-1000; iSN = -1000; iBT = -1000; // число сеточных линий вдоль каждого из направлений.
+		iN = nullptr; //iN[3][max3(iWE,iSN,iBT)];
+		id = nullptr; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
+
+						  // Для полилинейного метода LR1:
+						  // память будет выделяться и 
+						  // уничтожаться один раз а не 
+						  // каждый раз в цикле. 
+						  // Это должно ускорить вычисления.
+						  // Т.к. вычисления требуется распараллелить то память будет выделяться
+						  // и уничтожаться многократно для каждой прогонки - одно выделение и одно
+						  // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
+						  // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
+						  // со временем вычисления.
+
+						  // В реальности большинство течений Турбулентны,
+						  // здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
+						  // режим течения для данной зоны FLUID
+		iflowregime= 0; // default LAMINAR
+						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
+		rdistWall = nullptr; // расстояние до ближайшей твёрдой стенки.
+								  // Толщина пограничного слоя в формуле Эскудиера
+		 rdistWallmax=0.0;
+		// S инвариант тензора скоростей-деформаций
+		SInvariantStrainRateTensor = nullptr; // [0..maxelm+maxbound-1]; // инициализируется нулём.
+
+												   // массовый поток через грани КО:
+		mf = nullptr;
+
+		//SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
+
+							  // выходная невязка для поправки давления
+							  // согласованная с точностью аппроксимации уравнения.
+		resICCG=0.0; // O(h!2)
+		resLR1sk=0.0; // O(h!3)
+
+						 // Для правильной работы mass balance для естественно конвективных задач
+						 // нужен идентификатор разных по связности гидродинамических областей для
+						 // внутренних КО.
+		icolor_different_fluid_domain = nullptr; // Разные гидродинамические подобласти имеют разные цвета.
+
+												   // 9 августа 2015.
+												   // Для распараллеливания 
+		ifrontregulationgl = nullptr;
+		ibackregulationgl = nullptr; // обратное преобразование.
+	}
+
+} FLOW;
+
+
+
+
+// Объединение
+// Для блочно структурированной расчётной сетки.
+// Начало разработки 25.04.2018.
+typedef struct TUNION {
+	// id передаётся из интерфейса.
+	integer id; // Уникальный номер объединения.
+
+				// Из кабинета юнион видится как Hollow блок
+				// в виде прямой прямоугольной призмы.
+				// размеры передаются из интерфейса.
+	doublereal xS, xE, yS, yE, zS, zE;
+
+	// Внутренняя сетка union.
+	// Union является кабинетом для своих внутренних блоков.
+	// для внутреннего пользования.
+	doublereal *xpos, *ypos, *zpos;
+	doublereal *xposadd, *yposadd, *zposadd;
+
+	// Для внутренней сетки (размерности).
+	// Передаётся из интерфейса.
+	integer inx, iny, inz;
+	// для внутреннего пользования.
+	integer inxadd, inyadd, inzadd;
+
+	//  Тип сеточного генератора
+	// передаётся из интерфейса.
+	CONFORMAL_MESH_GENERATOR_SELECTOR iswitchMeshGenerator; // 2 - CoarseMeshGen
+
+															// Локальные объявления.
+	TEMPER t;
+	integer flow_interior; // Суммарное число FLUID зон
+	FLOW* f;
+
+	TUNION() {
+		// id передаётся из интерфейса.
+		id = -1; // Уникальный номер объединения.
+
+				 // Из кабинета юнион видится как Hollow блок
+				 // в виде прямой прямоугольной призмы.
+				 // размеры передаются из интерфейса.
+		xS = 0.0; xE = 0.0; yS = 0.0;
+		yE = 0.0; zS = 0.0; zE = 0.0;
+
+		// Внутренняя сетка union.
+		// Union является кабинетом для своих внутренних блоков.
+		// для внутреннего пользования.
+		xpos = nullptr; ypos = nullptr; zpos = nullptr;
+		xposadd = nullptr; yposadd = nullptr; zposadd = nullptr;
+
+		// Для внутренней сетки (размерности).
+		// Передаётся из интерфейса.
+		inx = -1; iny = -1; inz = -1;
+		// для внутреннего пользования.
+		inxadd = -1; inyadd = -1; inzadd = -1;
+
+		//  Тип сеточного генератора
+		// передаётся из интерфейса.
+		iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
+
+													 // Локальные объявления.
+													 //TEMPER t;
+		flow_interior = -1; // Суммарное число FLUID зон
+		f = nullptr;
+	}
+
+} UNION;
+
 // Проверяет если ли выход за пределы кабинета
 // среди блоков, стенок и источников тепла. 02.08.2019.
 // Переделал с printf("..."); на std::cout<<"..."<<std::endl; 14.08.2019.
-void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer ls) {
+void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer ls, UNION* &u, integer &lu) {
 	bool bOk = true;
 	const doublereal dcheck_eps = 1e-10; // 1.0e-10 подобрано для tgf*
-
+	
 	for (integer i = lb - 1; i >= 0; i--) {
 		// Проверка типа геометрии.
+
+		// Излучение в вакуумной призме не работает совместно с температурным солвером 
+		// на основе графового метода решения уравнения теплопередачи.
+		if ((b[i].radiation.binternalRadiation)&&(steady_or_unsteady_global_determinant == NETWORK_T)) {
+			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
+			std::cout << "steady_or_unsteady_global_determinant == NETWORK_T" << std::endl;
+			std::cout << "synopsis: incompatible solver settings..." << std::endl;
+			std::cout << "recomended: set the control volume method as a temperature solver and a structured grid." << std::endl;
+			system("pause");
+			bOk = false;
+			exit(1);
+		}
+
+		// Излучение в вакуумной призме не работает совместно с температурным солвером
+		// на основе метода конечных элементов.
+		if ((b[i].radiation.binternalRadiation) && (eqin.itemper == 2)) {
+			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
+			std::cout << "eqin.itemper == 2 Finite Element Method for Temperature solver." << std::endl;
+			std::cout << "synopsis: incompatible solver settings..." << std::endl;
+			std::cout << "recomended: set the control volume method as a temperature solver and a structured grid." << std::endl;
+			system("pause");
+			bOk = false;
+			exit(1);
+		}
+
+		// Излучение в вакуумной призме не работает совместно с гидродинамическим расчётом.
+		if ((b[i].radiation.binternalRadiation) && (steady_or_unsteady_global_determinant == CFD_STEADY)) {
+			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
+			std::cout << "steady_or_unsteady_global_determinant == CFD_STEADY." << std::endl;
+			std::cout << "synopsis: incompatible solver settings..." << std::endl;
+			std::cout << "recomended: set the control volume method as a temperature solver and a structured grid. turn OFF cfd." << std::endl;
+			system("pause");
+			bOk = false;
+			exit(1);
+		}
+		
+		// Излучение в вакуумной призме не работает с Адаптивными Локально Измельченными Сетками.
+		if ((b[i].radiation.binternalRadiation) && (b_on_adaptive_local_refinement_mesh)) {
+			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
+			std::cout << "b_on_adaptive_local_refinement_mesh == true Adaptive Local Refinement Mesh is ON." << std::endl;
+			std::cout << "synopsis: incompatible solver settings..." << std::endl;
+			std::cout << "recomended: set the control volume method as a temperature solver and a structured grid. turn OFF cfd." << std::endl;
+			system("pause");
+			bOk = false;
+			exit(1);
+		}
+
+
 		CHECK_TYPE_GEOM(b[i].g.itypegeom);
 		if (b[i].g.itypegeom == PRISM) {
 			// Ошибка не число.
 			if (b[i].g.xS != b[i].g.xS) {
 				//printf("Error body[%lld] xS NOT VALUE=%e.\n", i, b[i].g.xS);
-				std::cout<<"Error body["<<i<<"] xS NOT VALUE="<< b[i].g.xS <<"."<<std::endl;
+				std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] xS NOT VALUE=" << b[i].g.xS << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.xE != b[i].g.xE) {
 				//printf("Error body[%lld] xE NOT VALUE=%e.\n", i, b[i].g.xE);
-				std::cout << "Error body[" << i << "] xE NOT VALUE=" << b[i].g.xE << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] xE NOT VALUE=" << b[i].g.xE << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.yS != b[i].g.yS) {
 				//printf("Error body[%lld] yS NOT VALUE=%e.\n", i, b[i].g.yS);
-				std::cout << "Error body[" << i << "] yS NOT VALUE=" << b[i].g.yS << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] yS NOT VALUE=" << b[i].g.yS << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.yE != b[i].g.yE) {
 				//printf("Error body[%lld] yE NOT VALUE=%e.\n", i, b[i].g.yE);
-				std::cout << "Error body[" << i << "] yE NOT VALUE=" << b[i].g.yE << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] yE NOT VALUE=" << b[i].g.yE << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.zS != b[i].g.zS) {
 				//printf("Error body[%lld] zS NOT VALUE=%e.\n", i, b[i].g.zS);
-				std::cout << "Error body[" << i << "] zS NOT VALUE=" << b[i].g.zS << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] zS NOT VALUE=" << b[i].g.zS << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.zE != b[i].g.zE) {
 				//printf("Error body[%lld] zE NOT VALUE=%e.\n", i, b[i].g.zE);
-				std::cout << "Error body[" << i << "] zE NOT VALUE=" << b[i].g.zE << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] zE NOT VALUE=" << b[i].g.zE << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (b[i].g.xS >= b[i].g.xE) {
 				//printf("body[%lld].xS=%e >= body[%lld].xE=%e\n", i, b[i].g.xS, i, b[i].g.xE);
-				std::cout << "body["<<i<<"].xS="<< b[i].g.xS<<" >= body["<<i<<"].xE="<< b[i].g.xE<< std::endl;
+				std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "].xS=" << b[i].g.xS << " >= body[" << i << "].xE=" << b[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = b[i].g.xE;
 				b[i].g.xE = b[i].g.xS;
@@ -1528,7 +2954,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (b[i].g.yS >= b[i].g.yE) {
 				//printf("body[%lld].yS=%e >= body[%lld].yE=%e\n", i, b[i].g.yS, i, b[i].g.yE);
-				std::cout << "body[" << i << "].yS=" << b[i].g.yS << " >= body[" << i << "].yE=" << b[i].g.yE << std::endl;
+				std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "].yS=" << b[i].g.yS << " >= body[" << i << "].yE=" << b[i].g.yE << std::endl;
 				std::cout << "" << std::endl;
 				system("pause");
 				doublereal temp = b[i].g.yE;
@@ -1538,7 +2964,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (b[i].g.zS >= b[i].g.zE) {
 				//printf("body[%lld].zS=%e >= body[%lld].zE=%e\n", i, b[i].g.zS, i, b[i].g.zE);
-				std::cout << "body[" << i << "].zS=" << b[i].g.zS << " >= body[" << i << "].zE=" << b[i].g.zE << std::endl;
+				std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "].zS=" << b[i].g.zS << " >= body[" << i << "].zE=" << b[i].g.zE << std::endl;
 				std::cout << "" << std::endl;
 				system("pause");
 				doublereal temp = b[i].g.zE;
@@ -1551,7 +2977,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (b[i].g.xE > b[0].g.xE) {
 					printf("ERROR. Your model is incorrect.\n");
 					//printf("b[%lld].g.xE=%e > cabinet.xE=%e.\n", i, b[i].g.xE, b[0].g.xE);
-					std::cout << "b["<<i<<"].g.xE="<< b[i].g.xE<<" > cabinet.xE="<< b[0].g.xE<<"."<< std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " b[" << i << "].g.xE=" << b[i].g.xE << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
 					system("pause");
 					b[i].g.xE = b[0].g.xE; // исправление.
 					bOk = false;
@@ -1559,7 +2985,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (b[i].g.yE > b[0].g.yE) {
 					printf("ERROR. Your model is incorrect.\n");
 					//printf("b[%lld].g.yE=%e > cabinet.yE=%e.\n", i, b[i].g.yE, b[0].g.yE);
-					std::cout << "b[" << i << "].g.yE=" << b[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " b[" << i << "].g.yE=" << b[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 					system("pause");
 					b[i].g.yE = b[0].g.yE; // исправление.
 					bOk = false;
@@ -1567,7 +2993,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (b[i].g.zE > b[0].g.zE) {
 					printf("ERROR. Your model is incorrect.\n");
 					//printf("b[%lld].g.zE=%e > cabinet.zE=%e.\n", i, b[i].g.zE, b[0].g.zE);
-					std::cout << "b[" << i << "].g.zE=" << b[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " b[" << i << "].g.zE=" << b[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 					system("pause");
 					b[i].g.zE = b[0].g.zE; // исправление.
 					bOk = false;
@@ -1575,7 +3001,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (b[i].g.xS < b[0].g.xS) {
 					printf("ERROR. Your model is incorrect.\n");
 					//printf("b[%lld].g.xS=%e < cabinet.xS=%e.\n", i, b[i].g.xS, b[0].g.xS);
-					std::cout << "b[" << i << "].g.xS=" << b[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " b[" << i << "].g.xS=" << b[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 					system("pause");
 					b[i].g.xS = b[0].g.xS; // исправление.
 					bOk = false;
@@ -1583,7 +3009,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (b[i].g.yS < b[0].g.yS) {
 					printf("ERROR. Your model is incorrect.\n");
 					//printf("b[%lld].g.yS=%e < cabinet.yS=%e.\n", i, b[i].g.yS, b[0].g.yS);
-					std::cout << "b[" << i << "].g.yS=" << b[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " b[" << i << "].g.yS=" << b[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 					std::cout << "" << std::endl;
 					system("pause");
 					b[i].g.yS = b[0].g.yS; // исправление.
@@ -1592,7 +3018,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (b[i].g.zS < b[0].g.zS) {
 					printf("ERROR. Your model is incorrect.\n");
 					//printf("b[%lld].g.zS=%e < cabinet.zS=%e.\n", i, b[i].g.zS, b[0].g.zS);
-					std::cout << "b[" << i << "].g.zS=" << b[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " b[" << i << "].g.zS=" << b[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 					system("pause");
 					b[i].g.zS = b[0].g.zS; // исправление.
 					bOk = false;
@@ -1602,63 +3028,63 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (b[i].g.itypegeom == CYLINDER) {
 			if (b[i].g.xC != b[i].g.xC) {
 				//printf("Error body[%lld] xC NOT VALUE=%e.\n",i, b[i].g.xC);
-				std::cout << "Error body[" << i << "] xC NOT VALUE=" << b[i].g.xC << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] xC NOT VALUE=" << b[i].g.xC << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.yC != b[i].g.yC) {
 				//printf("Error body[%lld] yC NOT VALUE=%e.\n", i, b[i].g.yC);
-				std::cout << "Error body[" << i << "] yC NOT VALUE=" << b[i].g.yC << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] yC NOT VALUE=" << b[i].g.yC << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.zC != b[i].g.zC) {
 				//printf("Error body[%lld] zC NOT VALUE=%e.\n", i, b[i].g.zC);
-				std::cout << "Error body[" << i << "] zC NOT VALUE=" << b[i].g.zC << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] zC NOT VALUE=" << b[i].g.zC << "." << std::endl;
 				std::cout << "" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.Hcyl != b[i].g.Hcyl) {
 				//printf("Error body[%lld] Hcyl NOT VALUE=%e.\n", i, b[i].g.Hcyl);
-				std::cout << "Error body[" << i << "] Hcyl NOT VALUE=" << b[i].g.Hcyl << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] Hcyl NOT VALUE=" << b[i].g.Hcyl << "." << std::endl;
 				std::cout << "" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_out_cyl != b[i].g.R_out_cyl) {
 				//printf("Error body[%lld] R_out_cyl NOT VALUE=%e.\n", i, b[i].g.R_out_cyl);
-				std::cout << "Error body[" << i << "] R_out_cyl NOT VALUE=" << b[i].g.R_out_cyl << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] R_out_cyl NOT VALUE=" << b[i].g.R_out_cyl << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_in_cyl != b[i].g.R_in_cyl) {
 				//printf("Error body[%lld] R_in_cyl NOT VALUE=%e.\n", i, b[i].g.R_in_cyl);
-				std::cout << "Error body[" << i << "] R_in_cyl NOT VALUE=" << b[i].g.R_in_cyl << "." << std::endl;
+				std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] R_in_cyl NOT VALUE=" << b[i].g.R_in_cyl << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.Hcyl <= 0.0) {
 				//printf("Error: negative or zero Hcyl=%e of cylinder body[%lld]\n", b[i].g.Hcyl, i);
-				std::cout << "Error: negative or zero Hcyl="<< b[i].g.Hcyl<<" of cylinder body["<<i<<"]" << std::endl;
+				std::cout << "Error: body[" << i << "].name = " << b[i].name << " negative or zero Hcyl=" << b[i].g.Hcyl << " of cylinder body[" << i << "]" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_out_cyl <= 0.0) {
 				//printf("Error: negative or zero R_out_cyl=%e of cylinder body[%lld]\n", b[i].g.R_out_cyl, i);
-				std::cout << "Error: negative or zero R_out_cyl=" << b[i].g.R_out_cyl << " of cylinder body[" << i << "]" << std::endl;
+				std::cout << "Error: body[" << i << "].name = " << b[i].name << " negative or zero R_out_cyl=" << b[i].g.R_out_cyl << " of cylinder body[" << i << "]" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_in_cyl < 0.0) {
-				printf("Error: negative R_in_cyl=%e of cylinder body[%lld]\n", b[i].g.R_in_cyl, i);
-				std::cout << "Error: negative  R_in_cyl=" << b[i].g.R_in_cyl << " of cylinder body[" << i << "]" << std::endl;
+				//printf("Error: negative R_in_cyl=%e of cylinder body[%lld]\n", b[i].g.R_in_cyl, i);
+				std::cout << "Error: body[" << i << "].name = " << b[i].name << " negative  R_in_cyl=" << b[i].g.R_in_cyl << " of cylinder body[" << i << "]" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_in_cyl > b[i].g.R_out_cyl) {
 				//printf("Error: b[%lld].g.R_in_cyl=%e > b[%lld].g.R_out_cyl=%e\n", i, b[i].g.R_in_cyl, i, b[i].g.R_out_cyl);
-				std::cout << "Error: b["<<i<<"].g.R_in_cyl="<< b[i].g.R_in_cyl<<" > b["<<i<<"].g.R_out_cyl="<< b[i].g.R_out_cyl << std::endl;
+				std::cout << "Error: body[" << i << "].name = " << b[i].name << " b[" << i << "].g.R_in_cyl=" << b[i].g.R_in_cyl << " > b[" << i << "].g.R_out_cyl=" << b[i].g.R_out_cyl << std::endl;
 				system("pause");
 				bOk = false;
 			}
@@ -1674,21 +3100,21 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				doublereal zS_box_cyl = b[i].g.zC;
 				doublereal zE_box_cyl = b[i].g.zC;
 				switch (b[i].g.iPlane) {
-				case XY:
+				case XY_PLANE:
 					xS_box_cyl -= b[i].g.R_out_cyl;
 					xE_box_cyl += b[i].g.R_out_cyl;
 					yS_box_cyl -= b[i].g.R_out_cyl;
 					yE_box_cyl += b[i].g.R_out_cyl;
 					zE_box_cyl += b[i].g.Hcyl;
 					break;
-				case XZ:
+				case XZ_PLANE:
 					xS_box_cyl -= b[i].g.R_out_cyl;
 					xE_box_cyl += b[i].g.R_out_cyl;
 					zS_box_cyl -= b[i].g.R_out_cyl;
 					zE_box_cyl += b[i].g.R_out_cyl;
 					yE_box_cyl += b[i].g.Hcyl;
 					break;
-				case YZ:
+				case YZ_PLANE:
 					zS_box_cyl -= b[i].g.R_out_cyl;
 					zE_box_cyl += b[i].g.R_out_cyl;
 					yS_box_cyl -= b[i].g.R_out_cyl;
@@ -1696,11 +3122,11 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 					xE_box_cyl += b[i].g.Hcyl;
 					break;
 				}
-				
+
 				if (xE_box_cyl > b[0].g.xE + dcheck_eps) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
 					//printf("body[%lld] xE_box_cyl=%e > cabinet.xE=%e.\n", i, xE_box_cyl, b[0].g.xE);
-					std::cout << "body["<<i<<"] xE_box_cyl="<< xE_box_cyl<<" > cabinet.xE="<< b[0].g.xE<<"." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] xE_box_cyl=" << xE_box_cyl << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
 					printf("tolerance=%e\n", xE_box_cyl - b[0].g.xE);
 					system("pause");
 
@@ -1709,25 +3135,25 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (yE_box_cyl > b[0].g.yE + dcheck_eps) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
 					//printf("body[%lld] yE_box_cyl=%e > cabinet.yE=%e.\n", i, yE_box_cyl, b[0].g.yE);
-					std::cout << "body[" << i << "] yE_box_cyl=" << yE_box_cyl << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] yE_box_cyl=" << yE_box_cyl << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 					printf("tolerance=%e\n", yE_box_cyl - b[0].g.yE);
 					system("pause");
 
 					bOk = false;
 				}
-				if (zE_box_cyl > b[0].g.zE+ dcheck_eps) {
+				if (zE_box_cyl > b[0].g.zE + dcheck_eps) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
 					//printf("body[%lld] zE_box_cyl=%e > cabinet.zE=%e.\n", i, zE_box_cyl, b[0].g.zE);
-					std::cout << "body[" << i << "] zE_box_cyl=" << zE_box_cyl << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] zE_box_cyl=" << zE_box_cyl << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 					printf("tolerance=%e\n", zE_box_cyl - b[0].g.zE);
 					system("pause");
 
 					bOk = false;
 				}
-				if (xS_box_cyl < b[0].g.xS- dcheck_eps) {
+				if (xS_box_cyl < b[0].g.xS - dcheck_eps) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
 					//printf("body[%lld] xS_box_cyl=%e < cabinet.xS=%e.\n", i, xS_box_cyl, b[0].g.xS);
-					std::cout << "body[" << i << "] xS_box_cyl=" << xS_box_cyl << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] xS_box_cyl=" << xS_box_cyl << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 					printf("tolerance=%e\n", b[0].g.xS - xS_box_cyl);
 					system("pause");
 
@@ -1736,7 +3162,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (yS_box_cyl < b[0].g.yS - dcheck_eps) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
 					//printf("body[%lld] yS_box_cyl=%e < cabinet.yS=%e.\n", i, yS_box_cyl, b[0].g.yS);
-					std::cout << "body[" << i << "] yS_box_cyl=" << yS_box_cyl << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] yS_box_cyl=" << yS_box_cyl << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 					printf("tolerance=%e\n", b[0].g.yS - yS_box_cyl);
 					system("pause");
 
@@ -1745,7 +3171,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (zS_box_cyl < b[0].g.zS - dcheck_eps) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
 					//printf("body[%lld] zS_box_cyl=%e < cabinet.zS=%e.\n", i, zS_box_cyl, b[0].g.zS);
-					std::cout << "body[" << i << "] zS_box_cyl=" << zS_box_cyl << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] zS_box_cyl=" << zS_box_cyl << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 					printf("tolerance=%e\n", b[0].g.zS - zS_box_cyl);
 					system("pause");
 
@@ -1753,7 +3179,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				}
 			}
 		}
-	
+
 		if (b[i].g.itypegeom == POLYGON) {
 			if (i != 0) {
 				// Не cabinet
@@ -1769,35 +3195,35 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 				if (b[i].g.nsizei<2) {
 					//printf("Error number points on polygon very small: b[%lld].g.nsizei=%lld<2\n",i, b[i].g.nsizei);
-					std::cout << "Error number points on polygon very small: b["<<i<<"].g.nsizei="<< b[i].g.nsizei<<"<2." << std::endl;
+					std::cout << "Error number points on polygon very small: body[" << i << "].name = " << b[i].name << " b[" << i << "].g.nsizei=" << b[i].g.nsizei << "<2." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.xi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.xi array.\n",i);
-					std::cout << "Error: no memory allocate for b["<<i<<"].g.xi array." << std::endl;
+					std::cout << "Error: body[" << i << "].name = " << b[i].name << " no memory allocate for b[" << i << "].g.xi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.yi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.yi array.\n", i);
-					std::cout << "Error: no memory allocate for b["<<i<<"].g.yi array." << std::endl;
+					std::cout << "Error: body[" << i << "].name = " << b[i].name << " no memory allocate for b[" << i << "].g.yi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.zi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.zi array.\n", i);
-					std::cout << "Error: no memory allocate for b["<<i<<"].g.zi array." << std::endl;
+					std::cout << "Error: body[" << i << "].name = " << b[i].name << " no memory allocate for b[" << i << "].g.zi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.hi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.hi array.\n", i);
-					std::cout << "Error: no memory allocate for b["<<i<<"].g.hi array." << std::endl;
+					std::cout << "Error: body[" << i << "].name = " << b[i].name << " no memory allocate for b[" << i << "].g.hi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
@@ -1805,55 +3231,55 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				for (integer ip = 0; ip < b[i].g.nsizei; ip++) {
 					if (b[i].g.xi[ip] != b[i].g.xi[ip]) {
 						//printf("Error body[%lld] xi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.xi[ip]);
-						std::cout << "Error body["<<i<<"] xi["<<ip<<"] NOT VALUE="<< b[i].g.xi[ip]<<"." << std::endl;
+						std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] xi[" << ip << "] NOT VALUE=" << b[i].g.xi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 					if (b[i].g.yi[ip] != b[i].g.yi[ip]) {
 						//printf("Error body[%lld] yi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.yi[ip]);
-						std::cout << "Error body[" << i << "] yi[" << ip << "] NOT VALUE=" << b[i].g.yi[ip] << "." << std::endl;
+						std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] yi[" << ip << "] NOT VALUE=" << b[i].g.yi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 					if (b[i].g.zi[ip] != b[i].g.zi[ip]) {
 						//printf("Error body[%lld] zi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.zi[ip]);
-						std::cout << "Error body[" << i << "] zi[" << ip << "] NOT VALUE=" << b[i].g.zi[ip] << "." << std::endl;
+						std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] zi[" << ip << "] NOT VALUE=" << b[i].g.zi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 					if (b[i].g.hi[ip] != b[i].g.hi[ip]) {
 						//printf("Error body[%lld] hi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.hi[ip]);
-						std::cout << "Error body[" << i << "] hi[" << ip << "] NOT VALUE=" << b[i].g.hi[ip] << "." << std::endl;
+						std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "] hi[" << ip << "] NOT VALUE=" << b[i].g.hi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 				}
 
-				integer i_t1, i_t2, i_t3, it_c=0;
+				integer i_t1, i_t2, i_t3, it_c = 0;
 				switch (b[i].g.iPlane_obj2) {
-				case XY: 
+				case XY_PLANE:
 					for (integer ip = 0; ip < b[i].g.nsizei; ip++) {
 
 						// Детектирование ОШИБКИ самопересечения отрезков в полигоне.
 						// Мы проверяем каждый с каждым
 						it_c = 0;
 						for (integer ip_t = 2; ip_t < b[i].g.nsizei; ip_t++) {
-							i_t1 = ip +1;
+							i_t1 = ip + 1;
 							if (i_t1 >= b[i].g.nsizei) i_t1 -= b[i].g.nsizei;
-							i_t2 = ip + it_c+2;
+							i_t2 = ip + it_c + 2;
 							if (i_t2 >= b[i].g.nsizei) i_t2 -= b[i].g.nsizei;
-							i_t3 = ip + it_c+3;
+							i_t3 = ip + it_c + 3;
 							if (i_t3 >= b[i].g.nsizei) i_t3 -= b[i].g.nsizei;
 
 							// Мы попарно проверяем есть ли самопересечения каждый с каждым.
 							if (b_is_intersect(b[i].g.xi[ip], b[i].g.yi[ip], b[i].g.xi[i_t1], b[i].g.yi[i_t1],
 								b[i].g.xi[i_t2], b[i].g.yi[i_t2], b[i].g.xi[i_t3], b[i].g.yi[i_t3])) {
 								// ОШИБКА: обнаружено самопересечение отрезков в полигоне.
-								printf("Error in POLYGON: Self-intersection of segments in body[%lld]\n",i);
+								std::cout << "Error in POLYGON: body[" << i << "].name = " << b[i].name << " Self-intersection of segments in body[" << i << "]\n";
 								system("pause");
 								bOk = false;
 							}
-							
+
 							it_c++;
 						}
 
@@ -1870,30 +3296,30 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							yE_box_polygon = b[i].g.yi[ip];
 						}
 						if (ip != 0) {
-							if (fabs(b[i].g.zi[ip]- b[i].g.zi[0]) > 1.0e-40) {
-								printf("Error: NON planar polygon. body[%lld] \n",i);
-								printf("Diagnostic: fabs(b[%lld].g.zi[%lld]- b[%lld].g.zi[0]) > 1.0e-40\n",i,ip,i);
+							if (fabs(b[i].g.zi[ip] - b[i].g.zi[0]) > 1.0e-40) {
+								std::cout << "Error: NON planar polygon. body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
+								std::cout << "Diagnostic: fabs(b[" << i << "].g.zi[" << ip << "]- b[" << i << "].g.zi[0]) > 1.0e-40\n";
 								system("pause");
 								bOk = false;
 							}
 							if (fabs(b[i].g.hi[ip] - b[i].g.hi[0]) > 1.0e-40) {
-								printf("Error: NON planar polygon. body[%lld] \n", i);
-								printf("Diagnostic: fabs(b[%lld].g.hi[%lld]- b[%lld].g.hi[0]) > 1.0e-40\n", i, ip, i);
+								std::cout << "Error: NON planar polygon. body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
+								std::cout << "Diagnostic: fabs(b[" << i << "].g.hi[" << ip << "]- b[" << i << "].g.hi[0]) > 1.0e-40\n";
 								system("pause");
 								bOk = false;
 							}
 						}
 						if (b[i].g.hi[ip] <= 0.0) {
 							//printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
-							std::cout << "Error body["<<i<<"].g.hi["<<ip<<"]="<< b[i].g.hi[ip]<<" is NEGATIV or ZERO." << std::endl;
+							std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
 							system("pause");
 							bOk = false;
 						}
 						zS_box_polygon = b[i].g.zi[ip];
-						zE_box_polygon = b[i].g.zi[ip]+ b[i].g.hi[ip];
+						zE_box_polygon = b[i].g.zi[ip] + b[i].g.hi[ip];
 					}
 					break;
-				case XZ: 
+				case XZ_PLANE:
 					for (integer ip = 0; ip < b[i].g.nsizei; ip++) {
 
 						// Детектирование ОШИБКИ самопересечения отрезков в полигоне.
@@ -1911,7 +3337,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							if (b_is_intersect(b[i].g.xi[ip], b[i].g.zi[ip], b[i].g.xi[i_t1], b[i].g.zi[i_t1],
 								b[i].g.xi[i_t2], b[i].g.zi[i_t2], b[i].g.xi[i_t3], b[i].g.zi[i_t3])) {
 								// ОШИБКА: обнаружено самопересечение отрезков в полигоне.
-								printf("Error in POLYGON: Self-intersection of segments in body[%lld]\n", i);
+								std::cout << "Error in POLYGON: Self-intersection of segments in body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
 								system("pause");
 								bOk = false;
 							}
@@ -1934,21 +3360,21 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 						}
 						if (ip != 0) {
 							if (fabs(b[i].g.yi[ip] - b[i].g.yi[0]) > 1.0e-40) {
-								printf("Error: NON planar polygon. body[%lld] \n", i);
-								printf("Diagnostic: fabs(b[%lld].g.yi[%lld]- b[%lld].g.yi[0]) > 1.0e-40\n", i, ip, i);
+								std::cout << "Error: NON planar polygon. body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
+								std::cout << "Diagnostic: fabs(b[" << i << "].g.yi[" << ip << "]- b[" << i << "].g.yi[0]) > 1.0e-40\n";
 								system("pause");
 								bOk = false;
 							}
 							if (fabs(b[i].g.hi[ip] - b[i].g.hi[0]) > 1.0e-40) {
-								printf("Error: NON planar polygon. body[%lld] \n", i);
-								printf("Diagnostic: fabs(b[%lld].g.hi[%lld]- b[%lld].g.hi[0]) > 1.0e-40\n", i, ip, i);
+								std::cout << "Error: NON planar polygon. body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
+								std::cout << "Diagnostic: fabs(b[" << i << "].g.hi[" << ip << "]- b[" << i << "].g.hi[0]) > 1.0e-40\n";
 								system("pause");
 								bOk = false;
 							}
 						}
 						if (b[i].g.hi[ip] <= 0.0) {
 							//printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
-							std::cout << "Error body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
+							std::cout << "Error body[" << i << "].name = " << b[i].name << "  body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
 							system("pause");
 							bOk = false;
 						}
@@ -1956,7 +3382,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 						yE_box_polygon = b[i].g.yi[ip] + b[i].g.hi[ip];
 					}
 					break;
-				case YZ:
+				case YZ_PLANE:
 					for (integer ip = 0; ip < b[i].g.nsizei; ip++) {
 
 
@@ -1975,7 +3401,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							if (b_is_intersect(b[i].g.yi[ip], b[i].g.zi[ip], b[i].g.yi[i_t1], b[i].g.zi[i_t1],
 								b[i].g.yi[i_t2], b[i].g.zi[i_t2], b[i].g.yi[i_t3], b[i].g.zi[i_t3])) {
 								// ОШИБКА: обнаружено самопересечение отрезков в полигоне.
-								printf("Error in POLYGON: Self-intersection of segments in body[%lld]\n", i);
+								std::cout << "Error in POLYGON: Self-intersection of segments in body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
 								system("pause");
 								bOk = false;
 							}
@@ -1997,21 +3423,21 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 						}
 						if (ip != 0) {
 							if (fabs(b[i].g.xi[ip] - b[i].g.xi[0]) > 1.0e-40) {
-								printf("Error: NON planar polygon. body[%lld] \n", i);
-								printf("Diagnostic: fabs(b[%lld].g.xi[%lld]- b[%lld].g.xi[0]) > 1.0e-40\n", i, ip, i);
+								std::cout << "Error: NON planar polygon. body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
+								std::cout << "Diagnostic: fabs(b[" << i << "].g.xi[" << ip << "]- b[" << i << "].g.xi[0]) > 1.0e-40\n";
 								system("pause");
 								bOk = false;
 							}
 							if (fabs(b[i].g.hi[ip] - b[i].g.hi[0]) > 1.0e-40) {
-								printf("Error: NON planar polygon. body[%lld] \n", i);
-								printf("Diagnostic: fabs(b[%lld].g.hi[%lld]- b[%lld].g.hi[0]) > 1.0e-40\n", i, ip, i);
+								std::cout << "Error: NON planar polygon. body[" << i << "] body[" << i << "].name = " << b[i].name << " \n";
+								std::cout << "Diagnostic: fabs(b[" << i << "].g.hi[" << ip << "]- b[" << i << "].g.hi[0]) > 1.0e-40\n";
 								system("pause");
 								bOk = false;
 							}
 						}
 						if (b[i].g.hi[ip] <= 0.0) {
 							//printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
-							std::cout << "Error body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
+							std::cout << "Error body[" << i << "].name = " << b[i].name << " body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
 							system("pause");
 							bOk = false;
 						}
@@ -2021,10 +3447,10 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 					break;
 				}
 
-				if (xE_box_polygon > b[0].g.xE+ dcheck_eps) {
+				if (xE_box_polygon > b[0].g.xE + dcheck_eps) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
 					//printf("body[%lld] xE_box_polygon=%e > cabinet.xE=%e.\n", i, xE_box_polygon, b[0].g.xE);
-					std::cout << "body["<<i<<"] xE_box_polygon="<< xE_box_polygon<<" > cabinet.xE="<< b[0].g.xE<<"." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] xE_box_polygon=" << xE_box_polygon << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -2032,7 +3458,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (yE_box_polygon > b[0].g.yE + dcheck_eps) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
 					//printf("body[%lld] yE_box_polygon=%e > cabinet.yE=%e.\n", i, yE_box_polygon, b[0].g.yE);
-					std::cout << "body[" << i << "] yE_box_polygon=" << yE_box_polygon << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] yE_box_polygon=" << yE_box_polygon << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -2040,7 +3466,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (zE_box_polygon > b[0].g.zE + dcheck_eps) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
 					//printf("body[%lld] zE_box_polygon=%e > cabinet.zE=%e.\n", i, zE_box_polygon, b[0].g.zE);
-					std::cout << "body[" << i << "] zE_box_polygon=" << zE_box_polygon << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] zE_box_polygon=" << zE_box_polygon << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -2048,7 +3474,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (xS_box_polygon < b[0].g.xS - dcheck_eps) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
 					//printf("body[%lld] xS_box_polygon=%e < cabinet.xS=%e.\n", i, xS_box_polygon, b[0].g.xS);
-					std::cout << "body[" << i << "] xS_box_polygon=" << xS_box_polygon << " > cabinet.xS=" << b[0].g.xS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] xS_box_polygon=" << xS_box_polygon << " > cabinet.xS=" << b[0].g.xS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -2056,7 +3482,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (yS_box_polygon < b[0].g.yS - dcheck_eps) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
 					//printf("body[%lld] yS_box_polygon=%e < cabinet.yS=%e.\n", i, yS_box_polygon, b[0].g.yS);
-					std::cout << "body[" << i << "] yS_box_polygon=" << yS_box_polygon << " > cabinet.yS=" << b[0].g.yS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] yS_box_polygon=" << yS_box_polygon << " > cabinet.yS=" << b[0].g.yS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -2064,7 +3490,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				if (zS_box_polygon < b[0].g.zS - dcheck_eps) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
 					//printf("body[%lld] zS_box_polygon=%e < cabinet.zS=%e.\n", i, zS_box_polygon, b[0].g.zS);
-					std::cout << "body[" << i << "] zS_box_polygon=" << zS_box_polygon << " > cabinet.zS=" << b[0].g.zS << "." << std::endl;
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] zS_box_polygon=" << zS_box_polygon << " > cabinet.zS=" << b[0].g.zS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -2073,54 +3499,54 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 
 		}
-    }
+	}
 
 	for (integer i = 0; i < lw; i++) {
 
 		// Ошибка не число.
 		if (w[i].g.xS != w[i].g.xS) {
 			//printf("Error wall[%lld] xS NOT VALUE=%e.\n", i, w[i].g.xS);
-			std::cout << "Error wall["<<i<<"] xS NOT VALUE="<< w[i].g.xS<<"." << std::endl;
+			std::cout << "Error wall[" << i << "].name = " << w[i].name << " wall[" << i << "] xS NOT VALUE=" << w[i].g.xS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.xE != w[i].g.xE) {
 			//printf("Error wall[%lld] xE NOT VALUE=%e.\n", i, w[i].g.xE);
-			std::cout << "Error wall[" << i << "] xE NOT VALUE=" << w[i].g.xE << "." << std::endl;
+			std::cout << "Error  wall[" << i << "].name = " << w[i].name << " wall[" << i << "] xE NOT VALUE=" << w[i].g.xE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.yS != w[i].g.yS) {
 			//printf("Error wall[%lld] yS NOT VALUE=%e.\n", i, w[i].g.yS);
-			std::cout << "Error wall[" << i << "] yS NOT VALUE=" << w[i].g.yS << "." << std::endl;
+			std::cout << "Error  wall[" << i << "].name = " << w[i].name << " wall[" << i << "] yS NOT VALUE=" << w[i].g.yS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.yE != w[i].g.yE) {
 			//printf("Error wall[%lld] yE NOT VALUE=%e.\n", i, w[i].g.yE);
-			std::cout << "Error wall[" << i << "] yE NOT VALUE=" << w[i].g.yE << "." << std::endl;
+			std::cout << "Error  wall[" << i << "].name = " << w[i].name << " wall[" << i << "] yE NOT VALUE=" << w[i].g.yE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.zS != w[i].g.zS) {
 			//printf("Error wall[%lld] zS NOT VALUE=%e.\n", i, w[i].g.zS);
-			std::cout << "Error wall[" << i << "] zS NOT VALUE=" << w[i].g.zS << "." << std::endl;
+			std::cout << "Error  wall[" << i << "].name = " << w[i].name << " wall[" << i << "] zS NOT VALUE=" << w[i].g.zS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.zE != w[i].g.zE) {
 			//printf("Error wall[%lld] zE NOT VALUE=%e.\n", i, w[i].g.zE);
-			std::cout << "Error wall[" << i << "] zE NOT VALUE=" << w[i].g.zE << "." << std::endl;
+			std::cout << "Error  wall[" << i << "].name = " << w[i].name << " wall[" << i << "] zE NOT VALUE=" << w[i].g.zE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 
 		switch (w[i].iPlane) {
-		case XY:
+		case XY_PLANE:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.xS >= w[i].g.xE) {
 				//printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
-				std::cout << "wall["<<i<<"].xS="<< w[i].g.xS<<" >= wall["<<i<<"].xE="<< w[i].g.xE << std::endl;
+				std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].xS=" << w[i].g.xS << " >= wall[" << i << "].xE=" << w[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.xE;
 				w[i].g.xE = w[i].g.xS;
@@ -2129,7 +3555,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (w[i].g.yS >= w[i].g.yE) {
 				//printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
-				std::cout << "wall[" << i << "].yS=" << w[i].g.yS << " >= wall[" << i << "].yE=" << w[i].g.yE << std::endl;
+				std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].yS=" << w[i].g.yS << " >= wall[" << i << "].yE=" << w[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.yE;
 				w[i].g.yE = w[i].g.yS;
@@ -2138,17 +3564,17 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (fabs(w[i].g.zS - w[i].g.zE) > 1.0e-40) {
 				//printf("non union iso position on plane wall[%lld]: zS=%e zE=%e\n",i, w[i].g.zS, w[i].g.zE);
-				std::cout << "non union iso position on plane wall[" << i << "]: zS=" << w[i].g.zS << " zE=" << w[i].g.zE << std::endl;
+				std::cout << "non union iso position on plane   wall[" << i << "].name = " << w[i].name << " wall[" << i << "]: zS=" << w[i].g.zS << " zE=" << w[i].g.zE << std::endl;
 				system("pause");
 				w[i].g.zS = w[i].g.zE;
 				bOk = false;
 			}
 			break;
-		case XZ:
+		case XZ_PLANE:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.xS >= w[i].g.xE) {
 				//printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
-				std::cout << "wall["<<i<<"].xS="<< w[i].g.xS<<" >= wall["<<i<<"].xE="<< w[i].g.xE  << std::endl;
+				std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].xS=" << w[i].g.xS << " >= wall[" << i << "].xE=" << w[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.xE;
 				w[i].g.xE = w[i].g.xS;
@@ -2157,7 +3583,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (w[i].g.zS >= w[i].g.zE) {
 				//printf("wall[%lld].zS=%e >= wall[%lld].zE=%e\n", i, w[i].g.zS, i, w[i].g.zE);
-				std::cout << "wall[" << i << "].zS=" << w[i].g.zS << " >= wall[" << i << "].zE=" << w[i].g.zE << std::endl;
+				std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].zS=" << w[i].g.zS << " >= wall[" << i << "].zE=" << w[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.zE;
 				w[i].g.zE = w[i].g.zS;
@@ -2166,17 +3592,17 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (fabs(w[i].g.yS - w[i].g.yE) > 1.0e-40) {
 				//printf("non union iso position on plane wall[%lld]: yS=%e yE=%e\n", i, w[i].g.yS, w[i].g.yE);
-				std::cout << "non union iso position on plane wall[" << i << "]: yS=" << w[i].g.yS << " yE=" << w[i].g.yE << std::endl;
+				std::cout << "non union iso position on plane   wall[" << i << "].name = " << w[i].name << " wall[" << i << "]: yS=" << w[i].g.yS << " yE=" << w[i].g.yE << std::endl;
 				system("pause");
-				w[i].g.yS=w[i].g.yE;
+				w[i].g.yS = w[i].g.yE;
 				bOk = false;
 			}
 			break;
-		case YZ:
+		case YZ_PLANE:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.yS >= w[i].g.yE) {
 				//printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
-				std::cout << "wall[" << i << "].yS=" << w[i].g.yS << " >= wall[" << i << "].yE=" << w[i].g.yE << std::endl;
+				std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].yS=" << w[i].g.yS << " >= wall[" << i << "].yE=" << w[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.yE;
 				w[i].g.yE = w[i].g.yS;
@@ -2185,7 +3611,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (w[i].g.zS >= w[i].g.zE) {
 				//printf("wall[%lld].zS=%e >= wall[%lld].zE=%e\n", i, w[i].g.zS, i, w[i].g.zE);
-				std::cout << "wall[" << i << "].zS=" << w[i].g.zS << " >= wall[" << i << "].zE=" << w[i].g.zE << std::endl;
+				std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].zS=" << w[i].g.zS << " >= wall[" << i << "].zE=" << w[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.zE;
 				w[i].g.zE = w[i].g.zS;
@@ -2194,7 +3620,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (fabs(w[i].g.xS - w[i].g.xE) > 1.0e-40) {
 				//printf("non union iso position on plane wall[%lld]: xS=%e xE=%e\n", i, w[i].g.xS, w[i].g.xE);
-				std::cout << "non union iso position on plane wall[" << i << "]: xS=" << w[i].g.xS << " xE=" << w[i].g.xE << std::endl;
+				std::cout << "non union iso position on plane   wall[" << i << "].name = " << w[i].name << " wall[" << i << "]: xS=" << w[i].g.xS << " xE=" << w[i].g.xE << std::endl;
 				system("pause");
 				w[i].g.xS = w[i].g.xE;
 				bOk = false;
@@ -2204,7 +3630,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (w[i].g.xE > b[0].g.xE) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("wall[%lld].g.xE=%e > cabinet.xE=%e.\n", i, w[i].g.xE, b[0].g.xE);
-			std::cout << "wall["<<i<<"].g.xE="<< w[i].g.xE<<" > cabinet.xE="<< b[0].g.xE<<"." << std::endl;
+			std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].g.xE=" << w[i].g.xE << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
 			system("pause");
 			w[i].g.xE = b[0].g.xE; // исправление.
 			bOk = false;
@@ -2212,7 +3638,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (w[i].g.yE > b[0].g.yE) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("wall[%lld].g.yE=%e > cabinet.yE=%e.\n", i, w[i].g.yE, b[0].g.yE);
-			std::cout << "wall[" << i << "].g.yE=" << w[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
+			std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].g.yE=" << w[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 			system("pause");
 			w[i].g.yE = b[0].g.yE; // исправление.
 			bOk = false;
@@ -2220,7 +3646,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (w[i].g.zE > b[0].g.zE) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("wall[%lld].g.zE=%e > cabinet.zE=%e.\n", i, w[i].g.zE, b[0].g.zE);
-			std::cout << "wall[" << i << "].g.zE=" << w[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
+			std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].g.zE=" << w[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 			system("pause");
 			w[i].g.zE = b[0].g.zE; // исправление.
 			bOk = false;
@@ -2228,7 +3654,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (w[i].g.xS < b[0].g.xS) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("wall[%lld].g.xS=%e < cabinet.xS=%e.\n", i, w[i].g.xS, b[0].g.xS);
-			std::cout << "wall[" << i << "].g.xS=" << w[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
+			std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].g.xS=" << w[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 			system("pause");
 			w[i].g.xS = b[0].g.xS; // исправление.
 			bOk = false;
@@ -2236,7 +3662,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (w[i].g.yS < b[0].g.yS) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("wall[%lld].g.yS=%e < cabinet.yS=%e.\n", i, w[i].g.yS, b[0].g.yS);
-			std::cout << "wall[" << i << "].g.yS=" << w[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
+			std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].g.yS=" << w[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 			system("pause");
 			w[i].g.yS = b[0].g.yS; // исправление.
 			bOk = false;
@@ -2244,7 +3670,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (w[i].g.zS < b[0].g.zS) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("wall[%lld].g.zS=%e < cabinet.zS=%e.\n", i, w[i].g.zS, b[0].g.zS);
-			std::cout << "wall[" << i << "].g.zS=" << w[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
+			std::cout << "  wall[" << i << "].name = " << w[i].name << " wall[" << i << "].g.zS=" << w[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 			system("pause");
 			w[i].g.zS = b[0].g.zS; // исправление.
 			bOk = false;
@@ -2256,47 +3682,47 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		// Ошибка не число.
 		if (s[i].g.xS != s[i].g.xS) {
 			//printf("Error source[%lld] xS NOT VALUE=%e.\n", i, s[i].g.xS);
-			std::cout << "Error source[" << i << "] xS NOT VALUE=" << s[i].g.xS << "." << std::endl;
+			std::cout << "Error   source[" << i << "].name = " << s[i].name << " source[" << i << "] xS NOT VALUE=" << s[i].g.xS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.xE != s[i].g.xE) {
 			//printf("Error source[%lld] xE NOT VALUE=%e.\n", i, s[i].g.xE);
-			std::cout << "Error source[" << i << "] xE NOT VALUE=" << s[i].g.xE << "." << std::endl;
+			std::cout << "Error   source[" << i << "].name = " << s[i].name << " source[" << i << "] xE NOT VALUE=" << s[i].g.xE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.yS != s[i].g.yS) {
 			//printf("Error source[%lld] yS NOT VALUE=%e.\n", i, s[i].g.yS);
-			std::cout << "Error source[" << i << "] yS NOT VALUE=" << s[i].g.yS << "." << std::endl;
+			std::cout << "Error   source[" << i << "].name = " << s[i].name << " source[" << i << "] yS NOT VALUE=" << s[i].g.yS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.yE != s[i].g.yE) {
 			//printf("Error source[%lld] yE NOT VALUE=%e.\n", i, s[i].g.yE);
-			std::cout << "Error source[" << i << "] yE NOT VALUE=" << s[i].g.yE << "." << std::endl;
+			std::cout << "Error   source[" << i << "].name = " << s[i].name << " source[" << i << "] yE NOT VALUE=" << s[i].g.yE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.zS != s[i].g.zS) {
 			//printf("Error source[%lld] zS NOT VALUE=%e.\n", i, s[i].g.zS);
-			std::cout << "Error source[" << i << "] zS NOT VALUE=" << s[i].g.zS << "." << std::endl;
+			std::cout << "Error   source[" << i << "].name = " << s[i].name << " source[" << i << "] zS NOT VALUE=" << s[i].g.zS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.zE != s[i].g.zE) {
 			//printf("Error source[%lld] zE NOT VALUE=%e.\n", i, s[i].g.zE);
-			std::cout << "Error source[" << i << "] zE NOT VALUE=" << s[i].g.zE << "." << std::endl;
+			std::cout << "Error   source[" << i << "].name = " << s[i].name << " source[" << i << "] zE NOT VALUE=" << s[i].g.zE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 
 		switch (s[i].iPlane) {
-		case XY:
+		case XY_PLANE:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (s[i].g.xS >= s[i].g.xE) {
 				//printf("source[%lld].xS=%e >= source[%lld].xE=%e\n", i, s[i].g.xS, i, s[i].g.xE);
-				std::cout << "source[" << i << "].xS=" << s[i].g.xS << " >= source[" << i << "].xE=" << s[i].g.xE << std::endl;
+				std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].xS=" << s[i].g.xS << " >= source[" << i << "].xE=" << s[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.xE;
 				s[i].g.xE = s[i].g.xS;
@@ -2305,7 +3731,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (s[i].g.yS >= s[i].g.yE) {
 				//printf("source[%lld].yS=%e >= source[%lld].yE=%e\n", i, s[i].g.yS, i, s[i].g.yE);
-				std::cout << "source[" << i << "].yS=" << s[i].g.yS << " >= source[" << i << "].yE=" << s[i].g.yE << std::endl;
+				std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].yS=" << s[i].g.yS << " >= source[" << i << "].yE=" << s[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.yE;
 				s[i].g.yE = s[i].g.yS;
@@ -2314,17 +3740,17 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (fabs(s[i].g.zS - s[i].g.zE) > 1.0e-40) {
 				//printf("non union iso position on plane source[%lld]: zS=%e zE=%e\n", i, s[i].g.zS, s[i].g.zE);
-				std::cout << "non union iso position on plane source[" << i << "]: zS=" << s[i].g.zS << " zE=" << s[i].g.zE << std::endl;
+				std::cout << "non union iso position on plane   source[" << i << "].name = " << s[i].name << " source[" << i << "]: zS=" << s[i].g.zS << " zE=" << s[i].g.zE << std::endl;
 				system("pause");
 				s[i].g.zS = s[i].g.zE;
 				bOk = false;
 			}
 			break;
-		case XZ:
+		case XZ_PLANE:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (s[i].g.xS >= s[i].g.xE) {
 				//printf("source[%lld].xS=%e >= source[%lld].xE=%e\n", i, s[i].g.xS, i, s[i].g.xE);
-				std::cout << "source[" << i << "].xS=" << s[i].g.xS << " >= source[" << i << "].xE=" << s[i].g.xE << std::endl;
+				std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].xS=" << s[i].g.xS << " >= source[" << i << "].xE=" << s[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.xE;
 				s[i].g.xE = s[i].g.xS;
@@ -2333,7 +3759,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (s[i].g.zS >= s[i].g.zE) {
 				//printf("source[%lld].zS=%e >= source[%lld].zE=%e\n", i, s[i].g.zS, i, s[i].g.zE);
-				std::cout << "source[" << i << "].zS=" << s[i].g.zS << " >= source[" << i << "].zE=" << s[i].g.zE << std::endl;
+				std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].zS=" << s[i].g.zS << " >= source[" << i << "].zE=" << s[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.zE;
 				s[i].g.zE = s[i].g.zS;
@@ -2342,17 +3768,17 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (fabs(s[i].g.yS - s[i].g.yE) > 1.0e-40) {
 				//printf("non union iso position on plane source[%lld]: yS=%e yE=%e\n", i, s[i].g.yS, s[i].g.yE);
-				std::cout << "non union iso position on plane source[" << i << "]: yS=" << s[i].g.yS << " yE=" << s[i].g.yE << std::endl;
+				std::cout << "non union iso position on plane   source[" << i << "].name = " << s[i].name << " source[" << i << "]: yS=" << s[i].g.yS << " yE=" << s[i].g.yE << std::endl;
 				system("pause");
 				s[i].g.yS = s[i].g.yE;
 				bOk = false;
 			}
 			break;
-		case YZ:
+		case YZ_PLANE:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (s[i].g.yS >= s[i].g.yE) {
 				//printf("source[%lld].yS=%e >= source[%lld].yE=%e\n", i, s[i].g.yS, i, s[i].g.yE);
-				std::cout << "source[" << i << "].yS=" << s[i].g.yS << " >= source[" << i << "].yE=" << s[i].g.yE << std::endl;
+				std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].yS=" << s[i].g.yS << " >= source[" << i << "].yE=" << s[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.yE;
 				s[i].g.yE = s[i].g.yS;
@@ -2361,7 +3787,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (s[i].g.zS >= s[i].g.zE) {
 				//printf("source[%lld].zS=%e >= source[%lld].zE=%e\n", i, s[i].g.zS, i, s[i].g.zE);
-				std::cout << "source[" << i << "].zS=" << s[i].g.zS << " >= source[" << i << "].zE=" << s[i].g.zE << std::endl;
+				std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].zS=" << s[i].g.zS << " >= source[" << i << "].zE=" << s[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.zE;
 				s[i].g.zE = s[i].g.zS;
@@ -2370,7 +3796,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 			}
 			if (fabs(s[i].g.xS - s[i].g.xE) > 1.0e-40) {
 				//printf("non union iso position on plane source[%lld]: xS=%e xE=%e\n", i, s[i].g.xS, s[i].g.xE);
-				std::cout << "non union iso position on plane source[" << i << "]: xS=" << s[i].g.xS << " xE=" << s[i].g.xE << std::endl;
+				std::cout << "non union iso position on plane   source[" << i << "].name = " << s[i].name << " source[" << i << "]: xS=" << s[i].g.xS << " xE=" << s[i].g.xE << std::endl;
 				system("pause");
 				s[i].g.xS = s[i].g.xE;
 				bOk = false;
@@ -2380,7 +3806,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (s[i].g.xE > b[0].g.xE) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("source[%lld].g.xE=%e > cabinet.xE=%e.\n", i, s[i].g.xE, b[0].g.xE);
-			std::cout << "source[" << i << "].g.xE=" << s[i].g.xE << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
+			std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].g.xE=" << s[i].g.xE << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
 			system("pause");
 			s[i].g.xE = b[0].g.xE; // исправление.
 			bOk = false;
@@ -2388,7 +3814,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (s[i].g.yE > b[0].g.yE) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("source[%lld].g.yE=%e > cabinet.yE=%e.\n", i, s[i].g.yE, b[0].g.yE);
-			std::cout << "source[" << i << "].g.yE=" << s[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
+			std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].g.yE=" << s[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 			system("pause");
 			s[i].g.yE = b[0].g.yE; // исправление.
 			bOk = false;
@@ -2396,7 +3822,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (s[i].g.zE > b[0].g.zE) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("source[%lld].g.zE=%e > cabinet.zE=%e.\n", i, s[i].g.zE, b[0].g.zE);
-			std::cout << "source[" << i << "].g.zE=" << s[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
+			std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].g.zE=" << s[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 			system("pause");
 			s[i].g.zE = b[0].g.zE; // исправление.
 			bOk = false;
@@ -2404,7 +3830,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (s[i].g.xS < b[0].g.xS) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("source[%lld].g.xS=%e < cabinet.xS=%e.\n", i, s[i].g.xS, b[0].g.xS);
-			std::cout << "source[" << i << "].g.xS=" << s[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
+			std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].g.xS=" << s[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 			system("pause");
 			s[i].g.xS = b[0].g.xS; // исправление.
 			bOk = false;
@@ -2412,7 +3838,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (s[i].g.yS < b[0].g.yS) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("source[%lld].g.yS=%e < cabinet.yS=%e.\n", i, s[i].g.yS, b[0].g.yS);
-			std::cout << "source[" << i << "].g.yS=" << s[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
+			std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].g.yS=" << s[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 			system("pause");
 			s[i].g.yS = b[0].g.yS; // исправление.
 			bOk = false;
@@ -2420,12 +3846,168 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (s[i].g.zS < b[0].g.zS) {
 			printf("ERROR. Your model is incorrect.\n");
 			//printf("source[%lld].g.zS=%e < cabinet.zS=%e.\n", i, s[i].g.zS, b[0].g.zS);
-			std::cout << "source[" << i << "].g.zS=" << s[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
+			std::cout << "  source[" << i << "].name = " << s[i].name << " source[" << i << "].g.zS=" << s[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 			system("pause");
 			s[i].g.zS = b[0].g.zS; // исправление.
 			bOk = false;
 		}
 	}
+
+
+	if ((b_on_adaptive_local_refinement_mesh) && (lu > 0)) {
+		// Не допустимо совместное использование
+		// Адаптивных локально измельченных сеток и
+		// асемблесов 24.07.2020.
+		std::cout << "ERROR!!! ((b_on_adaptive_local_refinement_mesh) && (lu > 0))==true." << std::endl;
+		std::cout << "dignostics: not compatible with user settings." << std::endl;
+		system("PAUSE");
+		exit(1);
+	}
+
+	if ((lu==0)||((lu > 0) && ((steady_or_unsteady_global_determinant == MESHER_ONLY) ||
+		((steady_or_unsteady_global_determinant == STEADY_TEMPERATURE) && (eqin.itemper == 2))||
+		(steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL)||
+		(steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))))
+	{
+		// Всё впорядке настройки совместимы.
+		// Асемблес может существовать при построении расчётной сетки,
+		// а также может существовать для температурного солвера на основе метода конечных элементов МКЭ.
+		// Либо асемблес может быть неактивен.
+	}
+	else {
+		std::wcout << "not if ((lu > 0) && ((steady_or_unsteady_global_determinant == MESHER_ONLY) ||" << std::endl;
+		std::wcout << "	((steady_or_unsteady_global_determinant == STEADY_TEMPERATURE) && (eqin.itemper == 2))))" << std::endl;
+		std::cout << "dignostics: not compatible with user settings." << std::endl;
+		system("PAUSE");
+		exit(1);
+	}
+
+	for (integer i = 0; i < lu; i++) {
+		if (u[i].xS != u[i].xS) {
+			//printf("Error my_union[%lld] xS NOT VALUE=%e.\n", i, u[i].xS);
+			std::cout << "Error:  my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "] xS NOT VALUE=" << u[i].xS << "." << std::endl;
+			system("pause");
+			bOk = false;
+		}
+		if (u[i].xE != u[i].xE) {
+			//printf("Error my_union[%lld] xE NOT VALUE=%e.\n", i, u[i].xE);
+			std::cout << "Error:  my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "] xE NOT VALUE=" << u[i].xE << "." << std::endl;
+			system("pause");
+			bOk = false;
+		}
+		if (u[i].yS != u[i].yS) {
+			//printf("Error my_union[%lld] yS NOT VALUE=%e.\n", i, u[i].yS);
+			std::cout << "Error:  my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "] yS NOT VALUE=" << u[i].yS << "." << std::endl;
+			system("pause");
+			bOk = false;
+		}
+		if (u[i].yE != u[i].yE) {
+			//printf("Error my_union[%lld] yE NOT VALUE=%e.\n", i, u[i].yE);
+			std::cout << "Error:  my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "] yE NOT VALUE=" << u[i].yE << "." << std::endl;
+			system("pause");
+			bOk = false;
+		}
+		if (u[i].zS != u[i].zS) {
+			//printf("Error my_union[%lld] zS NOT VALUE=%e.\n", i, u[i].zS);
+			std::cout << "Error:  my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "] zS NOT VALUE=" << u[i].zS << "." << std::endl;
+			system("pause");
+			bOk = false;
+		}
+		if (u[i].zE != u[i].zE) {
+			//printf("Error my_union[%lld] zE NOT VALUE=%e.\n", i, u[i].zE);
+			std::cout << "Error:  my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "] zE NOT VALUE=" << u[i].zE << "." << std::endl;
+			system("pause");
+			bOk = false;
+		}
+
+		// Ошибка порядка следования Start должен быть строго меньше End.
+		if (u[i].xS >= u[i].xE) {
+			//printf("my_union[%lld].xS=%e >= my_union[%lld].xE=%e\n", i, u[i].xS, i, u[i].xE);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "].xS=" << u[i].xS << " >= my_union[" << i << "].xE=" << u[i].xE << std::endl;
+			system("pause");
+			doublereal temp = u[i].xE;
+			u[i].xE = u[i].xS;
+			u[i].xS = temp;
+			bOk = false;
+		}
+
+		if (u[i].yS >= u[i].yE) {
+			//printf("my_union[%lld].yS=%e >= my_union[%lld].yE=%e\n", i, u[i].yS, i, u[i].yE);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "].yS=" << u[i].yS << " >= my_union[" << i << "].yE=" << u[i].yE << std::endl;
+			system("pause");
+			doublereal temp = u[i].yE;
+			u[i].yE = u[i].yS;
+			u[i].yS = temp;
+			bOk = false;
+		}
+
+		if (u[i].zS >= u[i].zE) {
+			//printf("my_union[%lld].zS=%e >= my_union[%lld].zE=%e\n", i, u[i].zS, i, u[i].zE);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*u[i].name*/ << " my_union[" << i << "].zS=" << u[i].zS << " >= my_union[" << i << "].zE=" << u[i].zE << std::endl;
+			system("pause");
+			doublereal temp = u[i].zE;
+			u[i].zE = u[i].zS;
+			u[i].zS = temp;
+			bOk = false;
+		}
+
+		// Асемблес не вылазит за границы кабинета
+		if (u[i].xE > b[0].g.xE) {
+			printf("ERROR. Your model is incorrect.\n");
+			//printf("my_union[%lld].xE=%e > cabinet.xE=%e.\n", i, u[i].xE, b[0].g.xE);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*b[i].name*/ << " my_union[" << i << "].xE=" << u[i].xE << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
+			system("pause");
+			u[i].xE = b[0].g.xE; // исправление.
+			bOk = false;
+		}
+
+		if (u[i].yE > b[0].g.yE) {
+			printf("ERROR. Your model is incorrect.\n");
+			//printf("my_union[%lld].yE=%e > cabinet.yE=%e.\n", i, u[i].yE, b[0].g.yE);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*b[i].name*/ << " my_union[" << i << "].yE=" << u[i].yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
+			system("pause");
+			u[i].yE = b[0].g.yE; // исправление.
+			bOk = false;
+		}
+
+		if (u[i].zE > b[0].g.zE) {
+			printf("ERROR. Your model is incorrect.\n");
+			//printf("my_union[%lld].zE=%e > cabinet.zE=%e.\n", i, u[i].zE, b[0].g.zE);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*b[i].name*/ << " my_union[" << i << "].zE=" << u[i].zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
+			system("pause");
+			u[i].zE = b[0].g.zE; // исправление.
+			bOk = false;
+		}
+
+		if (u[i].xS < b[0].g.xS) {
+			printf("ERROR. Your model is incorrect.\n");
+			//printf("my_union[%lld].xS=%e < cabinet.xS=%e.\n", i, u[i].xS, b[0].g.xS);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*b[i].name*/ << " my_union[" << i << "].xS=" << u[i].xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
+			system("pause");
+			u[i].xS = b[0].g.xS; // исправление.
+			bOk = false;
+		}
+
+		if (u[i].yS < b[0].g.yS) {
+			printf("ERROR. Your model is incorrect.\n");
+			//printf("my_union[%lld].yS=%e < cabinet.yS=%e.\n", i, u[i].yS, b[0].g.yS);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*b[i].name*/ << " my_union[" << i << "].yS=" << u[i].yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
+			system("pause");
+			u[i].yS = b[0].g.yS; // исправление.
+			bOk = false;
+		}
+
+		if (u[i].zS < b[0].g.zS) {
+			printf("ERROR. Your model is incorrect.\n");
+			//printf("my_union[%lld].zS=%e < cabinet.zS=%e.\n", i, u[i].zS, b[0].g.zS);
+			std::cout << "my_union[" << i << "].name = " << "union" << i + 1 /*b[i].name*/ << " my_union[" << i << "].zS=" << u[i].zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
+			system("pause");
+			u[i].zS = b[0].g.zS; // исправление.
+			bOk = false;
+		}
+
+	}
+
 
 	if (bOk) {
 		printf("GEOMETRY CHECKED. GEOMETRY IS CORRECT.\n");
@@ -2436,505 +4018,6 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		exit(1);
 	}
 } // body_check()
-
-
-// Параметры которые используются для 
-// настройки модели Смагоринского.
-typedef struct TSMAGORINSKYINFO {
-	doublereal Cs=0.151; // константа Смагоринского.
-	bool bDynamic_Stress=false; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
-	bool bLimiters_Cs=false; // ограничивать ли постоянную Смагоринского ?
-	doublereal minCs=-1.0e30, maxCs=1.0e30; // минимальное и максимальное значения константы Смагоринского.
-	// 2-SIMPSON
-	integer itypeFiltrGermano=2; // тип фильтра который используется для осреднения в модели Германо.
-	// 10 micron
-	doublereal roughness=10.0; // значение шероховатости на твёрдой неподвижной стенке.
-						  // показатель степени для учёта шероховатости на стенке.
-	integer ipowerroughness=1; // может принимать значения только 1 или 2.
-	bool bfdelta=true; // использовать ли поправку дающую улучшение на неравномерной сетке ?
-	bool bSmagorinsky_Lilly=false; // использовать ли модель Смагоринского-Лиллу ?
-	bool bsurface_roughness=false; // использовать ли поправку учитывающую шероховатость стенки ?
-	bool bSelectiveSmagorinsky=false; // использовать ли Selective Smagorinsky Model ?
-	// 2-SIMPSON
-	integer itypeFILTRSelectiveSmagorinsky=2; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
-	doublereal SSangle=15.0; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
-	bool bRichardsonCorrect=false; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
-	doublereal rRichardsonMultiplyer=1.0; // коэффициент в поправочной формуле связанной с кривизной линий тока.
-} SMAGORINSKYINFO;
-
-// Для полилинейного метода:
-typedef struct TNODELR {
-	integer id=-1; // идентификатор внутреннего узла
-	struct TNODELR *next = nullptr; // ссылка на следующий узел или nullptr
-} NODELR;
-
-typedef struct TNODELR_BASE {
-	integer ilineid=-1; // идентификатор сеточной линии
-	integer iN=-1; // количество узловых точек включая граничные
-	struct TNODELR *root = nullptr; // корень новой сеточной линии
-	struct TNODELR_BASE *next = nullptr; // указатель на следующую сеточную линию или nullptr
-
-	// Особый случай:
-	// обработка плоского бесконечно 
-	// тонкого источника тепла.
-	// Переменные равны истине если связь с источником 
-	// прервана (в случае если воздух граничит с плоским источником).
-	bool bNeimanStart=false;
-	bool bNeimanEnd=false;
-} NODELR_BASE;
-
-
-typedef struct TBOUND {
-	// граничный узел и узлы вглубь расчётной области
-	integer iB=-1, iI=-1, iII=-1;
-	integer iI1=-1, iI2=-1;
-	integer Norm=-10000; // внутренняя нормаль
-				  // marker boundary:
-				  /*
-				  * О маркере границы:
-				  * if (MCB < ls) значит источник с номером MCB;
-				  * else if (MCB < ls+lw) значит стенка c номером MCB-ls;
-				  * else значение по умолчанию. MCB==ls+lw.
-				  */
-	integer MCB=-1; // marker boundary
-
-				 // соседи на границе области,
-				 // их позиции нужны в матрице:
-				 // На этих позициях будут стоять нули.
-				 // Если позиция отсутствует, то стоит -1.
-				 // Всего возможно не более 4 позиций, но 
-				 // здесь сделано больше из-за 
-				 // алгоритмического удобства.
-				 // Позиции соответствуют сторонам света.
-	integer iW[6] = {-1, -1, -1, -1, -1, -1 };
-
-	// Для внутреннего источника указывает
-	// на соседний внутренний узел с обратной стороны
-	// источника противоположной текущей стороне, или на -1
-	// если источник на границе hollow блока.
-	// TODO 6 мая 2016.
-
-	// для теплообмена излучением хранит emissivity.
-	doublereal emissivity=0.8; // излучательная способность границы.
-
-						   // Площадь грани.
-						   // Это новое поле введённое лишь 20 сентября 2016.
-	doublereal dS=0.0;
-
-	// координаты центра грани.
-	TOCHKA p_c;
-
-} BOUND;
-
-
-// информация о жидкой зоне
-typedef struct TFLOWINFO {
-	// опорная точка
-	doublereal xc=1.0e30, yc=1.0e30, zc=1.0e30;
-	// нужно ли рассчитывать поле течения
-	integer iflow=0;
-	// режим течения: 0 - ламинарный, 1 - турбулентный
-	integer iflowregime=0;
-	// модель турбулентности
-	// 0 - Zero Equation Turbulence Model (RANS).
-	// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
-	// 2 - RNG (LES).
-	// 3 - Spalart-Allmares (RANS). 19.04.2019
-	// 4 - K - Omega SST (RANS). 06.10.2019
-	// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
-	integer iturbmodel=0;
-	// параметры модели Смагоринского:
-	doublereal Cs=0.151; // постоянная Смагоринского.
-	bool bDynamic_Stress = false; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
-	bool bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского: ограничение на минимальное и максимальное значения.
-	doublereal rminCs=-1.0e20, rmaxCs=1.0e23; // минимальное и максимальное ограничение для константы Смагоринского.
-	// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
-	integer itypeFiltrGermano=2; // SIMPSON filter	
-	// поправка на неравномерной сетке,
-	// модель Смагоринского-Лиллу,
-	// учёт шероховатости стенки.
-	integer bfdelta=0, bSmagorinskyLilly=0, bsurface_roughness=0;
-	doublereal roughness=10.0e-6; // шероховатость стенки 10micron.
-	integer ipowerroughness=2; // показатель степени в модели учёта шероховатости стенки.
-	doublereal rRi_mult=1.0; // корректирующий множитель подправляющий турбулентное число Ричардсона.
-	doublereal rSelectiveAngle = 15.0; // пороговое значение угла в модели Selective Smagorinsky.
-	integer itypeSelectiveSmagorinsky_filtr = 2; // SIMPSON тип фильтра в модели Смагоринского.
-	// поправка на течения с кривизной линий тока,
-	// избирательная модель Смагоринского.
-	bool bSwirlAmendment = false, bSelectiveSmagorinsky=false;
-
-	// Spalart-Allmares (RANS) [1992]. 19.04.2019
-	// Эмпирические константы, определяющие SA модель турбулентности.
-	doublereal sigma_nu = 2.0 / 3.0;
-	doublereal c_b1 = 0.1355;
-	doublereal c_b2 = 0.622;
-	doublereal karman = 0.41;
-	doublereal c_w1 = (c_b1/(karman*karman))+((1.0+c_b2)/sigma_nu);
-	doublereal c_w2 = 0.3;
-	doublereal c_w3 = 2.0;
-	doublereal c_nu1 = 7.1;
-	doublereal C_t3 = 1.2;
-	doublereal C_t4 = 0.5;
-
-	// SST Ментер (RANS) [1993]. 03.10.2019
-	// А.В. Гарбарук Моделирование турбулентности в расчётах сложных течений. Политех 2012.
-	// Эмпирические константы, определяющие SST Ментера модель турбулентности.
-	doublereal sigma_k1 = 0.85;
-	doublereal sigma_omega1 = 0.5;
-	doublereal beta1 = 0.075;
-	doublereal sigma_k2 = 1.0;
-	doublereal sigma_omega2 = 0.856;
-	doublereal beta2 = 0.0828;
-	doublereal beta_zvezda = 0.09;
-	doublereal menter_a1 = 0.31;
-	doublereal alpha1 = 0.555;
-	doublereal alpha2 = 0.44;
-
-	// Стандартная k-epsilon модель не работает вблизи стенок.
-	// Здесь используется двухслойная модель на основе стандартной
-	// k-epsilon модели которая работает также и в пристеночной области.
-	// А.В. Кузьминов, В.Н. Лапин, С.Г. Черный
-	// Метод расчёта турбулентных течений 
-	// несжимаемой жидкости на основе двухслойной (k-epsilon)-модели.
-	// Новосибирск, 2001.
-	// Граница между вязким подслоем 
-	// и развитым турбулентным течением
-	// характеризуется турбулентным числом Рейнольдса:
-	// Standart k-epsilon (RANS) [2001] 23.10.2019
-	doublereal Rey_zvezda = 100.0;//100.0;
-	doublereal A_switch = 5.0; // A_switch == 1.0 --- 10.0;
-	doublereal C_mu_std_ke = 0.09;
-	doublereal kar_std_ke = 0.42;
-	doublereal Cl_std_ke = kar_std_ke*pow(C_mu_std_ke,-3.0/4.0);
-	doublereal Aepsilon_std_ke = 2.0*Cl_std_ke;
-	doublereal CD_std_ke = 1.0;
-	doublereal Anu_std_ke = 70.0;
-	doublereal sigma_epsilon_std_ke = 1.3;
-	doublereal C_epsilon1_std_ke = 1.44;
-	doublereal C_epsilon2_std_ke = 1.92;
-
-	// функция переключатель между пристеночной областью и 
-	// областью развитого турбулентного потока. 
-	doublereal lambda_switch(doublereal Re_y) {
-		/*if (Re_y > 10.0) {
-			printf("Re=%e\n", Re_y);
-			getchar();
-		}*/
-		return 0.5*(1.0+tanh((Re_y - Rey_zvezda)/ A_switch));
-	}
-
-} FLOWINFO;
-
-// вся информация о полном наборе решаемых уравнений
-typedef struct TEQUATIONINFO {
-	// нужно ли решать уравнение теплопроводности
-	// 0 - ненужно, 1 - нужно методом контрольного объема, 2  - методом конечных элементов.
-	integer itemper=1;
-	// максимальное количество изолированных по жидкости
-	// жидких зон (FLUID interior)
-	integer imaxflD=0;
-	// база данных с информацией о жидких зонах.
-	FLOWINFO* fluidinfo=nullptr;
-} EQUATIONINFO;
-
-EQUATIONINFO eqin; // информация о наборе решаемых уравнений
-
-struct Tdatabase {
-	doublereal *x = nullptr, *y = nullptr, *z = nullptr; // координаты узлов.
-	integer maxelm=0;
-	integer** nvtxcell = nullptr;
-	integer ncell=0;
-	// связь теплопередачи с гидродинамикой.
-	integer **ptr = nullptr;// для тестирования алгебраического многосеточного метода
-};
-
-// одна строка матрицы СЛАУ в 3D варианте
-// для внутреннего КО.
-typedef struct Tequation3D {
-	doublereal ap=0.0, ae=0.0, an=0.0, aw=0.0, as=0.0, at=0.0, ab=0.0, b=0.0;
-	integer iP = -1, iE = -1, iN = -1, iT = -1, iW = -1, iS = -1, iB = -1;
-	// Расширение структуры данных под АЛИС сетку.
-	// На АЛИС сетке шаблон имеет переменное число связей и 
-	// их число колеблется от семиточечного шаблона до
-	// 25 точечного максимально.
-	// На АЛИС сетке даже чисто диффузионная матрица не имеет диагонального преобладания и 
-	// для решения СЛАУ с такой матрицей нужны специальные "робастые" методы типа BiCGStab + ILU2.
-	// Признак существования дополнительных связей:
-	// true если коэффициент существует.
-	bool bE2=false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
-	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
-	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
-	// Значение матричного коэффициента:
-	doublereal ae2 = 0.0, an2 = 0.0, aw2 = 0.0, as2 = 0.0, at2 = 0.0, ab2 = 0.0;
-	doublereal ae3 = 0.0, an3 = 0.0, aw3 = 0.0, as3 = 0.0, at3 = 0.0, ab3 = 0.0;
-	doublereal ae4 = 0.0, an4 = 0.0, aw4 = 0.0, as4 = 0.0, at4 = 0.0, ab4 = 0.0;
-	// индексация для дополнительных связей.
-	integer iE2=-1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1;
-	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1;
-	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1;
-	
-} equation3D;
-
-// одна строка матрицы СЛАУ в 3D варианте
-// для граничного КО.
-typedef struct Tequation3D_bon {
-	doublereal aw = 0.0, ai = 0.0, b = 0.0; // wall, internal, правая часть
-	integer iW = -1, iI = -1;
-
-	// соседи на границе области,
-	// их позиции нужны в матрице:
-	// На этих позициях будут стоять нули.
-	integer iW1 = -1, iW2 = -1, iW3 = -1, iW4 = -1;
-} equation3D_bon;
-
-typedef struct TTEMPER {
-	// флаг отвечающий за освобождение 
-	// памяти первого уровня. Пояснение:
-	// После сборки матрицы СЛАУ можно 
-	// уничтожить почти все структуры необходимые
-	// для сборки матрицы. Это можно сделать 
-	// только в том случае если матрица собирается
-	// лишь единожды, как например в случае статики
-	// для уравнения чистой теплопроводности.
-	// true если освобождаем.
-	bool free_temper_level1=true;
-	// флаг отвечающий за освобождение памяти
-	// второго уровня. Когда матрица СЛАУ перезаписывается
-	// в формат SIMPLESPARSE. Исходную матрицу в формате 
-	// equation3D можно убрать из оперативной памяти компьютера.
-	bool free_temper_level2=true;
-
-	integer maxnod=0; // максимальный номер узла (размерность массива)
-					// pa[0..maxnod-1];
-	TOCHKA* pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
-
-	integer maxelm=0; // число ненулевых контрольных объёмов
-					// nvtx[0..7][0..maxelm-1]
-	integer **nvtx = nullptr; // список узлов для каждого элемента (ненулевого контрольного объёма)
-						   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
-						   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
-						   // AliceMesh
-	ALICE_PARTITION **neighbors_for_the_internal_node = nullptr;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
-	integer maxbound=0; // число граничных узлов
-	integer maxp=0; // maxp == maxelm + maxbound;
-				  // border_neighbor[0..maxbound-1];
-	BOUND* border_neighbor = nullptr; // граничные узлы расчётной области 
-						  // для всех граничных КО. Равно истине если имеем дело с
-						  // границей строго внутри расчётной области причём на ней 
-						  // расположен именно плоский бесконечно тонкий источник и по 
-						  // одну его сторону расположена жидкость а по другую твёрдое тело.
-	bool* binternalsource = nullptr;
-
-	// какому блоку принадлежит внутренний КО
-	integer* whot_is_block = nullptr;
-
-	integer **ptr = nullptr; // Связь с гидродинамикой.
-
-						  // для графической визуализации
-	integer ncell=0; // количество связей для контрольных объёмов.
-	integer **nvtxcell = nullptr; // связи для контрольных объёмов.
-
-							   // Для АЛИС сетки хранит номер уровня ячейки, это 
-							   // потребуется при сборке матрицы.
-							   // ilevel_alice[0..maxelm-1].
-	integer *ilevel_alice = nullptr;
-
-
-	doublereal *potent = nullptr; // массив узловых потенциалов (искомых функций)
-	doublereal **total_deformation = nullptr; // Полная деформация.
-
-										   // Свойства материалов разделяются для  
-										   // внутренних и для граничных КО.
-										   // сначала prop[0..2][0..maxelm-1]
-	doublereal **prop = nullptr; // свойства материалов для внутренних КО.
-							  // сначала prop_b[0..2][0..maxbound-1]
-	doublereal **prop_b = nullptr; // свойства для граничных КО.
-
-
-	doublereal *Sc = nullptr; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
-	integer *ipower_time_depend = nullptr; // закон зависимости мощности тепловыделения от времени.
-
-	doublereal alpha=1.0; // параметр релаксации для температуры
-	equation3D *slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО
-	equation3D_bon *slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
-
-									 // для полилинейного метода:
-									 // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
-									 // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
-									 // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
-									 // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab.
-	NODELR_BASE *rootWE = nullptr;
-	NODELR_BASE *rootSN = nullptr;
-	NODELR_BASE *rootBT = nullptr;
-
-	integer iWE=-1000, iSN = -1000, iBT = -1000; // число сеточных линий вдоль каждого из направлений.
-
-						   // Для полилинейного метода LR1:
-						   // память будет выделяться и 
-						   // уничтожаться один раз а не 
-						   // каждый раз в цикле. 
-						   // Это должно ускорить вычисления.
-						   // Т.к. вычисления требуется распараллелить то память будет выделяться
-						   // и уничтожаться многократно для каждой прогонки - одно выделение и одно
-						   // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
-						   // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
-						   // со временем вычисления.
-
-						   // выходная невязка для температуры
-						   // согласованная с точностью аппроксимации уравнения.
-	doublereal resLR1sk=0.0; // O(h!3)
-
-						 // Копия сеточных размеров для восстановления данных.
-	integer inx_copy = 0, iny_copy = 0, inz_copy=0;
-	doublereal operatingtemperature_copy=0.0;
-
-	doublereal *xpos_copy = nullptr, *ypos_copy = nullptr, *zpos_copy = nullptr;
-
-	// 9 августа 2015.
-	// Для распараллеливания 
-	integer *ifrontregulationgl = nullptr;
-	integer *ibackregulationgl = nullptr; // обратное преобразование.
-
-	doublereal operatingtemperature = 20.0;
-
-	Tdatabase database;
-
-}  TEMPER;
-
-typedef struct TFLOW {
-	integer maxnod=0; // максимальный номер узла (размерность массива)
-	integer maxelm = 0; // число внутренних контрольных объёмов
-					// nvtx[0..7][0..maxelm-1]
-	integer **nvtx = nullptr; // список узлов для каждого внутреннего элемента (контрольного объёма)
-
-						   // pa[0..maxnod-1]
-	TOCHKA* pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
-
-					   // neighbors_for_the_internal_node[0..11][0..maxelm-1]
-					   //integer **neighbors_for_the_internal_node; // соседние контрольные объёмы для каждого внутреннего КО
-					   // Для ALICEMESH сетки.
-	ALICE_PARTITION **neighbors_for_the_internal_node = nullptr;// соседние контрольные объёмы для каждого внутреннего КО
-	integer maxbound = 0; // число граничных КО
-	integer maxp = 0; // число уравнений
-				  // border_neighbor[0..maxbound-1];
-	BOUND* border_neighbor = nullptr; // граничные узлы расчётной области
-
-	integer *ptr = nullptr; // Связь с теплопроводностью
-
-
-						 // какому блоку принадлежит внутренний КО
-	integer* whot_is_block = nullptr;
-
-	// potent[iVar][0..maxp-1]
-	doublereal **potent = nullptr; // массив узловых потенциалов (искомых функций)
-								// prop[0..2][0..maxelm-1]
-	doublereal **prop = nullptr; // свойства материалов
-							  // prop_b[0..2][0..maxbound-1]
-	doublereal **prop_b = nullptr; // свойства материалов для граничных КО
-
-	doublereal *alpha = nullptr; // параметры нижней релаксации
-	equation3D **slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО.
-	equation3D_bon **slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
-									  // для реализации монотонизатора Рхи-Чоу 1983 требуется хранить диагональные коэффициенты.
-	doublereal **diag_coef = nullptr;
-	doublereal OpTemp=0.0; // Operating Temperature
-
-
-	bool bactive=true; // нужно-ли рассчитывать поле течения
-	bool bPressureFix = false; // нужно ли фиксировать давление в одной точке
-	bool bLR1free=false; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
-
-				   // для полилинейного метода:
-				   // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
-				   // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
-				   // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
-				   // может быть использован как предобуславливатель в алгоритме Хенка ван дер Ворста - BiCGStab 1992.
-
-	integer iWE=-1000, iSN = -1000, iBT = -1000; // число сеточных линий вдоль каждого из направлений.
-	integer** iN = nullptr; //iN[3][max3(iWE,iSN,iBT)];
-	integer*** id = nullptr; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
-
-						  // Для полилинейного метода LR1:
-						  // память будет выделяться и 
-						  // уничтожаться один раз а не 
-						  // каждый раз в цикле. 
-						  // Это должно ускорить вычисления.
-						  // Т.к. вычисления требуется распараллелить то память будет выделяться
-						  // и уничтожаться многократно для каждой прогонки - одно выделение и одно
-						  // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
-						  // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
-						  // со временем вычисления.
-
-						  // В реальности большинство течений Турбулентны,
-						  // здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
-						  // режим течения для данной зоны FLUID
-	integer iflowregime= 0; // default LAMINAR
-						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
-	doublereal* rdistWall = nullptr; // расстояние до ближайшей твёрдой стенки.
-								  // Толщина пограничного слоя в формуле Эскудиера
-	doublereal rdistWallmax=0.0;
-	// S инвариант тензора скоростей-деформаций
-	doublereal* SInvariantStrainRateTensor = nullptr; // [0..maxelm+maxbound-1]; // инициализируется нулём.
-
-												   // массовый поток через грани КО:
-	doublereal** mf = nullptr;
-
-	SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
-
-							  // выходная невязка для поправки давления
-							  // согласованная с точностью аппроксимации уравнения.
-	doublereal resICCG=0.0; // O(h!2)
-	doublereal resLR1sk=0.0; // O(h!3)
-
-						 // Для правильной работы mass balance для естественно конвективных задач
-						 // нужен идентификатор разных по связности гидродинамических областей для
-						 // внутренних КО.
-	integer *icolor_different_fluid_domain = nullptr; // Разные гидродинамические подобласти имеют разные цвета.
-
-												   // 9 августа 2015.
-												   // Для распараллеливания 
-	integer *ifrontregulationgl = nullptr;
-	integer *ibackregulationgl = nullptr; // обратное преобразование.
-
-} FLOW;
-
-
-
-
-// Объединение
-// Для блочно структурированной расчётной сетки.
-// Начало разработки 25.04.2018.
-typedef struct TUNION {
-	// id передаётся из интерфейса.
-	integer id=-1; // Уникальный номер объединения.
-
-				// Из кабинета юнион видится как Hollow блок
-				// в виде прямой прямоугольной призмы.
-				// размеры передаются из интерфейса.
-	doublereal xS=0.0, xE=0.0, yS=0.0, yE=0.0, zS=0.0, zE=0.0;
-
-	// Внутренняя сетка union.
-	// Union является кабинетом для своих внутренних блоков.
-	// для внутреннего пользования.
-	doublereal *xpos = nullptr, *ypos = nullptr, *zpos = nullptr;
-	doublereal *xposadd = nullptr, *yposadd = nullptr, *zposadd = nullptr;
-
-	// Для внутренней сетки (размерности).
-	// Передаётся из интерфейса.
-	integer inx=-1, iny=-1, inz=-1;
-	// для внутреннего пользования.
-	integer inxadd = -1, inyadd = -1, inzadd = -1;
-
-	//  Тип сеточного генератора
-	// передаётся из интерфейса.
-	integer iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
-
-	// Локальные объявления.
-	TEMPER t;
-	integer flow_interior=-1; // Суммарное число FLUID зон
-	FLOW* f = nullptr;
-} UNION;
-
 
 
 // считывание параметров из 
@@ -2993,8 +4076,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			doublereal dbuf; // для упорядочивания в порядке возрастания
 
 			fscanf(fp, "%d", &din);
-			ionly_solid_visible=din;
-			printf("ionly_solid_visible =%d\n", ionly_solid_visible);
+			switch (din) {
+			case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
+			default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			}
+			//ionly_solid_visible=din;
+			std::cout<<"ionly_solid_visible ="<< ionly_solid_visible<<std::endl;
 			fscanf(fp, "%f", &fin);
 			scale = fin;
 			fscanf(fp, "%d", &din);
@@ -3050,7 +4138,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// одной из осей декартовой прямоугольной системы координат:
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			fscanf(fp, "%d", &din);
-			idirectional_for_XY_Plot = din;
+			switch (din) {
+			case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
+			case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
+			case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
+			default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+			}
+			//idirectional_for_XY_Plot = din;
 
 			fscanf(fp, "%f", &fin);
 			etalon_max_size_ratio = fin; // подробность расчётной сетки.
@@ -3076,7 +4170,15 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
+			switch (din) {
+			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
+			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
+			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
+			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			}
+			//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf(fp, "%d", &din);
 			if (din == 1) {
@@ -3137,12 +4239,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// Выбор сеточного генератора.
 			fscanf(fp, "%d", &din);
-			iswitchMeshGenerator = din;
+			switch (din) {
+				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+			}
+			//iswitchMeshGenerator = din;
 
 
 			fscanf(fp, "%d", &din);
-			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| (din == 7) || (din == 8) || (din == 9)) {
+			steady_or_unsteady_global_determinant = MESHER_ONLY;
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| 
+				(din == 7) || (din == 8) || (din == 9)||(din == 10)||(din == 11)) {
 				// 0 - thermal only steady state calculation,
 				// 1 - thermal only unsteady calculation,
 				// 2 - mesh generator only.
@@ -3152,7 +4261,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 7 - Unsteady thermal solver #2
 				// 8 - Visualisation only
 				// 9 - cfd unsteady fluid dynamic.
-				steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
+				// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
+				// 11 - UNSTEADY NETWORK_T Нестационарный графовый метод решения уравнения теплопроводности.
+				switch(din) {
+				case 0: steady_or_unsteady_global_determinant =STEADY_TEMPERATURE; break;
+				case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
+				case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
+				case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
+				case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
+				case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
+				case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
+				case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
+				case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
+				default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				}
+				//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady - 1 calculation.
 			}
 			else {
 				printf("error input parametr steady or unsteady calculation\n");
@@ -3245,7 +4370,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// Newton-Richman condition.
 			fscanf(fp, "%d", &din);
-			adiabatic_vs_heat_transfer_coeff = din;  // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
+			switch (din) {
+			case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+            case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
+	        case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
+		    case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
+			default :adiabatic_vs_heat_transfer_coeff =ADIABATIC_WALL_BC; break;
+			}
+			//adiabatic_vs_heat_transfer_coeff = din;  // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 			fscanf(fp, "%f", &fin);
 			film_coefficient = fin;
 			// AЛИС сетка
@@ -3259,7 +4391,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				b_on_adaptive_local_refinement_mesh = true;
 			}
 			fscanf(fp, "%d", &din);
-			itype_ALICE_Mesh=din;
+			switch (din) {
+			case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
+			default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			}
+			//itype_ALICE_Mesh=din;
 			fscanf(fp, "%d", &din);
 			my_amg_manager.m_restart = din;
 			// classical algebraic multigrid parameters:
@@ -3737,13 +4874,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (b[i].g.Hcyl < 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.zC += b[i].g.Hcyl;
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.yC += b[i].g.Hcyl;
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.xC += b[i].g.Hcyl;
 						break;
 					}
@@ -3777,13 +4914,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (b[i].g.hi[i73] < 0.0) {
 						// ликвидируем отрицательную высоту цилиндра.
 						switch (b[i].g.iPlane_obj2) {
-						case XY:
+						case XY_PLANE:
 							b[i].g.zi[i73] += b[i].g.hi[i73];
 							break;
-						case XZ:
+						case XZ_PLANE:
 							b[i].g.yi[i73] += b[i].g.hi[i73];
 							break;
-						case YZ:
+						case YZ_PLANE:
 							b[i].g.xi[i73] += b[i].g.hi[i73];
 							break;
 						}
@@ -3808,7 +4945,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
 					}
 					switch (b[i].g.iPlane_obj2) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.yS = ymin53;
@@ -3816,7 +4953,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.zS = zmin53;
 						b[i].g.zE = zmin53 + b[i].g.hi[0];
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.zS = zmin53;
@@ -3824,7 +4961,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymin53 + b[i].g.hi[0];
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymax53;
 						b[i].g.zS = zmin53;
@@ -4031,9 +5168,9 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					s[i].g.zE = dbuf;
 				}
 				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
+				case XY_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
+				case XZ_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
+				case YZ_PLANE: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
 				//printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
@@ -4050,7 +5187,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
 
 				fscanf(fp, "%d", &din);
-				w[i].ifamily = din;
+				switch (din) {
+				case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
+				case 2: w[i].ifamily=NEIMAN_FAMILY; break;
+				case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
+				case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
+				default: w[i].ifamily=NEIMAN_FAMILY; break;
+				}
+				//w[i].ifamily = din;
 				switch (din) {
 				case 1:  fscanf(fp, "%f", &fin);
 					w[i].Tamb = fin;
@@ -4058,6 +5202,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// termostability wall
 					w[i].emissivity=0.0;
 					w[i].film_coefficient=0.0;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = 1.0;
 					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // первого рода
@@ -4067,6 +5213,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// adiabatic wall
 					w[i].emissivity=0.0;
 					w[i].film_coefficient=0.0;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = 1.0;
 					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // однородное условие Неймана
@@ -4076,6 +5224,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Newton-Richman condition, film coefficient.
 					w[i].emissivity=0.0;
 					w[i].film_coefficient=fin;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = 1.0;
 					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // Ньютон-Рихман.
@@ -4085,6 +5235,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Stefan - Bolcman condition
 					w[i].emissivity=fin;
 					w[i].film_coefficient=0.0;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = fmax(0.0,fmin(fin,1.0));
 					fscanf(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // Стефан-Больцман.
@@ -4167,7 +5319,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -4298,7 +5450,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 					fscanf(fp, "%d", &din);
 #endif
-					pfpir.idir = din;
+					switch (din) {
+					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					}
+					//pfpir.idir = din;
 
 #if doubleintprecision == 1
 					fscanf(fp, "%lld", &din);
@@ -4359,7 +5517,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 					fscanf(fp, "%d", &din);
 #endif
-					number_iteration_SIMPLE_algorithm = (integer)(din);
+					if (din>=0) {
+						number_iteration_SIMPLE_algorithm = (unsigned int)(din);
+					}
+					else {
+						number_iteration_SIMPLE_algorithm =0;
+						std::cout<<"WARNING : number_iteration_SIMPLE_algorithm =0;"<<std::endl;
+				    }
 
 #if doubleintprecision == 1
 					fscanf(fp, "%lld", &din);
@@ -4448,7 +5612,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 			// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 			switch (b[i_1].g.iPlane) {
-			case XY:
+			case XY_PLANE:
 				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.Hcyl;
 				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.R_out_cyl;
 				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -4458,7 +5622,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_in_cyl;
 				}
 				break;
-			case XZ:
+			case XZ_PLANE:
 				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.Hcyl;
 				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_out_cyl;
 				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -4468,7 +5632,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_in_cyl;
 				}
 				break;
-			case YZ:
+			case YZ_PLANE:
 				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.Hcyl;
 				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.R_out_cyl;
 				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -4485,7 +5649,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (b[i_1].n_Sc > 0) {
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				doublereal vol = 0.0;
-				const doublereal MPI0 = 3.1415926;
+				
 				vol = b[i_1].g.Hcyl*MPI0*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
 				if (vol < 1.0e-40) {
 					printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
@@ -4581,8 +5745,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 			fscanf_s(fp, "%d", &din);
-			ionly_solid_visible = din;
-			printf("ionly_solid_visible =%d\n", ionly_solid_visible);
+			switch (din) {
+			case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
+			default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			}
+			//ionly_solid_visible = din;
+			std::cout<<"ionly_solid_visible ="<< ionly_solid_visible<<std::endl;
 			fscanf_s(fp, "%f", &fin);
 			scale = fin;
 			fscanf_s(fp, "%d", &din);
@@ -4639,7 +5808,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// одной из осей декартовой прямоугольной системы координат:
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			fscanf_s(fp, "%d", &din);
-			idirectional_for_XY_Plot = din;
+			switch (din) {
+			case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
+			case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
+			case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
+			default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+			}
+			//idirectional_for_XY_Plot = din;
 
 			fscanf_s(fp, "%f", &fin);
 			etalon_max_size_ratio = fin; // подробность расчётной сетки.
@@ -4669,7 +5844,15 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf_s(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
+			switch (din) {
+			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
+			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
+			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
+			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			}
+			//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf_s(fp, "%d", &din);
 			if (din == 1) {
@@ -4731,11 +5914,18 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// Выбор сеточного генератора.
 			fscanf_s(fp, "%d", &din);
-			iswitchMeshGenerator = din;
+			switch (din) {
+				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+			}
+			//iswitchMeshGenerator = din;
 
 			fscanf_s(fp, "%d", &din);
-			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8) || (din == 9)) {
+			steady_or_unsteady_global_determinant = MESHER_ONLY;
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3)  || (din == 5) || (din == 6) || 
+				(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
 				// 0 - thermal only steady state calculation,
 				// 1 - thermal only unsteady calculation,
 				// 2 - mesh generator only.
@@ -4745,7 +5935,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 7 - Unsteady thermal solver #2
 				// 8 - Visualisation only
 				// 9 - cfd unsteady fluid dynamic.
-				steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
+				// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
+				// 11 - UNSTEADY NETWORK_T Нестационврный графовый метод решения уравнения теплопроводности.
+				switch (din) {
+				case 0: steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; break;
+				case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
+				case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
+				case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
+				case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
+				case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
+				case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
+				case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
+				case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
+				default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				}
+				//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
 			}
 			else {
 				printf("error input parametr steady or unsteady calculation\n");
@@ -4841,7 +6047,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// Newton-Richman condition.
 			fscanf_s(fp, "%d", &din);
-			adiabatic_vs_heat_transfer_coeff = din; // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
+			switch (din) {
+			case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+            case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
+	        case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
+		    case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
+			default :adiabatic_vs_heat_transfer_coeff =ADIABATIC_WALL_BC; break;
+			}
+			//adiabatic_vs_heat_transfer_coeff = din; // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 			fscanf_s(fp, "%f", &fin);
 			film_coefficient = fin;
 			// AЛИС сетка
@@ -4855,7 +6068,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				b_on_adaptive_local_refinement_mesh = true;
 			}
 			fscanf_s(fp, "%d", &din);
-			itype_ALICE_Mesh = din;
+			switch (din) {
+			case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
+			default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			}
+			//itype_ALICE_Mesh = din;
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.m_restart = din;
 			// classical algebraic multigrid parameters:
@@ -4905,13 +6123,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			// 23.02.2018
 			// print matrix portrait
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.bTemperatureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.bSpeedMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.bPressureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.bStressMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
 
 			// 01.05.2017
@@ -5091,16 +6309,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.iprint_log_Stress = din;
 
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.amgcl_smoother = din;
 
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.amgcl_selector = din;
 
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.amgcl_iterator = din;
 
-			fscanf(fp, "%d", &din);
+			fscanf_s(fp, "%d", &din);
 			my_amg_manager.lfil = din;
 
 			fscanf_s(fp, "%d", &din);
@@ -5343,13 +6561,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (b[i].g.Hcyl < 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.zC += b[i].g.Hcyl;
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.yC += b[i].g.Hcyl;
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.xC += b[i].g.Hcyl;
 						break;
 					}
@@ -5382,13 +6600,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (b[i].g.hi[i73] < 0.0) {
 						// ликвидируем отрицательную высоту цилиндра.
 						switch (b[i].g.iPlane_obj2) {
-						case XY:
+						case XY_PLANE:
 							b[i].g.zi[i73] += b[i].g.hi[i73];
 							break;
-						case XZ:
+						case XZ_PLANE:
 							b[i].g.yi[i73] += b[i].g.hi[i73];
 							break;
-						case YZ:
+						case YZ_PLANE:
 							b[i].g.xi[i73] += b[i].g.hi[i73];
 							break;
 						}
@@ -5414,7 +6632,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
 					}
 					switch (b[i].g.iPlane_obj2) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.yS = ymin53;
@@ -5422,7 +6640,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.zS = zmin53;
 						b[i].g.zE = zmin53 + b[i].g.hi[0];
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.zS = zmin53;
@@ -5430,7 +6648,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymin53 + b[i].g.hi[0];
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymax53;
 						b[i].g.zS = zmin53;
@@ -5650,9 +6868,9 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					s[i].g.zE = dbuf;
 				}
 				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case XY_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
+				case XZ_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case YZ_PLANE: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
 				printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
@@ -5668,7 +6886,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
 
 				fscanf_s(fp, "%d", &din);
-				w[i].ifamily = din;
+				switch (din) {
+				case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
+				case 2: w[i].ifamily=NEIMAN_FAMILY; break;
+				case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
+				case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
+				default: w[i].ifamily=NEIMAN_FAMILY; break;
+				}
+				//w[i].ifamily = din;
 				switch (din) {
 				case 1:  fscanf_s(fp, "%f", &fin);
 					w[i].Tamb = fin;
@@ -5676,6 +6901,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// termostability wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = 1.0;
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // первого рода
@@ -5685,6 +6912,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// adiabatic wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = 1.0;
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // однородное условие Неймана
@@ -5694,6 +6923,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Newton-Richman condition, film coefficient.
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = fin;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = 1.0;
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // Ньютон-Рихман.
@@ -5703,6 +6934,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Stefan - Bolcman condition
 					w[i].emissivity = fin;
 					w[i].film_coefficient = 0.0;
+					fscanf(fp, "%f", &fin); // ViewFactor
+					w[i].ViewFactor = fmax(0.0,fmin(fin,1.0));
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
 					break; // Стефан-Больцман.
@@ -5722,13 +6955,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				w[i].Vz = fin;
 				fscanf_s(fp, "%f", &fin);
 				w[i].P = fin;
-				fscanf(fp, "%d", &din);
+				fscanf_s(fp, "%d", &din);
 				w[i].ithermal_Stress_boundary_condition = din;
-				fscanf(fp, "%f", &fin);
+				fscanf_s(fp, "%f", &fin);
 				w[i].xForce = fin;
-				fscanf(fp, "%f", &fin);
+				fscanf_s(fp, "%f", &fin);
 				w[i].yForce = fin;
-				fscanf(fp, "%f", &fin);
+				fscanf_s(fp, "%f", &fin);
 				w[i].zForce = fin;
 				fscanf_s(fp, "%d", &din);
 				w[i].iPlane = din;
@@ -5783,7 +7016,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -5916,7 +7149,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 					fscanf_s(fp, "%d", &din);
 #endif
-					pfpir.idir = din;
+					switch (din) {
+					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					}
+					//pfpir.idir = din;
 
 #if doubleintprecision == 1
 					fscanf_s(fp, "%lld", &din);
@@ -5977,7 +7216,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #else
 					fscanf_s(fp, "%d", &din);
 #endif
-					number_iteration_SIMPLE_algorithm = (integer)(din);
+					if (din>=0) {
+						number_iteration_SIMPLE_algorithm = (unsigned int)(din);
+					}
+					else {
+						number_iteration_SIMPLE_algorithm =0;
+						std::cout<<"WARNING : number_iteration_SIMPLE_algorithm =0;"<<std::endl;
+				    }
 
 #if doubleintprecision == 1
 					fscanf_s(fp, "%lld", &din);
@@ -6037,8 +7282,13 @@ else
 
 
 		fscanf_s(fp, "%lld", &din);
-		ionly_solid_visible = din;
-		printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
+		switch (din) {
+			case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
+			default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+		}
+		//ionly_solid_visible = din;
+		std::cout<<"ionly_solid_visible ="<< ionly_solid_visible<<std::endl;
 		fscanf_s(fp, "%f", &fin);
 		const doublereal scale = fin;
 		fscanf_s(fp, "%lld", &din);
@@ -6094,7 +7344,13 @@ else
 		// одной из осей декартовой прямоугольной системы координат:
 		// 0 - Ox, 1 - Oy, 2 - Oz.
 		fscanf_s(fp, "%lld", &din);
-		idirectional_for_XY_Plot = din;
+		switch (din) {
+			case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
+			case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
+			case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
+			default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+		}
+		//idirectional_for_XY_Plot = din;
 
 		fscanf_s(fp, "%f", &fin);
 		etalon_max_size_ratio = fin; // подробность расчётной сетки.
@@ -6120,7 +7376,15 @@ else
 		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
 
 		fscanf_s(fp, "%lld", &din);
-		iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
+		switch (din) {
+			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
+			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
+			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
+			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+		}
+		//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 		fscanf_s(fp, "%lld", &din);
 		if (din == 1) {
@@ -6182,11 +7446,18 @@ else
 
 		// Выбор сеточного генератора.
 		fscanf_s(fp, "%lld", &din);
-		iswitchMeshGenerator = din;
+		switch (din) {
+				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+		}
+		//iswitchMeshGenerator = din;
 
 		fscanf_s(fp, "%lld", &din);
-		steady_or_unsteady_global_determinant = 2;
-		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8) || (din == 9)) {
+		steady_or_unsteady_global_determinant = MESHER_ONLY;
+		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) ||
+			(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
 			// 0 - thermal only steady state calculation,
 			// 1 - thermal only unsteady calculation,
 			// 2 - mesh generator only.
@@ -6196,7 +7467,23 @@ else
 			// 7 - Unsteady thermal solver #2
 			// 8 - Visualisation only
 			// 9 - cfd unsteady fluid dynamic.
-			steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
+			// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
+			// 11 - UNSTEADY NETWORK_T Нестационарный графовый метод решения уравнения теплопроводности.
+			switch(din) {
+				case 0: steady_or_unsteady_global_determinant =STEADY_TEMPERATURE; break;
+				case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
+				case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
+				case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
+				case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
+				case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
+				case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
+				case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
+				case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
+				default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+			}
+			//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady - 1 calculation.
 			//printf("steady_or_unsteady_global_determinant =%lld\n",din);
 			//system("PAUSE");
 		}
@@ -6292,7 +7579,14 @@ else
 
 		// Newton-Richman condition.
 		fscanf_s(fp, "%lld", &din);
-		adiabatic_vs_heat_transfer_coeff = din; // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
+		switch (din) {
+			case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+            case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
+	        case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
+		    case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
+			default :adiabatic_vs_heat_transfer_coeff =ADIABATIC_WALL_BC; break;
+		}
+		//adiabatic_vs_heat_transfer_coeff = din; // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 		fscanf_s(fp, "%f", &fin);
 		film_coefficient = fin;
 		// AЛИС сетка
@@ -6306,7 +7600,12 @@ else
 			b_on_adaptive_local_refinement_mesh = true;
 		}
 		fscanf_s(fp, "%lld", &din);
-		itype_ALICE_Mesh = din;
+		switch (din) {
+			case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
+			default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+		}
+		//itype_ALICE_Mesh = din;
 
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.m_restart = din;
@@ -6812,13 +8111,13 @@ else
 			if (b[i].g.Hcyl < 0.0) {
 				// ликвидируем отрицательную высоту цилиндра.
 				switch (b[i].g.iPlane) {
-				case XY:
+				case XY_PLANE:
 					b[i].g.zC += b[i].g.Hcyl;
 					break;
-				case XZ:
+				case XZ_PLANE:
 					b[i].g.yC += b[i].g.Hcyl;
 					break;
-				case YZ:
+				case YZ_PLANE:
 					b[i].g.xC += b[i].g.Hcyl;
 					break;
 				}
@@ -6862,13 +8161,13 @@ else
 				if (b[i].g.hi[i73] < 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane_obj2) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.zi[i73] += b[i].g.hi[i73];
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.yi[i73] += b[i].g.hi[i73];
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.xi[i73] += b[i].g.hi[i73];
 						break;
 					}
@@ -6901,7 +8200,7 @@ else
 					if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
 				}
 				switch (b[i].g.iPlane_obj2) {
-				case XY:
+				case XY_PLANE:
 					b[i].g.xS = xmin53;
 					b[i].g.xE = xmax53;
 					b[i].g.yS = ymin53;
@@ -6909,7 +8208,7 @@ else
 					b[i].g.zS = zmin53;
 					b[i].g.zE = zmin53 + b[i].g.hi[0];
 					break;
-				case XZ:
+				case XZ_PLANE:
 					b[i].g.xS = xmin53;
 					b[i].g.xE = xmax53;
 					b[i].g.zS = zmin53;
@@ -6917,7 +8216,7 @@ else
 					b[i].g.yS = ymin53;
 					b[i].g.yE = ymin53 + b[i].g.hi[0];
 					break;
-				case YZ:
+				case YZ_PLANE:
 					b[i].g.yS = ymin53;
 					b[i].g.yE = ymax53;
 					b[i].g.zS = zmin53;
@@ -6930,8 +8229,10 @@ else
 
 			if (b[i].g.itypegeom == CYLINDER) {
 				// Cylinder
-				//printf("%e %e %e %e %e %e %e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE, b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
+				
+				//	printf("%e %e %e %e %e %e %e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE, b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
 				//system("PAUSE");
+				
 			}
 
 
@@ -7170,9 +8471,9 @@ else
 				s[i].g.zE = dbuf;
 			}
 			switch (s[i].iPlane) {
-			case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
-			case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
-			case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
+			case XY_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
+			case XZ_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
+			case YZ_PLANE: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
 			default: break;
 			}
 			//printf("source %e %lld %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
@@ -7192,7 +8493,14 @@ else
 #else
 			fscanf_s(fp, "%d", &din);
 #endif
-			w[i].ifamily = din;
+			switch (din) {
+				case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
+				case 2: w[i].ifamily=NEIMAN_FAMILY; break;
+				case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
+				case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
+				default: w[i].ifamily=NEIMAN_FAMILY; break;
+			}
+			//w[i].ifamily = din;
 			switch (din) {
 			case 1:  fscanf_s(fp, "%f", &fin);
 				w[i].Tamb = fin;
@@ -7200,6 +8508,8 @@ else
 										  // termostability wall
 				w[i].emissivity = 0.0;
 				w[i].film_coefficient = 0.0;
+				fscanf_s(fp, "%f", &fin); // ViewFactor
+				w[i].ViewFactor = 1.0;
 				fscanf_s(fp, "%f", &fin);
 				w[i].hf = 0.0;
 				break; // первого рода
@@ -7209,15 +8519,19 @@ else
 										   // adiabatic wall
 				w[i].emissivity = 0.0;
 				w[i].film_coefficient = 0.0;
+				fscanf_s(fp, "%f", &fin); // ViewFactor
+				w[i].ViewFactor = 1.0;
 				fscanf_s(fp, "%f", &fin);
 				w[i].hf = 0.0;
 				break; // однородное условие Неймана
 			case 3:  fscanf_s(fp, "%f", &fin);
 				w[i].Tamb = fin;
 				fscanf_s(fp, "%f", &fin); // Stefan Bolcman
-										  // Newton-Richman condition, film coefficient.
+				// Newton-Richman condition, film coefficient.
 				w[i].emissivity = 0.0;
 				w[i].film_coefficient = fin;
+				fscanf_s(fp, "%f", &fin); // ViewFactor
+				w[i].ViewFactor = 1.0;
 				fscanf_s(fp, "%f", &fin);
 				w[i].hf = 0.0;
 				break; // Ньютон-Рихман.
@@ -7227,6 +8541,8 @@ else
 										  // Stefan - Bolcman condition
 				w[i].emissivity = fin;
 				w[i].film_coefficient = 0.0;
+				fscanf_s(fp, "%f", &fin); // ViewFactor
+				w[i].ViewFactor = fmax(0.0,fmin(fin,1.0));
 				fscanf_s(fp, "%f", &fin);
 				w[i].hf = 0.0;
 				break; // Стефан-Больцман.
@@ -7344,7 +8660,7 @@ else
 				my_union[i].xposadd = nullptr;
 				my_union[i].yposadd = nullptr;
 				my_union[i].zposadd = nullptr;
-				my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+				my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 				my_union[i].inxadd = -1;
 				my_union[i].inyadd = -1;
 				my_union[i].inzadd = -1;
@@ -7553,7 +8869,13 @@ else
 #else
 				fscanf_s(fp, "%d", &din);
 #endif
-				pfpir.idir = din;
+				switch (din) {
+					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+				}
+				//pfpir.idir = din;
 
 #if doubleintprecision == 1
 				fscanf_s(fp, "%lld", &din);
@@ -7614,7 +8936,13 @@ else
 #else
 				fscanf_s(fp, "%d", &din);
 #endif
-				number_iteration_SIMPLE_algorithm = (integer)(din);
+				if (din>=0) {
+					number_iteration_SIMPLE_algorithm = (unsigned int)(din);
+				}
+				else {
+					number_iteration_SIMPLE_algorithm =0;
+					std::cout<<"WARNING : number_iteration_SIMPLE_algorithm =0;"<<std::endl;
+				}
 
 #if doubleintprecision == 1
 				fscanf_s(fp, "%lld", &din);
@@ -7698,7 +9026,7 @@ else
 				// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 				// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 				switch (b[i_1].g.iPlane) {
-				case XY:
+				case XY_PLANE:
 					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.Hcyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.R_out_cyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -7708,7 +9036,7 @@ else
 						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_in_cyl;
 					}
 					break;
-				case XZ:
+				case XZ_PLANE:
 					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.Hcyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.R_out_cyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -7718,7 +9046,7 @@ else
 						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_in_cyl;
 					}
 					break;
-				case YZ:
+				case YZ_PLANE:
 					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult*b[i_1].g.Hcyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult*b[i_1].g.R_out_cyl;
 					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult*b[i_1].g.R_out_cyl;
@@ -7950,6 +9278,73 @@ void freeStringList() {
 } // freeStringList
 
 
+// анализирует строку символов buf длиной ilen.
+bool sanalizestring(char* name0, char* buf, int ilen, char* strret)
+{
+	// состав анализируемой строки:
+	// ключевое слово, символ равенства, число без знака.
+	bool bfound = false;
+
+	bool bstring = false;
+	int inum = -1;
+	int i; // счётчик цикла for
+	for (i = 0; i < ilen; i++) {
+		if (buf[i] == '=') {
+			bstring = true;
+			inum = i;
+		}
+	}
+	if (bstring) {
+		//
+		//printf("%d\n",inum);
+
+		// если строка нам подходит по структуре
+		char* name = (char*)malloc(1024); // строка имя переменной
+		if (name != nullptr) {
+			for (i = 0; i < inum; i++) name[i] = buf[i];
+			name[i] = '\n'; // конец имени
+			i++;
+			name[i] = '\0'; // конец строки
+			//printf("%s \n", name); // debug
+		}
+		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+		i = inum + 1;
+		int j = 0;
+		if (value != nullptr) {
+			while (buf[i] != '\n') {
+				value[j] = buf[i];
+				j++;
+				i++;
+			}
+			value[j] = '\n';
+			j++;
+			value[j] = '\0'; // символ конца строки
+			//printf("value=%s \n",value); // контроль считанного значения
+			//printf("name=%s \n", name);
+			//getchar();
+
+			if (isname(name, name0)) {
+				for (integer j45 = 0; j45 < j; j45++) {
+					strret[j45] = value[j45];
+				}
+				strret[j-1]= '\0'; // символ конца строки
+
+				bfound = true;
+			}
+		}
+
+		if (name != nullptr) {
+			free(name);
+		}
+		if (value != nullptr) {
+			free(value);
+		}
+		return bfound;
+
+	}
+
+	return bfound;
+} // sanalizestring по мотивам 2009
 
 
 
@@ -8231,6 +9626,142 @@ bool imakesource(const char* name0_const, int& iret)
 
 
 } // imakesource по мотивам 2010
+
+// считывает данные из входного файла
+// premeshin.txt
+// реализовано 23 апреля 2010.
+// revised 24 мая 2020.
+bool smakesource(const char* name0_const, char* name)
+{
+	bool bfound = false;
+	char* name0 = new char[strlen(name0_const) + 1];
+#ifdef MINGW_COMPILLER
+	strcpy(name0, name0_const);
+#else
+	strcpy_s(name0, (strlen(name0_const) + 1) * sizeof(char), name0_const);
+#endif
+
+	char* buf = (char*)malloc(1024); // строка буфер
+	if (buf != nullptr) {
+
+		bool bfound_loc = false;
+		int iret_loc = -1;
+		for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
+			if (!bfound) {
+				// Если не найдена.
+
+				bool bbeginstring = true; // строка ещё не кончилась
+				int k = 0;
+				char c;
+				c = ' ';
+				while (StringList[i_1][k] != '\0') {
+					c = StringList[i_1][k];
+					if (c == '#') {
+						bbeginstring = false;
+						buf[k++] = '\n';
+						buf[k] = '\0';
+
+						bfound_loc = sanalizestring(name0, buf, k - 1, name);
+						if (bfound_loc) {
+							bfound = true;
+							icurrent_position__StringList = i_1 + 1;
+						}
+												
+						//printf("%s # \n",buf);
+						//getchar();	
+						break;
+					}
+					if (c == '\n') {
+						bbeginstring = false;
+						buf[k++] = '\n';
+						buf[k] = '\0';
+
+						bfound_loc = sanalizestring(name0, buf, k - 1, name);
+						if (bfound_loc) {
+							bfound = true;
+							icurrent_position__StringList = i_1 + 1;
+						}
+
+						//printf("%s k=%d n \n",buf,k);
+						//getchar();
+						break;
+					}
+					if (bbeginstring) {
+						buf[k++] = c;
+						// printf("%c \n",c);
+					}
+				} // while
+			}
+			else {
+				break;
+			}
+		}
+
+
+		if (!bfound) {
+
+			// Сканируем всё сначала.
+			for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
+				if (!bfound) {
+					// Если не найдена.
+
+					bool bbeginstring = true; // строка ещё не кончилась
+					int k = 0;
+					char c;
+					c = ' ';
+					while (StringList[i_1][k] != '\0') {
+						c = StringList[i_1][k];
+						if (c == '#') {
+							bbeginstring = false;
+							buf[k++] = '\n';
+							buf[k] = '\0';
+
+							bfound_loc = sanalizestring(name0, buf, k - 1, name);
+							if (bfound_loc) {
+								bfound = true;
+								icurrent_position__StringList = i_1 + 1;
+							}
+
+							//printf("%s \n",buf);
+							//getchar();	
+							break;
+						}
+						if (c == '\n') {
+							bbeginstring = false;
+							buf[k++] = '\n';
+							buf[k] = '\0';
+
+							bfound_loc = sanalizestring(name0, buf, k - 1, name);
+							if (bfound_loc) {
+								bfound = true;
+								icurrent_position__StringList = i_1 + 1;
+							}
+							
+							//printf("%s \n",buf);
+							//getchar();
+							break;
+						}
+						if (bbeginstring) {
+							buf[k++] = c;
+							// printf("%c \n",c);
+						}
+					} // while
+				}
+				else {
+					break;
+				}
+			}
+		}
+
+
+		free(buf);
+	}
+
+	delete[] name0;
+	return bfound;
+
+
+} // smakesource по мотивам 2010
 
 // считывает данные из входного файла
 // premeshin.txt
@@ -8786,7 +10317,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 				// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 				switch (b[i_1].g.iPlane) {
-				case XY:
+				case XY_PLANE:
 					if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.Hcyl;
 					if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 					if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -8796,7 +10327,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
 					}
 					break;
-				case XZ:
+				case XZ_PLANE:
 					if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.Hcyl;
 					if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
 					if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -8806,7 +10337,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
 					}
 					break;
-				case YZ:
+				case YZ_PLANE:
 					if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.Hcyl;
 					if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 					if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -8824,8 +10355,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (b[i_1].n_Sc > 0) {
 						doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 						doublereal vol = 0.0;
-						const doublereal MPI0 = 3.1415926;
-						vol = b[i_1].g.Hcyl * MPI0 * (b[i_1].g.R_out_cyl * b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl * b[i_1].g.R_in_cyl);
+						vol = b[i_1].g.Hcyl * M_PI * (b[i_1].g.R_out_cyl * b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl * b[i_1].g.R_in_cyl);
 						if (vol < 1.0e-40) {
 							printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
 							system("PAUSE");
@@ -8929,19 +10459,24 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("only_solid_visible", idin)) {
 			    // Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
-					ionly_solid_visible = (integer)(idin);
-					printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
+					switch (idin) {
+						case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+						case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
+						default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+					}
+					//ionly_solid_visible = (integer)(idin);
+					std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
 				}
 				else {
-					printf("ionly_solid_visible must be equal 0 or 1. now value=%d\n",idin);
+					std::cout << "ionly_solid_visible must be equal 0 or 1. now value=" << idin << std::endl;
 					system("pause");
-					ionly_solid_visible = 0;
+					ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
 				}
 			}
 			else {
 				printf("WARNING!!! only_solid_visible not found in file premeshin.txt\n");
-				ionly_solid_visible = 0; // Показываем всё
-				printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
+				ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE; // Показываем всё
+				std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
 				if (bSTOP_Reading) system("pause");
 			}
 		
@@ -9252,13 +10787,19 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			if (imakesource("line_directional", idin)) {
 				// Найдено успешно.
-				idirectional_for_XY_Plot  = (integer)(idin);
+				switch (idin) {
+					case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
+					case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
+					case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
+					default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+				}
+				//idirectional_for_XY_Plot  = (integer)(idin);
 				//printf("iny =%lld\n", iny);
 			}
 			else {
 				printf("WARNING!!! line_directional not found in file premeshin.txt\n");
-				idirectional_for_XY_Plot = 0; // нет информации о количестве узлов сетки в направлении оси Оy.
-				printf("idirectional_for_XY_Plot =%lld\n", idirectional_for_XY_Plot);
+				idirectional_for_XY_Plot = X_LINE_DIRECTIONAL; // нет информации о количестве узлов сетки в направлении оси Оy.
+				printf("idirectional_for_XY_Plot =%d\n", idirectional_for_XY_Plot);
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -9359,13 +10900,21 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 			if (imakesource("StaticStructuralSolverSetting", idin)) {
 				// Найдено успешно.
-				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
+				switch ((integer)(idin)) {
+					case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+					case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
+					case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+					case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
+					case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
+					default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+				}
+				//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
 				//printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU6);
 			}
 			else {
 				printf("WARNING!!! StaticStructuralSolverSetting not found in file premeshin.txt\n");
-				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = 0; //BiCGStab +ILU* solver.
-				printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU6);
+				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; //BiCGStab +ILU* solver.
+				printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER\n");
 				if (bSTOP_Reading) system("pause");
 			}
 			
@@ -9466,22 +11015,29 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("mesh_generator_algorithm", idin)) {
 				// Найдено успешно.
 				// Выбор сеточного генератора.
-				iswitchMeshGenerator = (integer)(idin);
+				switch (idin) {
+					case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
+					case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
+					case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+					default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				}
+				//iswitchMeshGenerator = (integer)(idin);
 				//printf("iswitchMeshGenerator =%lld\n", iswitchMeshGenerator);
 			}
 			else {
 				printf("WARNING!!! mesh_generator_algorithm not found in file premeshin.txt\n");
-				iswitchMeshGenerator = 2; // Coarse Mesh.
-				printf("iswitchMeshGenerator =CoarseMesh(2)\n");
+				iswitchMeshGenerator = COARSEMESHGEN_MESHER; // Coarse Mesh.
+				printf("iswitchMeshGenerator = COARSEMESHGEN_MESHER\n");
 				if (bSTOP_Reading) system("pause");
 			}
 			
 
 			if (imakesource("Schedule", idin)) {
 				// Найдено успешно.
-				steady_or_unsteady_global_determinant = 2;
+				steady_or_unsteady_global_determinant = MESHER_ONLY;
 				din = (integer)(idin);
-				if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8) || (din == 9)) {
+				if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || 
+					(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
 					// 0 - thermal only steady state calculation,
 					// 1 - thermal only unsteady calculation,
 					// 2 - mesh generator only.
@@ -9491,7 +11047,23 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// 7 - Unsteady thermal solver #2
 					// 8 - Visualisation only
 					// 9 - cfd unsteady fluid dynamic.
-					steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
+					// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
+			        // 11 - UNSTEADY NETWORK_T Нестационарный графовый метод решения уравнения теплопроводности.
+					switch(din) {
+						case 0: steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; break;
+						case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
+						case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+						case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
+						case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
+						case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+						case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
+						case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
+						case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
+						case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
+						case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
+						default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+					}
+					//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
 					//printf("steady_or_unsteady_global_determinant =%lld\n",din);
 					//system("PAUSE");
 				}
@@ -9504,7 +11076,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! Schedule not found in file premeshin.txt\n");
-				steady_or_unsteady_global_determinant = 2; // Mesh Generator only
+				steady_or_unsteady_global_determinant = MESHER_ONLY; // Mesh Generator only
 				printf("steady_or_unsteady_global_determinant =Mesh Generator only\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -9796,6 +11368,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							
 							if (din_piecewise_const == 1) {
 								// 1 - time duration(s);
+								if (fin_piecewise_const <= 0.0) {
+									printf("Zero increment current time. %e %lld\n", fin_piecewise_const, i_35);
+									system("pause");
+								}
+								//printf("increment time=%e\n", fin_piecewise_const);
 								time_current_piecewise_const += fin_piecewise_const;
 							}
 							else {
@@ -9805,6 +11382,9 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							glTSL.table_law_piecewise_constant[i_35].time = time_current_piecewise_const;
 								
 							if ((i_35>0)&&(glTSL.table_law_piecewise_constant[i_35].time <= glTSL.table_law_piecewise_constant[i_35-1].time)) {
+								// Внимание: при возникновении данной ошибки скорее всего произошла следующая ошибка интерфейса AliceMesh_v0_45.
+								// Скорее всего забыл после временного интервала указать шаг по времени которым разбивается данный интервал. 
+								// Третьим столбцом должен быть написан домножающий мощность множитель. Т.е. столбцов должно быть три а не два.
 								printf("ERROR!!! Piecewise constant timestep law time non monotone. i==%lld n_i=%lld %e <=%e\n", i_35, glTSL.n_string_PiecewiseConst, glTSL.table_law_piecewise_constant[i_35].time, glTSL.table_law_piecewise_constant[i_35-1].time);
 								system("pause");
 								exit(1);
@@ -9838,21 +11418,31 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Newton-Richman condition.
 			if (imakesource("adiabatic_vs_heat_transfer_coeff", idin)) {
 				// Найдено успешно.
-				if ((idin == 0) || (idin == 1) || (idin == 2) || (idin == 3)) {
-					// 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
-					adiabatic_vs_heat_transfer_coeff = (integer)(idin);
-					//printf("adiabatic_vs_heat_transfer_coeff =%lld\n", adiabatic_vs_heat_transfer_coeff);
+				if ((idin == 0) || (idin == 1) 
+					|| (idin == 2) || (idin == 3)) {
+					// 0 - adiabatic wall, 1 - Newton Richman condition,
+					// 2 - Stefan Bolcman condition, 3 - mix condition.
+					switch (idin) {
+						case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+						case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
+						case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
+						case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
+						default :adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+					}
+					//adiabatic_vs_heat_transfer_coeff = (integer)(idin);
+					//printf("adiabatic_vs_heat_transfer_coeff =%lld\n", idin);
+					//getchar();
 				}
 				else {
-					printf("Error!!! adiabatic_vs_heat_transfer_coeff must be equal 0 or 1 or 2 or 3. Current value %d\n",idin);
+					printf("Error!!! adiabatic_vs_heat_transfer_coeff must be equal 0==ADIABATIC_WALL_BC or 1==NEWTON_RICHMAN_BC or 2==STEFAN_BOLCMAN_BC or 3==MIX_CONDITION_BC. Current value %d\n",idin);
 					system("pause");
-					adiabatic_vs_heat_transfer_coeff = 0; // adiabatic wall
+					adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; // adiabatic wall
 				}
 			}
 			else {
 				printf("WARNING!!! adiabatic_vs_heat_transfer_coeff not found in file premeshin.txt\n");
-				adiabatic_vs_heat_transfer_coeff = 0; //  0 - adiabatic wall.
-				printf("adiabatic_vs_heat_transfer_coeff =%lld\n", adiabatic_vs_heat_transfer_coeff);
+				adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; //  0 - adiabatic wall.
+				printf("adiabatic_vs_heat_transfer_coeff =%d\n", adiabatic_vs_heat_transfer_coeff);
 				if (bSTOP_Reading) system("pause");
 			}			
 			
@@ -9891,13 +11481,18 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			if (imakesource("version_ALICE_Mesh", idin)) {
 				// Найдено успешно.
-				itype_ALICE_Mesh = (integer)(idin);
+				switch (idin) {
+					case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+					case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
+					default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+				}
+				//itype_ALICE_Mesh = (integer)(idin);
 				//printf("itype_ALICE_Mesh =%lld\n", itype_ALICE_Mesh);
 			}
 			else {
 				printf("WARNING!!! version_ALICE_Mesh not found in file premeshin.txt\n");
-				itype_ALICE_Mesh = 0; // Coarse Mesh.
-				printf("itype_ALICE_Mesh =%lld\n", itype_ALICE_Mesh);
+				itype_ALICE_Mesh = ONE_PASS_COARSE_ALICE_MESH; // Coarse Mesh.
+				printf("itype_ALICE_Mesh =ONE_PASS_COARSE_ALICE_MESH\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -11113,6 +12708,8 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
+		
+
 			
 			if (imakesource("AnimationFields", idin)) {
 				// Найдено успешно.
@@ -11753,6 +13350,22 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			for (i = 0; i < lb; i++) {
 
 				char name0[1000] = "body";
+				buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
+				strcat_s(name0, "name");
+
+				if (smakesource(name0, b[i].name)) {
+					// Найдено успешно.
+
+					//printf(" b[%lld].name=%s\n", i, b[i].name);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					b[i].name[0] = '\0'; // уникальное текстовое объёмного геометрического тела.
+					printf(" b[%d].name=unknown\n", i);
+					//if (bSTOP_Reading) system("pause");
+				}
+				
+				name0[0] = '\0'; strcat_s(name0, "body");
 				buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
 				strcat_s(name0, "iunion");
 
@@ -11997,13 +13610,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (b[i].g.Hcyl <= 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.zC += b[i].g.Hcyl;
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.yC += b[i].g.Hcyl;
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.xC += b[i].g.Hcyl;
 						break;
 					}
@@ -12044,7 +13657,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// patch 10.01.2020
 					// Для правильной генерации сеточных линий xpos, ypos, zpos.
 					switch (b[i].g.iPlane) {
-					case XY: 
+					case XY_PLANE: 
 						b[i].g.xS = b[i].g.xC - b[i].g.R_out_cyl;
 						b[i].g.xE = b[i].g.xC + b[i].g.R_out_cyl;
 						b[i].g.yS = b[i].g.yC - b[i].g.R_out_cyl;
@@ -12052,7 +13665,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.zS = b[i].g.zC;
 						b[i].g.zE = b[i].g.zC + b[i].g.Hcyl;
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.xS = b[i].g.xC - b[i].g.R_out_cyl;
 						b[i].g.xE = b[i].g.xC + b[i].g.R_out_cyl;
 						b[i].g.zS = b[i].g.zC - b[i].g.R_out_cyl;
@@ -12060,7 +13673,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.yS = b[i].g.yC;
 						b[i].g.yE = b[i].g.yC + b[i].g.Hcyl;
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.zS = b[i].g.zC - b[i].g.R_out_cyl;
 						b[i].g.zE = b[i].g.zC + b[i].g.R_out_cyl;
 						b[i].g.yS = b[i].g.yC - b[i].g.R_out_cyl;
@@ -12187,13 +13800,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (b[i].g.hi[i73] < 0.0) {
 						// ликвидируем отрицательную высоту цилиндра.
 						switch (b[i].g.iPlane_obj2) {
-						case XY:
+						case XY_PLANE:
 							b[i].g.zi[i73] += b[i].g.hi[i73];
 							break;
-						case XZ:
+						case XZ_PLANE:
 							b[i].g.yi[i73] += b[i].g.hi[i73];
 							break;
-						case YZ:
+						case YZ_PLANE:
 							b[i].g.xi[i73] += b[i].g.hi[i73];
 							break;
 						}
@@ -12226,7 +13839,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
 					}
 					switch (b[i].g.iPlane_obj2) {
-					case XY:
+					case XY_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.yS = ymin53;
@@ -12234,7 +13847,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.zS = zmin53;
 						b[i].g.zE = zmin53 + b[i].g.hi[0];
 						break;
-					case XZ:
+					case XZ_PLANE:
 						b[i].g.xS = xmin53;
 						b[i].g.xE = xmax53;
 						b[i].g.zS = zmin53;
@@ -12242,7 +13855,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymin53 + b[i].g.hi[0];
 						break;
-					case YZ:
+					case YZ_PLANE:
 						b[i].g.yS = ymin53;
 						b[i].g.yE = ymax53;
 						b[i].g.zS = zmin53;
@@ -12255,8 +13868,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				if (b[i].g.itypegeom == CYLINDER) {
 					// Cylinder
+					
 					//printf("%e %e %e %e %e %e %e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE, b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
 					//system("PAUSE");
+					
 				}
 
 
@@ -12565,6 +14180,22 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				char name0[1000] = "source";
 				buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
+				strcat_s(name0, "name");
+
+				if (smakesource(name0, s[i].name)) {
+					// Найдено успешно.
+
+					//printf(" s[%lld].name=%s\n", i, s[i].name);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					s[i].name[0] = '\0'; // уникальное текстовое имя источника тепла.
+					printf(" s[%d].name=unknown\n", i);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat_s(name0, "source");
+				buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
 				strcat_s(name0, "iunion");			
 				
 				if (imakesource(name0, idin)) {
@@ -12812,19 +14443,34 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					s[i].g.zE = dbuf;
 				}
 				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
+				case XY_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
+				case XZ_PLANE: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
+				case YZ_PLANE: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
 				//printf("source %e %lld %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
 			}
 
 			// считывание твёрдых стенок
-
 			for (i = 0; i < lw; i++) {
 
 				char name0[1000] = "wall";
+				buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
+				strcat_s(name0, "name");
+
+				if (smakesource(name0, w[i].name)) {
+					// Найдено успешно.
+					
+					//printf(" w[%lld].name=%s\n", i, w[i].name);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					w[i].name[0] = '\0'; // уникальное текстовое имя твёрдой стенки.
+					printf(" w[%d].name=unknown\n", i);
+					//if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat_s(name0, "wall");
 				buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
 				strcat_s(name0, "iunion");
 
@@ -12846,14 +14492,22 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					w[i].ifamily = (integer)(idin);
+					switch (idin) {
+						case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
+						case 2: w[i].ifamily=NEIMAN_FAMILY; break;
+						case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
+						case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
+						default: w[i].ifamily=NEIMAN_FAMILY; break;
+					}
+					//w[i].ifamily = (integer)(idin);
 					din= (integer)(idin); // for switch() см. далее.
 					//printf("w[%lld].ifamily =%lld\n", i, w[i].ifamily);
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					w[i].ifamily = 2; // Однородное условие Неймана.
-					printf("w[%d].ifamily =%lld\n", i, w[i].ifamily);
+					w[i].ifamily = NEIMAN_FAMILY; // Однородное условие Неймана.
+					din=2;//NEIMAN_FAMILY
+					printf("w[%d].ifamily =%d\n", i, w[i].ifamily);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12878,17 +14532,19 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
 					strcat_s(name0, "heat_transfer_coefficient_vs_emissivity");
 
+					name0[0] = '\0'; strcat_s(name0, "wall");
+					buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
+					strcat_s(name0, "ViewFactor");
+
 					// Stefan Bolcman
 					// termostability wall
 					w[i].emissivity = 0.0;
-					w[i].film_coefficient = 0.0;
-					
-					
+					w[i].ViewFactor = 1.0; // фактор видимости.
+					w[i].film_coefficient = 0.0;					
 
 					name0[0] = '\0'; strcat_s(name0, "wall");
 					buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
 					strcat_s(name0, "HF");
-
 					
 					w[i].hf = 0.0;
 					
@@ -12913,9 +14569,14 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
 					strcat_s(name0, "heat_transfer_coefficient_vs_emissivity");
 
+					name0[0] = '\0'; strcat_s(name0, "wall");
+					buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
+					strcat_s(name0, "ViewFactor");
+
 					// Stefan Bolcman
 					// adiabatic wall
 					w[i].emissivity = 0.0;
+					w[i].ViewFactor = 1.0; // фактор видимости.
 					w[i].film_coefficient = 0.0;
 					
 
@@ -12952,6 +14613,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					w[i].emissivity = 0.0;
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
+						printf("film_coefficient=%e\n", fin);
 						w[i].film_coefficient = (doublereal)(fin);
 					}
 					else {
@@ -12960,6 +14622,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						printf(" w[%d].film_coefficient=%e\n",i, w[i].film_coefficient);
 						if (bSTOP_Reading) system("pause");
 					}
+
+					name0[0] = '\0'; strcat_s(name0, "wall");
+					buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
+					strcat_s(name0, "ViewFactor");
+
+					w[i].ViewFactor = 1.0; // фактор видимости.
 
 					name0[0] = '\0'; strcat_s(name0, "wall");
 					buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
@@ -12995,12 +14663,29 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					w[i].film_coefficient = 0.0;
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
-						w[i].emissivity = (doublereal)(fin);
+						w[i].emissivity = (doublereal)(fin); // Коэффициент излучения==поглощения.
 					}
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-						w[i].emissivity = 0.0; // .
+						w[i].emissivity = 0.0; // Коэффициент излучения==поглощения.
 						printf("w[%d].emissivity =%e\n",i, w[i].emissivity);
+						if (bSTOP_Reading) system("pause");
+					}
+
+
+					name0[0] = '\0'; strcat_s(name0, "wall");
+					buffer[0] = '\0'; _itoa_s(i, buffer, 10); strcat_s(name0, buffer);
+					strcat_s(name0, "ViewFactor");
+
+					if (fmakesource(name0, fin)) {
+						// Найдено успешно.
+						w[i].ViewFactor = (doublereal)(fin);
+						w[i].ViewFactor = fmax(0.0, fmin(w[i].ViewFactor, 1.0));
+					}
+					else {
+						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+						w[i].ViewFactor  = 1.0; // фактор видимости.
+						printf("w[%d].ViewFactor =%e\n", i, w[i].ViewFactor);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13346,7 +15031,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -13944,13 +15629,19 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				if (imakesource("report_directional", idin)) {
 					// Найдено успешно.
-					pfpir.idir = (integer)(idin);
+					switch (idin) {
+					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					}
+					//pfpir.idir = (integer)(idin);
 					//printf(" pfpir.idir=%lld\n", pfpir.idir);
 				}
 				else {
 					printf("WARNING!!! report_directional not found in file premeshin.txt\n");
-					pfpir.idir = 0; // XY.
-					printf(" pfpir.idir=%lld\n", pfpir.idir);
+					pfpir.idir = Y_LINE_DIRECTIONAL; 
+					printf(" pfpir.idir=%d\n", pfpir.idir);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14039,13 +15730,19 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				if (imakesource("number_iterations_SIMPLE_algorithm", idin)) {
 					// Найдено успешно.
-					number_iteration_SIMPLE_algorithm  = (int)(idin);
+					if (idin>=0) {
+						number_iteration_SIMPLE_algorithm = (unsigned int)(idin);
+					}
+					else {
+						number_iteration_SIMPLE_algorithm =0;
+						std::cout<<"WARNING : number_iteration_SIMPLE_algorithm =0;"<<std::endl;
+					}
 					//printf(" number_iterations_SIMPLE_algorithm=%lld\n",number_iteration_SIMPLE_algorithm );
 				}
 				else {
 					printf("WARNING!!! number_iterations_SIMPLE_algorithm not found in file premeshin.txt\n");
 					number_iteration_SIMPLE_algorithm = 0; // default 1000 iterations.
-					printf(" number_iterations_SIMPLE_algorithm=%lld\n", number_iteration_SIMPLE_algorithm);
+					printf(" number_iterations_SIMPLE_algorithm=%u\n", number_iteration_SIMPLE_algorithm);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -14057,6 +15754,8 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
 						break;
 					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+						break;
+					case 3: stabilization_amg1r5_algorithm = Non_Linear_amg1r5;
 						break;
 					default:
 						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
@@ -14110,7 +15809,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 						switch (b[i_1].g.iPlane)
 						{
-						case XY:
+						case XY_PLANE:
 							// находим окаймляющий четырёхугольник.
 							x1 = b[i_2].g.xC + b[i_2].g.R_out_cyl;
 							y1 = b[i_2].g.yC + b[i_2].g.R_out_cyl;
@@ -14132,7 +15831,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							// находим окаймляющий четырёхугольник.
 							x1 = b[i_2].g.xC + b[i_2].g.R_out_cyl;
 							z1 = b[i_2].g.zC + b[i_2].g.R_out_cyl;
@@ -14154,7 +15853,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							// находим окаймляющий четырёхугольник.
 							y1 = b[i_2].g.yC + b[i_2].g.R_out_cyl;
 							z1 = b[i_2].g.zC + b[i_2].g.R_out_cyl;
@@ -14254,7 +15953,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 						// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 						switch (b[i_1].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.Hcyl;
 							if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 							if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -14264,7 +15963,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.Hcyl;
 							if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
 							if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -14274,7 +15973,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 								if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.Hcyl;
 							if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
 							if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
@@ -14292,7 +15991,6 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							if (b[i_1].n_Sc > 0) {
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								doublereal vol = 0.0;
-								//const doublereal MPI0 = 3.1415926; // M_PI constant math.h
 								vol = b[i_1].g.Hcyl*M_PI*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
 								if (vol < 1.0e-40) {
 									printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
@@ -14340,20 +16038,20 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 			printf("Apriory quick model statistics:\n");
-			printf("number of thermal power blocks lb_p=%lld\n", ilb_p);
+			std::cout << "number of thermal power blocks lb_p=" << ilb_p << std::endl;
 			printf("Blocks integral power =%e W\n", dpower);
-			printf("number of sources ls=%lld\n", ls);
+			std::cout << "number of sources ls=" << ls << std::endl;
 			printf("Sources integral power = %e W\n", dsoupow);
 			printf("Full total power = %e W\n", dpower + dsoupow);
 			// Запоминаем полное тепловыделение в модели.
 			d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL = dpower + dsoupow;
-			printf("number of blocks lb=%lld\n", lb);
-			printf("PRISMS = %lld, CYLINDERS = %lld, POLYGONS = %lld\n", iprism, icyl, ipoly);
-			printf("SOLID: %lld\n", isol);
-			printf("HOLLOW: %lld\n", ihol);
-			printf("FLUID: %lld\n", iflui);
-			printf("number of walls lw=%lld\n", lw);
-			printf("number of units lu=%lld\n", lu);
+			std::cout << "number of blocks lb=" << lb << std::endl;
+			std::cout << "PRISMS = " << iprism << ", CYLINDERS = " << icyl << ", POLYGONS = " << ipoly << "\n";
+			std::cout <<  "SOLID: " <<  isol << std::endl;
+			std::cout <<  "HOLLOW: " <<  ihol << std::endl;
+			std::cout <<  "FLUID: " <<  iflui << std::endl;
+			std::cout << "number of walls lw=" <<  lw << std::endl;
+			std::cout << "number of units lu=" <<  lu << std::endl;
 
 			fclose(fp); // закрытие файла
 		}

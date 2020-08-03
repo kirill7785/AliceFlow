@@ -8,8 +8,14 @@
 // Может сканироваться как вперёд так и назад.
 typedef struct Thashlist_i {
 	integer item;
-	Thashlist_i* next = nullptr;
-	Thashlist_i* prev = nullptr;
+	Thashlist_i* next;
+	Thashlist_i* prev;
+
+	Thashlist_i() {
+		item = -1;
+		next = nullptr;
+		prev = nullptr;
+	}
 } hashlist_i;
 
 // вставка целочисленного ключа в список

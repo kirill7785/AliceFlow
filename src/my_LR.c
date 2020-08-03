@@ -91,7 +91,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 			if (!bmask[iP]) {
 				// если узел ещё не был посещён
 				while (iP < f[i].maxelm) {
-					iP=f[i].neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+					iP=f[i].neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 					if (iP < f[i].maxelm) idubl=iP;
 				}
 				iP=idubl; // самый W-ый внутренний сеточный узел в сеточной линии WE
@@ -125,7 +125,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 					bmask[iP]=true; // узел был посещён.
 					iN++;
 					r2->id=iP;
-					iP = f[i].neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+					iP = f[i].neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 					if (iP < f[i].maxelm) {
 						idubl=iP;
 						r2->next=new NODELR;
@@ -156,7 +156,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 			if (!bmask[iP]) {
 				// если узел ещё не был посещён
 				while (iP < f[i].maxelm) {
-					iP = f[i].neighbors_for_the_internal_node[SSIDE][iP].iNODE1;
+					iP = f[i].neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
 					if (iP < f[i].maxelm) idubl=iP;
 				}
 				iP=idubl; // самый S-ый внутренний сеточный узел в сеточной линии SN
@@ -190,7 +190,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 					bmask[iP]=true; // узел был посещён.
 					iN++;
 					r2->id=iP;
-					iP = f[i].neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
+					iP = f[i].neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
 					if (iP < f[i].maxelm) {
 						idubl=iP;
 						r2->next=new NODELR;
@@ -217,7 +217,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 			if (!bmask[iP]) {
 				// если узел ещё не был посещён
 				while (iP < f[i].maxelm) {
-					iP = f[i].neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+					iP = f[i].neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 					if (iP < f[i].maxelm) idubl=iP;
 				}
 				iP=idubl; // самый S-ый внутренний сеточный узел в сеточной линии SN
@@ -251,7 +251,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 					bmask[iP]=true; // узел был посещён.
 					iN++;
 					r2->id=iP;
-					iP = f[i].neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+					iP = f[i].neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
 					if (iP < f[i].maxelm) {
 						idubl=iP;
 						r2->next=new NODELR;
@@ -461,7 +461,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		if (!bmask[iP]) {
 			// если узел ещё не был посещён
 			while (iP < t.maxelm) {
-				iP = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
+				iP = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
 				if (iP < t.maxelm) idubl=iP;
 				// случай источника тепла также предусмотрен т.к. его идентификатор контрольного объёма меньше t.maxelm.
 			}
@@ -498,7 +498,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 				bmask[iP]=true; // узел был посещён.
 				iN++;
 				r2->id=iP;
-				iP = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
+				iP = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
 				if (iP < t.maxelm) {
 					//idubl=iP; // это лишнее TODO
 					if (r2->next == nullptr) {
@@ -532,7 +532,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		if (!bmask[iP]) {
 			// если узел ещё не был посещён
 			while (iP < t.maxelm) {
-				iP = t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1;
+				iP = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
 				if (iP < t.maxelm) idubl=iP;
 			}
 			iP=idubl; // самый S-ый внутренний сеточный узел в сеточной линии SN
@@ -567,7 +567,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 				bmask[iP]=true; // узел был посещён.
 				iN++;
 				r2->id=iP;
-				iP = t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
+				iP = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
 				if (iP < t.maxelm) {
 					idubl=iP;
 					if (r2->next == nullptr) {
@@ -602,7 +602,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		if (!bmask[iP]) {
 			// если узел ещё не был посещён
 			while (iP < t.maxelm) {
-				iP = t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+				iP = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 				if (iP < t.maxelm) idubl=iP;
 			}
 			iP=idubl; // самый S-ый внутренний сеточный узел в сеточной линии SN
@@ -637,7 +637,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 				bmask[iP]=true; // узел был посещён.
 				iN++;
 				r2->id=iP;
-				iP = t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
+				iP = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
 				if (iP < t.maxelm) {
 					idubl=iP;
 					if (r2->next == nullptr) {
@@ -721,7 +721,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		// В ib возвращается номер блока которому принадлежит контрольный объём КО.
 	    bi_fluid=in_model_flow(p_c,ib,b,lb); // принадлежит ли КО жидкой зоне.
 
-		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[WSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
+		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[W_SIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
 		
 		while (r2->next!=nullptr) r2=r2->next; // перемотка в конец списка
 
@@ -731,7 +731,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	    bi_fluid=in_model_flow(p_c,ib,b,lb); // принадлежит ли КО жидкой зоне.
 
-		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[ESIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanEnd = true;
+		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[E_SIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanEnd = true;
 
 		r1=r1->next; // переход к следующей линиии
 	}
@@ -753,7 +753,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		// В ib возвращается номер блока которому принадлежит контрольный объём КО.
 	    bi_fluid=in_model_flow(p_c,ib,b,lb); // принадлежит ли КО жидкой зоне.
 
-		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[SSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
+		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[S_SIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
 		
 		while (r2->next!=nullptr) r2=r2->next; // перемотка в конец списка
 
@@ -763,7 +763,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	    bi_fluid=in_model_flow(p_c,ib,b,lb); // принадлежит ли КО жидкой зоне.
 
-		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[NSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanEnd = true;
+		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[N_SIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanEnd = true;
 
 		r1=r1->next; // переход к следующей линиии
 	}
@@ -785,7 +785,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		// В ib возвращается номер блока которому принадлежит контрольный объём КО.
 	    bi_fluid=in_model_flow(p_c,ib,b,lb); // принадлежит ли КО жидкой зоне.
 
-		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[BSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
+		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[B_SIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
 		
 		while (r2->next!=nullptr) r2=r2->next; // перемотка в конец списка
 
@@ -795,7 +795,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	    bi_fluid=in_model_flow(p_c,ib,b,lb); // принадлежит ли КО жидкой зоне.
 
-		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[TSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanEnd = true;
+		if ((bi_fluid) && (t.binternalsource[t.neighbors_for_the_internal_node[T_SIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanEnd = true;
 
 		r1=r1->next; // переход к следующей линиии
 	}
@@ -924,9 +924,9 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
     doublereal alphaP=1.0;
 	if (!bnorelax) {
 		switch (iVar) {
-		    case VX: alphaP=alpha[iVar]; break;
-		    case VY: alphaP=alpha[iVar]; break;
-		    case VZ: alphaP=alpha[iVar]; break;
+		    case VELOCITY_X_COMPONENT: alphaP=alpha[iVar]; break;
+		    case VELOCITY_Y_COMPONENT: alphaP=alpha[iVar]; break;
+		    case VELOCITY_Z_COMPONENT: alphaP=alpha[iVar]; break;
 	    }
 	}
 	else alphaP=1.0;
@@ -985,7 +985,7 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 		c[0]=0.0;
 		b[n-1]=0.0;
 
-		integer iP=neighbors_for_the_internal_node[WSIDE][id[0][j][0]].iNODE1; // номер граничного узла
+		integer iP=neighbors_for_the_internal_node[W_SIDE][id[0][j][0]].iNODE1; // номер граничного узла
 		a[0]=slau_bon[iVar][iP-maxelm].aw;///alphaP; // граничные узлы не релаксируются если на них стоит условие Дирихле
 		if (slau_bon[iVar][iP-maxelm].iI>-1) {
 			b[0]=slau_bon[iVar][iP-maxelm].ai;
@@ -1000,14 +1000,14 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 			a[i]=slau[iVar][iP].ap/alphaP;
 			b[i]=slau[iVar][iP].ae;
 			c[i]=slau[iVar][iP].aw;
-			d[i] = slau[iVar][iP].an*xc[neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].as*xc[neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].at*xc[neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].ab*xc[neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+			d[i] = slau[iVar][iP].an*xc[neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].as*xc[neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].at*xc[neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].ab*xc[neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 			d[i]+=rthdsd[iP]; //f.slau[iVar][iP].b;
 		}
 
-		iP = neighbors_for_the_internal_node[ESIDE][id[0][j][n - 3]].iNODE1; // номер граничного узла
+		iP = neighbors_for_the_internal_node[E_SIDE][id[0][j][n - 3]].iNODE1; // номер граничного узла
 		a[n-1]=slau_bon[iVar][iP-maxelm].aw;///alphaP; // граничные узлы не релаксируются
         if (slau_bon[iVar][iP-maxelm].iI>-1) {
 		    c[n-1]=slau_bon[iVar][iP-maxelm].ai;
@@ -1080,7 +1080,7 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 		c[0]=0.0;
 		b[n-1]=0.0;
 
-		integer iP = neighbors_for_the_internal_node[SSIDE][id[1][j][0]].iNODE1; // номер граничного узла
+		integer iP = neighbors_for_the_internal_node[S_SIDE][id[1][j][0]].iNODE1; // номер граничного узла
 		a[0]=slau_bon[iVar][iP-maxelm].aw;///alphaP;
 		if (slau_bon[iVar][iP-maxelm].iI>-1) {
 			b[0]=slau_bon[iVar][iP-maxelm].ai;
@@ -1095,15 +1095,15 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 			a[i]=slau[iVar][iP].ap/alphaP;
 			b[i]=slau[iVar][iP].an;
 			c[i]=slau[iVar][iP].as;
-			d[i] = slau[iVar][iP].ae*xc[neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].aw*xc[neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].at*xc[neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].ab*xc[neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+			d[i] = slau[iVar][iP].ae*xc[neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].aw*xc[neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].at*xc[neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].ab*xc[neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 			d[i]+=rthdsd[iP]; //f.slau[iVar][iP].b
 		}
 
 
-		iP = neighbors_for_the_internal_node[NSIDE][id[1][j][n - 3]].iNODE1; // номер граничного узла
+		iP = neighbors_for_the_internal_node[N_SIDE][id[1][j][n - 3]].iNODE1; // номер граничного узла
 		a[n-1]=slau_bon[iVar][iP-maxelm].aw;///alphaP;
         if (slau_bon[iVar][iP-maxelm].iI>-1) {
 		    c[n-1]=slau_bon[iVar][iP-maxelm].ai;
@@ -1175,7 +1175,7 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 		c[0]=0.0;
 		b[n-1]=0.0;
  
-		integer iP = neighbors_for_the_internal_node[BSIDE][id[2][j][0]].iNODE1; // номер граничного узла
+		integer iP = neighbors_for_the_internal_node[B_SIDE][id[2][j][0]].iNODE1; // номер граничного узла
 		a[0]=slau_bon[iVar][iP-maxelm].aw;///alphaP;
 		if (slau_bon[iVar][iP-maxelm].iI>-1) {
 			b[0]=slau_bon[iVar][iP-maxelm].ai;
@@ -1190,14 +1190,14 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 			a[i]=slau[iVar][iP].ap/alphaP;
 			b[i]=slau[iVar][iP].at;
 			c[i]=slau[iVar][iP].ab;
-			d[i] = slau[iVar][iP].ae*xc[neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].aw*xc[neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].an*xc[neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].as*xc[neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
+			d[i] = slau[iVar][iP].ae*xc[neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].aw*xc[neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].an*xc[neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].as*xc[neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
 			d[i]+=rthdsd[iP]; //f.slau[iVar][iP].b;
 		}
 		
-		iP = neighbors_for_the_internal_node[TSIDE][id[2][j][n - 3]].iNODE1; // номер граничного узла
+		iP = neighbors_for_the_internal_node[T_SIDE][id[2][j][n - 3]].iNODE1; // номер граничного узла
 		a[n-1]=slau_bon[iVar][iP-maxelm].aw;//alphaP;
         if (slau_bon[iVar][iP-maxelm].iI>-1) {
 		    c[n-1]=slau_bon[iVar][iP-maxelm].ai;
@@ -1282,9 +1282,9 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 	doublereal alphaP = 1.0;
 	if (!bnorelax) {
 		switch (iVar) {
-		case VX: alphaP = alpha[iVar]; break;
-		case VY: alphaP = alpha[iVar]; break;
-		case VZ: alphaP = alpha[iVar]; break;
+		case VELOCITY_X_COMPONENT: alphaP = alpha[iVar]; break;
+		case VELOCITY_Y_COMPONENT: alphaP = alpha[iVar]; break;
+		case VELOCITY_Z_COMPONENT: alphaP = alpha[iVar]; break;
 		}
 	}
 	else alphaP = 1.0;
@@ -1349,7 +1349,7 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 
 		
 
-		integer iP = neighbors_for_the_internal_node[WSIDE][id[0][j][0]].iNODE1; // номер граничного узла
+		integer iP = neighbors_for_the_internal_node[W_SIDE][id[0][j][0]].iNODE1; // номер граничного узла
 		a[0] = slau_bon[iVar][iP - maxelm].aw;///alphaP; // граничные узлы не релаксируются если на них стоит условие Дирихле
 		if (slau_bon[iVar][iP - maxelm].iI>-1) {
 			b[0] = slau_bon[iVar][iP - maxelm].ai;
@@ -1375,10 +1375,10 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 			// serial
 			
 			
-			d[i] = slau[iVar][iP].an*x[neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].as*x[neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].at*x[neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].ab*x[neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+			d[i] = slau[iVar][iP].an*x[neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].as*x[neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].at*x[neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].ab*x[neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 			d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 
 			
@@ -1386,7 +1386,7 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 
 		
 
-		iP = neighbors_for_the_internal_node[ESIDE][id[0][j][n - 3]].iNODE1; // номер граничного узла
+		iP = neighbors_for_the_internal_node[E_SIDE][id[0][j][n - 3]].iNODE1; // номер граничного узла
 		
 		
 		a[n - 1] = slau_bon[iVar][iP - maxelm].aw;///alphaP; // граничные узлы не релаксируются
@@ -1480,7 +1480,7 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 		c[0] = 0.0;
 		b[n - 1] = 0.0;
 
-		integer iP = neighbors_for_the_internal_node[SSIDE][id[1][j][0]].iNODE1; // номер граничного узла
+		integer iP = neighbors_for_the_internal_node[S_SIDE][id[1][j][0]].iNODE1; // номер граничного узла
 		a[0] = slau_bon[iVar][iP - maxelm].aw;///alphaP;
 		if (slau_bon[iVar][iP - maxelm].iI>-1) {
 			b[0] = slau_bon[iVar][iP - maxelm].ai;
@@ -1500,15 +1500,15 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 			//d[i] += slau[iVar][iP].aw*xc[neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
 			//d[i] += slau[iVar][iP].at*xc[neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
 			//d[i] += slau[iVar][iP].ab*xc[neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
-			d[i] = slau[iVar][iP].ae*x[neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].aw*x[neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].at*x[neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].ab*x[neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+			d[i] = slau[iVar][iP].ae*x[neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].aw*x[neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].at*x[neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].ab*x[neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 			d[i] += rthdsd[iP]; //f.slau[iVar][iP].b
 		}
 
 
-		iP = neighbors_for_the_internal_node[NSIDE][id[1][j][n - 3]].iNODE1; // номер граничного узла
+		iP = neighbors_for_the_internal_node[N_SIDE][id[1][j][n - 3]].iNODE1; // номер граничного узла
 		a[n - 1] = slau_bon[iVar][iP - maxelm].aw;///alphaP;
 		if (slau_bon[iVar][iP - maxelm].iI>-1) {
 			c[n - 1] = slau_bon[iVar][iP - maxelm].ai;
@@ -1592,7 +1592,7 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 		c[0] = 0.0;
 		b[n - 1] = 0.0;
 
-		integer iP = neighbors_for_the_internal_node[BSIDE][id[2][j][0]].iNODE1; // номер граничного узла
+		integer iP = neighbors_for_the_internal_node[B_SIDE][id[2][j][0]].iNODE1; // номер граничного узла
 		a[0] = slau_bon[iVar][iP - maxelm].aw;///alphaP;
 		if (slau_bon[iVar][iP - maxelm].iI>-1) {
 			b[0] = slau_bon[iVar][iP - maxelm].ai;
@@ -1613,14 +1613,14 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 			//d[i] += slau[iVar][iP].an*xc[neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
 			//d[i] += slau[iVar][iP].as*xc[neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
 
-			d[i] = slau[iVar][iP].ae*x[neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].aw*x[neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].an*x[neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-			d[i] += slau[iVar][iP].as*x[neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
+			d[i] = slau[iVar][iP].ae*x[neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].aw*x[neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].an*x[neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+			d[i] += slau[iVar][iP].as*x[neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
 			d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 		}
 
-		iP = neighbors_for_the_internal_node[TSIDE][id[2][j][n - 3]].iNODE1; // номер граничного узла
+		iP = neighbors_for_the_internal_node[T_SIDE][id[2][j][n - 3]].iNODE1; // номер граничного узла
 		a[n - 1] = slau_bon[iVar][iP - maxelm].aw;//alphaP;
 		if (slau_bon[iVar][iP - maxelm].iI>-1) {
 			c[n - 1] = slau_bon[iVar][iP - maxelm].ai;
@@ -1767,7 +1767,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 
 			if (!t.rootWE[j].bNeimanStart) {
-				iP = t.neighbors_for_the_internal_node[WSIDE][r2->id].iNODE1; // номер граничного узла
+				iP = t.neighbors_for_the_internal_node[W_SIDE][r2->id].iNODE1; // номер граничного узла
 				a[0] = t.slau_bon[iP - t.maxelm].aw;///alphaP; // граничные узлы не релаксируются если на них стоит условие Дирихле
 				if (t.slau_bon[iP - t.maxelm].iI > -1) {
 					b[0] = t.slau_bon[iP - t.maxelm].ai;
@@ -1786,10 +1786,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 				a[0] = t.slau[iP].ap / alphaP;
 				b[0] = t.slau[iP].ae;
 				c[0] = 0.0; //t.slau[iP].aw; // связь была разорвана
-				d[0] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+				d[0] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 				d[0] += rthdsd[iP]; //f.slau[iVar][iP].b;
 
 				r2 = r2->next;
@@ -1805,10 +1805,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					a[i] = t.slau[iP].ap / alphaP;
 					b[i] = t.slau[iP].ae;
 					c[i] = t.slau[iP].aw;
-					d[i] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+					d[i] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 					d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 				}
 				else {
@@ -1833,10 +1833,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 						a[i] = t.slau[iP].ap / alphaP;
 						b[i] = t.slau[iP].ae;
 						c[i] = t.slau[iP].aw;
-						d[i] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+						d[i] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 						d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 					}
 					else {
@@ -1847,7 +1847,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 
 					i++;
-					iP = t.neighbors_for_the_internal_node[ESIDE][r2->id].iNODE1; // номер граничного узла
+					iP = t.neighbors_for_the_internal_node[E_SIDE][r2->id].iNODE1; // номер граничного узла
 					a[i] = t.slau_bon[iP - t.maxelm].aw;///alphaP; // граничные узлы не релаксируются
 					if (t.slau_bon[iP - t.maxelm].iI > -1) {
 						c[i] = t.slau_bon[iP - t.maxelm].ai;
@@ -1876,10 +1876,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 						a[i] = t.slau[iP].ap / alphaP;
 						b[i] = 0.0; // t.slau[iP].ae; связь разорвана
 						c[i] = t.slau[iP].aw;
-						d[i] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+						d[i] = t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 						d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 					}
 					else {
@@ -2004,7 +2004,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			NODELR* r2 = t.rootSN[j].root;
 
 			if (!t.rootSN[j].bNeimanStart) {
-				iP = t.neighbors_for_the_internal_node[SSIDE][r2->id].iNODE1; // номер граничного узла
+				iP = t.neighbors_for_the_internal_node[S_SIDE][r2->id].iNODE1; // номер граничного узла
 				a[0] = t.slau_bon[iP - t.maxelm].aw;///alphaP;
 				if (t.slau_bon[iP - t.maxelm].iI > -1) {
 					b[0] = t.slau_bon[iP - t.maxelm].ai;
@@ -2023,10 +2023,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 				a[0] = t.slau[iP].ap / alphaP;
 				b[0] = t.slau[iP].an;
 				c[0] = 0.0; //t.slau[iP].as; // разорвана связь с источником
-				d[0] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-				d[0] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+				d[0] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 				d[0] += rthdsd[iP]; //f.slau[iVar][iP].b;
 
 				r2 = r2->next;
@@ -2041,10 +2041,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					a[i] = t.slau[iP].ap / alphaP;
 					b[i] = t.slau[iP].an;
 					c[i] = t.slau[iP].as;
-					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 					d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 				}
 				else {
@@ -2069,13 +2069,13 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 						a[i] = t.slau[iP].ap / alphaP;
 						b[i] = t.slau[iP].an;
 						c[i] = t.slau[iP].as;
-						d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-						d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+						d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 						d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 						i++;
-						iP = t.neighbors_for_the_internal_node[NSIDE][r2->id].iNODE1; // номер граничного узла
+						iP = t.neighbors_for_the_internal_node[N_SIDE][r2->id].iNODE1; // номер граничного узла
 						a[i] = t.slau_bon[iP - t.maxelm].aw;///alphaP;
 						if (t.slau_bon[iP - t.maxelm].iI > -1) {
 							c[i] = t.slau_bon[iP - t.maxelm].ai;
@@ -2103,10 +2103,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 						a[i] = t.slau[iP].ap / alphaP;
 						b[i] = 0.0; //t.slau[iP].an; разрыв связи с источником
 						c[i] = t.slau[iP].as;
-						d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-						d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1];
-						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1];
+						d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].at*xc[t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1];
+						d[i] += t.slau[iP].ab*xc[t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1];
 						d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 					}
 				}
@@ -2237,7 +2237,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			NODELR* r2 = t.rootBT[j].root;
 
 			if (!t.rootBT[j].bNeimanStart) {
-				iP = t.neighbors_for_the_internal_node[BSIDE][r2->id].iNODE1; // номер граничного узла
+				iP = t.neighbors_for_the_internal_node[B_SIDE][r2->id].iNODE1; // номер граничного узла
 				a[0] = t.slau_bon[iP - t.maxelm].aw;///alphaP;
 				if (t.slau_bon[iP - t.maxelm].iI > -1) {
 					b[0] = t.slau_bon[iP - t.maxelm].ai;
@@ -2257,10 +2257,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 				a[0] = t.slau[iP].ap / alphaP;
 				b[0] = t.slau[iP].at;
 				c[0] = 0.0; // t.slau[iP].ab; // разрыв связи с источником тепла
-				d[0] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-				d[0] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-				d[0] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
+				d[0] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+				d[0] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
 				d[0] += rthdsd[iP]; //f.slau[iVar][iP].b;
 
 				r2 = r2->next;
@@ -2275,10 +2275,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					a[i] = t.slau[iP].ap / alphaP;
 					b[i] = t.slau[iP].at;
 					c[i] = t.slau[iP].ab;
-					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
+					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
 					d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 				}
 				else {
@@ -2301,13 +2301,13 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					a[i] = t.slau[iP].ap / alphaP;
 					b[i] = t.slau[iP].at;
 					c[i] = t.slau[iP].ab;
-					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
+					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
 					d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 					i++;
-					iP = t.neighbors_for_the_internal_node[TSIDE][r2->id].iNODE1; // номер граничного узла
+					iP = t.neighbors_for_the_internal_node[T_SIDE][r2->id].iNODE1; // номер граничного узла
 					a[i] = t.slau_bon[iP - t.maxelm].aw;//alphaP;
 					if (t.slau_bon[iP - t.maxelm].iI > -1) {
 						c[i] = t.slau_bon[iP - t.maxelm].ai;
@@ -2326,10 +2326,10 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					a[i] = t.slau[iP].ap / alphaP;
 					b[i] = 0.0; //t.slau[iP].at; // разрыв связи с источником
 					c[i] = t.slau[iP].ab;
-					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1];
-					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1];
-					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1];
+					d[i] = t.slau[iP].ae*xc[t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].aw*xc[t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].an*xc[t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1];
+					d[i] += t.slau[iP].as*xc[t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1];
 					d[i] += rthdsd[iP]; //f.slau[iVar][iP].b;
 				}
 				n = i + 1;
@@ -2445,7 +2445,6 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 	integer i=0; // счётчик количества итераций
 	if (bprintf) {
 		printf("LR1 start solution...\n");
-		fprintf(fp_log,"LR1 start solution...\n");
 	}
 	doublereal e=dterminatedTResudual;
 	doublereal dresgl=1.0;
@@ -2457,9 +2456,9 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 		if (only_serial) {
 			doublereal omega = 1.0;
 			switch (iVar) {
-			case VX:  omega = 1.0; break;
-			case VY:  omega = 1.0;  break;
-			case VZ:  omega = 1.0; break;
+			case VELOCITY_X_COMPONENT:  omega = 1.0; break;
+			case VELOCITY_Y_COMPONENT:  omega = 1.0;  break;
+			case VELOCITY_Z_COMPONENT:  omega = 1.0; break;
 			case PAM: omega = 1.7; break; // 1.855
 			default:  omega = 1.0;  break;
 			}
@@ -2489,7 +2488,7 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 		for (j=0; j<maxelm; j++) {
 			doublereal dbuf=0.0;
 			//rmax=fmaxloc(rmax,fabs(f.slau[iVar][j].ap*x[j]-f.slau[iVar][j].ab*x[f.neighbors_for_the_internal_node[BSIDE][j].iNODE1]-f.slau[iVar][j].at*x[f.neighbors_for_the_internal_node[TSIDE][j].iNODE1]-f.slau[iVar][j].an*x[f.neighbors_for_the_internal_node[NSIDE][j].iNODE1]-f.slau[iVar][j].as*x[f.neighbors_for_the_internal_node[SSIDE][j].iNODE1]-f.slau[iVar][j].ae*x[f.neighbors_for_the_internal_node[ESIDE][j].iNODE1]-f.slau[iVar][j].aw*x[f.neighbors_for_the_internal_node[WSIDE][j].iNODE1]-f.slau[iVar][j].b));
-			dbuf = fabs(slau[iVar][j].ap*x[j] - slau[iVar][j].ab*x[neighbors_for_the_internal_node[BSIDE][j].iNODE1] - slau[iVar][j].at*x[neighbors_for_the_internal_node[TSIDE][j].iNODE1] - slau[iVar][j].an*x[neighbors_for_the_internal_node[NSIDE][j].iNODE1] - slau[iVar][j].as*x[neighbors_for_the_internal_node[SSIDE][j].iNODE1] - slau[iVar][j].ae*x[neighbors_for_the_internal_node[ESIDE][j].iNODE1] - slau[iVar][j].aw*x[neighbors_for_the_internal_node[WSIDE][j].iNODE1] - rthdsd[j]); //-f.slau[iVar][j].b
+			dbuf = fabs(slau[iVar][j].ap*x[j] - slau[iVar][j].ab*x[neighbors_for_the_internal_node[B_SIDE][j].iNODE1] - slau[iVar][j].at*x[neighbors_for_the_internal_node[T_SIDE][j].iNODE1] - slau[iVar][j].an*x[neighbors_for_the_internal_node[N_SIDE][j].iNODE1] - slau[iVar][j].as*x[neighbors_for_the_internal_node[S_SIDE][j].iNODE1] - slau[iVar][j].ae*x[neighbors_for_the_internal_node[E_SIDE][j].iNODE1] - slau[iVar][j].aw*x[neighbors_for_the_internal_node[W_SIDE][j].iNODE1] - rthdsd[j]); //-f.slau[iVar][j].b
 			//dbuf=dbuf*dbuf;
 			//dsum+=dbuf;
 			residual[j]=dbuf;
@@ -2529,35 +2528,20 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 
 		// нормы невязки по видимому должны быть согласованы с основным алгоритмом.
 		dsum=NormaV(residual, maxelm+maxbound); // вычисление нормы невязки.
-		if (residual != nullptr) {
-			delete[] residual; // освобождение памяти из под вектора невязки.
-		}
+		
+		delete[] residual; // освобождение памяти из под вектора невязки.
+		residual = nullptr;
 
 		if (bprintf) {
 		    if (i%10==0) {
-				printf("iter residual\n");
-				fprintf(fp_log,"iter residual\n");
+				std::cout<<"iter residual"<<std::endl;
 			}
-#if doubleintprecision == 1
-			printf(" %lld  %e\n", i + 1, dsum);
-			fprintf(fp_log, " %lld  %e\n", i + 1, dsum);
-#else
-			printf(" %d  %e\n", i + 1, dsum);
-			fprintf(fp_log, " %d  %e\n", i + 1, dsum);
-#endif
-
-		    
+			std::cout << " " << i+1 << "  " << dsum << std::endl;   
 		}
 		divres=fabs(dresgl-dsum); // разница в невязках между двумя ближайшими итерациями
 		dresgl=dsum;
 
 		i++;
-	}
-
-    // В этот файл пишется статистика об успешности решения СЛАУ:
-	if (bprintf) {
-		//fprintf(fp_statistic_convergence, " LR1 method finish residual=%e \n",dresgl);
-	    fprintf(fp_statistic_convergence,"%e ",dresgl);
 	}
 
 } // solveLRn
@@ -2584,7 +2568,6 @@ void solveLRn_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns, i
 	integer i=0; // счётчик количества итераций
 	if (bprintf) {
 		printf("LR1 start solution...\n");
-		fprintf(fp_log,"LR1 start solution...\n");
 	}
 	doublereal e=dterminatedTResudual; // Норма должна быть согласована с LR1sk солвером.
 	doublereal dresgl=1.0;
@@ -2616,12 +2599,12 @@ void solveLRn_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns, i
 			// f.slau[iVar][j].aw*x[f.neighbors_for_the_internal_node[WSIDE][j].iNODE1]-
 			// f.slau[iVar][j].b)); // или rthdsd[j]);
 			dbuf=fabs(t.slau[j].ap*x[j]-
-				t.slau[j].ab*x[t.neighbors_for_the_internal_node[BSIDE][j].iNODE1] -
-				t.slau[j].at*x[t.neighbors_for_the_internal_node[TSIDE][j].iNODE1] -
-				t.slau[j].an*x[t.neighbors_for_the_internal_node[NSIDE][j].iNODE1] -
-				t.slau[j].as*x[t.neighbors_for_the_internal_node[SSIDE][j].iNODE1] -
-				t.slau[j].ae*x[t.neighbors_for_the_internal_node[ESIDE][j].iNODE1] -
-				t.slau[j].aw*x[t.neighbors_for_the_internal_node[WSIDE][j].iNODE1] -
+				t.slau[j].ab*x[t.neighbors_for_the_internal_node[B_SIDE][j].iNODE1] -
+				t.slau[j].at*x[t.neighbors_for_the_internal_node[T_SIDE][j].iNODE1] -
+				t.slau[j].an*x[t.neighbors_for_the_internal_node[N_SIDE][j].iNODE1] -
+				t.slau[j].as*x[t.neighbors_for_the_internal_node[S_SIDE][j].iNODE1] -
+				t.slau[j].ae*x[t.neighbors_for_the_internal_node[E_SIDE][j].iNODE1] -
+				t.slau[j].aw*x[t.neighbors_for_the_internal_node[W_SIDE][j].iNODE1] -
 					  rthdsd[j]);
 
 			//dbuf=dbuf*dbuf;
@@ -2666,42 +2649,23 @@ void solveLRn_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns, i
 
 		// нормы невязки по видимому должны быть согласованы с основным алгоритмом.
 		dsum=NormaV(residual, t.maxelm+t.maxbound); // вычисление нормы невязки.
-		if (residual != nullptr) {
-			delete[] residual; // освобождение памяти из под вектора невязки.
-			residual = nullptr;
-		}
+		
+		delete[] residual; // освобождение памяти из под вектора невязки.
+		residual = nullptr;
+		
 
 
 		if (bprintf) {
-#if doubleintprecision == 1
 			if (i % 10 == 0) {
-				printf("iter residual\n");
-				fprintf(fp_log, " %lld  %e\n", i + 1, dsum);
-		    }
-			printf(" %lld  %e\n", i + 1, dsum); //getchar();
-			fprintf(fp_log, " %lld  %e\n", i + 1, dsum);
-#else
-			if (i % 10 == 0) {
-				printf("iter residual\n");
-				fprintf(fp_log, " %d  %e\n", i + 1, dsum);
+				std::cout << "iter residual"<< std::endl;
 			}
-			printf(" %d  %e\n", i + 1, dsum); //getchar();
-			fprintf(fp_log, " %d  %e\n", i + 1, dsum);
-#endif
-
-		  
+			std::cout << " " << i+1 << "  " << dsum << std::endl; //getchar();
 		}
 		divres=fabs(dresgl-dsum); // разница в невязках между двумя ближайшими итерациями
 		dresgl=dsum;
 
 		i++;
 	}
-
-    // В этот файл пишется статистика об успешности решения СЛАУ:
-	//if (bprintf) {
-		//fprintf(fp_statistic_convergence, " LR1 method finish residual=%e \n",dresgl);
-	  //  fprintf(fp_statistic_convergence,"%e ",dresgl);
-	//}
 
 } // solveLRn_temp
 

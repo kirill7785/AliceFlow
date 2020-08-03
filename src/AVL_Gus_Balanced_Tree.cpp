@@ -27,10 +27,17 @@ struct node_AVL_Gus
 	integer key;
 	// Высота поддерева с корнем в данном узле.
 	unsigned char height;
-	node_AVL_Gus* left = nullptr;
-	node_AVL_Gus* right = nullptr;
+	node_AVL_Gus* left;
+	node_AVL_Gus* right;
 	// Конструктор.
 	node_AVL_Gus(integer k) { key = k; left = right = 0; height = 1; }
+
+	node_AVL_Gus() {
+		key = -1;
+		height = 1;
+		left = nullptr;
+		right = nullptr;
+	}
 };
 
 

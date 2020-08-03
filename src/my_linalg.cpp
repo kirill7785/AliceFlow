@@ -18,9 +18,9 @@
 // закомментировать #include "my_vienna_alg.cpp"  если она не используется.
 // Задать GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0; Если viennacl 1.7.1 lib не используется.
 const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
-const integer AMGCL_INCLUDE_IN_MY_PROJECT = 0;
+#define AMGCL_INCLUDE_IN_MY_PROJECT 1
 //#include "my_vienna_alg.cpp" // ViennaCL 1.7.1
-#if AMGCL_INCLUDE_IN_MY_PROJECT == 1
+#ifdef AMGCL_INCLUDE_IN_MY_PROJECT
 #include "my_amgcl_alg.cpp" // Библиотека Дениса Демидова AMGCL.
 //#include "my_amgcl_alg_openMP.cpp"  // Библиотека Дениса Демидова AMGCL OpenMP.
 #endif
@@ -43,12 +43,12 @@ doublereal rterminate_residual_ICCG_Oh2(FLOW floc) {
 		doublereal dl = fmin(dx, fmin(dy, dz));
 		resterm[iP] = 0.1*dl*dl; // O(h!2)
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = floc.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; 
-		iN = floc.neighbors_for_the_internal_node[NSIDE][iP].iNODE1;
-		iT = floc.neighbors_for_the_internal_node[TSIDE][iP].iNODE1; 
-		iW = floc.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
-		iS = floc.neighbors_for_the_internal_node[SSIDE][iP].iNODE1; 
-		iB = floc.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+		iE = floc.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
+		iN = floc.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1;
+		iT = floc.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
+		iW = floc.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+		iS = floc.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+		iB = floc.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 		// Если с одной из сторон стоит граница расчётной области
 		// то соответствующая переменная равна true
 		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -96,12 +96,12 @@ doublereal rterminate_residual_LR1sk_Oh3(FLOW floc) {
 		doublereal dl = fmin(dx, fmin(dy, dz));
 		resterm[iP] = 0.1*dl*dl*dl; // O(h!3)
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = floc.neighbors_for_the_internal_node[ESIDE][iP].iNODE1;
-		iN = floc.neighbors_for_the_internal_node[NSIDE][iP].iNODE1; 
-		iT = floc.neighbors_for_the_internal_node[TSIDE][iP].iNODE1; 
-		iW = floc.neighbors_for_the_internal_node[WSIDE][iP].iNODE1;
-		iS = floc.neighbors_for_the_internal_node[SSIDE][iP].iNODE1; 
-		iB = floc.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+		iE = floc.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1;
+		iN = floc.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+		iT = floc.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
+		iW = floc.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1;
+		iS = floc.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; 
+		iB = floc.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 		// Если с одной из сторон стоит граница расчётной области
 		// то соответствующая переменная равна true
 		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -156,12 +156,12 @@ doublereal rterminate_residual_LR1sk_temp_Oh3(TEMPER t) {
 		//resterm[iP]=0.1*dl*dl*dl; // O(h!3)
 		resterm[iP] = dl; // O(h)
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = t.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; 
-		iN = t.neighbors_for_the_internal_node[NSIDE][iP].iNODE1; 
-		iT = t.neighbors_for_the_internal_node[TSIDE][iP].iNODE1; 
-		iW = t.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; 
-		iS = t.neighbors_for_the_internal_node[SSIDE][iP].iNODE1;
-		iB = t.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+		iE = t.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; 
+		iN = t.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; 
+		iT = t.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1; 
+		iW = t.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; 
+		iS = t.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1;
+		iB = t.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 		// Если с одной из сторон стоит граница расчётной области
 		// то соответствующая переменная равна true
 		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
@@ -850,7 +850,7 @@ void jacobi_matrix_simple(doublereal **A, doublereal **U, doublereal *lambda, in
 	   // Вычисление угла:
 	   if (fabs(A[im][im]-A[jm][jm])<eps) {
 		   // особый случай значения равны
-		   fi=3.141/4.0;
+		   fi=M_PI/4.0;
 	   }
 	   else fi= atan(2*maxij/(A[im][im]-A[jm][jm]))/2;
        
@@ -1100,7 +1100,7 @@ void GSEP1(doublereal **A1, doublereal **A2, doublereal **U, doublereal *lambda,
 	doublereal *test=new doublereal[nodes];
     for (integer i=0; i<nodes; i++) test[i]=Ac[i][i];
     BubbleSortGSEP1(test,mask,nodes); 
-    for (integer i=0; i<8; i++) printf("%.2f ",test[i]/3.141/3.141); // собственные значения
+    for (integer i=0; i<8; i++) printf("%.2f ",test[i]/M_PI/M_PI); // собственные значения
 	printf("\n");
 	*/
 	if (L != nullptr) {
@@ -1271,24 +1271,47 @@ void SOR(equation* &sl, doublereal* &x, integer n) {
 // к выводу программы ANSYS Icepak 17.2.
 typedef struct  TResidualNormalization {
 	// 5.05.2017
-	 integer iM = 3;
-	doublereal resVX0 = 1.0;
-	doublereal resVY0 = 1.0;
-	doublereal resVZ0 = 1.0;
-	integer icVX = 0, icVY = 0, icVZ = 0;
+	 integer iM;
+	doublereal resVX0;
+	doublereal resVY0;
+	doublereal resVZ0;
+	integer icVX, icVY, icVZ;
 	// Спаларт Аллмарес [1992].
-	doublereal resNUSHA0 = 1.0;
-	integer icNUSHA = 0;
+	doublereal resNUSHA0;
+	integer icNUSHA;
 	// SST k-omega Menter [1993].
-	doublereal reskMenter0 = 1.0;
-	integer ickMenter = 0;
-	doublereal resomegaMenter0 = 1.0;
-	integer icomegaMenter = 0;
+	doublereal reskMenter0;
+	integer ickMenter;
+	doublereal resomegaMenter0;
+	integer icomegaMenter;
 	// Двухслойная модель на основе стандартной k-epsilon модели [2001].
-	doublereal reskStandart_k_epsilon0 = 1.0;
-	integer ickStandart_k_epsilon = 0;
-	doublereal resepsilonStandart_k_epsilon0 = 1.0;
-	integer icepsilonStandart_k_epsilon = 0;
+	doublereal reskStandart_k_epsilon0;
+	integer ickStandart_k_epsilon;
+	doublereal resepsilonStandart_k_epsilon0;
+	integer icepsilonStandart_k_epsilon;
+
+	TResidualNormalization() {
+		// 5.05.2017
+		iM = 3;
+		resVX0 = 1.0;
+		resVY0 = 1.0;
+		resVZ0 = 1.0;
+		icVX = 0; icVY = 0; icVZ = 0;
+		// Спаларт Аллмарес [1992].
+		resNUSHA0 = 1.0;
+		icNUSHA = 0;
+		// SST k-omega Menter [1993].
+		 reskMenter0 = 1.0;
+		 ickMenter = 0;
+		 resomegaMenter0 = 1.0;
+		icomegaMenter = 0;
+		// Двухслойная модель на основе стандартной k-epsilon модели [2001].
+		reskStandart_k_epsilon0 = 1.0;
+		ickStandart_k_epsilon = 0;
+		resepsilonStandart_k_epsilon0 = 1.0;
+		icepsilonStandart_k_epsilon = 0;
+	}
+
 } ResidualNormalization;
 
 ResidualNormalization fluent_resformat;
@@ -1396,21 +1419,21 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 	}
 	
 	switch (iVar) {
-	  case VX: fluent_resformat.icVX++;
+	  case VELOCITY_X_COMPONENT: fluent_resformat.icVX++;
 		  if (fluent_resformat.icVX == fluent_resformat.iM) {
 			  if (fsum2 > 1.0e-41) {
 				  fluent_resformat.resVX0 = fsum1 / fsum2;
 			  }
 		  }
 		       break;
-	  case VY: fluent_resformat.icVY++;
+	  case VELOCITY_Y_COMPONENT: fluent_resformat.icVY++;
 		  if (fluent_resformat.icVY == fluent_resformat.iM) {
 			  if (fsum2 > 1.0e-41) {
 				  fluent_resformat.resVY0 = fsum1 / fsum2;
 			  }
 		  }
 		  break;
-	  case VZ: fluent_resformat.icVZ++; 
+	  case VELOCITY_Z_COMPONENT: fluent_resformat.icVZ++; 
 		  if (fluent_resformat.icVZ == fluent_resformat.iM) {
 			  if (fsum2 > 1.0e-41) {
 				  fluent_resformat.resVZ0 = fsum1 / fsum2;
@@ -1461,9 +1484,9 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 		r=fsum1/fsum2;
 		// Нормализация.
 		switch (iVar) {
-		  case VX: r = r / fluent_resformat.resVX0; break;
-		  case VY: r = r / fluent_resformat.resVY0; break;
-		  case VZ: r = r / fluent_resformat.resVZ0; break;
+		  case VELOCITY_X_COMPONENT: r = r / fluent_resformat.resVX0; break;
+		  case VELOCITY_Y_COMPONENT: r = r / fluent_resformat.resVY0; break;
+		  case VELOCITY_Z_COMPONENT: r = r / fluent_resformat.resVZ0; break;
 		  case NUSHA: r = r / fluent_resformat.resNUSHA0; break;
 		  case TURBULENT_KINETIK_ENERGY: r = r / fluent_resformat.reskMenter0; break;
 		  case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: r = r / fluent_resformat.resomegaMenter0; break;
@@ -1636,11 +1659,11 @@ void SOR3D(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* x_
 	switch (iVar) {
 		case PAM: rURF=1.0;//1.855; //1.855; 
 			      break;
-		case VX: rURF=1.0; //1.0;  // уравнения по скорости нелинейны и им нужна нижняя релаксация. Иначе возможна расходимость.
+		case VELOCITY_X_COMPONENT: rURF=1.0; //1.0;  // уравнения по скорости нелинейны и им нужна нижняя релаксация. Иначе возможна расходимость.
 			      break; // эта нижняя релаксация определяется при формировании матрицы СЛАУ.
-		case VY: rURF=1.0; //1.0;
+		case VELOCITY_Y_COMPONENT: rURF=1.0; //1.0;
 			      break;
-		case VZ: rURF=1.0; //1.0;
+		case VELOCITY_Z_COMPONENT: rURF=1.0; //1.0;
 			      break;
 		default: rURF=1.0; break; // в остальных случаях.
 	}
@@ -1687,7 +1710,7 @@ void SOR3D(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* x_
 		                  x[sl[i].iP]=x[sl[i].iP]+rURF*(ptilda-x[sl[i].iP]);
 					  }
 					   break;
-			case VX: case VY: case VZ: // нижняя релаксация на компоненты скорости.
+			case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: // нижняя релаксация на компоненты скорости.
 				      if (fabs(sl[i].ap)<1.0e-30) {
 #if doubleintprecision == 1
 						  printf("division by zero in i=%lld internal node. maxelm=%lld, maxbound=%lld\n", i, maxelm, maxbound);
@@ -1769,7 +1792,7 @@ void SOR3D(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* x_
 			              else x[slb[i].iW]=x[slb[i].iW]+rURF*(ptilda-x[slb[i].iW]);
 					  }
 					  break;
-			case VX: case VY: case VZ:
+			case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 				      if (fabs(slb[i].aw)<1.0e-30) {
 #if doubleintprecision == 1
 						  printf("division by zero in i=%lld boundary node. maxelm=%lld, maxbound=%lld\n", i, maxelm, maxbound);
@@ -1880,11 +1903,11 @@ void SOR3Dnow(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, integer max
 	switch (iVar) {
 		case PAM: rURF=1.0;//1.855; //1.855; 
 			      break;
-		case VX: rURF=1.0; //1.0;  // уравнения по скорости нелинейны и им нужна нижняя релаксация. Иначе возможна расходимость.
+		case VELOCITY_X_COMPONENT: rURF=1.0; //1.0;  // уравнения по скорости нелинейны и им нужна нижняя релаксация. Иначе возможна расходимость.
 			      break; // эта нижняя релаксация определяется при формировании матрицы СЛАУ.
-		case VY: rURF=1.0; //1.0;
+		case VELOCITY_Y_COMPONENT: rURF=1.0; //1.0;
 			      break;
-		case VZ: rURF=1.0; //1.0;
+		case VELOCITY_Z_COMPONENT: rURF=1.0; //1.0;
 			      break;
 		default: rURF=1.0; break; // в остальных случаях.
 	}
@@ -1931,7 +1954,7 @@ void SOR3Dnow(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, integer max
 		                  x[sl[i].iP]=x[sl[i].iP]+rURF*(ptilda-x[sl[i].iP]);
 					  }
 					   break;
-			case VX: case VY: case VZ: // нижняя релаксация на компоненты скорости.
+			case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: // нижняя релаксация на компоненты скорости.
 				      if (fabs(sl[i].ap)<1.0e-30) {
 #if doubleintprecision == 1
 						  printf("division by zero in i=%lld internal node. maxelm=%lld, maxbound=%lld\n", i, maxelm, maxbound);
@@ -2013,7 +2036,7 @@ void SOR3Dnow(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, integer max
 			              else x[slb[i].iW]=x[slb[i].iW]+rURF*(ptilda-x[slb[i].iW]);
 					  }
 					  break;
-			case VX: case VY: case VZ:
+			case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 				      if (fabs(slb[i].aw)<1.0e-30) {
 #if doubleintprecision == 1
 						  printf("division by zero in i=%lld boundary node. maxelm=%lld, maxbound=%lld\n", i, maxelm, maxbound);
@@ -2511,11 +2534,11 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 	switch (iVar) {
 		case PAM: rURF=1.0; //1.855; 
 			      break;
-		case VX: rURF=1.0;  // уравнения по скорости нелинейны и им нужна нижняя релаксация. Иначе возможна расходимость.
+		case VELOCITY_X_COMPONENT: rURF=1.0;  // уравнения по скорости нелинейны и им нужна нижняя релаксация. Иначе возможна расходимость.
 			      break; // эта нижняя релаксация определяется при формировании матрицы СЛАУ.
-		case VY: rURF=1.0;
+		case VELOCITY_Y_COMPONENT: rURF=1.0;
 			      break;
-		case VZ: rURF=1.0;
+		case VELOCITY_Z_COMPONENT: rURF=1.0;
 			      break;
 		default: rURF=1.0; break; // в остальных случаях.
 	}
@@ -2563,7 +2586,7 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 		switch (iVar) {
 		  case PAM: ptilda=(sE+sW+sN+sS+sT+sB+sl[i].b)/sl[i].ap; 
 			       break;
-		  case VX: case VY: case VZ:
+		  case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 			      ptilda=alpha*(sE+sW+sN+sS+sT+sB+sl[i].b+(1.0-alpha)*sl[i].ap*x_cor[sl[i].iP]/alpha)/sl[i].ap;
 			  break;
 		  default:
@@ -2601,7 +2624,7 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 		switch (iVar) {
 		case PAM: ptilda=(sE+sW+sN+sS+sT+sB+sl[i].b)/sl[i].ap;
 			    break;
-		case VX: case VY: case VZ:
+		case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 			 ptilda=alpha*(sE+sW+sN+sS+sT+sB+sl[i].b+(1.0-alpha)*sl[i].ap*x_cor[sl[i].iP]/alpha)/sl[i].ap;   
 			break;
 		default:
@@ -2637,7 +2660,7 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 			switch (iVar) {
 		       case PAM: ptilda=(sE+sW+sN+sS+sT+sB)/sl[i].ap;
 			             break;
-		       case VX: case VY: case VZ:
+		       case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 			             ptilda=alpha*(sE+sW+sN+sS+sT+sB)/sl[i].ap;   
 			             break;
 		       default:
@@ -2690,7 +2713,7 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 				switch (iVar) {
 		           case PAM: ptilda=(sE+sW+sN+sS+sT+sB+sl[i].b)/sl[i].ap; 
 			                  break;
-		           case VX: case VY: case VZ:
+		           case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
 			                  ptilda=alpha*(sE+sW+sN+sS+sT+sB+sl[i].b+(1.0-alpha)*sl[i].ap*x_cor[sl[i].iP]/alpha)/sl[i].ap;
 			                  break;
 		           default:
@@ -4462,7 +4485,6 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 
 	if (bprintmessage) {
 		printf("Reshenie metodom sopryjennyh gradientov:\n");
-		fprintf(fp_log,"Reshenie metodom sopryjennyh gradientov:\n");
 	}
     // матрица СЛАУ
 	// в формате CSIR:
@@ -4503,13 +4525,11 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 	// Возвращает левый нижний треугольный сомножитель.
 	if (bprintmessage) {
 		printf("Incoplete Cholesky decomposition beginig...:\n");
-		fprintf(fp_log,"Incoplete Cholesky decomposition beginig...:\n");
 	}
 	//IC0Factor_ITL(val, indx, pntr, n);
 	IC0FactorModify_ITL(val, indx, pntr, n);
 	if (bprintmessage) {
 		printf("Incoplete Cholesky decomposition finish...:\n");//*/
-		fprintf(fp_log,"Incoplete Cholesky decomposition finish...:\n");
 	}
 
 
@@ -4535,7 +4555,7 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
     	isfinite_vec(n, z , "z");
 	}
 	// передача информации о начальном уровне невязки в текстовый файл:
-	if (!bdistwall) fprintf(fp_statistic_convergence,"%+.16f ",NormaV(z,n));
+	
 	for (i=0; i<n; i++) vcopy[i]=z[i];
 	if (bdebug) {
     	isfinite_vec(n, vcopy , "vcopy");
@@ -4596,16 +4616,9 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 		  res=sqrt(dnew)/dsize;
 		  if (bprintmessage) {
 			  if (k%10==0) {
-				  printf("iter residual\n");
-				  fprintf(fp_log,"iter residual\n");
+				  std::cout << "iter residual" << std::endl;
 			  }
-#if doubleintprecision == 1
-			  printf(" %lld %e\n", k, res);
-			  fprintf(fp_log, " %lld %e\n", k, res);
-#else
-			  printf(" %d %e\n", k, res);
-			  fprintf(fp_log, " %d %e\n", k, res);
-#endif
+			  std::cout << " " << k << " " << res << std::endl;
 		     
 		  }
 		  // шаг 3.1
@@ -4621,10 +4634,7 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 		  k++;
 	   } // while
 
-	   // В этот файл пишется статистика об успешности решения СЛАУ:
-       //fprintf(fp_statistic_convergence, " ICCG finish residual=%e \n",res);
-       //fprintf(fp_statistic_convergence,"%e ",res); // нет смысла печатать конечную невязку так как она задана пользователем
-
+	  
 	   // Освобождение памяти
         delete[] ap;
 		delete[] vcopy;
@@ -4635,9 +4645,6 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 	else {
 		// Освобождение памяти
 		printf("ICCG inform: residual of the initial approximation is too small me= %e, e=%e...\n",me,e);
-		fprintf(fp_log,"ICCG inform: residual of the initial approximation is too small...\n");
-		//fprintf(fp_statistic_convergence, " ICCG no solve start residual < %e \n",e);
-		//fprintf(fp_statistic_convergence,"%e ",e); // нет смысла печатать конечную невязку так как она задана пользователем
 		delete[] ap; 
 		delete[] vcopy;
 		delete[] z; 
@@ -5078,19 +5085,11 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
             for (i=0; i<isize; i++) if (dX0==nullptr) dx[i]=0.0; else dx[i]=dstart[i];
             printf("\n divergence Soloveichik solver \n");
 			// В этот файл пишется статистика об успешности решения СЛАУ:
-			//fprintf(fp_statistic_convergence, " Soloveichik solver finish residual: dnz=%e, dr=%e. divergence solution \n",dnz,NormaChebyshev(dr, isize));
-			fprintf(fp_statistic_convergence,"%e ",fabs(dnz));
-            bweShouldContinue=false;
+			bweShouldContinue=false;
             break; // выход из цикла while
 		 }
  
 	  } // while
-
-	  if (bweShouldContinue) {
-		  //fprintf(fp_statistic_convergence, " Soloveichik solver finish residual=%e \n",dnz);
-		  fprintf(fp_statistic_convergence,"%e ",fabs(dnz));
-		  //fprintf(fp_statistic_convergence, " Soloveichik solver finish residual=%e \n",NormaChebyshev(dr, isize));  
-	  }
 	  
       // возвращение результата
       for (i=0; i<isize; i++) dres[i]=dx[i];
@@ -5100,8 +5099,6 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
       // возвращает начальное приближение
 	  for (i=0; i<isize; i++) dres[i]=dstart[i];
 	  printf(" (fabs(Scal( dp, dp, isize))>1e-270)==false\n");
-	  //fprintf(fp_statistic_convergence, " Soloveichik solver start residual < 1e-270 \n");
-	  fprintf(fp_statistic_convergence,"%e ",0.0);
 	  //getchar();
    }
 
@@ -7775,19 +7772,11 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
             // восстановление начального приближения
             for (i=0; i<isize; i++) if (dX0==nullptr) dx[i]=0.0; else dx[i]=dX0[i];
             printf("\n divergence Soloveichik solver \n");
-			//fprintf(fp_statistic_convergence, " divergence Soloveichik solver finish residual > 1e7 \n");
-			fprintf(fp_statistic_convergence, "%e ",fabs(dnz));
-            bweShouldContinue=false;
+			bweShouldContinue=false;
             break; // выход из цикла while
 		 }
  
 	  } // while
-
-	  if (bweShouldContinue) {
-		  //fprintf(fp_statistic_convergence, " Soloveichik solver finish residual=%e \n",dnz);
-		  fprintf(fp_statistic_convergence, "%e ",fabs(dnz));
-		  //fprintf(fp_statistic_convergence, " Soloveichik solver finish residual=%e \n",NormaChebyshev(dr, isize));  
-	  }
 
       // возвращение результата
       for (i=0; i<isize; i++) dres[i]=dx[i];
@@ -7979,8 +7968,9 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 				//getchar();
 				system("pause");
 			}
+		}
 
-			if (!std::isfinite(roi)) {
+			if (!isfinite(roi)) {
 				printf("roi!=roi solution bug. \n");
 				system("pause");
 			}
@@ -8000,7 +7990,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 					bet = (roi / roim1)*(al / wi);
 				}
 			}
-			if (!std::isfinite(bet)) {
+			if (!isfinite(bet)) {
 				printf("bet!=bet solution bug. \n");
 				printf("%e %e %e %e\n", roi, roim1, al, wi);
 				system("pause");
@@ -8008,7 +7998,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 
 
 			if (bdebug) {
-				if (!std::isfinite(bet)) {
+				if (!isfinite(bet)) {
 					printf("bet is infinity");
 					//getchar();
 					system("pause");
@@ -8069,25 +8059,23 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 				}
 			}
 			// печать невязки на консоль
-			if ((icount % 10) == 0)  printf("iter  residual\n");
-#if doubleintprecision == 1
-			printf("%lld %e \n", icount, deltai);
-			// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
-			//fprintf(fp_log, "%lld %e \n", icount, deltai);
-#else
-			printf("%d %e \n", icount, deltai);
-			// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
-			//fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
+			//if ((icount % 10) == 0)  std::cout << "iter  residual" << std::endl;
+
+			//std::cout<< icount << " " << deltai << std::endl;
 
 		//if ((icount % 100)== 0) getchar();
 
 			if (deltai < epsilon) iflag = 0; // конец вычисления
 			else roim1 = roi;
-		}
+		//}
 	}
 
-	printf("internal: number iterations = %lld , finish residual = %e \n", icount, deltai);
+	if (icount == 0) {
+		//printf("internal: number iterations = %lld \n", icount);
+	}
+	else {
+		//printf("internal: number iterations = %lld , finish residual = %e \n", icount, deltai);
+	}
 	//getchar();
 
     // освобождение памяти
@@ -8095,6 +8083,14 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 	delete[] vi; delete[] pi; delete[] dax;
 
 	for (i=0; i<n; i++) dX0[i]=dx[i];
+
+	doublereal tmax = -1.0e30;
+	doublereal tmin = 1.0e30;
+	for (integer i = 0; i < n; i++) {
+		if (dx[i] > tmax) tmax = dx[i];
+		if (dx[i] < tmin) tmin = dx[i];
+	}
+	//printf("tmax=%e tmin=%e deltai=%e\n",tmax,tmin,deltai);
 
 	delete[] dx; 
 
@@ -8288,16 +8284,9 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 			}
 		}
 		// печать невязки на консоль
-		//if ((icount % 10) == 0)  printf("iter  residual\n");
-#if doubleintprecision == 1
-		//printf("%lld %e \n", icount, deltai);
-		// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
-		//fprintf(fp_log, "%lld %e \n", icount, deltai);
-#else
-		//printf("%d %e \n", icount, deltai);
-		// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
-		//fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
+		//if ((icount % 10) == 0)  std::cout << "iter  residual" << std::endl;
+
+		//std::cout<< icount <<" "<<deltai<<std::endl;
 
 		//if ((icount % 100)== 0) getchar();
 		if (deltai / delta0_ < 0.8) iflag = 0;
@@ -8426,14 +8415,8 @@ void Bi_CGStab_internal1(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
          dnz=NormaV(dr,n);
 		 // печать невязки на консоль
-         if ((icount % 10) == 0)  printf("iter  residual\n");
-#if doubleintprecision == 1
-		 printf("%lld %e \n", icount, dnz);
-		 fprintf(fp_log, "%lld %e \n", icount, dnz); // печать невязки в файл.
-#else
-		 printf("%d %e \n", icount, dnz);
-		 fprintf(fp_log, "%d %e \n", icount, dnz); // печать невязки в файл.
-#endif
+         if ((icount % 10) == 0)  std::cout << "iter  residual" << std::endl;
+		 std::cout << icount << " " << dnz << std::endl;
          
 
          beta=(Scal(dr,dr0,n)/scal1)*(alpha/omega);
@@ -8563,17 +8546,6 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 	}
 	delta0=NormaV(ri,n);
 
-	// передаём в текстовый файл информацию о том как решаются уравнения
-	// сохранения импульса от итерации к итерации алгоритма SIMPLE.
-	if (bprintmessage) {
-		switch (iVar) {
-		case VX: fprintf(fp_statistic_convergence, "%+.16f ", delta0); break;
-		case VY: fprintf(fp_statistic_convergence, "%+.16f ", delta0); break;
-		case VZ: fprintf(fp_statistic_convergence, "%+.16f ", delta0); break;
-		case PAM: fprintf(fp_statistic_convergence, "%+.16f ", delta0); break; // для поправки давления также может быть использован LR1sK решатель.
-		}
-	}
-
 	// Если решение сразу хорошее то не считать:
 	if (fabs(delta0)<dterminatedTResudual) iflag=0;
 
@@ -8612,9 +8584,9 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 
 	if (bprintmessage) {
 		switch (iVar) {
-		case VX: printf("VX	"); break;
-		case VY: printf("VY "); break;
-		case VZ: printf("VZ "); break;
+		case VELOCITY_X_COMPONENT: printf("VX	"); break;
+		case VELOCITY_Y_COMPONENT: printf("VY "); break;
+		case VELOCITY_Z_COMPONENT: printf("VZ "); break;
 		case PAM: printf("PAM "); break;
 		}
 	}
@@ -8723,16 +8695,10 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 		if (bprintmessage) {
 			// печать невязки на консоль
             if ((icount % 10) == 0)  {
-				printf("iter  residual imaxdubl\n");
-				fprintf(fp_log,"iter  residual imaxdubl\n");
+				std::cout << "iter  residual imaxdubl" << std::endl;				
 			}
-#if doubleintprecision == 1
-			printf("%lld %e %lld\n", icount, deltai, imaxdubl);
-			fprintf(fp_log, "%lld %e %lld\n", icount, deltai, imaxdubl);
-#else
-			printf("%d %e %d\n", icount, deltai, imaxdubl);
-			fprintf(fp_log, "%d %e %d\n", icount, deltai, imaxdubl);
-#endif
+
+			std::cout << icount << " " << deltai << " " << imaxdubl << std::endl;			
             
 			//getchar();
 			system("pause");
@@ -8761,9 +8727,7 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 
 			//iflag=0; // конец вычисления
 			//printf("calculation can not cope with the stiffness of the problem...\n");
-			//fprintf(fp_log,"calculation can not cope with the stiffness of the problem...\n");
 			//printf("Please, press any key to continue calculation...\n");
-			//fprintf(fp_log,"Please, press any key to continue calculation...\n");
 			//bexporttecplot=true; // проблемы со сходимотью => экспорт картинки для анализа в программу tecplot.
 			//getchar();
 			//system("pause");
@@ -8804,11 +8768,11 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 
 #if doubleintprecision == 1
 	switch (iVar) {
-	case VX:	printf("VX %lld  ", icount); // контроль количества итераций.
+	case VELOCITY_X_COMPONENT:	printf("VX %lld  ", icount); // контроль количества итераций.
 		break;
-	case VY: printf("VY %lld  ", icount); // контроль количества итераций.
+	case VELOCITY_Y_COMPONENT: printf("VY %lld  ", icount); // контроль количества итераций.
 		break;
-	case VZ: printf("VZ %lld  ", icount); // контроль количества итераций.
+	case VELOCITY_Z_COMPONENT: printf("VZ %lld  ", icount); // контроль количества итераций.
 		break;
 	case PAM: if (eqin.itemper == 1) {
 		// потом еще решается уравнение теплопередачи.
@@ -8821,11 +8785,11 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 	}
 #else
 	switch (iVar) {
-	case VX:	printf("VX %d  ", icount); // контроль количества итераций.
+	case VELOCITY_X_COMPONENT:	printf("VX %d  ", icount); // контроль количества итераций.
 		break;
-	case VY: printf("VY %d  ", icount); // контроль количества итераций.
+	case VELOCITY_Y_COMPONENT: printf("VY %d  ", icount); // контроль количества итераций.
 		break;
-	case VZ: printf("VZ %d  ", icount); // контроль количества итераций.
+	case VELOCITY_Z_COMPONENT: printf("VZ %d  ", icount); // контроль количества итераций.
 		break;
 	case PAM: if (eqin.itemper == 1) {
 		// потом еще решается уравнение теплопередачи.
@@ -9048,17 +9012,9 @@ void LR1sK_temp(TEMPER &tGlobal, equation3D* &sl, equation3D_bon* &slb,
 		// печать невязки на консоль
 		if (bprintmessage) {
             if ((icount % 10) == 0)  {
-				printf("iter  residual imaxdubl\n");
-				fprintf(fp_log,"iter  residual imaxdubl\n");
+				std::cout << "iter  residual imaxdubl" <<std::endl;				
 			}
-#if doubleintprecision == 1
-			printf("%lld %e %lld\n", icount, deltai, imaxdubl);
-			fprintf(fp_log, "%lld %e %lld\n", icount, deltai, imaxdubl);
-#else
-			printf("%d %e %d\n", icount, deltai, imaxdubl);
-			fprintf(fp_log, "%d %e %d\n", icount, deltai, imaxdubl);
-#endif
-           
+			std::cout << icount<< " " << deltai << " " << imaxdubl << std::endl;           
 		}
 
 		if (deltai <epsilon) iflag=0; // конец вычисления
@@ -9084,9 +9040,7 @@ void LR1sK_temp(TEMPER &tGlobal, equation3D* &sl, equation3D_bon* &slb,
 
 			//iflag=0; // конец вычисления
 			//printf("calculation can not cope with the stiffness of the problem...\n");
-            //fprintf(fp_log,"calculation can not cope with the stiffness of the problem...\n");
 			//printf("Please, press any key to continue calculation...\n");
-			//fprintf(fp_log,"Please, press any key to continue calculation...\n");
 			//bexporttecplot=true; // проблемы со сходимотью => экспорт картинки для анализа в программу tecplot.
 			//getchar();
 			//system("pause");
@@ -9331,16 +9285,10 @@ void Bi_CGStab_internal2(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		// печать невязки на консоль
 		if (bprintmessage) {
             if ((icount % 10) == 0)  {
-				printf("iter  residual\n");
-				fprintf(fp_log,"iter  residual\n");
+				std::cout << "iter  residual" << std::endl;
 			}
-#if doubleintprecision == 1
-			printf("%lld %e\n", icount, deltai);
-			fprintf(fp_log, "%lld %e\n", icount, deltai);
-#else
-			printf("%d %e\n", icount, deltai);
-			fprintf(fp_log, "%d %e\n", icount, deltai);
-#endif
+
+			std::cout << icount << " " << deltai << std::endl;
             
 		}
 
@@ -9368,9 +9316,9 @@ void Bi_CGStab_internal2(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 // Возвращает позицию в векторе переменных.
 integer iposfunc(integer iVar) {
 	switch (iVar) {
-	case VX: return 0; break;
-	case VY: return 1; break;
-	case VZ: return 2; break;
+	case VELOCITY_X_COMPONENT: return 0; break;
+	case VELOCITY_Y_COMPONENT: return 1; break;
+	case VELOCITY_Z_COMPONENT: return 2; break;
 	case PAM: return 3; break;
 	case TEMP: return 4; break;
 	default: return -1; break;
@@ -9603,14 +9551,39 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	           BLOCK* &b, integer &lb, SOURCE* &s, integer &ls, integer inumber_iteration_SIMPLE,
-               integer* &color, integer dist_max, bool breordering_for_parallel)
+               integer* &color, integer dist_max, bool breordering_for_parallel,
+			   WALL* &w, integer &lw)
 {
+	
+
+	//printf("1. alpharelax=%e \n", alpharelax);
 
 	if (breordering_for_parallel) {
 		BiCGStab_internal3_incomming_now = true;
 	}
 	else {
 		BiCGStab_internal3_incomming_now = false;
+	}
+
+	// Если память под решение еще не выделена.
+	if (dX0 == nullptr) {
+		dX0 = new doublereal[maxelm+maxbound];
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+#pragma omp parallel for shared(m, dX0) schedule (guided)
+			for (integer i_37 = 0; i_37 < maxelm + maxbound; i_37++) {
+				dX0[i_37] = 0.0;
+			}
+
+		}
+		if (iVar == TEMP) {
+#pragma omp parallel for shared(m, dX0) schedule (guided)
+			for (integer i_37 = 0; i_37 < maxelm + maxbound; i_37++) {
+				dX0[i_37] = 0.0;
+			}
+		}
+
 	}
 
 	// inumiter - номер глобальной итерации (например номер итерации в стационарном алгоритме SIMPLE).
@@ -9634,9 +9607,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (dV[k] != dV[k]) {
 			printf("NAN or INF in iP=%lld in dV rthdsd internal\n", k);
 			switch (iVar) {
-			case VX: printf("VX equation problem.\n"); break;
-			case VY: printf("VY equation problem.\n"); break;
-			case VZ: printf("VZ equation problem.\n"); break;
+			case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+			case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+			case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 			case NUSHA: printf("NU equation problem.\n"); break;
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
@@ -9657,9 +9630,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (dV[k] != dV[k]) {
 			printf("NAN or INF in iP=%lld in dV rthdsd boundary\n", k);
 			switch (iVar) {
-			case VX: printf("VX equation problem.\n"); break;
-			case VY: printf("VY equation problem.\n"); break;
-			case VZ: printf("VZ equation problem.\n"); break;
+			case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+			case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+			case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 			case NUSHA: printf("NU equation problem.\n"); break;
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
@@ -9674,7 +9647,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	
 
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)||
+	 if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM)||(iVar==NUSHA)||
 		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)||
 		 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		 if (ibackregulationgl!=nullptr) {
@@ -9684,9 +9657,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			 integer ierr=equation3DtoCRSnd(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, ifrontregulationgl, ibackregulationgl,b,lb,s,ls);
 			 if (ierr > 0) {
 				 switch (iVar) {
-				 case VX: printf("VX equation problem.\n"); break;
-				 case VY: printf("VY equation problem.\n"); break;
-				 case VZ: printf("VZ equation problem.\n"); break;
+				 case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				 case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				 case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				 case NUSHA: printf("NU equation problem.\n"); break;
 				 case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 				 case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
@@ -9700,9 +9673,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		     integer ierr=equation3DtoCRS(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, b, lb, s, ls);
 			 if (ierr > 0) {
 				 switch (iVar) {
-				 case VX: printf("VX equation problem.\n"); break;
-				 case VY: printf("VY equation problem.\n"); break;
-				 case VZ: printf("VZ equation problem.\n"); break;
+				 case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				 case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				 case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				 case NUSHA: printf("NU equation problem.\n"); break;
 				 case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 				 case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
@@ -9715,6 +9688,67 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 }
 	 if (iVar==TEMP) {
 		 integer ierr=equation3DtoCRS(sl, slb, m.tval, m.tcol_ind, m.trow_ptr, maxelm, maxbound, alpharelax,!m.ballocCRSt, b, lb, s, ls);
+		
+		 doublereal alpharelax = 1.0;
+
+		 bool bnonlinear18 = false;
+
+		 // Это не специальная нелинейная версия кода amg1r5 CAMG.
+		 for (integer k = 0; k < lw; k++) {
+			 if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+				 (w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+					 alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
+					 // 0.9999 - недостаточное значение, температуры не те получаются.
+					 bnonlinear18 = true;
+			 }
+		 }
+
+		 if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+			 (adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+			 (adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+			 alpharelax = 0.99999;
+			 bnonlinear18 = true;
+		 }
+		 //if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
+		 //printf("ADIABATIC WALL BC"); getchar();
+		 //}
+		 
+		 //printf("2. alpharelax=%e \n", alpharelax);
+
+		 if (bnonlinear18) {
+			 // Разреженная матрица СЛАУ
+			 // в CRS формате.
+
+			 {
+				 integer nsize = maxelm + maxbound;
+				 integer nnzsize = m.trow_ptr[maxelm+maxbound];
+
+				 integer ierr = 0;
+				 
+				 for (integer i_5 = 0; i_5 < nsize; i_5++) {
+
+					 for (integer i_6 = m.trow_ptr[i_5]; i_6 <= m.trow_ptr[i_5 + 1] - 1; i_6++) {
+						 if (m.tcol_ind[i_6] == i_5) {
+							 if (m.trow_ptr[i_5 + 1] > m.trow_ptr[i_5] + 1) {
+								 dV[i_5] += (1.0 - alpharelax)*dX0[i_5]* m.tval[i_6] / alpharelax;
+								 m.tval[i_6] /= alpharelax;
+							 }
+						 }
+					 }
+					 /*if (i_5 <= 1) {
+						 printf("row_ptr75[%lld]=%lld \n",i_5,ia[i_5]);
+						 getchar();
+					 }
+					 */
+				 }
+
+				 if (ierr > 0) {
+					 printf("Temperature equation problem.\n");
+				 }
+			 }
+
+		 }
+		 
 		 if (ierr > 0) {
 			 printf("Temperature equation problem.\n");
 		 }
@@ -9751,7 +9785,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 if (iVar == TEMP) {
 					 nested_desection_crs(m.tcol_ind, m.trow_ptr, n, color, dist_max);
 				 }
-				 if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+				 if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 					 (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					 nested_desection_crs(m.col_ind, m.row_ptr, n, color, dist_max);
@@ -9873,7 +9907,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 			 }
 
-			 if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			 if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 				 (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
@@ -9917,7 +9951,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 }
 	 
      // Исходная матрица.
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)||
+	 if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM)||(iVar==NUSHA)||
 		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	    if (!m.ballocCRScfd) {
@@ -9978,7 +10012,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     
 	
 	integer ierr=0;
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+	if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	   for (integer i=0; i<m.row_ptr[n]; i++) {
@@ -9999,7 +10033,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	    }
 	}
 
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+	 if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		 (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		 if (!m.ballocCRScfd) {
@@ -10030,7 +10064,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	if (itype_ilu==ILU0) {
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
@@ -10096,7 +10130,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	       ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
@@ -10135,7 +10169,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		
 		lfil=my_amg_manager.lfil;
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			if (!m.ballocCRScfd) {
@@ -10269,7 +10303,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 		
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
           // iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
@@ -10499,7 +10533,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	#pragma omp parallel for shared(m,iVar) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		   m.s[i]=0.0;
@@ -10530,7 +10564,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     // под X0 понимается вектор поля температур к примеру.
     if (dX0==nullptr) {
 	   dX0=new doublereal[n];
-	   if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+	   if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		   (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 #pragma omp parallel for shared(m, dX0) schedule (guided)
@@ -10550,7 +10584,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	  
     }
     else {
-      if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+      if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		  (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		  (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		  if (ibackregulationgl!=nullptr) {
@@ -10573,7 +10607,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	  
     }
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+	if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		MatrixCRSByVector(m.val,m.col_ind,m.row_ptr, m.dx, m.dax, n); // результат занесён в  dax
@@ -10589,7 +10623,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	bool bCheck_matrix = true;
 	#pragma omp parallel for shared(dV,m,iVar,ifrontregulationgl) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			 if (ibackregulationgl!=nullptr) { 
@@ -10658,7 +10692,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	doublereal norma_b= NormaV_for_gmres(dV, n);
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+	if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	   delta0=NormaV(m.ri,n);
@@ -10732,7 +10766,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	integer iN=10;
 	if (n<=15000) {
 		// задача очень малой размерности !
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			iN = 1; // обязательно нужна хотя бы одна итерация.
@@ -10783,7 +10817,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>15000)&&(n<30000)) {
 		// задача очень малой размерности !
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=1; // обязательно нужна хотя бы одна итерация.
@@ -10827,7 +10861,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
@@ -10877,7 +10911,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			iN = 3; // обязательно нужна хотя бы одна итерация.
@@ -10923,7 +10957,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=100000)&&(n<300000)) {
 		// задача небольшой средней размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
@@ -10966,7 +11000,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=300000)&&(n<1000000)) {
 		// задача истинно средней размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
@@ -11008,7 +11042,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=1000000)&&(n<3000000)) {
 		// задача достаточно большой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
@@ -11050,7 +11084,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if (n>=3000000) {
 		// задача очень большой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
@@ -11154,7 +11188,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			//BiSoprGradCRS( m.val, m.col_ind, m.row_ptr,dV,dX0,n,200);
 		}
 	}
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+	if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		maxit=100;//100
@@ -11206,6 +11240,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	integer count_iter_for_film_coef = 0;
 
 	//printf("epsilon=%e\n",epsilon);
+	//printf("while (((icount < iN=%lld) && (iflag1=%lld != 0)) || (iflag=%lld != 0 && icount < maxit=%lld))\n",iN,iflag1,iflag,maxit);
 
 	// Мы обязательно должны сделать несколько итераций. (не менее 10).
 	// Если только решение не удовлетворяет уравнению тождественно.
@@ -11216,13 +11251,13 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		count_iter_for_film_coef++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>5)) break;
+		//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>5)) break;
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-			if (!std::isfinite(Scal(m.roc, m.ri, n))) {
+			if (!isfinite(Scal(m.roc, m.ri, n))) {
 				roi = 0.0;
 			}
 			else {
@@ -11248,7 +11283,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					bet = (roi / roim1)*(al / wi);
 				}
 			}
-			if ((bet != bet)||(!std::isfinite(bet))) {
+			if ((bet != bet)||(!isfinite(bet))) {
 				printf("bet!=bet solution bug. \n");
 				printf("%e %e %e %e\n", roi, roim1, al, wi);
 				system("pause");
@@ -11282,7 +11317,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Ky=pi
 
 		// (LU)y=pi; 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
@@ -11343,7 +11378,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
@@ -11390,7 +11425,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Kz=s
 
 		// (LU)z=s; 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
@@ -11476,7 +11511,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			MatrixCRSByVector(m.tval, m.tcol_ind, m.trow_ptr, m.tz, m.tt, n); // t==A*z;
 		}
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
@@ -11549,7 +11584,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			}
 			deltai = NormaV(m.tri, n);
 		}
-		//printf("deltai=%e\n",deltai); getchar();
+		//printf("icount=%lld deltai=%e\n",icount, deltai); getchar();
 
 		//if (breakRUMBAcalc_for_nonlinear_boundary_condition && (icount>10) && (bonly_solid_calculation)&& (iVar == TEMP)) iflag = 0;
 
@@ -11573,27 +11608,14 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			*/
             if ((icount % 10) == 0)  {
 				printf("iter  residual\n");
-				fprintf(fp_log,"iter  residual\n");
 			}
-#if doubleintprecision == 1
-			//printf("%lld %e\n", icount, deltai);
+			
 			std::cout << icount << " " << deltai << std::endl;
-			fprintf(fp_log, "%lld %e \n", icount, deltai);
-#else
-			//printf("%d %e\n", icount, deltai);
-			std::cout << icount << " " << deltai << std::endl;
-			fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
+
 			//getchar();
 		}
 		// 28.07.2016.
-#if doubleintprecision == 1
-		//printf("%lld %e\n", icount, deltai);
-		//fprintf(fp_log, "%lld %e \n", icount, deltai);
-#else
-		//printf("%d %e\n", icount, deltai);
-		//fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
+		//std::cout << icount << " " << deltai << std::endl;
 		
 		//getchar();
 		
@@ -11627,7 +11649,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 		// Досрочный выход из итерационного процесса по опыту алгоритма FGMRES
 		// Ю. Саада и М. Шульца.
-		if (0&&((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if (0&&((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS))) {
 			// Нужно точнее, этой точности недостаточно
@@ -11666,7 +11688,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 
-    if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+    if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (!((maxit==0)&&(iN==0))) {
@@ -11713,7 +11735,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			delete[] tmp;
 
 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
@@ -11749,7 +11771,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	// Это матрица в котрой нумерация (а индексация элементов с нуля) начинается с единицы. Она используется в библиотеке SPARSKIT2.
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+	if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)||(iVar==PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	   if (m.bsignalfreeCRScfd) {
@@ -12435,7 +12457,8 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 // Stress
 void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 	doublereal *dV, doublereal* &dX0, integer maxit, 
-	bool bprintmessage,  QuickMemVorst& m)
+	bool bprintmessage,  QuickMemVorst& m, WALL* &w, integer &lw,
+	bool* &bondary, unsigned char iVar)
 {
 
 
@@ -12460,6 +12483,58 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 	//m.ballocCRScfd = true;
 	simplesparsefree(sparseM, n);
 
+
+	if (dX0 == nullptr) {
+		dX0 = new doublereal[n];
+
+#pragma omp parallel for shared(m, dX0) schedule (guided)
+		for (integer i38 = 0; i38 < n; i38++) {
+			dX0[i38] = 0.0;
+		}
+
+	}
+
+	if (iVar == TEMP) {
+		doublereal alpharelax = 1.0;
+
+		// Это не специальная нелинейная версия кода amg1r5 CAMG.
+		for (integer k = 0; k < lw; k++) {
+			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+				alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
+				// 0.9999 - недостаточное значение, температуры не те получаются.
+			}
+		}
+
+		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+			alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
+			// 0.9999 - недостаточное значение, температуры не те получаются.
+		}
+
+
+		for (integer i = 0; i < n; i++) {
+
+			for (integer j = m.row_ptr[i]; j < m.row_ptr[i + 1]; j++) {
+				if (m.col_ind[j] == i) {
+					// диагональ.
+					if (((bondary != nullptr) && (!bondary[i])) &&
+						(m.row_ptr[i + 1] > m.row_ptr[i] + 1)) {
+						// Релаксация к предыдущему значению.
+
+						dV[i] += (1.0 - alpharelax) * m.val[j] * dX0[i] / alpharelax;
+
+						m.val[j] = (m.val[j] / alpharelax);
+					}
+
+					//debug
+					//std::cout << "col_buffer[j]=" << col_ind[j] << std::endl;
+					//system("pause");
+				}
+			}
+		}
+	}
 	// debug
 	//for (integer ii = m.row_ptr[650]; ii <= m.row_ptr[651] - 1; ii++) {
 		//printf("a[%d][%d]=%e\n",650, m.col_ind[ii],m.val[ii]);
@@ -13069,12 +13144,12 @@ if (itype_ilu == ILU_lfil)
 		count_iter_for_film_coef++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>5)) break;
+		//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>5)) break;
 
 
 		
 			roi = Scal(m.roc, m.ri, n);
-			if (!std::isfinite(roi)) {
+			if (!isfinite(roi)) {
 				printf("roi!=roi solution bug. \n");
 				system("pause");
 			}
@@ -13094,7 +13169,7 @@ if (itype_ilu == ILU_lfil)
 					bet = (roi / roim1)*(al / wi);
 				}
 			}
-			if  (!std::isfinite(bet)) {
+			if  (!isfinite(bet)) {
 				printf("bet!=bet solution bug. \n");
 				printf("%e %e %e %e\n", roi, roim1, al, wi);
 				system("pause");
@@ -13233,28 +13308,20 @@ if (itype_ilu == ILU_lfil)
 		// печать невязки на консоль
 		if (bprintmessage) {
 			if ((icount % 10) == 0) {
-				printf("iter  residual maximum_deformation\n");
-				fprintf(fp_log, "iter  residual maximum_deformation\n");
+				if (iVar == TEMP) {
+					std::cout << "iter  residual maximum_temperature" << std::endl;
+				}
+				if (iVar == TOTALDEFORMATION) {
+					std::cout << "iter  residual maximum_deformation" << std::endl;
+				}
 			}
 			//if ((icount % 1) == 0) {
-#if doubleintprecision == 1
-				printf("%lld %e %e\n", icount, deltai, max_deformation);
-				fprintf(fp_log, "%lld %e %e\n", icount, deltai, max_deformation);
-#else
-				printf("%d %e\n", icount, deltai);
-				fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
+				std::cout << icount << " " << deltai << " " << max_deformation << std::endl;
 			//}
 
 		}
 		// 28.07.2016.
-#if doubleintprecision == 1
-		//printf("%lld %e\n", icount, deltai);
-		//fprintf(fp_log, "%lld %e \n", icount, deltai);
-#else
-		//printf("%d %e\n", icount, deltai);
-		//fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
+		//std::cout << icount << " " << deltai << std::endl;
 
 		//getchar();
 		if (deltai > delta_old_iter) i_signal_break_pam_opening++;
@@ -13786,15 +13853,15 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -13803,9 +13870,9 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -13827,7 +13894,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 
 								 // Исходная матрица.
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (!m.ballocCRScfd) {
 			// m.a=new doublereal[7*n+2]; // CRS
 			// m.ja=new integer[7*n+2];
@@ -13886,7 +13953,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 
 	integer ierr = 0;
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		for (integer i = 0; i<row_ptr[n]; i++) {
 			m.a[i] = val[i];
 			m.ja[i] = col_ind[i] + 1;
@@ -13905,7 +13972,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (!m.ballocCRScfd) {
 			//m.ri = new doublereal[n]; m.roc = new doublereal[n]; m.s = new doublereal[n]; m.t = new doublereal[n]; m.vec = new doublereal[n];
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
@@ -13939,7 +14006,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 if (itype_ilu == ILU0) 
 	{
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 
 			if (!m.ballocCRScfd) {
 				//m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -14003,7 +14070,7 @@ if (itype_ilu == ILU0)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
 			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
@@ -14041,7 +14108,7 @@ if (itype_ilu == ILU_lfil)
 		integer lfil = 3; // 2 уровня (0, 1, 2)
 		lfil = my_amg_manager.lfil;
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
@@ -14178,7 +14245,7 @@ if (itype_ilu == ILU_lfil)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -15077,7 +15144,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar==NUSHA) ||
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar==NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (ibackregulationgl != nullptr) {
@@ -15085,9 +15152,9 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				case NUSHA: printf("NU  equation problem.\n");  break;
 				case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY  equation problem.\n");  break;
@@ -15101,9 +15168,9 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -15125,7 +15192,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 								 // Исходная матрица.
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (!m.ballocCRScfd) {
@@ -15186,7 +15253,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 	integer ierr = 0;
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		for (integer i = 0; i<row_ptr[n]; i++) {
@@ -15207,7 +15274,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (!m.ballocCRScfd) {
@@ -15243,7 +15310,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 if (itype_ilu == ILU0)
 	{
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
@@ -15309,7 +15376,7 @@ if (itype_ilu == ILU0)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
@@ -15350,7 +15417,7 @@ if (itype_ilu == ILU_lfil)
 
 		lfil = my_amg_manager.lfil;
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			if (!m.ballocCRScfd) {
@@ -15489,7 +15556,7 @@ if (itype_ilu == ILU_lfil)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
@@ -15852,7 +15919,7 @@ if (itype_ilu == ILU_lfil)
 
 			// (LU)Z[i]=v[i];
 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
@@ -16101,7 +16168,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM) || (iVar == NUSHA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (ibackregulationgl != nullptr) {
@@ -16109,9 +16176,9 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				case NUSHA: printf("NU  equation problem.\n");  break;
 				case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY  equation problem.\n");  break;
@@ -16125,9 +16192,9 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -16591,15 +16658,15 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	const integer itype_ilu = ILU_lfil;//ILU_lfil;
 
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -16608,9 +16675,9 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRS(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -16625,7 +16692,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 
 	// Исходная матрица.
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (!mstruct.ballocCRScfd) {
 			// mstruct.a=new doublereal[7*n+2]; // CRS
 			// mstruct.ja=new integer[7*n+2];
@@ -16684,7 +16751,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 
 	integer ierr = 0;
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		for (integer i = 0; i<mstruct.row_ptr[n]; i++) {
 			mstruct.a[i] = mstruct.val[i];
 			mstruct.ja[i] = mstruct.col_ind[i] + 1;
@@ -16703,7 +16770,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (!mstruct.ballocCRScfd) {
 			//mstruct.ri = new doublereal[n]; mstruct.roc = new doublereal[n]; mstruct.s = new doublereal[n]; mstruct.t = new doublereal[n]; mstruct.vec = new doublereal[n];
 			//mstruct.vi = new doublereal[n]; mstruct.pi = new doublereal[n]; mstruct.dx = new doublereal[n]; mstruct.dax = new doublereal[n];
@@ -16737,7 +16804,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 if (itype_ilu == ILU0) 
 	{
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 
 			if (!mstruct.ballocCRScfd) {
 				//mstruct.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -16801,7 +16868,7 @@ if (itype_ilu == ILU0)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			ilu0_(n, mstruct.a, mstruct.ja, mstruct.ia, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.iw, ierr);
 			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
@@ -16838,7 +16905,7 @@ if (itype_ilu == ILU_lfil)
 		integer lfil = 2; // 2 уровня (0, 1, 2)
 		lfil = my_amg_manager.lfil;
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			if (!mstruct.ballocCRScfd) {
 
 				// инициализация.
@@ -16975,7 +17042,7 @@ if (itype_ilu == ILU_lfil)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			// iluk_(n, mstruct.a, mstruct.ja, mstruct.ia, lfil, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.levs, mstruct.iwk, mstruct.w, mstruct.jw, ierr);
 			iluk_2(n, mstruct.a, mstruct.ja, mstruct.ia, lfil, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.levs, mstruct.iwk, mstruct.w, mstruct.jw, mstruct.w_dubl, mstruct.jw_dubl, ierr);
 
@@ -17239,7 +17306,7 @@ if (itype_ilu == ILU_lfil)
 	// rtilde = r[0] = b - Ax
 	//doublereal *rtilde = work + (2 * L + 2) * n;
 	doublereal *rtilde = new doublereal[(2 * L + 2) * n];
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		MatrixCRSByVector(mstruct.val, mstruct.col_ind, mstruct.row_ptr, x, r[0], n); // результат занесён в  r[0]
 	}
 	if (iVar == TEMP) {
@@ -17294,7 +17361,7 @@ if (itype_ilu == ILU_lfil)
 			// Ky=u[j]
 
 			// (LU)y=u[j]; 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for
 				for (integer i = 0; i<n; i++) mstruct.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -17374,7 +17441,7 @@ if (itype_ilu == ILU_lfil)
 			// Ky=r[j]
 
 			// (LU)y=r[j]; 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for
 				for (integer i = 0; i<n; i++) mstruct.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -17528,7 +17595,7 @@ if (itype_ilu == ILU_lfil)
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (mstruct.bsignalfreeCRScfd) {
 			// Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
 			if (mstruct.val != nullptr) delete mstruct.val;
@@ -17601,15 +17668,15 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 	doublereal* val = nullptr;
 	integer* col_ind = nullptr, *row_ptr = nullptr;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -17618,9 +17685,9 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -17668,15 +17735,15 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -17685,9 +17752,9 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -17709,7 +17776,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 
 								 // Исходная матрица.
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (!m.ballocCRScfd) {
 			// m.a=new doublereal[7*n+2]; // CRS
 			// m.ja=new integer[7*n+2];
@@ -17768,7 +17835,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 
 	integer ierr = 0;
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		for (integer i = 0; i<row_ptr[n]; i++) {
 			m.a[i] = val[i];
 			m.ja[i] = col_ind[i] + 1;
@@ -17787,7 +17854,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		if (!m.ballocCRScfd) {
 			//m.ri = new doublereal[n]; m.roc = new doublereal[n]; m.s = new doublereal[n]; m.t = new doublereal[n]; m.vec = new doublereal[n];
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
@@ -17821,7 +17888,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 if (itype_ilu == ILU0)
 	{
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 
 			if (!m.ballocCRScfd) {
 				//m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -17885,7 +17952,7 @@ if (itype_ilu == ILU0)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
 			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
@@ -17924,7 +17991,7 @@ if (itype_ilu == ILU_lfil)
 		integer lfil = my_amg_manager.lfil;// 3; // 2 уровня (0, 1, 2)
 		
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
@@ -18061,7 +18128,7 @@ if (itype_ilu == ILU_lfil)
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 			// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -18893,7 +18960,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	integer* &ibackregulationgl,
 	doublereal dgx, doublereal dgy, doublereal dgz,
 	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE,
-	integer* &color, integer dist_max)
+	integer* &color, integer dist_max, WALL* &w, integer &lw)
 {
 
 	
@@ -18907,11 +18974,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
 		if (dV[i_1] != dV[i_1]) {
 			switch (iVar) {
-			case VX: printf("VX rthdsd problem\n");
+			case VELOCITY_X_COMPONENT: printf("VX rthdsd problem\n");
 				break;
-			case VY: printf("VY rthdsd problem\n");
+			case VELOCITY_Y_COMPONENT: printf("VY rthdsd problem\n");
 				break;
-			case VZ: printf("VZ rthdsd problem\n");
+			case VELOCITY_Z_COMPONENT: printf("VZ rthdsd problem\n");
 				break;
 			case PAM: printf("PAM rthdsd problem iP=%lld\n",i_1);
 				break;
@@ -19003,7 +19070,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		my_amg_manager.bMatrixPortrait = my_amg_manager.bPressureMatrixPortrait;
 		break;
 		// 10.10.2019 Для турбулентных характеристик настройка решателя такая же как и для компонент скорости.
-	case VX: case VY: case VZ: case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
+	case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
 	case TURBULENT_KINETIK_ENERGY_STD_K_EPS: case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
 		my_amg_manager.theta = my_amg_manager.theta_Speed;
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
@@ -19054,7 +19121,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 								ICCG(sparseM, dV, f.potent[PAM], f.maxelm + f.maxbound ,bprintmessage,false,2000);
 								}
 								else {
-								Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m);
+								Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m,w,lw);
 								}*/
 
 
@@ -19091,17 +19158,17 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 
 	if (!bdontstartsolver) {
-		if (0 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 0) {
 
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			// BiCGStab + ILU(k). k=1 or 2 recomended.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls, inumber_iteration_SIMPLE, color, dist_max,true);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 			
 			//integer L = 2;
 			//Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 
 		}
-		else if (1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
+		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 1) {
 
 			// здесь предложена реализация алгебраического многосеточного метода
 			// под названием amg1r5 предложенная широкой публике в 1985 году.
@@ -19113,21 +19180,28 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if (NONE_only_amg1r5 ==stabilization_amg1r5_algorithm) {
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
 				}
 				else {
 					bool worked_successfully = false;
-					// amg1r5 realisation.
-					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls);
+					if ((iVar==PAM) && (inumber_iteration_SIMPLE < 10)) {
+						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+
+					}
+					else {
+						// amg1r5 realisation.
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls, w, lw);
+					}
 
 					if (!bsolid_static_only) {
 						if (!worked_successfully) {
 							//30.03.2019
-							// СБРОС огбнуление.
+							// СБРОС обнуление.
 							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
 								if (i_5 < maxelm) {
 									dX0[i_5] = 0.0;
@@ -19141,7 +19215,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
 						}
 					}
 				}
@@ -19152,11 +19226,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Предобуславливание, Многосеточные технологии, Стабилизация.
 			// 23-24 декабря 2017.
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
 				}
 				else {
 
@@ -19165,7 +19239,14 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 					bool worked_successfully = false;
 					const integer iHAVorstModification_id = 1;
-					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
+					if ((iVar == PAM) && (inumber_iteration_SIMPLE < 10)) {
+						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+
+					}
+					else {
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+					}
 
 					if (iVar == PAM) {
 						if (!worked_successfully) {
@@ -19185,7 +19266,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
 						}
 					}
 
@@ -19197,11 +19278,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Предобуславливание, Многосеточные технологии.
 			// 31 декабря 2017.
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
 				}
 				else {
 
@@ -19212,7 +19293,14 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					omp_set_num_threads(6);
 #endif
 					const integer iHAVorstModification_id = 2;
-					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
+					if ((iVar == PAM) && (inumber_iteration_SIMPLE < 10)) {
+						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+
+					}
+					else {
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+					}
 #ifdef _OPENMP
 					omp_set_num_threads(1);
 #endif
@@ -19234,8 +19322,67 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 						}
+					}
+
+				}
+			}
+
+
+			if (Non_Linear_amg1r5 == stabilization_amg1r5_algorithm) {
+				// BiCGStab[1992] + amg1r5[1986]
+				// Предобуславливание, Многосеточные технологии, Стабилизация.
+				// 23-24 декабря 2017.
+
+				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
+				}
+				else {
+
+					
+					if (iVar == PAM) {
+
+						// H.A. VAN DER Vorst, BiCGStab, 1992.
+						// Руге и Штубен, 1986.
+
+						bool worked_successfully = false;
+						const integer iHAVorstModification_id = 1; // BiCGStab  for PAM
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+
+
+						if (!worked_successfully) {
+							//30.03.2019
+							printf("PAM equation divergence detected BiCGStab + amg1r5 solver.\n");
+							// СБРОС огбнуление.
+							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
+								if (i_5 < maxelm) {
+									dX0[i_5] = 0.0;
+								}
+								else {
+									if (slb[i_5 - maxelm].iI > -1) {
+										// Однородное условие Неймана.
+										dX0[i_5] = 0.0;
+									}
+								}
+							}
+							printf("Redirecting to BiCGStab + ILU2 solver.\n");
+							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+						}
+					}
+					else {
+						// H.A. VAN DER Vorst, BiCGStab, 1992.
+						// Руге и Штубен, 1986.
+
+						bool worked_successfully = false;
+						const integer iHAVorstModification_id = 3; // non linear solver
+						amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls, w, lw);
+
+
 					}
 
 				}
@@ -19247,9 +19394,9 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			printf("ERROR !!! Call Lr1sk should be earlier in solver mysolverv0_03.c source code file.\n");
 			printf("varialable is equal ");
 			switch (iVar) {
-			case VX: printf("Vx \n");  break;
-			case VY: printf("Vy \n");  break;
-			case VZ: printf("Vz \n");  break;
+			case VELOCITY_X_COMPONENT: printf("Vx \n");  break;
+			case VELOCITY_Y_COMPONENT: printf("Vy \n");  break;
+			case VELOCITY_Z_COMPONENT: printf("Vz \n");  break;
 			case NUSHA: printf("NU \n");  break;
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY \n");  break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");  break;
@@ -19260,7 +19407,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			}
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			system("PAUSE");
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
 			
 			//getchar();
 			//system("PAUSE");
@@ -19279,7 +19426,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			printf("WARNING: CUSP 0.5.1 library is not connected\n");
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 #endif
 		}
 		else if (11 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
@@ -19379,7 +19526,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			//printf("Redirecting to FGMRES(20) + ILU2 solver.\n");
 			//fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
-			//Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			//Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,w,lw);
 			
 			// Метод из библиотеки AMGCL работает и для гидродинамики и для температуры.
 			// Дата присоединения к проекту 7.05.2019, 8.05.2019.
@@ -19398,19 +19545,19 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				// в amgcl отключил проверку в bicgstab для rhs.
 
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 			}
 			else {
 
-#if AMGCL_INCLUDE_IN_MY_PROJECT == 1
+#ifdef AMGCL_INCLUDE_IN_MY_PROJECT 
 				printf("*********Denis Demidov AMGCL...***********\n");
 				if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
 					const bool bprint_preconditioner_amgcl = false;
-					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE);
+					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE,w,lw);
 				}
 				else {
 					const bool bprint_preconditioner_amgcl = true;
-					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE);
+					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE,w,lw);
 				}
 #endif
 			}
@@ -19430,10 +19577,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 #endif
 		}
-		else if (8 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
+		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 8) {
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
 			// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
 			// OpenSource Apache license 2.0.
@@ -19449,11 +19596,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 #endif
 		}
-		else if ((3 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) 
-		|| (7 == iswitchsolveramg_vs_BiCGstab_plus_ILU2)) {
+		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) 
+		|| (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)) {
 
 		integer iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc = iswitchsolveramg_vs_BiCGstab_plus_ILU2;
 		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 7;
@@ -19461,11 +19608,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc==3) {
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 				}
 				else {
 					// Для температуры и поправки давления.
@@ -19474,7 +19621,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					
 
 					doublereal ret74 = 0.0;
-					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE);
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE,w,lw);
 
 
 				}
@@ -19502,7 +19649,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				doublereal magic83 = my_amg_manager.magic;
 
 				doublereal ret74 = 0.0;
-				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE);
+				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE,w,lw);
 
 				/*
 				}
@@ -19557,7 +19704,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 #else
 				printf("Redirecting to BiCGStab + ILU2 solver.\n");
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
 #endif
 			}
 

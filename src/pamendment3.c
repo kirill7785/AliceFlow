@@ -115,37 +115,37 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					      // определение знака величины rsign:
 					      // внутренняя нормаль на выходной границе расчётной области.
 	                      switch (border_neighbor[inumber].Norm) {
-						  case ESIDE: if (potent[VX][border_neighbor[inumber].iB]>0.0) {
+						  case E_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case WSIDE: if (potent[VX][border_neighbor[inumber].iB]<0.0) {
+						  case W_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case NSIDE: if (potent[VY][border_neighbor[inumber].iB]>0.0) {
+						  case N_SIDE: if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case SSIDE:if (potent[VY][border_neighbor[inumber].iB]<0.0) {
+						  case S_SIDE:if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case TSIDE: if (potent[VZ][border_neighbor[inumber].iB]>0.0) {
+						  case T_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case BSIDE: if (potent[VZ][border_neighbor[inumber].iB]<0.0) {
+						  case B_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
@@ -162,9 +162,9 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 						  }
 						  else {
 							  kineticenergy=0.5*prop_b[RHO][border_neighbor[inumber].iB-maxelm];
-							  kineticenergy*=(potent[VX][border_neighbor[inumber].iB]*potent[VX][border_neighbor[inumber].iB]+
-								              potent[VY][border_neighbor[inumber].iB]*potent[VY][border_neighbor[inumber].iB]+
-											  potent[VZ][border_neighbor[inumber].iB]*potent[VZ][border_neighbor[inumber].iB]);
+							  kineticenergy*=(potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]*potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]+
+								              potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]*potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]+
+											  potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]*potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]);
 							  slb[PAM][inumber].aw=1.0;
 		                      slb[PAM][inumber].ai=0.0;
 		                      slb[PAM][inumber].b=rCe-kineticenergy-potent[PRESS][border_neighbor[inumber].iB]; // Соотношение Бернулли
@@ -208,13 +208,13 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 			// внутренняя нормаль
 	        switch (border_neighbor[inumber].Norm) {
-		        case ESIDE:
+		        case E_SIDE:
 			    
 				    dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VX]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VX][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VX]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -225,12 +225,12 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI] + fiplus*prop[RHO][border_neighbor[inumber].iII]);// проверено !
-					aUPi=(sl[VX][border_neighbor[inumber].iI].ap*sl[VX][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VX][border_neighbor[inumber].iI].ap + fiplus*sl[VX][border_neighbor[inumber].iII].ap);// проверено !
+					aUPi=(sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap);// проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VX]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VX]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 
 					/*
 					*  Итак лапласиан от поправки давления равен дивергенции скорости.
@@ -258,13 +258,13 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					   // getchar();
 				    break;			
 			
-		        case NSIDE:
+		        case N_SIDE:
 
                     dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VY]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VY][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VY]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -275,22 +275,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI] + fiplus*prop[RHO][border_neighbor[inumber].iII]);// проверено !
-					aUPi=(sl[VY][border_neighbor[inumber].iI].ap*sl[VY][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VY][border_neighbor[inumber].iI].ap + fiplus*sl[VY][border_neighbor[inumber].iII].ap);// проверено !
+					aUPi=(sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap);// проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VY]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VY]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 
 				    break;
 
-			    case TSIDE: 
+			    case T_SIDE: 
 
                     dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VZ]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VZ][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -301,22 +301,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI] + fiplus*prop[RHO][border_neighbor[inumber].iII]);// проверено !
-					aUPi=(sl[VZ][border_neighbor[inumber].iI].ap*sl[VZ][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VZ][border_neighbor[inumber].iI].ap + fiplus*sl[VZ][border_neighbor[inumber].iII].ap);// проверено !
+					aUPi=(sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap);// проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VZ]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 
-			    case WSIDE:
+			    case W_SIDE:
 
                     dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VX]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VX][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VX]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -327,22 +327,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]);// проверено !
-					aUPi=(sl[VX][border_neighbor[inumber].iI].ap*sl[VX][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VX][border_neighbor[inumber].iI].ap + fiplus*sl[VX][border_neighbor[inumber].iII].ap);// проверено !
+					aUPi=(sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap);// проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VX]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VX]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					
 					break;
 
-		        case SSIDE:
+		        case S_SIDE:
 
                     dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VY]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VY][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VY]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -353,22 +353,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI] + fiplus*prop[RHO][border_neighbor[inumber].iII]);// проверено !
-					aUPi=(sl[VY][border_neighbor[inumber].iI].ap*sl[VY][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VY][border_neighbor[inumber].iI].ap + fiplus*sl[VY][border_neighbor[inumber].iII].ap);// проверено !
+					aUPi=(sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap);// проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VY]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VY]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					
 				   break;
 
-		        case BSIDE: 
+		        case B_SIDE: 
 
                     dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VZ]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VZ][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -379,12 +379,12 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VZ][border_neighbor[inumber].iI].ap*sl[VZ][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VZ][border_neighbor[inumber].iI].ap + fiplus*sl[VZ][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VZ]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 	        } // switch
@@ -462,13 +462,13 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 			// внутренняя нормаль
 	        switch (border_neighbor[inumber].Norm) {
-		        case ESIDE:
+		        case E_SIDE:
 			    
 				    dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VX]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VX][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VX]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -479,12 +479,12 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VX][border_neighbor[inumber].iI].ap*sl[VX][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VX][border_neighbor[inumber].iI].ap + fiplus*sl[VX][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VX]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VX]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 
 					/*
 					*  Итак лапласиан от поправки давления равен дивергенции скорости.
@@ -512,13 +512,13 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					   // getchar();
 				    break;			
 			
-		        case NSIDE:
+		        case N_SIDE:
 
                     dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VY]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VY][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VY]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -529,22 +529,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VY][border_neighbor[inumber].iI].ap*sl[VY][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VY][border_neighbor[inumber].iI].ap + fiplus*sl[VY][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VY]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VY]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 
 				    break;
 
-			    case TSIDE: 
+			    case T_SIDE: 
 
                     dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VZ]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VZ][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -555,22 +555,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VZ][border_neighbor[inumber].iI].ap*sl[VZ][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VZ][border_neighbor[inumber].iI].ap + fiplus*sl[VZ][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VZ]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 
-			    case WSIDE:
+			    case W_SIDE:
 
                     dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VX]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VX][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VX]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -581,22 +581,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI] + fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VX][border_neighbor[inumber].iI].ap*sl[VX][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VX][border_neighbor[inumber].iI].ap + fiplus*sl[VX][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VX]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VX]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					
 					break;
 
-		        case SSIDE:
+		        case S_SIDE:
 
                     dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VY]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VY][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VY]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -607,22 +607,22 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VY][border_neighbor[inumber].iI].ap*sl[VY][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VY][border_neighbor[inumber].iI].ap + fiplus*sl[VY][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VY]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VY]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					
 				   break;
 
-		        case BSIDE: 
+		        case B_SIDE: 
 
                     dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
-					slb[PAM][inumber].ai=dbeta*alpha[VZ]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VZ][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -633,12 +633,12 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 
 					rhoi=(prop[RHO][border_neighbor[inumber].iI]*prop[RHO][border_neighbor[inumber].iII]);
 					rhoi=rhoi/((1.0-fiplus)*prop[RHO][border_neighbor[inumber].iI]+ fiplus*prop[RHO][border_neighbor[inumber].iII]); // проверено !
-					aUPi=(sl[VZ][border_neighbor[inumber].iI].ap*sl[VZ][border_neighbor[inumber].iII].ap);
-					aUPi=aUPi/((1.0-fiplus)*sl[VZ][border_neighbor[inumber].iI].ap + fiplus*sl[VZ][border_neighbor[inumber].iII].ap); // проверено !
+					aUPi=(sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap);
+					aUPi=aUPi/((1.0-fiplus)*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI].ap + fiplus*sl[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII].ap); // проверено !
 			        
                     // правая часть:  
-					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VZ]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VZ]);
+					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
+					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 	        } // switch
@@ -774,37 +774,37 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					      // определение знака величины rsign:
 					      // внутренняя нормаль на выходной границе расчётной области.
 	                      switch (border_neighbor[inumber].Norm) {
-						  case ESIDE: if (potent[VX][border_neighbor[inumber].iB]>0.0) {
+						  case E_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case WSIDE: if (potent[VX][border_neighbor[inumber].iB]<0.0) {
+						  case W_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case NSIDE: if (potent[VY][border_neighbor[inumber].iB]>0.0) {
+						  case N_SIDE: if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case SSIDE:if (potent[VY][border_neighbor[inumber].iB]<0.0) {
+						  case S_SIDE:if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case TSIDE: if (potent[VZ][border_neighbor[inumber].iB]>0.0) {
+						  case T_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case BSIDE: if (potent[VZ][border_neighbor[inumber].iB]<0.0) {
+						  case B_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
@@ -821,9 +821,9 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 						  }
 						  else {
 							  kineticenergy=0.5*prop_b[RHO][border_neighbor[inumber].iB-maxelm];
-							  kineticenergy*=(potent[VX][border_neighbor[inumber].iB]*potent[VX][border_neighbor[inumber].iB]+
-								              potent[VY][border_neighbor[inumber].iB]*potent[VY][border_neighbor[inumber].iB]+
-											  potent[VZ][border_neighbor[inumber].iB]*potent[VZ][border_neighbor[inumber].iB]);
+							  kineticenergy*=(potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]*potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]+
+								              potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]*potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]+
+											  potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]*potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]);
 							  slb[PAM][inumber].aw=1.0;
 		                      slb[PAM][inumber].ai=0.0;
 		                      slb[PAM][inumber].b=rCe-kineticenergy-potent[PRESS][border_neighbor[inumber].iB]; // Соотношение Бернулли
@@ -865,7 +865,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 
         			// внутренняя нормаль
 	                switch (border_neighbor[inumber].Norm) {
-		              case ESIDE:
+		              case E_SIDE:
 			    
 				          dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					      dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
@@ -902,7 +902,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					      */
 				          break;			
 			
-		              case NSIDE:
+		              case N_SIDE:
 
                           dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					      dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -927,7 +927,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 
 				          break;
 
-			          case TSIDE: 
+			          case T_SIDE: 
 
                           dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					      dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -951,7 +951,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					
 				          break;
 
-			          case WSIDE:
+			          case W_SIDE:
 
                           dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					      dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y; 
@@ -975,7 +975,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					
 					      break;
 
-		              case SSIDE:
+		              case S_SIDE:
 
                           dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					      dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -1000,7 +1000,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					
 				          break;
 
-		              case BSIDE: 
+		              case B_SIDE: 
 
                           dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					      dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -1099,7 +1099,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 
 			// внутренняя нормаль
 	        switch (border_neighbor[inumber].Norm) {
-		        case ESIDE:
+		        case E_SIDE:
 			    
 				    dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
@@ -1136,7 +1136,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					*/
 				    break;			
 			
-		        case NSIDE:
+		        case N_SIDE:
 
                     dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -1160,7 +1160,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 
 				    break;
 
-			    case TSIDE: 
+			    case T_SIDE: 
 
                     dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -1183,7 +1183,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					
 				    break;
 
-			    case WSIDE:
+			    case W_SIDE:
 
                     dl=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x;
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y; 
@@ -1207,7 +1207,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					
 					break;
 
-		        case SSIDE:
+		        case S_SIDE:
 
                     dl=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -1231,7 +1231,7 @@ void my_elmatr_quad_PAm_bon2(equation3D_bon** &slb, equation3D** sl,
 					
 				   break;
 
-		        case BSIDE: 
+		        case B_SIDE: 
 
                     dl=pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z;
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
@@ -1405,37 +1405,37 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 					      // определение знака величины rsign:
 					      // внутренняя нормаль на выходной границе расчётной области.
 	                      switch (border_neighbor[inumber].Norm) {
-						  case ESIDE: if (potent[VX][border_neighbor[inumber].iB]>0.0) {
+						  case E_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case WSIDE: if (potent[VX][border_neighbor[inumber].iB]<0.0) {
+						  case W_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case NSIDE: if (potent[VY][border_neighbor[inumber].iB]>0.0) {
+						  case N_SIDE: if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case SSIDE:if (potent[VY][border_neighbor[inumber].iB]<0.0) {
+						  case S_SIDE:if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case TSIDE: if (potent[VZ][border_neighbor[inumber].iB]>0.0) {
+						  case T_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]>0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
 								   } else rsign=1.0;
 							       break;
-						  case BSIDE: if (potent[VZ][border_neighbor[inumber].iB]<0.0) {
+						  case B_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB]<0.0) {
 							          // жидкость втекает внутрь расчётной области через выходную границу.
 							          rsign=-1.0;
 									  breversedflow=true;
@@ -1504,7 +1504,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							 // определение знака величины rsign:
 							 // внутренняя нормаль на выходной границе расчётной области.
 							 switch (border_neighbor[inumber].Norm) {
-							 case ESIDE:  if (potent[VX][border_neighbor[inumber].iB] > 0.0) {
+							 case E_SIDE:  if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB] > 0.0) {
 								        // жидкость втекает внутрь расчётной области через выходную границу.
 								        rsign = -1.0;
 										// Повторно не увеличиваем счетчик КО с рециркуляцией.
@@ -1512,7 +1512,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							         }
 									 else rsign = 1.0;
 									 break;
-							 case WSIDE: if (potent[VX][border_neighbor[inumber].iB] < 0.0) {
+							 case W_SIDE: if (potent[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB] < 0.0) {
 								          // жидкость втекает внутрь расчётной области через выходную границу.
 								          rsign = -1.0;
 										  // Повторно не увеличиваем счетчик КО с рециркуляцией.
@@ -1520,7 +1520,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							         }
 									 else rsign = 1.0;
 									 break;
-							 case NSIDE: if (potent[VY][border_neighbor[inumber].iB] > 0.0) {
+							 case N_SIDE: if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB] > 0.0) {
 								             // жидкость втекает внутрь расчётной области через выходную границу.
 								             rsign = -1.0;
 											 // Повторно не увеличиваем счетчик КО с рециркуляцией.
@@ -1528,7 +1528,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							             }
 										 else rsign = 1.0;
 										 break;
-							 case SSIDE:if (potent[VY][border_neighbor[inumber].iB] < 0.0) {
+							 case S_SIDE:if (potent[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB] < 0.0) {
 								            // жидкость втекает внутрь расчётной области через выходную границу.
 								            rsign = -1.0;
 											// Повторно не увеличиваем счетчик КО с рециркуляцией.
@@ -1536,7 +1536,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							            }
 										else rsign = 1.0;
 										break;
-							 case TSIDE: if (potent[VZ][border_neighbor[inumber].iB] > 0.0) {
+							 case T_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB] > 0.0) {
 								             // жидкость втекает внутрь расчётной области через выходную границу.
 								             rsign = -1.0;
 											 // Повторно не увеличиваем счетчик КО с рециркуляцией.				             
@@ -1544,7 +1544,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							             }
 										 else rsign = 1.0;
 										 break;
-							 case BSIDE: if (potent[VZ][border_neighbor[inumber].iB] < 0.0) {
+							 case B_SIDE: if (potent[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB] < 0.0) {
 								             // жидкость втекает внутрь расчётной области через выходную границу.
 								             rsign = -1.0;
 											 // Повторно не увеличиваем счетчик КО с рециркуляцией.
@@ -1593,13 +1593,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 						// внутренняя нормаль
 						switch (border_neighbor[inumber].Norm) {
-						case ESIDE:
+						case E_SIDE:
 
 							dl = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 							dS = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[1][border_neighbor[inumber].iI] - 1].y;
 							dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-							slb[PAM][inumber].ai = 2.0*dbeta*tau[VX][border_neighbor[inumber].iB] * dS / dl;
+							slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 							slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 							slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 							slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1610,8 +1610,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 								deltal -= 0.5*(pa[nvtx[1][border_neighbor[inumber].iI] - 1].x + pa[nvtx[0][border_neighbor[inumber].iI] - 1].x);
 								fiplus = 0.5*dl / deltal;
 
-								taui = (tau[VX][border_neighbor[inumber].iI] * tau[VX][border_neighbor[inumber].iII]);
-								taui = taui / ((1.0 - fiplus)*tau[VX][border_neighbor[inumber].iI] + fiplus * tau[VX][border_neighbor[inumber].iII]); // проверено !
+								taui = (tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);
+								taui = taui / ((1.0 - fiplus)*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]); // проверено !
 
 
 								// правая часть:  
@@ -1633,13 +1633,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 							*/
 							break;
 
-						case NSIDE:
+						case N_SIDE:
 
 							dl = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y;
 							dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 							dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-							slb[PAM][inumber].ai = 2.0*dbeta*tau[VY][border_neighbor[inumber].iB] * dS / dl;
+							slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 							slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 							slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 							slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1649,8 +1649,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 								deltal -= 0.5*(pa[nvtx[2][border_neighbor[inumber].iI] - 1].y + pa[nvtx[0][border_neighbor[inumber].iI] - 1].y);
 								fiplus = 0.5*dl / deltal;
 
-								taui = (tau[VY][border_neighbor[inumber].iI] * tau[VY][border_neighbor[inumber].iII]);
-								taui = taui / ((1.0 - fiplus)*tau[VY][border_neighbor[inumber].iI] + fiplus * tau[VY][border_neighbor[inumber].iII]); // проверено !
+								taui = (tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);
+								taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]); // проверено !
 
 
 								// правая часть:  
@@ -1660,13 +1660,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 							break;
 
-						case TSIDE:
+						case T_SIDE:
 
 							dl = pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z;
 							dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 							dS *= (pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y); // площадь грани
 
-							slb[PAM][inumber].ai = 2.0*dbeta*tau[VZ][border_neighbor[inumber].iB] * dS / dl;
+							slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 							slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 							slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 							slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1676,8 +1676,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 								deltal -= 0.5*(pa[nvtx[4][border_neighbor[inumber].iI] - 1].z + pa[nvtx[0][border_neighbor[inumber].iI] - 1].z);
 								fiplus = 0.5*dl / deltal;
 
-								taui = (tau[VZ][border_neighbor[inumber].iI] * tau[VZ][border_neighbor[inumber].iII]);
-								taui = taui / ((1.0 - fiplus)*tau[VZ][border_neighbor[inumber].iI] + fiplus * tau[VZ][border_neighbor[inumber].iII]);// проверено !
+								taui = (tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);
+								taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 								// правая часть:  
@@ -1687,13 +1687,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 							break;
 
-						case WSIDE:
+						case W_SIDE:
 
 							dl = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 							dS = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y;
 							dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-							slb[PAM][inumber].ai = 2.0*dbeta*tau[VX][border_neighbor[inumber].iB] * dS / dl;
+							slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 							slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 							slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 							slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1704,8 +1704,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 								deltal += 0.5*(pa[nvtx[1][border_neighbor[inumber].iI] - 1].x + pa[nvtx[0][border_neighbor[inumber].iI] - 1].x);
 								fiplus = 0.5*dl / deltal;
 
-								taui = (tau[VX][border_neighbor[inumber].iI] * tau[VX][border_neighbor[inumber].iII]);
-								taui = taui / ((1.0 - fiplus)*tau[VX][border_neighbor[inumber].iI] + fiplus * tau[VX][border_neighbor[inumber].iII]);// проверено !
+								taui = (tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);
+								taui = taui / ((1.0 - fiplus)*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 								// правая часть:  
@@ -1715,13 +1715,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 							break;
 
-						case SSIDE:
+						case S_SIDE:
 
 							dl = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y;
 							dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 							dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-							slb[PAM][inumber].ai = 2.0*dbeta*tau[VY][border_neighbor[inumber].iB] * dS / dl;
+							slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 							slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 							slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 							slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1731,8 +1731,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 								deltal += 0.5*(pa[nvtx[2][border_neighbor[inumber].iI] - 1].y + pa[nvtx[0][border_neighbor[inumber].iI] - 1].y);
 								fiplus = 0.5*dl / deltal;
 
-								taui = (tau[VY][border_neighbor[inumber].iI] * tau[VY][border_neighbor[inumber].iII]);
-								taui = taui / ((1.0 - fiplus)*tau[VY][border_neighbor[inumber].iI] + fiplus * tau[VY][border_neighbor[inumber].iII]);// проверено !
+								taui = (tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);
+								taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 								// правая часть:  
@@ -1742,13 +1742,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 							break;
 
-						case BSIDE:
+						case B_SIDE:
 
 							dl = pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z;
 							dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 							dS *= (pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y); // площадь грани
 
-							slb[PAM][inumber].ai = 2.0*dbeta*tau[VZ][border_neighbor[inumber].iB] * dS / dl;
+							slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 							slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 							slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 							slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1759,8 +1759,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 								deltal += 0.5*(pa[nvtx[4][border_neighbor[inumber].iI] - 1].z + pa[nvtx[0][border_neighbor[inumber].iI] - 1].z);
 								fiplus = 0.5*dl / deltal;
 
-								taui = (tau[VZ][border_neighbor[inumber].iI] * tau[VZ][border_neighbor[inumber].iII]);
-								taui = taui / ((1.0 - fiplus)*tau[VZ][border_neighbor[inumber].iI] + fiplus * tau[VZ][border_neighbor[inumber].iII]);// проверено !
+								taui = (tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);
+								taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 								// правая часть:  
@@ -1858,13 +1858,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 				// внутренняя нормаль
 				switch (border_neighbor[inumber].Norm) {
-				case ESIDE:
+				case E_SIDE:
 
 					dl = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 					dS = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[1][border_neighbor[inumber].iI] - 1].y;
 					dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-					slb[PAM][inumber].ai = 2.0*dbeta*tau[VX][border_neighbor[inumber].iB] * dS / dl;
+					slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 					slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1875,8 +1875,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 						deltal -= 0.5*(pa[nvtx[1][border_neighbor[inumber].iI] - 1].x + pa[nvtx[0][border_neighbor[inumber].iI] - 1].x);
 						fiplus = 0.5*dl / deltal;
 
-						taui = (tau[VX][border_neighbor[inumber].iI] * tau[VX][border_neighbor[inumber].iII]);
-						taui = taui / ((1.0 - fiplus)*tau[VX][border_neighbor[inumber].iI] + fiplus * tau[VX][border_neighbor[inumber].iII]);// проверено !
+						taui = (tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);
+						taui = taui / ((1.0 - fiplus)*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 						// правая часть:  
@@ -1899,13 +1899,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 					*/
 					break;
 
-				case NSIDE:
+				case N_SIDE:
 
 					dl = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y;
 					dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 					dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-					slb[PAM][inumber].ai = 2.0*dbeta*tau[VY][border_neighbor[inumber].iB] * dS / dl;
+					slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 					slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1917,8 +1917,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 						deltal -= 0.5*(pa[nvtx[2][border_neighbor[inumber].iI] - 1].y + pa[nvtx[0][border_neighbor[inumber].iI] - 1].y);
 						fiplus = 0.5*dl / deltal;
 
-						taui = (tau[VY][border_neighbor[inumber].iI] * tau[VY][border_neighbor[inumber].iII]);
-						taui = taui / ((1.0 - fiplus)*tau[VY][border_neighbor[inumber].iI] + fiplus * tau[VY][border_neighbor[inumber].iII]);// проверено !
+						taui = (tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);
+						taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 						// правая часть:  
@@ -1928,13 +1928,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 					break;
 
-				case TSIDE:
+				case T_SIDE:
 
 					dl = pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z;
 					dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 					dS *= (pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y); // площадь грани
 
-					slb[PAM][inumber].ai = 2.0*dbeta*tau[VZ][border_neighbor[inumber].iB] * dS / dl;
+					slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 					slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1946,8 +1946,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 						deltal -= 0.5*(pa[nvtx[4][border_neighbor[inumber].iI] - 1].z + pa[nvtx[0][border_neighbor[inumber].iI] - 1].z);
 						fiplus = 0.5*dl / deltal;
 
-						taui = (tau[VZ][border_neighbor[inumber].iI] * tau[VZ][border_neighbor[inumber].iII]);
-						taui = taui / ((1.0 - fiplus)*tau[VZ][border_neighbor[inumber].iI] + fiplus * tau[VZ][border_neighbor[inumber].iII]);// проверено !
+						taui = (tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);
+						taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 						// правая часть:  
 						slb[PAM][inumber].b = (dbeta - 1.0)*taui*dS*(potent[PAM][border_neighbor[inumber].iI] - potent[PAM][border_neighbor[inumber].iII]) / deltal;
@@ -1956,13 +1956,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 					break;
 
-				case WSIDE:
+				case W_SIDE:
 
 					dl = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 					dS = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y;
 					dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-					slb[PAM][inumber].ai = 2.0*dbeta*tau[VX][border_neighbor[inumber].iB] * dS / dl;
+					slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 					slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -1973,8 +1973,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 						deltal += 0.5*(pa[nvtx[1][border_neighbor[inumber].iI] - 1].x + pa[nvtx[0][border_neighbor[inumber].iI] - 1].x);
 						fiplus = 0.5*dl / deltal;
 
-						taui = (tau[VX][border_neighbor[inumber].iI] * tau[VX][border_neighbor[inumber].iII]);
-						taui = taui / ((1.0 - fiplus)*tau[VX][border_neighbor[inumber].iI] + fiplus * tau[VX][border_neighbor[inumber].iII]);// проверено !
+						taui = (tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);
+						taui = taui / ((1.0 - fiplus)*tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_X_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 						// правая часть:  
@@ -1984,13 +1984,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 					break;
 
-				case SSIDE:
+				case S_SIDE:
 
 					dl = pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y;
 					dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 					dS *= (pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z); // площадь грани
 
-					slb[PAM][inumber].ai = 2.0*dbeta*tau[VY][border_neighbor[inumber].iB] * dS / dl;
+					slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 					slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -2002,8 +2002,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 						deltal += 0.5*(pa[nvtx[2][border_neighbor[inumber].iI] - 1].y + pa[nvtx[0][border_neighbor[inumber].iI] - 1].y);
 						fiplus = 0.5*dl / deltal;
 
-						taui = (tau[VY][border_neighbor[inumber].iI] * tau[VY][border_neighbor[inumber].iII]);
-						taui = taui / ((1.0 - fiplus)*tau[VY][border_neighbor[inumber].iI] + fiplus * tau[VY][border_neighbor[inumber].iII]);// проверено !
+						taui = (tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);
+						taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 						// правая часть:  
@@ -2013,13 +2013,13 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 
 					break;
 
-				case BSIDE:
+				case B_SIDE:
 
 					dl = pa[nvtx[4][border_neighbor[inumber].iI] - 1].z - pa[nvtx[0][border_neighbor[inumber].iI] - 1].z;
 					dS = pa[nvtx[1][border_neighbor[inumber].iI] - 1].x - pa[nvtx[0][border_neighbor[inumber].iI] - 1].x;
 					dS *= (pa[nvtx[2][border_neighbor[inumber].iI] - 1].y - pa[nvtx[0][border_neighbor[inumber].iI] - 1].y); // площадь грани
 
-					slb[PAM][inumber].ai = 2.0*dbeta*tau[VZ][border_neighbor[inumber].iB] * dS / dl;
+					slb[PAM][inumber].ai = 2.0*dbeta*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB] * dS / dl;
 					slb[PAM][inumber].iI = border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw = slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW = border_neighbor[inumber].iB;
@@ -2030,8 +2030,8 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 						deltal += 0.5*(pa[nvtx[4][border_neighbor[inumber].iI] - 1].z + pa[nvtx[0][border_neighbor[inumber].iI] - 1].z);
 						fiplus = 0.5*dl / deltal;
 
-						taui = (tau[VZ][border_neighbor[inumber].iI] * tau[VZ][border_neighbor[inumber].iII]);
-						taui = taui / ((1.0 - fiplus)*tau[VZ][border_neighbor[inumber].iI] + fiplus * tau[VZ][border_neighbor[inumber].iII]);// проверено !
+						taui = (tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);
+						taui = taui / ((1.0 - fiplus)*tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iI] + fiplus * tau[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iII]);// проверено !
 
 
 						// правая часть:  
@@ -2203,8 +2203,8 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 
 	// iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 
 	// 26.09.2016 Добавок для АЛИС сетки.
@@ -2214,12 +2214,12 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 
 	// -1 если не используется и [0..maxelm+maxbound-1] если используется.
 
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 	// Присутствует в СЛАУ
@@ -2660,50 +2660,50 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 		doublereal SpeedCorOlde=0.0, SpeedCorOldw = 0.0, SpeedCorOldn = 0.0, SpeedCorOlds = 0.0, SpeedCorOldt = 0.0, SpeedCorOldb = 0.0;
 		if (iE > -1) {
 			if (!bE) {
-				SpeedCorOlde = feplus * potent[VX][iE] + (1.0 - feplus)*potent[VX][iP];
+				SpeedCorOlde = feplus * potent[VELOCITY_X_COMPONENT][iE] + (1.0 - feplus)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde = potent[VX][iE];
+				SpeedCorOlde = potent[VELOCITY_X_COMPONENT][iE];
 			}
 		}
 		if (iN > -1) {
 			if (!bN) {
-				SpeedCorOldn = fnplus * potent[VY][iN] + (1.0 - fnplus)*potent[VY][iP];
+				SpeedCorOldn = fnplus * potent[VELOCITY_Y_COMPONENT][iN] + (1.0 - fnplus)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn = potent[VY][iN];
+				SpeedCorOldn = potent[VELOCITY_Y_COMPONENT][iN];
 			}
 		}
 		if (iT > -1) {
 			if (!bT) {
-				SpeedCorOldt = ftplus * potent[VZ][iT] + (1.0 - ftplus)*potent[VZ][iP];
+				SpeedCorOldt = ftplus * potent[VELOCITY_Z_COMPONENT][iT] + (1.0 - ftplus)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt = potent[VZ][iT];
+				SpeedCorOldt = potent[VELOCITY_Z_COMPONENT][iT];
 			}
 		}
 		if (iW > -1) {
 			if (!bW) {
-				SpeedCorOldw = fwplus * potent[VX][iW] + (1.0 - fwplus)*potent[VX][iP];
+				SpeedCorOldw = fwplus * potent[VELOCITY_X_COMPONENT][iW] + (1.0 - fwplus)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw = potent[VX][iW];
+				SpeedCorOldw = potent[VELOCITY_X_COMPONENT][iW];
 			}
 		}
 		if (iS > -1) {
 			if (!bS) {
-				SpeedCorOlds = fsplus * potent[VY][iS] + (1.0 - fsplus)*potent[VY][iP];
+				SpeedCorOlds = fsplus * potent[VELOCITY_Y_COMPONENT][iS] + (1.0 - fsplus)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds = potent[VY][iS];
+				SpeedCorOlds = potent[VELOCITY_Y_COMPONENT][iS];
 			}
 		}
 		if (iB > -1) {
 			if (!bB) {
-				SpeedCorOldb = fbplus * potent[VZ][iB] + (1.0 - fbplus)*potent[VZ][iP];
+				SpeedCorOldb = fbplus * potent[VELOCITY_Z_COMPONENT][iB] + (1.0 - fbplus)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb = potent[VZ][iB];
+				SpeedCorOldb = potent[VELOCITY_Z_COMPONENT][iB];
 			}
 		}
 		/*
@@ -2723,148 +2723,148 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 
 		if (iE2 > -1) {
 			if (!bE2) {
-				SpeedCorOlde2 = feplus2 * potent[VX][iE2] + (1.0 - feplus2)*potent[VX][iP];
+				SpeedCorOlde2 = feplus2 * potent[VELOCITY_X_COMPONENT][iE2] + (1.0 - feplus2)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde2 = potent[VX][iE2];
+				SpeedCorOlde2 = potent[VELOCITY_X_COMPONENT][iE2];
 			}
 		}
 		if (iN2 > -1) {
 			if (!bN2) {
-				SpeedCorOldn2 = fnplus2 * potent[VY][iN2] + (1.0 - fnplus2)*potent[VY][iP];
+				SpeedCorOldn2 = fnplus2 * potent[VELOCITY_Y_COMPONENT][iN2] + (1.0 - fnplus2)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn2 = potent[VY][iN2];
+				SpeedCorOldn2 = potent[VELOCITY_Y_COMPONENT][iN2];
 			}
 		}
 		if (iT2 > -1) {
 			if (!bT2) {
-				SpeedCorOldt2 = ftplus2 * potent[VZ][iT2] + (1.0 - ftplus2)*potent[VZ][iP];
+				SpeedCorOldt2 = ftplus2 * potent[VELOCITY_Z_COMPONENT][iT2] + (1.0 - ftplus2)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt2 = potent[VZ][iT2];
+				SpeedCorOldt2 = potent[VELOCITY_Z_COMPONENT][iT2];
 			}
 		}
 		if (iW2 > -1) {
 			if (!bW2) {
-				SpeedCorOldw2 = fwplus2 * potent[VX][iW2] + (1.0 - fwplus2)*potent[VX][iP];
+				SpeedCorOldw2 = fwplus2 * potent[VELOCITY_X_COMPONENT][iW2] + (1.0 - fwplus2)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw2 = potent[VX][iW2];
+				SpeedCorOldw2 = potent[VELOCITY_X_COMPONENT][iW2];
 			}
 		}
 		if (iS2 > -1) {
 			if (!bS2) {
-				SpeedCorOlds2 = fsplus2 * potent[VY][iS2] + (1.0 - fsplus2)*potent[VY][iP];
+				SpeedCorOlds2 = fsplus2 * potent[VELOCITY_Y_COMPONENT][iS2] + (1.0 - fsplus2)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds2 = potent[VY][iS2];
+				SpeedCorOlds2 = potent[VELOCITY_Y_COMPONENT][iS2];
 			}
 		}
 		if (iB2 > -1) {
 			if (!bB2) {
-				SpeedCorOldb2 = fbplus2 * potent[VZ][iB2] + (1.0 - fbplus2)*potent[VZ][iP];
+				SpeedCorOldb2 = fbplus2 * potent[VELOCITY_Z_COMPONENT][iB2] + (1.0 - fbplus2)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb2 = potent[VZ][iB2];
+				SpeedCorOldb2 = potent[VELOCITY_Z_COMPONENT][iB2];
 			}
 		}
 
 		if (iE3 > -1) {
 			if (!bE3) {
-				SpeedCorOlde3 = feplus3 * potent[VX][iE3] + (1.0 - feplus3)*potent[VX][iP];
+				SpeedCorOlde3 = feplus3 * potent[VELOCITY_X_COMPONENT][iE3] + (1.0 - feplus3)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde3 = potent[VX][iE3];
+				SpeedCorOlde3 = potent[VELOCITY_X_COMPONENT][iE3];
 			}
 		}
 		if (iN3 > -1) {
 			if (!bN3) {
-				SpeedCorOldn3 = fnplus3 * potent[VY][iN3] + (1.0 - fnplus3)*potent[VY][iP];
+				SpeedCorOldn3 = fnplus3 * potent[VELOCITY_Y_COMPONENT][iN3] + (1.0 - fnplus3)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn3 = potent[VY][iN3];
+				SpeedCorOldn3 = potent[VELOCITY_Y_COMPONENT][iN3];
 			}
 		}
 		if (iT3 > -1) {
 			if (!bT3) {
-				SpeedCorOldt3 = ftplus3 * potent[VZ][iT3] + (1.0 - ftplus3)*potent[VZ][iP];
+				SpeedCorOldt3 = ftplus3 * potent[VELOCITY_Z_COMPONENT][iT3] + (1.0 - ftplus3)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt3 = potent[VZ][iT3];
+				SpeedCorOldt3 = potent[VELOCITY_Z_COMPONENT][iT3];
 			}
 		}
 		if (iW3 > -1) {
 			if (!bW3) {
-				SpeedCorOldw3 = fwplus3 * potent[VX][iW3] + (1.0 - fwplus3)*potent[VX][iP];
+				SpeedCorOldw3 = fwplus3 * potent[VELOCITY_X_COMPONENT][iW3] + (1.0 - fwplus3)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw3 = potent[VX][iW3];
+				SpeedCorOldw3 = potent[VELOCITY_X_COMPONENT][iW3];
 			}
 		}
 		if (iS3 > -1) {
 			if (!bS3) {
-				SpeedCorOlds3 = fsplus3 * potent[VY][iS3] + (1.0 - fsplus3)*potent[VY][iP];
+				SpeedCorOlds3 = fsplus3 * potent[VELOCITY_Y_COMPONENT][iS3] + (1.0 - fsplus3)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds3 = potent[VY][iS3];
+				SpeedCorOlds3 = potent[VELOCITY_Y_COMPONENT][iS3];
 			}
 		}
 		if (iB3 > -1) {
 			if (!bB3) {
-				SpeedCorOldb3 = fbplus3 * potent[VZ][iB3] + (1.0 - fbplus3)*potent[VZ][iP];
+				SpeedCorOldb3 = fbplus3 * potent[VELOCITY_Z_COMPONENT][iB3] + (1.0 - fbplus3)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb3 = potent[VZ][iB3];
+				SpeedCorOldb3 = potent[VELOCITY_Z_COMPONENT][iB3];
 			}
 		}
 
 		if (iE4 > -1) {
 			if (!bE4) {
-				SpeedCorOlde4 = feplus4 * potent[VX][iE4] + (1.0 - feplus4)*potent[VX][iP];
+				SpeedCorOlde4 = feplus4 * potent[VELOCITY_X_COMPONENT][iE4] + (1.0 - feplus4)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde4 = potent[VX][iE4];
+				SpeedCorOlde4 = potent[VELOCITY_X_COMPONENT][iE4];
 			}
 		}
 		if (iN4 > -1) {
 			if (!bN4) {
-				SpeedCorOldn4 = fnplus4 * potent[VY][iN4] + (1.0 - fnplus4)*potent[VY][iP];
+				SpeedCorOldn4 = fnplus4 * potent[VELOCITY_Y_COMPONENT][iN4] + (1.0 - fnplus4)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn4 = potent[VY][iN4];
+				SpeedCorOldn4 = potent[VELOCITY_Y_COMPONENT][iN4];
 			}
 		}
 		if (iT4 > -1) {
 			if (!bT4) {
-				SpeedCorOldt4 = ftplus4 * potent[VZ][iT4] + (1.0 - ftplus4)*potent[VZ][iP];
+				SpeedCorOldt4 = ftplus4 * potent[VELOCITY_Z_COMPONENT][iT4] + (1.0 - ftplus4)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt4 = potent[VZ][iT4];
+				SpeedCorOldt4 = potent[VELOCITY_Z_COMPONENT][iT4];
 			}
 		}
 		if (iW4 > -1) {
 			if (!bW4) {
-				SpeedCorOldw4 = fwplus4 * potent[VX][iW4] + (1.0 - fwplus4)*potent[VX][iP];
+				SpeedCorOldw4 = fwplus4 * potent[VELOCITY_X_COMPONENT][iW4] + (1.0 - fwplus4)*potent[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw4 = potent[VX][iW4];
+				SpeedCorOldw4 = potent[VELOCITY_X_COMPONENT][iW4];
 			}
 		}
 		if (iS4 > -1) {
 			if (!bS4) {
-				SpeedCorOlds4 = fsplus4 * potent[VY][iS4] + (1.0 - fsplus4)*potent[VY][iP];
+				SpeedCorOlds4 = fsplus4 * potent[VELOCITY_Y_COMPONENT][iS4] + (1.0 - fsplus4)*potent[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds4 = potent[VY][iS4];
+				SpeedCorOlds4 = potent[VELOCITY_Y_COMPONENT][iS4];
 			}
 		}
 		if (iB4 > -1) {
 			if (!bB4) {
-				SpeedCorOldb4 = fbplus4 * potent[VZ][iB4] + (1.0 - fbplus4)*potent[VZ][iP];
+				SpeedCorOldb4 = fbplus4 * potent[VELOCITY_Z_COMPONENT][iB4] + (1.0 - fbplus4)*potent[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb4 = potent[VZ][iB4];
+				SpeedCorOldb4 = potent[VELOCITY_Z_COMPONENT][iB4];
 			}
 		}
 
@@ -3508,12 +3508,12 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			//getchar();
 		//}
 	
-		mfcurrentretune[ESIDE] = Fe;
-		mfcurrentretune[NSIDE] = Fn;
-		mfcurrentretune[TSIDE] = Ft;
-		mfcurrentretune[WSIDE] = Fw;
-		mfcurrentretune[SSIDE] = Fs;
-		mfcurrentretune[BSIDE] = Fb;
+		mfcurrentretune[E_SIDE] = Fe;
+		mfcurrentretune[N_SIDE] = Fn;
+		mfcurrentretune[T_SIDE] = Ft;
+		mfcurrentretune[W_SIDE] = Fw;
+		mfcurrentretune[S_SIDE] = Fs;
+		mfcurrentretune[B_SIDE] = Fb;
 
 		// Для прохождения проверки корректности необходимо
 		// принудительно занулить скорость и поток скорости
@@ -3524,7 +3524,7 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			// граничный узел
 			integer inumber = iE - maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				mfcurrentretune[ESIDE] = 0.0;
+				mfcurrentretune[E_SIDE] = 0.0;
 			}
 		}
 				
@@ -3532,7 +3532,7 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			// граничный узел
 			integer inumber = iW - maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				mfcurrentretune[WSIDE] = 0.0;
+				mfcurrentretune[W_SIDE] = 0.0;
 			}
 		}
 
@@ -3540,7 +3540,7 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			// граничный узел
 			integer inumber = iN - maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				mfcurrentretune[NSIDE] = 0.0;
+				mfcurrentretune[N_SIDE] = 0.0;
 			}
 		}
 
@@ -3548,7 +3548,7 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			// граничный узел
 			integer inumber = iS - maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				mfcurrentretune[SSIDE] = 0.0;
+				mfcurrentretune[S_SIDE] = 0.0;
 			}
 		}
 
@@ -3556,7 +3556,7 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			// граничный узел
 			integer inumber = iT - maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				mfcurrentretune[TSIDE] = 0.0;
+				mfcurrentretune[T_SIDE] = 0.0;
 			}
 		}
 
@@ -3564,7 +3564,7 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			// граничный узел
 			integer inumber = iB - maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				mfcurrentretune[BSIDE] = 0.0;
+				mfcurrentretune[B_SIDE] = 0.0;
 			}
 		}
 
@@ -3659,14 +3659,14 @@ doublereal calcFg(bool bG, doublereal fgplus, doublereal VG, doublereal VP,
 		doublereal VPoldtimestep=0.0;
 		integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
 		switch (G) {
-		 case ESIDE: case WSIDE: VPoldtimestep=speedoldtimestep[VX][iP];
-			               VGoldtimestep=speedoldtimestep[VX][iG];
+		 case E_SIDE: case W_SIDE: VPoldtimestep=speedoldtimestep[VELOCITY_X_COMPONENT][iP];
+			               VGoldtimestep=speedoldtimestep[VELOCITY_X_COMPONENT][iG];
 			      break;
-		 case NSIDE: case SSIDE:VPoldtimestep=speedoldtimestep[VY][iP];
-			               VGoldtimestep=speedoldtimestep[VY][iG];
+		 case N_SIDE: case S_SIDE:VPoldtimestep=speedoldtimestep[VELOCITY_Y_COMPONENT][iP];
+			               VGoldtimestep=speedoldtimestep[VELOCITY_Y_COMPONENT][iG];
 			      break;
-		 case TSIDE:  case BSIDE: VPoldtimestep=speedoldtimestep[VZ][iP];
-			                VGoldtimestep=speedoldtimestep[VZ][iG];
+		 case T_SIDE:  case B_SIDE: VPoldtimestep=speedoldtimestep[VELOCITY_Z_COMPONENT][iP];
+			                VGoldtimestep=speedoldtimestep[VELOCITY_Z_COMPONENT][iG];
 			      break;
 		 }
 
@@ -3738,9 +3738,9 @@ doublereal calcFg2(bool bG, doublereal fgplus,
 	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
 	doublereal VG=0.0, VP=0.0;
 	switch (G) {
-		case ESIDE: case WSIDE: VG=potent[VX][iG]; VP=potent[VX][iP]; break;
-		case NSIDE: case SSIDE:VG=potent[VY][iG]; VP=potent[VY][iP]; break;
-		case TSIDE: case BSIDE: VG=potent[VZ][iG]; VP=potent[VZ][iP]; break;
+		case E_SIDE: case W_SIDE: VG=potent[VELOCITY_X_COMPONENT][iG]; VP=potent[VELOCITY_X_COMPONENT][iP]; break;
+		case N_SIDE: case S_SIDE:VG=potent[VELOCITY_Y_COMPONENT][iG]; VP=potent[VELOCITY_Y_COMPONENT][iP]; break;
+		case T_SIDE: case B_SIDE: VG=potent[VELOCITY_Z_COMPONENT][iG]; VP=potent[VELOCITY_Z_COMPONENT][iP]; break;
 	} // end switch
 	
 
@@ -3768,12 +3768,12 @@ doublereal calcFg2(bool bG, doublereal fgplus,
         doublereal taug=tau[iP]*tau[iG]/(fgplus*tau[iG]+(1.0-fgplus)*tau[iP]); // псевдовремя на грани КО.
 	    doublereal gradP=0.0, gradG=0.0;
 	    switch(G) {
-	       case ESIDE: gradP=potent[GRADXPRESS][iP]; gradG=potent[GRADXPRESS][neighbors_for_the_internal_node[ESIDE][iP].iNODE1]; break;
-	       case WSIDE: gradP=potent[GRADXPRESS][iP]; gradG=potent[GRADXPRESS][neighbors_for_the_internal_node[WSIDE][iP].iNODE1]; break;
-	       case NSIDE: gradP=potent[GRADYPRESS][iP]; gradG=potent[GRADYPRESS][neighbors_for_the_internal_node[NSIDE][iP].iNODE1]; break;
-	       case SSIDE:gradP=potent[GRADYPRESS][iP]; gradG=potent[GRADYPRESS][neighbors_for_the_internal_node[SSIDE][iP].iNODE1]; break;
-	       case TSIDE: gradP=potent[GRADZPRESS][iP]; gradG=potent[GRADZPRESS][neighbors_for_the_internal_node[TSIDE][iP].iNODE1]; break;
-	       case BSIDE: gradP=potent[GRADZPRESS][iP]; gradG=potent[GRADZPRESS][neighbors_for_the_internal_node[BSIDE][iP].iNODE1]; break;
+	       case E_SIDE: gradP=potent[GRADXPRESS][iP]; gradG=potent[GRADXPRESS][neighbors_for_the_internal_node[E_SIDE][iP].iNODE1]; break;
+	       case W_SIDE: gradP=potent[GRADXPRESS][iP]; gradG=potent[GRADXPRESS][neighbors_for_the_internal_node[W_SIDE][iP].iNODE1]; break;
+	       case N_SIDE: gradP=potent[GRADYPRESS][iP]; gradG=potent[GRADYPRESS][neighbors_for_the_internal_node[N_SIDE][iP].iNODE1]; break;
+	       case S_SIDE:gradP=potent[GRADYPRESS][iP]; gradG=potent[GRADYPRESS][neighbors_for_the_internal_node[S_SIDE][iP].iNODE1]; break;
+	       case T_SIDE: gradP=potent[GRADZPRESS][iP]; gradG=potent[GRADZPRESS][neighbors_for_the_internal_node[T_SIDE][iP].iNODE1]; break;
+	       case B_SIDE: gradP=potent[GRADZPRESS][iP]; gradG=potent[GRADZPRESS][neighbors_for_the_internal_node[B_SIDE][iP].iNODE1]; break;
 	    }
 
 
@@ -3808,14 +3808,14 @@ doublereal calcFg2(bool bG, doublereal fgplus,
 		    doublereal VPoldtimestep=0.0;
 
 		    switch (G) {
-		       case ESIDE: case WSIDE: VPoldtimestep=speedoldtimestep[VX][iP];
-			                     VGoldtimestep=speedoldtimestep[VX][iG];
+		       case E_SIDE: case W_SIDE: VPoldtimestep=speedoldtimestep[VELOCITY_X_COMPONENT][iP];
+			                     VGoldtimestep=speedoldtimestep[VELOCITY_X_COMPONENT][iG];
 			                     break;
-		       case NSIDE: case SSIDE:VPoldtimestep=speedoldtimestep[VY][iP];
-			                     VGoldtimestep=speedoldtimestep[VY][iG];
+		       case N_SIDE: case S_SIDE:VPoldtimestep=speedoldtimestep[VELOCITY_Y_COMPONENT][iP];
+			                     VGoldtimestep=speedoldtimestep[VELOCITY_Y_COMPONENT][iG];
 			                     break;
-		       case TSIDE:  case BSIDE: VPoldtimestep=speedoldtimestep[VZ][iP];
-			                      VGoldtimestep=speedoldtimestep[VZ][iG];
+		       case T_SIDE:  case B_SIDE: VPoldtimestep=speedoldtimestep[VELOCITY_Z_COMPONENT][iP];
+			                      VGoldtimestep=speedoldtimestep[VELOCITY_Z_COMPONENT][iG];
 			                     break;
 		    }
 
@@ -3890,9 +3890,9 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 		doublereal VG = 0.0, VP = 0.0;
 		integer VGid = -1;
 		switch (G) {
-		case ESIDE: case WSIDE: VG = potent[VX][iG]; VP = potent[VX][iP]; VGid = VX; break;
-		case NSIDE: case SSIDE: VG = potent[VY][iG]; VP = potent[VY][iP]; VGid = VY; break;
-		case TSIDE: case BSIDE: VG = potent[VZ][iG]; VP = potent[VZ][iP]; VGid = VZ; break;
+		case E_SIDE: case W_SIDE: VG = potent[VELOCITY_X_COMPONENT][iG]; VP = potent[VELOCITY_X_COMPONENT][iP]; VGid = VELOCITY_X_COMPONENT; break;
+		case N_SIDE: case S_SIDE: VG = potent[VELOCITY_Y_COMPONENT][iG]; VP = potent[VELOCITY_Y_COMPONENT][iP]; VGid = VELOCITY_Y_COMPONENT; break;
+		case T_SIDE: case B_SIDE: VG = potent[VELOCITY_Z_COMPONENT][iG]; VP = potent[VELOCITY_Z_COMPONENT][iP]; VGid = VELOCITY_Z_COMPONENT; break;
 		} // end switch
 
 
@@ -3933,52 +3933,52 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 			switch (iNODEid) {
 			case 1:
 				switch (G) {
-				case ESIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[ESIDE][iP].iNODE1]; break;
-				case WSIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[WSIDE][iP].iNODE1]; break;
-				case NSIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[NSIDE][iP].iNODE1]; break;
-				case SSIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[SSIDE][iP].iNODE1]; break;
-				case TSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[TSIDE][iP].iNODE1]; break;
-				case BSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[BSIDE][iP].iNODE1]; break;
+				case E_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[E_SIDE][iP].iNODE1]; break;
+				case W_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[W_SIDE][iP].iNODE1]; break;
+				case N_SIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[N_SIDE][iP].iNODE1]; break;
+				case S_SIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[S_SIDE][iP].iNODE1]; break;
+				case T_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[T_SIDE][iP].iNODE1]; break;
+				case B_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[B_SIDE][iP].iNODE1]; break;
 				}
 				break;
 			case 2:
 				switch (G) {
-				case ESIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[ESIDE][iP].iNODE2]; break;
-				case WSIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[WSIDE][iP].iNODE2]; break;
-				case NSIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[NSIDE][iP].iNODE2]; break;
-				case SSIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[SSIDE][iP].iNODE2]; break;
-				case TSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[TSIDE][iP].iNODE2]; break;
-				case BSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[BSIDE][iP].iNODE2]; break;
+				case E_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[E_SIDE][iP].iNODE2]; break;
+				case W_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[W_SIDE][iP].iNODE2]; break;
+				case N_SIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[N_SIDE][iP].iNODE2]; break;
+				case S_SIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[S_SIDE][iP].iNODE2]; break;
+				case T_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[T_SIDE][iP].iNODE2]; break;
+				case B_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[B_SIDE][iP].iNODE2]; break;
 				}
 				break;
 			case 3:
 				switch (G) {
-				case ESIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[ESIDE][iP].iNODE3]; break;
-				case WSIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[WSIDE][iP].iNODE3]; break;
-				case NSIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[NSIDE][iP].iNODE3]; break;
-				case SSIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[SSIDE][iP].iNODE3]; break;
-				case TSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[TSIDE][iP].iNODE3]; break;
-				case BSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[BSIDE][iP].iNODE3]; break;
+				case E_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[E_SIDE][iP].iNODE3]; break;
+				case W_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[W_SIDE][iP].iNODE3]; break;
+				case N_SIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[N_SIDE][iP].iNODE3]; break;
+				case S_SIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[S_SIDE][iP].iNODE3]; break;
+				case T_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[T_SIDE][iP].iNODE3]; break;
+				case B_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[B_SIDE][iP].iNODE3]; break;
 				}
 				break;
 			case 4:
 				switch (G) {
-				case ESIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[ESIDE][iP].iNODE4]; break;
-				case WSIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[WSIDE][iP].iNODE4]; break;
-				case NSIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[NSIDE][iP].iNODE4]; break;
-				case SSIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[SSIDE][iP].iNODE4]; break;
-				case TSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[TSIDE][iP].iNODE4]; break;
-				case BSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[BSIDE][iP].iNODE4]; break;
+				case E_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[E_SIDE][iP].iNODE4]; break;
+				case W_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[W_SIDE][iP].iNODE4]; break;
+				case N_SIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[N_SIDE][iP].iNODE4]; break;
+				case S_SIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[S_SIDE][iP].iNODE4]; break;
+				case T_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[T_SIDE][iP].iNODE4]; break;
+				case B_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[B_SIDE][iP].iNODE4]; break;
 				}
 				break;
 			default:
 				switch (G) {
-				case ESIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[ESIDE][iP].iNODE1]; break;
-				case WSIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[WSIDE][iP].iNODE1]; break;
-				case NSIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[NSIDE][iP].iNODE1]; break;
-				case SSIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[SSIDE][iP].iNODE1]; break;
-				case TSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[TSIDE][iP].iNODE1]; break;
-				case BSIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[BSIDE][iP].iNODE1]; break;
+				case E_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[E_SIDE][iP].iNODE1]; break;
+				case W_SIDE: gradP = potent[GRADXPRESS][iP]; gradG = potent[GRADXPRESS][neighbors_for_the_internal_node[W_SIDE][iP].iNODE1]; break;
+				case N_SIDE: gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[N_SIDE][iP].iNODE1]; break;
+				case S_SIDE:gradP = potent[GRADYPRESS][iP]; gradG = potent[GRADYPRESS][neighbors_for_the_internal_node[S_SIDE][iP].iNODE1]; break;
+				case T_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[T_SIDE][iP].iNODE1]; break;
+				case B_SIDE: gradP = potent[GRADZPRESS][iP]; gradG = potent[GRADZPRESS][neighbors_for_the_internal_node[B_SIDE][iP].iNODE1]; break;
 				}
 				break;
 			}
@@ -4004,9 +4004,9 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 
 					// Правильный вариант поправки Рхи-Чоу.
 					switch (G) {// Вклад поправки Рхи-Чоу
-					case ESIDE: case NSIDE: case TSIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iG] - potent[PRESS][iP]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
+					case E_SIDE: case N_SIDE: case T_SIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iG] - potent[PRESS][iP]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
 						break;
-					case WSIDE: case SSIDE:case BSIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iP] - potent[PRESS][iG]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
+					case W_SIDE: case S_SIDE:case B_SIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iP] - potent[PRESS][iG]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
 						break;
 					}
 
@@ -4033,9 +4033,9 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 
 					// Правильный вариант поправки Рхи-Чоу.
 					switch (G) {// Вклад поправки Рхи-Чоу
-					case ESIDE: case NSIDE: case TSIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iG] - potent[PRESS][iP]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
+					case E_SIDE: case N_SIDE: case T_SIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iG] - potent[PRESS][iP]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
 						break;
-					case WSIDE: case SSIDE:case BSIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iP] - potent[PRESS][iG]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
+					case W_SIDE: case S_SIDE:case B_SIDE: ug += RCh * (taug / rhog)*(-(potent[PRESS][iP] - potent[PRESS][iG]) / drg + (1.0 - fgplus)*gradP + fgplus * gradG);
 						break;
 					}
 
@@ -4062,14 +4062,14 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 				doublereal VPoldtimestep = 0.0;
 
 				switch (G) {
-				case ESIDE: case WSIDE: VPoldtimestep = speedoldtimestep[VX][iP];
-					VGoldtimestep = speedoldtimestep[VX][iG];
+				case E_SIDE: case W_SIDE: VPoldtimestep = speedoldtimestep[VELOCITY_X_COMPONENT][iP];
+					VGoldtimestep = speedoldtimestep[VELOCITY_X_COMPONENT][iG];
 					break;
-				case NSIDE: case SSIDE:VPoldtimestep = speedoldtimestep[VY][iP];
-					VGoldtimestep = speedoldtimestep[VY][iG];
+				case N_SIDE: case S_SIDE:VPoldtimestep = speedoldtimestep[VELOCITY_Y_COMPONENT][iP];
+					VGoldtimestep = speedoldtimestep[VELOCITY_Y_COMPONENT][iG];
 					break;
-				case TSIDE:  case BSIDE: VPoldtimestep = speedoldtimestep[VZ][iP];
-					VGoldtimestep = speedoldtimestep[VZ][iG];
+				case T_SIDE:  case B_SIDE: VPoldtimestep = speedoldtimestep[VELOCITY_Z_COMPONENT][iP];
+					VGoldtimestep = speedoldtimestep[VELOCITY_Z_COMPONENT][iG];
 					break;
 				}
 
@@ -4143,20 +4143,20 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 
 	// iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 	// если с одной из сторон граница расчётной области 
@@ -4581,11 +4581,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fe = calcFg(bE, feplus, potent[VX][iE], potent[VX][iP],
-			iP, ESIDE, alpha[VX], rhoe,
+		Fe = calcFg(bE, feplus, potent[VELOCITY_X_COMPONENT][iE], potent[VELOCITY_X_COMPONENT][iP],
+			iP, E_SIDE, alpha[VELOCITY_X_COMPONENT], rhoe,
 			dSqe, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iE], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iE], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4614,11 +4614,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fw = calcFg(bW, fwplus, potent[VX][iW], potent[VX][iP],
-			iP, WSIDE, alpha[VX], rhow,
+		Fw = calcFg(bW, fwplus, potent[VELOCITY_X_COMPONENT][iW], potent[VELOCITY_X_COMPONENT][iP],
+			iP, W_SIDE, alpha[VELOCITY_X_COMPONENT], rhow,
 			dSqw, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iW], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iW], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4647,11 +4647,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 		}
 
 
-		Fn = calcFg(bN, fnplus, potent[VY][iN], potent[VY][iP],
-			iP, NSIDE, alpha[VY], rhon,
+		Fn = calcFg(bN, fnplus, potent[VELOCITY_Y_COMPONENT][iN], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, N_SIDE, alpha[VELOCITY_Y_COMPONENT], rhon,
 			dSqn, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iN], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iN], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4680,11 +4680,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 		}
 
 
-		Fs = calcFg(bS, fsplus, potent[VY][iS], potent[VY][iP],
-			iP, SSIDE, alpha[VY], rhos,
+		Fs = calcFg(bS, fsplus, potent[VELOCITY_Y_COMPONENT][iS], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, S_SIDE, alpha[VELOCITY_Y_COMPONENT], rhos,
 			dSqs, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iS], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iS], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4713,11 +4713,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Ft = calcFg(bT, ftplus, potent[VZ][iT], potent[VZ][iP],
-			iP, TSIDE, alpha[VZ], rhot,
+		Ft = calcFg(bT, ftplus, potent[VELOCITY_Z_COMPONENT][iT], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, T_SIDE, alpha[VELOCITY_Z_COMPONENT], rhot,
 			dSqt, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iT], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iT], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4745,11 +4745,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fb = calcFg(bB, fbplus, potent[VZ][iB], potent[VZ][iP],
-			iP, BSIDE, alpha[VZ], rhob,
+		Fb = calcFg(bB, fbplus, potent[VELOCITY_Z_COMPONENT][iB], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, B_SIDE, alpha[VELOCITY_Z_COMPONENT], rhob,
 			dSqb, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iB], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iB], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4780,11 +4780,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fe2 = calcFg(bE2, feplus2, potent[VX][iE2], potent[VX][iP],
-			iP, ESIDE, alpha[VX], rhoe2,
+		Fe2 = calcFg(bE2, feplus2, potent[VELOCITY_X_COMPONENT][iE2], potent[VELOCITY_X_COMPONENT][iP],
+			iP, E_SIDE, alpha[VELOCITY_X_COMPONENT], rhoe2,
 			dSqe2, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iE2], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iE2], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4811,11 +4811,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fw2 = calcFg(bW2, fwplus2, potent[VX][iW2], potent[VX][iP],
-			iP, WSIDE, alpha[VX], rhow2,
+		Fw2 = calcFg(bW2, fwplus2, potent[VELOCITY_X_COMPONENT][iW2], potent[VELOCITY_X_COMPONENT][iP],
+			iP, W_SIDE, alpha[VELOCITY_X_COMPONENT], rhow2,
 			dSqw2, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iW2], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iW2], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4843,11 +4843,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fn2 = calcFg(bN2, fnplus2, potent[VY][iN2], potent[VY][iP],
-			iP, NSIDE, alpha[VY], rhon2,
+		Fn2 = calcFg(bN2, fnplus2, potent[VELOCITY_Y_COMPONENT][iN2], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, N_SIDE, alpha[VELOCITY_Y_COMPONENT], rhon2,
 			dSqn2, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iN2], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iN2], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4875,11 +4875,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fs2 = calcFg(bS2, fsplus2, potent[VY][iS2], potent[VY][iP],
-			iP, SSIDE, alpha[VY], rhos2,
+		Fs2 = calcFg(bS2, fsplus2, potent[VELOCITY_Y_COMPONENT][iS2], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, S_SIDE, alpha[VELOCITY_Y_COMPONENT], rhos2,
 			dSqs2, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iS2], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iS2], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4907,11 +4907,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Ft2 = calcFg(bT2, ftplus2, potent[VZ][iT2], potent[VZ][iP],
-			iP, TSIDE, alpha[VZ], rhot2,
+		Ft2 = calcFg(bT2, ftplus2, potent[VELOCITY_Z_COMPONENT][iT2], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, T_SIDE, alpha[VELOCITY_Z_COMPONENT], rhot2,
 			dSqt2, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iT2], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iT2], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4939,11 +4939,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fb2 = calcFg(bB2, fbplus2, potent[VZ][iB2], potent[VZ][iP],
-			iP, BSIDE, alpha[VZ], rhob2,
+		Fb2 = calcFg(bB2, fbplus2, potent[VELOCITY_Z_COMPONENT][iB2], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, B_SIDE, alpha[VELOCITY_Z_COMPONENT], rhob2,
 			dSqb2, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iB2], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iB2], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -4975,11 +4975,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fe3 = calcFg(bE3, feplus3, potent[VX][iE3], potent[VX][iP],
-			iP, ESIDE, alpha[VX], rhoe3,
+		Fe3 = calcFg(bE3, feplus3, potent[VELOCITY_X_COMPONENT][iE3], potent[VELOCITY_X_COMPONENT][iP],
+			iP, E_SIDE, alpha[VELOCITY_X_COMPONENT], rhoe3,
 			dSqe3, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iE3], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iE3], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5007,11 +5007,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fw3 = calcFg(bW3, fwplus3, potent[VX][iW3], potent[VX][iP],
-			iP, WSIDE, alpha[VX], rhow3,
+		Fw3 = calcFg(bW3, fwplus3, potent[VELOCITY_X_COMPONENT][iW3], potent[VELOCITY_X_COMPONENT][iP],
+			iP, W_SIDE, alpha[VELOCITY_X_COMPONENT], rhow3,
 			dSqw3, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iW3], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iW3], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5039,11 +5039,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fn3 = calcFg(bN3, fnplus3, potent[VY][iN3], potent[VY][iP],
-			iP, NSIDE, alpha[VY], rhon3,
+		Fn3 = calcFg(bN3, fnplus3, potent[VELOCITY_Y_COMPONENT][iN3], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, N_SIDE, alpha[VELOCITY_Y_COMPONENT], rhon3,
 			dSqn3, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iN3], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iN3], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5071,11 +5071,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fs3 = calcFg(bS3, fsplus3, potent[VY][iS3], potent[VY][iP],
-			iP, SSIDE, alpha[VY], rhos3,
+		Fs3 = calcFg(bS3, fsplus3, potent[VELOCITY_Y_COMPONENT][iS3], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, S_SIDE, alpha[VELOCITY_Y_COMPONENT], rhos3,
 			dSqs3, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iS3], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iS3], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5103,11 +5103,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Ft3 = calcFg(bT3, ftplus3, potent[VZ][iT3], potent[VZ][iP],
-			iP, TSIDE, alpha[VZ], rhot3,
+		Ft3 = calcFg(bT3, ftplus3, potent[VELOCITY_Z_COMPONENT][iT3], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, T_SIDE, alpha[VELOCITY_Z_COMPONENT], rhot3,
 			dSqt3, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iT3], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iT3], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5135,11 +5135,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fb3 = calcFg(bB3, fbplus3, potent[VZ][iB3], potent[VZ][iP],
-			iP, BSIDE, alpha[VZ], rhob3,
+		Fb3 = calcFg(bB3, fbplus3, potent[VELOCITY_Z_COMPONENT][iB3], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, B_SIDE, alpha[VELOCITY_Z_COMPONENT], rhob3,
 			dSqb3, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iB3], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iB3], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5170,11 +5170,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fe4 = calcFg(bE4, feplus4, potent[VX][iE4], potent[VX][iP],
-			iP, ESIDE, alpha[VX], rhoe4,
+		Fe4 = calcFg(bE4, feplus4, potent[VELOCITY_X_COMPONENT][iE4], potent[VELOCITY_X_COMPONENT][iP],
+			iP, E_SIDE, alpha[VELOCITY_X_COMPONENT], rhoe4,
 			dSqe4, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iE4], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iE4], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5202,11 +5202,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fw4 = calcFg(bW4, fwplus4, potent[VX][iW4], potent[VX][iP],
-			iP, WSIDE, alpha[VX], rhow4,
+		Fw4 = calcFg(bW4, fwplus4, potent[VELOCITY_X_COMPONENT][iW4], potent[VELOCITY_X_COMPONENT][iP],
+			iP, W_SIDE, alpha[VELOCITY_X_COMPONENT], rhow4,
 			dSqw4, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VX][iW4], diag_coef[VX][iP], dtimestep,
+			diag_coef[VELOCITY_X_COMPONENT][iW4], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5234,11 +5234,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fn4 = calcFg(bN4, fnplus4, potent[VY][iN4], potent[VY][iP],
-			iP, NSIDE, alpha[VY], rhon4,
+		Fn4 = calcFg(bN4, fnplus4, potent[VELOCITY_Y_COMPONENT][iN4], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, N_SIDE, alpha[VELOCITY_Y_COMPONENT], rhon4,
 			dSqn4, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iN4], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iN4], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5266,11 +5266,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fs4 = calcFg(bS4, fsplus4, potent[VY][iS4], potent[VY][iP],
-			iP, SSIDE, alpha[VY], rhos4,
+		Fs4 = calcFg(bS4, fsplus4, potent[VELOCITY_Y_COMPONENT][iS4], potent[VELOCITY_Y_COMPONENT][iP],
+			iP, S_SIDE, alpha[VELOCITY_Y_COMPONENT], rhos4,
 			dSqs4, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VY][iS4], diag_coef[VY][iP], dtimestep,
+			diag_coef[VELOCITY_Y_COMPONENT][iS4], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5298,11 +5298,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Ft4 = calcFg(bT4, ftplus4, potent[VZ][iT4], potent[VZ][iP],
-			iP, TSIDE, alpha[VZ], rhot4,
+		Ft4 = calcFg(bT4, ftplus4, potent[VELOCITY_Z_COMPONENT][iT4], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, T_SIDE, alpha[VELOCITY_Z_COMPONENT], rhot4,
 			dSqt4, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iT4], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iT4], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5330,11 +5330,11 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 			}
 		}
 
-		Fb4 = calcFg(bB4, fbplus4, potent[VZ][iB4], potent[VZ][iP],
-			iP, BSIDE, alpha[VZ], rhob4,
+		Fb4 = calcFg(bB4, fbplus4, potent[VELOCITY_Z_COMPONENT][iB4], potent[VELOCITY_Z_COMPONENT][iP],
+			iP, B_SIDE, alpha[VELOCITY_Z_COMPONENT], rhob4,
 			dSqb4, dx*dy*dz, btimedepend,
 			speedoldtimestep, mfoldtimestep,
-			diag_coef[VZ][iB4], diag_coef[VZ][iP], dtimestep,
+			diag_coef[VELOCITY_Z_COMPONENT][iB4], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 			RCh, nvtx, neighbors_for_the_internal_node, maxelm,
 			potent[PRESS], pa, diag_coef,
 			bRhieChowi, bRhieChowb, bsimplelinearinterpol);
@@ -5356,150 +5356,150 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 	    doublereal SpeedCorOlde = 0.0, SpeedCorOldw = 0.0,  SpeedCorOldn = 0.0,  SpeedCorOlds = 0.0,  SpeedCorOldt = 0.0,  SpeedCorOldb = 0.0;
 		if (iE > -1) {
 			if (!bE) {
-				SpeedCorOlde = feplus*SpeedCorOld[VX][iE] + (1.0 - feplus)*SpeedCorOld[VX][iP];
+				SpeedCorOlde = feplus*SpeedCorOld[VELOCITY_X_COMPONENT][iE] + (1.0 - feplus)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde = SpeedCorOld[VX][iE];
+				SpeedCorOlde = SpeedCorOld[VELOCITY_X_COMPONENT][iE];
 			}
 		}
 		if (iN > -1) {
 			if (!bN) {
-				SpeedCorOldn = fnplus*SpeedCorOld[VY][iN] + (1.0 - fnplus)*SpeedCorOld[VY][iP];
+				SpeedCorOldn = fnplus*SpeedCorOld[VELOCITY_Y_COMPONENT][iN] + (1.0 - fnplus)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn = SpeedCorOld[VY][iN];
+				SpeedCorOldn = SpeedCorOld[VELOCITY_Y_COMPONENT][iN];
 			}
 		}
 		if (iT > -1) {
 			if (!bT) {
-				SpeedCorOldt = ftplus*SpeedCorOld[VZ][iT] + (1.0 - ftplus)*SpeedCorOld[VZ][iP];
+				SpeedCorOldt = ftplus*SpeedCorOld[VELOCITY_Z_COMPONENT][iT] + (1.0 - ftplus)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt = SpeedCorOld[VZ][iT];
+				SpeedCorOldt = SpeedCorOld[VELOCITY_Z_COMPONENT][iT];
 			}
 		}
 		if (iW > -1) {
 			if (!bW) {
-				SpeedCorOldw = fwplus*SpeedCorOld[VX][iW] + (1.0 - fwplus)*SpeedCorOld[VX][iP];
+				SpeedCorOldw = fwplus*SpeedCorOld[VELOCITY_X_COMPONENT][iW] + (1.0 - fwplus)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw = SpeedCorOld[VX][iW];
+				SpeedCorOldw = SpeedCorOld[VELOCITY_X_COMPONENT][iW];
 			}
 		}
 		if (iS > -1) {
 			if (!bS) {
-				SpeedCorOlds = fsplus*SpeedCorOld[VY][iS] + (1.0 - fsplus)*SpeedCorOld[VY][iP];
+				SpeedCorOlds = fsplus*SpeedCorOld[VELOCITY_Y_COMPONENT][iS] + (1.0 - fsplus)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds = SpeedCorOld[VY][iS];
+				SpeedCorOlds = SpeedCorOld[VELOCITY_Y_COMPONENT][iS];
 			}
 		}
 		if (iB > -1) {
 			if (!bB) {
-				SpeedCorOldb = fbplus*SpeedCorOld[VZ][iB] + (1.0 - fbplus)*SpeedCorOld[VZ][iP];
+				SpeedCorOldb = fbplus*SpeedCorOld[VELOCITY_Z_COMPONENT][iB] + (1.0 - fbplus)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb = SpeedCorOld[VZ][iB];
+				SpeedCorOldb = SpeedCorOld[VELOCITY_Z_COMPONENT][iB];
 			}
 		}
 
 		doublereal SpeedCorOlde2 = 0.0, SpeedCorOldw2 = 0.0, SpeedCorOldn2 = 0.0, SpeedCorOlds2 = 0.0, SpeedCorOldt2 = 0.0, SpeedCorOldb2 = 0.0;
 		if (iE2 > -1) {
 			if (!bE2) {
-				SpeedCorOlde2 = feplus2*SpeedCorOld[VX][iE2] + (1.0 - feplus2)*SpeedCorOld[VX][iP];
+				SpeedCorOlde2 = feplus2*SpeedCorOld[VELOCITY_X_COMPONENT][iE2] + (1.0 - feplus2)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde2 = SpeedCorOld[VX][iE2];
+				SpeedCorOlde2 = SpeedCorOld[VELOCITY_X_COMPONENT][iE2];
 			}
 		}
 		if (iN2 > -1) {
 			if (!bN2) {
-				SpeedCorOldn2 = fnplus2*SpeedCorOld[VY][iN2] + (1.0 - fnplus2)*SpeedCorOld[VY][iP];
+				SpeedCorOldn2 = fnplus2*SpeedCorOld[VELOCITY_Y_COMPONENT][iN2] + (1.0 - fnplus2)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn2 = SpeedCorOld[VY][iN2];
+				SpeedCorOldn2 = SpeedCorOld[VELOCITY_Y_COMPONENT][iN2];
 			}
 		}
 		if (iT2 > -1) {
 			if (!bT2) {
-				SpeedCorOldt2 = ftplus2*SpeedCorOld[VZ][iT2] + (1.0 - ftplus2)*SpeedCorOld[VZ][iP];
+				SpeedCorOldt2 = ftplus2*SpeedCorOld[VELOCITY_Z_COMPONENT][iT2] + (1.0 - ftplus2)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt2 = SpeedCorOld[VZ][iT2];
+				SpeedCorOldt2 = SpeedCorOld[VELOCITY_Z_COMPONENT][iT2];
 			}
 		}
 		if (iW2 > -1) {
 			if (!bW2) {
-				SpeedCorOldw2 = fwplus2*SpeedCorOld[VX][iW2] + (1.0 - fwplus2)*SpeedCorOld[VX][iP];
+				SpeedCorOldw2 = fwplus2*SpeedCorOld[VELOCITY_X_COMPONENT][iW2] + (1.0 - fwplus2)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw2 = SpeedCorOld[VX][iW2];
+				SpeedCorOldw2 = SpeedCorOld[VELOCITY_X_COMPONENT][iW2];
 			}
 		}
 		if (iS2 > -1) {
 			if (!bS2) {
-				SpeedCorOlds2 = fsplus2*SpeedCorOld[VY][iS2] + (1.0 - fsplus2)*SpeedCorOld[VY][iP];
+				SpeedCorOlds2 = fsplus2*SpeedCorOld[VELOCITY_Y_COMPONENT][iS2] + (1.0 - fsplus2)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds2 = SpeedCorOld[VY][iS2];
+				SpeedCorOlds2 = SpeedCorOld[VELOCITY_Y_COMPONENT][iS2];
 			}
 		}
 		if (iB2 > -1) {
 			if (!bB2) {
-				SpeedCorOldb2 = fbplus2*SpeedCorOld[VZ][iB2] + (1.0 - fbplus2)*SpeedCorOld[VZ][iP];
+				SpeedCorOldb2 = fbplus2*SpeedCorOld[VELOCITY_Z_COMPONENT][iB2] + (1.0 - fbplus2)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb2 = SpeedCorOld[VZ][iB2];
+				SpeedCorOldb2 = SpeedCorOld[VELOCITY_Z_COMPONENT][iB2];
 			}
 		}
 
 		doublereal SpeedCorOlde3 = 0.0, SpeedCorOldw3 = 0.0, SpeedCorOldn3 = 0.0, SpeedCorOlds3 = 0.0, SpeedCorOldt3 = 0.0, SpeedCorOldb3 = 0.0;
 		if (iE3 > -1) {
 			if (!bE3) {
-				SpeedCorOlde3 = feplus3*SpeedCorOld[VX][iE3] + (1.0 - feplus3)*SpeedCorOld[VX][iP];
+				SpeedCorOlde3 = feplus3*SpeedCorOld[VELOCITY_X_COMPONENT][iE3] + (1.0 - feplus3)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde3 = SpeedCorOld[VX][iE3];
+				SpeedCorOlde3 = SpeedCorOld[VELOCITY_X_COMPONENT][iE3];
 			}
 		}
 		if (iN3 > -1) {
 			if (!bN3) {
-				SpeedCorOldn3 = fnplus3*SpeedCorOld[VY][iN3] + (1.0 - fnplus3)*SpeedCorOld[VY][iP];
+				SpeedCorOldn3 = fnplus3*SpeedCorOld[VELOCITY_Y_COMPONENT][iN3] + (1.0 - fnplus3)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn3 = SpeedCorOld[VY][iN3];
+				SpeedCorOldn3 = SpeedCorOld[VELOCITY_Y_COMPONENT][iN3];
 			}
 		}
 		if (iT3 > -1) {
 			if (!bT3) {
-				SpeedCorOldt3 = ftplus3*SpeedCorOld[VZ][iT3] + (1.0 - ftplus3)*SpeedCorOld[VZ][iP];
+				SpeedCorOldt3 = ftplus3*SpeedCorOld[VELOCITY_Z_COMPONENT][iT3] + (1.0 - ftplus3)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt3 = SpeedCorOld[VZ][iT3];
+				SpeedCorOldt3 = SpeedCorOld[VELOCITY_Z_COMPONENT][iT3];
 			}
 		}
 		if (iW3 > -1) {
 			if (!bW3) {
-				SpeedCorOldw3 = fwplus3*SpeedCorOld[VX][iW3] + (1.0 - fwplus3)*SpeedCorOld[VX][iP];
+				SpeedCorOldw3 = fwplus3*SpeedCorOld[VELOCITY_X_COMPONENT][iW3] + (1.0 - fwplus3)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw3 = SpeedCorOld[VX][iW3];
+				SpeedCorOldw3 = SpeedCorOld[VELOCITY_X_COMPONENT][iW3];
 			}
 		}
 		if (iS3 > -1) {
 			if (!bS3) {
-				SpeedCorOlds3 = fsplus3*SpeedCorOld[VY][iS3] + (1.0 - fsplus3)*SpeedCorOld[VY][iP];
+				SpeedCorOlds3 = fsplus3*SpeedCorOld[VELOCITY_Y_COMPONENT][iS3] + (1.0 - fsplus3)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds3 = SpeedCorOld[VY][iS3];
+				SpeedCorOlds3 = SpeedCorOld[VELOCITY_Y_COMPONENT][iS3];
 			}
 		}
 		if (iB3 > -1) {
 			if (!bB3) {
-				SpeedCorOldb3 = fbplus3*SpeedCorOld[VZ][iB3] + (1.0 - fbplus3)*SpeedCorOld[VZ][iP];
+				SpeedCorOldb3 = fbplus3*SpeedCorOld[VELOCITY_Z_COMPONENT][iB3] + (1.0 - fbplus3)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb3 = SpeedCorOld[VZ][iB3];
+				SpeedCorOldb3 = SpeedCorOld[VELOCITY_Z_COMPONENT][iB3];
 			}
 		}
 
@@ -5507,50 +5507,50 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 		doublereal SpeedCorOlde4 = 0.0, SpeedCorOldw4 = 0.0, SpeedCorOldn4 = 0.0, SpeedCorOlds4 = 0.0, SpeedCorOldt4 = 0.0, SpeedCorOldb4 = 0.0;
 		if (iE4 > -1) {
 			if (!bE4) {
-				SpeedCorOlde4 = feplus4*SpeedCorOld[VX][iE4] + (1.0 - feplus4)*SpeedCorOld[VX][iP];
+				SpeedCorOlde4 = feplus4*SpeedCorOld[VELOCITY_X_COMPONENT][iE4] + (1.0 - feplus4)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlde4 = SpeedCorOld[VX][iE4];
+				SpeedCorOlde4 = SpeedCorOld[VELOCITY_X_COMPONENT][iE4];
 			}
 		}
 		if (iN4 > -1) {
 			if (!bN4) {
-				SpeedCorOldn4 = fnplus4*SpeedCorOld[VY][iN4] + (1.0 - fnplus4)*SpeedCorOld[VY][iP];
+				SpeedCorOldn4 = fnplus4*SpeedCorOld[VELOCITY_Y_COMPONENT][iN4] + (1.0 - fnplus4)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldn4 = SpeedCorOld[VY][iN4];
+				SpeedCorOldn4 = SpeedCorOld[VELOCITY_Y_COMPONENT][iN4];
 			}
 		}
 		if (iT4 > -1) {
 			if (!bT4) {
-				SpeedCorOldt4 = ftplus4*SpeedCorOld[VZ][iT4] + (1.0 - ftplus4)*SpeedCorOld[VZ][iP];
+				SpeedCorOldt4 = ftplus4*SpeedCorOld[VELOCITY_Z_COMPONENT][iT4] + (1.0 - ftplus4)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldt4 = SpeedCorOld[VZ][iT4];
+				SpeedCorOldt4 = SpeedCorOld[VELOCITY_Z_COMPONENT][iT4];
 			}
 		}
 		if (iW4 > -1) {
 			if (!bW4) {
-				SpeedCorOldw4 = fwplus4*SpeedCorOld[VX][iW4] + (1.0 - fwplus4)*SpeedCorOld[VX][iP];
+				SpeedCorOldw4 = fwplus4*SpeedCorOld[VELOCITY_X_COMPONENT][iW4] + (1.0 - fwplus4)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldw4 = SpeedCorOld[VX][iW4];
+				SpeedCorOldw4 = SpeedCorOld[VELOCITY_X_COMPONENT][iW4];
 			}
 		}
 		if (iS4 > -1) {
 			if (!bS4) {
-				SpeedCorOlds4 = fsplus4*SpeedCorOld[VY][iS4] + (1.0 - fsplus4)*SpeedCorOld[VY][iP];
+				SpeedCorOlds4 = fsplus4*SpeedCorOld[VELOCITY_Y_COMPONENT][iS4] + (1.0 - fsplus4)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOlds4 = SpeedCorOld[VY][iS4];
+				SpeedCorOlds4 = SpeedCorOld[VELOCITY_Y_COMPONENT][iS4];
 			}
 		}
 		if (iB4 > -1) {
 			if (!bB4) {
-				SpeedCorOldb4 = fbplus4*SpeedCorOld[VZ][iB4] + (1.0 - fbplus4)*SpeedCorOld[VZ][iP];
+				SpeedCorOldb4 = fbplus4*SpeedCorOld[VELOCITY_Z_COMPONENT][iB4] + (1.0 - fbplus4)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 			}
 			else {
-				SpeedCorOldb4 = SpeedCorOld[VZ][iB4];
+				SpeedCorOldb4 = SpeedCorOld[VELOCITY_Z_COMPONENT][iB4];
 			}
 		}
 
@@ -5575,12 +5575,12 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 		// возвращаем значение потока на грани КО.
 		// С включённой поправкой (дополнительная нижняя релаксация) из статьи I. Sezai. !!!
 		// mfold - значение массового потока с предыдущей итерации.
-		mfcurrentretune[ESIDE] = Fe_sum + (1.0 - alpha[VX])*(mfold[ESIDE] - rhoe*SpeedCorOlde*dSqe - rhoe2 * SpeedCorOlde2*dSqe2 - rhoe3 * SpeedCorOlde3*dSqe3 - rhoe4 * SpeedCorOlde4*dSqe4);
-		mfcurrentretune[NSIDE] = Fn_sum + (1.0 - alpha[VY])*(mfold[NSIDE] - rhon*SpeedCorOldn*dSqn - rhon2 * SpeedCorOldn2*dSqn2 - rhon3 * SpeedCorOldn3*dSqn3 - rhon4 * SpeedCorOldn4*dSqn4);
-		mfcurrentretune[TSIDE] = Ft_sum + (1.0 - alpha[VZ])*(mfold[TSIDE] - rhot*SpeedCorOldt*dSqt - rhot2 * SpeedCorOldt2*dSqt2 - rhot3 * SpeedCorOldt3*dSqt3 - rhot4 * SpeedCorOldt4*dSqt4);
-		mfcurrentretune[WSIDE] = Fw_sum + (1.0 - alpha[VX])*(mfold[WSIDE] - rhow*SpeedCorOldw*dSqw - rhow2 * SpeedCorOldw2*dSqw2 - rhow3 * SpeedCorOldw3*dSqw3 - rhow4 * SpeedCorOldw4*dSqw4);
-		mfcurrentretune[SSIDE] = Fs_sum + (1.0 - alpha[VY])*(mfold[SSIDE] - rhos*SpeedCorOlds*dSqs - rhos2 * SpeedCorOlds2*dSqs2 - rhos3 * SpeedCorOlds3*dSqs3 - rhos4 * SpeedCorOlds4*dSqs4);
-		mfcurrentretune[BSIDE] = Fb_sum + (1.0 - alpha[VZ])*(mfold[BSIDE] - rhob*SpeedCorOldb*dSqb - rhob2 * SpeedCorOldb2*dSqb2 - rhob3 * SpeedCorOldb3*dSqb3 - rhob4 * SpeedCorOldb4*dSqb4);
+		mfcurrentretune[E_SIDE] = Fe_sum + (1.0 - alpha[VELOCITY_X_COMPONENT])*(mfold[E_SIDE] - rhoe*SpeedCorOlde*dSqe - rhoe2 * SpeedCorOlde2*dSqe2 - rhoe3 * SpeedCorOlde3*dSqe3 - rhoe4 * SpeedCorOlde4*dSqe4);
+		mfcurrentretune[N_SIDE] = Fn_sum + (1.0 - alpha[VELOCITY_Y_COMPONENT])*(mfold[N_SIDE] - rhon*SpeedCorOldn*dSqn - rhon2 * SpeedCorOldn2*dSqn2 - rhon3 * SpeedCorOldn3*dSqn3 - rhon4 * SpeedCorOldn4*dSqn4);
+		mfcurrentretune[T_SIDE] = Ft_sum + (1.0 - alpha[VELOCITY_Z_COMPONENT])*(mfold[T_SIDE] - rhot*SpeedCorOldt*dSqt - rhot2 * SpeedCorOldt2*dSqt2 - rhot3 * SpeedCorOldt3*dSqt3 - rhot4 * SpeedCorOldt4*dSqt4);
+		mfcurrentretune[W_SIDE] = Fw_sum + (1.0 - alpha[VELOCITY_X_COMPONENT])*(mfold[W_SIDE] - rhow*SpeedCorOldw*dSqw - rhow2 * SpeedCorOldw2*dSqw2 - rhow3 * SpeedCorOldw3*dSqw3 - rhow4 * SpeedCorOldw4*dSqw4);
+		mfcurrentretune[S_SIDE] = Fs_sum + (1.0 - alpha[VELOCITY_Y_COMPONENT])*(mfold[S_SIDE] - rhos*SpeedCorOlds*dSqs - rhos2 * SpeedCorOlds2*dSqs2 - rhos3 * SpeedCorOlds3*dSqs3 - rhos4 * SpeedCorOlds4*dSqs4);
+		mfcurrentretune[B_SIDE] = Fb_sum + (1.0 - alpha[VELOCITY_Z_COMPONENT])*(mfold[B_SIDE] - rhob*SpeedCorOldb*dSqb - rhob2 * SpeedCorOldb2*dSqb2 - rhob3 * SpeedCorOldb3*dSqb3 - rhob4 * SpeedCorOldb4*dSqb4);
 	}
 
 	if (!ISezai) {
@@ -5590,12 +5590,12 @@ void return_calc_correct_mass_flux(integer iP, doublereal** potent, TOCHKA* pa, 
 	   //mfcurrentretune[WSIDE]=Fw;
 	   //mfcurrentretune[SSIDE]=Fs;
 	   //mfcurrentretune[BSIDE]=Fb;
-		mfcurrentretune[ESIDE] = Fe_sum;
-		mfcurrentretune[NSIDE] = Fn_sum;
-		mfcurrentretune[TSIDE] = Ft_sum;
-		mfcurrentretune[WSIDE] = Fw_sum;
-		mfcurrentretune[SSIDE] = Fs_sum;
-		mfcurrentretune[BSIDE] = Fb_sum;
+		mfcurrentretune[E_SIDE] = Fe_sum;
+		mfcurrentretune[N_SIDE] = Fn_sum;
+		mfcurrentretune[T_SIDE] = Ft_sum;
+		mfcurrentretune[W_SIDE] = Fw_sum;
+		mfcurrentretune[S_SIDE] = Fs_sum;
+		mfcurrentretune[B_SIDE] = Fb_sum;
 	}
 
 } // return_correct_mass_flux
@@ -5627,8 +5627,8 @@ void return_calc_correct_mass_flux2(integer iP, doublereal** potent, TOCHKA* pa,
 
 	// iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 
 	// если с одной из сторон граница расчётной области 
@@ -5703,42 +5703,42 @@ void return_calc_correct_mass_flux2(integer iP, doublereal** potent, TOCHKA* pa,
 
 	doublereal Fw=0.0, Fe=0.0, Fs=0.0, Fn=0.0, Ft=0.0, Fb=0.0; 
 
-	Fe=calcFg2(bE, feplus, iP, ESIDE,  rhoe, 
+	Fe=calcFg2(bE, feplus, iP, E_SIDE,  rhoe, 
 			   dy*dz, btimedepend, 
 			   speedoldtimestep,  mfoldtimestep,
 		       dtimestep,	 RCh, neighbors_for_the_internal_node, 
 			   bRhieChowi, bRhieChowb, 
 			   bsimplelinearinterpol, tau, dxe, potent);
 
-	Fw=calcFg2(bW, fwplus, iP, WSIDE, rhow, 
+	Fw=calcFg2(bW, fwplus, iP, W_SIDE, rhow, 
 			   dy*dz, btimedepend, 
 			   speedoldtimestep, mfoldtimestep,
 			   dtimestep,	RCh, neighbors_for_the_internal_node, 
 			   bRhieChowi, bRhieChowb, bsimplelinearinterpol,
 			   tau, dxw, potent);
 
-	Fn=calcFg2(bN, fnplus, iP, NSIDE, rhon, 
+	Fn=calcFg2(bN, fnplus, iP, N_SIDE, rhon, 
 			   dx*dz, btimedepend, 
 			   speedoldtimestep, mfoldtimestep,
 			   dtimestep, RCh, neighbors_for_the_internal_node, 
 			   bRhieChowi, bRhieChowb, bsimplelinearinterpol,
 			   tau, dyn, potent);
 
-	Fs=calcFg2(bS, fsplus, iP, SSIDE, rhos, 
+	Fs=calcFg2(bS, fsplus, iP, S_SIDE, rhos, 
 			   dx*dz, btimedepend, 
 			   speedoldtimestep, mfoldtimestep,
 			   dtimestep, RCh, neighbors_for_the_internal_node, 
 			   bRhieChowi, bRhieChowb, bsimplelinearinterpol,
 			   tau, dys, potent);
 
-	Ft=calcFg2(bT, ftplus, iP, TSIDE, rhot, 
+	Ft=calcFg2(bT, ftplus, iP, T_SIDE, rhot, 
 		       dx*dy, btimedepend, 
 			   speedoldtimestep, mfoldtimestep,
 			   dtimestep,	RCh, neighbors_for_the_internal_node, 
 			   bRhieChowi, bRhieChowb, bsimplelinearinterpol,
 			   tau, dzt, potent);
 
-	Fb=calcFg2(bB, fbplus, iP, BSIDE, rhob, 
+	Fb=calcFg2(bB, fbplus, iP, B_SIDE, rhob, 
 			   dx*dy, btimedepend, 
 			   speedoldtimestep, mfoldtimestep,
 			   dtimestep,	RCh, neighbors_for_the_internal_node, 
@@ -5750,60 +5750,60 @@ void return_calc_correct_mass_flux2(integer iP, doublereal** potent, TOCHKA* pa,
 
 	    doublereal SpeedCorOlde, SpeedCorOldw,  SpeedCorOldn,  SpeedCorOlds,  SpeedCorOldt,  SpeedCorOldb; 
 	    if (!bE) { 
-		   SpeedCorOlde=feplus*SpeedCorOld[VX][iE]+(1.0-feplus)*SpeedCorOld[VX][iP];
+		   SpeedCorOlde=feplus*SpeedCorOld[VELOCITY_X_COMPONENT][iE]+(1.0-feplus)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
 	    }
 	    else {
-	       SpeedCorOlde=SpeedCorOld[VX][iE];
+	       SpeedCorOlde=SpeedCorOld[VELOCITY_X_COMPONENT][iE];
 	    }
 	    if (!bN) { 
-		   SpeedCorOldn=fnplus*SpeedCorOld[VY][iN]+(1.0-fnplus)*SpeedCorOld[VY][iP];
+		   SpeedCorOldn=fnplus*SpeedCorOld[VELOCITY_Y_COMPONENT][iN]+(1.0-fnplus)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 	    }
 	    else {
-	       SpeedCorOldn=SpeedCorOld[VY][iN];
+	       SpeedCorOldn=SpeedCorOld[VELOCITY_Y_COMPONENT][iN];
 	    }
 	    if (!bT) { 
-		   SpeedCorOldt=ftplus*SpeedCorOld[VZ][iT]+(1.0-ftplus)*SpeedCorOld[VZ][iP];
+		   SpeedCorOldt=ftplus*SpeedCorOld[VELOCITY_Z_COMPONENT][iT]+(1.0-ftplus)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 	    }
 	    else {
-	       SpeedCorOldt=SpeedCorOld[VZ][iT];
+	       SpeedCorOldt=SpeedCorOld[VELOCITY_Z_COMPONENT][iT];
 	    }
 	    if (!bW) { 
-		   SpeedCorOldw=fwplus*SpeedCorOld[VX][iW]+(1.0-fwplus)*SpeedCorOld[VX][iP];
+		   SpeedCorOldw=fwplus*SpeedCorOld[VELOCITY_X_COMPONENT][iW]+(1.0-fwplus)*SpeedCorOld[VELOCITY_X_COMPONENT][iP];
      	}
         else {
-	       SpeedCorOldw=SpeedCorOld[VX][iW];
+	       SpeedCorOldw=SpeedCorOld[VELOCITY_X_COMPONENT][iW];
 	    }
 	    if (!bS) { 
-		   SpeedCorOlds=fsplus*SpeedCorOld[VY][iS]+(1.0-fsplus)*SpeedCorOld[VY][iP];
+		   SpeedCorOlds=fsplus*SpeedCorOld[VELOCITY_Y_COMPONENT][iS]+(1.0-fsplus)*SpeedCorOld[VELOCITY_Y_COMPONENT][iP];
 	    }
 	    else {
-	       SpeedCorOlds=SpeedCorOld[VY][iS];
+	       SpeedCorOlds=SpeedCorOld[VELOCITY_Y_COMPONENT][iS];
 	    }
 	    if (!bB) { 
-		   SpeedCorOldb=fbplus*SpeedCorOld[VZ][iB]+(1.0-fbplus)*SpeedCorOld[VZ][iP];
+		   SpeedCorOldb=fbplus*SpeedCorOld[VELOCITY_Z_COMPONENT][iB]+(1.0-fbplus)*SpeedCorOld[VELOCITY_Z_COMPONENT][iP];
 	    }
 	    else {
-	       SpeedCorOldb=SpeedCorOld[VZ][iB];
+	       SpeedCorOldb=SpeedCorOld[VELOCITY_Z_COMPONENT][iB];
 	    }
 
 	    // возвращаем значение потока на грани КО.
 	    // С включённой поправкой (дополнительная нижняя релаксация) из статьи I. Sezai. !!!
 	   // mfold - значение массового потока с предыдущей итерации.
-        mfcurrentretune[ESIDE]=Fe+(1.0-alpha[VX])*(mfold[ESIDE]-rhoe*SpeedCorOlde*dy*dz);
-	    mfcurrentretune[NSIDE]=Fn+(1.0-alpha[VY])*(mfold[NSIDE]-rhon*SpeedCorOldn*dx*dz);
-	    mfcurrentretune[TSIDE]=Ft+(1.0-alpha[VZ])*(mfold[TSIDE]-rhot*SpeedCorOldt*dx*dy);
-	    mfcurrentretune[WSIDE]=Fw+(1.0-alpha[VX])*(mfold[WSIDE]-rhow*SpeedCorOldw*dy*dz);
-	    mfcurrentretune[SSIDE]=Fs+(1.0-alpha[VY])*(mfold[SSIDE]-rhos*SpeedCorOlds*dx*dz);
-	    mfcurrentretune[BSIDE]=Fb+(1.0-alpha[VZ])*(mfold[BSIDE]-rhob*SpeedCorOldb*dx*dy);
+        mfcurrentretune[E_SIDE]=Fe+(1.0-alpha[VELOCITY_X_COMPONENT])*(mfold[E_SIDE]-rhoe*SpeedCorOlde*dy*dz);
+	    mfcurrentretune[N_SIDE]=Fn+(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfold[N_SIDE]-rhon*SpeedCorOldn*dx*dz);
+	    mfcurrentretune[T_SIDE]=Ft+(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfold[T_SIDE]-rhot*SpeedCorOldt*dx*dy);
+	    mfcurrentretune[W_SIDE]=Fw+(1.0-alpha[VELOCITY_X_COMPONENT])*(mfold[W_SIDE]-rhow*SpeedCorOldw*dy*dz);
+	    mfcurrentretune[S_SIDE]=Fs+(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfold[S_SIDE]-rhos*SpeedCorOlds*dx*dz);
+	    mfcurrentretune[B_SIDE]=Fb+(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfold[B_SIDE]-rhob*SpeedCorOldb*dx*dy);
 	}
 
 	if (!ISezai) {
-	   mfcurrentretune[ESIDE]=Fe;
-	   mfcurrentretune[NSIDE]=Fn;
-	   mfcurrentretune[TSIDE]=Ft;
-	   mfcurrentretune[WSIDE]=Fw;
-	   mfcurrentretune[SSIDE]=Fs;
-	   mfcurrentretune[BSIDE]=Fb;
+	   mfcurrentretune[E_SIDE]=Fe;
+	   mfcurrentretune[N_SIDE]=Fn;
+	   mfcurrentretune[T_SIDE]=Ft;
+	   mfcurrentretune[W_SIDE]=Fw;
+	   mfcurrentretune[S_SIDE]=Fs;
+	   mfcurrentretune[B_SIDE]=Fb;
 	}
 
 } // return_correct_mass_flux2
@@ -5836,8 +5836,8 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 
 	// iP - номер центрального контрольного объёма
 	integer iE=-1, iN=-1, iT=-1, iW=-1, iS=-1, iB=-1; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 
 	// 26.09.2016 Добавок для АЛИС сетки.
@@ -5847,12 +5847,12 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 
 										  // -1 если не используется и [0..maxelm+maxbound-1] если используется.
 
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 	// если с одной из сторон граница расчётной области 
@@ -6264,7 +6264,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 		}
 
 
-		Fe = calcFg3(bE, feplus, iP, ESIDE, rhoe,
+		Fe = calcFg3(bE, feplus, iP, E_SIDE, rhoe,
 			dSqe, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6294,7 +6294,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fw = calcFg3(bW, fwplus, iP, WSIDE, rhow,
+		Fw = calcFg3(bW, fwplus, iP, W_SIDE, rhow,
 			dSqw, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6324,7 +6324,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fn = calcFg3(bN, fnplus, iP, NSIDE, rhon,
+		Fn = calcFg3(bN, fnplus, iP, N_SIDE, rhon,
 			dSqn, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6354,7 +6354,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fs = calcFg3(bS, fsplus, iP, SSIDE, rhos,
+		Fs = calcFg3(bS, fsplus, iP, S_SIDE, rhos,
 			dSqs, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6384,7 +6384,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Ft = calcFg3(bT, ftplus, iP, TSIDE, rhot,
+		Ft = calcFg3(bT, ftplus, iP, T_SIDE, rhot,
 			dSqt, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6414,7 +6414,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fb = calcFg3(bB, fbplus, iP, BSIDE, rhob,
+		Fb = calcFg3(bB, fbplus, iP, B_SIDE, rhob,
 			dSqb, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6447,7 +6447,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fe2 = calcFg3(bE2, feplus2, iP, ESIDE, rhoe2,
+		Fe2 = calcFg3(bE2, feplus2, iP, E_SIDE, rhoe2,
 			dSqe2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6476,7 +6476,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fw2 = calcFg3(bW2, fwplus2, iP, WSIDE, rhow2,
+		Fw2 = calcFg3(bW2, fwplus2, iP, W_SIDE, rhow2,
 			dSqw2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6506,7 +6506,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fn2 = calcFg3(bN2, fnplus2, iP, NSIDE, rhon2,
+		Fn2 = calcFg3(bN2, fnplus2, iP, N_SIDE, rhon2,
 			dSqn2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6536,7 +6536,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fs2 = calcFg3(bS2, fsplus2, iP, SSIDE, rhos2,
+		Fs2 = calcFg3(bS2, fsplus2, iP, S_SIDE, rhos2,
 			dSqs2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6566,7 +6566,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Ft2 = calcFg3(bT2, ftplus2, iP, TSIDE, rhot2,
+		Ft2 = calcFg3(bT2, ftplus2, iP, T_SIDE, rhot2,
 			dSqt2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6596,7 +6596,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fb2 = calcFg3(bB2, fbplus2, iP, BSIDE, rhob2,
+		Fb2 = calcFg3(bB2, fbplus2, iP, B_SIDE, rhob2,
 			dSqb2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6630,7 +6630,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fe3 = calcFg3(bE3, feplus3, iP, ESIDE, rhoe3,
+		Fe3 = calcFg3(bE3, feplus3, iP, E_SIDE, rhoe3,
 			dSqe3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6660,7 +6660,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fw3 = calcFg3(bW3, fwplus3, iP, WSIDE, rhow3,
+		Fw3 = calcFg3(bW3, fwplus3, iP, W_SIDE, rhow3,
 			dSqw3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6690,7 +6690,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fn3 = calcFg3(bN3, fnplus3, iP, NSIDE, rhon3,
+		Fn3 = calcFg3(bN3, fnplus3, iP, N_SIDE, rhon3,
 			dSqn3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6720,7 +6720,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fs3 = calcFg3(bS3, fsplus3, iP, SSIDE, rhos3,
+		Fs3 = calcFg3(bS3, fsplus3, iP, S_SIDE, rhos3,
 			dSqs3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6750,7 +6750,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Ft3 = calcFg3(bT3, ftplus3, iP, TSIDE, rhot3,
+		Ft3 = calcFg3(bT3, ftplus3, iP, T_SIDE, rhot3,
 			dSqt3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6780,7 +6780,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fb3 = calcFg3(bB3, fbplus3, iP, BSIDE, rhob3,
+		Fb3 = calcFg3(bB3, fbplus3, iP, B_SIDE, rhob3,
 			dSqb3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6813,7 +6813,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fe4 = calcFg3(bE4, feplus4, iP, ESIDE, rhoe4,
+		Fe4 = calcFg3(bE4, feplus4, iP, E_SIDE, rhoe4,
 			dSqe4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6843,7 +6843,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fw4 = calcFg3(bW4, fwplus4, iP, WSIDE, rhow4,
+		Fw4 = calcFg3(bW4, fwplus4, iP, W_SIDE, rhow4,
 			dSqw4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6873,7 +6873,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fn4 = calcFg3(bN4, fnplus4, iP, NSIDE, rhon4,
+		Fn4 = calcFg3(bN4, fnplus4, iP, N_SIDE, rhon4,
 			dSqn4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6903,7 +6903,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fs4 = calcFg3(bS4, fsplus4, iP, SSIDE, rhos4,
+		Fs4 = calcFg3(bS4, fsplus4, iP, S_SIDE, rhos4,
 			dSqs4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6933,7 +6933,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Ft4 = calcFg3(bT4, ftplus4, iP, TSIDE, rhot4,
+		Ft4 = calcFg3(bT4, ftplus4, iP, T_SIDE, rhot4,
 			dSqt4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -6963,7 +6963,7 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 			}
 		}
 
-		Fb4 = calcFg3(bB4, fbplus4, iP, BSIDE, rhob4,
+		Fb4 = calcFg3(bB4, fbplus4, iP, B_SIDE, rhob4,
 			dSqb4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -7187,21 +7187,21 @@ void return_calc_correct_mass_flux3(integer iP, doublereal** potent, TOCHKA* pa,
 	    // возвращаем значение потока на грани КО.
 	    // С включённой поправкой (дополнительная нижняя релаксация) из статьи I. Sezai. !!!
 	   // mfold - значение массового потока с предыдущей итерации.
-        mfcurrentretune[ESIDE]=Fe_sum+(1.0-alpha[VX])*(mfold[ESIDE]-rhoe*SpeedCorOlde*dSqe - rhoe2 * SpeedCorOlde2*dSqe2 - rhoe3 * SpeedCorOlde3*dSqe3 - rhoe4 * SpeedCorOlde4*dSqe4);
-	    mfcurrentretune[NSIDE]=Fn_sum +(1.0-alpha[VY])*(mfold[NSIDE]-rhon*SpeedCorOldn*dSqn - rhon2 * SpeedCorOldn2*dSqn2 - rhon3 * SpeedCorOldn3*dSqn3 - rhon4 * SpeedCorOldn4*dSqn4);
-	    mfcurrentretune[TSIDE]=Ft_sum +(1.0-alpha[VZ])*(mfold[TSIDE]-rhot*SpeedCorOldt*dSqt - rhot2 * SpeedCorOldt2*dSqt2 - rhot3 * SpeedCorOldt3*dSqt3 - rhot4 * SpeedCorOldt4*dSqt4);
-	    mfcurrentretune[WSIDE]=Fw_sum +(1.0-alpha[VX])*(mfold[WSIDE]-rhow*SpeedCorOldw*dSqw - rhow2 * SpeedCorOldw2*dSqw2 - rhow3 * SpeedCorOldw3*dSqw3 - rhow4 * SpeedCorOldw4*dSqw4);
-	    mfcurrentretune[SSIDE]=Fs_sum +(1.0-alpha[VY])*(mfold[SSIDE]-rhos*SpeedCorOlds*dSqs - rhos2 * SpeedCorOlds2*dSqs2 - rhos3 * SpeedCorOlds3*dSqs3 - rhos4 * SpeedCorOlds4*dSqs4);
-	    mfcurrentretune[BSIDE]=Fb_sum +(1.0-alpha[VZ])*(mfold[BSIDE]-rhob*SpeedCorOldb*dSqb - rhob2 * SpeedCorOldb2*dSqb2 - rhob3 * SpeedCorOldb3*dSqb3 - rhob4 * SpeedCorOldb4*dSqb4);
+        mfcurrentretune[E_SIDE]=Fe_sum+(1.0-alpha[VELOCITY_X_COMPONENT])*(mfold[E_SIDE]-rhoe*SpeedCorOlde*dSqe - rhoe2 * SpeedCorOlde2*dSqe2 - rhoe3 * SpeedCorOlde3*dSqe3 - rhoe4 * SpeedCorOlde4*dSqe4);
+	    mfcurrentretune[N_SIDE]=Fn_sum +(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfold[N_SIDE]-rhon*SpeedCorOldn*dSqn - rhon2 * SpeedCorOldn2*dSqn2 - rhon3 * SpeedCorOldn3*dSqn3 - rhon4 * SpeedCorOldn4*dSqn4);
+	    mfcurrentretune[T_SIDE]=Ft_sum +(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfold[T_SIDE]-rhot*SpeedCorOldt*dSqt - rhot2 * SpeedCorOldt2*dSqt2 - rhot3 * SpeedCorOldt3*dSqt3 - rhot4 * SpeedCorOldt4*dSqt4);
+	    mfcurrentretune[W_SIDE]=Fw_sum +(1.0-alpha[VELOCITY_X_COMPONENT])*(mfold[W_SIDE]-rhow*SpeedCorOldw*dSqw - rhow2 * SpeedCorOldw2*dSqw2 - rhow3 * SpeedCorOldw3*dSqw3 - rhow4 * SpeedCorOldw4*dSqw4);
+	    mfcurrentretune[S_SIDE]=Fs_sum +(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfold[S_SIDE]-rhos*SpeedCorOlds*dSqs - rhos2 * SpeedCorOlds2*dSqs2 - rhos3 * SpeedCorOlds3*dSqs3 - rhos4 * SpeedCorOlds4*dSqs4);
+	    mfcurrentretune[B_SIDE]=Fb_sum +(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfold[B_SIDE]-rhob*SpeedCorOldb*dSqb - rhob2 * SpeedCorOldb2*dSqb2 - rhob3 * SpeedCorOldb3*dSqb3 - rhob4 * SpeedCorOldb4*dSqb4);
 	}
 
 	if (!ISezai) {
-	   mfcurrentretune[ESIDE]=Fe_sum;
-	   mfcurrentretune[NSIDE]=Fn_sum;
-	   mfcurrentretune[TSIDE]=Ft_sum;
-	   mfcurrentretune[WSIDE]=Fw_sum;
-	   mfcurrentretune[SSIDE]=Fs_sum;
-	   mfcurrentretune[BSIDE]=Fb_sum;
+	   mfcurrentretune[E_SIDE]=Fe_sum;
+	   mfcurrentretune[N_SIDE]=Fn_sum;
+	   mfcurrentretune[T_SIDE]=Ft_sum;
+	   mfcurrentretune[W_SIDE]=Fw_sum;
+	   mfcurrentretune[S_SIDE]=Fs_sum;
+	   mfcurrentretune[B_SIDE]=Fb_sum;
 	}
 
 } // return_correct_mass_flux3
@@ -7241,8 +7241,8 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	sl[PAM][iP].iP=iP;
 	sl[PAM][iP].iE=iE; sl[PAM][iP].iN=iN; 
 	sl[PAM][iP].iS=iS; sl[PAM][iP].iW=iW;
@@ -7300,12 +7300,12 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		
 
 	doublereal apue=1.0, apuw=1.0, apvn=1.0, apvs=1.0, apwt=1.0, apwb=1.0;
-	if (!bE) apue=sl[VX][iE].ap*sl[VX][iP].ap/(feplus*sl[VX][iE].ap+(1-feplus)*sl[VX][iP].ap); else apue=slb[VX][iE-maxelm].aw;
-	if (!bW) apuw=sl[VX][iW].ap*sl[VX][iP].ap/(fwplus*sl[VX][iW].ap+(1-fwplus)*sl[VX][iP].ap); else apuw=slb[VX][iW-maxelm].aw;
-	if (!bN) apvn=sl[VY][iN].ap*sl[VY][iP].ap/(fnplus*sl[VY][iN].ap+(1-fnplus)*sl[VY][iP].ap); else apvn=slb[VY][iN-maxelm].aw;
-	if (!bS) apvs=sl[VY][iS].ap*sl[VY][iP].ap/(fsplus*sl[VY][iS].ap+(1-fsplus)*sl[VY][iP].ap); else apvs=slb[VY][iS-maxelm].aw;
-	if (!bT) apwt=sl[VZ][iT].ap*sl[VZ][iP].ap/(ftplus*sl[VZ][iT].ap+(1-ftplus)*sl[VZ][iP].ap); else apwt=slb[VZ][iT-maxelm].aw;
-	if (!bB) apwb=sl[VZ][iB].ap*sl[VZ][iP].ap/(fbplus*sl[VZ][iB].ap+(1-fbplus)*sl[VZ][iP].ap); else apwb=slb[VZ][iB-maxelm].aw;
+	if (!bE) apue=sl[VELOCITY_X_COMPONENT][iE].ap*sl[VELOCITY_X_COMPONENT][iP].ap/(feplus*sl[VELOCITY_X_COMPONENT][iE].ap+(1-feplus)*sl[VELOCITY_X_COMPONENT][iP].ap); else apue=slb[VELOCITY_X_COMPONENT][iE-maxelm].aw;
+	if (!bW) apuw=sl[VELOCITY_X_COMPONENT][iW].ap*sl[VELOCITY_X_COMPONENT][iP].ap/(fwplus*sl[VELOCITY_X_COMPONENT][iW].ap+(1-fwplus)*sl[VELOCITY_X_COMPONENT][iP].ap); else apuw=slb[VELOCITY_X_COMPONENT][iW-maxelm].aw;
+	if (!bN) apvn=sl[VELOCITY_Y_COMPONENT][iN].ap*sl[VELOCITY_Y_COMPONENT][iP].ap/(fnplus*sl[VELOCITY_Y_COMPONENT][iN].ap+(1-fnplus)*sl[VELOCITY_Y_COMPONENT][iP].ap); else apvn=slb[VELOCITY_Y_COMPONENT][iN-maxelm].aw;
+	if (!bS) apvs=sl[VELOCITY_Y_COMPONENT][iS].ap*sl[VELOCITY_Y_COMPONENT][iP].ap/(fsplus*sl[VELOCITY_Y_COMPONENT][iS].ap+(1-fsplus)*sl[VELOCITY_Y_COMPONENT][iP].ap); else apvs=slb[VELOCITY_Y_COMPONENT][iS-maxelm].aw;
+	if (!bT) apwt=sl[VELOCITY_Z_COMPONENT][iT].ap*sl[VELOCITY_Z_COMPONENT][iP].ap/(ftplus*sl[VELOCITY_Z_COMPONENT][iT].ap+(1-ftplus)*sl[VELOCITY_Z_COMPONENT][iP].ap); else apwt=slb[VELOCITY_Z_COMPONENT][iT-maxelm].aw;
+	if (!bB) apwb=sl[VELOCITY_Z_COMPONENT][iB].ap*sl[VELOCITY_Z_COMPONENT][iP].ap/(fbplus*sl[VELOCITY_Z_COMPONENT][iB].ap+(1-fbplus)*sl[VELOCITY_Z_COMPONENT][iP].ap); else apwb=slb[VELOCITY_Z_COMPONENT][iB-maxelm].aw;
 
 	doublereal de=dx, dw=dx, dn=dy, ds=dy, dt=dz, db=dz;
 	// Так рекомендует делать С. Патанкар, надо только
@@ -7325,15 +7325,15 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	// Такие значения также должны быть согласованы с теми что используются при коррекции скоростей.
 	if (iSIMPLE_alg==SIMPLE_Carretto) {
 		// SIMPLE
-		de=alpha[VX]*dy*dz/apue; dw=alpha[VX]*dy*dz/apuw; 
-	    dn=alpha[VY]*dx*dz/apvn; ds=alpha[VY]*dx*dz/apvs;
-	    dt=alpha[VZ]*dx*dy/apwt; db=alpha[VZ]*dx*dy/apwb;
+		de=alpha[VELOCITY_X_COMPONENT]*dy*dz/apue; dw=alpha[VELOCITY_X_COMPONENT]*dy*dz/apuw; 
+	    dn=alpha[VELOCITY_Y_COMPONENT]*dx*dz/apvn; ds=alpha[VELOCITY_Y_COMPONENT]*dx*dz/apvs;
+	    dt=alpha[VELOCITY_Z_COMPONENT]*dx*dy/apwt; db=alpha[VELOCITY_Z_COMPONENT]*dx*dy/apwb;
 	}
 	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
 		// SIMPLEC
-		de=alpha[VX]*dy*dz/((1.0-alpha[VX])*apue); dw=alpha[VX]*dy*dz/((1.0-alpha[VX])*apuw); 
-	    dn=alpha[VY]*dx*dz/((1.0-alpha[VY])*apvn); ds=alpha[VY]*dx*dz/((1.0-alpha[VY])*apvs);
-	    dt=alpha[VZ]*dx*dy/((1.0-alpha[VZ])*apwt); db=alpha[VZ]*dx*dy/((1.0-alpha[VZ])*apwb);
+		de=alpha[VELOCITY_X_COMPONENT]*dy*dz/((1.0-alpha[VELOCITY_X_COMPONENT])*apue); dw=alpha[VELOCITY_X_COMPONENT]*dy*dz/((1.0-alpha[VELOCITY_X_COMPONENT])*apuw); 
+	    dn=alpha[VELOCITY_Y_COMPONENT]*dx*dz/((1.0-alpha[VELOCITY_Y_COMPONENT])*apvn); ds=alpha[VELOCITY_Y_COMPONENT]*dx*dz/((1.0-alpha[VELOCITY_Y_COMPONENT])*apvs);
+	    dt=alpha[VELOCITY_Z_COMPONENT]*dx*dy/((1.0-alpha[VELOCITY_Z_COMPONENT])*apwt); db=alpha[VELOCITY_Z_COMPONENT]*dx*dy/((1.0-alpha[VELOCITY_Z_COMPONENT])*apwb);
 	}
 
     // плотность аппроксимируется средним гармоническим
@@ -7419,17 +7419,17 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		// если bborder == true то мы находимся вблизи граничного узла.
 		bool bborder=false;
 		doublereal myflux=0.0;
-		myflux=De*(dxe*DFDXiP(potent[PAM], iP, ESIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
+		myflux=De*(dxe*DFDXiP(potent[PAM], iP, E_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
 		baddDFLUX2+=myflux;
-		myflux=Dw*(-dxw*DFDXiP(potent[PAM], iP, WSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iW]-potent[PAM][iP]));
+		myflux=Dw*(-dxw*DFDXiP(potent[PAM], iP, W_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iW]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Dn*(dyn*DFDXiP(potent[PAM], iP, NSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iN]-potent[PAM][iP]));
+		myflux=Dn*(dyn*DFDXiP(potent[PAM], iP, N_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iN]-potent[PAM][iP]));
 		baddDFLUX2+=myflux;
-        myflux=Ds*(-dys*DFDXiP(potent[PAM], iP, SSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iS]-potent[PAM][iP]));
+        myflux=Ds*(-dys*DFDXiP(potent[PAM], iP, S_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iS]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Dt*(dzt*DFDXiP(potent[PAM], iP, TSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iT]-potent[PAM][iP]));
+		myflux=Dt*(dzt*DFDXiP(potent[PAM], iP, T_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iT]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Db*(-dzb*DFDXiP(potent[PAM], iP, BSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iB]-potent[PAM][iP]));
+		myflux=Db*(-dzb*DFDXiP(potent[PAM], iP, B_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iB]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
 	}
 
@@ -7438,56 +7438,56 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
     doublereal Fw=0.0, Fe=0.0, Fs=0.0, Fn=0.0, Ft=0.0, Fb=0.0; 
 	     
 	
-	Fe=calcFg(bE, feplus, potent[VX][iE], potent[VX][iP],  
-	          iP, ESIDE, alpha[VX], rhoe, 
+	Fe=calcFg(bE, feplus, potent[VELOCITY_X_COMPONENT][iE], potent[VELOCITY_X_COMPONENT][iP],  
+	          iP, E_SIDE, alpha[VELOCITY_X_COMPONENT], rhoe, 
 		      dy*dz, dx*dy*dz, btimedepend, 
 		      speedoldtimestep, mfoldtimestep,
-		      diag_coef[VX][iE], diag_coef[VX][iP], dtimestep,
+		      diag_coef[VELOCITY_X_COMPONENT][iE], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 		      RCh, nvtx, neighbors_for_the_internal_node, maxelm, 
 			  potent[PRESS],  pa, diag_coef,
 		      bRhieChowi, bRhieChowb,false);
 
-	Fw=calcFg(bW, fwplus, potent[VX][iW], potent[VX][iP],  
-	          iP, WSIDE, alpha[VX], rhow, 
+	Fw=calcFg(bW, fwplus, potent[VELOCITY_X_COMPONENT][iW], potent[VELOCITY_X_COMPONENT][iP],  
+	          iP, W_SIDE, alpha[VELOCITY_X_COMPONENT], rhow, 
 		      dy*dz, dx*dy*dz, btimedepend, 
 		      speedoldtimestep, mfoldtimestep,
-		      diag_coef[VX][iW], diag_coef[VX][iP], dtimestep,
+		      diag_coef[VELOCITY_X_COMPONENT][iW], diag_coef[VELOCITY_X_COMPONENT][iP], dtimestep,
 		      RCh, nvtx, neighbors_for_the_internal_node, maxelm, 
 			  potent[PRESS],  pa, diag_coef,
 		      bRhieChowi, bRhieChowb,false);
 
-	Fn=calcFg(bN, fnplus, potent[VY][iN], potent[VY][iP],  
-	          iP, NSIDE, alpha[VY], rhon, 
+	Fn=calcFg(bN, fnplus, potent[VELOCITY_Y_COMPONENT][iN], potent[VELOCITY_Y_COMPONENT][iP],  
+	          iP, N_SIDE, alpha[VELOCITY_Y_COMPONENT], rhon, 
 		      dx*dz, dx*dy*dz, btimedepend, 
 		      speedoldtimestep, mfoldtimestep,
-		      diag_coef[VY][iN], diag_coef[VY][iP], dtimestep,
+		      diag_coef[VELOCITY_Y_COMPONENT][iN], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 		      RCh, nvtx, neighbors_for_the_internal_node, maxelm, 
 			  potent[PRESS],  pa, diag_coef,
 		      bRhieChowi, bRhieChowb,false);
 
-	Fs=calcFg(bS, fsplus, potent[VY][iS], potent[VY][iP],  
-	          iP, SSIDE, alpha[VY], rhos, 
+	Fs=calcFg(bS, fsplus, potent[VELOCITY_Y_COMPONENT][iS], potent[VELOCITY_Y_COMPONENT][iP],  
+	          iP, S_SIDE, alpha[VELOCITY_Y_COMPONENT], rhos, 
 		      dx*dz, dx*dy*dz, btimedepend, 
 		      speedoldtimestep, mfoldtimestep,
-		      diag_coef[VY][iS], diag_coef[VY][iP], dtimestep,
+		      diag_coef[VELOCITY_Y_COMPONENT][iS], diag_coef[VELOCITY_Y_COMPONENT][iP], dtimestep,
 		      RCh, nvtx, neighbors_for_the_internal_node, maxelm, 
 			  potent[PRESS],  pa, diag_coef,
 		      bRhieChowi, bRhieChowb,false);
 
-    Ft=calcFg(bT, ftplus, potent[VZ][iT], potent[VZ][iP],  
-	          iP, TSIDE, alpha[VZ], rhot, 
+    Ft=calcFg(bT, ftplus, potent[VELOCITY_Z_COMPONENT][iT], potent[VELOCITY_Z_COMPONENT][iP],  
+	          iP, T_SIDE, alpha[VELOCITY_Z_COMPONENT], rhot, 
 		      dx*dy, dx*dy*dz, btimedepend, 
 		      speedoldtimestep, mfoldtimestep,
-		      diag_coef[VZ][iT], diag_coef[VZ][iP], dtimestep,
+		      diag_coef[VELOCITY_Z_COMPONENT][iT], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 		      RCh, nvtx, neighbors_for_the_internal_node, maxelm, 
 			  potent[PRESS],  pa, diag_coef,
 		      bRhieChowi, bRhieChowb,false);
 
-	Fb=calcFg(bB, fbplus, potent[VZ][iB], potent[VZ][iP],  
-	          iP, BSIDE, alpha[VZ], rhob, 
+	Fb=calcFg(bB, fbplus, potent[VELOCITY_Z_COMPONENT][iB], potent[VELOCITY_Z_COMPONENT][iP],  
+	          iP, B_SIDE, alpha[VELOCITY_Z_COMPONENT], rhob, 
 		      dx*dy, dx*dy*dz, btimedepend, 
 		      speedoldtimestep, mfoldtimestep,
-		      diag_coef[VZ][iB], diag_coef[VZ][iP], dtimestep,
+		      diag_coef[VELOCITY_Z_COMPONENT][iB], diag_coef[VELOCITY_Z_COMPONENT][iP], dtimestep,
 		      RCh, nvtx, neighbors_for_the_internal_node, maxelm, 
 			  potent[PRESS],  pa, diag_coef,
 		      bRhieChowi, bRhieChowb,false);
@@ -7549,24 +7549,24 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	    // С включённой поправкой (дополнительная нижняя релаксация) из статьи I. Sezai. !!!
 	    // дополнительная поправка осуществляется на основе скорректированной скорости.
 	    // Вообще говоря поле плотности также должно быть с предыдущей итерации.
-	    Fe+=(1.0-alpha[VX])*(mfcurrentretune[ESIDE]-rhoe*SpeedCorOlde*dy*dz);
-	    Fn+=(1.0-alpha[VY])*(mfcurrentretune[NSIDE]-rhon*SpeedCorOldn*dx*dz);
-	    Ft+=(1.0-alpha[VZ])*(mfcurrentretune[TSIDE]-rhot*SpeedCorOldt*dx*dy);
-	    Fw+=(1.0-alpha[VX])*(mfcurrentretune[WSIDE]-rhow*SpeedCorOldw*dy*dz);
-	    Fs+=(1.0-alpha[VY])*(mfcurrentretune[SSIDE]-rhos*SpeedCorOlds*dx*dz);
-	    Fb+=(1.0-alpha[VZ])*(mfcurrentretune[BSIDE]-rhob*SpeedCorOldb*dx*dy);
+	    Fe+=(1.0-alpha[VELOCITY_X_COMPONENT])*(mfcurrentretune[E_SIDE]-rhoe*SpeedCorOlde*dy*dz);
+	    Fn+=(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfcurrentretune[N_SIDE]-rhon*SpeedCorOldn*dx*dz);
+	    Ft+=(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfcurrentretune[T_SIDE]-rhot*SpeedCorOldt*dx*dy);
+	    Fw+=(1.0-alpha[VELOCITY_X_COMPONENT])*(mfcurrentretune[W_SIDE]-rhow*SpeedCorOldw*dy*dz);
+	    Fs+=(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfcurrentretune[S_SIDE]-rhos*SpeedCorOlds*dx*dz);
+	    Fb+=(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfcurrentretune[B_SIDE]-rhob*SpeedCorOldb*dx*dy);
 
 	} 
 	
 
 	
 	// возвращаем значение потока на грани КО.
-	mfcurrentretune[ESIDE]=Fe;
-	mfcurrentretune[NSIDE]=Fn;
-	mfcurrentretune[TSIDE]=Ft;
-	mfcurrentretune[WSIDE]=Fw;
-	mfcurrentretune[SSIDE]=Fs;
-	mfcurrentretune[BSIDE]=Fb;
+	mfcurrentretune[E_SIDE]=Fe;
+	mfcurrentretune[N_SIDE]=Fn;
+	mfcurrentretune[T_SIDE]=Ft;
+	mfcurrentretune[W_SIDE]=Fw;
+	mfcurrentretune[S_SIDE]=Fs;
+	mfcurrentretune[B_SIDE]=Fb;
 	
 	
 
@@ -7656,8 +7656,8 @@ void my_elmatr_quad_PAm2(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	sl[PAM][iP].iP=iP;
 	sl[PAM][iP].iE=iE; sl[PAM][iP].iN=iN; 
 	sl[PAM][iP].iS=iS; sl[PAM][iP].iW=iW;
@@ -7838,17 +7838,17 @@ void my_elmatr_quad_PAm2(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		// если bborder == true то мы находимся вблизи граничного узла.
 		bool bborder=false;
 		doublereal myflux=0.0;
-		myflux=De*(dxe*DFDXiP(potent[PAM], iP, ESIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
+		myflux=De*(dxe*DFDXiP(potent[PAM], iP, E_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
 		baddDFLUX2+=myflux;
-		myflux=Dw*(-dxw*DFDXiP(potent[PAM], iP, WSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iW]-potent[PAM][iP]));
+		myflux=Dw*(-dxw*DFDXiP(potent[PAM], iP, W_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iW]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Dn*(dyn*DFDXiP(potent[PAM], iP, NSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iN]-potent[PAM][iP]));
+		myflux=Dn*(dyn*DFDXiP(potent[PAM], iP, N_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iN]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Ds*(-dys*DFDXiP(potent[PAM], iP, SSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iS]-potent[PAM][iP]));
+		myflux=Ds*(-dys*DFDXiP(potent[PAM], iP, S_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iS]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Dt*(dzt*DFDXiP(potent[PAM], iP, TSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iT]-potent[PAM][iP]));
+		myflux=Dt*(dzt*DFDXiP(potent[PAM], iP, T_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iT]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Db*(-dzb*DFDXiP(potent[PAM], iP, BSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iB]-potent[PAM][iP]));
+		myflux=Db*(-dzb*DFDXiP(potent[PAM], iP, B_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iB]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
 	}
 
@@ -7856,42 +7856,42 @@ void my_elmatr_quad_PAm2(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
     doublereal Fw=0.0, Fe=0.0, Fs=0.0, Fn=0.0, Ft=0.0, Fb=0.0; 
 	     
-	Fe=calcFg2(bE, feplus, iP, ESIDE, rhoe, 
+	Fe=calcFg2(bE, feplus, iP, E_SIDE, rhoe, 
 			dy*dz, btimedepend, 
 			speedoldtimestep, mfoldtimestep,
 			dtimestep,	RCh, neighbors_for_the_internal_node, 
 			bRhieChowi, bRhieChowb, false,
 			tau, dxe, potent);
 
-	Fw=calcFg2(bW, fwplus, iP, WSIDE, rhow, 
+	Fw=calcFg2(bW, fwplus, iP, W_SIDE, rhow, 
 			dy*dz, btimedepend, 
 			speedoldtimestep, mfoldtimestep,
 			dtimestep,	RCh, neighbors_for_the_internal_node, 
 			bRhieChowi, bRhieChowb, false,
 			tau, dxw, potent);
 
-	Fn=calcFg2(bN, fnplus, iP, NSIDE, rhon, 
+	Fn=calcFg2(bN, fnplus, iP, N_SIDE, rhon, 
 			dx*dz, btimedepend, 
 			speedoldtimestep, mfoldtimestep,
 			dtimestep,	RCh, neighbors_for_the_internal_node, 
 			bRhieChowi, bRhieChowb, false,
 			tau, dyn, potent);
 
-	Fs=calcFg2(bS, fsplus, iP, SSIDE, rhos, 
+	Fs=calcFg2(bS, fsplus, iP, S_SIDE, rhos, 
 			dx*dz, btimedepend, 
 			speedoldtimestep, mfoldtimestep,
 			dtimestep,	RCh, neighbors_for_the_internal_node, 
 			bRhieChowi, bRhieChowb, false,
 			tau, dys, potent);
 
-	Ft=calcFg2(bT, ftplus, iP, TSIDE, rhot, 
+	Ft=calcFg2(bT, ftplus, iP, T_SIDE, rhot, 
 			dx*dy, btimedepend, 
 			speedoldtimestep, mfoldtimestep,
 			dtimestep,	RCh, neighbors_for_the_internal_node, 
 			bRhieChowi, bRhieChowb, false,
 			tau, dzt, potent);
 
-	Fb=calcFg2(bB, fbplus, iP, BSIDE, rhob, 
+	Fb=calcFg2(bB, fbplus, iP, B_SIDE, rhob, 
 			dx*dy, btimedepend, 
 			speedoldtimestep, mfoldtimestep,
 			dtimestep,	RCh, neighbors_for_the_internal_node, 
@@ -7943,24 +7943,24 @@ void my_elmatr_quad_PAm2(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		// С включённой поправкой (дополнительная нижняя релаксация) из статьи I. Sezai. !!!
 		// дополнительная поправка осуществляется на основе скорректированной скорости.
 		// Вообще говоря поле плотности также должно быть с предыдущей итерации.
-		Fe += (1.0 - alpha[VX])*(mfcurrentretune[ESIDE] - rhoe*SpeedCorOlde*dy*dz);
-		Fn += (1.0 - alpha[VY])*(mfcurrentretune[NSIDE] - rhon*SpeedCorOldn*dx*dz);
-		Ft += (1.0 - alpha[VZ])*(mfcurrentretune[TSIDE] - rhot*SpeedCorOldt*dx*dy);
-		Fw += (1.0 - alpha[VX])*(mfcurrentretune[WSIDE] - rhow*SpeedCorOldw*dy*dz);
-		Fs += (1.0 - alpha[VY])*(mfcurrentretune[SSIDE] - rhos*SpeedCorOlds*dx*dz);
-		Fb += (1.0 - alpha[VZ])*(mfcurrentretune[BSIDE] - rhob*SpeedCorOldb*dx*dy);
+		Fe += (1.0 - alpha[VELOCITY_X_COMPONENT])*(mfcurrentretune[E_SIDE] - rhoe*SpeedCorOlde*dy*dz);
+		Fn += (1.0 - alpha[VELOCITY_Y_COMPONENT])*(mfcurrentretune[N_SIDE] - rhon*SpeedCorOldn*dx*dz);
+		Ft += (1.0 - alpha[VELOCITY_Z_COMPONENT])*(mfcurrentretune[T_SIDE] - rhot*SpeedCorOldt*dx*dy);
+		Fw += (1.0 - alpha[VELOCITY_X_COMPONENT])*(mfcurrentretune[W_SIDE] - rhow*SpeedCorOldw*dy*dz);
+		Fs += (1.0 - alpha[VELOCITY_Y_COMPONENT])*(mfcurrentretune[S_SIDE] - rhos*SpeedCorOlds*dx*dz);
+		Fb += (1.0 - alpha[VELOCITY_Z_COMPONENT])*(mfcurrentretune[B_SIDE] - rhob*SpeedCorOldb*dx*dy);
 
 	}
 
 
 
 	// возвращаем значение потока на грани КО.
-	mfcurrentretune[ESIDE] = Fe;
-	mfcurrentretune[NSIDE] = Fn;
-	mfcurrentretune[TSIDE] = Ft;
-	mfcurrentretune[WSIDE] = Fw;
-	mfcurrentretune[SSIDE] = Fs;
-	mfcurrentretune[BSIDE] = Fb;
+	mfcurrentretune[E_SIDE] = Fe;
+	mfcurrentretune[N_SIDE] = Fn;
+	mfcurrentretune[T_SIDE] = Ft;
+	mfcurrentretune[W_SIDE] = Fw;
+	mfcurrentretune[S_SIDE] = Fs;
+	mfcurrentretune[B_SIDE] = Fb;
 
 
 
@@ -8067,8 +8067,8 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
     // iP - номер центрального контрольного объёма
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	sl[PAM][iP].iP=iP;
 	sl[PAM][iP].iE=iE; sl[PAM][iP].iN=iN; 
 	sl[PAM][iP].iS=iS; sl[PAM][iP].iW=iW;
@@ -8082,12 +8082,12 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
 										  // -1 если не используется и [0..maxelm+maxbound-1] если используется.
 
-	iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-	iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
-	iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-	iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
-	iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-	iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+	iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+	iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
+	iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+	iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
+	iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+	iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 	
 	/*
 	if (iE2 > -1 || iW2 > -1 || iN2 > -1 || iS2 > -1 || iT2 > -1 || iB2 > -1 || iE3 > -1 || iW3 > -1 || iN3 > -1 || iS3 > -1 || iT3 > -1 || iB3 > -1 || iE4 > -1 || iW4 > -1 || iN4 > -1 || iS4 > -1 || iT4 > -1 || iB4 > -1) {
@@ -8386,83 +8386,83 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	// Учитывается что псевдовремя это три скалярных поля.
 	doublereal taue=1.0, tauw=1.0, taun=1.0, taus=1.0, taut=1.0, taub=1.0;
 	if (iE > -1) {
-		if (!bE) taue = tau[VX][iE] * tau[VX][iP] / (feplus*tau[VX][iE] + (1.0 - feplus)*tau[VX][iP]); else taue = tau[VX][iE]; // проверено !
+		if (!bE) taue = tau[VELOCITY_X_COMPONENT][iE] * tau[VELOCITY_X_COMPONENT][iP] / (feplus*tau[VELOCITY_X_COMPONENT][iE] + (1.0 - feplus)*tau[VELOCITY_X_COMPONENT][iP]); else taue = tau[VELOCITY_X_COMPONENT][iE]; // проверено !
 	}
 	if (iW > -1) {
-		if (!bW) tauw = tau[VX][iW] * tau[VX][iP] / (fwplus*tau[VX][iW] + (1.0 - fwplus)*tau[VX][iP]); else tauw = tau[VX][iW];
+		if (!bW) tauw = tau[VELOCITY_X_COMPONENT][iW] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus*tau[VELOCITY_X_COMPONENT][iW] + (1.0 - fwplus)*tau[VELOCITY_X_COMPONENT][iP]); else tauw = tau[VELOCITY_X_COMPONENT][iW];
 	}
 	if (iN > -1) {
-		if (!bN) taun = tau[VY][iN] * tau[VY][iP] / (fnplus*tau[VY][iN] + (1.0 - fnplus)*tau[VY][iP]); else taun = tau[VY][iN];
+		if (!bN) taun = tau[VELOCITY_Y_COMPONENT][iN] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus*tau[VELOCITY_Y_COMPONENT][iN] + (1.0 - fnplus)*tau[VELOCITY_Y_COMPONENT][iP]); else taun = tau[VELOCITY_Y_COMPONENT][iN];
 	}
 	if (iS > -1) {
-		if (!bS) taus = tau[VY][iS] * tau[VY][iP] / (fsplus*tau[VY][iS] + (1.0 - fsplus)*tau[VY][iP]); else taus = tau[VY][iS];
+		if (!bS) taus = tau[VELOCITY_Y_COMPONENT][iS] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus*tau[VELOCITY_Y_COMPONENT][iS] + (1.0 - fsplus)*tau[VELOCITY_Y_COMPONENT][iP]); else taus = tau[VELOCITY_Y_COMPONENT][iS];
 	}
 	if (iT > -1) {
-		if (!bT) taut = tau[VZ][iT] * tau[VZ][iP] / (ftplus*tau[VZ][iT] + (1.0 - ftplus)*tau[VZ][iP]); else taut = tau[VZ][iT];
+		if (!bT) taut = tau[VELOCITY_Z_COMPONENT][iT] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus*tau[VELOCITY_Z_COMPONENT][iT] + (1.0 - ftplus)*tau[VELOCITY_Z_COMPONENT][iP]); else taut = tau[VELOCITY_Z_COMPONENT][iT];
 	}
 	if (iB > -1) {
-		if (!bB) taub = tau[VZ][iB] * tau[VZ][iP] / (fbplus*tau[VZ][iB] + (1.0 - fbplus)*tau[VZ][iP]); else taub = tau[VZ][iB];
+		if (!bB) taub = tau[VELOCITY_Z_COMPONENT][iB] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus*tau[VELOCITY_Z_COMPONENT][iB] + (1.0 - fbplus)*tau[VELOCITY_Z_COMPONENT][iP]); else taub = tau[VELOCITY_Z_COMPONENT][iB];
 	}
 
 	doublereal taue2 = 1.0, tauw2 = 1.0, taun2 = 1.0, taus2 = 1.0, taut2 = 1.0, taub2 = 1.0;
 	if (iE2 > -1) {
-		if (!bE2) taue2 = tau[VX][iE2] * tau[VX][iP] / (feplus2*tau[VX][iE2] + (1.0 - feplus2)*tau[VX][iP]); else taue2 = tau[VX][iE2]; // проверено !
+		if (!bE2) taue2 = tau[VELOCITY_X_COMPONENT][iE2] * tau[VELOCITY_X_COMPONENT][iP] / (feplus2*tau[VELOCITY_X_COMPONENT][iE2] + (1.0 - feplus2)*tau[VELOCITY_X_COMPONENT][iP]); else taue2 = tau[VELOCITY_X_COMPONENT][iE2]; // проверено !
 	}
 	if (iW2 > -1) {
-		if (!bW2) tauw2 = tau[VX][iW2] * tau[VX][iP] / (fwplus2*tau[VX][iW2] + (1.0 - fwplus2)*tau[VX][iP]); else tauw2 = tau[VX][iW2];
+		if (!bW2) tauw2 = tau[VELOCITY_X_COMPONENT][iW2] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus2*tau[VELOCITY_X_COMPONENT][iW2] + (1.0 - fwplus2)*tau[VELOCITY_X_COMPONENT][iP]); else tauw2 = tau[VELOCITY_X_COMPONENT][iW2];
 	}
 	if (iN2 > -1) {
-		if (!bN2) taun2 = tau[VY][iN2] * tau[VY][iP] / (fnplus2*tau[VY][iN2] + (1.0 - fnplus2)*tau[VY][iP]); else taun2 = tau[VY][iN2];
+		if (!bN2) taun2 = tau[VELOCITY_Y_COMPONENT][iN2] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus2*tau[VELOCITY_Y_COMPONENT][iN2] + (1.0 - fnplus2)*tau[VELOCITY_Y_COMPONENT][iP]); else taun2 = tau[VELOCITY_Y_COMPONENT][iN2];
 	}
 	if (iS2 > -1) {
-		if (!bS2) taus2 = tau[VY][iS2] * tau[VY][iP] / (fsplus2*tau[VY][iS2] + (1.0 - fsplus2)*tau[VY][iP]); else taus2 = tau[VY][iS2];
+		if (!bS2) taus2 = tau[VELOCITY_Y_COMPONENT][iS2] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus2*tau[VELOCITY_Y_COMPONENT][iS2] + (1.0 - fsplus2)*tau[VELOCITY_Y_COMPONENT][iP]); else taus2 = tau[VELOCITY_Y_COMPONENT][iS2];
 	}
 	if (iT2 > -1) {
-		if (!bT2) taut2 = tau[VZ][iT2] * tau[VZ][iP] / (ftplus2*tau[VZ][iT2] + (1.0 - ftplus2)*tau[VZ][iP]); else taut2 = tau[VZ][iT2];
+		if (!bT2) taut2 = tau[VELOCITY_Z_COMPONENT][iT2] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus2*tau[VELOCITY_Z_COMPONENT][iT2] + (1.0 - ftplus2)*tau[VELOCITY_Z_COMPONENT][iP]); else taut2 = tau[VELOCITY_Z_COMPONENT][iT2];
 	}
 	if (iB2 > -1) {
-		if (!bB2) taub2 = tau[VZ][iB2] * tau[VZ][iP] / (fbplus2*tau[VZ][iB2] + (1.0 - fbplus2)*tau[VZ][iP]); else taub2 = tau[VZ][iB2];
+		if (!bB2) taub2 = tau[VELOCITY_Z_COMPONENT][iB2] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus2*tau[VELOCITY_Z_COMPONENT][iB2] + (1.0 - fbplus2)*tau[VELOCITY_Z_COMPONENT][iP]); else taub2 = tau[VELOCITY_Z_COMPONENT][iB2];
 	}
 
 	doublereal taue3 = 1.0, tauw3 = 1.0, taun3 = 1.0, taus3 = 1.0, taut3 = 1.0, taub3 = 1.0;
 	if (iE3 > -1) {
-		if (!bE3) taue3 = tau[VX][iE3] * tau[VX][iP] / (feplus3*tau[VX][iE3] + (1.0 - feplus3)*tau[VX][iP]); else taue3 = tau[VX][iE3]; // проверено !
+		if (!bE3) taue3 = tau[VELOCITY_X_COMPONENT][iE3] * tau[VELOCITY_X_COMPONENT][iP] / (feplus3*tau[VELOCITY_X_COMPONENT][iE3] + (1.0 - feplus3)*tau[VELOCITY_X_COMPONENT][iP]); else taue3 = tau[VELOCITY_X_COMPONENT][iE3]; // проверено !
 	}
 	if (iW3 > -1) {
-		if (!bW3) tauw3 = tau[VX][iW3] * tau[VX][iP] / (fwplus3*tau[VX][iW3] + (1.0 - fwplus3)*tau[VX][iP]); else tauw3 = tau[VX][iW3];
+		if (!bW3) tauw3 = tau[VELOCITY_X_COMPONENT][iW3] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus3*tau[VELOCITY_X_COMPONENT][iW3] + (1.0 - fwplus3)*tau[VELOCITY_X_COMPONENT][iP]); else tauw3 = tau[VELOCITY_X_COMPONENT][iW3];
 	}
 	if (iN3 > -1) {
-		if (!bN3) taun3 = tau[VY][iN3] * tau[VY][iP] / (fnplus3*tau[VY][iN3] + (1.0 - fnplus3)*tau[VY][iP]); else taun3 = tau[VY][iN3];
+		if (!bN3) taun3 = tau[VELOCITY_Y_COMPONENT][iN3] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus3*tau[VELOCITY_Y_COMPONENT][iN3] + (1.0 - fnplus3)*tau[VELOCITY_Y_COMPONENT][iP]); else taun3 = tau[VELOCITY_Y_COMPONENT][iN3];
 	}
 	if (iS3 > -1) {
-		if (!bS3) taus3 = tau[VY][iS3] * tau[VY][iP] / (fsplus3*tau[VY][iS3] + (1.0 - fsplus3)*tau[VY][iP]); else taus3 = tau[VY][iS3];
+		if (!bS3) taus3 = tau[VELOCITY_Y_COMPONENT][iS3] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus3*tau[VELOCITY_Y_COMPONENT][iS3] + (1.0 - fsplus3)*tau[VELOCITY_Y_COMPONENT][iP]); else taus3 = tau[VELOCITY_Y_COMPONENT][iS3];
 	}
 	if (iT3 > -1) {
-		if (!bT3) taut3 = tau[VZ][iT3] * tau[VZ][iP] / (ftplus3*tau[VZ][iT3] + (1.0 - ftplus3)*tau[VZ][iP]); else taut3 = tau[VZ][iT3];
+		if (!bT3) taut3 = tau[VELOCITY_Z_COMPONENT][iT3] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus3*tau[VELOCITY_Z_COMPONENT][iT3] + (1.0 - ftplus3)*tau[VELOCITY_Z_COMPONENT][iP]); else taut3 = tau[VELOCITY_Z_COMPONENT][iT3];
 	}
 	if (iB3 > -1) {
-		if (!bB3) taub3 = tau[VZ][iB3] * tau[VZ][iP] / (fbplus3*tau[VZ][iB3] + (1.0 - fbplus3)*tau[VZ][iP]); else taub3 = tau[VZ][iB3];
+		if (!bB3) taub3 = tau[VELOCITY_Z_COMPONENT][iB3] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus3*tau[VELOCITY_Z_COMPONENT][iB3] + (1.0 - fbplus3)*tau[VELOCITY_Z_COMPONENT][iP]); else taub3 = tau[VELOCITY_Z_COMPONENT][iB3];
 	}
 
 
 	doublereal taue4 = 1.0, tauw4 = 1.0, taun4 = 1.0, taus4 = 1.0, taut4 = 1.0, taub4 = 1.0;
 	if (iE4 > -1) {
-		if (!bE4) taue4 = tau[VX][iE4] * tau[VX][iP] / (feplus4*tau[VX][iE4] + (1.0 - feplus4)*tau[VX][iP]); else taue4 = tau[VX][iE4]; // проверено !
+		if (!bE4) taue4 = tau[VELOCITY_X_COMPONENT][iE4] * tau[VELOCITY_X_COMPONENT][iP] / (feplus4*tau[VELOCITY_X_COMPONENT][iE4] + (1.0 - feplus4)*tau[VELOCITY_X_COMPONENT][iP]); else taue4 = tau[VELOCITY_X_COMPONENT][iE4]; // проверено !
 	}
 	if (iW4 > -1) {
-		if (!bW4) tauw4 = tau[VX][iW4] * tau[VX][iP] / (fwplus4*tau[VX][iW4] + (1.0 - fwplus4)*tau[VX][iP]); else tauw4 = tau[VX][iW4];
+		if (!bW4) tauw4 = tau[VELOCITY_X_COMPONENT][iW4] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus4*tau[VELOCITY_X_COMPONENT][iW4] + (1.0 - fwplus4)*tau[VELOCITY_X_COMPONENT][iP]); else tauw4 = tau[VELOCITY_X_COMPONENT][iW4];
 	}
 	if (iN4 > -1) {
-		if (!bN4) taun4 = tau[VY][iN4] * tau[VY][iP] / (fnplus4*tau[VY][iN4] + (1.0 - fnplus4)*tau[VY][iP]); else taun4 = tau[VY][iN4];
+		if (!bN4) taun4 = tau[VELOCITY_Y_COMPONENT][iN4] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus4*tau[VELOCITY_Y_COMPONENT][iN4] + (1.0 - fnplus4)*tau[VELOCITY_Y_COMPONENT][iP]); else taun4 = tau[VELOCITY_Y_COMPONENT][iN4];
 	}
 	if (iS4 > -1) {
-		if (!bS4) taus4 = tau[VY][iS4] * tau[VY][iP] / (fsplus4*tau[VY][iS4] + (1.0 - fsplus4)*tau[VY][iP]); else taus4 = tau[VY][iS4];
+		if (!bS4) taus4 = tau[VELOCITY_Y_COMPONENT][iS4] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus4*tau[VELOCITY_Y_COMPONENT][iS4] + (1.0 - fsplus4)*tau[VELOCITY_Y_COMPONENT][iP]); else taus4 = tau[VELOCITY_Y_COMPONENT][iS4];
 	}
 	if (iT4 > -1) {
-		if (!bT4) taut4 = tau[VZ][iT4] * tau[VZ][iP] / (ftplus4*tau[VZ][iT4] + (1.0 - ftplus4)*tau[VZ][iP]); else taut4 = tau[VZ][iT4];
+		if (!bT4) taut4 = tau[VELOCITY_Z_COMPONENT][iT4] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus4*tau[VELOCITY_Z_COMPONENT][iT4] + (1.0 - ftplus4)*tau[VELOCITY_Z_COMPONENT][iP]); else taut4 = tau[VELOCITY_Z_COMPONENT][iT4];
 	}
 	if (iB4 > -1) {
-		if (!bB4) taub4 = tau[VZ][iB4] * tau[VZ][iP] / (fbplus4*tau[VZ][iB4] + (1.0 - fbplus4)*tau[VZ][iP]); else taub4 = tau[VZ][iB4];
+		if (!bB4) taub4 = tau[VELOCITY_Z_COMPONENT][iB4] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus4*tau[VELOCITY_Z_COMPONENT][iB4] + (1.0 - fbplus4)*tau[VELOCITY_Z_COMPONENT][iP]); else taub4 = tau[VELOCITY_Z_COMPONENT][iB4];
 	}
 
 	/*
@@ -9847,17 +9847,17 @@ if (iB4 > -1) {
 		// если bborder == true то мы находимся вблизи граничного узла.
 		bool bborder=false;
 		doublereal myflux=0.0;
-		myflux=De*(dxe*DFDXiP(potent[PAM], iP, ESIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
+		myflux=De*(dxe*DFDXiP(potent[PAM], iP, E_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
 		baddDFLUX2+=myflux;
-		myflux=Dw*(-dxw*DFDXiP(potent[PAM], iP, WSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iW]-potent[PAM][iP]));
+		myflux=Dw*(-dxw*DFDXiP(potent[PAM], iP, W_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iW]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Dn*(dyn*DFDXiP(potent[PAM], iP, NSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iN]-potent[PAM][iP]));
+		myflux=Dn*(dyn*DFDXiP(potent[PAM], iP, N_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iN]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Ds*(-dys*DFDXiP(potent[PAM], iP, SSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iS]-potent[PAM][iP]));
+		myflux=Ds*(-dys*DFDXiP(potent[PAM], iP, S_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iS]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Dt*(dzt*DFDXiP(potent[PAM], iP, TSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iT]-potent[PAM][iP]));
+		myflux=Dt*(dzt*DFDXiP(potent[PAM], iP, T_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iT]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
-		myflux=Db*(-dzb*DFDXiP(potent[PAM], iP, BSIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iB]-potent[PAM][iP]));
+		myflux=Db*(-dzb*DFDXiP(potent[PAM], iP, B_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iB]-potent[PAM][iP]));
 	    baddDFLUX2+=myflux;
 	}
 
@@ -9873,7 +9873,7 @@ if (iB4 > -1) {
 		
 		
 
-		Fe = calcFg3(bE, feplus, iP, ESIDE, rhoe,
+		Fe = calcFg3(bE, feplus, iP, E_SIDE, rhoe,
 			dSqe, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9889,7 +9889,7 @@ if (iB4 > -1) {
 	
 	if (iW > -1) {		
 
-		Fw = calcFg3(bW, fwplus, iP, WSIDE, rhow,
+		Fw = calcFg3(bW, fwplus, iP, W_SIDE, rhow,
 			dSqw, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9900,7 +9900,7 @@ if (iB4 > -1) {
 	
 	if (iN > -1) {		
 
-		Fn = calcFg3(bN, fnplus, iP, NSIDE, rhon,
+		Fn = calcFg3(bN, fnplus, iP, N_SIDE, rhon,
 			dSqn, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9912,7 +9912,7 @@ if (iB4 > -1) {
 	if (iS > -1) {
 
 
-		Fs = calcFg3(bS, fsplus, iP, SSIDE, rhos,
+		Fs = calcFg3(bS, fsplus, iP, S_SIDE, rhos,
 			dSqs, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9925,7 +9925,7 @@ if (iB4 > -1) {
 
 		
 
-		Ft = calcFg3(bT, ftplus, iP, TSIDE, rhot,
+		Ft = calcFg3(bT, ftplus, iP, T_SIDE, rhot,
 			dSqt, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9938,7 +9938,7 @@ if (iB4 > -1) {
 
 		
 
-		Fb = calcFg3(bB, fbplus, iP, BSIDE, rhob,
+		Fb = calcFg3(bB, fbplus, iP, B_SIDE, rhob,
 			dSqb, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9954,7 +9954,7 @@ if (iB4 > -1) {
 
 		
 
-		Fe2 = calcFg3(bE2, feplus2, iP, ESIDE, rhoe2,
+		Fe2 = calcFg3(bE2, feplus2, iP, E_SIDE, rhoe2,
 			dSqe2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9966,7 +9966,7 @@ if (iB4 > -1) {
 	if (iW2 > -1) {
 		
 
-		Fw2 = calcFg3(bW2, fwplus2, iP, WSIDE, rhow2,
+		Fw2 = calcFg3(bW2, fwplus2, iP, W_SIDE, rhow2,
 			dSqw2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9978,7 +9978,7 @@ if (iB4 > -1) {
 	if (iN2 > -1) {
 
 		
-		Fn2 = calcFg3(bN2, fnplus2, iP, NSIDE, rhon2,
+		Fn2 = calcFg3(bN2, fnplus2, iP, N_SIDE, rhon2,
 			dSqn2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -9991,7 +9991,7 @@ if (iB4 > -1) {
 
 		
 
-		Fs2 = calcFg3(bS2, fsplus2, iP, SSIDE, rhos2,
+		Fs2 = calcFg3(bS2, fsplus2, iP, S_SIDE, rhos2,
 			dSqs2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10004,7 +10004,7 @@ if (iB4 > -1) {
 
 		
 
-		Ft2 = calcFg3(bT2, ftplus2, iP, TSIDE, rhot2,
+		Ft2 = calcFg3(bT2, ftplus2, iP, T_SIDE, rhot2,
 			dSqt2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10017,7 +10017,7 @@ if (iB4 > -1) {
 
 		
 
-		Fb2 = calcFg3(bB2, fbplus2, iP, BSIDE, rhob2,
+		Fb2 = calcFg3(bB2, fbplus2, iP, B_SIDE, rhob2,
 			dSqb2, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10034,7 +10034,7 @@ if (iB4 > -1) {
 
 		
 
-		Fe3 = calcFg3(bE3, feplus3, iP, ESIDE, rhoe3,
+		Fe3 = calcFg3(bE3, feplus3, iP, E_SIDE, rhoe3,
 			dSqe3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10047,7 +10047,7 @@ if (iB4 > -1) {
 
 		
 
-		Fw3 = calcFg3(bW3, fwplus3, iP, WSIDE, rhow3,
+		Fw3 = calcFg3(bW3, fwplus3, iP, W_SIDE, rhow3,
 			dSqw3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10059,7 +10059,7 @@ if (iB4 > -1) {
 	if (iN3 > -1) {
 
 
-		Fn3 = calcFg3(bN3, fnplus3, iP, NSIDE, rhon3,
+		Fn3 = calcFg3(bN3, fnplus3, iP, N_SIDE, rhon3,
 			dSqn3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10072,7 +10072,7 @@ if (iB4 > -1) {
 
 		
 
-		Fs3 = calcFg3(bS3, fsplus3, iP, SSIDE, rhos3,
+		Fs3 = calcFg3(bS3, fsplus3, iP, S_SIDE, rhos3,
 			dSqs3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10085,7 +10085,7 @@ if (iB4 > -1) {
 
 		
 
-		Ft3 = calcFg3(bT3, ftplus3, iP, TSIDE, rhot3,
+		Ft3 = calcFg3(bT3, ftplus3, iP, T_SIDE, rhot3,
 			dSqt3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10098,7 +10098,7 @@ if (iB4 > -1) {
 
 		
 
-		Fb3 = calcFg3(bB3, fbplus3, iP, BSIDE, rhob3,
+		Fb3 = calcFg3(bB3, fbplus3, iP, B_SIDE, rhob3,
 			dSqb3, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10114,7 +10114,7 @@ if (iB4 > -1) {
 
 		
 
-		Fe4 = calcFg3(bE4, feplus4, iP, ESIDE, rhoe4,
+		Fe4 = calcFg3(bE4, feplus4, iP, E_SIDE, rhoe4,
 			dSqe4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10126,7 +10126,7 @@ if (iB4 > -1) {
 	if (iW4 > -1) {
 
 
-		Fw4 = calcFg3(bW4, fwplus4, iP, WSIDE, rhow4,
+		Fw4 = calcFg3(bW4, fwplus4, iP, W_SIDE, rhow4,
 			dSqw4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10139,7 +10139,7 @@ if (iB4 > -1) {
 
 		
 
-		Fn4 = calcFg3(bN4, fnplus4, iP, NSIDE, rhon4,
+		Fn4 = calcFg3(bN4, fnplus4, iP, N_SIDE, rhon4,
 			dSqn4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10151,7 +10151,7 @@ if (iB4 > -1) {
 	if (iS4 > -1) {
 
 		
-		Fs4 = calcFg3(bS4, fsplus4, iP, SSIDE, rhos4,
+		Fs4 = calcFg3(bS4, fsplus4, iP, S_SIDE, rhos4,
 			dSqs4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10164,7 +10164,7 @@ if (iB4 > -1) {
 
 		
 
-		Ft4 = calcFg3(bT4, ftplus4, iP, TSIDE, rhot4,
+		Ft4 = calcFg3(bT4, ftplus4, iP, T_SIDE, rhot4,
 			dSqt4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10176,7 +10176,7 @@ if (iB4 > -1) {
 	if (iB4 > -1) {
 
 		
-		Fb4 = calcFg3(bB4, fbplus4, iP, BSIDE, rhob4,
+		Fb4 = calcFg3(bB4, fbplus4, iP, B_SIDE, rhob4,
 			dSqb4, btimedepend,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, RCh, neighbors_for_the_internal_node,
@@ -10425,12 +10425,12 @@ if (iB4 > -1) {
 	    // С включённой поправкой (дополнительная нижняя релаксация) из статьи I. Sezai. !!!
 	    // дополнительная поправка осуществляется на основе скорректированной скорости.
 	    // Вообще говоря поле плотности также должно быть с предыдущей итерации.
-	    Fe_sum +=(1.0-alpha[VX])*(mfcurrentretune[ESIDE] - rhoe * SpeedCorOlde*dSqe - rhoe2 * SpeedCorOlde2*dSqe2 - rhoe3 * SpeedCorOlde3*dSqe3 - rhoe4 * SpeedCorOlde4*dSqe4);
-	    Fn_sum +=(1.0-alpha[VY])*(mfcurrentretune[NSIDE] - rhon * SpeedCorOldn*dSqn - rhon2 * SpeedCorOldn2*dSqn2 - rhon3 * SpeedCorOldn3*dSqn3 - rhon4 * SpeedCorOldn4*dSqn4);
-	    Ft_sum +=(1.0-alpha[VZ])*(mfcurrentretune[TSIDE] - rhot * SpeedCorOldt*dSqt - rhot2 * SpeedCorOldt2*dSqt2 - rhot3 * SpeedCorOldt3*dSqt3 - rhot4 * SpeedCorOldt4*dSqt4);
-	    Fw_sum +=(1.0-alpha[VX])*(mfcurrentretune[WSIDE] - rhow * SpeedCorOldw*dSqw - rhow2 * SpeedCorOldw2*dSqw2 - rhow3 * SpeedCorOldw3*dSqw3 - rhow4 * SpeedCorOldw4*dSqw4);
-	    Fs_sum +=(1.0-alpha[VY])*(mfcurrentretune[SSIDE] - rhos * SpeedCorOlds*dSqs - rhos2 * SpeedCorOlds2*dSqs2 - rhos3 * SpeedCorOlds3*dSqs3 - rhos4 * SpeedCorOlds4*dSqs4);
-	    Fb_sum +=(1.0-alpha[VZ])*(mfcurrentretune[BSIDE] - rhob * SpeedCorOldb*dSqb - rhob2 * SpeedCorOldb2*dSqb2 - rhob3 * SpeedCorOldb3*dSqb3 - rhob4 * SpeedCorOldb4*dSqb4);
+	    Fe_sum +=(1.0-alpha[VELOCITY_X_COMPONENT])*(mfcurrentretune[E_SIDE] - rhoe * SpeedCorOlde*dSqe - rhoe2 * SpeedCorOlde2*dSqe2 - rhoe3 * SpeedCorOlde3*dSqe3 - rhoe4 * SpeedCorOlde4*dSqe4);
+	    Fn_sum +=(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfcurrentretune[N_SIDE] - rhon * SpeedCorOldn*dSqn - rhon2 * SpeedCorOldn2*dSqn2 - rhon3 * SpeedCorOldn3*dSqn3 - rhon4 * SpeedCorOldn4*dSqn4);
+	    Ft_sum +=(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfcurrentretune[T_SIDE] - rhot * SpeedCorOldt*dSqt - rhot2 * SpeedCorOldt2*dSqt2 - rhot3 * SpeedCorOldt3*dSqt3 - rhot4 * SpeedCorOldt4*dSqt4);
+	    Fw_sum +=(1.0-alpha[VELOCITY_X_COMPONENT])*(mfcurrentretune[W_SIDE] - rhow * SpeedCorOldw*dSqw - rhow2 * SpeedCorOldw2*dSqw2 - rhow3 * SpeedCorOldw3*dSqw3 - rhow4 * SpeedCorOldw4*dSqw4);
+	    Fs_sum +=(1.0-alpha[VELOCITY_Y_COMPONENT])*(mfcurrentretune[S_SIDE] - rhos * SpeedCorOlds*dSqs - rhos2 * SpeedCorOlds2*dSqs2 - rhos3 * SpeedCorOlds3*dSqs3 - rhos4 * SpeedCorOlds4*dSqs4);
+	    Fb_sum +=(1.0-alpha[VELOCITY_Z_COMPONENT])*(mfcurrentretune[B_SIDE] - rhob * SpeedCorOldb*dSqb - rhob2 * SpeedCorOldb2*dSqb2 - rhob3 * SpeedCorOldb3*dSqb3 - rhob4 * SpeedCorOldb4*dSqb4);
 
 	} 
 	
@@ -10439,12 +10439,12 @@ if (iB4 > -1) {
 	// возвращаем значение потока на грани КО.
 	if (bdeltapfinish==true) {
 	   // запоминаем финишный поток через грань.
-	   mfcurrentretune[ESIDE]=Fe_sum;
-	   mfcurrentretune[NSIDE]=Fn_sum;
-	   mfcurrentretune[TSIDE]=Ft_sum;
-	   mfcurrentretune[WSIDE]=Fw_sum;
-	   mfcurrentretune[SSIDE]=Fs_sum;
-	   mfcurrentretune[BSIDE]=Fb_sum;
+	   mfcurrentretune[E_SIDE]=Fe_sum;
+	   mfcurrentretune[N_SIDE]=Fn_sum;
+	   mfcurrentretune[T_SIDE]=Ft_sum;
+	   mfcurrentretune[W_SIDE]=Fw_sum;
+	   mfcurrentretune[S_SIDE]=Fs_sum;
+	   mfcurrentretune[B_SIDE]=Fb_sum;
 	}
 	
 	
@@ -10720,8 +10720,8 @@ void free_pressure(FLOW &f) {
 		for (integer iP=0; iP<f.maxelm; iP++) {
 			// iP - номер центрального контрольного объёма
 	        integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	        iE=f.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	        iW=f.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	        iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	        iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	        
 
             // если с одной из сторон граница расчётной области 
@@ -10745,17 +10745,17 @@ void free_pressure(FLOW &f) {
             if (bW) {
 				// узел W граничный
 				TOCHKA pp,pb,pbb;
-				integer iEE=f.neighbors_for_the_internal_node[ESIDE][iE].iNODE1;
+				integer iEE=f.neighbors_for_the_internal_node[E_SIDE][iE].iNODE1;
 				switch (imy_interpol) {
 				case LINEAR_INTERPOL: 
 		                   center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                   center_cord3D(iE, f.nvtx, f.pa, pb,ESIDE);
+		                   center_cord3D(iE, f.nvtx, f.pa, pb,E_SIDE);
 		                   f.potent[PAM][iW]=my_linear_interpolation('-', f.potent[PAM][iP], f.potent[PAM][iE], pp.x, pb.x, pp.x-0.5*dx);
 						   break;
 				case QUAD_INTERPOL:
 					        center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                    center_cord3D(iE, f.nvtx, f.pa, pb,ESIDE);
-						    center_cord3D(iEE, f.nvtx, f.pa, pbb,EE);
+		                    center_cord3D(iE, f.nvtx, f.pa, pb,E_SIDE);
+						    center_cord3D(iEE, f.nvtx, f.pa, pbb,EE_SIDE);
 							f.potent[PAM][iW]=my_quadratic_interpolation('-', f.potent[PAM][iEE], f.potent[PAM][iE], f.potent[PAM][iP],
 	                            pbb.x , pb.x, pp.x, pp.x-0.5*dx);
 					       break;
@@ -10764,7 +10764,7 @@ void free_pressure(FLOW &f) {
 				default:
 					// узел W граничный
 		            center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iE, f.nvtx, f.pa, pb,ESIDE);
+		            center_cord3D(iE, f.nvtx, f.pa, pb,E_SIDE);
 		            f.potent[PAM][iW]=my_linear_interpolation('-', f.potent[PAM][iP], f.potent[PAM][iE], pp.x, pb.x, pp.x-0.5*dx);
 					break;
 				}
@@ -10772,17 +10772,17 @@ void free_pressure(FLOW &f) {
 	        if (bE) {
 		        // узел E граничный
 				TOCHKA pp,pb,pbb;
-				integer iWW=f.neighbors_for_the_internal_node[WSIDE][iW].iNODE1;
+				integer iWW=f.neighbors_for_the_internal_node[W_SIDE][iW].iNODE1;
 				switch (imy_interpol) {
 				case LINEAR_INTERPOL:
 		                  center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                  center_cord3D(iW, f.nvtx, f.pa, pb,WSIDE);
+		                  center_cord3D(iW, f.nvtx, f.pa, pb,W_SIDE);
 		                  f.potent[PAM][iE]=my_linear_interpolation('+', f.potent[PAM][iP], f.potent[PAM][iW], pp.x, pb.x, pp.x+0.5*dx);
 						  break;
 				case QUAD_INTERPOL:
 					      center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                  center_cord3D(iW, f.nvtx, f.pa, pb,WSIDE);
-						  center_cord3D(iWW, f.nvtx, f.pa, pbb,WW);
+		                  center_cord3D(iW, f.nvtx, f.pa, pb,W_SIDE);
+						  center_cord3D(iWW, f.nvtx, f.pa, pbb,WW_SIDE);
 						  
 						  f.potent[PAM][iE]=my_quadratic_interpolation('+', f.potent[PAM][iWW], f.potent[PAM][iW], f.potent[PAM][iP], pbb.x, pb.x, pp.x, pp.x+0.5*dx);	  
 					break;
@@ -10790,7 +10790,7 @@ void free_pressure(FLOW &f) {
 					break;
 				default: 
 					center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iW, f.nvtx, f.pa, pb,WSIDE);
+		            center_cord3D(iW, f.nvtx, f.pa, pb,W_SIDE);
 		            f.potent[PAM][iE]=my_linear_interpolation('+', f.potent[PAM][iP], f.potent[PAM][iW], pp.x, pb.x, pp.x+0.5*dx);  
 					break;
 				}
@@ -10798,17 +10798,17 @@ void free_pressure(FLOW &f) {
 	        if (bS) {
 		        // узел S граничный
 				TOCHKA pp,pb,pbb;
-				integer iNN=f.neighbors_for_the_internal_node[NSIDE][iN].iNODE1;
+				integer iNN=f.neighbors_for_the_internal_node[N_SIDE][iN].iNODE1;
 				switch (imy_interpol) {
                 case LINEAR_INTERPOL:
 		                 center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                 center_cord3D(iN, f.nvtx, f.pa, pb,NSIDE);
+		                 center_cord3D(iN, f.nvtx, f.pa, pb,N_SIDE);
 		                 f.potent[PAM][iS]=my_linear_interpolation('-', f.potent[PAM][iP], f.potent[PAM][iN], pp.y, pb.y, pp.y-0.5*dy);
 				         break;
 				case QUAD_INTERPOL:
 		                 center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                 center_cord3D(iN, f.nvtx, f.pa, pb,NSIDE);
-						 center_cord3D(iNN, f.nvtx, f.pa, pbb,NN);
+		                 center_cord3D(iN, f.nvtx, f.pa, pb,N_SIDE);
+						 center_cord3D(iNN, f.nvtx, f.pa, pbb,NN_SIDE);
 						 f.potent[PAM][iS]=my_quadratic_interpolation('-', f.potent[PAM][iNN], f.potent[PAM][iN], f.potent[PAM][iP],
 	                            pbb.y, pb.y, pp.y, pp.y-0.5*dy);
 					break;
@@ -10816,7 +10816,7 @@ void free_pressure(FLOW &f) {
 					break;
 				default:
 		            center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iN, f.nvtx, f.pa, pb,NSIDE);
+		            center_cord3D(iN, f.nvtx, f.pa, pb,N_SIDE);
 		            f.potent[PAM][iS]=my_linear_interpolation('-', f.potent[PAM][iP], f.potent[PAM][iN], pp.y, pb.y, pp.y-0.5*dy);
 					break;
 				}
@@ -10824,17 +10824,17 @@ void free_pressure(FLOW &f) {
 	        if (bN) {
 		        // узел N граничный
 				TOCHKA pp,pb,pbb;
-				integer iSS=f.neighbors_for_the_internal_node[SSIDE][iS].iNODE1;
+				integer iSS=f.neighbors_for_the_internal_node[S_SIDE][iS].iNODE1;
 				switch (imy_interpol) {
 					case LINEAR_INTERPOL:
 		                 center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                 center_cord3D(iS, f.nvtx, f.pa, pb,SSIDE);
+		                 center_cord3D(iS, f.nvtx, f.pa, pb,S_SIDE);
 		                 f.potent[PAM][iN]=my_linear_interpolation('+', f.potent[PAM][iP], f.potent[PAM][iS], pp.y, pb.y, pp.y+0.5*dy);
 				    break;
 					case QUAD_INTERPOL:
 		                center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                center_cord3D(iS, f.nvtx, f.pa, pb,SSIDE);
-						center_cord3D(iSS, f.nvtx, f.pa, pbb,SS);
+		                center_cord3D(iS, f.nvtx, f.pa, pb,S_SIDE);
+						center_cord3D(iSS, f.nvtx, f.pa, pbb,SS_SIDE);
 						f.potent[PAM][iN]=my_quadratic_interpolation('+', f.potent[PAM][iSS], f.potent[PAM][iS], f.potent[PAM][iP],
 	                            pbb.y , pb.y, pp.y, pp.y+0.5*dy);
 					break;
@@ -10842,7 +10842,7 @@ void free_pressure(FLOW &f) {
 						break;
 					default:
 						center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		                center_cord3D(iS, f.nvtx, f.pa, pb,SSIDE);
+		                center_cord3D(iS, f.nvtx, f.pa, pb,S_SIDE);
 		                f.potent[PAM][iN]=my_linear_interpolation('+', f.potent[PAM][iP], f.potent[PAM][iS], pp.y, pb.y, pp.y+0.5*dy);
 					break;
 				}
@@ -10850,17 +10850,17 @@ void free_pressure(FLOW &f) {
 	       if (bB) {
 		        // узел B граничный
 			   TOCHKA pp,pb,pbb;
-			   integer iTT=f.neighbors_for_the_internal_node[TSIDE][iT].iNODE1;
+			   integer iTT=f.neighbors_for_the_internal_node[T_SIDE][iT].iNODE1;
 				switch (imy_interpol) {
 		        case LINEAR_INTERPOL:
 		               center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		               center_cord3D(iT, f.nvtx, f.pa, pb,TSIDE);
+		               center_cord3D(iT, f.nvtx, f.pa, pb,T_SIDE);
 		               f.potent[PAM][iB]=my_linear_interpolation('-', f.potent[PAM][iP], f.potent[PAM][iT], pp.z, pb.z, pp.z-0.5*dz);
 				   break;
 				case QUAD_INTERPOL:
 					center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iT, f.nvtx, f.pa, pb,TSIDE);
-					center_cord3D(iTT, f.nvtx, f.pa, pbb,TTSIDE);
+		            center_cord3D(iT, f.nvtx, f.pa, pb,T_SIDE);
+					center_cord3D(iTT, f.nvtx, f.pa, pbb,TT_SIDE);
 					f.potent[PAM][iB]=my_quadratic_interpolation('-', f.potent[PAM][iTT], f.potent[PAM][iT], f.potent[PAM][iP],
 	                            pbb.z, pb.z, pp.z, pp.z-0.5*dz);
 
@@ -10869,7 +10869,7 @@ void free_pressure(FLOW &f) {
 					break;
 				default:
 					center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iT, f.nvtx, f.pa, pb,TSIDE);
+		            center_cord3D(iT, f.nvtx, f.pa, pb,T_SIDE);
 		            f.potent[PAM][iB]=my_linear_interpolation('-', f.potent[PAM][iP], f.potent[PAM][iT], pp.z, pb.z, pp.z-0.5*dz);
 					break;
 				}
@@ -10877,17 +10877,17 @@ void free_pressure(FLOW &f) {
 	       if (bT) { 
 		        // узел T граничный
 		        TOCHKA pp,pb, pbb;
-				integer iBB=f.neighbors_for_the_internal_node[BSIDE][iB].iNODE1;
+				integer iBB=f.neighbors_for_the_internal_node[B_SIDE][iB].iNODE1;
 				switch (imy_interpol) {
 				case LINEAR_INTERPOL:
 		              center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		              center_cord3D(iB, f.nvtx, f.pa, pb,BSIDE);
+		              center_cord3D(iB, f.nvtx, f.pa, pb,B_SIDE);
 		              f.potent[PAM][iT]=my_linear_interpolation('+', f.potent[PAM][iP], f.potent[PAM][iB], pp.z, pb.z, pp.z+0.5*dz);
 					  break;
                 case QUAD_INTERPOL:
 					  center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		              center_cord3D(iB, f.nvtx, f.pa, pb,BSIDE);
-					  center_cord3D(iBB, f.nvtx, f.pa, pbb,BB);
+		              center_cord3D(iB, f.nvtx, f.pa, pb,B_SIDE);
+					  center_cord3D(iBB, f.nvtx, f.pa, pbb,BB_SIDE);
 					  f.potent[PAM][iT]=my_quadratic_interpolation('+', f.potent[PAM][iBB], f.potent[PAM][iB], f.potent[PAM][iP],
 	                            pbb.z , pb.z, pp.z, pp.z+0.5*dz);
 					break;
@@ -10895,7 +10895,7 @@ void free_pressure(FLOW &f) {
 					break;
 				default:
 					  center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		              center_cord3D(iB, f.nvtx, f.pa, pb,BSIDE);
+		              center_cord3D(iB, f.nvtx, f.pa, pb,B_SIDE);
 		              f.potent[PAM][iT]=my_linear_interpolation('+', f.potent[PAM][iP], f.potent[PAM][iB], pp.z, pb.z, pp.z+0.5*dz);
 					break;
 				}
@@ -10917,8 +10917,8 @@ void correctpressureoutlet(FLOW &f, integer lw, integer ls, WALL* w) {
 	for (integer iP=0; iP<f.maxelm; iP++) {
 			// iP - номер центрального контрольного объёма
 	        integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	        iE=f.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	        iW=f.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	        iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	        iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	        
 
             // если с одной из сторон граница расчётной области 
@@ -10997,8 +10997,8 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 	for (integer iP=0; iP<f.maxelm; iP++) {
 			// iP - номер центрального контрольного объёма
 	        integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	        iE=f.neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	        iW=f.neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	        iE=f.neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=f.neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=f.neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	        iW=f.neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=f.neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=f.neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	        
 
             // если с одной из сторон граница расчётной области 
@@ -11025,7 +11025,7 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 				   // Линейная интерполяция
 				   TOCHKA pp,pb;
 		           center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		           center_cord3D(iE, f.nvtx, f.pa, pb,ESIDE);
+		           center_cord3D(iE, f.nvtx, f.pa, pb,E_SIDE);
 		           f.potent[iVar][iW]=my_linear_interpolation('-', f.potent[iVar][iP], f.potent[iVar][iE], pp.x, pb.x, pp.x-0.5*dx);
 			   }
 	        }
@@ -11036,7 +11036,7 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 					// Линейная интерполяция
 				    TOCHKA pp,pb;
 		            center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iW, f.nvtx, f.pa, pb,WSIDE);
+		            center_cord3D(iW, f.nvtx, f.pa, pb,W_SIDE);
 		            f.potent[iVar][iE]=my_linear_interpolation('+', f.potent[iVar][iP], f.potent[iVar][iW], pp.x, pb.x, pp.x+0.5*dx);
 			   }
 	        }
@@ -11046,7 +11046,7 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && ((w[f.border_neighbor[inumber].MCB - ls].bpressure || w[f.border_neighbor[inumber].MCB - ls].bopening))) {
 				    TOCHKA pp,pb;
 		            center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		            center_cord3D(iN, f.nvtx, f.pa, pb,NSIDE);
+		            center_cord3D(iN, f.nvtx, f.pa, pb,N_SIDE);
 		            f.potent[iVar][iS]=my_linear_interpolation('-', f.potent[iVar][iP], f.potent[iVar][iN], pp.y, pb.y, pp.y-0.5*dy);
 			   }
 	        }
@@ -11056,7 +11056,7 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && ((w[f.border_neighbor[inumber].MCB - ls].bpressure || w[f.border_neighbor[inumber].MCB - ls].bopening))) {
 				   TOCHKA pp,pb;
 		           center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		           center_cord3D(iS, f.nvtx, f.pa, pb,SSIDE);
+		           center_cord3D(iS, f.nvtx, f.pa, pb,S_SIDE);
 		           f.potent[iVar][iN]=my_linear_interpolation('+', f.potent[iVar][iP], f.potent[iVar][iS], pp.y, pb.y, pp.y+0.5*dy);
 			    }
 	        }
@@ -11066,7 +11066,7 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && ((w[f.border_neighbor[inumber].MCB - ls].bpressure || w[f.border_neighbor[inumber].MCB - ls].bopening))) {
 				   TOCHKA pp,pb;
 		           center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		           center_cord3D(iT, f.nvtx, f.pa, pb,TSIDE);
+		           center_cord3D(iT, f.nvtx, f.pa, pb,T_SIDE);
 		           f.potent[iVar][iB]=my_linear_interpolation('-', f.potent[iVar][iP], f.potent[iVar][iT], pp.z, pb.z, pp.z-0.5*dz);
 			   }
 	       }
@@ -11076,7 +11076,7 @@ void interpolatevel(FLOW &f, integer lw, integer ls, WALL* w, integer iVar) {
 				if ((f.border_neighbor[inumber].MCB<(ls + lw)) && (f.border_neighbor[inumber].MCB >= ls) && ((w[f.border_neighbor[inumber].MCB - ls].bpressure ||  w[f.border_neighbor[inumber].MCB - ls].bopening))) {
 				   TOCHKA pp,pb;
 		           center_cord3D(iP, f.nvtx, f.pa, pp,100);
-		           center_cord3D(iB, f.nvtx, f.pa, pb,BSIDE);
+		           center_cord3D(iB, f.nvtx, f.pa, pb,B_SIDE);
 		           f.potent[iVar][iT]=my_linear_interpolation('+', f.potent[iVar][iP], f.potent[iVar][iB], pp.z, pb.z, pp.z+0.5*dz);
 			   }
 	       }

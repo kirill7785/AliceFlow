@@ -59,8 +59,13 @@ integer size_splay_Tree;  /* number of nodes in the Tree_splay */
 
 typedef struct Tree_splay_node Tree_splay;
 struct Tree_splay_node {
-	Tree_splay* left = nullptr, * right = nullptr;
+	Tree_splay* left, * right;
 	data_BalTree item;
+
+	Tree_splay_node() {
+		left = nullptr;
+		right = nullptr;
+	}
 };
 
 Tree_splay* findmax(Tree_splay* p)
@@ -86,28 +91,7 @@ bool isfound_recursive(Tree_splay* p, data_BalTree k)
 	else return true; // найден.
 } // isfound_recursive in splay tree.
 
-  // Возвращает true если узел найден в SPLAY дереве
-bool isfound(Tree_splay* p1, data_BalTree k)
-{
-	//if (p == 0) return false; // не найден.
-
-	Tree_splay* p;
-	p = p1;
-
-	for (;;) {
-		if (p == 0) return false; // не найден.
-		else if (k < p->item) {
-			p = p->left;
-		}
-		else if (k > p->item) {
-			p = p->right;
-		}
-		else {
-			p = 0;
-			return true; // найден.
-		}
-	}
-} // isfound in splay tree.
+  
 
 
 Tree_splay* splay(data_BalTree i, Tree_splay* t) {
@@ -156,6 +140,31 @@ Tree_splay* splay(data_BalTree i, Tree_splay* t) {
 	t->right = Nbuf.left;
 	return t;
 }
+
+// Возвращает true если узел найден в SPLAY дереве
+bool isfound(Tree_splay* p1, data_BalTree k)
+{
+	//if (p == 0) return false; // не найден.
+
+	Tree_splay* p;
+	p = p1;
+
+	for (;;) {
+		if (p == 0) return false; // не найден.
+		else if (k < p->item) {
+			p = p->left;
+		}
+		else if (k > p->item) {
+			p = p->right;
+		}
+		else {
+			//p1 = splay(k, p); // так медленнее
+			p = 0;
+			
+			return true; // найден.
+		}
+	}
+} // isfound in splay tree.
 
 // Данный метод не используется.
 /* Here is how sedgewick would have written this.		*/

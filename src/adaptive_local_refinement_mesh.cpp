@@ -51,38 +51,43 @@ bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doub
 bool bVerySimpleGeometryforALICE = true;
 
 // стороны света.
-#define ESIDE 0 // (east) восток
-#define NSIDE 1 // (north) север
-#define TSIDE 2 // (top) верх
-#define WSIDE 3 // (west) запад
-#define SSIDE 4 // (south) юг
-#define BSIDE 5 // (bottom) низ
-#define EE 6
-#define NN 7
-#define TTSIDE 8
-#define WW 9
-#define SS 10
-#define BB 11
+const integer E_SIDE = 0; // (east)   восток
+const integer N_SIDE = 1; // (north)  север
+const integer T_SIDE = 2; // (top)    верх
+const integer W_SIDE = 3; // (west)   запад
+const integer S_SIDE = 4; // (south)  юг
+const integer B_SIDE = 5; // (bottom) низ
+const integer EE_SIDE = 6; // (double east) двойной сосед на востоке
+const integer NN_SIDE = 7; // (double north)  двойной сосед на севере
+const integer TT_SIDE = 8; // (double top)  двойной сосед сверху
+const integer WW_SIDE = 9; // (double west)  двойной сосед с запада
+const integer SS_SIDE = 10; // (double south)  двойной сосед с юга
+const integer BB_SIDE = 11; // (double bottom) двойной сосед снизу
 
 const integer MAX_NEIGHBOUR_COUNT = 2147483646;
 
 // для хеш-таблицы.
 typedef struct THASH_POLE {
-	bool flag=false;
-	integer inum=-1;
+	bool flag;
+	integer inum;
+
+	THASH_POLE() {
+		flag=false;
+		inum=-1;
+	}
 } HASH_POLE;
 
 // Узел octree дерева.
 typedef struct Toctree {
 	// 0-7 как вершины в nvtx
-	Toctree* link0 = nullptr;
-	Toctree* link1 = nullptr;
-	Toctree* link2 = nullptr;
-	Toctree* link3 = nullptr;
-	Toctree* link4 = nullptr;
-	Toctree* link5 = nullptr;
-	Toctree* link6 = nullptr;
-	Toctree* link7 = nullptr;
+	Toctree* link0;
+	Toctree* link1;
+	Toctree* link2;
+	Toctree* link3;
+	Toctree* link4;
+	Toctree* link5;
+	Toctree* link6;
+	Toctree* link7;
 	TOCHKA p0;
 	TOCHKA p1;
 	TOCHKA p2;
@@ -91,25 +96,25 @@ typedef struct Toctree {
 	TOCHKA p5;
 	TOCHKA p6;
 	TOCHKA p7;
-	bool dlist=false;// true если дробление закончилось.
+	bool dlist;// true если дробление закончилось.
 	// если maxGneighbour больше 4 то дробление.
-	integer maxWneighbour = MAX_NEIGHBOUR_COUNT;
-	integer maxEneighbour = MAX_NEIGHBOUR_COUNT;
-	integer maxSneighbour = MAX_NEIGHBOUR_COUNT;
-	integer maxNneighbour = MAX_NEIGHBOUR_COUNT;
-	integer maxTneighbour = MAX_NEIGHBOUR_COUNT;
-	integer maxBneighbour = MAX_NEIGHBOUR_COUNT;
+	integer maxWneighbour;
+	integer maxEneighbour;
+	integer maxSneighbour;
+	integer maxNneighbour;
+	integer maxTneighbour;
+	integer maxBneighbour;
 	// Линки на 6 соседей.
 	// Истина если face ячейки имеет четырёх соседей и 
 	// false если face ячейки имеет только одного соседа.
-	bool b4W=false, b4E = false, b4S = false, b4N = false, b4B = false, b4T = false;
+	bool b4W, b4E, b4S, b4N, b4B, b4T;
 	// Если сосед лишь один.
-	Toctree* linkW = nullptr;
-	Toctree* linkE = nullptr;
-	Toctree* linkS = nullptr;
-	Toctree* linkN = nullptr;
-	Toctree* linkB = nullptr;
-	Toctree* linkT = nullptr;
+	Toctree* linkW;
+	Toctree* linkE;
+	Toctree* linkS;
+	Toctree* linkN;
+	Toctree* linkB;
+	Toctree* linkT;
     // Если соседа 4 штуки.
 	// 3 2 B
 	// 0 1
@@ -128,53 +133,158 @@ typedef struct Toctree {
 	//******
 	// 4 5 T
 	// 6 7
-	Toctree* linkW0 = nullptr;
-	Toctree* linkW3 = nullptr;
-	Toctree* linkW4 = nullptr;
-	Toctree* linkW7 = nullptr;
-	Toctree* linkE1 = nullptr;
-	Toctree* linkE2 = nullptr;
-	Toctree* linkE5 = nullptr;
-	Toctree* linkE6 = nullptr;
-	Toctree* linkS0 = nullptr;
-	Toctree* linkS1 = nullptr;
-	Toctree* linkS4 = nullptr;
-	Toctree* linkS5 = nullptr;
-	Toctree* linkN2 = nullptr;
-	Toctree* linkN3 = nullptr;
-	Toctree* linkN6 = nullptr;
-	Toctree* linkN7 = nullptr;
-	Toctree* linkB0 = nullptr;
-	Toctree* linkB1 = nullptr;
-	Toctree* linkB2 = nullptr;
-	Toctree* linkB3 = nullptr;
-	Toctree* linkT4 = nullptr;
-	Toctree* linkT5 = nullptr;
-	Toctree* linkT6 = nullptr;
-	Toctree* linkT7 = nullptr;
+	Toctree* linkW0;
+	Toctree* linkW3;
+	Toctree* linkW4;
+	Toctree* linkW7;
+	Toctree* linkE1;
+	Toctree* linkE2;
+	Toctree* linkE5;
+	Toctree* linkE6;
+	Toctree* linkS0;
+	Toctree* linkS1;
+	Toctree* linkS4;
+	Toctree* linkS5;
+	Toctree* linkN2;
+	Toctree* linkN3;
+	Toctree* linkN6;
+	Toctree* linkN7;
+	Toctree* linkB0;
+	Toctree* linkB1;
+	Toctree* linkB2;
+	Toctree* linkB3;
+	Toctree* linkT4;
+	Toctree* linkT5;
+	Toctree* linkT6;
+	Toctree* linkT7;
 	// Целочисленные координаты октанта.
-	integer minx = -1;
-	integer maxx = -2;
-	integer miny = -1;
-	integer maxy = -2;
-	integer minz = -1;
-	integer maxz = -2;
+	integer minx;
+	integer maxx;
+	integer miny;
+	integer maxy;
+	integer minz;
+	integer maxz;
 	// root info
 	// for update neighbor procedure.
-	integer root=-1; // (0,link0) (1,link1) ...(7,link7)
-	bool brootSituationX = false, brootSituationY = false, brootSituationZ = false;
-	bool brootSituationX_virtual = false, brootSituationY_virtual = false, brootSituationZ_virtual = false;
-	integer ilevel=-1; // номер уровня в octree дереве.
-	Toctree* parent=nullptr; // ссылка на родителя.
+	integer root; // (0,link0) (1,link1) ...(7,link7)
+	bool brootSituationX, brootSituationY, brootSituationZ;
+	bool brootSituationX_virtual, brootSituationY_virtual, brootSituationZ_virtual;
+	integer ilevel; // номер уровня в octree дереве.
+	Toctree* parent; // ссылка на родителя.
 	// обновлять ли ссылки сейчас
-	bool b_the_geometric_fragmentation=false;
-	bool bcrushing_when_balancing = false;
-	bool disbalance_now = false;
+	bool b_the_geometric_fragmentation;
+	bool bcrushing_when_balancing;
+	bool disbalance_now;
 	// Следующие структуры используются только в модуле constr_struct_alice и далее ниже по коду и НЕ
 	// используются и заполняются в модуле adaptive_local_refinement_mesh.cpp.
 	// Уникальный номер внутреннего КО температурной области и 0 если не принадлежит области.
-	integer inum_TD=-1; // inumber Temperature Domain.
-	integer inum_FD=-1; // inumber Fluid Domain.
+	integer inum_TD; // inumber Temperature Domain.
+	integer inum_FD; // inumber Fluid Domain.
+
+	Toctree() {
+		// 0-7 как вершины в nvtx
+		link0 = nullptr;
+		link1 = nullptr;
+		link2 = nullptr;
+		link3 = nullptr;
+		link4 = nullptr;
+		link5 = nullptr;
+		link6 = nullptr;
+		link7 = nullptr;
+		//TOCHKA p0;
+		//TOCHKA p1;
+		//TOCHKA p2;
+		//TOCHKA p3;
+		//TOCHKA p4;
+		//TOCHKA p5;
+		//TOCHKA p6;
+		//TOCHKA p7;
+		dlist=false;// true если дробление закончилось.
+		// если maxGneighbour больше 4 то дробление.
+		maxWneighbour = MAX_NEIGHBOUR_COUNT;
+		maxEneighbour = MAX_NEIGHBOUR_COUNT;
+		maxSneighbour = MAX_NEIGHBOUR_COUNT;
+		maxNneighbour = MAX_NEIGHBOUR_COUNT;
+		maxTneighbour = MAX_NEIGHBOUR_COUNT;
+		maxBneighbour = MAX_NEIGHBOUR_COUNT;
+		// Линки на 6 соседей.
+		// Истина если face ячейки имеет четырёх соседей и 
+		// false если face ячейки имеет только одного соседа.
+		 b4W=false; b4E = false; b4S = false; b4N = false; b4B = false; b4T = false;
+		// Если сосед лишь один.
+		linkW = nullptr;
+		linkE = nullptr;
+		linkS = nullptr;
+		linkN = nullptr;
+		linkB = nullptr;
+		linkT = nullptr;
+		// Если соседа 4 штуки.
+		// 3 2 B
+		// 0 1
+		//******
+		// 7 3 W
+		// 4 0
+		//******
+		// 2 6 E
+		// 1 5
+		//******
+		// 4 5 S
+		// 0 1
+		//******
+		// 7 6 N
+		// 3 2
+		//******
+		// 4 5 T
+		// 6 7
+		linkW0 = nullptr;
+		linkW3 = nullptr;
+		linkW4 = nullptr;
+		linkW7 = nullptr;
+		linkE1 = nullptr;
+		linkE2 = nullptr;
+		linkE5 = nullptr;
+		linkE6 = nullptr;
+		linkS0 = nullptr;
+		linkS1 = nullptr;
+		linkS4 = nullptr;
+		linkS5 = nullptr;
+		linkN2 = nullptr;
+		linkN3 = nullptr;
+		linkN6 = nullptr;
+		linkN7 = nullptr;
+		linkB0 = nullptr;
+		linkB1 = nullptr;
+		linkB2 = nullptr;
+		linkB3 = nullptr;
+		linkT4 = nullptr;
+		linkT5 = nullptr;
+		linkT6 = nullptr;
+		linkT7 = nullptr;
+		// Целочисленные координаты октанта.
+		minx = -1;
+		maxx = -2;
+		miny = -1;
+		maxy = -2;
+		minz = -1;
+		maxz = -2;
+		// root info
+		// for update neighbor procedure.
+		root=-1; // (0,link0) (1,link1) ...(7,link7)
+		brootSituationX = false; brootSituationY = false; brootSituationZ = false;
+		brootSituationX_virtual = false; brootSituationY_virtual = false; brootSituationZ_virtual = false;
+		ilevel=-1; // номер уровня в octree дереве.
+		parent=nullptr; // ссылка на родителя.
+		// обновлять ли ссылки сейчас
+		b_the_geometric_fragmentation=false;
+		bcrushing_when_balancing = false;
+		disbalance_now = false;
+		// Следующие структуры используются только в модуле constr_struct_alice и далее ниже по коду и НЕ
+		// используются и заполняются в модуле adaptive_local_refinement_mesh.cpp.
+		// Уникальный номер внутреннего КО температурной области и 0 если не принадлежит области.
+		inum_TD=-1; // inumber Temperature Domain.
+		inum_FD=-1; // inumber Fluid Domain.
+	}
+
 } octree;
 
 // Ссылки на каждый узел octree дерева для его полной очистки.
@@ -183,13 +293,24 @@ integer icount_Length_vector_octree = 0;
 octree** rootClear_octree = nullptr;
 
 typedef struct TSTACK_ALICE {
-	integer minx = -1;
-	integer maxx = -2;
-	integer miny = -1;
-	integer maxy = -2;
-	integer minz = -1;
-	integer maxz = -2;
-	octree* link=nullptr;
+	integer minx;
+	integer maxx;
+	integer miny;
+	integer maxy;
+	integer minz;
+	integer maxz;
+	octree* link;
+
+	TSTACK_ALICE() {
+		minx = -1;
+		maxx = -2;
+		miny = -1;
+		maxy = -2;
+		minz = -1;
+		maxz = -2;
+		link=nullptr;
+	}
+
 } STACK_ALICE;
 
 STACK_ALICE* my_ALICE_STACK=nullptr;
@@ -616,15 +737,15 @@ bool is_null1_(Toctree* &oc, integer direct)
 {
 	// direct WSIDE, SSIDE, B:
 	integer dir = direct;
-	if (dir == ESIDE) dir = WSIDE;
-	if (dir == NSIDE) dir = SSIDE;
-	if (dir == TSIDE) dir = BSIDE;
+	if (dir == E_SIDE) dir = W_SIDE;
+	if (dir == N_SIDE) dir = S_SIDE;
+	if (dir == T_SIDE) dir = B_SIDE;
 
 	bool b1 = false;
 
 	if (oc != nullptr) {
 		switch (dir) {
-		case WSIDE: // 0,3,4,7
+		case W_SIDE: // 0,3,4,7
 			if ((oc->link0 != nullptr) && (oc->link3 != nullptr) && (oc->link4 != nullptr) && (oc->link7 != nullptr)) {
 				if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 					if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
@@ -641,7 +762,7 @@ bool is_null1_(Toctree* &oc, integer direct)
 				}
 			}
 			break;
-		case SSIDE: // 0,1,4,5 
+		case S_SIDE: // 0,1,4,5 
 			if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link4 != nullptr) && (oc->link5 != nullptr)) {
 				if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 					if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
@@ -658,7 +779,7 @@ bool is_null1_(Toctree* &oc, integer direct)
 				}
 			}
 			break;
-		case BSIDE: // 0,1,2,3
+		case B_SIDE: // 0,1,2,3
 			// Т.к. может быть вырождение по Z.
 			if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link3 != nullptr)) {
 				if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -720,16 +841,16 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 	// direct WSIDE, SSIDE, B:
 	integer dir = direct;
-	if (dir == ESIDE) dir = WSIDE;
-	if (dir == NSIDE) dir = SSIDE;
-	if (dir == TSIDE) dir = BSIDE;
+	if (dir == E_SIDE) dir = W_SIDE;
+	if (dir == N_SIDE) dir = S_SIDE;
+	if (dir == T_SIDE) dir = B_SIDE;
 
 	bool b1 = false;
 
 	if (oc != nullptr) {
 
 		switch (dir) {
-		case WSIDE: // 0,3,4,7
+		case W_SIDE: // 0,3,4,7
 			if ((oc->link0 != nullptr) && (oc->link3 != nullptr) && (oc->link4 != nullptr) && (oc->link7 != nullptr)) {
 				if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 					if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
@@ -830,7 +951,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 			}
 			break;
-		case SSIDE: // 0,1,4,5 
+		case S_SIDE: // 0,1,4,5 
 			if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link4 != nullptr) && (oc->link5 != nullptr)) {
 				if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 					if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
@@ -933,7 +1054,7 @@ bool is_null2(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 			break;
-		case BSIDE: // 0,1,2,3
+		case B_SIDE: // 0,1,2,3
 			// Т.к. может быть вырождение по Z.
 			if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link3 != nullptr)) {
 				if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -1093,7 +1214,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		// Вырождение по Z
 		if (oc != nullptr) {
 			switch (dir) {
-			case TSIDE: case  BSIDE: // 0,1,2,3
+			case T_SIDE: case  B_SIDE: // 0,1,2,3
 
 				if (oc->link0 != nullptr) {
 					c0 = 1; c4 = 1;
@@ -1195,7 +1316,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 				break;
-			case WSIDE:  // 1,2
+			case W_SIDE:  // 1,2
 				if ((oc->link1 != nullptr) && (oc->link2 != nullptr)) {
 					if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
 						if ((oc->link2->link0 == nullptr) && (oc->link2->link1 == nullptr) && (oc->link2->link2 == nullptr) && (oc->link2->link3 == nullptr) && (oc->link2->link4 == nullptr) && (oc->link2->link5 == nullptr) && (oc->link2->link6 == nullptr) && (oc->link2->link7 == nullptr)) {
@@ -1253,7 +1374,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c6 = 0;
 
 				break;
-			case ESIDE: // 0,3
+			case E_SIDE: // 0,3
 				if ((oc->link0 != nullptr) && (oc->link3 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 						if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
@@ -1310,7 +1431,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c7 = 0;
 
 				break;
-			case SSIDE: // 2,3
+			case S_SIDE: // 2,3
 				if ((oc->link2 != nullptr) && (oc->link3 != nullptr) && (oc->link6 != nullptr) && (oc->link7 != nullptr)) {
 					if ((oc->link2->link0 == nullptr) && (oc->link2->link1 == nullptr) && (oc->link2->link2 == nullptr) && (oc->link2->link3 == nullptr) && (oc->link2->link4 == nullptr) && (oc->link2->link5 == nullptr) && (oc->link2->link6 == nullptr) && (oc->link2->link7 == nullptr)) {
 						if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
@@ -1367,7 +1488,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c7 = 0;
 
 				break;
-			case NSIDE: // 0,1
+			case N_SIDE: // 0,1
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link4 != nullptr) && (oc->link5 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 						if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
@@ -1435,7 +1556,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		// Вырождение по Y
 		if (oc != nullptr) {
 			switch (dir) {
-			case NSIDE: case SSIDE: // 0,1,4,5 
+			case N_SIDE: case S_SIDE: // 0,1,4,5 
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link4 != nullptr) && (oc->link5 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 						if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
@@ -1545,7 +1666,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 					}
 				}
 				break;
-			case ESIDE: // 0,4
+			case E_SIDE: // 0,4
 				if ((oc->link0 != nullptr) && (oc->link3 != nullptr) && (oc->link4 != nullptr) && (oc->link7 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 						if ((oc->link4->link0 == nullptr) && (oc->link4->link1 == nullptr) && (oc->link4->link2 == nullptr) && (oc->link4->link3 == nullptr) && (oc->link4->link4 == nullptr) && (oc->link4->link5 == nullptr) && (oc->link4->link6 == nullptr) && (oc->link4->link7 == nullptr)) {
@@ -1602,7 +1723,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c7 = 0;
 				c3 = 0;
 				break;
-			case WSIDE: // 1,2,5,6
+			case W_SIDE: // 1,2,5,6
 				// 1,5
 				if ((oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link5 != nullptr) && (oc->link6 != nullptr)) {
 					if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
@@ -1661,7 +1782,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c6 = 0;
 
 				break;
-			case TSIDE: // 0,1,2,3
+			case T_SIDE: // 0,1,2,3
 				// 0,1
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link3 != nullptr)) {
@@ -1720,7 +1841,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c2 = 0;
 				c3 = 0;
 				break;
-			case BSIDE: // 4,5,6,7
+			case B_SIDE: // 4,5,6,7
 				// 4,5
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link4 != nullptr) && (oc->link5 != nullptr) && (oc->link6 != nullptr) && (oc->link7 != nullptr)) {
@@ -1792,7 +1913,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		// Вырождение по X
 		if (oc != nullptr) {
 			switch (dir) {
-			case ESIDE: case WSIDE:// 0,3,4,7
+			case E_SIDE: case W_SIDE:// 0,3,4,7
 
 				if (oc->link0 != nullptr) {
 					c0 = 1; c1 = 1;
@@ -1891,7 +2012,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 					}
 				}
 				break;
-			case NSIDE: // 0,1,4,5 
+			case N_SIDE: // 0,1,4,5 
 				// 0,4
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link4 != nullptr) && (oc->link5 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -1950,7 +2071,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c5 = 0;
 
 				break;
-			case SSIDE: // 3,7 
+			case S_SIDE: // 3,7 
 				if ((oc->link2 != nullptr) && (oc->link3 != nullptr) && (oc->link6 != nullptr) && (oc->link7 != nullptr)) {
 					if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
 						if ((oc->link7->link0 == nullptr) && (oc->link7->link1 == nullptr) && (oc->link7->link2 == nullptr) && (oc->link7->link3 == nullptr) && (oc->link7->link4 == nullptr) && (oc->link7->link5 == nullptr) && (oc->link7->link6 == nullptr) && (oc->link7->link7 == nullptr)) {
@@ -2010,7 +2131,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 				break;
-			case TSIDE: // 0,1,2,3
+			case T_SIDE: // 0,1,2,3
 				// 0,3
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link3 != nullptr)) {
@@ -2072,7 +2193,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 				break;
-			case BSIDE: // 4,5,6,7
+			case B_SIDE: // 4,5,6,7
 				// 4,7
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link4 != nullptr) && (oc->link5 != nullptr) && (oc->link6 != nullptr) && (oc->link7 != nullptr)) {
@@ -2151,13 +2272,13 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		if (oc != nullptr) {
 
 			switch (dir) {
-			case WSIDE: case ESIDE:
+			case W_SIDE: case E_SIDE:
 				c0 = c1 = 1;
 				c2 = c3 = c4 = c5 = c6 = c7 = 0;
 				break;
-			case NSIDE: // 0,1,4,5 
+			case N_SIDE: // 0,1,4,5 
 				// 0,1
-			case SSIDE: // 2,3,6,7
+			case S_SIDE: // 2,3,6,7
 				//(0,3) (1,2) (4,7) (5,6)
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -2217,9 +2338,9 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c4 = c5 = c6 = c7 = 0;
 
 				break;
-			case TSIDE: // 0,1,2,3
+			case T_SIDE: // 0,1,2,3
 				//0,1
-			case BSIDE: // 4,5,6,7
+			case B_SIDE: // 4,5,6,7
 				// 4,5
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr)) {
@@ -2290,13 +2411,13 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		if (oc != nullptr) {
 
 			switch (dir) {
-			case SSIDE: case NSIDE:
+			case S_SIDE: case N_SIDE:
 				c0 = c3 = 1;
 				c2 = c1 = c4 = c5 = c6 = c7 = 0;
 				break;
-			case ESIDE: // 0,3,4,7
+			case E_SIDE: // 0,3,4,7
 				// 0,3
-			case WSIDE: // 1,2,5,6
+			case W_SIDE: // 1,2,5,6
 				// (0,1) (3,2) (4,5) (7,6) 
 				if ((oc->link0 != nullptr) && (oc->link3 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -2357,9 +2478,9 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				}
 				c4 = c5 = c6 = c7 = 0;
 				break;
-			case TSIDE: // 0,1,2,3
+			case T_SIDE: // 0,1,2,3
 				//0,3
-			case BSIDE: // 4, 5, 6, 7
+			case B_SIDE: // 4, 5, 6, 7
 				//(0,4) (1,5) (2,6) (3,7)
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link0 != nullptr) && (oc->link3 != nullptr)) {
@@ -2431,11 +2552,11 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		if (oc != nullptr) {
 
 			switch (dir) {
-			case TSIDE: case  BSIDE:
+			case T_SIDE: case  B_SIDE:
 				c0 = c4 = 1;
 				c1 = c2 = c3 = c5 = c6 = c7 = 0;
 				break;
-			case ESIDE: case WSIDE:// 0,3,4,7
+			case E_SIDE: case W_SIDE:// 0,3,4,7
 				// 0, 4
 				// W 1,2,5,6
 				// 1,5
@@ -2500,9 +2621,9 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 				c7 = 0;
 				c6 = 0;
 				break;
-			case NSIDE: // 0,1,4,5
+			case N_SIDE: // 0,1,4,5
 				// 0, 4
-			case SSIDE: // 2,3,6,7
+			case S_SIDE: // 2,3,6,7
 				// (0,3) (1,2) (4,7) (5,6)
 				if ((oc->link0 != nullptr) && (oc->link4 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -2573,7 +2694,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 		if (oc != nullptr) {
 
 			switch (dir) {
-			case ESIDE: // 0,3,4,7
+			case E_SIDE: // 0,3,4,7
 				if ((oc->link0 != nullptr) && (oc->link3 != nullptr) && (oc->link4 != nullptr) && (oc->link7 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 						if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
@@ -2674,7 +2795,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 					}
 				}
 				break;
-			case WSIDE: // 1,2,5,6
+			case W_SIDE: // 1,2,5,6
 				if ((oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link5 != nullptr) && (oc->link6 != nullptr)) {
 					if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
 						if ((oc->link2->link0 == nullptr) && (oc->link2->link1 == nullptr) && (oc->link2->link2 == nullptr) && (oc->link2->link3 == nullptr) && (oc->link2->link4 == nullptr) && (oc->link2->link5 == nullptr) && (oc->link2->link6 == nullptr) && (oc->link2->link7 == nullptr)) {
@@ -2775,7 +2896,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 					}
 				}
 				break;
-			case NSIDE: // 0,1,4,5 
+			case N_SIDE: // 0,1,4,5 
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link4 != nullptr) && (oc->link5 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
 						if ((oc->link1->link0 == nullptr) && (oc->link1->link1 == nullptr) && (oc->link1->link2 == nullptr) && (oc->link1->link3 == nullptr) && (oc->link1->link4 == nullptr) && (oc->link1->link5 == nullptr) && (oc->link1->link6 == nullptr) && (oc->link1->link7 == nullptr)) {
@@ -2878,7 +2999,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 				break;
-			case SSIDE: // 2,3,6,7 
+			case S_SIDE: // 2,3,6,7 
 				if ((oc->link2 != nullptr) && (oc->link3 != nullptr) && (oc->link6 != nullptr) && (oc->link7 != nullptr)) {
 					if ((oc->link2->link0 == nullptr) && (oc->link2->link1 == nullptr) && (oc->link2->link2 == nullptr) && (oc->link2->link3 == nullptr) && (oc->link2->link4 == nullptr) && (oc->link2->link5 == nullptr) && (oc->link2->link6 == nullptr) && (oc->link2->link7 == nullptr)) {
 						if ((oc->link3->link0 == nullptr) && (oc->link3->link1 == nullptr) && (oc->link3->link2 == nullptr) && (oc->link3->link3 == nullptr) && (oc->link3->link4 == nullptr) && (oc->link3->link5 == nullptr) && (oc->link3->link6 == nullptr) && (oc->link3->link7 == nullptr)) {
@@ -2981,7 +3102,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 				break;
-			case TSIDE: // 0,1,2,3
+			case T_SIDE: // 0,1,2,3
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link0 != nullptr) && (oc->link1 != nullptr) && (oc->link2 != nullptr) && (oc->link3 != nullptr)) {
 					if ((oc->link0->link0 == nullptr) && (oc->link0->link1 == nullptr) && (oc->link0->link2 == nullptr) && (oc->link0->link3 == nullptr) && (oc->link0->link4 == nullptr) && (oc->link0->link5 == nullptr) && (oc->link0->link6 == nullptr) && (oc->link0->link7 == nullptr)) {
@@ -3086,7 +3207,7 @@ bool is_null3(Toctree* &oc, integer direct, integer &c0, integer &c1, integer &c
 
 
 				break;
-			case BSIDE: // 4,5,6,7
+			case B_SIDE: // 4,5,6,7
 				// Т.к. может быть вырождение по Z.
 				if ((oc->link4 != nullptr) && (oc->link5 != nullptr) && (oc->link6 != nullptr) && (oc->link7 != nullptr)) {
 					if ((oc->link4->link0 == nullptr) && (oc->link4->link1 == nullptr) && (oc->link4->link2 == nullptr) && (oc->link4->link3 == nullptr) && (oc->link4->link4 == nullptr) && (oc->link4->link5 == nullptr) && (oc->link4->link6 == nullptr) && (oc->link4->link7 == nullptr)) {
@@ -3229,12 +3350,12 @@ void patch_neighbour_count(integer &ineighbour, octree* &oc_info, integer iside_
 #endif
 		
 		switch (iside_info) {
-		case ESIDE: printf("ESIDE\n"); break;
-		case WSIDE: printf("W\n"); break;
-		case NSIDE: printf("NSIDE\n"); break;
-		case SSIDE: printf("SSIDE\n"); break;
-		case TSIDE: printf("TSIDE\n"); break;
-		case BSIDE: printf("B\n"); break;
+		case E_SIDE: printf("ESIDE\n"); break;
+		case W_SIDE: printf("W\n"); break;
+		case N_SIDE: printf("NSIDE\n"); break;
+		case S_SIDE: printf("SSIDE\n"); break;
+		case T_SIDE: printf("TSIDE\n"); break;
+		case B_SIDE: printf("B\n"); break;
 		}
 		//system("PAUSE");
 		system("PAUSE");
@@ -5906,7 +6027,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X) || (bonly_dir_Y)) {
 							if (bonly_dir_X) {
 								// дробим только по оси Ох.
@@ -5953,7 +6074,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X) || (bonly_dir_Z)) {
 							if (bonly_dir_X) {
 								oc->link0->maxNneighbour = c0 + c4;
@@ -5999,7 +6120,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y) || (bonly_dir_Z)) {
 							if (bonly_dir_Y) {
 								// дробим только по оси Oy.
@@ -6041,7 +6162,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxWneighbour = c1 + c2;
 					}
 				}
@@ -6059,7 +6180,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxWneighbour = c1 + c5;
 					}
 				}
@@ -6085,7 +6206,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link0->maxWneighbour = 4;
 						if (bonly_dir_Y) {
@@ -6120,7 +6241,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxSneighbour = c3 + c2;
 					}
 				}
@@ -6138,7 +6259,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxSneighbour = c3 + c7;
 					}
 				}
@@ -6164,7 +6285,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						if (bonly_dir_Z) {
 							oc->link0->maxSneighbour = c3 + c2;
@@ -6198,7 +6319,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxBneighbour = c4 + c7;
 					}
 				}
@@ -6216,7 +6337,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link0->maxBneighbour = c4 + c5;
 					}
 				}
@@ -6242,7 +6363,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_Y) {
 							oc->link0->maxBneighbour = c4 + c5;
 						}
@@ -6431,7 +6552,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X)) {
 							//if (bonly_dir_X) {
 								// дробим только по оси Oy.
@@ -6474,7 +6595,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X)) {
 							//if (bonly_dir_X) {
 								// дробим только по оси Oy.
@@ -6517,7 +6638,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link1->maxEneighbour = 4;
 					oc->link1->maxEneighbour = c0;
@@ -6542,7 +6663,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link1->maxSneighbour = c2 + c6;
 					}
 				}
@@ -6565,7 +6686,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_X) {
 							oc->link1->maxSneighbour = c2 + c6;
 						}
@@ -6596,7 +6717,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link1->maxBneighbour = c5 + c6;
 					}
 				}
@@ -6619,7 +6740,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (bonly_dir_X) {
 							oc->link1->maxBneighbour = c5 + c6;
 						}
@@ -6798,7 +6919,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link2->maxTneighbour = 4;
 						oc->link2->maxTneighbour = c2;
@@ -6832,7 +6953,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link2->maxEneighbour = 4;
 					oc->link2->maxEneighbour = c3;
@@ -6856,7 +6977,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 					// других вариантов быть не может, здесь только 4.
 					//oc->link2->maxNneighbour = 4;
@@ -6881,7 +7002,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link2->maxBneighbour = 4;
 					oc->link2->maxBneighbour = c6;
@@ -7060,7 +7181,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y)) {
 							//if (bonly_dir_Y) {
 								// дробим только по оси Oy.
@@ -7107,7 +7228,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y)) {
 							//if (bonly_dir_Y) {
 								// дробим только по оси Oy.
@@ -7147,7 +7268,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link3->maxWneighbour = c2 + c6;
 					}
 				}
@@ -7170,7 +7291,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link3->maxWneighbour = 4;
 						if (bonly_dir_Y) {
@@ -7201,7 +7322,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link3->maxNneighbour = 4;
 					oc->link3->maxNneighbour = c0;
@@ -7226,7 +7347,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link3->maxBneighbour = c7 + c6;
 					}
 				}
@@ -7248,7 +7369,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (bonly_dir_Y) {
 						oc->link3->maxBneighbour = c7 + c6;
 					}
@@ -7433,7 +7554,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Z)) {
 							//if (bonly_dir_Z) {
 								// дробим только по оси Oy.
@@ -7476,7 +7597,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Z)) {
 							//if (bonly_dir_Z) {
 								// дробим только по оси Oy.
@@ -7514,7 +7635,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link4->maxWneighbour = c5 + c6;
 					}
 				}
@@ -7537,7 +7658,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link4->maxWneighbour = 4;
 						if (bonly_dir_Z) {
@@ -7569,7 +7690,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						oc->link4->maxSneighbour = c7 + c6;
 					}
 				}
@@ -7592,7 +7713,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link4->maxSneighbour = 4;
 						if (bonly_dir_Z) {
@@ -7622,7 +7743,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link4->maxTneighbour = 4;
 					oc->link4->maxTneighbour = c0;
@@ -7799,7 +7920,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link5->maxNneighbour = 4;
 						oc->link5->maxNneighbour = c5;
@@ -7830,7 +7951,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link5->maxEneighbour = 4;
 					oc->link5->maxEneighbour = c4;
@@ -7854,7 +7975,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link5->maxSneighbour = 4;
 					oc->link5->maxSneighbour = c6;
@@ -7878,7 +7999,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link5->maxTneighbour = 4;
 					oc->link5->maxTneighbour = c1;
@@ -8055,7 +8176,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link6->maxEneighbour = 4;
 					oc->link6->maxEneighbour = c7;
@@ -8079,7 +8200,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link6->maxNneighbour = 4;
 					oc->link6->maxNneighbour = c5;
@@ -8103,7 +8224,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link6->maxTneighbour = 4;
 					oc->link6->maxTneighbour = c2;
@@ -8279,7 +8400,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(oc->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//oc->link7->maxEneighbour = 4;
 						oc->link7->maxEneighbour = c7;
@@ -8308,7 +8429,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link7->maxWneighbour = 4;
 					oc->link7->maxWneighbour = c6;
@@ -8333,7 +8454,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link7->maxNneighbour = 4;
 					oc->link7->maxNneighbour = c4;
@@ -8357,7 +8478,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null3(oc->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					// других вариантов быть не может, здесь только 4.
 					//oc->link7->maxTneighbour = 4;
 					oc->link7->maxTneighbour = c3;
@@ -8739,7 +8860,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 				if (oc->linkB != nullptr) {
 					if (is_null(oc->linkB)) {
 						//oc->linkB->maxTneighbour += 4 - 1;
-						patch_neighbour_count(oc->linkB->maxTneighbour, oc->linkB, TSIDE);
+						patch_neighbour_count(oc->linkB->maxTneighbour, oc->linkB, T_SIDE);
 					}
 					if (is_null1(oc->linkB)) {
 						// он представляет собой ячейку делённую на 8 частей.
@@ -8754,7 +8875,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 				if (oc->linkT != nullptr) {
 					if (is_null(oc->linkT)) {
 						//oc->linkT->maxBneighbour += 4 - 1;
-						patch_neighbour_count(oc->linkT->maxBneighbour, oc->linkT, BSIDE);
+						patch_neighbour_count(oc->linkT->maxBneighbour, oc->linkT, B_SIDE);
 					}
 					if (is_null1(oc->linkT)) {
 						// он представляет собой ячейку делённую на 8 частей.
@@ -8786,7 +8907,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null2(oc->linkN, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkN != nullptr) {
 						if (oc->linkN->link0 != nullptr) {
 							oc->linkN->link0->maxSneighbour = 1; // 
@@ -8820,7 +8941,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null2(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkS != nullptr) {
 						if (oc->linkS->link2 != nullptr) {
 							oc->linkS->link2->maxNneighbour = 1; //
@@ -8844,7 +8965,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 				if (oc->linkN != nullptr) {
 					if (is_null(oc->linkN)) {
 						//oc->linkN->maxSneighbour += 4 - 1;
-						patch_neighbour_count(oc->linkN->maxSneighbour, oc->linkN, SSIDE);
+						patch_neighbour_count(oc->linkN->maxSneighbour, oc->linkN, S_SIDE);
 					}
 				}
 				else if (is_null1(oc->linkN)) {
@@ -8859,7 +8980,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 					// может быть 2, 4, 5, 8
 					// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 					integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-					is_null2(oc->linkN, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+					is_null2(oc->linkN, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 					if (oc->linkN != nullptr) {
 						if (oc->linkN->link0 != nullptr) {
 							oc->linkN->link0->maxSneighbour = 1; // 
@@ -8880,7 +9001,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 				if (oc->linkS != nullptr) {
 					if (is_null(oc->linkS)) {
 						//oc->linkS->maxNneighbour += 4 - 1;
-						patch_neighbour_count(oc->linkS->maxNneighbour, oc->linkS, NSIDE);
+						patch_neighbour_count(oc->linkS->maxNneighbour, oc->linkS, N_SIDE);
 					}
 					else if (is_null1(oc->linkS)) {
 						// он представляет собой ячейку делённую на 8 частей.
@@ -8894,7 +9015,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null2(oc->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null2(oc->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if (oc->linkS != nullptr) {
 							if (oc->linkS->link2 != nullptr) {
 								oc->linkS->link2->maxNneighbour = 1; //
@@ -8948,7 +9069,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 				if (oc->linkW != nullptr) {
 					if (is_null(oc->linkW)) {
 						//oc->linkW->maxEneighbour += 4 - 1;
-						patch_neighbour_count(oc->linkW->maxEneighbour, oc->linkW, ESIDE);
+						patch_neighbour_count(oc->linkW->maxEneighbour, oc->linkW, E_SIDE);
 					}
 					if (is_null1(oc->linkW)) {
 						// он представляет собой ячейку делённую на 8 частей.
@@ -8963,7 +9084,7 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 				if (oc->linkE != nullptr) {
 					if (is_null(oc->linkE)) {
 						//oc->linkE->maxWneighbour += 4 - 1;
-						patch_neighbour_count(oc->linkE->maxWneighbour, oc->linkE, WSIDE);
+						patch_neighbour_count(oc->linkE->maxWneighbour, oc->linkE, W_SIDE);
 					}
 					if (is_null1(oc->linkE)) {
 						// он представляет собой ячейку делённую на 8 частей.
@@ -9102,13 +9223,13 @@ bool split_near_the_entrance_or_exit(doublereal* xpos, doublereal* ypos, doubler
 			//doublereal radius_of_influence = 1.8;// 14.0;// 1.8;
 			doublereal wall_size = 0.0;
 			switch (w[i_35].iPlane) {
-			case XY:  wall_size=fmin(fabs(w[i_35].g.xE - w[i_35].g.xS), fabs(w[i_35].g.yE - w[i_35].g.yS));
+			case XY_PLANE:  wall_size=fmin(fabs(w[i_35].g.xE - w[i_35].g.xS), fabs(w[i_35].g.yE - w[i_35].g.yS));
 				Radius_35 = radius_of_influence * wall_size;
 				break;
-			case XZ:  wall_size=fmin(fabs(w[i_35].g.xE - w[i_35].g.xS), fabs(w[i_35].g.zE - w[i_35].g.zS));
+			case XZ_PLANE:  wall_size=fmin(fabs(w[i_35].g.xE - w[i_35].g.xS), fabs(w[i_35].g.zE - w[i_35].g.zS));
 				Radius_35 = radius_of_influence * wall_size;
 				break;
-			case YZ: wall_size =fmin(fabs(w[i_35].g.yE - w[i_35].g.yS), fabs(w[i_35].g.zE - w[i_35].g.zS));
+			case YZ_PLANE: wall_size =fmin(fabs(w[i_35].g.yE - w[i_35].g.yS), fabs(w[i_35].g.zE - w[i_35].g.zS));
 				Radius_35 = radius_of_influence * wall_size;
 				break;
 			}
@@ -9305,6 +9426,8 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										printf("lb=%lld ib83==%lld ib84==%lld\n", lb, ib83, ib84);
 										system("PAUSE");
 									}
+									
+									
 									if ((ib84!=-1)&&(((b[ib83].itype == FLUID) && (b[ib84].itype == FLUID)) ||
 									    ((b[ib83].itype == HOLLOW) && (b[ib84].itype == HOLLOW)) ||
 									    ((b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)
@@ -9330,7 +9453,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										// Вывод в том что вблизи входной и выходной границ желательно мельчить
 										// АЛИС сетку чтобы не пропустить эти границы.
 
-										if ((b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)&&
+										if ((b_thermal_source_refinement)&&(b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)&&
 											((fabs(b[ib83].arr_Sc[0])>1.0e-30)||(fabs(b[ib84].arr_Sc[0])>1.0e-30))) 
 										{
 											// 11.12.2019
@@ -9515,7 +9638,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									if (b[i1].g.itypegeom == 1) {
 										// Cylinder
 										switch (b[i1].g.iPlane) {
-										case XY:
+										case XY_PLANE:
 											if (b[i1].g.R_in_cyl < 1.0e-20) {
 												if ((sqrt((xc - b[i1].g.xC)*(xc - b[i1].g.xC) + (yc - b[i1].g.yC)*(yc - b[i1].g.yC)) < b[i1].g.R_out_cyl) && ((fabs(b[i1].g.zC - zc) < epsToolz) || (fabs(b[i1].g.zC + b[i1].g.Hcyl - zc) < epsToolz))) {
 													oc->dlist = false; // будем дробить
@@ -9529,7 +9652,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 												}
 											}
 											break;
-										case XZ:
+										case XZ_PLANE:
 											if (b[i1].g.R_in_cyl < 1.0e-20) {
 												// без внутреннего радиуса.
 												if ((yc > b[i1].g.yC) && (yc < b[i1].g.yC + b[i1].g.Hcyl)) {
@@ -9547,7 +9670,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 											}
 											break;
-										case YZ:
+										case YZ_PLANE:
 											if (b[i1].g.R_in_cyl < 1.0e-20) {
 												// без внутреннего радиуса.
 												if ((xc > b[i1].g.xC) && (xc < b[i1].g.xC + b[i1].g.Hcyl)) {
@@ -9591,7 +9714,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 								if (b[i1].g.itypegeom == 1) {
 									// Cylinder
 									switch (b[i1].g.iPlane) {
-									case XY:
+									case XY_PLANE:
 										if (b[i1].g.R_in_cyl < 1.0e-20) {
 											// без внутреннего радиуса.
 											if ((zc > b[i1].g.zC) && (zc < b[i1].g.zC + b[i1].g.Hcyl)) {
@@ -9609,7 +9732,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 										}
 										break;
-									case XZ:
+									case XZ_PLANE:
 										if (b[i1].g.R_in_cyl < 1.0e-20) {
 											// без внутреннего радиуса.
 											if ((yc > b[i1].g.yC) && (yc < b[i1].g.yC + b[i1].g.Hcyl)) {
@@ -9627,7 +9750,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 										}
 										break;
-									case YZ:
+									case YZ_PLANE:
 										if (b[i1].g.R_in_cyl < 1.0e-20) {
 											if ((sqrt((zc - b[i1].g.zC)*(zc - b[i1].g.zC) + (yc - b[i1].g.yC)*(yc - b[i1].g.yC)) < b[i1].g.R_out_cyl) && ((fabs(b[i1].g.xC - xc) < epsToolz) || (fabs(b[i1].g.xC + b[i1].g.Hcyl - xc) < epsToolz))) {
 												oc->dlist = false; // будем дробить
@@ -9665,10 +9788,10 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 								if (b[i1].g.itypegeom == 1) {
 									// Cylinder
 									switch (b[i1].g.iPlane) {
-									case XY:
+									case XY_PLANE:
 
 										break;
-									case XZ:
+									case XZ_PLANE:
 										if (b[i1].g.R_in_cyl < 1.0e-20) {
 											if ((sqrt((xc - b[i1].g.xC)*(xc - b[i1].g.xC) + (zc - b[i1].g.zC)*(zc - b[i1].g.zC)) < b[i1].g.R_out_cyl) && ((fabs(b[i1].g.yC - yc) < epsToolz) || (fabs(b[i1].g.yC + b[i1].g.Hcyl - yc) < epsToolz))) {
 												oc->dlist = false; // будем дробить
@@ -9683,7 +9806,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										}
 
 										break;
-									case YZ:
+									case YZ_PLANE:
 										break;
 									}
 								}
@@ -10207,7 +10330,7 @@ void Emultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkE1, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkE1, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
 	}
@@ -10220,7 +10343,7 @@ void Emultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkE2, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkE2, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
 	}
@@ -10233,7 +10356,7 @@ void Emultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkE5, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkE5, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
 	}
@@ -10246,7 +10369,7 @@ void Emultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkE6, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkE6, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c3 + c4 + c7;
 		}
 	}
@@ -10266,7 +10389,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkW0, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkW0, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
 	}
@@ -10279,7 +10402,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkW3, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkW3, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
 	}
@@ -10292,7 +10415,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkW4, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkW4, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
 	}
@@ -10305,7 +10428,7 @@ void Wmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkW7, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkW7, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c1 + c2 + c5 + c6;
 		}
 	}
@@ -10325,7 +10448,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkN2, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkN2, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
 	}
@@ -10338,7 +10461,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkN3, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkN3, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
 	}
@@ -10351,7 +10474,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkN6, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkN6, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
 	}
@@ -10364,7 +10487,7 @@ void Nmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkN7, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkN7, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c4 + c5;
 		}
 	}
@@ -10398,7 +10521,7 @@ void Smultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkS0, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkS0, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
 	}
@@ -10411,7 +10534,7 @@ void Smultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkS1, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkS1, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
 	}
@@ -10424,7 +10547,7 @@ void Smultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkS4, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkS4, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
 	}
@@ -10437,7 +10560,7 @@ void Smultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkS5, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkS5, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c2 + c3 + c6 + c7;
 		}
 	}
@@ -10459,7 +10582,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkB0, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkB0, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
 	}
@@ -10472,7 +10595,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkB1, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkB1, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
 	}
@@ -10485,7 +10608,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkB2, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkB2, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
 	}
@@ -10498,7 +10621,7 @@ void Bmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkB3, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkB3, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c4 + c5 + c6 + c7;
 		}
 	}
@@ -10518,7 +10641,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkT4, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkT4, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
 	}
@@ -10531,7 +10654,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkT5, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkT5, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
 	}
@@ -10544,7 +10667,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkT6, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkT6, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
 	}
@@ -10557,7 +10680,7 @@ void Tmultineighbour_patch(octree* &octree1) {
 		}
 		else {
 			integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-			is_null3(octree1->linkT7, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+			is_null3(octree1->linkT7, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 			icsos += c0 + c1 + c2 + c3;
 		}
 	}
@@ -10624,7 +10747,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X) || (bonly_dir_Y)) {
 									if (bonly_dir_X) {
 										// дробим только по оси Ох.
@@ -10675,7 +10798,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 							//octree1->maxTneighbour = 4;
 							printf("TSIDE root 0 na odnom urovne is_null3 _c0+c1+c2+c3");
@@ -10729,7 +10852,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X) || (bonly_dir_Z)) {
 									if (bonly_dir_X) {
 										printf("NSIDE root 0  dir X is_null3 _c0+c4");
@@ -10786,7 +10909,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							printf("N root 0 na odnom urovne is_null3 _c0+c1+c4+c5");
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxNneighbour = 4;
@@ -10841,7 +10964,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y) || (bonly_dir_Z)) {
 									if (bonly_dir_Y) {
 										// дробим только по оси Oy.
@@ -10885,7 +11008,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxEneighbour = 4;
@@ -10931,7 +11054,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c1 + c2;
 						}
 					}
@@ -10949,7 +11072,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c1 + c5;
 						}
 					}
@@ -10975,7 +11098,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxWneighbour = 4;
 							if (bonly_dir_Y) {
@@ -11006,7 +11129,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
 						octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -11046,7 +11169,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c3 + c2;
 						}
 					}
@@ -11064,7 +11187,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c3 + c7;
 						}
 					}
@@ -11090,7 +11213,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							if (bonly_dir_Z) {
 								octree1->maxSneighbour = c3 + c2;
@@ -11120,7 +11243,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 
 						//octree1->maxSneighbour = 4;
@@ -11159,7 +11282,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c4 + c7;
 						}
 					}
@@ -11177,7 +11300,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c4 + c5;
 						}
 					}
@@ -11203,7 +11326,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_Y) {
 								octree1->maxBneighbour = c4 + c5;
 							}
@@ -11233,7 +11356,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
@@ -11283,7 +11406,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X)) {
 									//if (bonly_dir_X) {
 										// дробим только по оси Oy.
@@ -11322,7 +11445,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						// может быть  2, 4, 5, 8
@@ -11370,7 +11493,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X)) {
 									//if (bonly_dir_X) {
 										// дробим только по оси Oy.
@@ -11410,7 +11533,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -11451,7 +11574,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -11490,7 +11613,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c0;
@@ -11511,7 +11634,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c0 + c3 + c4 + c7;
@@ -11550,7 +11673,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c2 + c6;
 						}
 					}
@@ -11573,7 +11696,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_X) {
 								octree1->maxSneighbour = c2 + c6;
 							}
@@ -11600,7 +11723,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
@@ -11640,7 +11763,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c5 + c6;
 						}
 					}
@@ -11663,7 +11786,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_X) {
 								octree1->maxBneighbour = c5 + c6;
 							}
@@ -11690,7 +11813,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
@@ -11738,7 +11861,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								// других вариантов быть не может, здесь только 4.
 								//octree1->maxTneighbour = 4;
 								octree1->maxTneighbour = c2;
@@ -11770,7 +11893,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c2 + c0 + c1 + c3;
@@ -11812,7 +11935,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxSneighbour = c6 + c7 + c2 + c3;
@@ -11851,7 +11974,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -11889,7 +12012,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c3;
@@ -11910,7 +12033,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c3 + c0 + c4 + c7;
@@ -11947,7 +12070,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -11969,7 +12092,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
@@ -12006,7 +12129,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
 						octree1->maxBneighbour = c6;
@@ -12027,7 +12150,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
 						octree1->maxBneighbour = c6 + c5 + c7 + c4;
@@ -12077,7 +12200,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y)) {
 									//if (bonly_dir_Y) {
 										// дробим только по оси Oy.
@@ -12118,7 +12241,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						// может быть 2, 4, 5, 8.
@@ -12160,7 +12283,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxSneighbour = c2 + c3 + c6 + c7;
@@ -12205,7 +12328,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y)) {
 									//if (bonly_dir_Y) {
 										// дробим только по оси Oy.
@@ -12246,7 +12369,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						// Может быть 2, 4, 5, 8
@@ -12286,7 +12409,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c2 + c6;
 						}
 					}
@@ -12309,7 +12432,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxWneighbour = 4;
 							if (bonly_dir_Y) {
@@ -12336,7 +12459,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
 
@@ -12373,7 +12496,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c0;
@@ -12394,7 +12517,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c0 + c1 + c4 + c5;
@@ -12430,7 +12553,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxBneighbour = c7 + c6;
 						}
 					}
@@ -12453,7 +12576,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							if (bonly_dir_Y) {
 								octree1->maxBneighbour = c7 + c6;
 							}
@@ -12480,7 +12603,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxBneighbour = 4;
@@ -12529,7 +12652,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Z)) {
 									//if (bonly_dir_Z) {
 										// дробим только по оси Oy.
@@ -12569,7 +12692,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						// Здесь может быть 2, 4, 5, 8
@@ -12627,7 +12750,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Z)) {
 									//if (bonly_dir_Z) {
 										// дробим только по оси Oy.
@@ -12664,7 +12787,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
@@ -12703,7 +12826,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxWneighbour = c5 + c6;
 						}
 					}
@@ -12726,7 +12849,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxWneighbour = 4;
 							if (bonly_dir_Z) {
@@ -12753,7 +12876,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
 
@@ -12791,7 +12914,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							octree1->maxSneighbour = c7 + c6;
 						}
 					}
@@ -12814,7 +12937,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxSneighbour = 4;
 							if (bonly_dir_Z) {
@@ -12841,7 +12964,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
 
@@ -12879,7 +13002,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c0;
@@ -12900,7 +13023,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c0 + c1 + c2 + c3;
@@ -12938,7 +13061,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxBneighbour = c4 + c5 + c6 + c7;
@@ -12979,7 +13102,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxBneighbour = c4 + c5 + c6 + c7;
@@ -13016,7 +13139,7 @@ void log_cs(octree* &octree1) {
 							// может быть 2, 4, 5, 8
 							// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 							integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-							is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+							is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 							// других вариантов быть не может, здесь только 4.
 							//octree1->maxNneighbour = 4;
 							octree1->maxNneighbour = c5;
@@ -13041,7 +13164,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c5 + c0 + c1 + c4;
@@ -13083,7 +13206,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -13120,7 +13243,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c4;
@@ -13140,7 +13263,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c4 + c0 + c3 + c7;
@@ -13174,7 +13297,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
 						octree1->maxSneighbour = c6;
@@ -13195,7 +13318,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxSneighbour = 4;
 						octree1->maxSneighbour = c6 + c2 + c3 + c7;
@@ -13231,7 +13354,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c1;
@@ -13252,7 +13375,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c1 + c0 + c2 + c3;
@@ -13293,7 +13416,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxBneighbour = c4 + c5 + c6 + c7;
@@ -13332,7 +13455,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxSneighbour = c2 + c3 + c6 + c7;
@@ -13371,7 +13494,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -13407,7 +13530,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c7;
@@ -13428,7 +13551,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c7 + c0 + c3 + c4;
@@ -13464,7 +13587,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c5;
@@ -13486,7 +13609,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c5 + c0 + c1 + c4;
@@ -13521,7 +13644,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c2;
@@ -13542,7 +13665,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c2 + c0 + c1 + c3;
@@ -13584,7 +13707,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxBneighbour = c1 + c2 + c5 + c6;
@@ -13623,7 +13746,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxSneighbour = c1 + c2 + c5 + c6;
@@ -13660,7 +13783,7 @@ void log_cs(octree* &octree1) {
 								// может быть 2, 4, 5, 8
 								// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+								is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								// других вариантов быть не может, здесь только 4.
 								//octree1->maxEneighbour = 4;
 								octree1->maxEneighbour = c7;
@@ -13690,7 +13813,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxEneighbour = 4;
 						octree1->maxEneighbour = c7 + c0 + c4 + c3;
@@ -13727,7 +13850,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
 						octree1->maxWneighbour = c6;
@@ -13748,7 +13871,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxWneighbour = 4;
 						octree1->maxWneighbour = c6 + c1 + c5 + c2;
@@ -13784,7 +13907,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c4;
@@ -13805,7 +13928,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxNneighbour = 4;
 						octree1->maxNneighbour = c4 + c0 + c1 + c5;
@@ -13840,7 +13963,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c3;
@@ -13861,7 +13984,7 @@ void log_cs(octree* &octree1) {
 						// может быть 2, 4, 5, 8
 						// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-						is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+						is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						// других вариантов быть не может, здесь только 4.
 						//octree1->maxTneighbour = 4;
 						octree1->maxTneighbour = c3 + c0 + c1 + c2;
@@ -14064,7 +14187,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X) || (bonly_dir_Y)) {
 													if (bonly_dir_X) {
 														// дробим только по оси Ох.
@@ -14108,7 +14231,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											
 												//octree1->maxTneighbour = 4;
 												octree1->maxTneighbour = c0+c1+c2+c3;
@@ -14156,7 +14279,7 @@ void update_max_count_neighbour(octree* &oc) {
 													// может быть 2, 4, 5, 8
 													// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 													integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-													is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+													is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 													if ((bonly_dir_X) || (bonly_dir_Z)) {
 														if (bonly_dir_X) {
 															octree1->maxNneighbour = c0 + c4;
@@ -14201,7 +14324,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxNneighbour = 4;
@@ -14254,7 +14377,7 @@ void update_max_count_neighbour(octree* &oc) {
 													// может быть 2, 4, 5, 8
 													// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 													integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-													is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+													is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 													if ((bonly_dir_Y) || (bonly_dir_Z)) {
 														if (bonly_dir_Y) {
 															// дробим только по оси Oy.
@@ -14298,7 +14421,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												
 													// других вариантов быть не может, здесь только 4.
 													//octree1->maxEneighbour = 4;
@@ -14344,7 +14467,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxWneighbour = c1 + c2;
 											}
 										}
@@ -14362,7 +14485,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxWneighbour = c1 + c5;
 											}
 										}
@@ -14388,7 +14511,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxWneighbour = 4;
 												if (bonly_dir_Y) {
@@ -14419,7 +14542,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxWneighbour = 4;
 											octree1->maxWneighbour = c1+c2+c5+c6;
@@ -14459,7 +14582,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxSneighbour = c3 + c2;
 											}
 										}
@@ -14477,7 +14600,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxSneighbour = c3 + c7;
 											}
 										}
@@ -14503,7 +14626,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												if (bonly_dir_Z) {
 													octree1->maxSneighbour = c3 + c2;
@@ -14533,7 +14656,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											
 											//octree1->maxSneighbour = 4;
@@ -14572,7 +14695,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxBneighbour = c4 + c7;
 											}
 										}
@@ -14590,7 +14713,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												octree1->maxBneighbour = c4 + c5;
 											}
 										}
@@ -14616,7 +14739,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if (bonly_dir_Y) {
 													octree1->maxBneighbour = c4 + c5;
 												}
@@ -14646,7 +14769,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxBneighbour = 4;
@@ -14696,7 +14819,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X)) {
 													//if (bonly_dir_X) {
 														// дробим только по оси Oy.
@@ -14735,7 +14858,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											// может быть  2, 4, 5, 8
@@ -14783,7 +14906,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X)) {
 													//if (bonly_dir_X) {
 														// дробим только по оси Oy.
@@ -14823,7 +14946,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -14864,7 +14987,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxWneighbour = c1+c2+c5+c6;
@@ -14903,7 +15026,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c0;
@@ -14924,7 +15047,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c0+c3+c4+c7;
@@ -14963,7 +15086,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxSneighbour = c2 + c6;
 										}
 									}
@@ -14986,7 +15109,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_X) {
 												octree1->maxSneighbour = c2 + c6;
 											}
@@ -15013,7 +15136,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
@@ -15053,7 +15176,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxBneighbour = c5 + c6;
 										}
 									}
@@ -15076,7 +15199,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_X) {
 												octree1->maxBneighbour = c5 + c6;
 											}
@@ -15103,7 +15226,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxBneighbour = 4;
@@ -15151,7 +15274,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxTneighbour = 4;
 												octree1->maxTneighbour = c2;
@@ -15183,7 +15306,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c2 + c0 + c1 + c3;
@@ -15225,7 +15348,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxSneighbour = c6 + c7 + c2 + c3;
@@ -15264,7 +15387,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -15302,7 +15425,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c3;
@@ -15323,7 +15446,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c3 + c0 + c4 + c7;
@@ -15360,7 +15483,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -15382,7 +15505,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
@@ -15419,7 +15542,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxBneighbour = 4;
 										octree1->maxBneighbour = c6;
@@ -15440,7 +15563,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxBneighbour = 4;
 										octree1->maxBneighbour = c6+c5+c7+c4;
@@ -15490,7 +15613,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Y)) {
 													//if (bonly_dir_Y) {
 														// дробим только по оси Oy.
@@ -15531,7 +15654,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											// может быть 2, 4, 5, 8.
@@ -15573,7 +15696,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxSneighbour = c2 + c3 + c6 + c7;
@@ -15618,7 +15741,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Y)) {
 													//if (bonly_dir_Y) {
 														// дробим только по оси Oy.
@@ -15659,7 +15782,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											// Может быть 2, 4, 5, 8
@@ -15699,7 +15822,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxWneighbour = c2 + c6;
 										}
 									}
@@ -15722,7 +15845,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxWneighbour = 4;
 											if (bonly_dir_Y) {
@@ -15749,7 +15872,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
 										
@@ -15786,7 +15909,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
 										octree1->maxNneighbour = c0;
@@ -15807,7 +15930,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
 										octree1->maxNneighbour = c0 + c1 + c4 + c5;
@@ -15843,7 +15966,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxBneighbour = c7 + c6;
 										}
 									}
@@ -15866,7 +15989,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											if (bonly_dir_Y) {
 												octree1->maxBneighbour = c7 + c6;
 											}
@@ -15893,7 +16016,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxBneighbour = 4;
@@ -15942,7 +16065,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Z)) {
 													//if (bonly_dir_Z) {
 														// дробим только по оси Oy.
@@ -15982,7 +16105,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											// Здесь может быть 2, 4, 5, 8
@@ -16040,7 +16163,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Z)) {
 													//if (bonly_dir_Z) {
 														// дробим только по оси Oy.
@@ -16077,7 +16200,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxEneighbour = 4;
@@ -16116,7 +16239,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxWneighbour = c5 + c6;
 										}
 									}
@@ -16139,7 +16262,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxWneighbour = 4;
 											if (bonly_dir_Z) {
@@ -16166,7 +16289,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
 										
@@ -16204,7 +16327,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											octree1->maxSneighbour = c7 + c6;
 										}
 									}
@@ -16227,7 +16350,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxSneighbour = 4;
 											if (bonly_dir_Z) {
@@ -16254,7 +16377,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
 										
@@ -16292,7 +16415,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c0;
@@ -16313,7 +16436,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c0 + c1 + c2 + c3;
@@ -16351,7 +16474,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxBneighbour = c4 + c5 + c6 + c7;
@@ -16392,7 +16515,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxBneighbour = c4 + c5 + c6 + c7;
@@ -16429,7 +16552,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxNneighbour = 4;
 												octree1->maxNneighbour = c5;
@@ -16454,7 +16577,7 @@ void update_max_count_neighbour(octree* &oc) {
 											// может быть 2, 4, 5, 8
 											// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 											integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-											is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+											is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 											// других вариантов быть не может, здесь только 4.
 											//octree1->maxNneighbour = 4;
 											octree1->maxNneighbour = c5 + c0 + c1 + c4;
@@ -16496,7 +16619,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -16533,7 +16656,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c4;
@@ -16553,7 +16676,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c4+c0+c3+c7;
@@ -16587,7 +16710,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
 										octree1->maxSneighbour = c6;
@@ -16608,7 +16731,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxSneighbour = 4;
 										octree1->maxSneighbour = c6 + c2 + c3 + c7;
@@ -16644,7 +16767,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c1;
@@ -16665,7 +16788,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c1 + c0 + c2 + c3;
@@ -16706,7 +16829,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxBneighbour = c4 + c5 + c6 + c7;
@@ -16745,7 +16868,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxSneighbour = c2 + c3 + c6 + c7;
@@ -16784,7 +16907,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxWneighbour = c1 + c2 + c5 + c6;
@@ -16820,7 +16943,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c7;
@@ -16841,7 +16964,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c7+c0+c3+c4;
@@ -16877,7 +17000,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
 										octree1->maxNneighbour = c5;
@@ -16899,7 +17022,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
 										octree1->maxNneighbour = c5+c0+c1+c4;
@@ -16934,7 +17057,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c2;
@@ -16955,7 +17078,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c2 + c0 + c1 + c3;
@@ -16997,7 +17120,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkB, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkB, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxBneighbour = c1 + c2 + c5 + c6;
@@ -17036,7 +17159,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkS, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkS, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxSneighbour = c1 + c2 + c5 + c6;
@@ -17073,7 +17196,7 @@ void update_max_count_neighbour(octree* &oc) {
 												// может быть 2, 4, 5, 8
 												// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+												is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												// других вариантов быть не может, здесь только 4.
 												//octree1->maxEneighbour = 4;
 												octree1->maxEneighbour = c7;
@@ -17103,7 +17226,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxEneighbour = 4;
 										octree1->maxEneighbour = c7+c0+c4+c3;
@@ -17140,7 +17263,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
 										octree1->maxWneighbour = c6;
@@ -17161,7 +17284,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxWneighbour = 4;
 										octree1->maxWneighbour = c6+c1+c5+c2;
@@ -17197,7 +17320,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
 										octree1->maxNneighbour = c4;
@@ -17218,7 +17341,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxNneighbour = 4;
 										octree1->maxNneighbour = c4+c0+c1+c5;
@@ -17253,7 +17376,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c3;
@@ -17274,7 +17397,7 @@ void update_max_count_neighbour(octree* &oc) {
 										// может быть 2, 4, 5, 8
 										// здесь ci - (i=0..7) количество ячеек поддробления в каждом из восьми частей root дробления.
 										integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
-										is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+										is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 										// других вариантов быть не может, здесь только 4.
 										//octree1->maxTneighbour = 4;
 										octree1->maxTneighbour = c3 + c0 + c1 + c2;
@@ -18822,7 +18945,7 @@ void update_link_neighbor(octree* &oc) {
 									integer c5 = 0;
 									integer c6 = 0;
 									integer c7 = 0;
-									is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+									is_null3(octree1->linkE, E_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
 									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkE->link0));
@@ -21434,7 +21557,7 @@ void update_link_neighbor(octree* &oc) {
 									integer c5 = 0;
 									integer c6 = 0;
 									integer c7 = 0;
-									is_null3(octree1->linkW, WSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+									is_null3(octree1->linkW, W_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 
 #if doubleintprecision == 1
 									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
@@ -24074,7 +24197,7 @@ void update_link_neighbor(octree* &oc) {
 									integer c5 = 0;
 									integer c6 = 0;
 									integer c7 = 0;
-									is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+									is_null3(octree1->linkN, N_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
 
 									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
@@ -26704,7 +26827,7 @@ void update_link_neighbor(octree* &oc) {
 									integer c5 = 0;
 									integer c6 = 0;
 									integer c7 = 0;
-									is_null3(octree1->linkS, SSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+									is_null3(octree1->linkS, S_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
 									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkS->link0));
@@ -29356,7 +29479,7 @@ void update_link_neighbor(octree* &oc) {
 									integer c5 = 0;
 									integer c6 = 0;
 									integer c7 = 0;
-									is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+									is_null3(octree1->linkT, T_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
 									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkT->link0));
@@ -32030,7 +32153,7 @@ void update_link_neighbor(octree* &oc) {
 									integer c5 = 0;
 									integer c6 = 0;
 									integer c7 = 0;
-									is_null3(octree1->linkB, BSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
+									is_null3(octree1->linkB, B_SIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 #if doubleintprecision == 1
 									printf("c0=%lld c1=%lld c2=%lld c3=%lld c4=%lld c5=%lld c6=%lld c7=%lld\n", c0, c1, c2, c3, c4, c5, c6, c7);
 									printf("%lld ", print_link(octree1->linkB->link0));
@@ -37059,7 +37182,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// дробим octree1
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-									addboundary(yposadd, inyadd, y_1, XZ,b,lb,w,lw,s,ls);
+									addboundary(yposadd, inyadd, y_1, XZ_PLANE,b,lb,w,lw,s,ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
@@ -37070,7 +37193,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkN->minx] + xpos[octree1->linkN->maxx]));
-									addboundary(yposadd, inyadd, y_1, XZ, b, lb, w, lw, s, ls);
+									addboundary(yposadd, inyadd, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkN->minz] + zpos[octree1->linkN->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
 								}
@@ -37092,7 +37215,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// дробим octree1
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-									addboundary(yposadd, inyadd, y_1,XZ, b, lb, w, lw, s, ls);
+									addboundary(yposadd, inyadd, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
@@ -37103,7 +37226,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// дробим octree1->linkN
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkS->minx] + xpos[octree1->linkS->maxx]));
-									addboundary(yposadd, inyadd, y_1,XZ, b, lb, w, lw, s, ls);
+									addboundary(yposadd, inyadd, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkS->minz] + zpos[octree1->linkS->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
 								}
@@ -37124,7 +37247,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1,YZ, b, lb, w, lw, s, ls);
+									addboundary(xposadd, inxadd, x_1,YZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
@@ -37135,7 +37258,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1->linkN
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd,x_1,YZ, b, lb, w, lw, s, ls);
+									addboundary(xposadd, inxadd,x_1,YZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkE->miny] + ypos[octree1->linkE->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkE->minz] + zpos[octree1->linkE->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
@@ -37157,7 +37280,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1,YZ, b, lb, w, lw, s, ls);
+									addboundary(xposadd, inxadd, x_1,YZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
@@ -37168,7 +37291,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1->linkN
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1,YZ, b, lb, w, lw, s, ls);
+									addboundary(xposadd, inxadd, x_1,YZ_PLANE, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkW->miny] + ypos[octree1->linkW->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkW->minz] + zpos[octree1->linkW->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
@@ -37192,7 +37315,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
+									addboundary(zposadd, inzadd, z_1, XY_PLANE, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
 							}
@@ -37203,7 +37326,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkT->minx] + xpos[octree1->linkT->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkT->miny] + ypos[octree1->linkT->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
+									addboundary(zposadd, inzadd, z_1, XY_PLANE, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
 								}
 							}
@@ -37225,7 +37348,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
+									addboundary(zposadd, inzadd, z_1, XY_PLANE, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
 							}
@@ -37236,7 +37359,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkB->minx] + xpos[octree1->linkB->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkB->miny] + ypos[octree1->linkB->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
+									addboundary(zposadd, inzadd, z_1, XY_PLANE, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
 								}
 							}
@@ -40842,7 +40965,7 @@ void marker_disbalnce_year2017(octree* &oc) {
 void marker_disbalnce(octree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 	// Первоначальная базовая версия.
 	// написана в 2016 году.
-	if (itype_ALICE_Mesh == 1/*1*/) {
+	if (itype_ALICE_Mesh == MULTI_PASS_MEDIUM_ALICE_MESH/*1*/) {
 		// проблемы построения. Данный метод работает не всегда.
 		// Качество сетки, получаемое алгоритмом 2016 года не является удовлетворительным
 		// по ряду причин. В частности он допускает ячейки соседствующие по вершине, разность уровней у которых равна 2.
@@ -41649,7 +41772,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 	}
 
-	if (1) {
+	if (!CAD_GEOMETRY_OCTREE_MESHGEN) {
 		// 1 января 2018. 
 		// Способ заимствован из файла constr_struct.cpp из файла 
 		// enumerate_volume_improved_obobshenie.
@@ -41705,10 +41828,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			{
 
 				doublereal x4 = b[i].g.xS;
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == XZ_PLANE))) {
 					x4 = b[i].g.xC - b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ_PLANE))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.xC;
 					}
@@ -41743,10 +41866,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				
 				x4 = b[i].g.xE;
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == XZ_PLANE))) {
 					x4 = b[i].g.xC + b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ_PLANE))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.xC + b[i].g.Hcyl;
 					}
@@ -41781,10 +41904,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				
 				x4 = b[i].g.yS;
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 					x4 = b[i].g.yC - b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.yC;
 					}
@@ -41819,10 +41942,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 
 				x4 = b[i].g.yE;
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 					x4 = b[i].g.yC + b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.yC + b[i].g.Hcyl;
 					}
@@ -41858,10 +41981,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				
 				x4 = b[i].g.zS;
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 					x4 = b[i].g.zC - b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.zC;
 					}
@@ -41896,10 +42019,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 
 				x4 = b[i].g.zE;
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ_PLANE) || (b[i].g.iPlane == YZ_PLANE))) {
 					x4 = b[i].g.zC + b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY_PLANE))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.zC + b[i].g.Hcyl;
 					}
@@ -42000,6 +42123,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							block_indexes[i_1].iR, block_indexes[i_1].jL,
 							block_indexes[i_1].jR, block_indexes[i_1].kL,
 							block_indexes[i_1].kR);
+						std::cout << b[i].name << ": ";
 						printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
 							b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
 						printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
@@ -42014,14 +42138,15 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							block_indexes[i_1].iL, block_indexes[i_1].iR,
 							block_indexes[i_1].jL, block_indexes[i_1].jR, 
 							block_indexes[i_1].kL, block_indexes[i_1].kR);
+						std::cout << b[i].name << ": ";
 						printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
 							b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
 						printf("iPlane=");
 						switch (b[i].g.iPlane)
 						{
-						case XY: printf("XY"); break;
-						case XZ: printf("XZ"); break;
-						case YZ: printf("YZ"); break;
+						case XY_PLANE: printf("XY"); break;
+						case XZ_PLANE: printf("XZ"); break;
+						case YZ_PLANE: printf("YZ"); break;
 						}
 						printf(" xC=%e yC=%e zC=%e HCyl=%e Rout=%e Rin=%e\n", 
 							b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
@@ -42052,6 +42177,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							block_indexes[i_1].iL, block_indexes[i_1].iR,
 							block_indexes[i_1].jL, block_indexes[i_1].jR,
 							block_indexes[i_1].kL, block_indexes[i_1].kR);
+						std::cout << b[i].name << ": ";
 						system("pause");
 					}
 				}
@@ -42063,9 +42189,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 
 	// Обязательная проверка !!!
-	// И ногда предыдущий метод не срабатывает и это в случае
+	// Иногда предыдущий метод не срабатывает и это в случае
 	// отсутствия исправления приводит к сбою.
-	// Здесь приведена коррекция она медленней но работает в 100% случаев.
+	// Здесь приведена коррекция. Она медленней, но работает в 100% случаев.
 	// 28.07.2019
 		for (integer i_a = lb - 1; i_a >= 0; i_a--) {
 			if ((block_indexes[i_a].iL <= -1) || (block_indexes[i_a].iR <= -1) ||
@@ -42074,10 +42200,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				// Проблема признана, теперь работаем с каждым проявлением индивидуально.
 				if (block_indexes[i_a].iL == -1) {
 					doublereal x4 = b[i_a].g.xS;
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 						x4 = b[i_a].g.xC - b[i_a].g.R_out_cyl;
 					}
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE))) {
 						if (b[i_a].g.Hcyl > 0.0) {
 							x4 = b[i_a].g.xC;
 						}
@@ -42100,10 +42226,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				if (block_indexes[i_a].iR == -1) {
 					doublereal x4 = b[i_a].g.xE;
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 						x4 = b[i_a].g.xC + b[i_a].g.R_out_cyl;
 					}
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE))) {
 						if (b[i_a].g.Hcyl > 0.0) {
 							x4 = b[i_a].g.xC + b[i_a].g.Hcyl;
 						}
@@ -42127,10 +42253,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				if (block_indexes[i_a].jL == -1) {
 					doublereal x4 = b[i_a].g.yS;
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == YZ_PLANE))) {
 						x4 = b[i_a].g.yC - b[i_a].g.R_out_cyl;
 					}
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ_PLANE))) {
 						if (b[i_a].g.Hcyl > 0.0) {
 							x4 = b[i_a].g.yC;
 						}
@@ -42153,10 +42279,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				if (block_indexes[i_a].jR == -1) {
 					doublereal x4 = b[i_a].g.yE;
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE) || (b[i_a].g.iPlane == YZ_PLANE))) {
 						x4 = b[i_a].g.yC + b[i_a].g.R_out_cyl;
 					}
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ_PLANE))) {
 						if (b[i_a].g.Hcyl > 0.0) {
 							x4 = b[i_a].g.yC + b[i_a].g.Hcyl;
 						}
@@ -42180,10 +42306,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				if (block_indexes[i_a].kL == -1) {
 					doublereal x4 = b[i_a].g.zS;
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 						x4 = b[i_a].g.zC - b[i_a].g.R_out_cyl;
 					}
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE))) {
 						if (b[i_a].g.Hcyl > 0.0) {
 							x4 = b[i_a].g.zC;
 						}
@@ -42206,10 +42332,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				if (block_indexes[i_a].kR == -1) {
 					doublereal x4 = b[i_a].g.zE;
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ_PLANE) || (b[i_a].g.iPlane == XZ_PLANE))) {
 						x4 = b[i_a].g.zC + b[i_a].g.R_out_cyl;
 					}
-					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY_PLANE))) {
 						if (b[i_a].g.Hcyl > 0.0) {
 							x4 = b[i_a].g.zC + b[i_a].g.Hcyl;
 						}
@@ -42257,6 +42383,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
 						// ERROR
 						printf("ERROR PRISM\n");
+						std::cout << b[m8].name << ": ";
 						printf("inx=%lld iny=%lld inz=%lld \n",inx,iny,inz);
 						printf("i1=%lld j1=%lld k1=%lld \n",i1,j1,k1);
 						printf("iP=%lld m8=%lld",iP,m8);
@@ -42290,6 +42417,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
 						// ERROR
 						printf("ERROR CYLINDER\n");
+						std::cout << b[m8].name << ": ";
 						printf("iplane=%lld",b[m8].g.iPlane);
 						printf("xC=%e yC=%e zC=%e Hcyl=%e\n", b[m8].g.xC, b[m8].g.yC, b[m8].g.zC, b[m8].g.Hcyl);
 						printf("Rin=%e Rout=%e\n", b[m8].g.R_in_cyl, b[m8].g.R_out_cyl);
@@ -42309,7 +42437,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
 
 						switch (b[m8].g.iPlane) {
-						case XY:
+						case XY_PLANE:
 							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 								if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[i1].g.R_out_cyl) {
@@ -42333,7 +42461,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 								}
 							}
 							break;
-						case XZ:
+						case XZ_PLANE:
 							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 								if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
@@ -42357,7 +42485,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 								}
 							}
 							break;
-						case YZ:
+						case YZ_PLANE:
 							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
 								if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
 									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
@@ -42402,6 +42530,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
 						// ERROR
 						printf("ERROR POLYGON\n");
+						std::cout << b[m8].name << ": ";
 						printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
 						printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
 						printf("iP=%lld m8=%lld", iP, m8);
@@ -43045,7 +43174,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Важнейший контроль дисбаланса, никаких дисбалансов быть не должно.
 		integer iOk28 = 0;
 		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd,b,lb,w,lw,s,ls);
-		if ((1 == itype_ALICE_Mesh)&&(iOk28>0)) {
+		if ((MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh)&&(iOk28>0)) {
 			// Только в том случае если мы строим многопроходовую АЛИС сетку высочайшего качества.
 			// Это долгий вычислительный процесс.
 #if doubleintprecision == 1

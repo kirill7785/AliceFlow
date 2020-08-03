@@ -284,7 +284,7 @@ NDRV СУЩЕСТВУЕТ ТАКЖЕ ПАРАМЕТР LRATIO.
 	integer *nwt, integer *ntr, integer *ierr)
 {
     /* Format strings */
-   
+
 
     /* Builtin functions */
     
@@ -1139,8 +1139,19 @@ L70:
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr, integer iVar,
-	SIMPLESPARSE &sparseM, integer n,
+	integer n,
 	bool &bOkfgmres_amg1r5);
+
+/* Subroutine */ integer amg1r5_fgmres_version_networkT(doublereal *a,
+	integer *ia, integer *ja,
+	doublereal *u, doublereal *f, integer *ig, integer *nda, integer *
+	ndia, integer *ndja, integer *ndu, integer *ndf, integer *ndig,
+	integer *nnu, integer *matrix, integer *iswtch, integer *iout,
+	integer *iprint, integer *levelx, integer *ifirst, integer *ncyc,
+	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
+	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
+	integer *nwt, integer *ntr, integer *ierr, bool &bOkfgmres_amg1r5,
+	integer &nsize, integer &nnzsize);
 
 
 //#if AMG1R6_LABEL==1
@@ -2031,7 +2042,7 @@ L20:
 		getchar();
 	}
 	*/
-	printf("sizeof  ndu=%lld nnu=%lld ndf=%lld\n",ndu[0],nnu[0],ndf[0]);
+	std::cout << "sizeof  ndu="<< ndu[0] <<" nnu="<< nnu[0] <<" ndf="<< ndf[0] <<std::endl;
 	integer nnz;
 	/*
 	integer n75 = -1 , nnz;
@@ -2050,7 +2061,7 @@ L20:
 	// в CRS формате.
 
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 		/*
 		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
@@ -2069,9 +2080,9 @@ L20:
 			integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true,b,lb,s_loc,ls);
 			if (ierr > 0) {
 				switch (iVar) {
-				case VX: printf("VX equation problem.\n"); break;
-				case VY: printf("VY equation problem.\n"); break;
-				case VZ: printf("VZ equation problem.\n"); break;
+				case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
+				case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
+				case VELOCITY_Z_COMPONENT: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
 				}
 			}
@@ -2092,7 +2103,7 @@ L20:
 	}
 
 	nnz = row_ptr75[n75];
-	printf("n=%lld nnz=%lld ndu=%lld nda=%lld\n", n75, nnz, ndu[0], nda[0]);
+	std::cout << "n=" << n75 << " nnz=" << nnz << " ndu=" << ndu[0] << " nda=" << nda[0] << std::endl;
 
 	
 
@@ -2214,7 +2225,7 @@ L20:
 	
 	if (n75<30000) {
 		// задача очень малой размерности !
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			iN75 = 1; // обязательно нужна хотя бы одна итерация.
 					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -2256,7 +2267,7 @@ L20:
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			//iN75 = 3; // обязательно нужна хотя бы одна итерация.
 					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -2300,7 +2311,7 @@ L20:
 	}
 	else if ((n75 >= 100000) && (n75<300000)) {
 		// задача небольшой средней размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			iN75 = 3; // обязательно нужна хотя бы одна итерация.
 					  // Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -2339,7 +2350,7 @@ L20:
 	}
 	else if ((n75 >= 300000) && (n75<1000000)) {
 		// задача истинно средней размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			iN75 = 3; // обязательно нужна хотя бы одна итерация.
 					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -2377,7 +2388,7 @@ L20:
 	}
 	else if ((n75 >= 1000000) && (n75<3000000)) {
 		// задача достаточно большой размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			iN75 = 6; // обязательно нужна хотя бы одна итерация.
 					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -2415,7 +2426,7 @@ L20:
 	}
 	else if (n75 >= 3000000) {
 		// задача очень большой размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 			iN75 = 6; // обязательно нужна хотя бы одна итерация.
 					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -2448,7 +2459,7 @@ L20:
 	if (iVar == PAM) {
 		maxit75 = 2000; // 2000
 	}
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+	if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
 		maxit75 = 100;//100
 	}
 	if (iVar == TOTALDEFORMATIONVAR) {
@@ -2482,10 +2493,10 @@ L20:
 		count_iter_for_film_coef75++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
+		//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 		roi75 = Scal(roc75, ri75, n75);
-		if (!std::isfinite(roi75)) {
+		if (!isfinite(roi75)) {
 			printf("roi75!=roi75 solution bug. \n");
 			system("pause");
 		}
@@ -2505,7 +2516,7 @@ L20:
 				bet75 = (roi75 / roim175)*(al75 / wi75);
 			}
 		}
-		if ((bet75 != bet75) || (!std::isfinite(bet75))) {
+		if ((bet75 != bet75) || (!isfinite(bet75))) {
 			printf("bet!=bet solution bug. \n");
 			printf("%e %e %e %e\n", roi75, roim175, al75, wi75);
 			system("pause");
@@ -2625,29 +2636,14 @@ L20:
 	bool bprint_mesage_diagnostic = true;
 	if (bprint_mesage_diagnostic) {
 		if ((icount75 % 10) == 0) {
-			printf("iter  residual\n");
-			//fprintf(fp_log, "iter  residual\n");
+			std::cout << "iter  residual" << std::endl;			
 		}
-#if doubleintprecision == 1
-		//printf("%lld %e\n", icount75, deltai75);
 		std::cout << icount75 << " " << deltai75 << std::endl;
-		//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-		//printf("%d %e\n", icount75, deltai75);
-		std::cout << icount75 << " " << deltai75 << std::endl;
-		//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
-
 	}
 
 	// 28.07.2016.
-#if doubleintprecision == 1
-	//printf("%lld %e\n", icount75, deltai75);
-	//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-	//printf("%d %e\n", icount75, deltai75);
-	//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
+	//std::cout << icount75 << " " << deltai75 << std::endl;
+
 
 	//getchar();
 	if (deltai75 > delta_old_iter75) i_signal_break_pam_opening75++;
@@ -2655,12 +2651,7 @@ L20:
 	if (iVar == PAM) {
 		if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
 			// досрочный выход из цикла.
-#if doubleintprecision == 1
-			printf("icount PAM=%lld\n", icount75);
-#else
-			printf("icount PAM=%d\n", icount75);
-#endif
-
+			std::cout << "icount PAM=" <<  icount75 << std::endl;
 			break;
 		}
 	}
@@ -2911,7 +2902,7 @@ L70:
 	integer *iprint, integer *levelx, integer *ifirst, integer *ncyc,
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
-	integer *nwt, integer *ntr, integer *ierr, SIMPLESPARSE &sparseM, integer n)
+	integer *nwt, integer *ntr, integer *ierr,  integer n)
 {
 
 	// 23-24 декабря 2017.
@@ -3016,6 +3007,50 @@ L70:
 	integer* row_ptr75 = nullptr;
 	//row_ptr75 = new integer[n75 + 1];
 
+
+	// Разреженная матрица СЛАУ
+	// в CRS формате.
+
+	{
+		integer nsize = n;
+		integer nnzsize = ia[n];
+
+		integer ierr = 0;
+
+		val75 = new doublereal[nnzsize];
+		col_ind75 = new integer[nnzsize];
+
+		for (integer i_5 = 0; i_5 < nnzsize; i_5++) {
+			val75[i_5] = a[i_5];
+
+			col_ind75[i_5] = ja[i_5] - 1;
+		}
+
+		
+		row_ptr75 = new integer[nsize + 1];
+		for (integer i_5 = 0; i_5 < nsize + 1; i_5++) {
+			
+			row_ptr75[i_5] = ia[i_5] - 1;
+			/*if (i_5 <= 1) {
+				printf("row_ptr75[%lld]=%lld \n",i_5,ia[i_5]);
+				getchar();
+			}
+			*/
+		}
+
+
+		if (ierr > 0) {
+			printf("Temperature equation problem.\n");
+		}
+	}
+
+
+	if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
 
 	/*         ----------------------------------------------- */
 	/*         | AMG-MODULE FOR SOLVING LINEAR SYSTEMS L*U=F | */
@@ -3571,6 +3606,8 @@ L70:
 
 	/* ===> SET PARAMETERS TO STANDARD VALUES, IF NECCESSARY */
 
+	
+
 
 	if (*iout != 0) {
 		idec_(iout, &c__2, &ndigit, iarr);
@@ -3710,17 +3747,7 @@ L20:
 
 
 
-	// Разреженная матрица СЛАУ
-	// в CRS формате.
-	simplesparsetoCRS(sparseM, val75, col_ind75, row_ptr75, n); // преобразование матрицы из одного формата хранения в другой.
 	
-
-	if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
 
 	nnz = row_ptr75[n75];
 	printf("n=%lld nnz=%lld ndu=%lld nda=%lld\n", n75, nnz, ndu[0], nda[0]);
@@ -4141,10 +4168,10 @@ L20:
 		count_iter_for_film_coef75++;
 		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
 		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
+		//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 		roi75 = Scal(roc75, ri75, n75);
-		if (!std::isfinite(roi75)) {
+		if (!isfinite(roi75)) {
 			printf("roi75!=roi75 solution bug. \n");
 			system("pause");
 		}
@@ -4164,7 +4191,7 @@ L20:
 				bet75 = (roi75 / roim175)*(al75 / wi75);
 			}
 		}
-		if (!std::isfinite(bet75)) {
+		if (!isfinite(bet75)) {
 			printf("bet75!=bet75 solution bug. \n");
 			printf("%e %e %e %e\n", roi75, roim175, al75, wi75);
 			system("pause");
@@ -4285,29 +4312,13 @@ L20:
 		bool bprint_mesage_diagnostic = true;
 		if (bprint_mesage_diagnostic) {
 			if ((icount75 % 10) == 0) {
-				printf("iter  residual\n");
-				//fprintf(fp_log, "iter  residual\n");
+				std::cout << "iter  residual" << std::endl;
 			}
-#if doubleintprecision == 1
-			//printf("%lld %e\n", icount75, deltai75);
-			std::cout << icount75 << " " << deltai75 << std::endl;
-			//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-			//printf("%d %e\n", icount75, deltai75);
-			std::cout << icount75 << " " << deltai75 << std::endl;
-			//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
-
+			std::cout << icount75 << " " << deltai75 << std::endl;	
 		}
 
 		// 28.07.2016.
-#if doubleintprecision == 1
-		//printf("%lld %e\n", icount75, deltai75);
-		//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
-#else
-		//printf("%d %e\n", icount75, deltai75);
-		//fprintf(fp_log, "%d %e \n", icount75, deltai75);
-#endif
+		//std::cout << icount75 << " " << deltai75 << std::endl;
 
 		//getchar();
 		if (deltai75 > delta_old_iter75) i_signal_break_pam_opening75++;
@@ -4316,12 +4327,7 @@ L20:
 		if (iVar == PAM) {
 			if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
 				// досрочный выход из цикла.
-#if doubleintprecision == 1
-				printf("icount PAM=%lld\n", icount75);
-#else
-				printf("icount PAM=%d\n", icount75);
-#endif
-
+				std::cout << "icount PAM="<< icount75 << std::endl;
 				break;
 			}
 		}
@@ -4713,7 +4719,7 @@ L70:
 	icg[i__] = 0;
 /* L2: */
     }
-    i__1 = nnu;
+    //i__1 = nnu;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	j1 = ia[i__];
 	j2 = ia[i__ + 1] - 1;
@@ -4744,7 +4750,7 @@ L70:
 	    icg[i1] = 1;// столбец был посещен.
 /* L5: */
 	}
-	i__2 = j2;
+	//i__2 = j2;
 	for (j = j1; j <= i__2; ++j) {
 	    icg[ja[j]] = 0;// сброс посещения.
 /* L7: */
@@ -4763,13 +4769,13 @@ L70:
     naneg = 0;
     nazer = 0;
     new__ = 0;
-    i__1 = nnu;
+    //  i__1 = nnu;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	icg[i__] = ia[i__ + 1] - ia[i__];
 /* L100: */
     }
 
-    i__1 = nnu;
+    //i__1 = nnu;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	d__ = a[ia[i__]];
 	if (d__ <= 0.) {
@@ -4890,7 +4896,7 @@ L150:
     if (*isym == 1 && asym != 0. || *isym > 1 && asym == 0. || *irow0 == 1 && 
 	    nazer != nnu || *irow0 > 1 && nazer == nnu) {
 	 if (yes_print_amg) {
-         printf("--- WARNG IN CHECK: PARAM MATRIX MAY BE BAD ---");
+         printf("--- WARNG IN CHECK: PARAM MATRIX MAY BE BAD ---\n");
 	 }
 	*ierr = -12;
     }
@@ -7834,7 +7840,8 @@ L60:
 	}
 	resid_(&c__2, &rescg, &a[1], &u[1], &f[1], &ia[1], &ja[1], &iw[1], &
 		imin[1], &imax[1], &iminw[1]);
-	
+
+
 	if (yes_print_amg) {
 #if doubleintprecision == 1
 		//printf("( CYCLE ,%lld,:   RESCG=%1.4f\n", iter, rescg);
@@ -7895,6 +7902,9 @@ L170:
 
 /* L9030: */
 } /* solve_ */
+
+
+ 
 
 
 /* ....................................................................... */
@@ -8783,6 +8793,8 @@ L1000:
 	nstcol, /*real*/ unsigned int *time, char ch_direct)
 {
 
+	
+
 	// ch_direct=='D' вниз, ch_direct=='U' вверх.
 
 #ifdef _OPENMP 
@@ -8827,6 +8839,9 @@ L1000:
     --u;
     --a;
 
+
+	//printf("getchar %lld",*irel); getchar();
+
     /* Function Body */
 	told=clock();
     iaux = ia[imax[*k] + 1];
@@ -8845,7 +8860,7 @@ L100:
 
 	if (b_iluk_amg1r5_LABEL_D || b_iluk_amg1r5_LABEL_U) {
 
-		// от повторного коструирования защищает флаг
+		// от повторного конструирования защищает флаг
 		// bflag_repeat_buffer_ilu
 
 		// iluk smoother. начало 31.12.2019.
@@ -8874,7 +8889,9 @@ L100:
 	    s -= a[j] * u[ja[j]];
 /* L110: */
 	}
-	u[i__] = (f[i__] + s) / a[ia[i__]];
+	//printf("1\n");
+	u[i__] = u[i__] + 0.6667*((f[i__] + s) / a[ia[i__]] - u[i__]);
+	
 L120:
 	;
     }
@@ -8915,9 +8932,9 @@ L200:
 
 				/* L210: */
 			}
-			//doublereal alpha = 0.6667; // damped Jacobi
-			//u[i__] = (1.0-alpha)* u[i__]+alpha*(s / a[ia[i__]]);
-			u[i__] = s / a[ia[i__]];
+			doublereal alpha = 0.6667; // damped Jacobi
+			u[i__] = (1.0-alpha)* u[i__]+alpha*(s / a[ia[i__]]);
+			//u[i__] = s / a[ia[i__]];
 			/* L220: */
 		}
 
@@ -8958,7 +8975,10 @@ L200:
 				
 				/* L210: */
 			}
-			u[i__] = s / a[ia[i__]];
+			//u[i__] = s / a[ia[i__]];
+			doublereal alpha = 0.03; //   0.6667; 0.03; // damped Jacobi
+			u[i__] = (1.0 - alpha) * u[i__] + alpha * (s / a[ia[i__]]);
+			//printf("2\n");
 			/* L220: */
 		}
 	}
@@ -8999,7 +9019,8 @@ L300:
 				s_loc -= a[j_loc] * u[ja[j_loc]];
 				/* L310: */
 			}
-			u[i__loc] = (f[i__loc] + s_loc) / a[ia[i__loc]];
+			u[i__loc] = u[i__loc]+ 0.6667*((f[i__loc] + s_loc) / a[ia[i__loc]]- u[i__loc]);
+			//printf("3\n");
 		}
     }
     goto L1000;
@@ -9037,6 +9058,7 @@ L400:
 /* L410: */
 	}
 	u[i__] = s / a[ia[i__]];
+	//printf("4\n");
 L420:
 	;
     }
@@ -9055,6 +9077,7 @@ L420:
 /* L430: */
 	}
 	u[i__] = s / a[ia[i__]];
+	//printf("5\n");
 L440:
 	;
     }
@@ -9094,6 +9117,7 @@ L1000:
 	omp_set_num_threads(1); // установка числа потоков
 #endif
 
+	//getchar();
     return 0;
 } /* relx_ */
 
@@ -11654,6 +11678,748 @@ typedef struct TQuickMemVorst {
 	 integer icount_vel; 
 } QuickMemVorst;
 
+// Здесь содержится обвязка вызывающая amg1r5.
+// локальное выделение памяти:всё внутри, многократные alloc и free.
+void amg_loc_memory_networkT(doublereal* &val, integer* &col_ind, integer* &row_ptr, integer n, integer nnz,
+	doublereal *dV, doublereal* &dX0,
+	doublereal alpharelax, bool bLRfree, 
+	integer iVorst_version, bool &worked_successfully,
+	BLOCK* &b, integer &lb, integer &ls,  integer maxelm, bool bnonlinear)
+{
+
+	integer iVar = TEMP;
+
+	// Замер времени.
+	unsigned int calculation_main_start_time; // начало счёта мс.
+	unsigned int calculation_main_end_time; // окончание счёта мс.
+
+	calculation_main_start_time = clock(); // момент начала счёта.
+
+	worked_successfully = false;
+
+	// На случай если память не была выделена.
+	if (dX0 == nullptr) {
+		dX0 = new doublereal[n];
+		for (integer i = 0; i<n; i++) {
+			dX0[i] = 0.0;
+		}
+	}
+
+
+	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	doublereal res_sum = 0.0;
+	for (integer i = 0; i < n; i++) {		
+		doublereal sum = dV[i];
+		for (integer j = row_ptr[i] + 1; j < row_ptr[i + 1]; j++) {
+			sum += -(val[j] * dX0[col_ind[j]]);
+		}
+		doublereal buf= val[row_ptr[i]] * dX0[col_ind[row_ptr[i]]] - sum;
+		res_sum += buf*buf;
+	}
+	res_sum = sqrt(res_sum);
+	//printf("residual start=%1.4e\n",res_sum);
+	//getchar();
+
+	// результаты тестирования
+	// задача, начальная невязка , значение евклидовой нормы невязки при которой решение является полученным.
+	// tgf01 5.4357e-1 1.0209e-11
+	// CGHV1J с метализацией 3.3667e-1 5.0712e-12
+	// tgf02 7.6872e-11 1.434e-11
+	// tgf05 1.0871e+0  2.2895e-11
+	// резистор на 1мм поликоре 5.0e-2 4.9174e-14
+	//Diamond ZUb 4 4.0016e-1  4.64444e-11
+	// DiamondZUB 4.0016e-1 1.1443e-8
+	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
+
+
+
+	doublereal res_sum_previos = 1.05*finish_residual;
+	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+		// Работает задача Ньютона Рихмана.
+		res_sum_previos = 1.0e-12;
+	}
+
+
+	//if (res_sum>1.0E-10) 
+	if (res_sum>res_sum_previos) // защита от повторного холостого запуска экономит время конечного пользователя.
+	{
+
+		//yes_print_amg=false;
+		yes_print_amg = false;
+
+
+
+		const integer id = 0;
+
+		integer ierr = 0;
+		doublereal eps = 1.0e-12;
+
+		ierr = 0; // изначальное состояние безошибочное.
+				  // Порог точности решения СЛАУ. Значение 1.0E-12 достаточно что проверено в ANSYS icepak.
+		eps = 1.0e-3; // рекомендуемое значение которого достаточно. 
+
+					  // Требования к оперативной памяти.
+					  /*     VECTOR         NEEDED LENGTH (GUESS) */
+					  /*       A               3*NNA + 5*NNU */
+					  /*       JA              3*NNA + 5*NNU */
+					  /*       IA              2.2*NNU */
+					  /*       U               2.2*NNU */
+					  /*       F               2.2*NNU */
+					  /*       IG              5.4*NNU */
+
+
+		integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+
+
+						 // подсчёт числа ненулевых элементов в матрице.
+		nna = nnz;
+		
+
+		integer nnu = 0; // число неизвестных.
+		nnu = n;
+
+		/*
+		// Рекомендуемые по умолчанию параметры.
+		integer nda=0; // память под вектор значений матрицы слау.
+		nda=3*(nna)+5*(nnu);
+		integer ndia=0;
+		ndia=(integer)(2.2*(nnu));
+		integer ndja=0;
+		ndja=3*(nna)+5*(nnu);
+		integer ndu=0;
+		ndu=(integer)(2.2*(nnu));
+		integer ndf=0;
+		ndf=(integer)(2.2*(nnu));
+		integer ndig=0;
+		ndig=(integer)(5.4*(nnu));
+		*/
+
+		/*
+		// в двое больше памяти чем рекомендовано.
+		integer nda=0; // память под вектор значений матрицы слау.
+		nda=6*(nna)+10*(nnu);
+		integer ndia=0;
+		ndia=(integer)(4.4*(nnu));
+		integer ndja=0;
+		ndja=6*(nna)+10*(nnu);
+		integer ndu=0;
+		ndu=(integer)(4.4*(nnu));
+		integer ndf=0;
+		ndf=(integer)(4.4*(nnu));
+		integer ndig=0;
+		ndig=(integer)(10.8*(nnu));
+		*/
+
+		// данная константа работоспособна вплоть до размерностей сетки равных 34млн 463тысячи 250узлов.
+		//doublereal rsize=1.51; // 1048416
+		// Вынужденные течения достаточно 2.5.
+		// значения 3.5 недостаточно для 8 модулей Пионер. 
+		doublereal rsize = 4.5; // на задаче Концевого Ю.А. Электростатика со столбиком в случае сетки со сгущением достаточно 2.0.
+
+		integer nda = 0; // память под вектор значений матрицы слау.
+		nda = (integer)(rsize*(3 * (nna)+5 * (nnu)));
+		if (iVar == TEMP) {
+			//std::cout << "nda=" << nda << std::endl;
+		}
+		integer ndia = 0;
+		ndia = (integer)(rsize*2.2*(nnu));
+		integer ndja = 0;
+		ndja = (integer)(rsize*(3 * (nna)+5 * (nnu)));
+		integer ndu = 0;
+		ndu = (integer)(rsize*2.2*(nnu));
+		integer ndf = 0;
+		ndf = (integer)(rsize*2.2*(nnu));
+		integer ndig = 0;
+		ndig = (integer)(rsize*5.4*(nnu));
+
+		/*     CLASS 3 - PARAMETERS: */
+
+		/*     LEVELX   -   MAXIMUM NUMBER OF MG-LEVELS TO BE CREATED (>=1). */
+
+		/*     IFIRST   -   PARAMETER FOR FIRST APPROXIMATION. */
+
+		/*                  1ST DIGIT OF IFIRST: NOT USED; HAS TO BE NON-ZERO. */
+
+		/*                  2ND DIGIT OF IFIRST  --  ITYPU: */
+		/*                    =0: NO SETTING OF FIRST APPROXIMATION, */
+		/*                    =1: FIRST APPROXIMATION CONSTANT TO ZERO, */
+		/*                    =2: FIRST APPROXIMATION CONSTANT TO ONE, */
+		/*                    =3: FIRST APPROXIMATION IS RANDOM FUNCTION WITH */
+		/*                        THE CONCRETE RANDOM SEQUENCE BEING DETERMINED */
+		/*                        BY THE FOLLWING DIGITS. */
+
+		/*                  REST OF IFIRST  --  RNDU: */
+		/*                    DETERMINES THE CONCRETE RANDOM SEQUENCE USED IN */
+		/*                    THE CASE ITYPU=3. (IFIRST=13 IS EQUIVALENT TO */
+		/*                    IFIRST=1372815) */
+
+		/*     NCYC     -   INTEGER PARAMETER DESCRIBING THE TYPE OF CYCLE TO BE */
+		/*                  USED AND THE NUMBER OF CYCLES TO BE PERFORMED. */
+
+		/*                  1ST DIGIT OF NCYC  --  IGAM: */
+		/*                    =1: V -CYCLE, */
+		/*                    =2: V*-CYCLE, */
+		/*                    =3: F -CYCLE, */
+		/*                    =4: W -CYCLE. */
+		/*                  IF NCYC IS NEGATIV, THEN THE APPROXIMATION OF THE */
+		/*                  PROBLEM ON THE SECOND FINEST GRID IS COMPUTED BY */
+		/*                  IGAM V-CYCLES ON THAT PARTICULAR GRID. */
+
+		/*                  2ND DIGIT OF NCYC  --  ICGR: */
+		/*                    =0: NO CONJUGATE GRADIENT, */
+		/*                    =1: CONJUGATE GRADIENT (ONLY FIRST STEP OF CG), */
+		/*                    =2: CONJUGATE GRADIENT (FULL CG). */
+
+		/*                  3RD DIGIT OF NCYC  --  ICONV: */
+		/*                    CONVERGENCE CRITERION FOR THE USER-DEFINED PROBLEM */
+		/*                    (FINEST GRID): */
+		/*                    =1: PERFORM A FIXED NUMBER OF CYCLES AS GIVEN BY */
+		/*                        NCYCLE (SEE BELOW) */
+		/*                    =2: STOP, IF  ||RES|| < EPS */
+		/*                    =3: STOP, IF  ||RES|| < EPS * |F| */
+		/*                    =4: STOP, IF  ||RES|| < EPS * |U| * |DIAG| */
+		/*                    WITH ||RES|| = L2-NORM OF RESIDUAL, */
+		/*                           EPS     (SEE INPUT PARAMETER EPS) */
+		/*                           |F|   = SUPREMUM NORM OF RIGHT HAND SIDE */
+		/*                           |U|   = SUPREMUM NORM OF SOLUTION */
+		/*                         |DIAG|  = MAXIMAL DIAGONAL ENTRY IN MATRIX L */
+		/*                    NOTE THAT IN ANY CASE THE SOLUTION PROCESS STOPS */
+		/*                    AFTER AT MOST NCYCLE CYCLES. */
+
+		/*                  REST OF NCYC  --  NCYCLE: */
+		/*                    MAXIMAL NUMBER OF CYCLES TO BE PERFORMED (>0) OR */
+		/*                    NCYCLE=0: NO CYCLING. */
+
+		/*     EPS      -   CONVERGENCE CRITERION FOR SOLUTION PROCESS: (SEE */
+		/*                  PARAMETER NCYC). NOTE THAT NO MORE THAN NCYCLE CYCLES */
+		/*                  ARE PERFORMED, REGARDLESS OF EPS. */
+
+		/*     MADAPT   -   INTEGER VALUE SPECIFYING THE CHOICE OF COARSEST */
+		/*                  GRID IN CYCLING: */
+
+		/*                  1ST DIGIT OF MADAPT  --  MSEL: */
+		/*                    =1: IN CYCLING, ALL GRIDS CONSTRUCTED IN THE SETUP */
+		/*                        PHASE ARE USED WITHOUT CHECK. */
+		/*                    =2: THE NUMBER OF GRIDS IS AUTOMATICALLY REDUCED */
+		/*                        IF THE CONVERGENCE FACTOR ON THE COARSER GRIDS */
+		/*                        IS FOUND TO BE LARGER THAN A GIVEN VALUE FAC */
+		/*                        (SEE BELOW). */
+
+		/*                  REST OF MADAPT  --  FAC */
+		/*                        THE REST OF MADAPT DEFINES THE FRACTIONAL PART */
+		/*                        OF A REAL NUMBER FAC BETWEEN 0.1 AND 0.99, E.G. */
+		/*                        MADAPT=258 MEANS MSEL=2 AND FAC=0.58. IF MADAPT */
+		/*                        CONSISTS OF ONLY ONE DIGIT, FAC IS SET TO 0.7 */
+		/*                        BY DEFAULT. */
+
+
+		/*     NRD      -   PARAMETER DESCRIBING RELAXATION (DOWNWARDS): */
+
+		/*                  1ST DIGIT OF NRD: NOT USED; HAS TO BE NON-ZERO. */
+
+		/*                  2ND DIGIT OF NRD  --  NRDX: */
+		/*                    ACTUAL NUMBER OF SMOOTHING STEPS TO BE PERFORMED */
+		/*                    THE TYPE OF WHICH IS GIVEN BY THE FOLLOWING DIGITS */
+
+		/*                  FOLLOWING DIGITS  --  ARRAY NRDTYP: */
+		/*                    =1: RELAXATION OVER THE F-POINTS ONLY */
+		/*                    =2: FULL GS SWEEP */
+		/*                    =3: RELAXATION OVER THE C-POINTS ONLY */
+		/*                    =4: FULL MORE COLOR SWEEP, HIGHEST COLOR FIRST */
+
+		/*     NSOLCO   -   PARAMETER CONTROLLING THE SOLUTION ON COARSEST GRID: */
+
+		/*                  1ST DIGIT  --  NSC: */
+		/*                    =1: GAUSS-SEIDEL METHOD */
+		/*                    =2: DIRECT SOLVER (YALE SMP) */
+
+		/*                  REST OF NSOLCO  --  NRCX: (ONLY IF NSC=1) */
+		/*                  NUMBER OF GS SWEEPS ON COARSEST GRID (>=0). */
+		/*                  IF NRCX=0, THEN AS MANY GS SWEEPS ARE PERFORMED */
+		/*                  AS ARE NEEDED TO REDUCE THE RESIDUAL BY TWO ORDERS */
+		/*                  OF MAGNITUDE. (MAXIMAL 100 RELAXATION SWEEPS) */
+
+		/*     NRU      -   PARAMETER FOR RELAXATION (UPWARDS), ANALOGOUS TO NRD. */
+
+		/*         -------------------------------------------------------------- */
+
+		/*     CLASS 4 - PARAMETERS: */
+
+		/*     ECG1,ECG2-   REAL PARAMETERS AFFECTING THE CREATION OF COARSER */
+		/*     EWT2     -   GRIDS AND/OR THE DEFINITION OF THE INTERPOLATION. */
+		/*                  THE CHOICE OF THESE PARAMETERS DEPENDS ON */
+		/*                  THE ACTUAL AMG VERSION (SEE SUBROUTINE CRSNG) */
+
+		/*     NWT      -   INTEGER PARAMETER AFFECTING THE CREATION OF COARSER */
+		/*                  GRIDS AND/OR THE DEFINITION OF THE INTERPOLATION. */
+		/*                  THE CHOICE OF THIS PARAMETER DEPENDS ON */
+		/*                  THE ACTUAL AMG VERSION (SEE SUBROUTINE CRSNG) */
+
+		/*     NTR      -   PARAMETER CONTROLLING COARSE-GRID OPERATOR TRUNCATION */
+		/*                    =0: PAIRS OF ZEROES ARE REMOVED FROM COARSE GRID */
+		/*                        OPERATORS */
+		/*                    =1: NO COARSE-GRID OPERATOR TRUNCATION */
+
+
+
+		/*     STANDARD CHOICES OF PARAMETERS (AS FAR AS MEANINGFUL): */
+
+		/*          ISWTCH = 4 */
+		/*          IOUT   = 12 */
+		/*          IPRINT = 10606 */
+
+		/*          LEVELX = 100 */
+		/*          IFIRST = 13 */
+		/*          NCYC   = 10110 */
+		/*          EPS    = 1.D-12 */
+		/*          MADAPT = 27 */
+		/*          NRD    = 1131 */
+		/*          NSOLCO = 110 */
+		/*          NRU    = 1131 */
+
+		/*          ECG1   = 0. */
+		/*          ECG2   = 0.25 */
+		/*          EWT2   = 0.35 */
+		/*          NWT    = 2 */
+		/*          NTR    = 0 */
+
+
+
+		// рекомедуемые параметры по дефолту.
+
+		integer iswtch = 0;
+		iswtch = 4;
+		integer iout = 0;
+		iout = 13; // 13 обеспечивает печать изменения невязки в процессе счёта.
+		integer iprint = 0;
+		iprint = 10606;
+		integer levelx = 0;
+		levelx = 100;
+		// инициализация.
+		init_level_additional_data(milu2_amg1r5, levelx);
+		bflag_repeat_buffer_ilu = true;
+		for (int i43 = 0; i43 < 100; i43++) {
+			bflag_visit_amg1r5[i43] = false;
+		}
+
+
+		integer ifirst = 0;
+		// начальное приближение:
+		// 0 - используется из вне.
+		// 1 - нулевое.
+		// 2 - единицы.
+		// 3 - случайная последовательность.
+		ifirst = 13;//13 по умолчанию.
+					//ifirst=11; // нулевое начальное приближение.
+					//ifirst=10; // вроде как начальное приближение берётся из dX0.
+					// но 10 никоим образом не улучшает сходимость.
+		integer ncyc = 0;
+		//ncyc=10110;
+		ncyc = 10299; // максимум 99 V циклов
+		if ((bnonlinear)&&(steady_or_unsteady_global_determinant == NETWORK_T_UNSTEADY)) {
+			ncyc = 10205;
+		}
+		integer madapt = 0;
+		madapt = 27;
+		integer nrd = 0;
+		//nrd=1131;
+		nrd = nrd_LABEL;
+		integer nsolco = 0;
+		nsolco = 110;
+		integer nru = 0;
+		//nru=1131;
+		nru = nru_LABEL;
+		doublereal ecg1 = 0.0;
+		ecg1 = 0.0;
+		doublereal ecg2 = 0.0;
+		//ecg2=0.25;
+		ecg2 = ecg2_LABEL;
+		doublereal ewt2 = 0.0;
+		//ewt2=0.35;
+		ewt2 = ewt2_LABEL;
+		integer nwt = 0;
+		nwt = 2;
+		integer ntr = 0;
+		ntr = 0;
+
+		integer matrix = 0;
+		//matrix=11; // symmetric SPD.
+		matrix = 22;
+
+		if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
+			ifirst = 10;// начальное приближение с предыдущего шага.
+			ncyc = 10101; // Всего один V цикл.
+			matrix = 11;
+		}
+
+		if ((iVar == PAM) && (bLRfree)) {
+			//printf("work amg1r5\n");
+			//getchar();
+			// Симметричная положительно определённая матрица это такая матрица
+			// которая возникает для поправки давления при решении вязких несжимаемых уравнений Навье-Стокса в 
+			// случае задач: каверна, тест Валь-Девиса. Для задач промышленного масштаба это всякие естественные
+			// конвекции охлаждающие висящие в воздухе без контакта с теплоотводом греющиеся изделия.
+			// Это особый специфический класс задач.
+			matrix = 11;
+		}
+
+		if (iVar != TEMP)
+		{
+			//cfd
+			//4.08.2018
+			if (iVar == PAM) {
+				ifirst = 13;
+				ncyc = 10110;
+				//ncyc = 10399; // максимум 99 V циклов
+				//eps = 1.0e-5;
+				//5000->10;
+				//3720->10
+				//255194->
+			}
+			else {
+				ifirst = 10;
+				ncyc = 10101;
+			}
+		}
+		//getchar();
+		// allocate memory.
+		doublereal *a = nullptr;
+		//a=new doublereal[nda+1];
+		// 15 jan 2016
+		a = (doublereal*)malloc(((integer)(nda)+1) * sizeof(doublereal));
+		if (a == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		integer *ia = nullptr;
+		//ia=new integer[ndia+1];
+		ia = (integer*)malloc(((integer)(ndia)+1) * sizeof(integer));
+		if (ia == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		integer *ja = nullptr;
+		//ja=new integer[ndja+1];
+		ja = (integer*)malloc(((integer)(ndja)+1) * sizeof(integer));
+		if (ja == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		doublereal *u = nullptr;
+		//u = new doublereal[ndu + 1];
+		u = (doublereal*)malloc(((integer)(ndu)+1) * sizeof(doublereal));
+		if (u == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		doublereal *f = nullptr;
+		//f=new doublereal[ndf+1];
+		f = (doublereal*)malloc(((integer)(ndf)+1) * sizeof(doublereal));
+		if (f == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		integer *ig = nullptr;
+		//ig=new integer[ndig+1];
+		ig = (integer*)malloc(((integer)(ndig)+1) * sizeof(integer));
+		if (ig == nullptr) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem: not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+
+		// Блок инициализации нулём, возможно будет работоспособно и без него.
+
+		for (integer k = 0; k <= nda; k++) {
+			a[k] = 0.0;
+		}
+		for (integer k = 0; k <= ndia; k++) {
+			ia[k] = 0;
+		}
+		for (integer k = 0; k <= ndja; k++) {
+			ja[k] = 0;
+		}
+		for (integer k = 0; k <= ndu; k++) {
+			u[k] = 0.0;
+		}
+		for (integer k = 0; k <= ndf; k++) {
+			f[k] = 0.0;
+		}
+		for (integer k = 0; k <= ndig; k++) {
+			ig[k] = 0;
+		}
+
+
+		if (nnu <= ndia) {
+			// обязателная инициализация.
+			for (integer k = 0; k <= nnu + 1; k++) {
+				ia[k + id] = nna + 1; // инициализация.
+			}
+
+			if (id == 1) {
+				ia[nnu + 2] = 0;
+			}
+
+		}
+		else {
+			printf("ERROR initialize ia array in amg1r5.c\n");
+			system("PAUSE");
+			exit(1);
+		}
+
+
+
+
+
+
+		// начальное приближение.
+		for (integer i = 0; i <= ndu; i++) {
+			u[i] = 0.0;
+			if (i<n) {
+				// обязательно нужно проверить была ли выделена оперативная память. 
+				u[i + id] = dX0[i];
+			}
+		}
+
+		// правая часть.
+		for (integer i = 0; i <= ndf; i++) {
+			f[i] = 0.0;
+			if (i<n) {
+				// обязательно нужно проверить была ли выделена оперативная память. 
+				f[i + id] = dV[i];
+			}
+		}
+
+		// см. equation3DtoCRS.
+
+		integer ik = 0; // счётчик ненулевых элементов СЛАУ
+
+		// для всех узлов расчётной области:
+		for (integer k = 0; k < nnz; k++) {
+			a[k + id] = val[k];
+			ja[k + id] = col_ind[k] + 1;
+		}
+		for (integer k = 0; k <= n; k++) {
+			ia[k + id] = row_ptr[k]+1;
+		}
+
+		
+
+
+		// TODO: 
+		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
+
+		// в каждой строке элементы отсортированы по номерам столбцов:
+		// Но диагональный элемент всегда на первом месте в строке матрицы.
+		integer imove = 0;
+
+		if (id == 0) {
+			imove = -1;
+		}
+
+
+		// сортировка ненужна порядок следования любой, но главное чтобы первый в строке был имено диагональный элемент.
+		//for (integer k=0; k<(maxelm+maxbound); k++) QuickSortCSIR_amg(ja, a, ia[k+1]+1+imove, ia[k+2]-1+imove); // первый элемент всегда диагональный.
+		//for (integer k=0; k<(maxelm+maxbound); k++) QuickSortCSIR_amg(ja, a, ia[k+1]+imove, ia[k+2]-1+imove); 
+
+		for (integer k = 1; k <= nnu; k++) ig[k + imove] = ia[k + 1 + imove]; // инициализация.
+
+
+		bool bOkfgmres_amg1r5;
+		//printf("getready ...");
+		//getchar();
+
+		//if (iVorst_version == 0)
+		{
+			/*
+			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
+			// алгоритм 1985 года.
+			amg1r5_(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr);
+				*/
+
+				//31 декабря 2017.
+
+				// В качестве внешнего итерационного процесса используется 
+				// алгоритм Ю.Саада и Шульца FGMRes. amg1r5 используется только как
+				// многосеточный предобуславливатель.
+			amg1r5_fgmres_version_networkT(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr, bOkfgmres_amg1r5,
+				n, nnz);
+		}
+		/*
+		else if (iVorst_version == 1) {
+
+			// 23-24 декабря 2017.
+
+			// В качестве внешнего итерационного процесса используется 
+			// алгоритм Хенка Ван Дер Ворста BiCGStab. amg1r5 используется только как
+			// многосеточный предобуславливатель.
+			amg1r5_Vorst_modification(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound,
+				b, lb, s_loc, ls);
+
+		}
+		else {
+			//31 декабря 2017.
+
+			// В качестве внешнего итерационного процесса используется 
+			// алгоритм Ю.Саада и Шульца FGMRes. amg1r5 используется только как
+			// многосеточный предобуславливатель.
+			amg1r5_fgmres_version(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr, iVar, sl, slb,
+				maxelm, maxbound, bOkfgmres_amg1r5,
+				b, lb, s_loc, ls);
+		}
+		*/
+
+
+		free_level_additional_data(milu2_amg1r5, levelx);
+
+		// Освобождение общей памяти в ILU буффере.
+		if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+		if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+		if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+		milu_gl_buffer.alu_copy = nullptr;
+		milu_gl_buffer.jlu_copy = nullptr;
+		milu_gl_buffer.ju_copy = nullptr;
+
+		switch (ierr) {
+		case 1: printf("dimension A small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 2: printf("dimension IA small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 3: printf("dimension JA small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 4: printf("dimension U small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 5: printf("dimension F small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 6: printf("dimension IG small\n.");
+			//getchar();
+			system("pause");
+			break;
+		}
+
+		// возвращаем решение СЛАУ.
+		for (integer i = 0; i<n; i++) {
+			// обратное копирование.
+			dX0[i] = u[i + 1 + imove];
+		}
+
+
+		// освобождение памяти.
+		if (a != nullptr) {
+			// delete[] a;
+			free(a);
+		}
+		if (ia != nullptr) {
+			// delete[] ia;
+			free(ia);
+		}
+		if (ja != nullptr) {
+			//delete[] ja;
+			free(ja);
+		}
+		if (u != nullptr) {
+			//delete[] u;
+			free(u);
+		}
+		if (f != nullptr) {
+			//delete[] f;
+			free(f);
+		}
+		if (ig != nullptr) {
+			//delete[] ig;
+			free(ig);
+		}
+
+
+		
+		doublereal res_sum2 = 0.0;
+		for (integer i = 0; i < n; i++) {
+			doublereal sum = dV[i];
+			for (integer j = row_ptr[i] + 1; j < row_ptr[i + 1]; j++) {
+				sum += -(val[j] * dX0[col_ind[j]]);
+			}
+			doublereal buf = val[row_ptr[i]] * dX0[col_ind[row_ptr[i]]] - sum;
+			res_sum2 += buf*buf;
+		}
+		res_sum2 = sqrt(res_sum2);
+		if (res_sum2 <= res_sum) {
+			worked_successfully = true;
+		}
+		//printf("residual finish=%1.4e\n",res_sum);
+		//getchar();
+		if (bsolid_static_only) {
+			// используется только для теплопередачи в твёрдом теле для ускорения
+			// решения задачи - защита от рестарта.
+			finish_residual = res_sum2; // значение невязки решённой задачи.
+		}
+
+	}
+
+	calculation_main_end_time = clock();
+	calculation_vorst_seach_time += calculation_main_end_time - calculation_main_start_time;
+
+} // amg_loc_memory_networkT
 
 
 // Здесь содержится обвязка вызывающая amg1r5.
@@ -11745,7 +12511,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == 1) {
+	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -11865,7 +12631,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	integer nda=0; // память под вектор значений матрицы слау.
 	nda=(integer)(rsize*(3*(nna)+5*(nnu)));
 	if (iVar == TEMP) {
-		printf("nda=%lld\n", nda);
+		std::cout << "nda=" << nda << std::endl;
 	}
 	integer ndia=0;
 	ndia=(integer)(rsize*2.2*(nnu));
@@ -12089,7 +12855,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	//matrix=11; // symmetric SPD.
 	matrix=22; 
 
-	if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == 1)) {
+	if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
 		ifirst = 10;// начальное приближение с предыдущего шага.
 		ncyc = 10101; // Всего один V цикл.
 		matrix = 11;
@@ -12562,9 +13328,13 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			break;
 		}
 
+		doublereal* tmpinit = new doublereal[maxelm + maxbound];
+
+
 	     // возвращаем решение СЛАУ.
 	     for (integer i=0; i<maxelm+maxbound; i++) {
 	        // обратное копирование.
+			tmpinit[i] = dX0[i];
 		    dX0[i]=u[i+1+imove]; 
 	     }
 	
@@ -12640,6 +13410,17 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		    res_sum2+=buf;
 	   }
 	   res_sum2=sqrt(res_sum2);
+
+	   if (res_sum2 >= 0.1) {
+		   // Неудачное решение сохранение результата не производится.
+		   for (integer i = 0; i < maxelm + maxbound; i++) {
+			   // обратное копирование.
+			   dX0[i] = tmpinit[i];
+		   }
+	   }
+
+	   delete[] tmpinit;
+
 	   if (res_sum2 <= res_sum) {
 		   worked_successfully = true;
 	   }
@@ -12663,7 +13444,8 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 	doublereal *dV, doublereal* &dX0,
 	integer maxit,
-	bool bprintmessage, QuickMemVorst& m)
+	bool bprintmessage, QuickMemVorst& m,
+	WALL* &w, integer &lw, bool* &boundary)
 {
 
 	// Замер времени.
@@ -12674,7 +13456,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 	simplesparsetoCRS(sparseM, m.val, m.col_ind, m.row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
 
-	//simplesparsefree(sparseM, n); // Очистка памяти из под матрицы sparseM.
+	simplesparsefree(sparseM, n); // Очистка памяти из под матрицы sparseM.
 
 	//**** apriory matrix check begin ******
 	{
@@ -12707,7 +13489,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 			integer i1 = m.col_ind[j];//номер столбца.
 			if (i1 < 0 || i1 > n - 1 || icg[i1] == 1) {
 				//icg[i1] == 1 - столбец был посещен.
-				printf("n=%lld i1=%lld icg=%lld\n", n, i1, icg[i1]);
+				std::cout << "n="<< n <<" i1="<< i1 <<" icg="<< icg[i1] << std::endl;
 				if (icg[i1] == 1) {
 					printf("POST simplesparsetoCRS in amg_loc_memory_m_ass2 amg two identical columns in a row\n");
 					for (integer j69 = j1; j69 <= i__2; ++j69) {
@@ -12760,7 +13542,9 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == 1) {
+	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -12849,7 +13633,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 		integer nda = 0; // память под вектор значений матрицы слау.
 		nda = (integer)(rsize * (3 * (nna)+5 * (nnu)));
-		printf("nda=%lld\n", nda);
+		std::cout << "nda=" << nda << std::endl;
 		integer ndia = 0;
 		ndia = (integer)(rsize * 2.2 * (nnu));
 		integer ndja = 0;
@@ -13060,12 +13844,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		//matrix=11; // symmetric SPD.
 		matrix = 22;
 		//int iVar = TEMP;
-		//if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == 1)) {
-		if (adiabatic_vs_heat_transfer_coeff == 1) {
-			ifirst = 10;// начальное приближение с предыдущего шага.
-			ncyc = 10101; // Всего один V цикл.
-			matrix = 11;
-		}
+		
 
 
 		/*
@@ -13187,11 +13966,6 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
      	}
 
 
-
-
-
-
-
 		// начальное приближение.
 		for (integer i = 0; i <= ndu; i++) {
 			u[i] = 0.0;
@@ -13222,6 +13996,27 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				// L2: 
 			}
 
+
+			doublereal alpharelax = 1.0;
+
+			// Это не специальная нелинейная версия кода amg1r5 CAMG.
+			if ((Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
+				for (integer k = 0; k < lw; k++) {
+					if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+						(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+						alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
+						// 0.9999 - недостаточное значение, температуры не те получаются.
+					}
+				}
+				if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+					(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+					(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+					alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
+					// 0.9999 - недостаточное значение, температуры не те получаются.
+				}
+			}
+
+
 			// для внутренних узлов расчётной области:
 			for (integer k = 0; k < n; k++) {
 
@@ -13233,7 +14028,16 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 						if (fabs(m.val[k1]) > nonzeroEPS) {
 							// id==0
 
-							a[ik + id] = m.val[k1];
+							if (((boundary != nullptr)&&(!boundary[k])) && (m.row_ptr[k + 1] - 1 > m.row_ptr[k])) {
+								
+								a[ik + id] = m.val[k1]/ alpharelax;
+								f[k + id] += (1.0 - alpharelax)* m.val[k1]* u[k + id] / alpharelax;
+							}
+							else {
+								a[ik + id] = m.val[k1];
+							}
+
+
 							ja[ik + id] = m.col_ind[k1] + 1;
 							ia[k + id] = m.row_ptr[k + id];
 							if (icg[m.col_ind[k1]] == 1) {
@@ -13256,7 +14060,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 							ja[ik + id] = m.col_ind[k1] + 1;
 							ia[k + id] = m.row_ptr[k + id];
 							if (icg[m.col_ind[k1]] == 1) {
-								printf("error k1=%lld k=%lld\n",k1,k);
+								std::cout << "error k1="<< k1 <<" k="<< k <<"\n";
 								system("PAUSE");
 							}
 							icg[m.col_ind[k1]] = 1;
@@ -13388,7 +14192,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		
 		//printf("getready ...");
 		//getchar();
-		if ((3 == iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		if ((AMG1R5_SECOND_T_SOLVER == iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
 		    (NONE_only_amg1r5 == stabilization_amg1r5_algorithm)){
 			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
 			// алгоритм 1985 года.
@@ -13402,13 +14206,13 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr);
 		}
-		else if ((3==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		else if ((AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
 		         (BiCGStab_plus_amg1r5 == stabilization_amg1r5_algorithm)){
 			// 23-24 декабря 2017.
 			//13.10.2018
 			// BiCGStab + amg1r5.
 			
-
+			
 			// В качестве внешнего итерационного процесса используется 
 			// алгоритм Хенка Ван Дер Ворста BiCGStab. amg1r5 используется только как
 			// многосеточный предобуславливатель.
@@ -13419,9 +14223,9 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&iprint, &levelx, &ifirst, &ncyc,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
-				&nwt, &ntr, &ierr,sparseM,n);
+				&nwt, &ntr, &ierr, n);
 		}
-		else if ((3==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		else if ((AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
 		(FGMRes_plus_amg1r5 == stabilization_amg1r5_algorithm)){
 			// FGMres + amg1r5.
 			//31 декабря 2017.
@@ -13441,10 +14245,10 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&iprint, &levelx, &ifirst, &ncyc,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
-				&nwt, &ntr, &ierr, iVar, sparseM, n, bOkfgmres_amg1r5);
+				&nwt, &ntr, &ierr, iVar,  n, bOkfgmres_amg1r5);
 		}
 
-		simplesparsefree(sparseM, n);
+		
 
 		switch (ierr) {
 		case 1: printf("dimension A small\n.");
@@ -13553,9 +14357,20 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE,
-	integer*& color, integer dist_max, bool breordering_for_parallel);
+	integer*& color, integer dist_max, bool breordering_for_parallel, WALL* &w, integer &lw);
 
 amgGlobalMemory amgGM;
+
+
+integer amg1r5_non_linear_(doublereal *a, integer *ia, integer *ja,
+	doublereal *u, doublereal *f, integer *ig, integer *nda, integer *
+	ndia, integer *ndja, integer *ndu, integer *ndf, integer *ndig,
+	integer *nnu, integer *matrix, integer *iswtch, integer *iout,
+	integer *iprint, integer *levelx, integer *ifirst, integer *ncyc,
+	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
+	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
+	integer *nwt, integer *ntr, integer *ierr,
+	BLOCK*& my_body, integer& lb, integer maxelm_out, integer maxelm_plus_maxbound);
 
 // Здесь содержится обвязка вызывающая amg1r5.
 // Внешняя память, нет выделений и уничтожений памяти.
@@ -13565,7 +14380,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	           integer iVorst_version,
-	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer lw)
 {
 
 
@@ -13653,14 +14468,34 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == 1) {
+	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
 
+	printf("res_sum=%e res_sum_previos=%e\n",res_sum,res_sum_previos);
+	//getchar();
+
+	bool bnonlinear = false;
+	for (integer k = 0; k < lw; k++) {
+		if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) || (w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			// Убираем защиту от повторного запуска при нелинейной задаче.
+			bnonlinear = true;
+		}
+	}
+	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		// Убираем защиту от повторного запуска при нелинейной задаче.
+		bnonlinear = true;
+	}
+
 	//if (res_sum>1.0E-10) 
-	if (res_sum>res_sum_previos) // защита от повторного холостого запуска экономит время конечного пользователя.
+	if ((iVar==PAM)||bnonlinear||(((1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) &&
+		(Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) ||
+		(res_sum>res_sum_previos))) 
 	{
+		// защита от повторного холостого запуска экономит время конечного пользователя.
 
 		integer iprogon=0; // в случае расходимости мы будем повторно производить решение.
 
@@ -13790,7 +14625,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 	integer nda=0; // память под вектор значений матрицы слау.
 	nda=(integer)(rsize*(3*(nna)+5*(nnu)));
-	printf("nda=%lld nna=%lld nnu=%lld maxelm=%lld maxbound=%lld \n",nda, nna, nnu, maxelm, maxbound);
+	std::cout << "nda="<< nda <<" nna="<< nna <<" nnu="<< nnu <<" maxelm="<< maxelm <<" maxbound="<< maxbound <<std::endl;
 	integer ndia=0;
 	ndia=(integer)(rsize*2.2*(nnu));//2.2
 	integer ndja=0;
@@ -14031,7 +14866,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	// с условием Ньютона-Рихмана на всей дефолтной границе. Пока с этой задачей 
 	// справляется только my_cl_agl_amg_v0_14 (РУМБА алгоритм).
 
-	if ((iVar==TEMP)&& (adiabatic_vs_heat_transfer_coeff == 1)) {
+	if ((iVar==TEMP)&& (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
 		ifirst = 13;// начальное приближение с предыдущего шага.
 		ncyc = 1019; // Всего 9 V циклов.
 		//if (blocker_Newton_Richman) {
@@ -14050,7 +14885,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		matrix=11;
 	}
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+	if ((iVar==VELOCITY_X_COMPONENT)||(iVar==VELOCITY_Y_COMPONENT)||(iVar==VELOCITY_Z_COMPONENT)) {
 		// A: Используем начальное приближение.
 		// 0 - используется из вне.
 	    // 1 - нулевое.
@@ -14307,6 +15142,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	}
 	for (integer k=0; k<=ndu; k++) {
 		amgGM.u[k]=0.0;
+		//amgGM.u[k] = operating_temperature_for_film_coeff;
 	}
 	for (integer k=0; k<=ndf; k++) {
 		amgGM.f[k]=0.0;
@@ -14316,7 +15152,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 
-	// обязателная инициализация.
+	// обязательная инициализация.
 	for (integer k=0; k<=nnu+1; k++) amgGM.ia[k+id]=nna+1; // инициализация.
 	if (id == 1) {
 		amgGM.ia[nnu + 2] = 0;
@@ -14343,6 +15179,25 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		if (i<maxelm+maxbound) {
 			// обязательно нужно проверить была ли выделена оперативная память. 
 			amgGM.f[i+id]=dV[i]; 
+			
+		}
+	}
+
+	doublereal alpharelax1 = alpharelax; // Запоминаем первоначальное значение.
+	if ((Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
+		// Это не специальная нелинейная версия кода amg1r5 CAMG.
+		for (integer k = 0; k < lw; k++) {
+			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+				alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
+				// 0.9999 - недостаточное значение, температуры не те получаются.
+			}
+		}
+
+		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+			alpharelax = 0.99999;
 		}
 	}
 
@@ -14354,14 +15209,34 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
         for (integer k=0; k<maxelm; k++) {
 
 			if (fabs(sl[k].ap) > nonzeroEPS) {
-				if (iprogon==1) {
-					amgGM.a[ik+id]=1.05*sl[k].ap/alpharelax;
-				}
-				else if (iprogon==2) {
-					amgGM.a[ik+id]=1.1*sl[k].ap/alpharelax;
+				
+				if (bSIMPLErun_now_for_natural_convection) {
+					// Гидродинамика теплопередача.
+					if (iVar == PAM) {
+						amgGM.a[ik + id] = sl[k].ap;
+					}
+					else {
+						amgGM.a[ik + id] = sl[k].ap / alpharelax;
+						sl[k].ap = sl[k].ap / alpharelax;
+					}
 				}
 				else {
-                    amgGM.a[ik+id]=sl[k].ap/alpharelax;
+					if ((iVar == VELOCITY_X_COMPONENT) || 
+						(iVar == VELOCITY_Y_COMPONENT) ||
+						(iVar == VELOCITY_Z_COMPONENT)) 
+					{
+						amgGM.a[ik + id] = sl[k].ap / alpharelax;
+						sl[k].ap = sl[k].ap / alpharelax;
+					}
+					else if (iVar==PAM) {
+						amgGM.a[ik + id] = sl[k].ap;
+					}
+					else {
+						// Теплопередача отдельно отдельно от естественной конвекции.
+						amgGM.a[ik + id] = sl[k].ap / alpharelax;
+						amgGM.f[k + id] += (1.0 - alpharelax) * sl[k].ap * amgGM.u[k + id] / alpharelax;
+						sl[k].ap = sl[k].ap / alpharelax;
+					}
 				}
 				amgGM.ja[ik+id]=sl[k].iP+1;
 				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
@@ -14404,115 +15279,151 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				ik++;
 			}
 
-			if ((sl[k].iE2>-1) && (fabs(sl[k].ae2) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].ae2;
-				amgGM.ja[ik + id] = sl[k].iE2 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bE2) {
+				if ((sl[k].iE2 > -1) && (fabs(sl[k].ae2) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].ae2;
+					amgGM.ja[ik + id] = sl[k].iE2 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iN2>-1) && (fabs(sl[k].an2) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].an2;
-				amgGM.ja[ik + id] = sl[k].iN2 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bN2) {
+				if ((sl[k].iN2 > -1) && (fabs(sl[k].an2) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].an2;
+					amgGM.ja[ik + id] = sl[k].iN2 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iT2>-1) && (fabs(sl[k].at2) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].at2;
-				amgGM.ja[ik + id] = sl[k].iT2 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bT2) {
+				if ((sl[k].iT2 > -1) && (fabs(sl[k].at2) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].at2;
+					amgGM.ja[ik + id] = sl[k].iT2 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iS2>-1) && (fabs(sl[k].as2) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].as2;
-				amgGM.ja[ik + id] = sl[k].iS2 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bS2) {
+				if ((sl[k].iS2 > -1) && (fabs(sl[k].as2) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].as2;
+					amgGM.ja[ik + id] = sl[k].iS2 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iW2>-1) && (fabs(sl[k].aw2) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].aw2;
-				amgGM.ja[ik + id] = sl[k].iW2 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bW2) {
+				if ((sl[k].iW2 > -1) && (fabs(sl[k].aw2) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].aw2;
+					amgGM.ja[ik + id] = sl[k].iW2 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iB2>-1) && (fabs(sl[k].ab2) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].ab2;
-				amgGM.ja[ik + id] = sl[k].iB2 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
-			}
-
-			if ((sl[k].iE3>-1) && (fabs(sl[k].ae3) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].ae3;
-				amgGM.ja[ik + id] = sl[k].iE3 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
-			}
-			if ((sl[k].iN3>-1) && (fabs(sl[k].an3) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].an3;
-				amgGM.ja[ik + id] = sl[k].iN3 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
-			}
-			if ((sl[k].iT3>-1) && (fabs(sl[k].at3) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].at3;
-				amgGM.ja[ik + id] = sl[k].iT3 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
-			}
-			if ((sl[k].iS3>-1) && (fabs(sl[k].as3) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].as3;
-				amgGM.ja[ik + id] = sl[k].iS3 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
-			}
-			if ((sl[k].iW3>-1) && (fabs(sl[k].aw3) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].aw3;
-				amgGM.ja[ik + id] = sl[k].iW3 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
-			}
-			if ((sl[k].iB3>-1) && (fabs(sl[k].ab3) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].ab3;
-				amgGM.ja[ik + id] = sl[k].iB3 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bB2) {
+				if ((sl[k].iB2 > -1) && (fabs(sl[k].ab2) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].ab2;
+					amgGM.ja[ik + id] = sl[k].iB2 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
 
-			if ((sl[k].iE4>-1) && (fabs(sl[k].ae4) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].ae4;
-				amgGM.ja[ik + id] = sl[k].iE4 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bE3) {
+				if ((sl[k].iE3 > -1) && (fabs(sl[k].ae3) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].ae3;
+					amgGM.ja[ik + id] = sl[k].iE3 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iN4>-1) && (fabs(sl[k].an4) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].an4;
-				amgGM.ja[ik + id] = sl[k].iN4 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bN3) {
+				if ((sl[k].iN3 > -1) && (fabs(sl[k].an3) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].an3;
+					amgGM.ja[ik + id] = sl[k].iN3 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iT4>-1) && (fabs(sl[k].at4) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].at4;
-				amgGM.ja[ik + id] = sl[k].iT4 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bT3) {
+				if ((sl[k].iT3 > -1) && (fabs(sl[k].at3) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].at3;
+					amgGM.ja[ik + id] = sl[k].iT3 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iS4>-1) && (fabs(sl[k].as4) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].as4;
-				amgGM.ja[ik + id] = sl[k].iS4 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bS3) {
+				if ((sl[k].iS3 > -1) && (fabs(sl[k].as3) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].as3;
+					amgGM.ja[ik + id] = sl[k].iS3 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iW4>-1) && (fabs(sl[k].aw4) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].aw4;
-				amgGM.ja[ik + id] = sl[k].iW4 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bW3) {
+				if ((sl[k].iW3 > -1) && (fabs(sl[k].aw3) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].aw3;
+					amgGM.ja[ik + id] = sl[k].iW3 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
-			if ((sl[k].iB4>-1) && (fabs(sl[k].ab4) > nonzeroEPS)) {
-				amgGM.a[ik + id] = -sl[k].ab4;
-				amgGM.ja[ik + id] = sl[k].iB4 + 1;
-				amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
-				ik++;
+			if (sl[k].bB3) {
+				if ((sl[k].iB3 > -1) && (fabs(sl[k].ab3) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].ab3;
+					amgGM.ja[ik + id] = sl[k].iB3 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
+			}
+
+			if (sl[k].bE4) {
+				if ((sl[k].iE4 > -1) && (fabs(sl[k].ae4) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].ae4;
+					amgGM.ja[ik + id] = sl[k].iE4 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
+			}
+			if (sl[k].bN4) {
+				if ((sl[k].iN4 > -1) && (fabs(sl[k].an4) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].an4;
+					amgGM.ja[ik + id] = sl[k].iN4 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
+			}
+			if (sl[k].bT4) {
+				if ((sl[k].iT4 > -1) && (fabs(sl[k].at4) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].at4;
+					amgGM.ja[ik + id] = sl[k].iT4 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
+			}
+			if (sl[k].bS4) {
+				if ((sl[k].iS4 > -1) && (fabs(sl[k].as4) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].as4;
+					amgGM.ja[ik + id] = sl[k].iS4 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
+			}
+			if (sl[k].bW4) {
+				if ((sl[k].iW4 > -1) && (fabs(sl[k].aw4) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].aw4;
+					amgGM.ja[ik + id] = sl[k].iW4 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
+			}
+			if (sl[k].bB4) {
+				if ((sl[k].iB4 > -1) && (fabs(sl[k].ab4) > nonzeroEPS)) {
+					amgGM.a[ik + id] = -sl[k].ab4;
+					amgGM.ja[ik + id] = sl[k].iB4 + 1;
+					amgGM.ia[k + id] = my_imin(ik + 1, amgGM.ia[k + id]);
+					ik++;
+				}
 			}
 
 		}
@@ -14520,21 +15431,43 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		// для внутренних узлов расчётной области:
         for (integer k=0; k<maxbound; k++) {
-			if (fabs(slb[k].aw) > nonzeroEPS) {
-               // val[ik]=slb[k].aw/alpharelax;
-				amgGM.a[ik+id]=slb[k].aw; // релаксация для граничных узлов не применяется.
-				/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
-				     // Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
-					 // а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
-					 // более благоприятен вариант без нижней релаксации на граничных узлах.
-					 // Данное изменение согласовано с функцией solve.
+			//if (slb[k].iI == -1) 
+			{
+				if (fabs(slb[k].aw) > nonzeroEPS) {
+					// val[ik]=slb[k].aw/alpharelax;
+					amgGM.a[ik + id] = slb[k].aw; // релаксация для граничных узлов не применяется.
+					/*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
+						 // Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
+						 // а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
+						 // более благоприятен вариант без нижней релаксации на граничных узлах.
+						 // Данное изменение согласовано с функцией solve.
 
-					 val[ik]/=alpharelax; // Если условия Неймана то нижняя релаксация.
-				}*/
-				amgGM.ja[ik+id]=slb[k].iW+1;
-				amgGM.ia[maxelm + k + id] = my_imin(ik + 1, amgGM.ia[maxelm + k + id]);
-				ik++;
-			}
+						 val[ik]/=alpharelax; // Если условия Неймана то нижняя релаксация.
+					}*/
+					amgGM.ja[ik + id] = slb[k].iW + 1;
+					amgGM.ia[maxelm + k + id] = my_imin(ik + 1, amgGM.ia[maxelm + k + id]);
+					ik++;
+				}
+			}/*
+			else {
+				if (fabs(slb[k].aw) > nonzeroEPS) {
+					// val[ik]=slb[k].aw/alpharelax;
+					amgGM.a[ik + id] = slb[k].aw / alpharelax; // релаксация для граничных узлов не применяется.
+					amgGM.f[maxelm + k + id] += (1.0 - alpharelax)*slb[k].aw*amgGM.u[maxelm + k + id] / alpharelax;
+					slb[k].aw=slb[k].aw / alpharelax;
+												  /*if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
+												  // Внимание !!! было произведено тестирование: один вариант был с нижней релаксацией для граничных узлов,
+												  // а второй вариант был без нижней релаксации на граничных узлах. Было выяснено, что для сходимости
+												  // более благоприятен вариант без нижней релаксации на граничных узлах.
+												  // Данное изменение согласовано с функцией solve.
+
+												  val[ik]/=alpharelax; // Если условия Неймана то нижняя релаксация.
+												  }*//*
+					amgGM.ja[ik + id] = slb[k].iW + 1;
+					amgGM.ia[maxelm + k + id] = my_imin(ik + 1, amgGM.ia[maxelm + k + id]);
+					ik++;
+				}
+			}*/
 			if ((slb[k].iI>-1) && (fabs(slb[k].ai) > nonzeroEPS)) {
 				amgGM.a[ik+id]=-slb[k].ai;
 				amgGM.ja[ik+id]=slb[k].iI+1;
@@ -14546,6 +15479,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		}
 
+		alpharelax = alpharelax1;
 		// debug*****
 		//for (integer ideb = 1; ideb < 30; ideb++) {
 			//printf("%e %d %d\n", amgGM.a[ideb], amgGM.ja[ideb], amgGM.ia[ideb]);
@@ -14575,6 +15509,15 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		bool bOkfgmres_amg1r5;
 
+		doublereal tmax = -1.0e30;
+		for (integer i23 = 0; i23 < maxelm + maxbound; i23++) {
+
+			if (amgGM.u[i23] > tmax) {
+				tmax = amgGM.u[i23];
+			}
+		}
+		//printf("amg1r5_non_linear_ tmax=%e\n", tmax); getchar();
+
 		//printf("getready ...");
 		//getchar();
 
@@ -14591,6 +15534,9 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr);
+
+			
+
 		}
 		else if (iVorst_version == 1) {
 
@@ -14609,7 +15555,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound,b,lb,s_loc,ls);
 
 		}
-		else {
+		else if (iVorst_version == 2) {
 			//31 декабря 2017.
 
 			// В качестве внешнего итерационного процесса используется 
@@ -14625,6 +15571,24 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&nwt, &ntr, &ierr, iVar, sl, slb,
 				maxelm, maxbound, bOkfgmres_amg1r5,
 				b, lb, s_loc, ls);
+		}
+		else {
+			// 28.05.2020
+			// Нелинейный решатель.
+
+			//printf("ifirst=%lld", ifirst);
+			//getchar();
+
+			ifirst = 10;//  стартуем с предыдущего начального приблитжения.
+
+			amg1r5_non_linear_(amgGM.a, amgGM.ia, amgGM.ja,
+				amgGM.u, amgGM.f, amgGM.ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr,b,lb,maxelm, maxelm+maxbound);
 		}
 
 		free_level_additional_data(milu2_amg1r5, levelx);
@@ -14751,7 +15715,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	   }
 	   res_sum=sqrt(res_sum);
 
-	   if ((iVar == TEMP) && ((adiabatic_vs_heat_transfer_coeff == 1)||(breakRUMBAcalc_for_nonlinear_boundary_condition==true))) {
+	   if ((iVar == TEMP) && ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)||(breakRUMBAcalc_for_nonlinear_boundary_condition==true))) {
 		   // Если мы решаем Задачу с условием Ньютона Рихмана то у нас нету ни одного условия Дирихле.
 		   // Сходимость определяется на глобальном уровне в solve nonlinear temp.
 
@@ -14776,9 +15740,9 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				   //printf("\nno panic: because WACEB run. restart solver.\n");
 				   printf("iVar=");
 				   switch (iVar) {
-				   case VX: printf("VX\n"); break;
-				   case VY: printf("VY\n"); break;
-				   case VZ: printf("VZ\n"); break;
+				   case VELOCITY_X_COMPONENT: printf("VX\n"); break;
+				   case VELOCITY_Y_COMPONENT: printf("VY\n"); break;
+				   case VELOCITY_Z_COMPONENT: printf("VZ\n"); break;
 				   case PAM: printf("PAM\n"); break;
 				   case TEMP: printf("TEMP\n"); break;
 				   }
@@ -14792,7 +15756,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				   integer* icol_stub = nullptr;
 				   Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0,
 					   maxit, alpharelax, bprintmessage, iVar, m, 
-					   ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls,100000000, icol_stub, 0,false);
+					   ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls,100000000, icol_stub, 0,false,w,lw);
 
 				   ///goto LabelAMGdivergenceDetected;
 			   }
@@ -14822,29 +15786,30 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 	           bool bLRfree, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
 	           integer iVorst_version,  bool &worked_successfully,
-	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw)
 {
 
 	              // iVorst_version == 0 - просто amg1r5 алгоритм.
 	              // iVorst_version == 1 - amg1r5 алгоритм является предобуславливателем к алгоритму Хенка Ван дер Ворста BiCGStab.
 
 				   bool bmemory_local=false;
-				   if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+				   if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 					   bmemory_local = true;//4.08.2018
 				   }
-				   if (adiabatic_vs_heat_transfer_coeff == 1) {
+				   if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
 					   // Нелинейное условие Ньютона - Рихмана 
 					   // матрица всё равно пересобирается каждый раз.
-					 //  bmemory_local = true;
+					   //  bmemory_local = true;
 				   }
 
 				   if (bmemory_local) {
 					   // локальное выделение памяти , много alloc и free.
+					   // Скорость - давление.
 					   amg_loc_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, iVorst_version, worked_successfully,b,lb,s_loc,ls);
 				   }
 				   else {
 					   // память выделяется лишь единожды.
-					   amg_global_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, ifrontregulationgl, ibackregulationgl, iVorst_version, b, lb, s_loc, ls);
+					   amg_global_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, ifrontregulationgl, ibackregulationgl, iVorst_version, b, lb, s_loc, ls,w,lw);
 				   }
 }
 

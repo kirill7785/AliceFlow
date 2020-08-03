@@ -512,7 +512,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
     iao[1] = 1;
     iptr = 1;
 /* --------- */
-    i__1 = n;
+    //i__1 = n;
     for (ii = 1; ii <= i__1; ++ii) {
 	added = false;
 	idiag = iptr + (iwk[ii + 1] - iwk[ii]);
@@ -1086,9 +1086,15 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 typedef struct TLEVEL_ADDITIONAL_DATA_BUFER {
 	// lusol_ портит матрицы и вектор правой части
 	// поэтому будем работать только на копиях объектов
-	doublereal* alu_copy=nullptr;
-	integer* jlu_copy = nullptr;
-	integer* ju_copy = nullptr;
+	doublereal* alu_copy;
+	integer* jlu_copy;
+	integer* ju_copy;
+
+	TLEVEL_ADDITIONAL_DATA_BUFER() {
+		alu_copy=nullptr;
+		jlu_copy = nullptr;
+		ju_copy = nullptr;
+	}
 } LEVEL_ADDITIONAL_DATA_BUFER;
 
 // Централизованное хранилище вспомогательных данных,
@@ -1103,28 +1109,54 @@ LEVEL_ADDITIONAL_DATA_BUFER milu_gl_buffer;
 // сглаживателей на основе методов подпространства Крылова.
 typedef struct TLEVEL_ADDITIONAL_DATA {
 	// для хранения матрицы на данном уровне.
-	doublereal* val = nullptr;
-	integer* col_ind = nullptr;
-	integer* row_ptr = nullptr;
+	doublereal* val;
+	integer* col_ind;
+	integer* row_ptr;
 	// для хранения ilu2 декомпозиции.
 	static const integer lfil = 2;
-	integer maxelm_plus_maxbound=-1;
-	integer iwk=-1;
-	doublereal* alu = nullptr;
-	integer* jlu = nullptr;
-	integer* ju = nullptr;
-	integer* levs = nullptr;
-	doublereal* w = nullptr;
-	integer* jw = nullptr;
+	integer maxelm_plus_maxbound;
+	integer iwk;
+	doublereal* alu;
+	integer* jlu;
+	integer* ju;
+	integer* levs;
+	doublereal* w;
+	integer* jw;
 	// lusol_ портит матрицы и вектор правой части
 	// поэтому будем работать только на копиях объектов
 	//doublereal* alu_copy;
 	//integer* jlu_copy;
 	//integer* ju_copy;
-	doublereal* b_copy = nullptr;
-	doublereal* x_copy = nullptr;
-	doublereal* zbuf = nullptr;
-	doublereal* zbuf2 = nullptr;
+	doublereal* b_copy;
+	doublereal* x_copy;
+	doublereal* zbuf;
+	doublereal* zbuf2;
+
+	TLEVEL_ADDITIONAL_DATA() {
+		// для хранения матрицы на данном уровне.
+		val = nullptr;
+		col_ind = nullptr;
+		row_ptr = nullptr;
+		// для хранения ilu2 декомпозиции.
+		//static const integer lfil = 2;
+		maxelm_plus_maxbound=-1;
+		iwk=-1;
+		alu = nullptr;
+		jlu = nullptr;
+		ju = nullptr;
+		levs = nullptr;
+		w = nullptr;
+		jw = nullptr;
+		// lusol_ портит матрицы и вектор правой части
+		// поэтому будем работать только на копиях объектов
+		//doublereal* alu_copy;
+		//integer* jlu_copy;
+		//integer* ju_copy;
+		b_copy = nullptr;
+		x_copy = nullptr;
+		zbuf = nullptr;
+		zbuf2 = nullptr;
+	}
 } LEVEL_ADDITIONAL_DATA;
 
 // 4 ноября 2016 года.
@@ -1133,30 +1165,58 @@ typedef struct TLEVEL_ADDITIONAL_DATA {
 // сглаживателей на основе методов подпространства Крылова.
 typedef struct TLEVEL_ADDITIONAL_DATA0 {
 	// для хранения матрицы на данном уровне.
-	doublereal* val = nullptr;
-	integer* col_ind = nullptr;
-	integer* row_ptr = nullptr;
+	doublereal* val;
+	integer* col_ind;
+	integer* row_ptr;
 	// для хранения ilu0 декомпозиции.
 
 	// Матрица разложения.
-	doublereal* alu = nullptr;
-	integer* jlu = nullptr;
-	integer* ju = nullptr;
+	doublereal* alu;
+	integer* jlu;
+	integer* ju;
 	// Вспомогательный вектор.
-	integer* iw = nullptr;
+	integer* iw;
 	
 	// for lusol_1patchforRUMBA
-	integer iwk=-1;
+	integer iwk;
 	
 	// lusol_ портит матрицы и вектор правой части
 	// поэтому будем работать только на копиях объектов
-	doublereal* alu_copy = nullptr;
-	integer* jlu_copy = nullptr;
-	integer* ju_copy = nullptr;
-	doublereal* b_copy = nullptr;
-	doublereal* x_copy = nullptr;
-	doublereal* zbuf = nullptr;
-	doublereal* zbuf2 = nullptr;
+	doublereal* alu_copy;
+	integer* jlu_copy;
+	integer* ju_copy;
+	doublereal* b_copy;
+	doublereal* x_copy;
+	doublereal* zbuf;
+	doublereal* zbuf2;
+
+	TLEVEL_ADDITIONAL_DATA0() {
+		 // для хранения матрицы на данном уровне.
+		 val = nullptr;
+		 col_ind = nullptr;
+		 row_ptr = nullptr;
+		 // для хранения ilu0 декомпозиции.
+
+	     // Матрица разложения.
+		 alu = nullptr;
+		 jlu = nullptr;
+		 ju = nullptr;
+		 // Вспомогательный вектор.
+		 iw = nullptr;
+	
+		 // for lusol_1patchforRUMBA
+	     iwk=-1;
+	
+	     // lusol_ портит матрицы и вектор правой части
+	     // поэтому будем работать только на копиях объектов
+		 alu_copy = nullptr;
+		 jlu_copy = nullptr;
+		 ju_copy = nullptr;
+		 b_copy = nullptr;
+		 x_copy = nullptr;
+		 zbuf = nullptr;
+		 zbuf2 = nullptr;
+	}
 } LEVEL_ADDITIONAL_DATA0;
 
 // 10.08.2016

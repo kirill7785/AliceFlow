@@ -51,8 +51,8 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 
     // iP - номер центрального контрольного объёма
 	integer iE=-1, iN=-1, iT=-1, iW=-1, iS=-1, iB=-1; // номера соседних контрольных объёмов
-	iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	// индексировать соседей для поправки давления 
 	// ненужно, т.к. они уже проиндексированы в 
 	// my_elmatr_quad_PAm...
@@ -113,9 +113,9 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 
 	doublereal ds=0.0, dl=0.0, dv=0.0; // площадь грани, длина интервала и объём контрольного объёма.
 	switch (iVar) {
-       case VX: ds=dy*dz; dv=ds*dx; dl=dx; break;
-       case VY: ds=dx*dz; dv=ds*dy; dl=dy;  break;
-       case VZ: ds=dx*dy; dv=ds*dz; dl=dz;  break;
+       case VELOCITY_X_COMPONENT: ds=dy*dz; dv=ds*dx; dl=dx; break;
+       case VELOCITY_Y_COMPONENT: ds=dx*dz; dv=ds*dy; dl=dy;  break;
+       case VELOCITY_Z_COMPONENT: ds=dx*dy; dv=ds*dz; dl=dz;  break;
 	}
 
 	
@@ -145,7 +145,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
     if (!bW) {
 		TOCHKA pp, pb;
 		center_cord3D(iP, nvtx, pa, pp,100);
-		center_cord3D(iW, nvtx, pa, pb,WSIDE);
+		center_cord3D(iW, nvtx, pa, pb,W_SIDE);
 		hxminus=fabs(pp.x-pb.x);
 
 		PAmW=potent[PAM][iW];
@@ -161,16 +161,16 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 			    break;
 		case 1: // линейная интерполяция
 		         center_cord3D(iP, nvtx, pa, pp,100);
-		         center_cord3D(iE, nvtx, pa, pb,ESIDE);
+		         center_cord3D(iE, nvtx, pa, pb,E_SIDE);
 		         PAmW=my_linear_interpolation('-', potent[PAM][iP], potent[PAM][iE], pp.x, pb.x, pp.x-0.5*dx); 
 			    break;
 		case 2: // квадратичная интерполяция.
 
 		         center_cord3D(iP, nvtx, pa, pp,100);
-		         center_cord3D(iE, nvtx, pa, pb,ESIDE);
-			     center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
+		         center_cord3D(iE, nvtx, pa, pb,E_SIDE);
+			     center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb,EE_SIDE);
 					
-			     PAmW=my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[PAM][iE], potent[PAM][iP], pbb.x , pb.x, pp.x, pp.x-0.5*dx); 
+			     PAmW=my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[PAM][iE], potent[PAM][iP], pbb.x , pb.x, pp.x, pp.x-0.5*dx); 
 			    break;
 		default: // значение которое получено после решения СЛАУ.
 			      PAmW=potent[PAM][iW];
@@ -181,7 +181,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	if (!bE) {
 		TOCHKA pp, pb;
 		center_cord3D(iP, nvtx, pa, pp,100);
-		center_cord3D(iE, nvtx, pa, pb,ESIDE);
+		center_cord3D(iE, nvtx, pa, pb,E_SIDE);
 		hxplus=fabs(pb.x-pp.x);
 
 		PAmE=potent[PAM][iE];
@@ -197,17 +197,17 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 		case 1: // линейная интерполяция
 
 		         center_cord3D(iP, nvtx, pa, pp,100);
-		         center_cord3D(iW, nvtx, pa, pb,WSIDE);
+		         center_cord3D(iW, nvtx, pa, pb,W_SIDE);
 		         PAmE=my_linear_interpolation('+', potent[PAM][iP], potent[PAM][iW], pp.x, pb.x, pp.x+0.5*dx);
 
 			    break;
 		case 2: // квадратичная интерполяция.
 						     
 		         center_cord3D(iP, nvtx, pa, pp,100);
-		         center_cord3D(iW, nvtx, pa, pb,WSIDE);
-				 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
+		         center_cord3D(iW, nvtx, pa, pb,W_SIDE);
+				 center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb,WW_SIDE);
 					
-				 PAmE = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[PAM][iW], potent[PAM][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+				 PAmE = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[PAM][iW], potent[PAM][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 			    break;
 		default: // значение которое получено после решения СЛАУ.
 			     PAmE=potent[PAM][iE]; 
@@ -218,7 +218,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	if (!bS) {
 		TOCHKA pp, pb;
 		center_cord3D(iP, nvtx, pa, pp,100);
-		center_cord3D(iS, nvtx, pa, pb,SSIDE);
+		center_cord3D(iS, nvtx, pa, pb,S_SIDE);
 		hyminus=fabs(pp.y-pb.y);
 
 		PAmS=potent[PAM][iS];
@@ -235,7 +235,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iN, nvtx, pa, pb,NSIDE);
+		        center_cord3D(iN, nvtx, pa, pb,N_SIDE);
 		        PAmS=my_linear_interpolation('-', potent[PAM][iP], potent[PAM][iN], pp.y, pb.y, pp.y-0.5*dy);
 
 			    break;
@@ -243,10 +243,10 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 			    // квадратичная интерполяция.
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iN, nvtx, pa, pb,NSIDE);
-				center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb,NN);
+		        center_cord3D(iN, nvtx, pa, pb,N_SIDE);
+				center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb,NN_SIDE);
 					
-				PAmS = my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[PAM][iN], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+				PAmS = my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[PAM][iN], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 
 			    break;
 		default: // значение которое получено после решения СЛАУ. 
@@ -258,7 +258,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	if (!bN) {
 		TOCHKA pp, pb;
 		center_cord3D(iP, nvtx, pa, pp,100);
-		center_cord3D(iN, nvtx, pa, pb,NSIDE);
+		center_cord3D(iN, nvtx, pa, pb,N_SIDE);
 		hyplus=fabs(pb.y-pp.y);
 
 		PAmN=potent[PAM][iN];
@@ -275,17 +275,17 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iS, nvtx, pa, pb,SSIDE);
+		        center_cord3D(iS, nvtx, pa, pb,S_SIDE);
 		        PAmN=my_linear_interpolation('+', potent[PAM][iP], potent[PAM][iS], pp.y, pb.y, pp.y+0.5*dy);
 			    break;
 		case 2:
 			    // квадратичная интерполяция.
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iS, nvtx, pa, pb,SSIDE);
-				center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
+		        center_cord3D(iS, nvtx, pa, pb,S_SIDE);
+				center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb,SS_SIDE);
 					
-				PAmN = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[PAM][iS], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+				PAmN = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[PAM][iS], potent[PAM][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 			    break;
 		default: 
 			    // значение которое получено после решения СЛАУ. 
@@ -299,7 +299,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	if (!bB) {
 		TOCHKA pp, pb;
 		center_cord3D(iP, nvtx, pa, pp,100);
-		center_cord3D(iB, nvtx, pa, pb,BSIDE);
+		center_cord3D(iB, nvtx, pa, pb,B_SIDE);
 		hzminus=fabs(pp.z-pb.z);
 
 		PAmB=potent[PAM][iB];
@@ -317,16 +317,16 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iT, nvtx, pa, pb,TSIDE);
+		        center_cord3D(iT, nvtx, pa, pb,T_SIDE);
 		        PAmB=my_linear_interpolation('-', potent[PAM][iP], potent[PAM][iT], pp.z, pb.z, pp.z-0.5*dz);
 			    break;
 		case 2: // квадратичная интерполяция.
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iT, nvtx, pa, pb,TSIDE);
-				center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb,TTSIDE);
+		        center_cord3D(iT, nvtx, pa, pb,T_SIDE);
+				center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb,TT_SIDE);
 					
-				PAmB = my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[PAM][iT], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+				PAmB = my_quadratic_interpolation('-', potent[PAM][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[PAM][iT], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 			    break;
 		default:
 			    // значение которое получено после решения СЛАУ. 
@@ -338,7 +338,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	if (!bT) { 
 		TOCHKA pp, pb;
 		center_cord3D(iP, nvtx, pa, pp,100);
-		center_cord3D(iT, nvtx, pa, pb,TSIDE);
+		center_cord3D(iT, nvtx, pa, pb,T_SIDE);
 		hzplus=fabs(pb.z-pp.z);
 
 		PAmT=potent[PAM][iT];
@@ -355,16 +355,16 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 			    // линейная интерполяция
 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iB, nvtx, pa, pb,BSIDE);
+		        center_cord3D(iB, nvtx, pa, pb,B_SIDE);
 		        PAmT=my_linear_interpolation('+', potent[PAM][iP], potent[PAM][iB], pp.z, pb.z, pp.z+0.5*dz);
 			    break;
 		case 2:// квадратичная интерполяция.
                 
 		        center_cord3D(iP, nvtx, pa, pp,100);
-		        center_cord3D(iB, nvtx, pa, pb,BSIDE);
-				center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
+		        center_cord3D(iB, nvtx, pa, pb,B_SIDE);
+				center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb,BB_SIDE);
 					
-				PAmT = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[PAM][iB], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+				PAmT = my_quadratic_interpolation('+', potent[PAM][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[PAM][iB], potent[PAM][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 			    break;
 		default: // значение которое получено после решения СЛАУ. 
 			     PAmT=potent[PAM][iT];
@@ -380,7 +380,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	// Линейная интерполяция давления на грань КО.
 	doublereal deltaP=0.0, gradP=0.0;
 	switch (iVar) {
-		case VX: if (iderivative_pressure== FIRST_ORDER) {
+		case VELOCITY_X_COMPONENT: if (iderivative_pressure== FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 				      deltaP=(fwplus*PAmW+(1-fwplus)*PAmP);
 			          deltaP-=(feplus*PAmE+(1-feplus)*PAmP); 
@@ -393,7 +393,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 					  gradP=-rgradF(PAmW, PAmP, PAmE, hxminus, hxplus);
 				  }
 				  break;
-		case VY: if (iderivative_pressure== FIRST_ORDER) {
+		case VELOCITY_Y_COMPONENT: if (iderivative_pressure== FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 				      deltaP=(fsplus*PAmS+(1-fsplus)*PAmP);
 			          deltaP-=(fnplus*PAmN+(1-fnplus)*PAmP);
@@ -406,7 +406,7 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 					  gradP=-rgradF(PAmS, PAmP, PAmN, hyminus, hyplus);
 				  }
 			      break;
-        case VZ: if (iderivative_pressure== FIRST_ORDER) {
+        case VELOCITY_Z_COMPONENT: if (iderivative_pressure== FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 			          deltaP=(fbplus*PAmB+(1-fbplus)*PAmP);
 			          deltaP-=(ftplus*PAmT+(1-ftplus)*PAmP);
@@ -475,9 +475,9 @@ void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,
 
 	doublereal ds=0.0, dv=0.0; // площадь грани, длина интервала и объём контрольного объёма.
 	switch (iVar) {
-       case VX: ds=dy*dz; dv=ds*dx; break;
-       case VY: ds=dx*dz; dv=ds*dy; break;
-       case VZ: ds=dx*dy; dv=ds*dz; break;
+       case VELOCITY_X_COMPONENT: ds=dy*dz; dv=ds*dx; break;
+       case VELOCITY_Y_COMPONENT: ds=dx*dz; dv=ds*dy; break;
+       case VELOCITY_Z_COMPONENT: ds=dx*dy; dv=ds*dz; break;
 	}
 	
 	// Случай граничного узла G учитывается правильно,
@@ -486,11 +486,11 @@ void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,
 	// Линейная интерполяция давления на грань КО.
 	doublereal deltaP=0.0, gradP=0.0;
 	switch (iVar) {
-		case VX: gradP=-potent[GRADXPAM][iP];
+		case VELOCITY_X_COMPONENT: gradP=-potent[GRADXPAM][iP];
 				  break;
-		case VY: gradP=-potent[GRADYPAM][iP];
+		case VELOCITY_Y_COMPONENT: gradP=-potent[GRADYPAM][iP];
 				  break;
-        case VZ: gradP=-potent[GRADZPAM][iP];
+        case VELOCITY_Z_COMPONENT: gradP=-potent[GRADZPAM][iP];
 				  break;
 	}
 
@@ -546,11 +546,11 @@ void correct_internal_volume3(integer iP, integer iVar, doublereal** prop,
 	// координатного направления.
 	doublereal gradP=0.0;
 	switch (iVar) {
-		case VX: gradP=-potent[GRADXPAM][iP];
+		case VELOCITY_X_COMPONENT: gradP=-potent[GRADXPAM][iP];
 				  break;
-		case VY: gradP=-potent[GRADYPAM][iP];
+		case VELOCITY_Y_COMPONENT: gradP=-potent[GRADYPAM][iP];
 				  break;
-        case VZ: gradP=-potent[GRADZPAM][iP];
+        case VELOCITY_Z_COMPONENT: gradP=-potent[GRADZPAM][iP];
 				  break;
 	}
 
@@ -619,14 +619,14 @@ void correct_internal_volume4(integer iP, integer iVar, doublereal** prop,
 	doublereal gradPAM=0.0, tauP=0.0;
 	switch (iVar) {
 		// всё правильно перед градиентом именно знак минус.
-		case VX: gradPAM=-potent[GRADXPAM][iP];
-			      tauP=tau[VX][iP];
+		case VELOCITY_X_COMPONENT: gradPAM=-potent[GRADXPAM][iP];
+			      tauP=tau[VELOCITY_X_COMPONENT][iP];
 				  break;
-		case VY: gradPAM=-potent[GRADYPAM][iP];
-			      tauP=tau[VY][iP];
+		case VELOCITY_Y_COMPONENT: gradPAM=-potent[GRADYPAM][iP];
+			      tauP=tau[VELOCITY_Y_COMPONENT][iP];
 				  break;
-        case VZ: gradPAM=-potent[GRADZPAM][iP];
-			      tauP=tau[VZ][iP];
+        case VELOCITY_Z_COMPONENT: gradPAM=-potent[GRADZPAM][iP];
+			      tauP=tau[VELOCITY_Z_COMPONENT][iP];
 				  break;
 	}
 
@@ -695,20 +695,20 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 		// iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	    
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
         // если с одной из сторон граница расчётной области 
@@ -1550,79 +1550,79 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
         // интерполяция псевдовремени сделана так, чтобы выполнялись 
 	    // предельные соотношения.
 		if (iE > -1) {
-			if (!bE) taue = tau[VX][iE] * tau[VX][iP] / (feplus*tau[VX][iE] + (1.0 - feplus)*tau[VX][iP]); else taue = tau[VX][iE];
+			if (!bE) taue = tau[VELOCITY_X_COMPONENT][iE] * tau[VELOCITY_X_COMPONENT][iP] / (feplus*tau[VELOCITY_X_COMPONENT][iE] + (1.0 - feplus)*tau[VELOCITY_X_COMPONENT][iP]); else taue = tau[VELOCITY_X_COMPONENT][iE];
 		}
 		if (iW > -1) {
-			if (!bW) tauw = tau[VX][iW] * tau[VX][iP] / (fwplus*tau[VX][iW] + (1.0 - fwplus)*tau[VX][iP]); else tauw = tau[VX][iW];
+			if (!bW) tauw = tau[VELOCITY_X_COMPONENT][iW] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus*tau[VELOCITY_X_COMPONENT][iW] + (1.0 - fwplus)*tau[VELOCITY_X_COMPONENT][iP]); else tauw = tau[VELOCITY_X_COMPONENT][iW];
 		}
 		if (iN > -1) {
-			if (!bN) taun = tau[VY][iN] * tau[VY][iP] / (fnplus*tau[VY][iN] + (1.0 - fnplus)*tau[VY][iP]); else taun = tau[VY][iN];
+			if (!bN) taun = tau[VELOCITY_Y_COMPONENT][iN] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus*tau[VELOCITY_Y_COMPONENT][iN] + (1.0 - fnplus)*tau[VELOCITY_Y_COMPONENT][iP]); else taun = tau[VELOCITY_Y_COMPONENT][iN];
 		}
 		if (iS > -1) {
-			if (!bS) taus = tau[VY][iS] * tau[VY][iP] / (fsplus*tau[VY][iS] + (1.0 - fsplus)*tau[VY][iP]); else taus = tau[VY][iS];
+			if (!bS) taus = tau[VELOCITY_Y_COMPONENT][iS] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus*tau[VELOCITY_Y_COMPONENT][iS] + (1.0 - fsplus)*tau[VELOCITY_Y_COMPONENT][iP]); else taus = tau[VELOCITY_Y_COMPONENT][iS];
 		}
 		if (iT > -1) {
-			if (!bT) taut = tau[VZ][iT] * tau[VZ][iP] / (ftplus*tau[VZ][iT] + (1.0 - ftplus)*tau[VZ][iP]); else taut = tau[VZ][iT];
+			if (!bT) taut = tau[VELOCITY_Z_COMPONENT][iT] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus*tau[VELOCITY_Z_COMPONENT][iT] + (1.0 - ftplus)*tau[VELOCITY_Z_COMPONENT][iP]); else taut = tau[VELOCITY_Z_COMPONENT][iT];
 		}
 		if (iB > -1) {
-			if (!bB) taub = tau[VZ][iB] * tau[VZ][iP] / (fbplus*tau[VZ][iB] + (1.0 - fbplus)*tau[VZ][iP]); else taub = tau[VZ][iB];
+			if (!bB) taub = tau[VELOCITY_Z_COMPONENT][iB] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus*tau[VELOCITY_Z_COMPONENT][iB] + (1.0 - fbplus)*tau[VELOCITY_Z_COMPONENT][iP]); else taub = tau[VELOCITY_Z_COMPONENT][iB];
 		}
 
 		if (iE2 > -1) {
-			if (!bE2) taue2 = tau[VX][iE2] * tau[VX][iP] / (feplus2*tau[VX][iE2] + (1.0 - feplus2)*tau[VX][iP]); else taue2 = tau[VX][iE2];
+			if (!bE2) taue2 = tau[VELOCITY_X_COMPONENT][iE2] * tau[VELOCITY_X_COMPONENT][iP] / (feplus2*tau[VELOCITY_X_COMPONENT][iE2] + (1.0 - feplus2)*tau[VELOCITY_X_COMPONENT][iP]); else taue2 = tau[VELOCITY_X_COMPONENT][iE2];
 		}
 		if (iW2 > -1) {
-			if (!bW2) tauw2 = tau[VX][iW2] * tau[VX][iP] / (fwplus2*tau[VX][iW2] + (1.0 - fwplus2)*tau[VX][iP]); else tauw2 = tau[VX][iW2];
+			if (!bW2) tauw2 = tau[VELOCITY_X_COMPONENT][iW2] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus2*tau[VELOCITY_X_COMPONENT][iW2] + (1.0 - fwplus2)*tau[VELOCITY_X_COMPONENT][iP]); else tauw2 = tau[VELOCITY_X_COMPONENT][iW2];
 		}
 		if (iN2 > -1) {
-			if (!bN2) taun2 = tau[VY][iN2] * tau[VY][iP] / (fnplus2*tau[VY][iN2] + (1.0 - fnplus2)*tau[VY][iP]); else taun2 = tau[VY][iN2];
+			if (!bN2) taun2 = tau[VELOCITY_Y_COMPONENT][iN2] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus2*tau[VELOCITY_Y_COMPONENT][iN2] + (1.0 - fnplus2)*tau[VELOCITY_Y_COMPONENT][iP]); else taun2 = tau[VELOCITY_Y_COMPONENT][iN2];
 		}
 		if (iS2 > -1) {
-			if (!bS2) taus2 = tau[VY][iS2] * tau[VY][iP] / (fsplus2*tau[VY][iS2] + (1.0 - fsplus2)*tau[VY][iP]); else taus2 = tau[VY][iS2];
+			if (!bS2) taus2 = tau[VELOCITY_Y_COMPONENT][iS2] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus2*tau[VELOCITY_Y_COMPONENT][iS2] + (1.0 - fsplus2)*tau[VELOCITY_Y_COMPONENT][iP]); else taus2 = tau[VELOCITY_Y_COMPONENT][iS2];
 		}
 		if (iT2 > -1) {
-			if (!bT2) taut2 = tau[VZ][iT2] * tau[VZ][iP] / (ftplus2*tau[VZ][iT2] + (1.0 - ftplus2)*tau[VZ][iP]); else taut2 = tau[VZ][iT2];
+			if (!bT2) taut2 = tau[VELOCITY_Z_COMPONENT][iT2] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus2*tau[VELOCITY_Z_COMPONENT][iT2] + (1.0 - ftplus2)*tau[VELOCITY_Z_COMPONENT][iP]); else taut2 = tau[VELOCITY_Z_COMPONENT][iT2];
 		}
 		if (iB2 > -1) {
-			if (!bB2) taub2 = tau[VZ][iB2] * tau[VZ][iP] / (fbplus2*tau[VZ][iB2] + (1.0 - fbplus2)*tau[VZ][iP]); else taub2 = tau[VZ][iB2];
+			if (!bB2) taub2 = tau[VELOCITY_Z_COMPONENT][iB2] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus2*tau[VELOCITY_Z_COMPONENT][iB2] + (1.0 - fbplus2)*tau[VELOCITY_Z_COMPONENT][iP]); else taub2 = tau[VELOCITY_Z_COMPONENT][iB2];
 		}
 
 		if (iE3 > -1) {
-			if (!bE3) taue3 = tau[VX][iE3] * tau[VX][iP] / (feplus3*tau[VX][iE3] + (1.0 - feplus3)*tau[VX][iP]); else taue3 = tau[VX][iE3];
+			if (!bE3) taue3 = tau[VELOCITY_X_COMPONENT][iE3] * tau[VELOCITY_X_COMPONENT][iP] / (feplus3*tau[VELOCITY_X_COMPONENT][iE3] + (1.0 - feplus3)*tau[VELOCITY_X_COMPONENT][iP]); else taue3 = tau[VELOCITY_X_COMPONENT][iE3];
 		}
 		if (iW3 > -1) {
-			if (!bW3) tauw3 = tau[VX][iW3] * tau[VX][iP] / (fwplus3*tau[VX][iW3] + (1.0 - fwplus3)*tau[VX][iP]); else tauw3 = tau[VX][iW3];
+			if (!bW3) tauw3 = tau[VELOCITY_X_COMPONENT][iW3] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus3*tau[VELOCITY_X_COMPONENT][iW3] + (1.0 - fwplus3)*tau[VELOCITY_X_COMPONENT][iP]); else tauw3 = tau[VELOCITY_X_COMPONENT][iW3];
 		}
 		if (iN3 > -1) {
-			if (!bN3) taun3 = tau[VY][iN3] * tau[VY][iP] / (fnplus3*tau[VY][iN3] + (1.0 - fnplus3)*tau[VY][iP]); else taun3 = tau[VY][iN3];
+			if (!bN3) taun3 = tau[VELOCITY_Y_COMPONENT][iN3] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus3*tau[VELOCITY_Y_COMPONENT][iN3] + (1.0 - fnplus3)*tau[VELOCITY_Y_COMPONENT][iP]); else taun3 = tau[VELOCITY_Y_COMPONENT][iN3];
 		}
 		if (iS3 > -1) {
-			if (!bS3) taus3 = tau[VY][iS3] * tau[VY][iP] / (fsplus3*tau[VY][iS3] + (1.0 - fsplus3)*tau[VY][iP]); else taus3 = tau[VY][iS3];
+			if (!bS3) taus3 = tau[VELOCITY_Y_COMPONENT][iS3] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus3*tau[VELOCITY_Y_COMPONENT][iS3] + (1.0 - fsplus3)*tau[VELOCITY_Y_COMPONENT][iP]); else taus3 = tau[VELOCITY_Y_COMPONENT][iS3];
 		}
 		if (iT3 > -1) {
-			if (!bT3) taut3 = tau[VZ][iT3] * tau[VZ][iP] / (ftplus3*tau[VZ][iT3] + (1.0 - ftplus3)*tau[VZ][iP]); else taut3 = tau[VZ][iT3];
+			if (!bT3) taut3 = tau[VELOCITY_Z_COMPONENT][iT3] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus3*tau[VELOCITY_Z_COMPONENT][iT3] + (1.0 - ftplus3)*tau[VELOCITY_Z_COMPONENT][iP]); else taut3 = tau[VELOCITY_Z_COMPONENT][iT3];
 		}
 		if (iB3 > -1) {
-			if (!bB3) taub3 = tau[VZ][iB3] * tau[VZ][iP] / (fbplus3*tau[VZ][iB3] + (1.0 - fbplus3)*tau[VZ][iP]); else taub3 = tau[VZ][iB3];
+			if (!bB3) taub3 = tau[VELOCITY_Z_COMPONENT][iB3] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus3*tau[VELOCITY_Z_COMPONENT][iB3] + (1.0 - fbplus3)*tau[VELOCITY_Z_COMPONENT][iP]); else taub3 = tau[VELOCITY_Z_COMPONENT][iB3];
 		}
 
 		if (iE4 > -1) {
-			if (!bE4) taue4 = tau[VX][iE4] * tau[VX][iP] / (feplus4*tau[VX][iE4] + (1.0 - feplus4)*tau[VX][iP]); else taue4 = tau[VX][iE4];
+			if (!bE4) taue4 = tau[VELOCITY_X_COMPONENT][iE4] * tau[VELOCITY_X_COMPONENT][iP] / (feplus4*tau[VELOCITY_X_COMPONENT][iE4] + (1.0 - feplus4)*tau[VELOCITY_X_COMPONENT][iP]); else taue4 = tau[VELOCITY_X_COMPONENT][iE4];
 		}
 		if (iW4 > -1) {
-			if (!bW4) tauw4 = tau[VX][iW4] * tau[VX][iP] / (fwplus4*tau[VX][iW4] + (1.0 - fwplus4)*tau[VX][iP]); else tauw4 = tau[VX][iW4];
+			if (!bW4) tauw4 = tau[VELOCITY_X_COMPONENT][iW4] * tau[VELOCITY_X_COMPONENT][iP] / (fwplus4*tau[VELOCITY_X_COMPONENT][iW4] + (1.0 - fwplus4)*tau[VELOCITY_X_COMPONENT][iP]); else tauw4 = tau[VELOCITY_X_COMPONENT][iW4];
 		}
 		if (iN4 > -1) {
-			if (!bN4) taun4 = tau[VY][iN4] * tau[VY][iP] / (fnplus4*tau[VY][iN4] + (1.0 - fnplus4)*tau[VY][iP]); else taun4 = tau[VY][iN4];
+			if (!bN4) taun4 = tau[VELOCITY_Y_COMPONENT][iN4] * tau[VELOCITY_Y_COMPONENT][iP] / (fnplus4*tau[VELOCITY_Y_COMPONENT][iN4] + (1.0 - fnplus4)*tau[VELOCITY_Y_COMPONENT][iP]); else taun4 = tau[VELOCITY_Y_COMPONENT][iN4];
 		}
 		if (iS4 > -1) {
-			if (!bS4) taus4 = tau[VY][iS4] * tau[VY][iP] / (fsplus4*tau[VY][iS4] + (1.0 - fsplus4)*tau[VY][iP]); else taus4 = tau[VY][iS4];
+			if (!bS4) taus4 = tau[VELOCITY_Y_COMPONENT][iS4] * tau[VELOCITY_Y_COMPONENT][iP] / (fsplus4*tau[VELOCITY_Y_COMPONENT][iS4] + (1.0 - fsplus4)*tau[VELOCITY_Y_COMPONENT][iP]); else taus4 = tau[VELOCITY_Y_COMPONENT][iS4];
 		}
 		if (iT4 > -1) {
-			if (!bT4) taut4 = tau[VZ][iT4] * tau[VZ][iP] / (ftplus4*tau[VZ][iT4] + (1.0 - ftplus4)*tau[VZ][iP]); else taut4 = tau[VZ][iT4];
+			if (!bT4) taut4 = tau[VELOCITY_Z_COMPONENT][iT4] * tau[VELOCITY_Z_COMPONENT][iP] / (ftplus4*tau[VELOCITY_Z_COMPONENT][iT4] + (1.0 - ftplus4)*tau[VELOCITY_Z_COMPONENT][iP]); else taut4 = tau[VELOCITY_Z_COMPONENT][iT4];
 		}
 		if (iB4 > -1) {
-			if (!bB4) taub4 = tau[VZ][iB4] * tau[VZ][iP] / (fbplus4*tau[VZ][iB4] + (1.0 - fbplus4)*tau[VZ][iP]); else taub4 = tau[VZ][iB4];
+			if (!bB4) taub4 = tau[VELOCITY_Z_COMPONENT][iB4] * tau[VELOCITY_Z_COMPONENT][iP] / (fbplus4*tau[VELOCITY_Z_COMPONENT][iB4] + (1.0 - fbplus4)*tau[VELOCITY_Z_COMPONENT][iP]); else taub4 = tau[VELOCITY_Z_COMPONENT][iB4];
 		}
 
 		// Градиент поправки давления на грани контрольного объёма.
@@ -1710,55 +1710,55 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 		// Наконец вычисление скорректированного массового 
 		// потока на грани КО.
-		mfloc[iP][ESIDE]=mfcurrentretune[iP][ESIDE]-taue*gradpame*dSqe - taue2 * gradpame2*dSqe2 - taue3 * gradpame3*dSqe3 - taue4 * gradpame4*dSqe4;
-		mfloc[iP][WSIDE]=mfcurrentretune[iP][WSIDE]-tauw*gradpamw*dSqw - tauw2 * gradpamw2*dSqw2 - tauw3 * gradpamw3*dSqw3 - tauw4 * gradpamw4*dSqw4;
-		mfloc[iP][NSIDE]=mfcurrentretune[iP][NSIDE]-taun*gradpamn*dSqn - taun2 * gradpamn2*dSqn2 - taun3 * gradpamn3*dSqn3 - taun4 * gradpamn4*dSqn4;
-		mfloc[iP][SSIDE]=mfcurrentretune[iP][SSIDE]-taus*gradpams*dSqs - taus2 * gradpams2*dSqs2 - taus3 * gradpams3*dSqs3 - taus4 * gradpams4*dSqs4;
-		mfloc[iP][TSIDE]=mfcurrentretune[iP][TSIDE]-taut*gradpamt*dSqt - taut2 * gradpamt2*dSqt2 - taut3 * gradpamt3*dSqt3 - taut4 * gradpamt4*dSqt4;
-		mfloc[iP][BSIDE]=mfcurrentretune[iP][BSIDE]-taub*gradpamb*dSqb - taub2 * gradpamb2*dSqb2 - taub3 * gradpamb3*dSqb3 - taub4 * gradpamb4*dSqb4;
+		mfloc[iP][E_SIDE]=mfcurrentretune[iP][E_SIDE]-taue*gradpame*dSqe - taue2 * gradpame2*dSqe2 - taue3 * gradpame3*dSqe3 - taue4 * gradpame4*dSqe4;
+		mfloc[iP][W_SIDE]=mfcurrentretune[iP][W_SIDE]-tauw*gradpamw*dSqw - tauw2 * gradpamw2*dSqw2 - tauw3 * gradpamw3*dSqw3 - tauw4 * gradpamw4*dSqw4;
+		mfloc[iP][N_SIDE]=mfcurrentretune[iP][N_SIDE]-taun*gradpamn*dSqn - taun2 * gradpamn2*dSqn2 - taun3 * gradpamn3*dSqn3 - taun4 * gradpamn4*dSqn4;
+		mfloc[iP][S_SIDE]=mfcurrentretune[iP][S_SIDE]-taus*gradpams*dSqs - taus2 * gradpams2*dSqs2 - taus3 * gradpams3*dSqs3 - taus4 * gradpams4*dSqs4;
+		mfloc[iP][T_SIDE]=mfcurrentretune[iP][T_SIDE]-taut*gradpamt*dSqt - taut2 * gradpamt2*dSqt2 - taut3 * gradpamt3*dSqt3 - taut4 * gradpamt4*dSqt4;
+		mfloc[iP][B_SIDE]=mfcurrentretune[iP][B_SIDE]-taub*gradpamb*dSqb - taub2 * gradpamb2*dSqb2 - taub3 * gradpamb3*dSqb3 - taub4 * gradpamb4*dSqb4;
 
-		if (mfloc[iP][ESIDE]!= mfloc[iP][ESIDE]) {
-			printf("mfcurrentretune[%lld][ESIDE]=%e  taue=%e, gradpame=%e, dSqe=%e\n",iP, mfcurrentretune[iP][ESIDE], taue, gradpame, dSqe);
+		if (mfloc[iP][E_SIDE]!= mfloc[iP][E_SIDE]) {
+			printf("mfcurrentretune[%lld][ESIDE]=%e  taue=%e, gradpame=%e, dSqe=%e\n",iP, mfcurrentretune[iP][E_SIDE], taue, gradpame, dSqe);
 			printf("taue2=%e, gradpame2=%e, dSqe2=%e\n", taue2, gradpame2, dSqe2);
 			printf("taue3=%e, gradpame3=%e, dSqe3=%e\n", taue3, gradpame3, dSqe3);
 			printf("taue4=%e, gradpame4=%e, dSqe4=%e\n", taue4, gradpame4, dSqe4);
 			system("pause");
 		}
 
-		if (mfloc[iP][WSIDE] != mfloc[iP][WSIDE]) {
-			printf("mfcurrentretune[%lld][WSIDE]=%e  tauw=%e, gradpamw=%e, dSqw=%e\n", iP, mfcurrentretune[iP][WSIDE], tauw, gradpamw, dSqw);
+		if (mfloc[iP][W_SIDE] != mfloc[iP][W_SIDE]) {
+			printf("mfcurrentretune[%lld][WSIDE]=%e  tauw=%e, gradpamw=%e, dSqw=%e\n", iP, mfcurrentretune[iP][W_SIDE], tauw, gradpamw, dSqw);
 			printf("tauw2=%e, gradpamw2=%e, dSqw2=%e\n", tauw2, gradpamw2, dSqw2);
 			printf("tauw3=%e, gradpamw3=%e, dSqw3=%e\n", tauw3, gradpamw3, dSqw3);
 			printf("tauw4=%e, gradpamw4=%e, dSqw4=%e\n", tauw4, gradpamw4, dSqw4);
 			system("pause");
 		}
 
-		if (mfloc[iP][NSIDE] != mfloc[iP][NSIDE]) {
-			printf("mfcurrentretune[%lld][NSIDE]=%e  taun=%e, gradpamn=%e, dSqn=%e\n", iP, mfcurrentretune[iP][NSIDE], taun, gradpamn, dSqn);
+		if (mfloc[iP][N_SIDE] != mfloc[iP][N_SIDE]) {
+			printf("mfcurrentretune[%lld][NSIDE]=%e  taun=%e, gradpamn=%e, dSqn=%e\n", iP, mfcurrentretune[iP][N_SIDE], taun, gradpamn, dSqn);
 			printf("taun2=%e, gradpamn2=%e, dSqn2=%e\n", taun2, gradpamn2, dSqn2);
 			printf("taun3=%e, gradpamn3=%e, dSqn3=%e\n", taun3, gradpamn3, dSqn3);
 			printf("taun4=%e, gradpamn4=%e, dSqn4=%e\n", taun4, gradpamn4, dSqn4);
 			system("pause");
 		}
 
-		if (mfloc[iP][SSIDE] != mfloc[iP][SSIDE]) {
-			printf("mfcurrentretune[%lld][SSIDE]=%e  taus=%e, gradpams=%e, dSqs=%e\n", iP, mfcurrentretune[iP][SSIDE], taus, gradpams, dSqs);
+		if (mfloc[iP][S_SIDE] != mfloc[iP][S_SIDE]) {
+			printf("mfcurrentretune[%lld][SSIDE]=%e  taus=%e, gradpams=%e, dSqs=%e\n", iP, mfcurrentretune[iP][S_SIDE], taus, gradpams, dSqs);
 			printf("taus2=%e, gradpams2=%e, dSqs2=%e\n", taus2, gradpams2, dSqs2);
 			printf("taus3=%e, gradpams3=%e, dSqs3=%e\n", taus3, gradpams3, dSqs3);
 			printf("taus4=%e, gradpams4=%e, dSqs4=%e\n", taus4, gradpams4, dSqs4);
 			system("pause");
 		}
 
-		if (mfloc[iP][TSIDE] != mfloc[iP][TSIDE]) {
-			printf("mfcurrentretune[%lld][TSIDE]=%e  taut=%e, gradpamt=%e, dSqt=%e\n", iP, mfcurrentretune[iP][TSIDE], taut, gradpamt, dSqt);
+		if (mfloc[iP][T_SIDE] != mfloc[iP][T_SIDE]) {
+			printf("mfcurrentretune[%lld][TSIDE]=%e  taut=%e, gradpamt=%e, dSqt=%e\n", iP, mfcurrentretune[iP][T_SIDE], taut, gradpamt, dSqt);
 			printf("taut2=%e, gradpamt2=%e, dSqt2=%e\n", taut2, gradpamt2, dSqt2);
 			printf("taut3=%e, gradpamt3=%e, dSqt3=%e\n", taut3, gradpamt3, dSqt3);
 			printf("taut4=%e, gradpamt4=%e, dSqt4=%e\n", taut4, gradpamt4, dSqt4);
 			system("pause");
 		}
 
-		if (mfloc[iP][BSIDE] != mfloc[iP][BSIDE]) {
-			printf("mfcurrentretune[%lld][BSIDE]=%e  taub=%e, gradpamb=%e, dSqb=%e\n", iP, mfcurrentretune[iP][BSIDE], taub, gradpamb, dSqb);
+		if (mfloc[iP][B_SIDE] != mfloc[iP][B_SIDE]) {
+			printf("mfcurrentretune[%lld][BSIDE]=%e  taub=%e, gradpamb=%e, dSqb=%e\n", iP, mfcurrentretune[iP][B_SIDE], taub, gradpamb, dSqb);
 			printf("taub2=%e, gradpamb2=%e, dSqb2=%e\n", taub2, gradpamb2, dSqb2);
 			printf("taub3=%e, gradpamb3=%e, dSqb3=%e\n", taub3, gradpamb3, dSqb3);
 			printf("taub4=%e, gradpamb4=%e, dSqb4=%e\n", taub4, gradpamb4, dSqb4);
@@ -1772,20 +1772,20 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	for (integer iP=0; iP<maxelm; iP++) {
 		// iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 	    
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
         // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
@@ -1847,18 +1847,18 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 			if (inumber > -1) {
 				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
-					mfloc[iP][ESIDE] = relax_bound * (mfloc[iP][ESIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][ESIDE];
+					mfloc[iP][E_SIDE] = relax_bound * (mfloc[iP][E_SIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][E_SIDE];
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
-					mfloc[iP][ESIDE] = 0.0;
+					mfloc[iP][E_SIDE] = 0.0;
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][ESIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
+					mfloc[iP][E_SIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
-					mfloc[iP][ESIDE] = 0.0;
+					mfloc[iP][E_SIDE] = 0.0;
 				}
 			}
 		}
@@ -1881,18 +1881,18 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
-					mfloc[iP][WSIDE] = relax_bound * (mfloc[iP][WSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][WSIDE];
+					mfloc[iP][W_SIDE] = relax_bound * (mfloc[iP][W_SIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][W_SIDE];
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
-					mfloc[iP][WSIDE] = 0.0;
+					mfloc[iP][W_SIDE] = 0.0;
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][WSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
+					mfloc[iP][W_SIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
-					mfloc[iP][WSIDE] = 0.0;
+					mfloc[iP][W_SIDE] = 0.0;
 				}
 			}
 		}
@@ -1915,18 +1915,18 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
-					mfloc[iP][NSIDE] = relax_bound * (mfloc[iP][NSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][NSIDE];
+					mfloc[iP][N_SIDE] = relax_bound * (mfloc[iP][N_SIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][N_SIDE];
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
-					mfloc[iP][NSIDE] = 0.0;
+					mfloc[iP][N_SIDE] = 0.0;
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][NSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
+					mfloc[iP][N_SIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
-					mfloc[iP][NSIDE] = 0.0;
+					mfloc[iP][N_SIDE] = 0.0;
 				}
 			}
 		}
@@ -1949,18 +1949,18 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
-					mfloc[iP][SSIDE] = relax_bound * (mfloc[iP][SSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][SSIDE];
+					mfloc[iP][S_SIDE] = relax_bound * (mfloc[iP][S_SIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][S_SIDE];
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
-					mfloc[iP][SSIDE] = 0.0;
+					mfloc[iP][S_SIDE] = 0.0;
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][SSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
+					mfloc[iP][S_SIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
-					mfloc[iP][SSIDE] = 0.0;
+					mfloc[iP][S_SIDE] = 0.0;
 				}
 			}
 		}
@@ -1983,18 +1983,18 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
-					mfloc[iP][TSIDE] = relax_bound * (mfloc[iP][TSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][TSIDE];
+					mfloc[iP][T_SIDE] = relax_bound * (mfloc[iP][T_SIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][T_SIDE];
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
-					mfloc[iP][TSIDE] = 0.0;
+					mfloc[iP][T_SIDE] = 0.0;
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][TSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
+					mfloc[iP][T_SIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
-					mfloc[iP][TSIDE] = 0.0;
+					mfloc[iP][T_SIDE] = 0.0;
 				}
 			}
 		}
@@ -2018,18 +2018,18 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 				if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && (w[border_neighbor[inumber].MCB - ls].bpressure || w[border_neighbor[inumber].MCB - ls].bopening)) {
 					// Выходная граница оставляем всё как есть
-					mfloc[iP][BSIDE] = relax_bound * (mfloc[iP][BSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][BSIDE];
+					mfloc[iP][B_SIDE] = relax_bound * (mfloc[iP][B_SIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][B_SIDE];
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry) {
-					mfloc[iP][BSIDE] = 0.0;
+					mfloc[iP][B_SIDE] = 0.0;
 				}
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					// заданная скорость на входной границе.
-					mfloc[iP][BSIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
+					mfloc[iP][B_SIDE] = prop_b[RHO][inumber] * w[border_neighbor[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
 				}
 				else {
 					// твёрдая неподвижная стенка по умолчанию
-					mfloc[iP][BSIDE] = 0.0;
+					mfloc[iP][B_SIDE] = 0.0;
 				}
 			}
 		}
@@ -2072,20 +2072,20 @@ void iscorrectmf(doublereal** &mf,
 	// iP - номер центрального контрольного объёма
 	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-		iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+		iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+		iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 		if (iE > -1) {
@@ -2093,7 +2093,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iE - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][ESIDE]) > admission) {
+					if (fabs(mf[iP][E_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iE=%lld\n", iE);
@@ -2103,7 +2103,7 @@ void iscorrectmf(doublereal** &mf,
 						}
 
 
-						mf[iP][ESIDE] = 0.0;
+						mf[iP][E_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2117,7 +2117,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iW - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][WSIDE]) > admission) {
+					if (fabs(mf[iP][W_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iW=%lld\n", iW);
@@ -2125,7 +2125,7 @@ void iscorrectmf(doublereal** &mf,
 							printf("wall mf flux velocity non zero iW=%d\n", iW);
 #endif
 						}
-						mf[iP][WSIDE] = 0.0;
+						mf[iP][W_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2139,7 +2139,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iN - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][NSIDE]) > admission) {
+					if (fabs(mf[iP][N_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iN=%lld\n", iN);
@@ -2148,7 +2148,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][NSIDE] = 0.0;
+						mf[iP][N_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
         			}
@@ -2161,7 +2161,7 @@ void iscorrectmf(doublereal** &mf,
 			// граничный узел
 			inumber=iS-maxelm;
 			if (border_neighbor[inumber].MCB == (ls + lw)) {
-				if (fabs(mf[iP][SSIDE]) > admission) {
+				if (fabs(mf[iP][S_SIDE]) > admission) {
 					if (bdiagnostic_message) {
 #if doubleintprecision == 1
 						printf("wall mf flux velocity non zero iS=%lld\n", iS);
@@ -2170,7 +2170,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 			}
 					
-					mf[iP][SSIDE] = 0.0;
+					mf[iP][S_SIDE] = 0.0;
 					biscorrectmf = true;
 					//system("pause");
 				}
@@ -2184,7 +2184,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iT - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][TSIDE]) > admission) {
+					if (fabs(mf[iP][T_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iT=%lld\n", iT);
@@ -2192,7 +2192,7 @@ void iscorrectmf(doublereal** &mf,
 							printf("wall mf flux velocity non zero iT=%d\n", iT);
 #endif
 						}
-						mf[iP][TSIDE] = 0.0;
+						mf[iP][T_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2205,7 +2205,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iB - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][BSIDE]) > admission) {
+					if (fabs(mf[iP][B_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iB=%lld\n", iB);
@@ -2214,7 +2214,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][BSIDE] = 0.0;
+						mf[iP][B_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2228,7 +2228,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iE2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][ESIDE]) > admission) {
+					if (fabs(mf[iP][E_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iE2=%lld\n", iE2);
@@ -2237,7 +2237,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][ESIDE] = 0.0;
+						mf[iP][E_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2250,7 +2250,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iW2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][WSIDE]) > admission) {
+					if (fabs(mf[iP][W_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iW2=%lld\n", iW2);
@@ -2259,7 +2259,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][WSIDE] = 0.0;
+						mf[iP][W_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2273,7 +2273,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iN2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][NSIDE]) > admission) {
+					if (fabs(mf[iP][N_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iN2=%lld\n", iN2);
@@ -2282,7 +2282,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][NSIDE] = 0.0;
+						mf[iP][N_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2296,7 +2296,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iS2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][SSIDE])>admission) {
+					if (fabs(mf[iP][S_SIDE])>admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iS2=%lld\n", iS2);
@@ -2305,7 +2305,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][SSIDE] = 0.0;
+						mf[iP][S_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2319,7 +2319,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iT2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][TSIDE]) > admission) {
+					if (fabs(mf[iP][T_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iT2=%lld\n", iT2);
@@ -2328,7 +2328,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][TSIDE] = 0.0;
+						mf[iP][T_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2341,7 +2341,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iB2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][BSIDE]) > admission) {
+					if (fabs(mf[iP][B_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iB2=%lld\n", iB2);
@@ -2350,7 +2350,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][BSIDE] = 0.0;
+						mf[iP][B_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2364,7 +2364,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iE3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][ESIDE]) > admission) {
+					if (fabs(mf[iP][E_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iE3=%lld\n", iE3);
@@ -2374,7 +2374,7 @@ void iscorrectmf(doublereal** &mf,
 						}
 
 
-						mf[iP][ESIDE] = 0.0;
+						mf[iP][E_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2387,7 +2387,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iW3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][WSIDE]) > admission) {
+					if (fabs(mf[iP][W_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iW=%lld\n", iW3);
@@ -2396,7 +2396,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 				}
 
-						mf[iP][WSIDE] = 0.0;
+						mf[iP][W_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2410,7 +2410,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iN3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][NSIDE]) > admission) {
+					if (fabs(mf[iP][N_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iN3=%lld\n", iN3);
@@ -2419,7 +2419,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][NSIDE] = 0.0;
+						mf[iP][N_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2433,7 +2433,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iS3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][SSIDE])>admission) {
+					if (fabs(mf[iP][S_SIDE])>admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iS=%lld\n", iS3);
@@ -2442,7 +2442,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][SSIDE] = 0.0;
+						mf[iP][S_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2456,7 +2456,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iT3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][TSIDE]) > admission) {
+					if (fabs(mf[iP][T_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iT3=%lld\n", iT3);
@@ -2465,7 +2465,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][TSIDE] = 0.0;
+						mf[iP][T_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2478,7 +2478,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iB3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][BSIDE]) > admission) {
+					if (fabs(mf[iP][B_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iB3=%lld\n", iB3);
@@ -2487,7 +2487,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][BSIDE] = 0.0;
+						mf[iP][B_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2501,7 +2501,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iE4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][ESIDE]) > admission) {
+					if (fabs(mf[iP][E_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iE4=%lld\n", iE4);
@@ -2511,7 +2511,7 @@ void iscorrectmf(doublereal** &mf,
 				}
 
 
-						mf[iP][ESIDE] = 0.0;
+						mf[iP][E_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2524,7 +2524,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iW4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][WSIDE]) > admission) {
+					if (fabs(mf[iP][W_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iW4=%lld\n", iW4);
@@ -2533,7 +2533,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][WSIDE] = 0.0;
+						mf[iP][W_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2547,7 +2547,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iN4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][NSIDE]) > admission) {
+					if (fabs(mf[iP][N_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iN4=%lld\n", iN4);
@@ -2556,7 +2556,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][NSIDE] = 0.0;
+						mf[iP][N_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2570,7 +2570,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iS4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][SSIDE])>admission) {
+					if (fabs(mf[iP][S_SIDE])>admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iS4=%lld\n", iS4);
@@ -2579,7 +2579,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][SSIDE] = 0.0;
+						mf[iP][S_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2593,7 +2593,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iT4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][TSIDE]) > admission) {
+					if (fabs(mf[iP][T_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iT4=%lld\n", iT4);
@@ -2602,7 +2602,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][TSIDE] = 0.0;
+						mf[iP][T_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2615,7 +2615,7 @@ void iscorrectmf(doublereal** &mf,
 				// граничный узел
 				inumber = iB4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(mf[iP][BSIDE]) > admission) {
+					if (fabs(mf[iP][B_SIDE]) > admission) {
 						if (bdiagnostic_message) {
 #if doubleintprecision == 1
 							printf("wall mf flux velocity non zero iB4=%lld\n", iB4);
@@ -2624,7 +2624,7 @@ void iscorrectmf(doublereal** &mf,
 #endif
 						}
 
-						mf[iP][BSIDE] = 0.0;
+						mf[iP][B_SIDE] = 0.0;
 						biscorrectmf = true;
 						//system("pause");
 					}
@@ -2654,20 +2654,20 @@ void iscorrectOk(doublereal** &potent,
 	// iP - номер центрального контрольного объёма
 	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-		iE = neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-		iW = neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+		iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+		iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 
 		if (iE > -1) {
@@ -2675,7 +2675,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iE - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iE]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iE]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE=%lld", iE);
 #else
@@ -2686,7 +2686,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iE]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iE]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iE=%lld", iE);
 #else
@@ -2696,7 +2696,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iE]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iE]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iE=%lld", iE);
 #else
@@ -2715,7 +2715,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iW - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iW]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iW]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW=%lld", iW);
 #else
@@ -2725,7 +2725,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iW]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iW]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iW=%lld", iW);
 #else
@@ -2735,7 +2735,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iW]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iW]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iW=%lld", iW);
 #else
@@ -2754,7 +2754,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iN - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iN]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iN]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN=%lld", iN);
 #else
@@ -2764,7 +2764,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iN]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iN]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iN=%lld", iN);
 #else
@@ -2774,7 +2774,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iN]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iN]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iN=%lld", iN);
 #else
@@ -2793,7 +2793,7 @@ void iscorrectOk(doublereal** &potent,
 			// граничный узел
 			inumber=iS-maxelm;
 			if (border_neighbor[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VX][iS])>admission) {
+				if (fabs(potent[VELOCITY_X_COMPONENT][iS])>admission) {
 #if doubleintprecision == 1
 					printf("wall VX velocity non zero iS=%lld", iS);
 #else
@@ -2803,7 +2803,7 @@ void iscorrectOk(doublereal** &potent,
 					//getchar();
 					system("pause");
 				}
-				if (fabs(potent[VY][iS])>admission) {
+				if (fabs(potent[VELOCITY_Y_COMPONENT][iS])>admission) {
 #if doubleintprecision == 1
 					printf("wall VY velocity non zero iS=%lld", iS);
 #else
@@ -2813,7 +2813,7 @@ void iscorrectOk(doublereal** &potent,
 					//getchar();
 					system("pause");
 				}
-				if (fabs(potent[VZ][iS])>admission) {
+				if (fabs(potent[VELOCITY_Z_COMPONENT][iS])>admission) {
 #if doubleintprecision == 1
 					printf("wall VZ velocity non zero iS=%lld", iS);
 #else
@@ -2833,7 +2833,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iT - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iT]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iT]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT=%lld", iT);
 #else
@@ -2843,7 +2843,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iT]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iT]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iT=%lld", iT);
 #else
@@ -2853,7 +2853,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iT]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iT]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iT=%lld", iT);
 #else
@@ -2872,7 +2872,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iB - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iB]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iB]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB=%lld", iB);
 #else
@@ -2882,7 +2882,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 				}
-					if (fabs(potent[VY][iB]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iB]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iB=%lld", iB);
 #else
@@ -2892,7 +2892,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 			}
-					if (fabs(potent[VZ][iB]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iB]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iB=%lld", iB);
 #else
@@ -2911,7 +2911,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iE2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iE2]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iE2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE2=%lld", iE2);
 #else
@@ -2922,7 +2922,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iE2]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iE2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iE2=%lld", iE2);
 #else
@@ -2932,7 +2932,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iE2]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iE2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iE2=%lld", iE2);
 #else
@@ -2951,7 +2951,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iW2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iW2]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iW2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW2=%lld", iW2);
 #else
@@ -2961,7 +2961,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iW2]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iW2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iW2=%lld", iW2);
 #else
@@ -2971,7 +2971,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iW2]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iW2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iW2=%lld", iW2);
 #else
@@ -2990,7 +2990,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iN2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iN2]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iN2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN=%lld", iN2);
 #else
@@ -3000,7 +3000,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iN2]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iN2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iN=%lld", iN2);
 #else
@@ -3010,7 +3010,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iN2]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iN2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iN=%lld", iN2);
 #else
@@ -3029,7 +3029,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iS2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iS2])>admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iS2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iS2=%lld", iS2);
 #else
@@ -3039,7 +3039,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iS2])>admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iS2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iS2=%lld", iS2);
 #else
@@ -3049,7 +3049,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iS2])>admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iS2])>admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iS2=%lld", iS2);
 #else
@@ -3069,7 +3069,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iT2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iT2]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iT2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT2=%lld", iT2);
 #else
@@ -3079,7 +3079,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iT2]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iT2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iT2=%lld", iT2);
 #else
@@ -3089,7 +3089,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iT2]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iT2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iT2=%lld", iT2);
 #else
@@ -3108,7 +3108,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iB2 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iB2]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iB2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB2=%lld", iB2);
 #else
@@ -3118,7 +3118,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iB2]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iB2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iB2=%lld", iB2);
 #else
@@ -3128,7 +3128,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iB2]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iB2]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iB2=%lld", iB2);
 #else
@@ -3147,7 +3147,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iE3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iE3]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iE3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE3=%lld", iE3);
 #else
@@ -3158,7 +3158,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iE3]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iE3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iE3=%lld", iE3);
 #else
@@ -3168,7 +3168,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iE3]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iE3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iE3=%lld", iE3);
 #else
@@ -3187,7 +3187,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iW3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iW3]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iW3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW3=%lld", iW3);
 #else
@@ -3197,7 +3197,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iW3]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iW3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iW3=%lld", iW3);
 #else
@@ -3207,7 +3207,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iW3]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iW3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iW3=%lld", iW3);
 #else
@@ -3226,7 +3226,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iN3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iN3]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iN3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN3=%lld", iN3);
 #else
@@ -3236,7 +3236,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iN3]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iN3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iN3=%lld", iN3);
 #else
@@ -3246,7 +3246,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iN3]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iN3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iN3=%lld", iN3);
 #else
@@ -3265,7 +3265,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iS3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iS3])>admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iS3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iS3=%lld", iS3);
 #else
@@ -3275,7 +3275,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iS3])>admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iS3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iS3=%lld", iS3);
 #else
@@ -3285,7 +3285,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iS3])>admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iS3])>admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iS3=%lld", iS3);
 #else
@@ -3305,7 +3305,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iT3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iT3]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iT3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT3=%lld", iT3);
 #else
@@ -3315,7 +3315,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iT3]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iT3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iT3=%lld", iT3);
 #else
@@ -3325,7 +3325,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iT3]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iT3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iT3=%lld", iT3);
 #else
@@ -3344,7 +3344,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iB3 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iB3]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iB3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB3=%lld", iB3);
 #else
@@ -3354,7 +3354,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iB3]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iB3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iB3=%lld", iB3);
 #else
@@ -3364,7 +3364,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iB3]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iB3]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iB3=%lld", iB3);
 #else
@@ -3383,7 +3383,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iE4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iE4]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iE4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iE4=%lld", iE4);
 #else
@@ -3394,7 +3394,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iE4]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iE4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iE4=%lld", iE4);
 #else
@@ -3404,7 +3404,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iE4]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iE4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iE4=%lld", iE4);
 #else
@@ -3423,7 +3423,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iW4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iW4]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iW4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iW4=%lld", iW4);
 #else
@@ -3433,7 +3433,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iW4]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iW4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iW4=%lld", iW4);
 #else
@@ -3443,7 +3443,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iW4]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iW4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iW4=%lld", iW4);
 #else
@@ -3462,7 +3462,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iN4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iN4]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iN4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iN4=%lld", iN4);
 #else
@@ -3472,7 +3472,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iN4]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iN4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iN4=%lld", iN4);
 #else
@@ -3482,7 +3482,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iN4]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iN4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iN4=%lld", iN4);
 #else
@@ -3501,7 +3501,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iS4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iS4])>admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iS4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iS4=%lld", iS4);
 #else
@@ -3511,7 +3511,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iS4])>admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iS4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iS4=%lld", iS4);
 #else
@@ -3521,7 +3521,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iS4])>admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iS4])>admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iS4=%lld", iS4);
 #else
@@ -3541,7 +3541,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iT4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iT4]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iT4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iT4=%lld", iT4);
 #else
@@ -3551,7 +3551,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iT4]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iT4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iT4=%lld", iT4);
 #else
@@ -3561,7 +3561,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iT4]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iT4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iT4=%lld", iT4);
 #else
@@ -3580,7 +3580,7 @@ void iscorrectOk(doublereal** &potent,
 				// граничный узел
 				inumber = iB4 - maxelm;
 				if (border_neighbor[inumber].MCB == (ls + lw)) {
-					if (fabs(potent[VX][iB4]) > admission) {
+					if (fabs(potent[VELOCITY_X_COMPONENT][iB4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VX velocity non zero iB4=%lld", iB4);
 #else
@@ -3590,7 +3590,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VY][iB4]) > admission) {
+					if (fabs(potent[VELOCITY_Y_COMPONENT][iB4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VY velocity non zero iB4=%lld", iB4);
 #else
@@ -3600,7 +3600,7 @@ void iscorrectOk(doublereal** &potent,
 						//getchar();
 						system("pause");
 					}
-					if (fabs(potent[VZ][iB4]) > admission) {
+					if (fabs(potent[VELOCITY_Z_COMPONENT][iB4]) > admission) {
 #if doubleintprecision == 1
 						printf("wall VZ velocity non zero iB4=%lld", iB4);
 #else
@@ -4603,20 +4603,20 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
     // iP - номер центрального контрольного объёма
 	for (iP=0; iP<maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=neighbors_for_the_internal_node[ESIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[NSIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[TSIDE][iP].iNODE1;
-	    iW=neighbors_for_the_internal_node[WSIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[SSIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[BSIDE][iP].iNODE1;
+	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
+	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
 
 		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
-		iE2 = neighbors_for_the_internal_node[ESIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[NSIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[TSIDE][iP].iNODE2;
-		iW2 = neighbors_for_the_internal_node[WSIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[SSIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[BSIDE][iP].iNODE2;
+		iE2 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE2; iN2 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE2; iT2 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE2;
+		iW2 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE2; iS2 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE2; iB2 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE2;
 
 		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
-		iE3 = neighbors_for_the_internal_node[ESIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[NSIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[TSIDE][iP].iNODE3;
-		iW3 = neighbors_for_the_internal_node[WSIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[SSIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[BSIDE][iP].iNODE3;
+		iE3 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE3; iN3 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE3; iT3 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE3;
+		iW3 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE3; iS3 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE3; iB3 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE3;
 
 		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
-		iE4 = neighbors_for_the_internal_node[ESIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[NSIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[TSIDE][iP].iNODE4;
-		iW4 = neighbors_for_the_internal_node[WSIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[SSIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[BSIDE][iP].iNODE4;
+		iE4 = neighbors_for_the_internal_node[E_SIDE][iP].iNODE4; iN4 = neighbors_for_the_internal_node[N_SIDE][iP].iNODE4; iT4 = neighbors_for_the_internal_node[T_SIDE][iP].iNODE4;
+		iW4 = neighbors_for_the_internal_node[W_SIDE][iP].iNODE4; iS4 = neighbors_for_the_internal_node[S_SIDE][iP].iNODE4; iB4 = neighbors_for_the_internal_node[B_SIDE][iP].iNODE4;
 
 		// вычисление размеров текущего контрольного объёма:
 	    doublereal dx=0.0, dy=0.0, dz=0.0; // размеры контрольного объёма
@@ -4655,7 +4655,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -4669,10 +4669,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -4680,8 +4680,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iE] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iE] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -4706,7 +4706,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -4719,10 +4719,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -4730,17 +4730,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iE] = 0.0; break;
-					case VY: potent[iVar][iE] = 0.0; break;
-					case VZ: potent[iVar][iE] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE] = 0.0; break;
 					}
 				}
 
@@ -4779,7 +4779,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -4793,10 +4793,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -4804,8 +4804,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iW] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iW] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -4829,7 +4829,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -4842,10 +4842,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -4853,17 +4853,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iW] = 0.0; break;
-					case VY: potent[iVar][iW] = 0.0; break;
-					case VZ: potent[iVar][iW] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW] = 0.0; break;
 					}
 				}
 
@@ -4901,7 +4901,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -4915,10 +4915,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -4926,7 +4926,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -4950,7 +4950,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -4964,29 +4964,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iN] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iN] = 0.0; break;
-					case VY: potent[iVar][iN] = 0.0; break;
-					case VZ: potent[iVar][iN] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN] = 0.0; break;
 					}
 				}
 
@@ -5024,7 +5024,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -5038,10 +5038,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
@@ -5050,7 +5050,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5074,7 +5074,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -5088,29 +5088,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iS] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iS] = 0.0; break;
-					case VY: potent[iVar][iS] = 0.0; break;
-					case VZ: potent[iVar][iS] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS] = 0.0; break;
 					}
 				}
 
@@ -5148,7 +5148,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -5163,10 +5163,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
 				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -5174,7 +5174,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5198,7 +5198,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -5213,29 +5213,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iT] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iT] = 0.0; break;
-					case VY: potent[iVar][iT] = 0.0; break;
-					case VZ: potent[iVar][iT] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT] = 0.0; break;
 					}
 				}
 
@@ -5273,7 +5273,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -5288,10 +5288,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -5299,7 +5299,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5323,7 +5323,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -5337,29 +5337,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iB] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iB] = 0.0; break;
-					case VY: potent[iVar][iB] = 0.0; break;
-					case VZ: potent[iVar][iB] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB] = 0.0; break;
 					}
 				}
 
@@ -5400,7 +5400,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -5414,10 +5414,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -5425,8 +5425,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iE2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iE2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5451,7 +5451,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -5464,10 +5464,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -5475,17 +5475,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iE2] = 0.0; break;
-					case VY: potent[iVar][iE2] = 0.0; break;
-					case VZ: potent[iVar][iE2] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE2] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE2] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE2] = 0.0; break;
 					}
 				}
 
@@ -5524,7 +5524,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -5538,10 +5538,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -5549,8 +5549,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iW2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iW2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5574,7 +5574,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -5587,10 +5587,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -5598,17 +5598,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iW2] = 0.0; break;
-					case VY: potent[iVar][iW2] = 0.0; break;
-					case VZ: potent[iVar][iW2] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW2] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW2] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW2] = 0.0; break;
 					}
 				}
 
@@ -5646,7 +5646,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -5660,10 +5660,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -5671,7 +5671,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5695,7 +5695,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -5709,29 +5709,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iN2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iN2] = 0.0; break;
-					case VY: potent[iVar][iN2] = 0.0; break;
-					case VZ: potent[iVar][iN2] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN2] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN2] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN2] = 0.0; break;
 					}
 				}
 
@@ -5769,7 +5769,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -5783,10 +5783,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
@@ -5795,7 +5795,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5819,7 +5819,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -5833,29 +5833,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iS2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iS2] = 0.0; break;
-					case VY: potent[iVar][iS2] = 0.0; break;
-					case VZ: potent[iVar][iS2] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS2] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS2] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS2] = 0.0; break;
 					}
 				}
 
@@ -5893,7 +5893,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -5908,10 +5908,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
 				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -5919,7 +5919,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -5943,7 +5943,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -5958,29 +5958,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iT2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iT2] = 0.0; break;
-					case VY: potent[iVar][iT2] = 0.0; break;
-					case VZ: potent[iVar][iT2] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT2] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT2] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT2] = 0.0; break;
 					}
 				}
 
@@ -6018,7 +6018,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -6033,10 +6033,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6044,7 +6044,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6068,7 +6068,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -6082,29 +6082,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iB2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB2] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iB2] = 0.0; break;
-					case VY: potent[iVar][iB2] = 0.0; break;
-					case VZ: potent[iVar][iB2] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB2] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB2] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB2] = 0.0; break;
 					}
 				}
 
@@ -6144,7 +6144,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -6158,10 +6158,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6169,8 +6169,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iE3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iE3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6195,7 +6195,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -6208,10 +6208,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -6219,17 +6219,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iE3] = 0.0; break;
-					case VY: potent[iVar][iE3] = 0.0; break;
-					case VZ: potent[iVar][iE3] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE3] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE3] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE3] = 0.0; break;
 					}
 				}
 
@@ -6268,7 +6268,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -6282,10 +6282,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6293,8 +6293,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iW3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iW3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6318,7 +6318,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -6331,10 +6331,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -6342,17 +6342,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iW3] = 0.0; break;
-					case VY: potent[iVar][iW3] = 0.0; break;
-					case VZ: potent[iVar][iW3] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW3] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW3] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW3] = 0.0; break;
 					}
 				}
 
@@ -6390,7 +6390,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -6404,10 +6404,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6415,7 +6415,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6439,7 +6439,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -6453,29 +6453,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iN3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iN3] = 0.0; break;
-					case VY: potent[iVar][iN3] = 0.0; break;
-					case VZ: potent[iVar][iN3] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN3] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN3] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN3] = 0.0; break;
 					}
 				}
 
@@ -6513,7 +6513,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -6527,10 +6527,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
@@ -6539,7 +6539,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6563,7 +6563,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -6577,29 +6577,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iS3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iS3] = 0.0; break;
-					case VY: potent[iVar][iS3] = 0.0; break;
-					case VZ: potent[iVar][iS3] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS3] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS3] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS3] = 0.0; break;
 					}
 				}
 
@@ -6637,7 +6637,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -6652,10 +6652,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
 				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6663,7 +6663,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6687,7 +6687,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -6702,29 +6702,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iT3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iT3] = 0.0; break;
-					case VY: potent[iVar][iT3] = 0.0; break;
-					case VZ: potent[iVar][iT3] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT3] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT3] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT3] = 0.0; break;
 					}
 				}
 
@@ -6762,7 +6762,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -6777,10 +6777,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6788,7 +6788,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6812,7 +6812,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -6826,29 +6826,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iB3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB3] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iB3] = 0.0; break;
-					case VY: potent[iVar][iB3] = 0.0; break;
-					case VZ: potent[iVar][iB3] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB3] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB3] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB3] = 0.0; break;
 					}
 				}
 
@@ -6888,7 +6888,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -6902,10 +6902,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iW, nvtx, pa, pb, WSIDE);
-						center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+						center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -6913,8 +6913,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iE4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iE4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -6939,7 +6939,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
 								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -6952,10 +6952,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+								 center_cord3D(iW, nvtx, pa, pb, W_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[W_SIDE][iW].iNODE1, nvtx, pa, pbb, WW_SIDE);
 
-								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[W_SIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -6963,17 +6963,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iE4] = 0.0; break;
-					case VY: potent[iVar][iE4] = 0.0; break;
-					case VZ: potent[iVar][iE4] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iE4] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iE4] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iE4] = 0.0; break;
 					}
 				}
 
@@ -7012,7 +7012,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 					}
 					else if (binterpol == 2) {
@@ -7026,10 +7026,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iE, nvtx, pa, pb, ESIDE);
-						center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+						center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -7037,8 +7037,8 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VY и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: potent[iVar][iW4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-					case VY: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: potent[iVar][iW4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -7062,7 +7062,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
 								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
 							 }
 							 else if (binterpol == 2) {
@@ -7075,10 +7075,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
-								 center_cord3D(neighbors_for_the_internal_node[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+								 center_cord3D(iE, nvtx, pa, pb, E_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[E_SIDE][iE].iNODE1, nvtx, pa, pbb, EE_SIDE);
 
-								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[E_SIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
 							 }
 							 break; // корректируем скорость.
 					}
@@ -7086,17 +7086,17 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iW4] = 0.0; break;
-					case VY: potent[iVar][iW4] = 0.0; break;
-					case VZ: potent[iVar][iW4] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iW4] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iW4] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iW4] = 0.0; break;
 					}
 				}
 
@@ -7134,7 +7134,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -7148,10 +7148,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iS, nvtx, pa, pb, SSIDE);
-						center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+						center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -7159,7 +7159,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -7183,7 +7183,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
 								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -7197,29 +7197,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+								 center_cord3D(iS, nvtx, pa, pb, S_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[S_SIDE][iS].iNODE1, nvtx, pa, pbb, SS_SIDE);
 
-								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[S_SIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iN4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iN4] = 0.0; break;
-					case VY: potent[iVar][iN4] = 0.0; break;
-					case VZ: potent[iVar][iN4] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iN4] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iN4] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iN4] = 0.0; break;
 					}
 				}
 
@@ -7257,7 +7257,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 					}
 					else if (binterpol == 2) {
@@ -7271,10 +7271,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iN, nvtx, pa, pb, NSIDE);
-						center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+						center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 					}
 					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
 				} // pressure outlet
@@ -7283,7 +7283,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VZ в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VZ: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Z_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -7307,7 +7307,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
 								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
 							 }
 							 else if (binterpol == 2) {
@@ -7321,29 +7321,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+								 center_cord3D(iN, nvtx, pa, pb, N_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[N_SIDE][iN].iNODE1, nvtx, pa, pbb, NN_SIDE);
 
-								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[N_SIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
 							 }
 							 break; // корректируем скорость.
-					case VY: potent[iVar][iS4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iS4] = 0.0; break;
-					case VY: potent[iVar][iS4] = 0.0; break;
-					case VZ: potent[iVar][iS4] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iS4] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iS4] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iS4] = 0.0; break;
 					}
 				}
 
@@ -7381,7 +7381,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -7396,10 +7396,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iB, nvtx, pa, pb, BSIDE);
-						center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+						center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 					}
 				} // pressure outlet
 				else  if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -7407,7 +7407,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -7431,7 +7431,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
 								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -7446,29 +7446,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+								 center_cord3D(iB, nvtx, pa, pb, B_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[B_SIDE][iB].iNODE1, nvtx, pa, pbb, BB_SIDE);
 
-								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][neighbors_for_the_internal_node[B_SIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iT4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iT4] = 0.0; break;
-					case VY: potent[iVar][iT4] = 0.0; break;
-					case VZ: potent[iVar][iT4] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iT4] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iT4] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iT4] = 0.0; break;
 					}
 				}
 
@@ -7506,7 +7506,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 					}
 					else if (binterpol == 2) {
@@ -7521,10 +7521,10 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						TOCHKA pp, pb, pbb;
 						center_cord3D(iP, nvtx, pa, pp, 100);
-						center_cord3D(iT, nvtx, pa, pb, TSIDE);
-						center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+						center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+						center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 					}
 				} // pressure outlet
 				else if (((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw)) && w[border_neighbor[inumber].MCB - ls].bsymmetry)) {
@@ -7532,7 +7532,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 					// Значит скорость VX и VY в граничном узле нужно скорректировать записав в неё значение из ближайшего внутреннего узла,
 					// так чтобы выполнялось граничное условие для скорректированной скорости.
 					switch (iVar) {
-					case VX: case VY: if (binterpol == 0) {
+					case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: if (binterpol == 0) {
 						if (brelax_bound) {
 							// Здесь возможно надо релаксировать к скорректированной скорости удовлетворяющей уравнению неразрывности.
 							if (brelax_val2) {
@@ -7556,7 +7556,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
 								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
 							 }
 							 else if (binterpol == 2) {
@@ -7570,29 +7570,29 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 TOCHKA pp, pb, pbb;
 								 center_cord3D(iP, nvtx, pa, pp, 100);
-								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
-								 center_cord3D(neighbors_for_the_internal_node[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+								 center_cord3D(iT, nvtx, pa, pb, T_SIDE);
+								 center_cord3D(neighbors_for_the_internal_node[T_SIDE][iT].iNODE1, nvtx, pa, pbb, TT_SIDE);
 
-								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][neighbors_for_the_internal_node[T_SIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
 							 }
 							 break; // корректируем скорость.
-					case VZ: potent[iVar][iB4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
 					}
 
 				} // symmetry
 				else if ((border_neighbor[inumber].MCB >= ls) && (border_neighbor[inumber].MCB < (ls + lw))) {
 					switch (iVar) {
-					case VX: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
-					case VY: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
-					case VZ: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vx; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vy; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB4] = w[border_neighbor[inumber].MCB - ls].Vz; break;
 					}
 				}
 				else {
 					// Твёрдая неподвижная стенка Stacionary WALL
 					switch (iVar) {
-					case VX: potent[iVar][iB4] = 0.0; break;
-					case VY: potent[iVar][iB4] = 0.0; break;
-					case VZ: potent[iVar][iB4] = 0.0; break;
+					case VELOCITY_X_COMPONENT: potent[iVar][iB4] = 0.0; break;
+					case VELOCITY_Y_COMPONENT: potent[iVar][iB4] = 0.0; break;
+					case VELOCITY_Z_COMPONENT: potent[iVar][iB4] = 0.0; break;
 					}
 				}
 

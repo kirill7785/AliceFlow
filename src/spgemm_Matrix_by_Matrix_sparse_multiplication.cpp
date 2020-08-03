@@ -429,9 +429,9 @@ void my_parallel8_sparse_matrix_by_matrix_multiplication_AP(Ak2& Amat,
 							printf("error: diagonal element is negative...\n");
 							switch (iVar) {
 							case PAM: printf("PAM equation\n"); break;
-							case VX: printf("VX equation\n"); break;
-							case VY: printf("VY equation\n"); break;
-							case VZ: printf("VZ equation\n"); break;
+							case VELOCITY_X_COMPONENT: printf("VELOCITY_X_COMPONENT equation\n"); break;
+							case VELOCITY_Y_COMPONENT: printf("VELOCITY_Y_COMPONENT equation\n"); break;
+							case VELOCITY_Z_COMPONENT: printf("VELOCITY_Z_COMPONENT equation\n"); break;
 							case NUSHA: printf("NU equation\n");  break;
 							case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation\n");  break;
 							case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation\n");  break;

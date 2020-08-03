@@ -375,7 +375,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	integer imaxiter = 6000;
-	if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
+	if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
 		// для нелинейных задач. 
 		imaxiter = 1;
 		tolerance = 0.1;
@@ -396,7 +396,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	}
 	*/
 	/*
-	if (bstart7 && (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition))))
+	if (bstart7 && (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))))
 	{
 		imaxiter = 1;
 		tolerance = 0.1;
@@ -757,7 +757,7 @@ void cusp_solver_GPU_SAMG(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	integer imaxiter = 6000;
-	if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
+	if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
 		// для нелинейных задач. Граничное условие Стефана-Больцмана.
 		// 348878024515312.94
 		// 1947852997768.51
@@ -780,7 +780,7 @@ void cusp_solver_GPU_SAMG(equation3D* &sl, equation3D_bon* &slb,
 	}
 	*/
 	/*
-	if (bstart7 && (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition))))
+	if (bstart7 && (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition))))
 	{
 		imaxiter = 1;
 		tolerance = 0.1;
