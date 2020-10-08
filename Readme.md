@@ -24,7 +24,7 @@ More effective priorite queue on Fibonacci Heap for RS coarsening.
 * User freandly GUI on Embarcadero® Delphi XE8 Version 22.0.19027.8951.
 
 
-System requirements:
+## System requirements:
 1. variant a) 
 * 1.1. OS Windows x64
 * 1.2. compiller: Visual Studio 2015 community
