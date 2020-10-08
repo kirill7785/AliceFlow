@@ -31,14 +31,21 @@ https://www.paraview.org/download/
 
 ## Algorithms
 
-* 3D Temperature solver on solid blocks. Finite Volume Method. Stacionary or transient.
+* 3D Temperature solver for conjugate heat transfer. Finite Volume Method. Stacionary or transient.
+  Analitic or load from file or zero velocity component (vx,vy,vz) depend.
+  Newton Richman or Stefan Bolcman boundary condition.
 * 3D cfd Semi Implicit Method for Pressure Linked Equation (SIMPLE [1972]). Stacionary.
 * Rhie-Chow [1983].
-* Adaptive Local Refinement Mesh (unstructured grid).
-* High Resolution Scheme on uneven structural grid: WACEB, SMARTER, SUPER-C etc.
-* Algebraic Multigrid Ruge Stueben. BiCGStab. ilu0 smoother. etc.
+* Adaptive Local Refinement Mesh (unstructured grid). Coarse MESH or Medium Mesh selector.
+* High Resolution Scheme for covection term on uneven structural grid: WACEB, SMARTER, SUPER-C etc.
+* Algebraic Multigrid : in house or imported. 
+imported amg: 1. CUSP NVIDIA library. 2. AMGCL ddemidov library. 3. amg1r5 (r6) Ruge Stueben[1987].
+BiCGStab or FGMRes(m). smoothed aggregation or Ruge Stueben amg.  ilu0 smoother. openMP support. etc.
+in house amg: РУМБАv.0.14 BiCGStab or FGMRes(m). PMIS or Ruge Stueben (RS or RS2) amg. truncation operator Prolongation,
+level depend threshold, mix floating point precision, ilu0 smoother. openMP support on all operations. etc.
+More effective priorite queue on Fibonacci Heap for RS coarsening.
 * Turbulent models: Spalart Allmares, SST K-Omega Menter.
-* Bussinesk Approach. Congruate heat transfer.
+* Bussinesk Approach. Congruate heat transfer for Natural convection.
 * User freandly GUI on Embarcadero® Delphi XE8 Version 22.0.19027.8951.
 
 
