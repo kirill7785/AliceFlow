@@ -55,7 +55,7 @@ doublereal rFgRhieChow_internal(integer iP, integer G, doublereal rhog, doublere
 	}
 
 	// SIMPLEC אכדמנטעל.
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
 	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
 	integer iGG=neighbors_for_the_internal_node[GG][iP].iNODE1;
@@ -260,7 +260,7 @@ doublereal ugRhieChow_internal(integer iP, integer G, doublereal alpha,
 	}
 
 	// SIMPLEC אכדמנטעל.
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
 	integer iG=neighbors_for_the_internal_node[G][iP].iNODE1;
 	integer iGG=neighbors_for_the_internal_node[GG][iP].iNODE1;
@@ -498,7 +498,7 @@ doublereal rFgRhieChow_internal_border1(integer iP, integer G, doublereal rhog, 
 	} // end switch G
 
 	// SIMPLEC אכדמנטעל.
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
     doublereal fggplus=0.5;
 	doublereal positionleftnode=0.0, fdeltaplus=0.0, fbplus=0.0, fdelta2plus=0.0, apvelback=0.0, apvelg=0.0, apvelG=0.0;
@@ -727,7 +727,7 @@ doublereal rFgRhieChow_internal_border2(integer iP, integer G, doublereal rhog, 
 	} // end switch G	
 
 	// SIMPLEC אכדמנטעל.
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 					
 					
    doublereal fggplus=0.5*dx/dlbackg, fpplus=0.5*dx/dx, fgplusloc=0.5;
@@ -892,7 +892,7 @@ doublereal rFgRhieChow_internal_border(integer iP, integer G, doublereal rhog, d
 	} // end switch G
 
 	// SIMPLEC אכדמנטעל.
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
    doublereal apvelg=1.0;
    switch (G) {
@@ -1043,7 +1043,7 @@ doublereal ugRhieChow_internal_border(integer iP, integer G, doublereal alpha,
 	} // end switch G
 
 	// SIMPLEC אכדמנטעל.
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) koef/=(1.0-alpha);
 
    doublereal apvelg=1.0;
    switch (G) {

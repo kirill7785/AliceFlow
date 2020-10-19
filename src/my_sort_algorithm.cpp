@@ -7,19 +7,19 @@
 // https://github.com/timsort/cpp-TimSort
 #include "gfx/timsort.hpp" // Сортировка Тима Петерсома 2002.
 
-const integer QUICK_SORT_ALG = 1; // Быстрая сортировка Ч. Хоара.
+// MY_SORT_ALGORITHM::QUICK_SORT // Быстрая сортировка Ч. Хоара.
 // Использовать ли quicksort qs and qsj.
 // Сортировка с подсчётом быстрее quickSort.
 // Использовать ли сортировку подсчётом которая 
 //потребляет килотонну памяти (Короче для машин у которых море оперативки).
-const integer COUNTING_SORT_ALG = 0; // Сортировка с подсчётом лучший выбор.
+// MY_SORT_ALGORITHM::COUNTING_SORT // Сортировка с подсчётом лучший выбор.
 // Сортировка с подсчётом подходит потому что ключи целочисленны и 
 // лежат в заданном интервале непрерывно.
-const integer HEAP_SORT_ALG = 2; // пирамидальная сортировка.
+// MY_SORT_ALGORITHM::HEAP_SORT // пирамидальная сортировка.
 // количество рекурсивных вызовов ограничено, поэтому QuickSort не подходит.
 // В компиляторе надо увеличить размер стека до 4Мб.
 // сортировка Тима Петерсона. 15-16.03.2019
-const integer TIM_PETERSON_SORT_ALG = 3;
+// MY_SORT_ALGORITHM::TIM_SORT
 
 // Для std::sort 
 bool compareAk1R(Ak1 i1, Ak1 i2)
@@ -849,9 +849,9 @@ void mySTDHeapSort(Ak1*& Amat, integer first, integer last,
 
 	std::make_heap(v1.begin(), v1.end(), greaters());
 
-	doublereal* a = new doublereal[last - first + 1];
-	integer* j_a = new integer[last - first + 1];
-	integer* i_a = new integer[last - first + 1];
+	real_mix_precision* a = new real_mix_precision[last - first + 1];
+	integer_mix_precision* j_a = new integer_mix_precision[last - first + 1];
+	integer_mix_precision* i_a = new integer_mix_precision[last - first + 1];
 	for (integer i = first; i <= last; i++) {
 		integer ind = i - first;
 		a[ind] = Amat[i].aij;

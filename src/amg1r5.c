@@ -2238,7 +2238,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 2;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2283,7 +2283,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2325,7 +2325,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2363,7 +2363,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2401,7 +2401,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 8;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3889,7 +3889,7 @@ L20:
 		{
 			iN75 = 2;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3938,7 +3938,7 @@ L20:
 		{
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3985,7 +3985,7 @@ L20:
 		{
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -4027,7 +4027,7 @@ L20:
 		{
 			iN75 = 4;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -4067,7 +4067,7 @@ L20:
 		{
 			iN75 = 8;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -9909,7 +9909,7 @@ doublereal cgeps_(integer *k, doublereal *s2, doublereal *a, doublereal *u,
 
     /* System generated locals */
     integer i__1=0, i__2=0;
-    doublereal ret_val=0.0; // TODO инициализация была добавлена позже мной её не было изначально.
+    doublereal ret_val=0.0; //  инициализация была добавлена позже мной её не было изначально.
 
     /* Builtin functions */
    // integer s_wsfe(cilist *), e_wsfe(void);
@@ -11734,7 +11734,7 @@ void amg_loc_memory_networkT(doublereal* &val, integer* &col_ind, integer* &row_
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+	if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -12016,7 +12016,7 @@ void amg_loc_memory_networkT(doublereal* &val, integer* &col_ind, integer* &row_
 		integer ncyc = 0;
 		//ncyc=10110;
 		ncyc = 10299; // максимум 99 V циклов
-		if ((bnonlinear)&&(steady_or_unsteady_global_determinant == NETWORK_T_UNSTEADY)) {
+		if ((bnonlinear)&&(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)) {
 			ncyc = 10205;
 		}
 		integer madapt = 0;
@@ -12046,7 +12046,7 @@ void amg_loc_memory_networkT(doublereal* &val, integer* &col_ind, integer* &row_
 		//matrix=11; // symmetric SPD.
 		matrix = 22;
 
-		if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
+		if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC)) {
 			ifirst = 10;// начальное приближение с предыдущего шага.
 			ncyc = 10101; // Всего один V цикл.
 			matrix = 11;
@@ -12229,7 +12229,7 @@ void amg_loc_memory_networkT(doublereal* &val, integer* &col_ind, integer* &row_
 		
 
 
-		// TODO: 
+		//  
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		// в каждой строке элементы отсортированы по номерам столбцов:
@@ -12511,7 +12511,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+	if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -12855,7 +12855,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	//matrix=11; // symmetric SPD.
 	matrix=22; 
 
-	if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
+	if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC)) {
 		ifirst = 10;// начальное приближение с предыдущего шага.
 		ncyc = 10101; // Всего один V цикл.
 		matrix = 11;
@@ -13219,7 +13219,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		// TODO: 
+		//
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
         // в каждой строке элементы отсортированы по номерам столбцов:
@@ -13542,9 +13542,9 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+	if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -14000,17 +14000,17 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 			doublereal alpharelax = 1.0;
 
 			// Это не специальная нелинейная версия кода amg1r5 CAMG.
-			if ((Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
+			if ((AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
 				for (integer k = 0; k < lw; k++) {
-					if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-						(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+					if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+						(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 						alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
 						// 0.9999 - недостаточное значение, температуры не те получаются.
 					}
 				}
-				if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-					(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-					(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+				if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+					(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+					(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 					alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
 					// 0.9999 - недостаточное значение, температуры не те получаются.
 				}
@@ -14112,7 +14112,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		//****debug print message*******
 		
 
-		// TODO: 
+		//  
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		// в каждой строке элементы отсортированы по номерам столбцов:
@@ -14192,8 +14192,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		
 		//printf("getready ...");
 		//getchar();
-		if ((AMG1R5_SECOND_T_SOLVER == iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
-		    (NONE_only_amg1r5 == stabilization_amg1r5_algorithm)){
+		if ((SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER == iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		    (AMG1R5_OUT_ITERATOR::NONE_only_amg1r5 == stabilization_amg1r5_algorithm)){
 			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
 			// алгоритм 1985 года.
 			
@@ -14206,8 +14206,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr);
 		}
-		else if ((AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
-		         (BiCGStab_plus_amg1r5 == stabilization_amg1r5_algorithm)){
+		else if ((SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		         (AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5 == stabilization_amg1r5_algorithm)){
 			// 23-24 декабря 2017.
 			//13.10.2018
 			// BiCGStab + amg1r5.
@@ -14225,8 +14225,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr, n);
 		}
-		else if ((AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
-		(FGMRes_plus_amg1r5 == stabilization_amg1r5_algorithm)){
+		else if ((SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		(AMG1R5_OUT_ITERATOR::FGMRes_plus_amg1r5 == stabilization_amg1r5_algorithm)){
 			// FGMres + amg1r5.
 			//31 декабря 2017.
 
@@ -14468,7 +14468,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
 
 	doublereal res_sum_previos = 1.05*finish_residual;
-	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+	if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 		// Работает задача Ньютона Рихмана.
 		res_sum_previos = 1.0e-12;
 	}
@@ -14478,21 +14478,22 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 	bool bnonlinear = false;
 	for (integer k = 0; k < lw; k++) {
-		if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) || (w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+		if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+			(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 			// Убираем защиту от повторного запуска при нелинейной задаче.
 			bnonlinear = true;
 		}
 	}
-	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+	if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 		// Убираем защиту от повторного запуска при нелинейной задаче.
 		bnonlinear = true;
 	}
 
 	//if (res_sum>1.0E-10) 
 	if ((iVar==PAM)||bnonlinear||(((1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) &&
-		(Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) ||
+		(AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) ||
 		(res_sum>res_sum_previos))) 
 	{
 		// защита от повторного холостого запуска экономит время конечного пользователя.
@@ -14823,7 +14824,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == TEMP) && (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30)) {
 		ncyc = 10120; // 20 / 99 V циклов.
 	}
-	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition == true)) {
+	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition  )) {
 		ncyc = 1012; // 2 - V цикла.
 		eps = res_sum*sqrt((doublereal)(maxelm + maxbound))*0.0002;
 	}
@@ -14838,7 +14839,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	nrd = nrd_LABEL;
 	integer nsolco=0;
 	nsolco=110;
-	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition == true)) {
+	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition  )) {
 		//nsolco = 122;
 	}
 	integer nru=0;
@@ -14866,7 +14867,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	// с условием Ньютона-Рихмана на всей дефолтной границе. Пока с этой задачей 
 	// справляется только my_cl_agl_amg_v0_14 (РУМБА алгоритм).
 
-	if ((iVar==TEMP)&& (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)) {
+	if ((iVar==TEMP)&& (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC)) {
 		ifirst = 13;// начальное приближение с предыдущего шага.
 		ncyc = 1019; // Всего 9 V циклов.
 		//if (blocker_Newton_Richman) {
@@ -15184,19 +15185,19 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	doublereal alpharelax1 = alpharelax; // Запоминаем первоначальное значение.
-	if ((Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
+	if ((AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
 		// Это не специальная нелинейная версия кода amg1r5 CAMG.
 		for (integer k = 0; k < lw; k++) {
-			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 				alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
 				// 0.9999 - недостаточное значение, температуры не те получаются.
 			}
 		}
 
-		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 			alpharelax = 0.99999;
 		}
 	}
@@ -15490,7 +15491,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		//printf("ik=%d\n",ik);
 		//getchar();
 
-		// TODO: 
+		// : 
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
         // в каждой строке элементы отсортированы по номерам столбцов:
@@ -15715,7 +15716,8 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	   }
 	   res_sum=sqrt(res_sum);
 
-	   if ((iVar == TEMP) && ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC)||(breakRUMBAcalc_for_nonlinear_boundary_condition==true))) {
+	   if ((iVar == TEMP) && ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC)||
+		   (breakRUMBAcalc_for_nonlinear_boundary_condition==true))) {
 		   // Если мы решаем Задачу с условием Ньютона Рихмана то у нас нету ни одного условия Дирихле.
 		   // Сходимость определяется на глобальном уровне в solve nonlinear temp.
 
@@ -15796,7 +15798,7 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 				   if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == PAM)) {
 					   bmemory_local = true;//4.08.2018
 				   }
-				   if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+				   if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 					   // Нелинейное условие Ньютона - Рихмана 
 					   // матрица всё равно пересобирается каждый раз.
 					   //  bmemory_local = true;

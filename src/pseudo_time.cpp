@@ -117,11 +117,11 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 
 		doublereal alpha_avg=(alpha[VELOCITY_X_COMPONENT]+alpha[VELOCITY_Y_COMPONENT]+alpha[VELOCITY_Z_COMPONENT])/3.0;
 		doublereal CFL2=4.0; // соответствует SIMPLEC alpha=0.8; 
-		if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
+		if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 		    // SIMPLEC 
 		    CFL2=alpha_avg/(1.0-alpha_avg);
 	    }
-	    if (iSIMPLE_alg==SIMPLE_Carretto) {
+	    if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 		    // SIMPLE
 		    CFL2=alpha_avg;
 	    }
@@ -292,12 +292,14 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	bVERY_STABILITY_ON=false;
 
 	// инициализация.
+#pragma omp parallel for
     for (integer i=0; i<maxelm+maxbound; i++) {
 		tau[VELOCITY_X_COMPONENT][i]=0.0; // псевдовремя.
 		tau[VELOCITY_Y_COMPONENT][i]=0.0;
 		tau[VELOCITY_Z_COMPONENT][i]=0.0;
 	}
 
+#pragma omp parallel for
 	for (integer iP=0; iP<maxelm; iP++) {
 
         // iP - номер центрального контрольного объёма
@@ -552,13 +554,13 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 		for (integer i9=0; i9<=2; i9++) {
 			CFL2[i9]=4.0;
 		}
-		if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
+		if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 		    // SIMPLEC 
 		    CFL2[VELOCITY_X_COMPONENT]=alpha[VELOCITY_X_COMPONENT]/(1.0-alpha[VELOCITY_X_COMPONENT]);
 			CFL2[VELOCITY_Y_COMPONENT]=alpha[VELOCITY_Y_COMPONENT]/(1.0-alpha[VELOCITY_Y_COMPONENT]);
 			CFL2[VELOCITY_Z_COMPONENT]=alpha[VELOCITY_Z_COMPONENT]/(1.0-alpha[VELOCITY_Z_COMPONENT]);
 	    }
-	    if (iSIMPLE_alg==SIMPLE_Carretto) {
+	    if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 		    // SIMPLE
 		    CFL2[VELOCITY_X_COMPONENT]=alpha[VELOCITY_X_COMPONENT];
 			CFL2[VELOCITY_Y_COMPONENT]=alpha[VELOCITY_Y_COMPONENT];
@@ -723,6 +725,7 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 		// продолжение параметра tau на границу расчётной области.
 		// Просто сносим значение tau из ближайшего внутреннего узла.
 		// iP - номер центрального контрольного объёма
+#pragma omp parallel for
 		for (integer iP = 0; iP < maxelm; iP++) {
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 			iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
@@ -956,6 +959,7 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	}
 	else {
 		// на основе диагональных коэффициентов в граничном условии.
+#pragma omp parallel for
 		for (integer iP = 0; iP < maxelm; iP++) {
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 			iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
@@ -984,13 +988,13 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 				CFL2[i9] = 4.0;
 			}
 
-			if (iSIMPLE_alg == SIMPLEC_Van_Doormal_and_Raithby) {
+			if (iSIMPLE_alg == SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 				// SIMPLEC 
 				CFL2[VELOCITY_X_COMPONENT] = alpha[VELOCITY_X_COMPONENT] / (1.0 - alpha[VELOCITY_X_COMPONENT]);
 				CFL2[VELOCITY_Y_COMPONENT] = alpha[VELOCITY_Y_COMPONENT] / (1.0 - alpha[VELOCITY_Y_COMPONENT]);
 				CFL2[VELOCITY_Z_COMPONENT] = alpha[VELOCITY_Z_COMPONENT] / (1.0 - alpha[VELOCITY_Z_COMPONENT]);
 			}
-			if (iSIMPLE_alg == SIMPLE_Carretto) {
+			if (iSIMPLE_alg == SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 				// SIMPLE
 				CFL2[VELOCITY_X_COMPONENT] = alpha[VELOCITY_X_COMPONENT];
 				CFL2[VELOCITY_Y_COMPONENT] = alpha[VELOCITY_Y_COMPONENT];

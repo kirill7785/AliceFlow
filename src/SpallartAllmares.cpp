@@ -3034,7 +3034,7 @@ void my_elmatr_quad_SpallartAllmares3D_bound(integer inumber, integer maxelm,
 
 
 
-	// bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+	// bDirichlet   осуществляется сборка только граничных условий Дирихле.
 	// bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
 	// inumber - номер граничного КО.

@@ -13,6 +13,7 @@
 
 // Двумерный график для гидродинамического решателя.
 typedef struct TSORT_XY_PLOT_FLOW {
+
 	doublereal x_argument;
 	doublereal Vx;
 	doublereal Vy;
@@ -55,6 +56,11 @@ typedef struct TSORT_XY_PLOT_FLOW {
 	doublereal GradXOmega;
 	doublereal GradYOmega;
 	doublereal GradZOmega;
+
+	doublereal F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16;
+	doublereal F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31, F32;
+
+
 } SORT_XY_PLOT_FLOW;
 
 bool compare_XY_PLOT_FLOW(SORT_XY_PLOT_FLOW& Amat1, SORT_XY_PLOT_FLOW& Amat2) {
@@ -67,10 +73,13 @@ bool compare_XY_PLOT_FLOW(SORT_XY_PLOT_FLOW& Amat1, SORT_XY_PLOT_FLOW& Amat2) {
 void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal** potent, doublereal **rhie_chow)
 {
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp = fopen64("ALICEFLOW0_03.PLT", "w");
+	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_03.PLT", "w");
 #endif
 
@@ -194,21 +203,21 @@ void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, intege
 			// запись информации о разностной сетке
 			for (i = 0; i < ncell; i++) {
 #if doubleintprecision == 1
-				if (ionly_solid_visible == FLUID_AND_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%lld %lld %lld %lld ", nvtxcell[0][i], nvtxcell[1][i], nvtxcell[2][i], nvtxcell[3][i]);
 					fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell[4][i], nvtxcell[5][i], nvtxcell[6][i], nvtxcell[7][i]);
 			    }
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 
 					fprintf(fp, "%lld %lld %lld %lld ", nvtxcell[0][i], nvtxcell[1][i], nvtxcell[2][i], nvtxcell[3][i]);
 					fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell[4][i], nvtxcell[5][i], nvtxcell[6][i], nvtxcell[7][i]);
 				}
 #else
-				if (ionly_solid_visible == FLUID_AND_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%d %d %d %d ", nvtxcell[0][i], nvtxcell[1][i], nvtxcell[2][i], nvtxcell[3][i]);
 					fprintf(fp, "%d %d %d %d\n", nvtxcell[4][i], nvtxcell[5][i], nvtxcell[6][i], nvtxcell[7][i]);
 				}
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 
 					fprintf(fp, "%d %d %d %d ", nvtxcell[0][i], nvtxcell[1][i], nvtxcell[2][i], nvtxcell[3][i]);
 					fprintf(fp, "%d %d %d %d\n", nvtxcell[4][i], nvtxcell[5][i], nvtxcell[6][i], nvtxcell[7][i]);
@@ -238,10 +247,13 @@ void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, intege
 void exporttecplotxy360T_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal* potent)
 {
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp = fopen64("ALICEFLOW0_03.PLT", "wb");
+	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_03.PLT", "wb");
 #endif
 	
@@ -455,10 +467,13 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 		// ivarexport == 3 печатается и поле температур и гидродинамика.
 
 		FILE *fp=NULL;
-		errno_t err=0;
+		
 #ifdef MINGW_COMPILLER
+		int err = 0;
 		fp = fopen64("ALICEFLOW0_06_temp_part1.txt", "w");
+		if (fp == NULL) err = 1;
 #else
+		errno_t err = 0;
 		err = fopen_s(&fp, "ALICEFLOW0_06_temp_part1.txt", "w");
 #endif
 		
@@ -641,11 +656,13 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 
 	FILE *fp=NULL;
     FILE *fp1=NULL; // часть 1 или 3
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp=fopen64("ALICEFLOW0_07_temp.PLT", "wb");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");
 #endif
 	
@@ -1443,11 +1460,11 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 			for (i=0;i<maxelm; i++) {
                 if (t.ptr[1][i]>-1) {
                    //fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime==ZEROEQMOD) ||
-						(f[t.ptr[1][i]].iflowregime==SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[t.ptr[1][i]].iflowregime== VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime== VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES)||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						fnumber = f[t.ptr[1][i]].rdistWall[t.ptr[0][i]];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -1480,11 +1497,11 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 				// Distance_Wall.
 				integer idfluid=0;
                 for (i=0;i<f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime==ZEROEQMOD) || 
-						(f[0].iflowregime==SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST)||
-						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[0].iflowregime== VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[0].iflowregime== VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
                       // fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i+maxelm]); // Distance_Wall
 					   fnumber = f[idfluid].rdistWall[i + maxelm];
 					   fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -2179,12 +2196,14 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count) {
 
 
-	errno_t err_inicialization_data=0;
+	
 	FILE* fp_inicialization_data=NULL;
 #ifdef MINGW_COMPILLER
+	int err_inicialization_data = 0;
 	fp_inicialization_data=fopen64("load.txt", "w");
 	if (fp_inicialization_data==NULL) err_inicialization_data = 1;
 #else
+	errno_t err_inicialization_data = 0;
 	err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "w");
 #endif
 
@@ -2229,10 +2248,35 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			}
 			fprintf(fp_inicialization_data, "\n");
 #else
+			int ifr = 0;
+			switch (f[0].iflowregime) {
+			case VISCOSITY_MODEL::LAMINAR: ifr = 0;
+				break;
+			case VISCOSITY_MODEL::ZEROEQMOD: ifr = 1;
+				break;
+			case VISCOSITY_MODEL::SMAGORINSKY: ifr = 2;
+				break;
+			case VISCOSITY_MODEL::RNG_LES: ifr = 3;
+				break;
+			case VISCOSITY_MODEL::RANS_SPALART_ALLMARES:
+				ifr = 4;
+				break;
+			case VISCOSITY_MODEL::RANS_MENTER_SST:
+				ifr = 5;
+				break;
+			case VISCOSITY_MODEL::RANS_STANDART_K_EPS:
+				ifr = 6;
+				break;
+			default:
+				ifr = 0;
+				break;
+			}
+
+
 #if doubleintprecision == 1
-			fprintf_s(fp_inicialization_data, "%lld\n %lld\n %lld\n", f[0].maxnod, f[0].maxelm, f[0].iflowregime);
+			fprintf_s(fp_inicialization_data, "%lld\n %lld\n %lld\n", f[0].maxnod, f[0].maxelm, (integer)(ifr));
 #else
-			fprintf_s(fp_inicialization_data, "%d\n %d\n %d\n", f[0].maxnod, f[0].maxelm, f[0].iflowregime);
+			fprintf_s(fp_inicialization_data, "%d\n %d\n %d\n", f[0].maxnod, f[0].maxelm, ifr);
 #endif
 			// X coordinate
 			for (integer i = 0; i < f[0].maxnod; i++) {
@@ -2665,10 +2709,34 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 		}
 		fprintf(fp_inicialization_data, "\n");
 #else
+			int ifr = 0;
+			switch (f[0].iflowregime) {
+			case VISCOSITY_MODEL::LAMINAR: ifr = 0;
+				break;
+			case VISCOSITY_MODEL::ZEROEQMOD: ifr = 1;
+				break;
+			case VISCOSITY_MODEL::SMAGORINSKY: ifr = 2;
+				break;
+			case VISCOSITY_MODEL::RNG_LES: ifr = 3;
+				break;
+			case VISCOSITY_MODEL::RANS_SPALART_ALLMARES:
+				ifr = 4;
+				break;
+			case VISCOSITY_MODEL::RANS_MENTER_SST:
+				ifr = 5;
+				break;
+			case VISCOSITY_MODEL::RANS_STANDART_K_EPS:
+				ifr = 6;
+				break;
+			default:
+				ifr = 0;
+				break;
+			}
+
 #if doubleintprecision == 1
-		fprintf_s(fp_inicialization_data, "%lld\n %lld\n %lld\n", maxelm, ncell, f[0].iflowregime);
+		fprintf_s(fp_inicialization_data, "%lld\n %lld\n %lld\n", maxelm, ncell, (integer)(ifr));
 #else
-		fprintf_s(fp_inicialization_data, "%d\n %d\n %d\n", maxelm, ncell, f[0].iflowregime);
+		fprintf_s(fp_inicialization_data, "%d\n %d\n %d\n", maxelm, ncell, ifr);
 #endif
 
 		// X
@@ -2835,7 +2903,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 
 	FILE *fp=NULL;
 	FILE *fp1=NULL; // часть 1 или 3
-	errno_t err;
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -2845,7 +2913,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 	// Экономия памяти 19N.
 
 	doublereal* temp_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		temp_shadow = new doublereal[t.maxelm + t.maxbound];
 		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
 			temp_shadow[i_1] = t.potent[i_1];
@@ -2853,7 +2921,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 	}
 
 	doublereal** total_deformation_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		total_deformation_shadow = new doublereal*[4];
 		for (integer j_1 = 0; j_1 < 4; j_1++) {
 			total_deformation_shadow[j_1] = new doublereal[t.maxelm + t.maxbound];
@@ -2871,7 +2939,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 	// 
 	// w -write, b - binary.
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	// Если сохранять всё то нехватит памяти на диске.
 	if (inum_exp>=0) {
 	switch (ikey) {
@@ -2919,6 +2987,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 	*/
 	if (fp == NULL) err = 1;
 #else
+	errno_t err;
 	// Если сохранять всё то памяти на диске может нехватить.
 	if (inum_exp >= 0) {
 		switch (ikey) {
@@ -3146,7 +3215,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 					//ncell_shadow = ncell;
 				}
 				else {
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
 						for (i = 0; i < t.database.ncell; i++) {
@@ -3282,7 +3351,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 						if (ncell_shadow == 0) {
 							// У нас совсем нету твёрдого тела, поэтому мы показываем только  жидкость.
 							ncell_shadow = ncell;
-							ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+							ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 						}
 					}
 				}
@@ -3368,7 +3437,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 		// запись температуры
 		if (lite_export) {
 			for (i = 0; i < maxelm; i++) {
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%+.3f ", temp_shadow[i]);
 				}
 				else {
@@ -3379,7 +3448,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 
 			if (bextendedprint) {
 				for (i = maxelm; i < maxelm + t.maxbound; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.3f ", temp_shadow[i]);
 					}
 					else {
@@ -3391,7 +3460,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 		}
 		else {
 			for (i = 0; i < maxelm; i++) {
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%+.16f ", temp_shadow[i]);
 				}
 				else {
@@ -3402,7 +3471,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 
 			if (bextendedprint) {
 				for (i = maxelm; i < maxelm + t.maxbound; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.16f ", temp_shadow[i]);
 					}
 					else {
@@ -3649,11 +3718,11 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
-						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -3666,11 +3735,11 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || 
-						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST) ||
-						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[0].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -5011,7 +5080,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 					for (i = 0; i < maxelm; i++) {
 
 
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 							//printf("%e \n", total_deformation_shadow[j_6][i]);
 						}
@@ -5027,7 +5096,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 
 					if (bextendedprint) {
 						for (i = maxelm; i < maxelm + t.maxbound; i++) {
-							if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+							if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 								fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 							}
 							else {
@@ -5039,7 +5108,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 				}
 				else {
 					for (i = 0; i < maxelm; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 						}
 						else {
@@ -5050,7 +5119,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 
 					if (bextendedprint) {
 						for (i = maxelm; i < maxelm + t.maxbound; i++) {
-							if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+							if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 								fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 							}
 							else {
@@ -5139,7 +5208,7 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 					//printf("fluid plot\n");
 					//getchar();
 
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;
@@ -5393,9 +5462,10 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 // Т.к. её аналог на делпфи совершенно не справляется с большими файлами по причине ограниченных функциональных возможностей библиоек стандартных компонентов на очень больших размерах.
 void tecplot360patcher_for_print_in_report() {
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
-	if (1 && steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL) {
+	int err = 0;
+	if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) {
 		// Второй температурный солвер.
 		fp = fopen64("ALICEFLOW0_08_temp.PLT", "r");
     }
@@ -5404,7 +5474,8 @@ void tecplot360patcher_for_print_in_report() {
 	}
 	if (fp==NULL) err = 1;
 #else
-	if (1 && steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL) {
+	errno_t err = 0;
+	if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) {
 		// Второй температурный солвер.
 		err = fopen_s(&fp, "ALICEFLOW0_08_temp.PLT", "r");
 }
@@ -5421,11 +5492,13 @@ void tecplot360patcher_for_print_in_report() {
 	}
 	else {
 		FILE *fp1=NULL;
-		errno_t err1=0;
+		
 #ifdef MINGW_COMPILLER
+		int err1 = 0;
 		fp1 = fopen64("ALICEFlow0_07_Visualisation_Magement.PLT", "w");
 		if (fp1==NULL) err1 = 1;
 #else
+		errno_t err1 = 0;
 		err1 = fopen_s(&fp1, "ALICEFlow0_07_Visualisation_Magement.PLT", "w");
 #endif
 		
@@ -5601,9 +5674,9 @@ void tecplot360patcher_for_print_in_report() {
 			//char ch2 = getchar();
 			char ch2 = '2'; // инициализируем осью Y
 			switch (pfpir.idir) {
-			case X_LINE_DIRECTIONAL: ch2 = '1'; break;
-			case Y_LINE_DIRECTIONAL: ch2 = '2'; break;
-			case Z_LINE_DIRECTIONAL: ch2 = '3'; break;
+			case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: ch2 = '1'; break;
+			case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: ch2 = '2'; break;
+			case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: ch2 = '3'; break;
 			default:
 				printf("Unknown directional in variable pfpir.idir=%d\n", pfpir.idir);
 				printf("1 - X, 2 - Y, 3 - Z - anather unknown.\n");
@@ -5750,11 +5823,13 @@ void tecplot360patcher_for_print_in_report() {
 				// имя создаваемого файла xyplotT.txt.
 
 				FILE *fpPLT = NULL;
-				errno_t err_PLT = 0;
+				
 #ifdef MINGW_COMPILLER
+				int  err_PLT = 0;
 				fpPLT = fopen64("xyplotT.txt", "w");
 				if (fpPLT == NULL) err_PLT = 1;
 #else
+				errno_t err_PLT = 0;
 				err_PLT = fopen_s(&fpPLT, "xyplotT.txt", "w");
 #endif
 
@@ -5808,21 +5883,21 @@ void tecplot360patcher_for_print_in_report() {
 
 						integer iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 						switch (idirectional_for_XY_Plot) {
-						case X_LINE_DIRECTIONAL: // YZ 
+						case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 							iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 							sp0.y = sp1.y = y;
 							sp0.z = sp1.z = z;
 							sp0.x = xmin;
 							sp1.x = xmax;
 							break;
-						case Y_LINE_DIRECTIONAL: //XZ
+						case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 							iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 							sp0.x = sp1.x = x;
 							sp0.z = sp1.z = z;
 							sp0.y = ymin;
 							sp1.y = ymax;
 							break;
-						case Z_LINE_DIRECTIONAL: // XY
+						case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 							iplane = XY_PLANE; // плоскость перпендикулярная линии.
 							sp0.y = sp1.y = y;
 							sp0.x = sp1.x = x;
@@ -5936,8 +6011,40 @@ void tecplot360patcher_for_print_in_report() {
 									case 35: xy_arr[icounter].GradXOmega = func_i32;  break;
 									case 36: xy_arr[icounter].GradYOmega = func_i32;  break;
 									case 37: xy_arr[icounter].GradZOmega = func_i32;  break;
+									case 38: xy_arr[icounter].F1 = func_i32; break;
+									case 39: xy_arr[icounter].F2 = func_i32; break;
+									case 40: xy_arr[icounter].F3 = func_i32; break;
+									case 41: xy_arr[icounter].F4 = func_i32; break;
+									case 42: xy_arr[icounter].F5 = func_i32; break;
+									case 43: xy_arr[icounter].F6 = func_i32; break;
+									case 44: xy_arr[icounter].F7 = func_i32; break;
+									case 45: xy_arr[icounter].F8 = func_i32; break;
+									case 46: xy_arr[icounter].F9 = func_i32; break;
+									case 47: xy_arr[icounter].F10 = func_i32; break;
+									case 48: xy_arr[icounter].F11 = func_i32; break;
+									case 49: xy_arr[icounter].F12 = func_i32; break;
+									case 50: xy_arr[icounter].F13 = func_i32; break;
+									case 51: xy_arr[icounter].F14 = func_i32; break;
+									case 52: xy_arr[icounter].F15 = func_i32; break;
+									case 53: xy_arr[icounter].F16 = func_i32; break;
+									case 54: xy_arr[icounter].F17 = func_i32; break;
+									case 55: xy_arr[icounter].F18 = func_i32; break;
+									case 56: xy_arr[icounter].F19 = func_i32; break;
+									case 57: xy_arr[icounter].F20 = func_i32; break;
+									case 58: xy_arr[icounter].F21 = func_i32; break;
+									case 59: xy_arr[icounter].F22 = func_i32; break;
+									case 60: xy_arr[icounter].F23 = func_i32; break;
+									case 61: xy_arr[icounter].F24 = func_i32; break;
+									case 62: xy_arr[icounter].F25 = func_i32; break;
+									case 63: xy_arr[icounter].F26 = func_i32; break;
+									case 64: xy_arr[icounter].F27 = func_i32; break;
+									case 65: xy_arr[icounter].F28 = func_i32; break;
+									case 66: xy_arr[icounter].F29 = func_i32; break;
+									case 67: xy_arr[icounter].F30 = func_i32; break;
+									case 68: xy_arr[icounter].F31 = func_i32; break;
+									case 69: xy_arr[icounter].F32 = func_i32; break;
 									default :
-										printf("ERROR!!! number of VARIABLES > 37. XYPLOT diagnostic.\n");
+										printf("ERROR!!! number of VARIABLES > 69. XYPLOT diagnostic.\n");
 										system("PAUSE");
 										break;
 									}
@@ -5946,13 +6053,13 @@ void tecplot360patcher_for_print_in_report() {
 								
 
 								switch (idirectional_for_XY_Plot) {
-								case X_LINE_DIRECTIONAL: // YZ 
+								case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 									xy_arr[icounter].x_argument = p.x;
 									break;
-								case Y_LINE_DIRECTIONAL: //XZ
+								case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: // XZ
 									xy_arr[icounter].x_argument = p.y;
 									break;
-								case Z_LINE_DIRECTIONAL: // XY
+								case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 									xy_arr[icounter].x_argument = p.z;
 									break;
 								default:
@@ -6019,13 +6126,13 @@ void tecplot360patcher_for_print_in_report() {
 
 						fprintf(fpPLT, "Xo=%e, Yo=%e, Zo=%e, ", x, y, z);
 						switch (idirectional_for_XY_Plot) {
-						case X_LINE_DIRECTIONAL: // YZ 
+						case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 							fprintf(fpPLT, "directional=X\n");
 							break;
-						case Y_LINE_DIRECTIONAL: //XZ
+						case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 							fprintf(fpPLT, "directional=Y\n");
 							break;
-						case Z_LINE_DIRECTIONAL: // XY
+						case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 							fprintf(fpPLT, "directional=Z\n");
 							break;
 						default: // YZ 
@@ -6077,8 +6184,40 @@ void tecplot360patcher_for_print_in_report() {
 								case 35: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].GradXOmega);   break;
 								case 36: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].GradYOmega);   break;
 								case 37: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].GradZOmega);   break;
+								case 38: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F1);   break;
+								case 39: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F2);   break;
+								case 40: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F3);   break;
+								case 41: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F4);   break;
+								case 42: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F5);   break;
+								case 43: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F6);   break;
+								case 44: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F7);   break;
+								case 45: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F8);   break;
+								case 46: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F9);   break;
+								case 47: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F10);   break;
+								case 48: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F11);   break;
+								case 49: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F12);   break;
+								case 50: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F13);   break;
+								case 51: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F14);   break;
+								case 52: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F15);   break;
+								case 53: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F16);   break;
+								case 54: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F17);   break;
+								case 55: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F18);   break;
+								case 56: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F19);   break;
+								case 57: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F20);   break;
+								case 58: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F21);   break;
+								case 59: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F22);   break;
+								case 60: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F23);   break;
+								case 61: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F24);   break;
+								case 62: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F25);   break;
+								case 63: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F26);   break;
+								case 64: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F27);   break;
+								case 65: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F28);   break;
+								case 66: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F29);   break;
+								case 67: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F30);   break;
+								case 68: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F31);   break;
+								case 69: fprintf(fpPLT, "%+.16f ", xy_arr[icounter].F32);   break;
 								default:
-									printf("ERROR!!! number of VARIABLES > 37. XYPLOT diagnostic.\n");
+									printf("ERROR!!! number of VARIABLES > 69. XYPLOT diagnostic.\n");
 									system("PAUSE");
 									break;
 								}
@@ -6192,7 +6331,7 @@ void tecplot360patcher_for_print_in_report() {
 			fclose(fp);
 			fclose(fp1);
 
-			if (1 && steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL) {
+			if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) {
 				printf("file ALICEFLOW0_08_temp.PLT preobrazovan. Ok.\n");
 			}
 			else {
@@ -6210,6 +6349,150 @@ void tecplot360patcher_for_print_in_report() {
 
 }// tecplot360patcher_for_print_in_report
 
+// Для расчёта производных от деформации.
+void green_gauss_Stress(integer iP,
+	doublereal**& potent, integer**& nvtx, TOCHKA*& pa,
+	ALICE_PARTITION**& neighbors_for_the_internal_node, integer maxelm, bool bbond,
+	BOUND*& border_neighbor, integer* ilevel_alice, integer iDATA, integer iTARGET, LINE_DIRECTIONAL iDIRECTIONAL);
+
+
+void print_tetrahedron(FILE* &fp, bool b1bvisible, bool b2bvisible, bool b3bvisible, bool b4bvisible, 
+	bool b5bvisible, bool b6bvisible, bool b7bvisible, bool b8bvisible,
+	integer nvtxcell0, integer nvtxcell1, integer nvtxcell2, integer nvtxcell3, 
+	integer nvtxcell4, integer nvtxcell5, integer nvtxcell6, integer nvtxcell7) {
+
+
+	// Отработан только XOY plane
+
+	integer buf = nvtxcell2;
+	nvtxcell2 = nvtxcell3;
+	nvtxcell3 = buf;
+
+	buf = nvtxcell6;
+	nvtxcell6 = nvtxcell7;
+	nvtxcell7 = buf;
+
+	bool bbuf = b3bvisible;
+	b3bvisible = b4bvisible;
+	b4bvisible = bbuf;
+
+    bbuf = b7bvisible;
+	b7bvisible = b8bvisible;
+	b8bvisible = bbuf;
+
+
+	if (((!b1bvisible)&&(!b5bvisible) && (b2bvisible) && (b3bvisible) && (b4bvisible) && (b6bvisible) && (b7bvisible) && (b8bvisible))||
+		((!b3bvisible)&&(!b7bvisible) && (b1bvisible) && (b2bvisible) && (b4bvisible) && (b5bvisible) && (b6bvisible) && (b8bvisible))||
+		((b1bvisible)&&(b2bvisible)&&(b3bvisible)&&(b4bvisible)&&(b5bvisible) && (b6bvisible) && (b7bvisible) && (b8bvisible)))
+	{
+
+		// Кирпич эквивалентен шести тетраэдрам.
+		if ((b1bvisible) && (b2bvisible) && (b3bvisible) && (b5bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell0, nvtxcell1, nvtxcell2, nvtxcell4);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell0, nvtxcell1, nvtxcell2, nvtxcell4);
+#endif
+		}
+
+		if ((b2bvisible) && (b5bvisible) && (b6bvisible) && (b7bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell1, nvtxcell4, nvtxcell5, nvtxcell6);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell1, nvtxcell4, nvtxcell5, nvtxcell6);
+#endif
+		}
+
+		if ((b2bvisible) && (b3bvisible) && (b7bvisible) && (b5bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell1, nvtxcell2, nvtxcell6, nvtxcell4);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell1, nvtxcell2, nvtxcell6, nvtxcell4);
+#endif
+		}
+
+		if ((b3bvisible) && (b2bvisible) && (b4bvisible) && (b7bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell2, nvtxcell1, nvtxcell3, nvtxcell6);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell2, nvtxcell1, nvtxcell3, nvtxcell6);
+#endif
+		}
+
+		if ((b7bvisible) && (b8bvisible) && (b6bvisible) && (b4bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell6, nvtxcell7, nvtxcell5, nvtxcell3);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell6, nvtxcell7, nvtxcell5, nvtxcell3);
+#endif
+		}
+
+		if ((b7bvisible) && (b6bvisible) && (b2bvisible) && (b4bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell6, nvtxcell5, nvtxcell1, nvtxcell3);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell6, nvtxcell5, nvtxcell1, nvtxcell3);
+#endif
+		}
+	}
+	else if (((!b2bvisible) && (!b6bvisible) && (b1bvisible) && (b3bvisible) && (b4bvisible) && (b5bvisible) && (b7bvisible) && (b8bvisible)) || 
+		((!b4bvisible) && (!b8bvisible) && (b1bvisible) && (b2bvisible) && (b3bvisible) && (b5bvisible) && (b6bvisible) && (b7bvisible)) ||
+		((b1bvisible) && (b2bvisible) && (b3bvisible) && (b4bvisible) && (b5bvisible) && (b6bvisible) && (b7bvisible) && (b8bvisible)))
+	{
+
+		// Кирпич эквивалентен шести тетраэдрам.
+		if ((b2bvisible) && (b4bvisible) && (b1bvisible) && (b6bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell1, nvtxcell3, nvtxcell0, nvtxcell5);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell1, nvtxcell3, nvtxcell0, nvtxcell5);
+#endif
+		}
+
+		if ((b4bvisible) && (b6bvisible) && (b8bvisible) && (b5bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell3, nvtxcell5, nvtxcell7, nvtxcell4);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell3, nvtxcell5, nvtxcell7, nvtxcell4);
+#endif
+		}
+
+		if ((b4bvisible) && (b1bvisible) && (b5bvisible) && (b6bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell3, nvtxcell0, nvtxcell4, nvtxcell5);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell3, nvtxcell0, nvtxcell4, nvtxcell5);
+#endif
+		}
+
+		if ((b1bvisible) && (b4bvisible) && (b3bvisible) && (b5bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell0, nvtxcell3, nvtxcell2, nvtxcell4);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell0, nvtxcell3, nvtxcell2, nvtxcell4);
+#endif
+		}
+
+		if ((b5bvisible) && (b7bvisible) && (b8bvisible) && (b3bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell4, nvtxcell6, nvtxcell7, nvtxcell2);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell4, nvtxcell6, nvtxcell7, nvtxcell2);
+#endif
+		}
+
+		if ((b5bvisible) && (b8bvisible) && (b4bvisible) && (b3bvisible)) {
+#if doubleintprecision == 1
+			fprintf(fp, "%lld %lld %lld %lld\n", nvtxcell4, nvtxcell7, nvtxcell3, nvtxcell2);
+#else
+			fprintf(fp, "%d %d %d %d\n", nvtxcell4, nvtxcell7, nvtxcell3, nvtxcell2);
+#endif
+		}
+
+	}
+
+}
+
 
 
 // 10 января 2016 . Заметка: надо сделать запись истинно бинарного файла, чтобы он быстрее открывался tecplotом,
@@ -6221,6 +6504,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 	integer flow_interior_count, integer ianimate, bool bextendedprint,
 	integer ikey, BLOCK* &b, integer &lb)
 {
+
+	bool bTETRAHEDRON = false; // 10.09.2020
+
+	
 
 	bool bFLAGitoa = false;
 
@@ -6242,7 +6529,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 	FILE *fp=NULL; // Выходной файл.
 	FILE *fp1=NULL; // часть 1 или 3
-	errno_t err;
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -6252,20 +6539,400 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 	// Экономия памяти 19N.
 
 	doublereal* temp_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		temp_shadow = new doublereal[t.maxelm + t.maxbound];
+
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
 			temp_shadow[i_1] = t.potent[i_1];
 		}
 	}
 
+
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+	(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL)||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+	{
+
+		// gamma_xy
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 2, 4, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 2, 4, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 1, 5, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 1, 5, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+			
+			t.total_deformation[STRAIN_XY][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+			
+		}
+
+		// gamma_yz
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 3, 4, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 3, 4, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 2, 5, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 2, 5, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_YZ][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+
+		// gamma_zx
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 1, 4, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 1, 4, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 3, 5, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 3, 5, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_ZX][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+		// epsilon_x
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, XDEFORMATION, STRAIN_X, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, XDEFORMATION, STRAIN_X, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+
+		// epsilon_y
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, YDEFORMATION, STRAIN_Y, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, YDEFORMATION, STRAIN_Y, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+		// epsilon_z
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, ZDEFORMATION, STRAIN_Z, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, ZDEFORMATION, STRAIN_Z, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+		double **Dirichlet = new doublereal*[6];
+		for (integer i_11 = 0; i_11 < 6; i_11++) {
+			Dirichlet[i_11] = new doublereal[6];
+		}
+		for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+
+				
+			doublereal beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1]; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+			doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i_1] * t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения 1/K.
+			doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+			doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+			doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			doublereal E = t.prop[YOUNG_MODULE][i_1];
+			doublereal nuyz = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuxz = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuxy = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuzy = t.prop[MULT_POISSON_RATIO_ZY][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuzx = t.prop[MULT_POISSON_RATIO_ZX][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuyx = t.prop[MULT_POISSON_RATIO_YX][i_1] * t.prop[POISSON_RATIO][i_1];
+
+			doublereal nu = t.prop[POISSON_RATIO][i_1];
+			
+
+			doublereal Gxy, Gyz, Gxz;
+			if (!t.bActiveShearModule[i_1]) {
+				Gxy = Gyz = Gxz = Ex / (2.0 * (1.0 + nuxy));
+			}
+			else {
+				Gyz = t.prop[SHEAR_MODULE_YZ][i_1];
+				Gxz = t.prop[SHEAR_MODULE_XZ][i_1];
+				Gxy = t.prop[SHEAR_MODULE_XY][i_1];
+			}
+
+
+			Dirichlet[0][0] = (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[0][1] = -(nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[0][2] = -(nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[0][3] = 0.0;
+			Dirichlet[0][4] = 0.0;
+			Dirichlet[0][5] = 0.0;
+			Dirichlet[1][0] = -(nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[1][1] = (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[1][2] = -(nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[1][3] = 0.0;
+			Dirichlet[1][4] = 0.0;
+			Dirichlet[1][5] = 0.0;
+			Dirichlet[2][0] = -(nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[2][1] = -(nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[2][2] = (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[2][3] = 0.0;
+			Dirichlet[2][4] = 0.0;
+			Dirichlet[2][5] = 0.0;
+			Dirichlet[3][0] = 0.0;
+			Dirichlet[3][1] = 0.0;
+			Dirichlet[3][2] = 0.0;
+			Dirichlet[3][3] = Gxy;
+			Dirichlet[3][4] = 0.0;
+			Dirichlet[3][5] = 0.0;
+			Dirichlet[4][0] = 0.0;
+			Dirichlet[4][1] = 0.0;
+			Dirichlet[4][2] = 0.0;
+			Dirichlet[4][3] = 0.0;
+			Dirichlet[4][4] = Gyz;
+			Dirichlet[4][5] = 0.0;
+			Dirichlet[5][0] = 0.0;
+			Dirichlet[5][1] = 0.0;
+			Dirichlet[5][2] = 0.0;
+			Dirichlet[5][3] = 0.0;
+			Dirichlet[5][4] = 0.0;
+			Dirichlet[5][5] = Gxz;
+
+
+			t.total_deformation[STRESS_X][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+				}
+				else {
+					t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+			t.total_deformation[STRESS_Y][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+				}
+				else {
+					t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+			t.total_deformation[STRESS_Z][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+				}
+				else {
+					t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+
+			t.total_deformation[STRESS_XY][i_1] = Dirichlet[3][3] * t.total_deformation[STRAIN_XY][i_1];
+			t.total_deformation[STRESS_YZ][i_1] = Dirichlet[4][4] * t.total_deformation[STRAIN_YZ][i_1];
+			t.total_deformation[STRESS_ZX][i_1] = Dirichlet[5][5] * t.total_deformation[STRAIN_ZX][i_1];
+		}
+		for (integer i_11 = 0; i_11 < 6; i_11++) {
+			delete[] Dirichlet[i_11];
+		}
+		delete[] Dirichlet;
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxbound; i_1++) {
+			t.total_deformation[STRESS_X][i_1] = t.total_deformation[STRESS_X][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_Y][i_1] = t.total_deformation[STRESS_Y][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_Z][i_1] = t.total_deformation[STRESS_Z][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_XY][i_1] = t.total_deformation[STRESS_XY][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_YZ][i_1] = t.total_deformation[STRESS_YZ][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_ZX][i_1] = t.total_deformation[STRESS_ZX][t.border_neighbor[i_1].iI];
+		}
+
+		// epsilon (STRAIN) von Mizes
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_VON_MIZES][i_1] = sqrt(0.5*((t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1])*
+				(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1]) + (t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				(t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) + (t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1])));
+
+			t.total_deformation[LOG10_STRAIN_VON_MIZES][i_1] = log10(t.total_deformation[STRAIN_VON_MIZES][i_1]);
+
+
+			// STRESS
+
+			t.total_deformation[STRESS_VON_MIZES][i_1] = sqrt(0.5*((t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1])*
+				(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1]) + (t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				(t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) + (t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1])));
+
+			t.total_deformation[LOG10_STRESS_VON_MIZES][i_1] = log10(t.total_deformation[STRESS_VON_MIZES][i_1]);
+
+		}
+	}
+
 	doublereal** total_deformation_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
-		total_deformation_shadow = new doublereal*[4];
-		for (integer j_1 = 0; j_1 < 4; j_1++) {
-			total_deformation_shadow[j_1] = new doublereal[t.maxelm + t.maxbound];
-			for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
-				total_deformation_shadow[j_1][i_1] = t.total_deformation[j_1][i_1];
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+	{
+		if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
+			total_deformation_shadow = new doublereal*[20];
+			for (integer j_1 = 0; j_1 < 20; j_1++) {
+				total_deformation_shadow[j_1] = new doublereal[t.maxelm + t.maxbound];
+#pragma omp parallel for
+				for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+					total_deformation_shadow[j_1][i_1] = t.total_deformation[j_1][i_1];
+				}
 			}
 		}
 	}
@@ -6275,7 +6942,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 	// 
 	// w -write, b - binary.
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	switch (ikey) {
 	case 0:  fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
 	case 1:  fp = fopen64("ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
@@ -6283,6 +6950,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 }
 	if (fp==NULL) err = 1;
 #else
+	errno_t err;
 	switch (ikey) {
 	case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
 	case 1: err = fopen_s(&fp, "ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
@@ -6333,6 +7001,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			if (ivarexport == 1) {
 
 				integer ncell_shadow = 0;
+#pragma omp parallel for reduction(+ : ncell_shadow)
 				for (i = 0; i < ncell; i++) {
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
@@ -6412,6 +7081,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 						ncell_shadow++;
 					}
+					
 				}
 				
 				// запись заголовка
@@ -6419,7 +7089,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 				// запись имён переменных
 				//fprintf(fp, "VARIABLES = x, y, z, Temp, Lam\n");  // печатается только поле температур
-				if (1 && MESHER_ONLY == steady_or_unsteady_global_determinant) {
+				if (1 && PHYSICAL_MODEL_SWITCH::MESHER_ONLY == steady_or_unsteady_global_determinant) {
 					// Вызов только сеточного генератора
 					// Температура найденная network T методом.
 					fprintf(fp, "VARIABLES = x, y, z, quolity, log(quolity), Temp \n");  // печатается только расчётная сетка
@@ -6427,24 +7097,54 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				}
 				else {
 					// печатается только поле температур
-					fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z, mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");  // печатается только поле температур
+					if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+						(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+						(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+						(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+					{
+						fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z, mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation, epsilon_x, epsilon_y, epsilon_z, gamma_xy, gamma_yz, gamma_zx, epsilon_von_Mizes, log10_epsilon_von_Mizes, stress_x, stress_y, stress_z, stress_xy, stress_yz, stress_zx, stress_von_Mizes, log10_stress_von_Mizes\n");  // печатается только поле температур
+					}
+					else {
+						fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z, mag_heat_flux, log10_mag_heat_flux\n");  // печатается только поле температур
+					}
 				}
 
 #if doubleintprecision == 1
-																																																							   // запись информации о зонах
-				if (bextendedprint) {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow);
+				 // запись информации о зонах
+				if (bTETRAHEDRON) {
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm + t.maxbound, 6*ncell_shadow);
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm, 6*ncell_shadow );
+					}
 				}
 				else {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow);
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow );
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow );
+					}
 				}
 #else
-																																																							   // запись информации о зонах
-				if (bextendedprint) {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow);
+					
+				if (bTETRAHEDRON) {
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm + t.maxbound, 6 * ncell_shadow );
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm, 6 * ncell_shadow );
+					}
 				}
 				else {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow);
+					// запись информации о зонах
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow );
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow );
+					}
 				}
 #endif
 
@@ -6469,7 +7169,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 
-					if (1 && MESHER_ONLY == steady_or_unsteady_global_determinant) {
+					if (1 && PHYSICAL_MODEL_SWITCH::MESHER_ONLY == steady_or_unsteady_global_determinant) {
 						/*
 						// Расчёт освещенности.
 						printf("calculation osveshennosti\n");
@@ -6477,7 +7177,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						doublereal* distance = new doublereal[t.maxelm + t.maxbound];
 						for (i = 0; i < t.maxelm; i++) {
 							distance[i] = 1.0e30;
-							if (b[t.whot_is_block[i]].itype == SOLID) {
+							if (b[t.whot_is_block[i]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 								distance[i] = 0.1e-3;// одна десятая мм
 							}
 						}
@@ -6560,6 +7260,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				if (bsolid_static_only) {
 					// ничего не делаем
 					ncell_shadow = 0;
+
+#pragma omp parallel for private(i) reduction(+: ncell_shadow)
 					for (i = 0; i < ncell; i++) {
 
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
@@ -6610,36 +7312,40 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							(b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 							ncell_shadow++;
 						}
+
+						
+
 					}
 					//ncell_shadow = ncell;
-					
+
 				}
 				else {
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
+
 						for (i = 0; i < t.database.ncell; i++) {
 
-							
 
-								integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-								inode1 = t.database.nvtxcell[0][i] - 1;
-								inode2 = t.database.nvtxcell[1][i] - 1;
-								inode3 = t.database.nvtxcell[2][i] - 1;
-								inode4 = t.database.nvtxcell[3][i] - 1;
-								inode5 = t.database.nvtxcell[4][i] - 1;
-								inode6 = t.database.nvtxcell[5][i] - 1;
-								inode7 = t.database.nvtxcell[6][i] - 1;
-								inode8 = t.database.nvtxcell[7][i] - 1;
 
-								if (b[t.whot_is_block[inode1]].bvisible&&
-									b[t.whot_is_block[inode2]].bvisible&&
-									b[t.whot_is_block[inode3]].bvisible&&
-									b[t.whot_is_block[inode4]].bvisible&&
-									b[t.whot_is_block[inode5]].bvisible&&
-									b[t.whot_is_block[inode6]].bvisible&&
-									b[t.whot_is_block[inode7]].bvisible&&
-									b[t.whot_is_block[inode8]].bvisible) {
+							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+							inode1 = t.database.nvtxcell[0][i] - 1;
+							inode2 = t.database.nvtxcell[1][i] - 1;
+							inode3 = t.database.nvtxcell[2][i] - 1;
+							inode4 = t.database.nvtxcell[3][i] - 1;
+							inode5 = t.database.nvtxcell[4][i] - 1;
+							inode6 = t.database.nvtxcell[5][i] - 1;
+							inode7 = t.database.nvtxcell[6][i] - 1;
+							inode8 = t.database.nvtxcell[7][i] - 1;
+
+							if (b[t.whot_is_block[inode1]].bvisible&&
+								b[t.whot_is_block[inode2]].bvisible&&
+								b[t.whot_is_block[inode3]].bvisible&&
+								b[t.whot_is_block[inode4]].bvisible&&
+								b[t.whot_is_block[inode5]].bvisible&&
+								b[t.whot_is_block[inode6]].bvisible&&
+								b[t.whot_is_block[inode7]].bvisible&&
+								b[t.whot_is_block[inode8]].bvisible) {
 
 								integer inode2W = t.neighbors_for_the_internal_node[W_SIDE][inode1].iNODE1;
 								integer inode3W = t.neighbors_for_the_internal_node[W_SIDE][inode4].iNODE1;
@@ -6711,11 +7417,17 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 										temp_shadow[inode7] = t.potent[inode3];
 										temp_shadow[inode8] = t.potent[inode4];
 										// total_deformation
-										for (integer j_4 = 0; j_4 < 4; j_4++) {
-											total_deformation_shadow[j_4][inode5] = t.total_deformation[j_4][inode1];
-											total_deformation_shadow[j_4][inode6] = t.total_deformation[j_4][inode2];
-											total_deformation_shadow[j_4][inode7] = t.total_deformation[j_4][inode3];
-											total_deformation_shadow[j_4][inode8] = t.total_deformation[j_4][inode4];
+										if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+										{
+											for (integer j_4 = 0; j_4 < 20; j_4++) {
+												total_deformation_shadow[j_4][inode5] = t.total_deformation[j_4][inode1];
+												total_deformation_shadow[j_4][inode6] = t.total_deformation[j_4][inode2];
+												total_deformation_shadow[j_4][inode7] = t.total_deformation[j_4][inode3];
+												total_deformation_shadow[j_4][inode8] = t.total_deformation[j_4][inode4];
+											}
 										}
 									}
 								}
@@ -6738,11 +7450,17 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 										temp_shadow[inode6] = t.potent[inode5];
 										temp_shadow[inode7] = t.potent[inode8];
 										// total_deformation
-										for (integer j_4 = 0; j_4 < 4; j_4++) {
-											total_deformation_shadow[j_4][inode2] = t.total_deformation[j_4][inode1];
-											total_deformation_shadow[j_4][inode3] = t.total_deformation[j_4][inode4];
-											total_deformation_shadow[j_4][inode6] = t.total_deformation[j_4][inode5];
-											total_deformation_shadow[j_4][inode7] = t.total_deformation[j_4][inode8];
+										if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+										{
+											for (integer j_4 = 0; j_4 < 20; j_4++) {
+												total_deformation_shadow[j_4][inode2] = t.total_deformation[j_4][inode1];
+												total_deformation_shadow[j_4][inode3] = t.total_deformation[j_4][inode4];
+												total_deformation_shadow[j_4][inode6] = t.total_deformation[j_4][inode5];
+												total_deformation_shadow[j_4][inode7] = t.total_deformation[j_4][inode8];
+											}
 										}
 									}
 								}
@@ -6765,23 +7483,31 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 										temp_shadow[inode8] = t.potent[inode5];
 										temp_shadow[inode7] = t.potent[inode6];
 										// total_deformation
-										for (integer j_4 = 0; j_4 < 4; j_4++) {
-											total_deformation_shadow[j_4][inode4] = t.total_deformation[j_4][inode1];
-											total_deformation_shadow[j_4][inode3] = t.total_deformation[j_4][inode2];
-											total_deformation_shadow[j_4][inode8] = t.total_deformation[j_4][inode5];
-											total_deformation_shadow[j_4][inode7] = t.total_deformation[j_4][inode6];
+										if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+											(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+										{
+											for (integer j_4 = 0; j_4 < 20; j_4++) {
+												total_deformation_shadow[j_4][inode4] = t.total_deformation[j_4][inode1];
+												total_deformation_shadow[j_4][inode3] = t.total_deformation[j_4][inode2];
+												total_deformation_shadow[j_4][inode8] = t.total_deformation[j_4][inode5];
+												total_deformation_shadow[j_4][inode7] = t.total_deformation[j_4][inode6];
+											}
 										}
 									}
 								}
 							}
-							
+
 						}
-						
-                     }
+
+					}
 					else {
-						
+
 
 						ncell_shadow = 0;
+
+#pragma omp parallel for private(i) reduction(+: ncell_shadow)
 						for (i = 0; i < ncell; i++) {
 
 							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
@@ -6832,28 +7558,45 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 								(b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 								ncell_shadow++;
 							}
+
+							
+
 						}
 						//ncell_shadow = ncell;
 
 						//printf("debug %lld\n", ncell_shadow); getchar(); // debug
 					}
-					
-                }
+
+				}
 				if (ncell_shadow == 0) {
 					// У нас совсем нету твёрдого тела, поэтому мы показываем только  жидкость.
 					ncell_shadow = ncell;
-					ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+					ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 				}
-				if (1 && MESHER_ONLY != steady_or_unsteady_global_determinant) {
+				if (1 && PHYSICAL_MODEL_SWITCH::MESHER_ONLY != steady_or_unsteady_global_determinant) {
 					// Полный набор искомых величин и теплопередача и гидродинамика:
-					
+
+					if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+						(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+						(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+						(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+					{
 						//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-					    if (f[0].iflowregime == RANS_MENTER_SST) {
-							fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, omega, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
-					    }
-					    else {
-						    fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, eps, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
-					    }
+						if (f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+							fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, omega, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation, epsilon_x, epsilon_y, epsilon_z, gamma_xy, gamma_yz, gamma_zx, epsilon_von_Mizes, log10_epsilon_von_Mizes, stress_x, stress_y, stress_z, stress_xy, stress_yz, stress_zx, stress_von_Mizes, log10_stress_von_Mizes\n");
+						}
+						else {
+							fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, eps, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation, epsilon_x, epsilon_y, epsilon_z, gamma_xy, gamma_yz, gamma_zx, epsilon_von_Mizes, log10_epsilon_von_Mizes, stress_x, stress_y, stress_z, stress_xy, stress_yz, stress_zx, stress_von_Mizes, log10_stress_von_Mizes\n");
+						}
+					}
+					else {
+						if (f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+							fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, omega, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux\n");
+						}
+						else {
+							fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, eps, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux\n");
+						}
+					}
 				}
 				else {
 					// 19,03,2019
@@ -6863,20 +7606,41 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 #if doubleintprecision == 1
 				// запись информации о зонах
-				if (bextendedprint) {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow);
+				if (bTETRAHEDRON) {
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm + t.maxbound, 6 * ncell_shadow);
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm, 6 * ncell_shadow );
+					}
 				}
 				else {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow);
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow );
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow );
+					}
 				}
 #else
-				// запись информации о зонах
-				if (bextendedprint) {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow);
+				if (bTETRAHEDRON) {
+					// запись информации о зонах
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm + t.maxbound, 6*ncell_shadow );
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=TETRAHEDRON, F=FEBLOCK\n\n", maxelm, 6*ncell_shadow );
+					}
 				}
 				else {
-					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow);
-				}
+					// запись информации о зонах
+					if (bextendedprint) {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm + t.maxbound, ncell_shadow );
+					}
+					else {
+						fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_shadow );
+					}
+			}
 #endif
 
 
@@ -6900,7 +7664,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 
-						if (1 && (MESHER_ONLY == steady_or_unsteady_global_determinant)) {
+						if (1 && (PHYSICAL_MODEL_SWITCH::MESHER_ONLY == steady_or_unsteady_global_determinant)) {
 							/*
 													// Расчёт освещенности.
 							printf("calculation osveshennosti\n");
@@ -6908,7 +7672,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							doublereal* distance = new doublereal[t.maxelm + t.maxbound];
 							for (i = 0; i < t.maxelm; i++) {
 								distance[i] = 1.0e30;
-								if (b[t.whot_is_block[i]].itype == SOLID) {
+								if (b[t.whot_is_block[i]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									distance[i] = -0.1e-3;// одна десятая мм
 								}
 							}
@@ -7037,7 +7801,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 
-						if (1 && (MESHER_ONLY == steady_or_unsteady_global_determinant)) {
+						if (1 && (PHYSICAL_MODEL_SWITCH::MESHER_ONLY == steady_or_unsteady_global_determinant)) {
 							// quolity
 							for (i = 0; i < t.database.maxelm; i++) {
 								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -7091,12 +7855,12 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 		// запись второй части
 
 		// Запись поля температур производится всегда.
-		if (1 && MESHER_ONLY != steady_or_unsteady_global_determinant) {
+		if (1 && PHYSICAL_MODEL_SWITCH::MESHER_ONLY != steady_or_unsteady_global_determinant) {
 
 		// запись температуры
 		if (lite_export) {
 			for (i = 0; i < maxelm; i++) {
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%+.3f ", temp_shadow[i]);
 				}
 				else {
@@ -7107,7 +7871,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 			if (bextendedprint) {
 				for (i = maxelm; i < maxelm + t.maxbound; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.3f ", temp_shadow[i]);
 					}
 					else {
@@ -7119,7 +7883,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 		}
 		else {
 			for (i = 0; i < maxelm; i++) {
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%+.16f ", temp_shadow[i]);
 				}
 				else {
@@ -7130,7 +7894,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 			if (bextendedprint) {
 				for (i = maxelm; i < maxelm + t.maxbound; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.16f ", temp_shadow[i]);
 					}
 					else {
@@ -7377,11 +8141,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
-						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)||
-						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -7394,11 +8158,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || 
-						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST) ||
-						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[0].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -7615,12 +8379,12 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			// Re_y
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
-					if ((f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)||(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+					if ((f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)||(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)) {
 						doublereal speed_or_sqrt_k = 0.0;
-						if (f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS) {
+						if (f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][t.ptr[0][i]]));
 						}
-						if (f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) {
+						if (f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY][t.ptr[0][i]]));
 						}
 						//speed_or_sqrt_k = sqrt(f[t.ptr[1][i]].potent[VELOCITY_X_COMPONENT][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VELOCITY_X_COMPONENT][t.ptr[0][i]] + f[t.ptr[1][i]].potent[VELOCITY_Y_COMPONENT][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VELOCITY_Y_COMPONENT][t.ptr[0][i]] + f[t.ptr[1][i]].potent[VELOCITY_Z_COMPONENT][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VELOCITY_Z_COMPONENT][t.ptr[0][i]]);
@@ -7649,12 +8413,12 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				// Re_y
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[idfluid].iflowregime == RANS_STANDART_K_EPS)||(f[idfluid].iflowregime == RANS_MENTER_SST)) {
+					if ((f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)||(f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)) {
 						doublereal speed_or_sqrt_k = 0.0;
-						if (f[idfluid].iflowregime == RANS_STANDART_K_EPS) {
+						if (f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[idfluid].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i + maxelm]));
 						}
-						if (f[idfluid].iflowregime == RANS_MENTER_SST) {
+						if (f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[idfluid].potent[TURBULENT_KINETIK_ENERGY][i + maxelm]));
 						}
 						//speed_or_sqrt_k = sqrt(f[idfluid].potent[VELOCITY_X_COMPONENT][i+ maxelm] * f[idfluid].potent[VELOCITY_X_COMPONENT][i+ maxelm] + f[idfluid].potent[VELOCITY_Y_COMPONENT][i+ maxelm] * f[idfluid].potent[VELOCITY_Y_COMPONENT][i+ maxelm] + f[idfluid].potent[VELOCITY_Z_COMPONENT][i+ maxelm] * f[idfluid].potent[VELOCITY_Z_COMPONENT][i+ maxelm]);
@@ -7675,10 +8439,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			// TURBULENT_KINETIK_ENERGY_STD_K_EPS
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
-					if (f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS) {
+					if (f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][t.ptr[0][i]]);
 					}
-					else if (f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) {
+					else if (f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY][t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -7691,10 +8455,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				// TURBULENT_KINETIK_ENERGY_STD_K_EPS
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if (f[idfluid].iflowregime == RANS_STANDART_K_EPS) {
+					if (f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i + maxelm]); // TURBULENT_KINETIK_ENERGY_STD_K_EPS
 					}
-					else if (f[idfluid].iflowregime == RANS_MENTER_SST) {
+					else if (f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_KINETIK_ENERGY][i + maxelm]); // TURBULENT_KINETIK_ENERGY
 					}
 					else {
@@ -7709,10 +8473,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			// TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
-					if (f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS) {
+					if (f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][t.ptr[0][i]]);
 					}
-					else if (f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) {
+					else if (f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][t.ptr[0][i]]);
 					}
 					else {
@@ -7727,10 +8491,10 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				// TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if (f[idfluid].iflowregime == RANS_STANDART_K_EPS) {
+					if (f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i + maxelm]); // TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS
 					}
-					else if (f[idfluid].iflowregime == RANS_MENTER_SST) {
+					else if (f[idfluid].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
 						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i + maxelm]); // TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA
 					}
 					else {
@@ -7753,6 +8517,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 		Tz = new doublereal[t.maxelm + t.maxbound];
 
 		// инициализация нулём.
+#pragma omp parallel for
 		for (i = 0; i<t.maxelm + t.maxbound; i++) {
 			Tx[i] = 0.0;
 			Ty[i] = 0.0;
@@ -7760,6 +8525,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 		}
 
 		// нахождение градиентов.
+#pragma omp parallel for private(i)
 		for (i = 0; i<t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
@@ -7767,6 +8533,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 		}
 
+#pragma omp parallel for private(i)
 		for (i = 0; i<t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
@@ -8863,14 +9630,19 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 		fprintf(fp, "\n");
 
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+		{
+		for (integer j_6 = 0; j_6 < 20; j_6++) {
 
 			// запись полной деформации
 			if (lite_export) {
 				for (i = 0; i < maxelm; i++) {
 
 
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 						//printf("%e \n", total_deformation_shadow[j_6][i]);
 					}
@@ -8886,7 +9658,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 				if (bextendedprint) {
 					for (i = maxelm; i < maxelm + t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 						}
 						else {
@@ -8898,7 +9670,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			}
 			else {
 				for (i = 0; i < maxelm; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 					}
 					else {
@@ -8909,7 +9681,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 				if (bextendedprint) {
 					for (i = maxelm; i < maxelm + t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 						}
 						else {
@@ -8925,6 +9697,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 		}
 		} // if (1 && MESHER_ONLY != steady_or_unsteady_global_determinant) 
+		}
+
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
@@ -8976,22 +9750,30 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					ib7 = t.whot_is_block[inode7];
 					ib8 = t.whot_is_block[inode8];
 
+					if (bTETRAHEDRON) {
 
-					if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+						print_tetrahedron(fp, b[ib1].bvisible, b[ib2].bvisible, b[ib3].bvisible, b[ib4].bvisible,
+							b[ib5].bvisible, b[ib6].bvisible, b[ib7].bvisible, b[ib8].bvisible,
+							t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i],
+							t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+					}
+					else {
+						if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-						//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							// Визуализация твёрдого тела и только как и раньше.
+							//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-						//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-						fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							// Визуализация твёрдого тела и только как и раньше.
+							//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 
+						}
 					}
 
 				}
@@ -8999,8 +9781,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					//printf("fluid plot\n");
 					//getchar();
 
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
+
+						// Не работает с TETRAHEDRON
+
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;
 						inode2 = t.database.nvtxcell[1][i] - 1;
@@ -9059,63 +9844,98 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							(t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))
 						{
 
-							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+							if (bTETRAHEDRON) {
+
+								print_tetrahedron(fp, b[ib1].bvisible, b[ib2].bvisible, b[ib3].bvisible, b[ib4].bvisible,
+									b[ib5].bvisible, b[ib6].bvisible, b[ib7].bvisible, b[ib8].bvisible,
+									t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i],
+									t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							}
+							else {
+
+								if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+									fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+									fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
+								}
 							}
 						}
 						else if (((inode5B >= 0) && (inode5B < t.maxelm) && (inode6B >= 0) && (inode6B < t.maxelm) && (inode7B >= 0) && (inode7B < t.maxelm) && (inode8B >= 0) && (inode8B < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) && (!((t.ptr[1][inode5B] == -1) && (t.ptr[1][inode6B] == -1) && (t.ptr[1][inode7B] == -1) && (t.ptr[1][inode8B] == -1))) && (!((t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))))
 						{
 							if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
-#if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-#else
-								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-#endif
+								if (bTETRAHEDRON) {
 
+									print_tetrahedron(fp, b[ib1].bvisible, b[ib2].bvisible, b[ib3].bvisible, b[ib4].bvisible,
+										b[ib5].bvisible, b[ib6].bvisible, b[ib7].bvisible, b[ib8].bvisible,
+										t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i],
+										t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								}
+								else {
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+								}
 							}
 						}
 						else if (((inode2W >= 0) && (inode2W < t.maxelm) && (inode3W >= 0) && (inode3W < t.maxelm) && (inode6W >= 0) && (inode6W < t.maxelm) && (inode7W >= 0) && (inode7W < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode4] == -1) && (t.ptr[1][inode5] == -1) && (t.ptr[1][inode8] == -1) && (!((t.ptr[1][inode2W] == -1) && (t.ptr[1][inode3W] == -1) && (t.ptr[1][inode6W] == -1) && (t.ptr[1][inode7W] == -1))) && (!((t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1)))))
 						{
 							if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
 
-#if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-#else
-								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-#endif
+								if (bTETRAHEDRON) {
 
+									print_tetrahedron(fp, b[ib1].bvisible, b[ib2].bvisible, b[ib3].bvisible, b[ib4].bvisible,
+										b[ib5].bvisible, b[ib6].bvisible, b[ib7].bvisible, b[ib8].bvisible,
+										t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i],
+										t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								}
+								else {
+
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+								}
 							}
 						}
 						else if (((inode3S >= 0) && (inode3S < t.maxelm) && (inode4S >= 0) && (inode4S < t.maxelm) && (inode7S >= 0) && (inode7S < t.maxelm) && (inode8S >= 0) && (inode8S < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (!((t.ptr[1][inode3S] == -1) && (t.ptr[1][inode4S] == -1) && (t.ptr[1][inode7S] == -1) && (t.ptr[1][inode8S] == -1))) && (!((t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))))
 						{
 							if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
 
-#if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-#else
-								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-#endif
+								if (bTETRAHEDRON) {
 
+									print_tetrahedron(fp, b[ib1].bvisible, b[ib2].bvisible, b[ib3].bvisible, b[ib4].bvisible,
+										b[ib5].bvisible, b[ib6].bvisible, b[ib7].bvisible, b[ib8].bvisible,
+										t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i],
+										t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								}
+								else {
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+								}
 							}
 						}
 					}
 					else {
-					
+
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;
 						inode2 = t.database.nvtxcell[1][i] - 1;
@@ -9163,22 +9983,32 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						ib7 = t.whot_is_block[inode7];
 						ib8 = t.whot_is_block[inode8];
 
-						if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+						if (bTETRAHEDRON) {
+
+							print_tetrahedron(fp, b[ib1].bvisible, b[ib2].bvisible, b[ib3].bvisible, b[ib4].bvisible,
+								b[ib5].bvisible, b[ib6].bvisible, b[ib7].bvisible, b[ib8].bvisible,
+								t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i],
+								t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						}
+						else {
+
+							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-							// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								// Визуализация твёрдого тела и жидкости.
+								// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
-							// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
-							fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								// Визуализация твёрдого тела и жидкости.
+								// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 
 						}
+					}
 
 					}
 				}
@@ -9227,18 +10057,24 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 		temp_shadow = nullptr;
 	}
 	//total_deformation
-
-	if (total_deformation_shadow != nullptr) {
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
-			if (total_deformation_shadow[j_6] != nullptr) {
-				delete[] total_deformation_shadow[j_6];
-				total_deformation_shadow[j_6] = nullptr;
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+	{
+		if (total_deformation_shadow != nullptr) {
+			for (integer j_6 = 0; j_6 < 4; j_6++) {
+				if (total_deformation_shadow[j_6] != nullptr) {
+					delete[] total_deformation_shadow[j_6];
+					total_deformation_shadow[j_6] = nullptr;
+				}
 			}
+			delete[] total_deformation_shadow;
+			total_deformation_shadow = nullptr;
 		}
-		delete[] total_deformation_shadow;
-		total_deformation_shadow = nullptr;
 	}
 
+	
 
 	// WinExec("C:\\Program Files (x86)\\Tecplot\\Tec360 2008\\bin\\tec360.exe ALICEFLOW0_03.PLT",SW_NORMAL);
 	//WinExec("C:\\Program Files (x86)\\Tecplot\\Tec360 2009\\bin\\tec360.exe ALICEFLOW0_03.PLT", SW_NORMAL);
@@ -9251,12 +10087,13 @@ void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCH
 	doublereal* &lam_for_export, doublereal* &Txgl, doublereal* &Tygl, doublereal* &Tzgl, doublereal* &HeatFluxMaggl,
 	 integer maxelm, integer ncell) {
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	fp=fopen64("ALICEFLOW0_08_temp.PLT", "wb");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_08_temp.PLT", "wb");
 #endif
 	
@@ -9391,11 +10228,13 @@ void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCH
 
 void exporttecplot_assembles_mesh(TEMPER &t, integer lu, UNION* &my_union) {
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");
 #endif
 	
@@ -9542,7 +10381,15 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 	const bool lite_export = true;
 	// 16 знаков после запятой сохранять никому ненужно,
 	// вполне достаточно шести знаков.
-	std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
+	switch (ionly_solid_visible) {
+	case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE:
+		std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+		break;
+	case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE:
+		std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+		break;
+	}
+	
 
 	if (lite_export) {
 		printf("lite export.\n");
@@ -9556,7 +10403,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 	FILE *fp=NULL;
 	FILE *fp1=NULL; // часть 1 или 3
-	errno_t err;
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -9567,14 +10414,14 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 	doublereal** temp_shadow = nullptr;
 	temp_shadow = new doublereal*[lu+1];
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		temp_shadow[0] = new doublereal[t.maxelm + t.maxbound];
 		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
 			temp_shadow[0][i_1] = t.potent[i_1];
 		}
 	}
 	for (integer i = 0; i < lu; i++) {
-		if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+		if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 			temp_shadow[i+1] = new doublereal[my_union[i].t.maxelm + my_union[i].t.maxbound];
 			for (integer i_1 = 0; i_1 < my_union[i].t.maxelm + my_union[i].t.maxbound; i_1++) {
 				temp_shadow[i+1][i_1] = my_union[i].t.potent[i_1];
@@ -9583,7 +10430,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 	}
 
 	doublereal*** total_deformation_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 	total_deformation_shadow = new doublereal**[lu + 1];
 		total_deformation_shadow[0] = new doublereal*[4];
 		for (integer j_1 = 0; j_1 < 4; j_1++) {
@@ -9594,7 +10441,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 		}
 	}
 	for (integer i = 0; i < lu; i++) {
-		if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+		if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 			total_deformation_shadow[i+1] = new doublereal*[4];
 			for (integer j_1 = 0; j_1 < 4; j_1++) {
 				total_deformation_shadow[i+1][j_1] = new doublereal[my_union[i].t.maxelm + my_union[i].t.maxbound];
@@ -9609,14 +10456,15 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 	// 
 	// w -write, b - binary.
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	switch (ikey) {
-	case 0: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
-	case 1: fp = fopen64("ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
-	default: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
-}
+	  case 0: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
+	  case 1: fp = fopen64("ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+	  default: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
+    }
 	if (fp==NULL) err = 1;
 #else
+	errno_t err;
 	switch (ikey) {
 	case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
 	case 1: err = fopen_s(&fp, "ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
@@ -10036,7 +10884,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					//ncell_shadow = ncell;
 				}
 				else {
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 
 						for (i = 0; i < t.database.ncell; i++) {
@@ -10293,7 +11141,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 							for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
 								ncell_shadow[iunion_scan+1] += my_union[iunion_scan].t.ncell;
 							}
-							ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+							ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 						}
 					}
 				}
@@ -10433,7 +11281,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 		// запись температуры
 		if (lite_export) {
 			for (i = 0; i < maxelm; i++) {
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%+.3f ", temp_shadow[0][i]);
 				}
 				else {
@@ -10444,7 +11292,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 			if (bextendedprint) {
 				for (i = maxelm; i < maxelm + t.maxbound; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.3f ", temp_shadow[0][i]);
 					}
 					else {
@@ -10455,7 +11303,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 			}
 			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
 				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.3f ", temp_shadow[iunion_scan + 1][i]);
 					}
 					else {
@@ -10466,7 +11314,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 				if (bextendedprint) {
 					for (i = my_union[iunion_scan].t.maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%+.3f ", temp_shadow[iunion_scan+1][i]);
 						}
 						else {
@@ -10480,7 +11328,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 		}
 		else {
 			for (i = 0; i < maxelm; i++) {
-				if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+				if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 					fprintf(fp, "%+.16f ", temp_shadow[0][i]);
 				}
 				else {
@@ -10491,7 +11339,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 			if (bextendedprint) {
 				for (i = maxelm; i < maxelm + t.maxbound; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.16f ", temp_shadow[0][i]);
 					}
 					else {
@@ -10503,7 +11351,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
 				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.16f ", temp_shadow[iunion_scan + 1][i]);
 					}
 					else {
@@ -10514,7 +11362,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 				if (bextendedprint) {
 					for (i = my_union[iunion_scan].t.maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%+.16f ", temp_shadow[iunion_scan+1][i]);
 						}
 						else {
@@ -10987,11 +11835,11 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
-						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -11004,11 +11852,11 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || 
-						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST) ||
-						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[0].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -11022,11 +11870,11 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
 					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
 						//fprintf(fp, "%+.16f ", doublereal(i));
-						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
-							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
-							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].rdistWall[my_union[iunion_scan].t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -11039,11 +11887,11 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					// Distance_Wall.
 					integer idfluid = 0;
 					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
-						if ((my_union[iunion_scan].f[0].iflowregime == ZEROEQMOD) || 
-							(my_union[iunion_scan].f[0].iflowregime == SMAGORINSKY)||
-							(my_union[iunion_scan].f[0].iflowregime == RANS_SPALART_ALLMARES)||
-							(my_union[iunion_scan].f[0].iflowregime == RANS_MENTER_SST) ||
-							(my_union[iunion_scan].f[0].iflowregime == RANS_STANDART_K_EPS)) {
+						if ((my_union[iunion_scan].f[0].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+							(my_union[iunion_scan].f[0].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+							(my_union[iunion_scan].f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES)||
+							(my_union[iunion_scan].f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+							(my_union[iunion_scan].f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].rdistWall[i + my_union[iunion_scan].t.maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -13709,7 +14557,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				for (i = 0; i < maxelm; i++) {
 
 
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
 						//printf("%e \n", total_deformation_shadow[j_6][i]);
 					}
@@ -13725,7 +14573,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 				if (bextendedprint) {
 					for (i = maxelm; i < maxelm + t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
 						}
 						else {
@@ -13737,7 +14585,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 			}
 			else {
 				for (i = 0; i < maxelm; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
 					}
 					else {
@@ -13748,7 +14596,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 				if (bextendedprint) {
 					for (i = maxelm; i < maxelm + t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
 						}
 						else {
@@ -13765,7 +14613,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
 
 
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
 							//printf("%e \n", total_deformation_shadow[j_6][i]);
 						}
@@ -13781,7 +14629,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 					if (bextendedprint) {
 						for (i = my_union[iunion_scan].t.maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
-							if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+							if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 								fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
 							}
 							else {
@@ -13793,7 +14641,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				}
 				else {
 					for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
 						}
 						else {
@@ -13804,7 +14652,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 					if (bextendedprint) {
 						for (i = maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
-							if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+							if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 								fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
 							}
 							else {
@@ -13895,7 +14743,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					//printf("fluid plot\n");
 					//getchar();
 
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;
@@ -14143,7 +14991,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 						//printf("fluid plot\n");
 						//getchar();
 
-						if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+						if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 						{
 							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 							inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
@@ -14362,7 +15210,7 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 	}
 	//total_deformation
 
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		if (total_deformation_shadow != nullptr) {
 
 			for (integer iunion_scan = 0; iunion_scan <= lu; iunion_scan++) {
@@ -14396,14 +15244,23 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 // проверка построенной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2. Для анимации. Если inumbercadr==0 то первый кадр.
-void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey,
+void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer ncell, FLOW* &f, 
+	TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey,
 	integer inumbercadr, doublereal time, BLOCK* b)
 {
 	const bool lite_export = true;
 	// 16 знаков после запятой сохранять никому ненужно,
 	// вполне достаточно шести знаков.
 	
-	std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
+	switch (ionly_solid_visible) {
+	case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE :
+		std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+		break;
+	case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE :
+		std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+		break;
+	}
+	
 
 	if (lite_export) {
 		printf("lite export.\n");
@@ -14417,7 +15274,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 	FILE *fp=NULL;
 	FILE *fp1=NULL; // часть 1 или 3
-	errno_t err;
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -14427,7 +15284,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 	// Экономия памяти 19N.
 
 	doublereal* temp_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		temp_shadow = new doublereal[t.maxelm + t.maxbound];
 		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
 			temp_shadow[i_1] = t.potent[i_1];
@@ -14435,7 +15292,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 	}
 
 	doublereal** total_deformation_shadow = nullptr;
-	if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+	if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 		total_deformation_shadow = new doublereal*[4];
 		for (integer j_1 = 0; j_1 < 4; j_1++) {
 			total_deformation_shadow[j_1] = new doublereal[t.maxelm + t.maxbound];
@@ -14450,14 +15307,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 	// 
 	// w -write, b - binary.
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	if (inumbercadr == 0) {
 		switch (ikey) {
 		case 0: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "wb");  break;
 		case 1: fp = fopen64("ALICEFLOW0_27_temp_animation.PLT", "wb");  break; // То что нужно для отчёта Алексею.
 		default: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "wb");  break;
 		}
-}
+    }
 	else {
 		switch (ikey) {
 		case 0: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "ab");  break;
@@ -14467,6 +15324,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 	}
 	if (fp==NULL) err = 1;
 #else
+	errno_t err;
 	if (inumbercadr == 0) {
 		switch (ikey) {
 		case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp_animation.PLT", "wb");  break;
@@ -14699,7 +15557,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 					//ncell_shadow = ncell;
 				}
 				else {
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
 						for (integer i = 0; i < t.database.ncell; i++) {
@@ -14834,7 +15692,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 						if (ncell_shadow == 0) {
 							// У нас совсем нету твёрдого тела, поэтому мы показываем только  жидкость.
 							ncell_shadow = ncell;
-							ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+							ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 						}
 					}
 				}
@@ -14925,7 +15783,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 		
 			if (lite_export) {
 				for (integer i = 0; i < maxelm; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.3f ", temp_shadow[i]);
 					}
 					else {
@@ -14936,7 +15794,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 				if (bextendedprint) {
 					for (integer i = maxelm; i < maxelm + t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%+.3f ", temp_shadow[i]);
 						}
 						else {
@@ -14948,7 +15806,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 			}
 			else {
 				for (integer i = 0; i < maxelm; i++) {
-					if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+					if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 						fprintf(fp, "%+.16f ", temp_shadow[i]);
 					}
 					else {
@@ -14959,7 +15817,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 				if (bextendedprint) {
 					for (integer i = maxelm; i < maxelm + t.maxbound; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%+.16f ", temp_shadow[i]);
 						}
 						else {
@@ -15210,11 +16068,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 				for (integer i = 0; i < maxelm; i++) {
 					if (t.ptr[1][i] > -1) {
 						//fprintf(fp, "%+.16f ", doublereal(i));
-						if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
-							(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
-							(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-							(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
-							(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+						if ((f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+							(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::SMAGORINSKY) ||
+							(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+							(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+							(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -15227,11 +16085,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 					// Distance_Wall.
 					integer idfluid = 0;
 					for (integer i = 0; i < f[idfluid].maxbound; i++) {
-						if ((f[0].iflowregime == ZEROEQMOD) ||
-							(f[0].iflowregime == SMAGORINSKY)||
-							(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-							(f[0].iflowregime == RANS_MENTER_SST) ||
-							(f[0].iflowregime == RANS_STANDART_K_EPS)) {
+						if ((f[0].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+							(f[0].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+							(f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+							(f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+							(f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -16574,7 +17432,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 					for (integer i = 0; i < maxelm; i++) {
 
 
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 							//printf("%e \n", total_deformation_shadow[j_6][i]);
 						}
@@ -16590,7 +17448,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 					if (bextendedprint) {
 						for (integer i = maxelm; i < maxelm + t.maxbound; i++) {
-							if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+							if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 								fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 							}
 							else {
@@ -16602,7 +17460,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 				}
 				else {
 					for (integer i = 0; i < maxelm; i++) {
-						if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+						if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 							fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 						}
 						else {
@@ -16613,7 +17471,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 					if (bextendedprint) {
 						for (integer i = maxelm; i < maxelm + t.maxbound; i++) {
-							if (ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) {
+							if (ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) {
 								fprintf(fp, "%e ", total_deformation_shadow[j_6][i]);
 							}
 							else {
@@ -16703,7 +17561,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 					//printf("fluid plot\n");
 					//getchar();
 
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;
@@ -16967,12 +17825,13 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 
 	FILE *fp=NULL;
 	FILE *fp1=NULL; // часть 1 или 3
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	fp=fopen64("ALICEFLOW0_07_temp.PLT", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
 #endif
 	
@@ -17775,7 +18634,7 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 
 						}
 				else {
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;
@@ -17872,12 +18731,13 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 
 	FILE *fp=NULL;
 	FILE *fp1=NULL; // часть 1 или 3
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	fp = fopen64("ALICEFLOW0_07_temp.PLT", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
 #endif
 	
@@ -17989,7 +18849,7 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				fprintf(fp, "TITLE = \"ALICEFLOW0_07\"\n");
 
 				integer ncell_shadow = ncell;
-				if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+				if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 				{
 					ncell_shadow = 0;
 					integer ncell_shadow_old = 0;
@@ -18069,7 +18929,7 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 					if (ncell_shadow == 0) {
 						// У нас совсем нету твёрдого тела, поэтому мы показываем только  жидкость.
 						ncell_shadow = ncell;
-						ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+						ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 					}
 				}
 				// Полный набор искомых величин и теплопередача и гидродинамика:
@@ -18357,11 +19217,11 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || 
-						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::SMAGORINSKY) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -18374,11 +19234,11 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || 
-						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST) ||
-						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
+					if ((f[0].iflowregime == VISCOSITY_MODEL::ZEROEQMOD) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::SMAGORINSKY)||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) ||
+						(f[0].iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -18705,7 +19565,7 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
 			for (i = 0; i < t.database.ncell; i++) {
-				if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior>0))
+				if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior>0))
 				{
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 					inode1 = t.database.nvtxcell[0][i]-1;
@@ -18801,12 +19661,13 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 	
 	
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	fp = fopen64("xyplot.txt", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "xyplot.txt", "w");
 #endif
 	
@@ -18850,21 +19711,21 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 			
 			integer iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 			switch (idirectional_for_XY_Plot) {
-			case X_LINE_DIRECTIONAL: // X
+			case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // X
 				iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 				sp0.y = sp1.y = y;
 				sp0.z = sp1.z = z;
 				sp0.x = xmin;
 				sp1.x = xmax;
 				break;
-			case Y_LINE_DIRECTIONAL: // Y
+			case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: // Y
 				iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 				sp0.x = sp1.x = x;
 				sp0.z = sp1.z = z;
 				sp0.y = ymin;
 				sp1.y = ymax;
 				break;
-			case Z_LINE_DIRECTIONAL: // Z
+			case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // Z
 				iplane = XY_PLANE; // плоскость перпендикулярная линии.
 				sp0.y = sp1.y = y;
 				sp0.x = sp1.x = x;
@@ -18960,17 +19821,17 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 
 
 					switch (idirectional_for_XY_Plot) {
-					case X_LINE_DIRECTIONAL: // YZ 
+					case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 						xy_arr[icounter].x_argument = p.x;
 						xy_arr[icounter].GradPam = fglobal[ifi].potent[GRADZPAM][iP];
 						xy_arr[icounter].GradPress = fglobal[ifi].potent[GRADZPRESS][iP];						
 						break;
-					case Y_LINE_DIRECTIONAL: //XZ
+					case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 						xy_arr[icounter].x_argument = p.y;
 						xy_arr[icounter].GradPam = fglobal[ifi].potent[GRADYPAM][iP];
 						xy_arr[icounter].GradPress = fglobal[ifi].potent[GRADYPRESS][iP];
 						break;
-					case Z_LINE_DIRECTIONAL: // XY
+					case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 						xy_arr[icounter].x_argument = p.z;
 						xy_arr[icounter].GradPam = fglobal[ifi].potent[GRADZPAM][iP];
 						xy_arr[icounter].GradPress = fglobal[ifi].potent[GRADZPRESS][iP];
@@ -19030,13 +19891,13 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 
 			fprintf(fp, "Xo=%e, Yo=%e, Zo=%e, ", x, y, z);
 			switch (idirectional_for_XY_Plot) {
-			case X_LINE_DIRECTIONAL: // YZ 
+			case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 				fprintf(fp, "directional=X\n");
 				break;
-			case Y_LINE_DIRECTIONAL: //XZ
+			case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 				fprintf(fp, "directional=Y\n");
 				break;
-			case Z_LINE_DIRECTIONAL: // XY
+			case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 				fprintf(fp, "directional=Z\n");
 				break;
 			default:
@@ -19083,12 +19944,13 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 // направлением одной из осей декартовой прямоугольной системы координат.
 void xyplot2(FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 	FILE *fp = NULL;
-	errno_t err = 0;
+	
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	fp = fopen64("xyplot.txt", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "xyplot.txt", "w");
 #endif
 
@@ -19112,13 +19974,13 @@ void xyplot2(FLOW* &fglobal, integer flow_interior, TEMPER &t) {
 		integer ifi = 0, iPf = 0;
 		integer iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 		switch (idirectional_for_XY_Plot) {
-		case X_LINE_DIRECTIONAL: // X
+		case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // X
 			iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 			break;
-		case Y_LINE_DIRECTIONAL: // Y
+		case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: // Y
 			iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 			break;
-		case Z_LINE_DIRECTIONAL: // Z
+		case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // Z
 			iplane = XY_PLANE; // плоскость перпендикулярная линии.
 			break;
 		default: // X
@@ -19306,11 +20168,13 @@ void xyplot_temp2(TEMPER &t, doublereal* tempfiltr) {
 	// имя создаваемого файла xyplotT.txt.
 
 	FILE *fp=NULL;
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp = fopen64("xyplotT.txt", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "xyplotT.txt", "w");
 #endif
 	
@@ -19340,13 +20204,13 @@ void xyplot_temp2(TEMPER &t, doublereal* tempfiltr) {
 			integer iPf = 0;
 			integer iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 			switch (idirectional_for_XY_Plot) {
-			case X_LINE_DIRECTIONAL: // YZ 
+			case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 				iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 				break;
-			case Y_LINE_DIRECTIONAL: //XZ
+			case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 				iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 				break;
-			case Z_LINE_DIRECTIONAL: // XY
+			case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 				iplane = XY_PLANE; // плоскость перпендикулярная линии.
 				break;
 			default:
@@ -19486,11 +20350,13 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 	// имя создаваемого файла xyplotT.txt.
 
 	FILE *fp = NULL;
-	errno_t err = 0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp = fopen64("xyplotT.txt", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "xyplotT.txt", "w");
 #endif
 
@@ -19534,21 +20400,21 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 			
 			integer iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 			switch (idirectional_for_XY_Plot) {
-			case X_LINE_DIRECTIONAL: // YZ 
+			case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 				iplane = YZ_PLANE; // плоскость перпендикулярная линии.
 				sp0.y = sp1.y = y;
 				sp0.z = sp1.z = z;
 				sp0.x = xmin;
 				sp1.x = xmax;
 				break;
-			case Y_LINE_DIRECTIONAL: //XZ
+			case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 				iplane = XZ_PLANE; // плоскость перпендикулярная линии.
 				sp0.x = sp1.x = x;
 				sp0.z = sp1.z = z;
 				sp0.y = ymin;
 				sp1.y = ymax;
 				break;
-			case Z_LINE_DIRECTIONAL: // XY
+			case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 				iplane = XY_PLANE; // плоскость перпендикулярная линии.
 				sp0.y = sp1.y = y;
 				sp0.x = sp1.x = x;
@@ -19602,13 +20468,13 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 					xy_arr[icounter].y_function2 = tempfiltr[iP];
 
 					switch (idirectional_for_XY_Plot) {
-					case X_LINE_DIRECTIONAL: // YZ 
+					case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 						xy_arr[icounter].x_argument = p.x;
 						break;
-					case Y_LINE_DIRECTIONAL: //XZ
+					case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: // XZ
 						xy_arr[icounter].x_argument = p.y;
 						break;
-					case Z_LINE_DIRECTIONAL: // XY
+					case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 						xy_arr[icounter].x_argument = p.z;
 						break;
 					default:
@@ -19687,13 +20553,13 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 
 			fprintf(fp, "Xo=%e, Yo=%e, Zo=%e, ", x, y, z);
 			switch (idirectional_for_XY_Plot) {
-			case X_LINE_DIRECTIONAL: // YZ 
+			case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL: // YZ 
 				fprintf(fp, "directional=X\n");
 				break;
-			case Y_LINE_DIRECTIONAL: //XZ
+			case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL: //XZ
 				fprintf(fp, "directional=Y\n");
 				break;
-			case Z_LINE_DIRECTIONAL: // XY
+			case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL: // XY
 				fprintf(fp, "directional=Z\n");
 				break;
 			default:
@@ -19721,7 +20587,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 
 	FILE *fp=NULL;
     FILE *fp1=NULL; // часть 1 или 3
-	errno_t err;
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -19734,7 +20600,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
 	//
 #ifdef MINGW_COMPILLER
-	err = 0;
+	int err = 0;
 	if (btitle) {
 		// мы стираем предыдущие кадры и переходим к новой анимации:
 		switch (iVar) {
@@ -19763,6 +20629,8 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 	}
 	if (fp == NULL) err = 1;
 #else
+	errno_t err;
+
 	if (btitle) {
 		// мы стираем предыдущие кадры и переходим к новой анимации:
 		switch (iVar) {
@@ -19874,7 +20742,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 
-					if (1 && MESHER_ONLY == steady_or_unsteady_global_determinant) {
+					if (1 && PHYSICAL_MODEL_SWITCH::MESHER_ONLY == steady_or_unsteady_global_determinant) {
 						// quolity
 						for (i = 0; i < t.database.maxelm; i++) {
 							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -19955,7 +20823,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 
-					if (1 && MESHER_ONLY == steady_or_unsteady_global_determinant) {
+					if (1 && PHYSICAL_MODEL_SWITCH::MESHER_ONLY == steady_or_unsteady_global_determinant) {
 						// quolity
 						for (i = 0; i < t.database.maxelm; i++) {
 							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
@@ -20247,7 +21115,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell,
 					//printf("fluid plot\n");
 					//getchar();
 
-					if ((ionly_solid_visible == ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
+					if ((ionly_solid_visible == WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
 						inode1 = t.database.nvtxcell[0][i] - 1;

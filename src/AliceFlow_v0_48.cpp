@@ -64,7 +64,7 @@
 
 // закомментировать в случае если сборка приложения 
 //осуществляется компилятором gcc (g++ 9.1) от GNU.
-#include "stdafx.h"
+//#include "stdafx.h"
 //#include "pch.h"
 
 //#define VISUAL_TUDIO_2008_COMPILLER
@@ -77,7 +77,7 @@
 //осуществляется компилятором g++ (g++ 9.1) от GNU.
 // g++ AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt
 // gcc_log.txt - файл с диагностическими сообщениями компилятора.
-//#define MINGW_COMPILLER 1
+#define MINGW_COMPILLER 1
 
 #ifdef MINGW_COMPILLER
 
@@ -162,6 +162,11 @@ bool SPARSE_MESHER = false;// true;// дополнительное разрежение расчётной сетки 
 // Одна клетка по Oz
 bool b_one_cell_z = false;
 
+// Свободный параметр используемый для отладки 
+// программы AliceFlov_v.0.48 и передаваемый из
+// программы интерфейса
+// AliceMesh_v.0.45.
+double free_debug_parametr1 = 0.0;
 
 // Число потоков исполнения. 
 // Передаётся из интерфейса пользователя.
@@ -179,6 +184,12 @@ int number_cores() {
 
 // 0 - Проект собран как стандартное консольное приложение windows.
 #define _CUDA_IS_ACTIVE_ 0
+
+typedef float real_mix_precision;
+// Неизвестных врядли будет больше чем уместится в типе unsigned int,
+// однако для прохода по иерархии матриц по прежнему используется тип 
+// int64_t.
+typedef unsigned int integer_mix_precision;
 
 // Вещественная арифметика.
 #define doubleprecision 1
@@ -270,7 +281,7 @@ const integer big_FIBO_integer_Value = 4294967295; // для int
 //const unsigned int STEFAN_BOLCMAN_BC = 2; // Нелинейное граничное условие Стефана-Больцмана.
 //const unsigned int MIX_CONDITION_BC = 3; // Смешанное граничное условие Ньютон Рихман + Стефан Больцман.
 
-enum DEFAULT_CABINET_BOUNDARY_CONDITION { ADIABATIC_WALL_BC = 0, 
+enum class DEFAULT_CABINET_BOUNDARY_CONDITION { ADIABATIC_WALL_BC = 0, 
 	NEWTON_RICHMAN_BC = 1, STEFAN_BOLCMAN_BC = 2, MIX_CONDITION_BC = 3};
 
 //const unsigned int DIRICHLET_FAMILY=1;
@@ -278,13 +289,13 @@ enum DEFAULT_CABINET_BOUNDARY_CONDITION { ADIABATIC_WALL_BC = 0,
 //const unsigned int NEWTON_RICHMAN_FAMILY=3;
 //const unsigned int STEFAN_BOLCMAN_FAMILY=4;
 
-enum WALL_BOUNDARY_CONDITION { DIRICHLET_FAMILY=1,
+enum class WALL_BOUNDARY_CONDITION { DIRICHLET_FAMILY=1,
 	NEIMAN_FAMILY=2, NEWTON_RICHMAN_FAMILY=3, STEFAN_BOLCMAN_FAMILY=4};
 
-enum ORDER_INTERPOLATION { parabola_MNK, line_MNK, cubic_parabola};
-enum ORDER_DERIVATIVE { FIRST_ORDER=1, SECOND_ORDER=2};
+enum ORDER_INTERPOLATION { parabola_MNK=0, line_MNK=1, cubic_parabola=2};
+enum class ORDER_DERIVATIVE { FIRST_ORDER=1, SECOND_ORDER=2};
 
-enum INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 {ZERO_INIT = 0, RANDOM_INIT = 1};
+enum class INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 {ZERO_INIT = 0, RANDOM_INIT = 1};
 
 // Для функции solve_Thermal(...);
 const integer bARRAYrealesation = 1; // На основе отсортированного массива, но вставка в отсортированный массив вызывает проблемы быстродействия.
@@ -302,7 +313,7 @@ doublereal d_my_optimetric1_6_12_2019 = 0.0;// Глобальная переменная для оптимиз
 doublereal d_my_optimetric2_6_12_2019 = 0.0;// Глобальная переменная для оптимизации.
 doublereal d_my_optimetric3_6_12_2019 = 0.0;// Глобальная переменная для оптимизации.
 
-enum LINE_DIRECTIONAL { X_LINE_DIRECTIONAL=0, 
+enum class LINE_DIRECTIONAL { X_LINE_DIRECTIONAL=0, 
 	Y_LINE_DIRECTIONAL=1, Z_LINE_DIRECTIONAL=2};
 
 // Параметры преобразователя xyplot графиков для отчетов.
@@ -313,7 +324,7 @@ typedef struct Tpatcher_for_print_in_report {
 	Tpatcher_for_print_in_report() {
 		fminimum = -1.0e+30;
 		fmaximum = 1.0e+30;
-		idir=Y_LINE_DIRECTIONAL; // 0 - X, 1 - Y, 2 - Z.
+		idir= LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; // 0 - X, 1 - Y, 2 - Z.
 	}
 } Patcher_for_print_in_report;
 
@@ -336,6 +347,10 @@ integer ianimation_write_on = 0; // 0 - off, 1 - on.
 // 1.0 - не используется. Не устанавливать 0.1!!!
 doublereal rGradual_changes = 1.0; 
 
+// При считывании скоростей из файла load.txt они домножаются
+// на множитель my_multiplyer_velocity_load;
+doublereal my_multiplyer_velocity_load = 1.0;// 33.3333; // 14.09.2020
+
 // 1 - включить правки amg1r6.f версии; 
 // 0 - оставить amg1r5.f в силе.
 integer AMG1R6_LABEL = 0; 
@@ -347,8 +362,8 @@ bool b_iluk_amg1r5_LABEL_D = false; // вниз
 bool b_iluk_amg1r5_LABEL_U = false; // вверх
 // stabilization_amg1r5_algorithm:
 // 0 - none(amg1r5); 1 - BiCGStab + amg1r5; 2 - FGMRes+amg1r5;
-enum AMG1R5_OUT_ITERATOR {NONE_only_amg1r5,  BiCGStab_plus_amg1r5,  FGMRes_plus_amg1r5, Non_Linear_amg1r5};
-AMG1R5_OUT_ITERATOR stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5; // BiCGStab + amg1r5.
+enum class AMG1R5_OUT_ITERATOR {NONE_only_amg1r5,  BiCGStab_plus_amg1r5,  FGMRes_plus_amg1r5, Non_Linear_amg1r5};
+AMG1R5_OUT_ITERATOR stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5; // BiCGStab + amg1r5.
 
 // инициализация компонент скорости константой.
 // Единые значения для всей расчётной области.
@@ -363,7 +378,7 @@ doublereal starting_speed_Vz = 0.0;
 doublereal Tochka_position_X0_for_XY_Plot = 0.0;
 doublereal Tochka_position_Y0_for_XY_Plot = 0.0;
 doublereal Tochka_position_Z0_for_XY_Plot = 0.0;
-LINE_DIRECTIONAL idirectional_for_XY_Plot = X_LINE_DIRECTIONAL; // 0 - Ox axis. 
+LINE_DIRECTIONAL idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; // 0 - Ox axis. 
 
 // При iVar==TEMP && lw==1 выход из солвера можно осуществлять когда максимальная температура между V циклами отличается менее 0.5K.
 bool bPhysics_stop = false;
@@ -404,35 +419,38 @@ bool bglobal_unsteady_temperature_determinant = false;
 // Выбор сеточного генератора:
 // simplemeshgen == 0 или unevensimplemeshgen ==1.
 // По умолчанию используется simplemeshgen == 0.
-enum CONFORMAL_MESH_GENERATOR_SELECTOR {
+enum class CONFORMAL_MESH_GENERATOR_SELECTOR {
 	SIMPLEMESHGEN_MESHER=0, UNEVENSIMPLEMESHGEN_MESHER=1,
 	COARSEMESHGEN_MESHER=2};
-CONFORMAL_MESH_GENERATOR_SELECTOR iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; // обычный сеточный генератор.
+CONFORMAL_MESH_GENERATOR_SELECTOR iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER; // обычный сеточный генератор.
 // нестационарное или стационарное моделирование.
-enum TIME_DEPEND_SWITCH  {STEADY_TEMPERATURE = 0, UNSTEADY_TEMPERATURE = 1,
+enum class PHYSICAL_MODEL_SWITCH  {STEADY_TEMPERATURE = 0, UNSTEADY_TEMPERATURE = 1,
 	MESHER_ONLY=2, CFD_STEADY=3, 
 	STEADY_STATIC_STRUCTURAL=5, STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE=6,
 	SECOND_TEMPERATURE_SOLVER=7,
     PREOBRAZOVATEL_FOR_REPORT=8, CFD_UNSTEADY=9, 
-	NETWORK_T=10, NETWORK_T_UNSTEADY=11};
-// 0 - STEADY_TEMPERATURE, 1- UNSTEADY_TEMPERATURE.
-// 0 - thermal only steady state calculation,
-// 1 - thermal only unsteady calculation,
-// 2 - mesh generator only.
-// 3 - fluid dynamic steady state.
-// 5 - Static Structural (Thermal solver #2)
-// 6 - Thermal Stress
-// 7 - Unsteady thermal solver #2
-// 8 - Visualisation only
-// 9 - cfd unsteady fluid dynamic.
+	NETWORK_T=10, NETWORK_T_UNSTEADY=11, UNSTEADY_STATIC_STRUCTURAL=12, 
+	UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE = 13
+};
+//  0 - thermal only steady state calculation, // 0 - STEADY_TEMPERATURE.
+//  1 - thermal only unsteady calculation, // 1 - UNSTEADY_TEMPERATURE.
+//  2 - mesh generator only.
+//  3 - fluid dynamic steady state.
+//  5 - Static Structural (Thermal solver #2)
+//  6 - Thermal Stress
+//  7 - Unsteady thermal solver #2
+//  8 - Visualisation only
+//  9 - cfd unsteady fluid dynamic.
 // 10 - NETWORK_T steady state. Графовый метод решения уравнения теплопроводности. Стационарное состояние.
 // 11 - NETWORK_T unsteady calculation. Графовый метод решения уравнения теплопроводности. Нестационарное состояние.
-TIME_DEPEND_SWITCH steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; 
+// 12 - UNSTEADY STRUCTURAL MECHANICS. Нестационарная механика,
+// 13 - UNSTEADY STRUCTURAL MECHANICS AND UNSTEADY TEMPERATURE CALCULATION. Нестационарная механика совместно с нестационарной теплопередачей.
+PHYSICAL_MODEL_SWITCH steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE;
 
 // Использовать ли адаптивные локально измельчённые расчётные сетки.
 bool b_on_adaptive_local_refinement_mesh = false;
-enum  TYPE_ALICE_MESH { ONE_PASS_COARSE_ALICE_MESH=0, MULTI_PASS_MEDIUM_ALICE_MESH=1};
-TYPE_ALICE_MESH itype_ALICE_Mesh = MULTI_PASS_MEDIUM_ALICE_MESH;// Тип АЛИС сетки.
+enum class TYPE_ALICE_MESH { ONE_PASS_COARSE_ALICE_MESH=0, MULTI_PASS_MEDIUM_ALICE_MESH=1};
+TYPE_ALICE_MESH itype_ALICE_Mesh = TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH;// Тип АЛИС сетки.
 
 // Октава 2 (один из возможных циклов).
 typedef struct TPiecewiseConstantTimeStepLaw {
@@ -444,6 +462,15 @@ typedef struct TPiecewiseConstantTimeStepLaw {
 	}
 } PiecewiseConstantTimeStepLawTimeStepLaw;
 
+// 0 - Linear, 
+	// 1 - Square Wave,
+	// 2 - Square Wave 2, 
+	// 3 - Hot Cold (Нагрев до заданного момента времени, а потом остывание заданное время. Шаг по времени двойной логарифмический.)
+	// 4 - Piecewise Constant 20.12.2019 - Закон изменения заданный пользователем.
+enum class TIME_STEP_lAW_SELECTOR {
+	LINEAR = 0, SQUARE_WAVE = 1, SQUARE_WAVE2 = 2, HOT_COLD = 3, PIECEWISE_CONSTANT = 4
+};
+
 // Для задания закона изменения шага по времени и тепловой мощности от времени
 // при нестационарном моделировании.
 typedef struct TTimeStepLaw
@@ -453,7 +480,7 @@ typedef struct TTimeStepLaw
 	// 2 - Square Wave 2, 
 	// 3 - Hot Cold (Нагрев до заданного момента времени, а потом остывание заданное время. Шаг по времени двойной логарифмический.)
 	// 4 - Piecewise Constant 20.12.2019 - Закон изменения заданный пользователем.
-	integer id_law; 
+	TIME_STEP_lAW_SELECTOR id_law;
 	doublereal Factor_a_for_Linear;
 	doublereal tau; // длительность импульса для Square Wave
 	// 06_03_2017 скважность может быть и дробной.
@@ -472,7 +499,7 @@ typedef struct TTimeStepLaw
 		// 2 - Square Wave 2, 
 		// 3 - Hot Cold (Евдокимова Н.Л.)
 		// 4 - Piecewise Constant 20.12.2019 - Закон изменения заданный пользователем.
-		id_law=0; 
+		id_law= TIME_STEP_lAW_SELECTOR::LINEAR;
 		Factor_a_for_Linear=0.2;
 		tau=60.0E-6; // длительность импульса для Square Wave
 		// 06_03_2017 скважность может быть и дробной.
@@ -552,7 +579,7 @@ bool bfirst_start_nonlinear_process = true;
 
 // Условие Ньютона-Рихмана по дефолту для температуры.
 // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
-DEFAULT_CABINET_BOUNDARY_CONDITION adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; 
+DEFAULT_CABINET_BOUNDARY_CONDITION adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC;
 // При нелинейном граничном условии на стенке надо делать лишь небольшое число V циклов. 
 bool breakRUMBAcalc_for_nonlinear_boundary_condition = false;
 bool bvacuumPrism = false; // Наличие вакуумных промежутков.
@@ -569,8 +596,8 @@ bool blocker_Newton_Richman = true;
 
 // 0 - визуализация и жидкости и твердого тела.
 // 1 - визуализация только твёрдого тела.
-enum WHAT_VISIBLE_OPTION {FLUID_AND_SOLID_BODY_VISIBLE=0, ONLY_SOLID_BODY_VISIBLE=1};
-WHAT_VISIBLE_OPTION ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+enum class WHAT_VISIBLE_OPTION {FLUID_AND_SOLID_BODY_VISIBLE=0, ONLY_SOLID_BODY_VISIBLE=1};
+WHAT_VISIBLE_OPTION ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 
 // переключение между алгебраическим многосеточным методом и алгоритмом Ван дер Ворста BiCGStab+ILU2.
 // 0 - алгоритм BiCGStab + ILU2.
@@ -584,12 +611,12 @@ WHAT_VISIBLE_OPTION ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
 integer iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 0; // BiCGStab + ILU2.
 // 0 - BiCGStab+ILU6, 1 - Direct, 2 - Румба 0.14, 3 - amg1r5, 4 - AMGCL_SECONT_T_SOLVER.
 // for Stress Solver
-enum SECOND_T_SOLVER_ID_SWITCH { BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER=0,
+enum class SECOND_T_SOLVER_ID_SWITCH { BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER=0,
 	DIRECT_SECOND_T_SOLVER=1, CAMG_RUMBA_v0_14_SECOND_T_SOLVER=2,
 	AMG1R5_SECOND_T_SOLVER=3, AMGCL_SECONT_T_SOLVER=4};
-SECOND_T_SOLVER_ID_SWITCH iswitchsolveramg_vs_BiCGstab_plus_ILU6 = BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; // BiCGStab + ILU6.
+SECOND_T_SOLVER_ID_SWITCH iswitchsolveramg_vs_BiCGstab_plus_ILU6 = SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; // BiCGStab + ILU6.
 
-bool bwait = false; // если false то мы игнорируем getchar().
+bool bwait = false; // если false, то мы игнорируем getchar().
 // Если задать нечто отличное от 1e-10 то программа уходит очень долгий цикл
 const doublereal admission = 1.0e-30; //1.0e-10 // для определения совпадения двух вещественных чисел.
 
@@ -600,7 +627,7 @@ unsigned int calculation_vorst_seach_time = 0;
 // то прибор Выйдет из строя (сгорит).
 // В случае превышения температуры равной TEMPERATURE_FAILURE_DC
 // на консоль печатается предупреждающее сообщение и после того
-// как пользователь прочтёт сообщение осуществляется выход из программы.
+// как пользователь прочтёт сообщение, осуществляется выход из программы.
 const doublereal TEMPERATURE_FAILURE_DC = 5000.2;
 
 
@@ -628,10 +655,10 @@ unsigned int iTEMPScheme = UDS; // Противопоточная первого порядка
 // 1. В SIMPLEC не используется нижняя релаксация для давления при коррекции давления, т.е. alphaP=1.0.
 // 2. В SIMPLEC псевдо время пропорционально tau ~ alpha/(1-alpha), а в SIMPLE tau ~ alpha. 
 // В остальном алгоритмы полностью совпадают.
-enum SIMPLE_CFD_ALGORITHM {SIMPLE_Carretto = 0, SIMPLEC_Van_Doormal_and_Raithby = 1};
+enum class SIMPLE_CFD_ALGORITHM {SIMPLE_Carretto = 0, SIMPLEC_Van_Doormal_and_Raithby = 1};
 //const unsigned int SIMPLE_Carretto = 0; // алгоритм SIMPLE Carretto et al., 1973 используется по умолчанию.
 //const unsigned int SIMPLEC_Van_Doormal_and_Raithby = 1; // алгоритм SIMPLEC Van Doormal and Raithby, 1984 год.
-SIMPLE_CFD_ALGORITHM iSIMPLE_alg = SIMPLE_Carretto;// SIMPLE_Carretto SIMPLEC_Van_Doormal_and_Raithby
+SIMPLE_CFD_ALGORITHM iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;// SIMPLE_Carretto SIMPLEC_Van_Doormal_and_Raithby
 
 // Точность решения СЛАУ для всех методов для нормы
 // (residual,residual) где () скалярное произведение в R^n.
@@ -723,9 +750,13 @@ const bool b_thermal_source_refinement = true;
 const bool bvery_big_memory = true; // true нет записи в файл всё храним в оперативной памяти. Это существенно быстрее по скорости.
 
 // Данные определения пределов раньше находились в файле MenterSST.cpp.
-const doublereal K_limiter_min = 1.0e-14; // 1.0e-14 Fluent limits
-const doublereal Omega_limiter_min = 1.0; // 1.0; иначе будет расходимость. // 1.0e-20 Fluent limits
-const doublereal Epsilon_limiter_min = 1.0e-20; // 1.0e-14; TODO требует уточнения... 1.0e-20 Fluent limits
+const doublereal K_limiter_min = 1.0e-20; //1.0e-14; // 1.0e-14 Fluent limits
+// 0.1 тоже подходит и сходимость стала лучше для k по сравнению со случаем 1.0.
+// при значении 1.0E-20 расходимость. Значение k на уровне 1e-14 до 1e-10. Октава 1 0.5м/с.
+// Справляется только метод сглаженной аггрегации ddemidov AMGCL.
+// Вточном решении (сошедшимся) omega не опускалась ниже значения 1.5.
+const doublereal Omega_limiter_min = 0.1; // 1.0; иначе будет расходимость. // 1.0e-20 Fluent limits
+const doublereal Epsilon_limiter_min = 1.0e-20; // 1.0e-14; значение требует уточнения... 1.0e-20 Fluent limits
 
 UNION* my_union = nullptr; // для объединения.
 
@@ -797,7 +828,7 @@ typedef struct TFLUENT_RESIDUAL{
 // на основе стационарного солвера,
 // а также нестационарный солвер для 
 // гидродинамики на основе стационарного солвера.
-#include "my_unsteady_temperature.c"
+#include "my_unsteady_temperature.cpp"
 
 // Препроцессинг для параллельной обработки.
 #include "my_nested_dissection.cpp"
@@ -850,7 +881,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 	// Инициализация, показываем всё.
 	pfpir.fmaximum = 1.0e+30;
 	pfpir.fminimum = -1.0e+30;
-	pfpir.idir = Y_LINE_DIRECTIONAL;
+	pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL;
 
 
 	// 22.01.2017 инициализация.
@@ -930,13 +961,13 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 		init_QSBid(lb, b, w, lw, s, ls); // Для ускоренной работы функции myisblock_id.
 		
-		if ((steady_or_unsteady_global_determinant == CFD_STEADY) ||
-			(steady_or_unsteady_global_determinant == CFD_UNSTEADY)) {
+		if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY)) {
 			// При решении уравнений гидродинамики мы удаляем старый load.txt файл.
 			remove("load.txt");
 		}
 		
-		if (1 && steady_or_unsteady_global_determinant == PREOBRAZOVATEL_FOR_REPORT) {
+		if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::PREOBRAZOVATEL_FOR_REPORT) {
 			// Преобразование файла с результатами вычислений.
 			// для написания отчетов. 05.01.2018.
 			tecplot360patcher_for_print_in_report();
@@ -944,16 +975,16 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		}
 
 		integer iCabinetMarker = 0;
-		if (iswitchMeshGenerator == SIMPLEMESHGEN_MESHER) {
+		if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER) {
 			simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 		}
-		else if (iswitchMeshGenerator == UNEVENSIMPLEMESHGEN_MESHER) {
+		else if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER) {
 			unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 			// генератор неравномерной сетки с автоматической балансировкой неравномерности.
 		}
-		else if (iswitchMeshGenerator == COARSEMESHGEN_MESHER) {
+		else if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER) {
 			// Я стремился сделать coarse Mesh как в Icepak.
 			// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 			// ресурсы персонального компьютера чрезвычайно слабы, т.к. CPU уперлись в 4ГГц а
@@ -962,7 +993,21 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 		}
 		else {
-			std::cout << "error: yuor mesh generator is undefined "<< iswitchMeshGenerator << "\n";
+			switch (iswitchMeshGenerator) {
+			case CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER:
+				std::cout << "your mesh generator is undefined "<< "CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER" << "\n";
+				break;
+			case CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER :
+				std::cout << "your mesh generator is undefined " << "CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER" << "\n";
+				break;
+			case CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER:
+				std::cout << "your mesh generator is undefined " << "CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER" << "\n";
+				break;
+			default :
+				std::cout << "error: your mesh generator is undefined "  << "\n";
+				break;
+			}
+			
 
 			system("pause");
 			exit(1);
@@ -982,18 +1027,18 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			my_union[iu].zpos = nullptr;
 			integer iup1 = iu + 1;
 			switch (my_union[iu].iswitchMeshGenerator) {
-			case 0: simplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
+			case CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER : simplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
 				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd, my_union[iu].inxadd,
 				my_union[iu].inyadd, my_union[iu].inzadd, iup1);
 				break;
-			case 1: unevensimplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos, my_union[iu].inx,
+			case CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER: unevensimplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos, my_union[iu].inx,
 				my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				dgx, dgy, dgz, my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd,
 				my_union[iu].inxadd, my_union[iu].inyadd, my_union[iu].inzadd, iup1);
 				// генератор неравномерной сетки с автоматической балансировкой неравномерности.
 				break;
-			case 2: coarsemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
+			case CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER: coarsemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
 				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd, my_union[iu].inxadd,
 				my_union[iu].inyadd, my_union[iu].inzadd, iup1);
@@ -1048,7 +1093,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 			std::cout << "starting ALICE\n";
 			if (0) {
-				if (MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh) {
+				if (TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh) {
 					// Так делать ни в коем случае нельзя по причине нехватки оперативной памяти.
 					doublereal* xpos_copy = nullptr;
 					// 10 слишком большое значение константы.
@@ -1056,6 +1101,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					// десятикратное дробление каждого интервала пополам.
 					for (integer jiter = 0; jiter < jiterM; jiter++) {
 						xpos_copy = new doublereal[2 * (inx + 1) - 1];
+#pragma omp parallel for
 						for (integer i74 = 0; i74 < inx; i74++) {
 							xpos_copy[2 * i74] = xpos[i74];
 							xpos_copy[2 * i74 + 1] = 0.5 * (xpos[i74] + xpos[i74 + 1]);
@@ -1064,6 +1110,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 						delete[] xpos;
 						xpos = nullptr;
 						xpos = new doublereal[2 * (inx + 1) - 1];
+#pragma omp parallel for
 						for (integer i74 = 0; i74 < 2 * (inx + 1) - 1; i74++) {
 							xpos[i74] = xpos_copy[i74];
 						}
@@ -1074,6 +1121,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 					for (integer jiter = 0; jiter < jiterM; jiter++) {
 						xpos_copy = new doublereal[2 * (iny + 1) - 1];
+#pragma omp parallel for
 						for (integer i74 = 0; i74 < iny; i74++) {
 							xpos_copy[2 * i74] = ypos[i74];
 							xpos_copy[2 * i74 + 1] = 0.5 * (ypos[i74] + ypos[i74 + 1]);
@@ -1082,6 +1130,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 						delete[] ypos;
 						ypos = nullptr;
 						ypos = new doublereal[2 * (iny + 1) - 1];
+#pragma omp parallel for
 						for (integer i74 = 0; i74 < 2 * (iny + 1) - 1; i74++) {
 							ypos[i74] = xpos_copy[i74];
 						}
@@ -1092,6 +1141,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 					for (integer jiter = 0; jiter < jiterM; jiter++) {
 						xpos_copy = new doublereal[2 * (inz + 1) - 1];
+#pragma omp parallel for
 						for (integer i74 = 0; i74 < inz; i74++) {
 							xpos_copy[2 * i74] = zpos[i74];
 							xpos_copy[2 * i74 + 1] = 0.5 * (zpos[i74] + zpos[i74 + 1]);
@@ -1100,6 +1150,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 						delete[] zpos;
 						zpos = nullptr;
 						zpos = new doublereal[2 * (inz + 1) - 1];
+#pragma omp parallel for
 						for (integer i74 = 0; i74 < 2 * (inz + 1) - 1; i74++) {
 							zpos[i74] = xpos_copy[i74];
 						}
@@ -1118,7 +1169,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 
 
-			if (0 || itype_ALICE_Mesh == MULTI_PASS_MEDIUM_ALICE_MESH/*1*/) {
+			if (0 || itype_ALICE_Mesh == TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH/*1*/) {
 				// Вызываем повторные генерации.
 
 				/*
@@ -1179,15 +1230,15 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					//system("PAUSE");
 
 					integer iCabinetMarker = 0;
-					if (iswitchMeshGenerator == SIMPLEMESHGEN_MESHER) {
+					if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER) {
 						simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union,
 							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 					}
-					else if (iswitchMeshGenerator == UNEVENSIMPLEMESHGEN_MESHER) {
+					else if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER) {
 						unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union,
 							matlist, dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker); // генератор неравномерной сетки с автоматической балансировкой неравномерности.
 					}
-					else if (iswitchMeshGenerator == COARSEMESHGEN_MESHER) {
+					else if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER) {
 						// Я стремился сделать coarse Mesh как в ANSYS Icepak.
 						// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 						// ресурсы персонального компьютера чрезвычайно слабы, т.к. CPU уперлись в 4ГГц а
@@ -1197,7 +1248,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					}
 					else {
 
-						printf("error: yuor mesh generator is undefined %d\n", iswitchMeshGenerator);
+						printf("error: your mesh generator is undefined %d\n", iswitchMeshGenerator);
 
 						system("pause");
 						exit(1);
@@ -1255,12 +1306,15 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		// Данная информация нужна для экономии оперативной памяти,
 		// некоторые данные будут выгружены из озу а потом восстановлены 
 		// путём вычисления.
+#pragma omp parallel for
 		for (integer i_7 = 0; i_7 < inx + 1; i_7++) {
 			my_global_temperature_struct.xpos_copy[i_7] = xpos[i_7];
 		}
+#pragma omp parallel for
 		for (integer i_7 = 0; i_7 < iny + 1; i_7++) {
 			my_global_temperature_struct.ypos_copy[i_7] = ypos[i_7];
 		}
+#pragma omp parallel for
 		for (integer i_7 = 0; i_7 < inz + 1; i_7++) {
 			my_global_temperature_struct.zpos_copy[i_7] = zpos[i_7];
 		}
@@ -1277,12 +1331,15 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			// Данная информация нужна для экономии оперативной памяти,
 			// некоторые данные будут выгружены из озу а потом восстановлены 
 			// путём вычисления.
+#pragma omp parallel for
 			for (integer i_7 = 0; i_7 < my_union[iu].inx + 1; i_7++) {
 				my_union[iu].t.xpos_copy[i_7] = my_union[iu].xpos[i_7];
 			}
+#pragma omp parallel for
 			for (integer i_7 = 0; i_7 < my_union[iu].iny + 1; i_7++) {
 				my_union[iu].t.ypos_copy[i_7] = my_union[iu].ypos[i_7];
 			}
+#pragma omp parallel for
 			for (integer i_7 = 0; i_7 < my_union[iu].inz + 1; i_7++) {
 				my_union[iu].t.zpos_copy[i_7] = my_union[iu].zpos[i_7];
 			}
@@ -1539,8 +1596,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		// 29.01.2017
 		// if (1 && steady_or_unsteady_global_determinant == MESHER_ONLY)  
 		// То мы просто вызываем мешер не вызывая солвера.
-		if (1 && ((steady_or_unsteady_global_determinant == MESHER_ONLY)||
-			(steady_or_unsteady_global_determinant == NETWORK_T))) {
+		if (1 && ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::MESHER_ONLY)||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T))) {
 			// Замер времени.
 			unsigned int calculation_start_time = 0; // начало счёта мс.
 			unsigned int calculation_end_time = 0; // окончание счёта мс.
@@ -1569,7 +1626,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 			// 24.06.2020
 			// Графовый метод решения уравнения теплопередачи.
-			if ((steady_or_unsteady_global_determinant == NETWORK_T)) {
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T)) {
 				calculate_Network_T(my_global_temperature_struct, b, lb, w, lw, ls, matlist);
 			}
 
@@ -1578,7 +1635,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			//exit(1);
 
 			// 1 - solver/solid_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist);
+			bool bMechanical = false;
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist, bMechanical);
 			// Печатает расход жидкости через выходную границу потока.
 			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28,10,2019
@@ -1610,7 +1668,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		//char ch_EXPORT_ALICE_ONLY = 'y';
 
 		// steady Temperature Finite Volume Method
-		if (1 && (steady_or_unsteady_global_determinant==STEADY_TEMPERATURE) && 
+		if (1 && (steady_or_unsteady_global_determinant== PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE) &&
 			(1==eqin.itemper)) {
 
 			// Замер времени.
@@ -1620,6 +1678,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 			calculation_start_time = clock(); // момент начала счёта.
 
+#pragma omp parallel for
 			for (integer i7 = 0; i7 < my_global_temperature_struct.maxelm + my_global_temperature_struct.maxbound; i7++) 
 				my_global_temperature_struct.potent[i7] = operating_temperature_for_film_coeff; // инициализация.
 
@@ -1636,7 +1695,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 			}
 
-			if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+			if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 				// Мы инициализируем случайной величиной чтобы избавится от неопределённости при первой сборке СЛАУ.
 				//for (integer i7 = 0; i7<t.maxelm + t.maxbound; i7++) t.potent[i7] = 0.57*operating_temperature_for_film_coeff;
 			}
@@ -1675,12 +1734,14 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data = 0;
+					
 					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
+					int err_inicialization_data = 0;
 					fp_inicialization_data = fopen64("load.txt", "r");
 					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
+					errno_t err_inicialization_data = 0;
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 					if (0 == err_inicialization_data) {
@@ -1840,6 +1901,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				// Вычисляет среднюю температуру в жидких ячейках.
 				doublereal Tavg_fluid = 0.0;
 				doublereal ic_avg_Temp_fluid = 0.0;
+
+#pragma omp parallel for reduction(+ : Tavg_fluid, ic_avg_Temp_fluid)
 				for (integer i_7 = 0; i_7 < f[0].maxelm; i_7++) {
 					if ((f[0].ptr[i_7] >= 0) && (f[0].ptr[i_7] < my_global_temperature_struct.maxelm)) {
 						Tavg_fluid += my_global_temperature_struct.potent[f[0].ptr[i_7]];
@@ -1908,11 +1971,13 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) tmaxfinish = fmax(tmaxfinish, my_global_temperature_struct.potent[i]);
 
 			FILE* fp = NULL;
-			errno_t err1 = 0;
+			
 #ifdef MINGW_COMPILLER
+			int err1 = 0;
 			fp = fopen64("report.txt", "w");
 			if (fp == NULL) err1 = 1;
 #else
+			errno_t err1 = 0;
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
 			// создание файла для записи.
@@ -1927,7 +1992,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				fclose(fp);
 			}
 			// 1 - solver/solid_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist);
+			bool bMechanical = false;
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist, bMechanical);
 			// Печатает расход жидкости через выходную границу потока.
 			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28.10.2019
@@ -2182,7 +2248,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		}
 
 		// steady Temperature Finite Element Method
-		if (1 && (steady_or_unsteady_global_determinant == STEADY_TEMPERATURE) && (eqin.itemper == 2)) {
+		if (1 && (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE) && (eqin.itemper == 2)) {
 
 			// Замер времени.
 			unsigned int calculation_start_time = 0; // начало счёта мс.
@@ -2191,6 +2257,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 			calculation_start_time = clock(); // момент начала счёта.
 
+#pragma omp parallel for
 			for (integer i7 = 0; i7 < my_global_temperature_struct.maxelm + my_global_temperature_struct.maxbound; i7++) {
 				my_global_temperature_struct.potent[i7] = operating_temperature_for_film_coeff; // инициализация.
 			}
@@ -2208,7 +2275,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 			}
 
-			if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+			if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 				// Мы инициализируем случайной величиной чтобы избавится от неопределённости при первой сборке СЛАУ.
 				//for (integer i7 = 0; i7<t.maxelm + t.maxbound; i7++) t.potent[i7] = 0.57*operating_temperature_for_film_coeff;
 			}
@@ -2247,12 +2314,14 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data = 0;
+					
 					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
+					int err_inicialization_data = 0;
 					fp_inicialization_data = fopen64("load.txt", "r");
 					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
+					errno_t err_inicialization_data = 0;
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 
@@ -2305,9 +2374,10 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 				doublereal* lstub = nullptr;
 				integer maxelm_global_ret = 0;
+				doublereal* t_for_Mechanical = nullptr;
 				solve_Thermal(my_global_temperature_struct, f, matlist, w, lw, lu, b, lb, ls, m, false, 
 					operatingtemperature, false, 0.0, lstub, lstub,
-					maxelm_global_ret, 1.0, bAVLrealesation);
+					maxelm_global_ret, 1.0, bAVLrealesation, t_for_Mechanical);
 
 
 				/*
@@ -2363,14 +2433,22 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) tmaxfinish = fmax(tmaxfinish, my_global_temperature_struct.potent[i]);
 
 			doublereal totaldeform_max = -1.0e+30;
-			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) totaldeform_max = fmax(totaldeform_max, my_global_temperature_struct.total_deformation[TOTALDEFORMATION][i]);
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+			{
+				for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) totaldeform_max = fmax(totaldeform_max, my_global_temperature_struct.total_deformation[TOTALDEFORMATION][i]);
+			}
 
 			FILE* fp = NULL;
-			errno_t err1 = 0;
+			
 #ifdef MINGW_COMPILLER
+			int err1 = 0;
 			fp = fopen64("report.txt", "w");
 			if (fp == NULL) err1 = 1;
 #else
+			errno_t err1 = 0;
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
 			// создание файла для записи.
@@ -2385,13 +2463,14 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				fclose(fp);
 			}
 			// 1 - solver/solid_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist);
+			bool bMechanical = false;
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist, bMechanical);
 
 
 		}
 
 		// steady Static Structural
-		if (1 && steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL) {
+		if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) {
 
 
 			// Замер времени.
@@ -2401,38 +2480,22 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 			calculation_start_time = clock(); // момент начала счёта.
 
-			for (integer i7 = 0; i7 < my_global_temperature_struct.maxelm + my_global_temperature_struct.maxbound; i7++) my_global_temperature_struct.potent[i7] = operating_temperature_for_film_coeff; // инициализация.
+#pragma omp parallel for
+			for (integer i7 = 0; i7 < my_global_temperature_struct.maxelm + my_global_temperature_struct.maxbound; i7++) {
+				my_global_temperature_struct.potent[i7] = operating_temperature_for_film_coeff; // инициализация.
+			}
 
 			// Решаем только Static Structural.
 			bonly_solid_calculation = true;
 
-			// Включаем прекращение вычисления по физическому смыслу.
-			if (lw == 1) {
-				bPhysics_stop = true;
-				if (lb < 11) {
-					// Это стандартная подложка:
-					// MD40, AuSn, Cu, AuSn, SiC, GaN. cabinet and hollow.
-					bPhysics_PTBSH_memory = true;
-				}
-			}
 
-			if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
-				// Мы инициализируем случайной величиной чтобы избавится от неопределённости при первой сборке СЛАУ.
-				//for (integer i7 = 0; i7<t.maxelm + t.maxbound; i7++) t.potent[i7] = 0.57*operating_temperature_for_film_coeff;
-			}
-
-			// Здесь предполагается что мы решаем стационарную задачу чистой теплопроводности.
+			// Здесь предполагается что мы решаем стационарную задачу чистой механики по нахождению деформированного состояния.
 			bsolid_static_only = true;
 			bool bcleantemp = false;
-			if (eqin.itemper == 1) {
-				bcleantemp = true;
-				for (integer i = 0; i < flow_interior; i++) {
-					if (eqin.fluidinfo[i].iflow == 1) bcleantemp = false;
-				}
-				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
-			}
+
 			if (1 || bcleantemp) {
-				// решение стационарной нелинейной (или линейной) задачи чистой теплопроводности в трёхмерной области. 
+				// решение стационарной нелинейной (или линейной) задачи чистой 
+				// механики по нахождению деформированного состояния в трёхмерной области. 
 				printf("solution of pure Static Structural...\n");
 				printf("please, press any key to continue...\n");
 				if (bwait) {
@@ -2445,19 +2508,23 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 				doublereal dbeta = 1.0; // первый порядок аппроксимации на границе.
 				bool bmyconvective = false;
-				if (starting_speed_Vx * starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30) {
+				if (starting_speed_Vx * starting_speed_Vx +
+					starting_speed_Vy * starting_speed_Vy +
+					starting_speed_Vz * starting_speed_Vz > 1.0e-30) {
 					if (f[0].maxelm > 0) {
 						bmyconvective = true;
 					}
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data = 0;
+					
 					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
+					int err_inicialization_data = 0;
 					fp_inicialization_data = fopen64("load.txt", "r");
 					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
+					errno_t err_inicialization_data = 0;
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 
@@ -2470,69 +2537,18 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					}
 				}
 
-				// if (flow_interior>0) bmyconvective=true;
-				// массив отладочной информации,
-				// конкретно для проверки подхода Рхи-Чоу
-				doublereal** rhie_chow = nullptr;
-				QuickMemVorst m;
-				m.ballocCRSt = false; // Выделять память
-				m.bsignalfreeCRSt = true; // и сразу освобождать.
-
-				// инициализация указателей.
-				m.tval = nullptr;
-				m.tcol_ind = nullptr;
-				m.trow_ptr = nullptr;
-				m.tri = nullptr;
-				m.troc = nullptr;
-				m.ts = nullptr;
-				m.tt = nullptr;
-				m.tvi = nullptr;
-				m.tpi = nullptr;
-				m.tdx = nullptr;
-				m.tdax = nullptr;
-				m.ty = nullptr;
-				m.tz = nullptr;
-				m.ta = nullptr;
-				m.tja = nullptr;
-				m.tia = nullptr;
-				m.talu = nullptr;
-				m.tjlu = nullptr;
-				m.tju = nullptr;
-				m.tiw = nullptr;
-				m.tlevs = nullptr;
-				m.tw = nullptr;
-				m.tjw = nullptr;
-				m.icount_vel = 100000; // очень большое число.
 
 				bPhysics_stop = false;
 				// Вызов солвера Static Structural.
 				// Погашено 19.05.2018
-				//solve_Structural(t, w, lw, m, false, operatingtemperature);
+				doublereal* stub_Mechanical = nullptr;
+				solve_Structural(my_global_temperature_struct, w, lw, false, operatingtemperature, b, lb, lu,
+					false, 1.0e9, stub_Mechanical, stub_Mechanical, 1.0, matlist, stub_Mechanical);
 				bPhysics_stop = true;
-				// Температура 19.05.2018
-
-				//doublereal* lstub = nullptr;
-				//integer maxelm_global_ret = 0;
-				//solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature,false, 0.0, lstub, lstub, maxelm_global_ret, 1.0);
 
 
-				/*
-				// если flow_interior == 0 то f[0] просто формальный параметр
-				solve_nonlinear_temp(f[0], f, t,
-				rhie_chow,
-				b, lb, s, ls, w, lw,
-				dbeta, flow_interior,
-				bmyconvective, nullptr, 0.001, 0.001,
-				false,
-				matlist, 0,
-				bprintmessage,
-				gtdps, ltdp, 1.0, m,
-				nullptr, // скорость с предыдущего временного слоя.
-				nullptr); // массовый поток через границу с предыдущего временного слоя.
-				// последний параметр равный 1.0 означает что мощность подаётся.
-				*/
 				// Вычисление массы модели.
-				massa_cabinet(my_global_temperature_struct, f,  flow_interior,
+				massa_cabinet(my_global_temperature_struct, f, flow_interior,
 					b, lb, operatingtemperature,
 					matlist);
 
@@ -2569,14 +2585,22 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) tmaxfinish = fmax(tmaxfinish, my_global_temperature_struct.potent[i]);
 
 			doublereal totaldeform_max = -1.0e+30;
-			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) totaldeform_max = fmax(totaldeform_max, my_global_temperature_struct.total_deformation[TOTALDEFORMATION][i]);
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+			{
+				for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) totaldeform_max = fmax(totaldeform_max, my_global_temperature_struct.total_deformation[TOTALDEFORMATION][i]);
+		    }
 
 			FILE* fp = NULL;
-			errno_t err1 = 0;
+			
 #ifdef MINGW_COMPILLER
+			int err1 = 0;
 			fp = fopen64("report.txt", "w");
 			if (fp == NULL) err1 = 1;
 #else
+			errno_t err1 = 0;
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
 			// создание файла для записи.
@@ -2591,14 +2615,13 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				fclose(fp);
 			}
 			// 1 - solver/solid_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist);
-
-
+			bool bMechanical = true;
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist, bMechanical);
 
 		}
 
 		// steady Static Structural and Temperature (Thermal Stress).
-		if (1 && steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) {
+		if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) {
 
 			// Замер времени.
 			unsigned int calculation_start_time = 0; // начало счёта мс.
@@ -2623,7 +2646,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 			}
 
-			if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+			if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 				// Мы инициализируем случайной величиной чтобы избавится от неопределённости при первой сборке СЛАУ.
 				//for (integer i7 = 0; i7<t.maxelm + t.maxbound; i7++) t.potent[i7] = 0.57*operating_temperature_for_film_coeff;
 			}
@@ -2659,12 +2682,14 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data = 0;
+					
 					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
+					int err_inicialization_data = 0;
 					fp_inicialization_data = fopen64("load.txt", "r");
 					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
+					errno_t err_inicialization_data = 0;
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 
@@ -2717,6 +2742,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				integer dist_max = 3;
 				calculate_color_for_temperature(color, my_global_temperature_struct,inx,xpos);
 
+				
 				// если flow_interior == 0 то f[0] просто формальный параметр
 				solve_nonlinear_temp(f[0], f, my_global_temperature_struct,
 					rhie_chow,
@@ -2730,13 +2756,89 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					m, nullptr, // скорость с предыдущего временного слоя.
 					nullptr,
 					lu, my_union, color, dist_max); // массовый поток через границу с предыдущего временного слоя.
-				    delete[] color;
-					
+				  
+				delete[] color;
+				
+				
 
-					//bPhysics_stop = false;
-					// Вызов солвера Static Structural.
-				solve_Structural(my_global_temperature_struct, w, lw, m, true, operatingtemperature, b, lb);
+				// Температура 19.05.2018
+
+				doublereal* t_for_Mechanical = nullptr;
+				//doublereal* lstub = nullptr;
+				//integer maxelm_global_ret = 0;
+				
+				//solve_Thermal(my_global_temperature_struct, f, matlist, w, lw, lu, b, lb, ls, m, false,
+					//operatingtemperature, false, 0.0, lstub, lstub,
+					//maxelm_global_ret, 1.0, bAVLrealesation, t_for_Mechanical);
+					
+				t_for_Mechanical = new doublereal[my_global_temperature_struct.maxnod + 2];
+				{
+					// Метод линейного порядка.
+					doublereal min_x = 1e60;
+					doublereal min_y = 1e60;
+					doublereal min_z = 1e60;
+					doublereal max_x = -1e60;
+					doublereal max_y = -1e60;
+					doublereal max_z = -1e60;
+
+					for (integer i = 0; i < my_global_temperature_struct.maxnod; i++) {
+						if (my_global_temperature_struct.pa[i].x < min_x) {
+							min_x = my_global_temperature_struct.pa[i].x;
+						}
+						if (my_global_temperature_struct.pa[i].y < min_y) {
+							min_y = my_global_temperature_struct.pa[i].y;
+						}
+						if (my_global_temperature_struct.pa[i].z < min_z) {
+							min_z = my_global_temperature_struct.pa[i].z;
+						}
+						if (my_global_temperature_struct.pa[i].x > max_x) {
+							max_x = my_global_temperature_struct.pa[i].x;
+						}
+						if (my_global_temperature_struct.pa[i].y > max_y) {
+							max_y = my_global_temperature_struct.pa[i].y;
+						}
+						if (my_global_temperature_struct.pa[i].z > max_z) {
+							max_z = my_global_temperature_struct.pa[i].z;
+						}
+					}
+
+					min_x = 1.05 * fabs(max_x - min_x);
+					if (min_x < 1.0e-30) {
+						min_x = 1.05 * fabs(max_x);
+					}
+					min_y = 1.05 * fabs(max_y - min_y);
+					if (min_y < 1.0e-30) {
+						min_y = 1.05 * fabs(max_y);
+					}
+					min_z = 1.05 * fabs(max_z - min_z);
+					if (min_z < 1.0e-30) {
+						min_z = 1.05 * fabs(max_z);
+					}
+					doublereal eps_mashine = 1.0e-308; // double
+
+					doublereal* vol = new doublereal[my_global_temperature_struct.maxnod];
+
+					for (integer i = 0; i < my_global_temperature_struct.maxnod; i++) {
+						vol[i] = 0.0;
+					}
+
+					// Преобразование температуры с сетки МКО на сетку МКЭ.
+					SECOND_ORDER_QUADRATIC_RECONSTRUCTA(my_global_temperature_struct.maxnod,
+						my_global_temperature_struct.maxelm, my_global_temperature_struct.pa,
+						my_global_temperature_struct.nvtx, vol, t_for_Mechanical, min_x, min_y, min_z, my_global_temperature_struct.potent,
+						my_global_temperature_struct, eps_mashine, false);
+
+					delete[] vol;
+
+				}
+				//bPhysics_stop = false;
+				// Вызов солвера Static Structural.
+				doublereal* stub_Mechanical = nullptr;
+				solve_Structural(my_global_temperature_struct, w, lw, true, operatingtemperature, b, lb,lu, 
+					false, 1.0e9, stub_Mechanical, stub_Mechanical, 1.0,matlist, t_for_Mechanical);
 				//bPhysics_stop = true;
+
+				delete[] t_for_Mechanical;
 
 				// Вычисление массы модели.
 				massa_cabinet(my_global_temperature_struct, f,  flow_interior,
@@ -2775,14 +2877,22 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) tmaxfinish = fmax(tmaxfinish, my_global_temperature_struct.potent[i]);
 
 			doublereal totaldeform_max = -1.0e+30;
-			for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) totaldeform_max = fmax(totaldeform_max, my_global_temperature_struct.total_deformation[TOTALDEFORMATION][i]);
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+			{
+				for (integer i = 0; i < my_global_temperature_struct.maxelm; i++) totaldeform_max = fmax(totaldeform_max, my_global_temperature_struct.total_deformation[TOTALDEFORMATION][i]);
+			}
 
 			FILE* fp = NULL;
-			errno_t err1 = 0;
+			
 #ifdef MINGW_COMPILLER
+			int err1 = 0;
 			fp = fopen64("report.txt", "w");
 			if (fp == NULL) err1 = 1;
 #else
+			errno_t err1 = 0;
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
 
@@ -2798,7 +2908,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				fclose(fp);
 			}
 			// 1 - solver/solid_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist);
+			bool bMechanical = true;
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist, bMechanical);
 			// Печатает расход жидкости через выходную границу потока.
 			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28,10,2019
@@ -2827,9 +2938,11 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		//system("pause");
 
 		// Нестационарная теплопроводность.
-		if (1 && ((steady_or_unsteady_global_determinant == UNSTEADY_TEMPERATURE) ||
-			(steady_or_unsteady_global_determinant == SECOND_TEMPERATURE_SOLVER)||
-			(steady_or_unsteady_global_determinant == NETWORK_T_UNSTEADY))) {
+		if (1 && ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER)||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY)||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL)||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
 			
 
 			// Решаем только теплопередачу в твёрдом теле.
@@ -2865,7 +2978,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			doublereal** rhie_chow = nullptr;
 
 			// 29.06.2020
-			if (steady_or_unsteady_global_determinant == NETWORK_T_UNSTEADY) {
+			if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY) {
 				calculate_Network_T_unsteady(my_global_temperature_struct, f,
 					b, lb, w, lw, s, ls, matlist);
 				//printf("unsteady temperature calculation is finished...\n");
@@ -2873,15 +2986,34 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			    //exit(1);
 			}
 
+			//std::cout << "steady_or_unsteady_global_determinant=" << steady_or_unsteady_global_determinant << std::endl;
+			//getchar();
+
 			//solve_nonlinear_temp(f[0], f, t, rhie_chow, b, lb, s, ls, w, lw, dbeta, flow_interior, false, nullptr, 0.001, false);
 			bool bsecond_T_solver = false;
-			if (steady_or_unsteady_global_determinant == SECOND_TEMPERATURE_SOLVER) {
+			if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER) {
 				// Температурный солвер на основе поячеечной сборки матрицы 10.11.2018.
 				bsecond_T_solver = true;
 			}
 			
-			if ((steady_or_unsteady_global_determinant == UNSTEADY_TEMPERATURE) ||
-				(steady_or_unsteady_global_determinant == SECOND_TEMPERATURE_SOLVER)) {
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE)) {
+				
+				bool bMechanical = false; // true - расчёт механических деформаций нестационарных МКЭ.
+				bool bTemperature = true; // true - расчёт нестационарной теплопередачи.
+				// bMechanical   && bTemperature   - расчёт нестационарной механики и теплопередачи совместно.
+
+				if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) {
+					bMechanical = true;
+					bTemperature = false;
+				}
+				if (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) {
+					bMechanical = true;
+					bTemperature = true;
+				}
+				
 
 				unsteady_temperature_calculation(f[0], f, my_global_temperature_struct,
 					rhie_chow,
@@ -2889,7 +3021,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					dbeta, flow_interior,
 					matlist,
 					operatingtemperature,
-					gtdps, ltdp, lu, my_union, bsecond_T_solver, inx, xpos); // нестационарный температурный солвер
+					gtdps, ltdp, lu, my_union, bsecond_T_solver, inx, xpos, bTemperature, bMechanical); // нестационарный температурный солвер
 					
 			}
 
@@ -2934,13 +3066,17 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 				doublereal tmaxfinish = -273.15;
 				// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-				for (integer i = 0; i < my_global_temperature_struct.maxelm + my_global_temperature_struct.maxbound; i++) tmaxfinish = fmax(tmaxfinish, my_global_temperature_struct.potent[i]);
+				for (integer i = 0; i < my_global_temperature_struct.maxelm + my_global_temperature_struct.maxbound; i++) {
+					tmaxfinish = fmax(tmaxfinish, my_global_temperature_struct.potent[i]);
+				}
 				FILE* fp = NULL;
-				errno_t err1 = 0;
+				
 #ifdef MINGW_COMPILLER
+				int err1 = 0;
 				fp = fopen64("report.txt", "w");
 				if (fp == NULL) err1 = 1;
 #else
+				errno_t err1 = 0;
 				err1 = fopen_s(&fp, "report.txt", "w");
 #endif
 				// создание файла для записи.
@@ -2955,7 +3091,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					fclose(fp);
 				}
 				// 1 - solver/solid_static/
-				report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist);
+				bool bMechanical = true;
+				report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0, matlist, bMechanical);
 				// Печатает расход жидкости через выходную границу потока.
 				// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 				// проходящий через выходную границу потока. 28,10,2019
@@ -2975,7 +3112,11 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		// экспорт результата вычисления в программу tecplot360:
 		// можно использовать как проверку построенной сетки.
 		if (false) {
-			exporttecplotxy360T_3D_part2(my_global_temperature_struct.maxelm, my_global_temperature_struct.ncell, f, my_global_temperature_struct, flow_interior, 0, bextendedprint, 0, b, lb);
+			exporttecplotxy360T_3D_part2(my_global_temperature_struct.maxelm, 
+				my_global_temperature_struct.ncell, 
+				f, my_global_temperature_struct,
+				flow_interior, 0, bextendedprint,
+				0, b, lb);
 			printf("read values. OK.\n");
 			if (bwait) {
 				//system("PAUSE"); // debug avtosave
@@ -2984,7 +3125,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 		}
 
 		// Fluid dynamic стационарные установившиеся течения.
-		if ((1 && steady_or_unsteady_global_determinant == CFD_STEADY)) {
+		if ((1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY)) {
 			
 #ifdef _OPENMP
 			// Предупреждение о невозможности расчёта cfd на openMP 08.05.2019.
@@ -3000,13 +3141,20 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			if (dgx * dgx + dgy * dgy + dgz * dgz > 1.0e-20) {
 				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
 				bool bbussinesk_7 = false;
-#pragma omp parallel for
+#pragma omp parallel for 
 				for (integer i_8 = 0; i_8 < f[0].maxelm; i_8++) {
 					integer ib = my_global_temperature_struct.whot_is_block[f[0].ptr[i_8]];
 					if (ib > -1) {
-						if (b[ib].itype == FLUID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							integer i_7 = b[ib].imatid;
-							if (matlist[i_7].bBussineskApproach) bbussinesk_7 = true;
+							if (matlist[i_7].bBussineskApproach) {
+#pragma omp critical
+								{
+									if (bbussinesk_7 == false) {
+										bbussinesk_7 = true;
+									}
+								}
+							}
 						}
 					}
 				}
@@ -3014,22 +3162,33 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 					bSIMPLErun_now_for_natural_convection = true;
 				}
 			}
+
+			const integer ISIZEf = f[0].maxelm + f[0].maxbound;
+
 			bHORF = true;
-			bPamendment_source_old = new doublereal[f[0].maxelm + f[0].maxbound];
-			for (integer i5 = 0; i5 < f[0].maxelm + f[0].maxbound; i5++) bPamendment_source_old[i5] = 0.0;
+			bPamendment_source_old = new doublereal[ISIZEf];
+#pragma omp parallel for
+			for (integer i5 = 0; i5 < ISIZEf; i5++) {
+				bPamendment_source_old[i5] = 0.0;
+			}
 			// exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint);
 			//system("PAUSE");
 			if (dgx * dgx + dgy * dgy + dgz * dgz > 1.0e-20) {
 				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
 				bool bbussinesk_7 = false;
-#pragma omp parallel for
+#pragma omp parallel for 
 				for (integer i_8 = 0; i_8 < f[0].maxelm; i_8++) {
 					integer ib = my_global_temperature_struct.whot_is_block[f[0].ptr[i_8]];
 					if (ib > -1) {
-						if (b[ib].itype == FLUID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							integer i_7 = b[ib].imatid;
 							if (matlist[i_7].bBussineskApproach) {
-								bbussinesk_7 = true;
+#pragma omp critical 
+								{
+									if (bbussinesk_7 == false) {
+										bbussinesk_7 = true;
+									}
+								}
 							}
 						}
 					}
@@ -3053,7 +3212,9 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			// xyplot( f, 0, t);
 			// boundarylayer_info(f, t, flow_interior, w, lw);
 			// 2 - solver/conjugate_heat_transfer_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0/*2*/, matlist);
+			bool bMechanical = false;
+			
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0/*2*/, matlist, bMechanical);
 			// Печатает расход жидкости через выходную границу потока.
 			// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 			// проходящий через выходную границу потока. 28,10,2019
@@ -3081,8 +3242,9 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			else {
 				ANES_tecplot360_export_temperature(my_global_temperature_struct.maxnod, my_global_temperature_struct.pa, my_global_temperature_struct.maxelm, my_global_temperature_struct.nvtx, my_global_temperature_struct.potent, my_global_temperature_struct, f, 0, b, lb);
 			}
-
+			
 			save_velocity_for_init(my_global_temperature_struct.maxelm, my_global_temperature_struct.ncell, f, my_global_temperature_struct, flow_interior);
+			
 			// exporttecplotxy360T_3D_part2_rev(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,b,lb);
 			delete[] bPamendment_source_old;
 			bPamendment_source_old = nullptr;
@@ -3092,7 +3254,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 
 		// нестационарный гидродинамический решатель: (НЕ РАБОТАЕТ)
-		if ((1 && (steady_or_unsteady_global_determinant == CFD_UNSTEADY))) {
+		if ((1 && (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY))) {
 
 
 #ifdef _OPENMP
@@ -3114,9 +3276,16 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				for (integer i_8 = 0; i_8 < f[0].maxelm; i_8++) {
 					integer ib = my_global_temperature_struct.whot_is_block[f[0].ptr[i_8]];
 					if (ib > -1) {
-						if (b[ib].itype == FLUID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							integer i_7 = b[ib].imatid;
-							if (matlist[i_7].bBussineskApproach) bbussinesk_7 = true;
+							if (matlist[i_7].bBussineskApproach) {
+#pragma omp critical
+								{
+									if (bbussinesk_7 == false) {
+										bbussinesk_7 = true;
+									}
+								}
+							}
 						}
 					}
 				}
@@ -3125,23 +3294,33 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 				}
 			}
 
+			const integer ISIZEf = f[0].maxelm + f[0].maxbound;
 			bHORF = true;
-			bPamendment_source_old = new doublereal[f[0].maxelm + f[0].maxbound];
-			for (integer i5 = 0; i5 < f[0].maxelm + f[0].maxbound; i5++) bPamendment_source_old[i5] = 0.0;
+			bPamendment_source_old = new doublereal[ISIZEf];
+#pragma omp parallel for
+			for (integer i5 = 0; i5 < ISIZEf; i5++) {
+				bPamendment_source_old[i5] = 0.0;
+			}
 
 			// exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint);
 			//system("PAUSE");
 			if (dgx * dgx + dgy * dgy + dgz * dgz > 1.0e-20) {
 				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
 				bool bbussinesk_7 = false;
-#pragma omp parallel for
+#pragma omp parallel for 
 				for (integer i_8 = 0; i_8 < f[0].maxelm; i_8++) {
 					integer ib = my_global_temperature_struct.whot_is_block[f[0].ptr[i_8]];
 					if (ib > -1) {
-						if (b[ib].itype == FLUID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							integer i_7 = b[ib].imatid;
 							if (matlist[i_7].bBussineskApproach) {
-								bbussinesk_7 = true;
+								if (bbussinesk_7 == false)
+								{
+#pragma omp critical
+									{
+										bbussinesk_7 = true;
+									}
+								}
 							}
 						}
 					}
@@ -3174,7 +3353,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			//xyplot( f, 0, t);
 			// boundarylayer_info(f, t, flow_interior, w, lw);
 			// 2 - solver/conjugate_heat_transfer_static/
-			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0/*2*/, matlist);
+			bool bMechanical = false;
+			report_temperature(flow_interior, f, my_global_temperature_struct, b, lb, s, ls, w, lw, 0/*2*/, matlist, bMechanical);
 
 			// Вычисление массы модели.
 			massa_cabinet(my_global_temperature_struct, f,  flow_interior,
@@ -3533,7 +3713,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 	flow_interior = 0;
 	printf("free memory finish...\n");
 
-	if (1 && steady_or_unsteady_global_determinant == MESHER_ONLY) {
+	if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::MESHER_ONLY) {
 		// Был только вызов сеточного генератора.
 		printf("Mesh generation procedure is finish.\n");
 	}
@@ -3588,7 +3768,7 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 
 	printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10 * ims);
 
-	if (1 && (steady_or_unsteady_global_determinant != PREOBRAZOVATEL_FOR_REPORT)) {
+	if (1 && (steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::PREOBRAZOVATEL_FOR_REPORT)) {
 		//system("pause");
 		//46.321
 		//31.655
@@ -3677,8 +3857,6 @@ int main(void)
 
 	// Освобождаем память из под массива строк.
 	delete[] StringList;
-
-	
 
 
 	system("pause");

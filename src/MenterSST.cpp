@@ -24,6 +24,101 @@
 
 // Определение лимитеров см. в файле AliceFlow_v0_48.cpp
 
+
+doublereal sigmak_func(integer iP, doublereal**& potent, 
+	doublereal** prop, doublereal*& distance_to_wall, 
+	doublereal rP, integer maxelm) {
+
+	doublereal sigmak = 0.85;
+
+	if ((iP > -1)&&(iP< maxelm)) {
+
+		doublereal multMenter = (2.0 * rP * eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+		doublereal Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
+			potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
+			potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+
+		doublereal CDkw = fmax(Dkw, 1.0e-10);
+		if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
+		doublereal F1;
+
+		doublereal part1 = sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]))
+			/ (eqin.fluidinfo[0].beta_zvezda * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP]);
+		doublereal part2 = (500.0 * prop[MU_DYNAMIC_VISCOSITY][iP]) / (prop[RHO][iP] * distance_to_wall[iP] * distance_to_wall[iP]
+			* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
+		doublereal part3 = (4.0 * eqin.fluidinfo[0].sigma_omega2 * fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) /
+			(CDkw * distance_to_wall[iP] * distance_to_wall[iP]);
+		doublereal arg1 = fmin(fmax(part1, part2), part3);
+		F1 = tanh(arg1 * arg1 * arg1 * arg1);
+
+		if ((F1 < 0.0) || (F1 > 1.0)) {
+			printf("F1 sigmak==%e\n", F1);
+			system("PAUSE");
+
+		}
+
+		sigmak = F1 * eqin.fluidinfo[0].sigma_k1 + (1.0 - F1) * eqin.fluidinfo[0].sigma_k2;
+
+		if ((sigmak > eqin.fluidinfo[0].sigma_k2) || (sigmak < eqin.fluidinfo[0].sigma_k1)) {
+
+			printf("sigmak==%e\n", sigmak);
+			system("PAUSE");
+		}
+	}
+
+	return sigmak;
+} // sigmak_func
+
+doublereal sigma_omega_func(integer iP, doublereal**& potent,
+	doublereal** prop, doublereal*& distance_to_wall, 
+	doublereal rP, integer maxelm) {
+	doublereal sigma_omega = 0.5;
+
+	if ((iP > -1) && (iP < maxelm)) {
+
+		doublereal Dkw;
+
+		doublereal multMenter = (2.0 * rP * eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+		Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
+			potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
+			potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+
+		doublereal CDkw = fmax(Dkw, 1.0e-10);
+		if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
+		doublereal F1;
+
+		doublereal part1 = sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) /
+			(eqin.fluidinfo[0].beta_zvezda * fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) * distance_to_wall[iP]);
+		doublereal part2 = (500.0 * prop[MU_DYNAMIC_VISCOSITY][iP]) / (prop[RHO][iP] * distance_to_wall[iP] * distance_to_wall[iP] *
+			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
+		doublereal part3 = (4.0 * eqin.fluidinfo[0].sigma_omega2 * fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP])) /
+			(CDkw * distance_to_wall[iP] * distance_to_wall[iP]);
+		doublereal arg1 = fmin(fmax(part1, part2), part3);
+		F1 = tanh(arg1 * arg1 * arg1 * arg1);
+
+		if ((F1 < 0.0) || (F1 > 1.0)) {
+			printf("F1 sigmak==%e\n", F1);
+			system("PAUSE");
+
+		}
+
+		sigma_omega = F1 * eqin.fluidinfo[0].sigma_omega1 + (1.0 - F1) * eqin.fluidinfo[0].sigma_omega2;
+		if ((sigma_omega < 1.0e-30) || (sigma_omega > 2.0)) {
+			printf("sigma_omega=%e\n", sigma_omega);
+			system("PAUSE");
+		}
+
+		if ((sigma_omega > eqin.fluidinfo[0].sigma_omega2) || (sigma_omega < eqin.fluidinfo[0].sigma_omega1)) {
+
+			printf("sigma_omega==%e\n", sigma_omega);
+			system("PAUSE");
+		}
+
+	}
+
+	return sigma_omega;
+}
+
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.
 // Для прямоугольной трёхмерной шестигранной Hex сетки.
@@ -69,7 +164,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	//doublereal &sumanb,
 	integer *ilevel_alice,
 	doublereal* &distance_to_wall,
-	doublereal* &SInvariantStrainRateTensor
+	doublereal* &SInvariantStrainRateTensor,
+	bool brthdsd_ON
 ) {
 
 	// iP - номер внутреннего контрольного объёма
@@ -608,7 +704,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	   SIMPLE (на момент непосредственного вычисления потоков коэффициенты берутся с текущей итерации, но
 	   дело в том что потом мы на следующей итерации используем вычисленные ранее потоки массы (которые были запомнены в памяти)
 	   и поэтому говорим что диагональные коэффициенты беруться с предыдущей итерации).
-	   требуется всеобъемлющая проверка... TODO
+	   требуется всеобъемлющая проверка... 
 	   Особенно должна обрабатываться первая итерация, т.к. на ней диагональные коэффициенты
 	   для всех точек ещё не посчитаны. Поэтому предлагается включать интерполяцию Рхи-Чоу только
 	   со второй итерации алгоритма SIMPLE. На первой итерации стационарного солвера используется
@@ -648,7 +744,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		Fb = mf[iP][B_SIDE];
 	}
 	else {
-		// TODO поток на АЛИС. 24.11.2018
+		// поток на АЛИС. 24.11.2018
 
 		if (iE > -1) {
 			if (bE) {
@@ -1076,12 +1172,19 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 	doublereal Dkw;
 	
+	if (potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] < Omega_limiter_min) {
+		printf("omega=%e\n", potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+		system("PAUSE");
+	}
+
+
 	doublereal multMenter = (2.0*rP*eqin.fluidinfo[0].sigma_omega2) / fmax(Omega_limiter_min,potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
 		Dkw = multMenter * (potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
 			potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] + 
 			potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
 	
 	doublereal CDkw = fmax(Dkw, 1.0e-10);
+	if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
 	doublereal F1;
 	
 	doublereal part1 = sqrt(fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP]))
@@ -1093,84 +1196,120 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 	doublereal arg1 = fmin(fmax(part1, part2), part3);
 		F1 = tanh(arg1*arg1*arg1*arg1);
 	
-	doublereal sigmak = F1 * eqin.fluidinfo[0].sigma_k1 + (1.0 - F1)*eqin.fluidinfo[0].sigma_k2;
+	//doublereal sigmak = F1 * eqin.fluidinfo[0].sigma_k1 + (1.0 - F1)*eqin.fluidinfo[0].sigma_k2;
+	doublereal sigmak= sigmak_func(iP, potent, prop, distance_to_wall, rP, maxelm);
+
+	doublereal sigmakE = sigmak_func(iE, potent, prop, distance_to_wall, rE, maxelm);
+	doublereal sigmakW = sigmak_func(iW, potent, prop, distance_to_wall, rW, maxelm);
+	doublereal sigmakN = sigmak_func(iN, potent, prop, distance_to_wall, rN, maxelm);
+	doublereal sigmakS = sigmak_func(iS, potent, prop, distance_to_wall, rS, maxelm);
+	doublereal sigmakT = sigmak_func(iT, potent, prop, distance_to_wall, rT, maxelm);
+	doublereal sigmakB = sigmak_func(iB, potent, prop, distance_to_wall, rB, maxelm);
+
+	doublereal sigmakE2 = sigmak_func(iE2, potent, prop, distance_to_wall, rE2, maxelm);
+	doublereal sigmakW2 = sigmak_func(iW2, potent, prop, distance_to_wall, rW2, maxelm);
+	doublereal sigmakN2 = sigmak_func(iN2, potent, prop, distance_to_wall, rN2, maxelm);
+	doublereal sigmakS2 = sigmak_func(iS2, potent, prop, distance_to_wall, rS2, maxelm);
+	doublereal sigmakT2 = sigmak_func(iT2, potent, prop, distance_to_wall, rT2, maxelm);
+	doublereal sigmakB2 = sigmak_func(iB2, potent, prop, distance_to_wall, rB2, maxelm);
+
+	doublereal sigmakE3 = sigmak_func(iE3, potent, prop, distance_to_wall, rE3, maxelm);
+	doublereal sigmakW3 = sigmak_func(iW3, potent, prop, distance_to_wall, rW3, maxelm);
+	doublereal sigmakN3 = sigmak_func(iN3, potent, prop, distance_to_wall, rN3, maxelm);
+	doublereal sigmakS3 = sigmak_func(iS3, potent, prop, distance_to_wall, rS3, maxelm);
+	doublereal sigmakT3 = sigmak_func(iT3, potent, prop, distance_to_wall, rT3, maxelm);
+	doublereal sigmakB3 = sigmak_func(iB3, potent, prop, distance_to_wall, rB3, maxelm);
+
+	doublereal sigmakE4 = sigmak_func(iE4, potent, prop, distance_to_wall, rE4, maxelm);
+	doublereal sigmakW4 = sigmak_func(iW4, potent, prop, distance_to_wall, rW4, maxelm);
+	doublereal sigmakN4 = sigmak_func(iN4, potent, prop, distance_to_wall, rN4, maxelm);
+	doublereal sigmakS4 = sigmak_func(iS4, potent, prop, distance_to_wall, rS4, maxelm);
+	doublereal sigmakT4 = sigmak_func(iT4, potent, prop, distance_to_wall, rT4, maxelm);
+	doublereal sigmakB4 = sigmak_func(iB4, potent, prop, distance_to_wall, rB4, maxelm);
+
+	// Данный код не вызвал повышения стабильности решения системы уравнений Рейнольдса.
+	// Сходится только метод сглаженной аггрегации.
+	//sigmak = sigmakE = sigmakW = sigmakN = sigmakS = sigmakT = sigmakB = 0.0;
+	//sigmakE2 = sigmakW2 = sigmakN2 = sigmakS2 = sigmakT2 = sigmakB2 = 0.0;
+	//sigmakE3 = sigmakW3 = sigmakN3 = sigmakS3 = sigmakT3 = sigmakB3 = 0.0;
+	//sigmakE4 = sigmakW4 = sigmakN4 = sigmakS4 = sigmakT4 = sigmakB4 = 0.0;
 
 	// Вычисление молекулярной диффузии:
 	GP = ((prop[MU_DYNAMIC_VISCOSITY][iP]) + fmax(0.0, sigmak*potent[MUT][iP])); // в центре внутреннего КО.
 	if (iE > -1) {
-		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigmak*potent[MUT][iE])); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + sigmak * potent[MUT][iE]);
+		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigmakE*potent[MUT][iE])); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE]));
 	}
 	if (iN > -1) {
-		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigmak*potent[MUT][iN])); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + sigmak * potent[MUT][iN]);
+		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigmakN*potent[MUT][iN])); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN]));
 	}
 	if (iT > -1) {
-		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigmak*potent[MUT][iT])); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + sigmak * potent[MUT][iT]);
+		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigmakT*potent[MUT][iT])); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT]));
 	}
 	if (iW > -1) {
-		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigmak*potent[MUT][iW])); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + sigmak * potent[MUT][iW]);
+		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigmakW*potent[MUT][iW])); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW]));
 	}
 	if (iS > -1) {
-		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigmak*potent[MUT][iS])); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + sigmak * potent[MUT][iS]);
+		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigmakS*potent[MUT][iS])); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS]));
 	}
 	if (iB > -1) {
-		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigmak*potent[MUT][iB])); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + sigmak * potent[MUT][iB]);
+		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigmakB*potent[MUT][iB])); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB]));
 	}
 
 	if (iE2 > -1) {
-		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigmak*potent[MUT][iE2])); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + sigmak * potent[MUT][iE2]);
+		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigmakE2*potent[MUT][iE2])); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE2]));
 	}
 	if (iN2 > -1) {
-		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigmak*potent[MUT][iN2])); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + sigmak * potent[MUT][iN2]);
+		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigmakN2*potent[MUT][iN2])); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN2]));
 	}
 	if (iT2 > -1) {
-		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigmak*potent[MUT][iT2])); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + sigmak * potent[MUT][iT2]);
+		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigmakT2*potent[MUT][iT2])); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT2]));
 	}
 	if (iW2 > -1) {
-		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigmak*potent[MUT][iW2])); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + sigmak * potent[MUT][iW2]);
+		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigmakW2*potent[MUT][iW2])); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW2]));
 	}
 	if (iS2 > -1) {
-		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigmak*potent[MUT][iS2])); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + sigmak * potent[MUT][iS2]);
+		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigmakS2*potent[MUT][iS2])); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS2]));
 	}
 	if (iB2 > -1) {
-		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigmak*potent[MUT][iB2])); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + sigmak * potent[MUT][iB2]);
+		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigmakB2*potent[MUT][iB2])); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB2]));
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigmak*potent[MUT][iE3])); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + sigmak * potent[MUT][iE3]);
+		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigmakE3*potent[MUT][iE3])); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE3]));
 	}
 	if (iN3 > -1) {
-		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigmak*potent[MUT][iN3])); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + sigmak * potent[MUT][iN3]);
+		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigmakN3*potent[MUT][iN3])); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN3]));
 	}
 	if (iT3 > -1) {
-		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigmak*potent[MUT][iT3])); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + sigmak * potent[MUT][iT3]);
+		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigmakT3*potent[MUT][iT3])); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT3]));
 	}
 	if (iW3 > -1) {
-		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigmak*potent[MUT][iW3])); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + sigmak * potent[MUT][iW3]);
+		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigmakW3*potent[MUT][iW3])); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW3]));
 	}
 	if (iS3 > -1) {
-		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigmak*potent[MUT][iS3])); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + sigmak * potent[MUT][iS3]);
+		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigmakS3*potent[MUT][iS3])); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS3]));
 	}
 	if (iB3 > -1) {
-		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigmak*potent[MUT][iB3])); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + sigmak * potent[MUT][iB3]);
+		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigmakB3*potent[MUT][iB3])); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB3]));
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigmak*potent[MUT][iE4])); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + sigmak * potent[MUT][iE4]);
+		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigmakE4*potent[MUT][iE4])); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iE4]));
 	}
 	if (iN4 > -1) {
-		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigmak*potent[MUT][iN4])); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + sigmak * potent[MUT][iN4]);
+		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigmakN4*potent[MUT][iN4])); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iN4]));
 	}
 	if (iT4 > -1) {
-		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigmak*potent[MUT][iT4])); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + sigmak * potent[MUT][iT4]);
+		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigmakT4*potent[MUT][iT4])); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iT4]));
 	}
 	if (iW4 > -1) {
-		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigmak*potent[MUT][iW4])); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + sigmak * potent[MUT][iW4]);
+		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigmakW4*potent[MUT][iW4])); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iW4]));
 	}
 	if (iS4 > -1) {
-		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigmak*potent[MUT][iS4])); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + sigmak * potent[MUT][iS4]);
+		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigmakS4*potent[MUT][iS4])); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iS4]));
 	}
 	if (iB4 > -1) {
-		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigmak*potent[MUT][iB4])); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + sigmak * potent[MUT][iB4]);
+		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigmakB4*potent[MUT][iB4])); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + fmax(0.0, sigmak * potent[MUT][iB4]));
 	}
 
 	doublereal Ge = GP, Gw = GP, Gn = GP, Gs = GP, Gt = GP, Gb = GP;
@@ -1919,7 +2058,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 			}
 			else {
-				// TODO 25 07 2015
+				// 25 07 2015
 				// Вычисление коэффициентов дискретного аналога:
 				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
@@ -2065,12 +2204,18 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			*/
 		}
 		else {
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
-			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
+			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
+			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
+			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
+			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
+			//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+
+			sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae +
+				sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw + sl[TURBULENT_KINETIK_ENERGY_SL][iP].an +
+				sl[TURBULENT_KINETIK_ENERGY_SL][iP].as + sl[TURBULENT_KINETIK_ENERGY_SL][iP].at +
+				sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab;
+
 		}
 
 		// 13 августа 2016
@@ -2078,7 +2223,8 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		// распределения получаются хоть и похожие, но не удовлетворяющие при более тщательном рассмотрении физическому смыслу задачи.
 		//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap = fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ae) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].aw) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].an) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].as) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].at) + fabs(sl[TURBULENT_KINETIK_ENERGY_SL][iP].ab);
 
-
+		
+		
 
 		if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap < 1.0e-40) {
 			printf("Zero diagonal coefficient in internal volume in my_elmatr_quad_turbulent_kinetik_energy_Menter3D.\n");
@@ -2292,7 +2438,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedW = potent[TURBULENT_KINETIK_ENERGY][iW]; // Attantion !! Debug TODO
+			SpeedW = potent[TURBULENT_KINETIK_ENERGY][iW]; // Attantion !! Debug 
 			SpeedWW = potent[TURBULENT_KINETIK_ENERGY][iW];
 			//printf("SpeedW==%e\n",SpeedW); getchar();
 			positionxw = positionxP - 0.5*dx;
@@ -2354,7 +2500,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		}
 		else {
 			// это граничный узел
-			SpeedS = potent[TURBULENT_KINETIK_ENERGY][iS]; // ATTANTION !!!! TODO 
+			SpeedS = potent[TURBULENT_KINETIK_ENERGY][iS]; // ATTANTION !!!! 
 			SpeedSS = potent[TURBULENT_KINETIK_ENERGY][iS]; // нулевая скорость внутри твёрдого тела.
 			positionys = positionyP - 0.5*dy;
 			positionyS = positionyP - 0.5*dy;
@@ -2599,7 +2745,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 			// Так делать нельзя по видимому, решение хоть и получается и даже похожим получается,
 			// НО при более тщательном рассмотрении оно не удовлетворяет физическому смыслу.
 		   // 30 07 2015
-		   // TODO
+		   // 
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
 				// строго внутренняя.
@@ -2736,7 +2882,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		else {
 			// Неверно.
 		   // 30 07 2015
-		   // TODO
+		   // 
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
 				attrs += -fmax((Fe), 0)*(Speede - SpeedP) + fmax(-(Fe), 0)*(Speede - SpeedE);
@@ -2765,7 +2911,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 
 	// Временная зависимость полностью проигнорирована.
 	// Только статика. Нестационарная постановка не используется.
-	// TODO Future.
+	// 
 
 	// источниковый член
 	doublereal dSc = 0.0, dSp = 0.0;
@@ -2798,7 +2944,7 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap);
 		system("pause");
 	}
-	sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += deltaF;//-->//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
+	//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap += deltaF;//-->//sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
 	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap != sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap) {
 		printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_KINETIK_ENERGY_SL][iP].ap);
 		system("pause");
@@ -2823,13 +2969,16 @@ void my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 		fmax(K_limiter_min,	potent[TURBULENT_KINETIK_ENERGY][iP])
 		* fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
 
-
-	dSc = Pk;
-	// диссипация
-	dSc -= eqin.fluidinfo[0].beta_zvezda*rP*
-		fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP]) * 
-		fmax(Omega_limiter_min,potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
-
+	if (brthdsd_ON) {
+		dSc = Pk;
+		// диссипация
+		dSc -= eqin.fluidinfo[0].beta_zvezda * rP *
+			fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY][iP]) *
+			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+	}
+	else {
+		dSc = 0.0;
+	}
 	sl[TURBULENT_KINETIK_ENERGY_SL][iP].b += dSc * dx*dy*dz; // генерация минус диссипация.
 	if (sl[TURBULENT_KINETIK_ENERGY_SL][iP].b != sl[TURBULENT_KINETIK_ENERGY_SL][iP].b) {
 		printf("dSc*dx*dy*dz error NAN or INF in control volume %lld\n", iP);
@@ -3023,7 +3172,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	//doublereal &sumanb,
 	integer *ilevel_alice,
 	doublereal* &distance_to_wall,
-	doublereal* &SInvariantStrainRateTensor
+	doublereal* &SInvariantStrainRateTensor,
+	bool brthdsd_ON
 ) {
 
 	// iP - номер внутреннего контрольного объёма
@@ -3562,7 +3712,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	   SIMPLE (на момент непосредственного вычисления потоков коэффициенты берутся с текущей итерации, но
 	   дело в том что потом мы на следующей итерации используем вычисленные ранее потоки массы (которые были запомнены в памяти)
 	   и поэтому говорим что диагональные коэффициенты беруться с предыдущей итерации).
-	   требуется всеобъемлющая проверка... TODO
+	   требуется всеобъемлющая проверка... 
 	   Особенно должна обрабатываться первая итерация, т.к. на ней диагональные коэффициенты
 	   для всех точек ещё не посчитаны. Поэтому предлагается включать интерполяцию Рхи-Чоу только
 	   со второй итерации алгоритма SIMPLE. На первой итерации стационарного солвера используется
@@ -3602,7 +3752,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		Fb = mf[iP][B_SIDE];
 	}
 	else {
-		// TODO поток на АЛИС. 24.11.2018
+		//  поток на АЛИС. 24.11.2018
 
 		if (iE > -1) {
 			if (bE) {
@@ -4037,6 +4187,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
 	
 	doublereal CDkw = fmax(Dkw, 1.0e-10);
+	if (fabs(Dkw) < 1.0e-30) CDkw = 0.01;// 16.10.2020
 	doublereal F1;
 	
 	doublereal part1 = sqrt(fmax(K_limiter_min,potent[TURBULENT_KINETIK_ENERGY][iP])) / 
@@ -4048,84 +4199,121 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	doublereal arg1 = fmin(fmax(part1, part2), part3);
 	F1 = tanh(arg1*arg1*arg1*arg1);
 	
-	doublereal sigma_omega = F1 * eqin.fluidinfo[0].sigma_omega1 + (1.0 - F1)*eqin.fluidinfo[0].sigma_omega2;
+	//doublereal sigma_omega = F1 * eqin.fluidinfo[0].sigma_omega1 + (1.0 - F1)*eqin.fluidinfo[0].sigma_omega2;
+
+	doublereal sigma_omega = sigma_omega_func(iP, potent, prop, distance_to_wall, rP, maxelm);
+
+	doublereal sigma_omegaE = sigma_omega_func(iE, potent, prop, distance_to_wall, rE, maxelm);
+	doublereal sigma_omegaW = sigma_omega_func(iW, potent, prop, distance_to_wall, rW, maxelm);
+	doublereal sigma_omegaN = sigma_omega_func(iN, potent, prop, distance_to_wall, rN, maxelm);
+	doublereal sigma_omegaS = sigma_omega_func(iS, potent, prop, distance_to_wall, rS, maxelm);
+	doublereal sigma_omegaT = sigma_omega_func(iT, potent, prop, distance_to_wall, rT, maxelm);
+	doublereal sigma_omegaB = sigma_omega_func(iB, potent, prop, distance_to_wall, rB, maxelm);
+
+	doublereal sigma_omegaE2 = sigma_omega_func(iE2, potent, prop, distance_to_wall, rE2, maxelm);
+	doublereal sigma_omegaW2 = sigma_omega_func(iW2, potent, prop, distance_to_wall, rW2, maxelm);
+	doublereal sigma_omegaN2 = sigma_omega_func(iN2, potent, prop, distance_to_wall, rN2, maxelm);
+	doublereal sigma_omegaS2 = sigma_omega_func(iS2, potent, prop, distance_to_wall, rS2, maxelm);
+	doublereal sigma_omegaT2 = sigma_omega_func(iT2, potent, prop, distance_to_wall, rT2, maxelm);
+	doublereal sigma_omegaB2 = sigma_omega_func(iB2, potent, prop, distance_to_wall, rB2, maxelm);
+
+	doublereal sigma_omegaE3 = sigma_omega_func(iE3, potent, prop, distance_to_wall, rE3, maxelm);
+	doublereal sigma_omegaW3 = sigma_omega_func(iW3, potent, prop, distance_to_wall, rW3, maxelm);
+	doublereal sigma_omegaN3 = sigma_omega_func(iN3, potent, prop, distance_to_wall, rN3, maxelm);
+	doublereal sigma_omegaS3 = sigma_omega_func(iS3, potent, prop, distance_to_wall, rS3, maxelm);
+	doublereal sigma_omegaT3 = sigma_omega_func(iT3, potent, prop, distance_to_wall, rT3, maxelm);
+	doublereal sigma_omegaB3 = sigma_omega_func(iB3, potent, prop, distance_to_wall, rB3, maxelm);
+
+	doublereal sigma_omegaE4 = sigma_omega_func(iE4, potent, prop, distance_to_wall, rE4, maxelm);
+	doublereal sigma_omegaW4 = sigma_omega_func(iW4, potent, prop, distance_to_wall, rW4, maxelm);
+	doublereal sigma_omegaN4 = sigma_omega_func(iN4, potent, prop, distance_to_wall, rN4, maxelm);
+	doublereal sigma_omegaS4 = sigma_omega_func(iS4, potent, prop, distance_to_wall, rS4, maxelm);
+	doublereal sigma_omegaT4 = sigma_omega_func(iT4, potent, prop, distance_to_wall, rT4, maxelm);
+	doublereal sigma_omegaB4 = sigma_omega_func(iB4, potent, prop, distance_to_wall, rB4, maxelm);
+
+	// Данный код не вызвал повышения стабильности решения системы уравнений Рейнольдса.
+	// Сходится только метод сглаженной аггрегации.
+	//sigma_omega = sigma_omegaE = sigma_omegaW = sigma_omegaN = sigma_omegaS = sigma_omegaT = sigma_omegaB = 0.0;
+	//sigma_omegaE2 = sigma_omegaW2 = sigma_omegaN2 = sigma_omegaS2 = sigma_omegaT2 = sigma_omegaB2 = 0.0;
+	//sigma_omegaE3 = sigma_omegaW3 = sigma_omegaN3 = sigma_omegaS3 = sigma_omegaT3 = sigma_omegaB3 = 0.0;
+	//sigma_omegaE4 = sigma_omegaW4 = sigma_omegaN4 = sigma_omegaS4 = sigma_omegaT4 = sigma_omegaB4 = 0.0;
 
 	// Вычисление молекулярной диффузии:
 	GP = ((prop[MU_DYNAMIC_VISCOSITY][iP]) + fmax(0.0, sigma_omega*potent[MUT][iP])); // в центре внутреннего КО.
 	if (iE > -1) {
-		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigma_omega*potent[MUT][iE])); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + sigma_omega * potent[MUT][iE]);
+		if (!bE) GE = ((prop[MU_DYNAMIC_VISCOSITY][iE]) + fmax(0.0, sigma_omegaE*potent[MUT][iE])); else GE = ((prop_b[MU_DYNAMIC_VISCOSITY][iE - maxelm]) + sigma_omega * potent[MUT][iE]);
 	}
 	if (iN > -1) {
-		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigma_omega*potent[MUT][iN])); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + sigma_omega * potent[MUT][iN]);
+		if (!bN) GN = ((prop[MU_DYNAMIC_VISCOSITY][iN]) + fmax(0.0, sigma_omegaN*potent[MUT][iN])); else GN = ((prop_b[MU_DYNAMIC_VISCOSITY][iN - maxelm]) + sigma_omega * potent[MUT][iN]);
 	}
 	if (iT > -1) {
-		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigma_omega*potent[MUT][iT])); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + sigma_omega * potent[MUT][iT]);
+		if (!bT) GT = ((prop[MU_DYNAMIC_VISCOSITY][iT]) + fmax(0.0, sigma_omegaT*potent[MUT][iT])); else GT = ((prop_b[MU_DYNAMIC_VISCOSITY][iT - maxelm]) + sigma_omega * potent[MUT][iT]);
 	}
 	if (iW > -1) {
-		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigma_omega*potent[MUT][iW])); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + sigma_omega * potent[MUT][iW]);
+		if (!bW) GW = ((prop[MU_DYNAMIC_VISCOSITY][iW]) + fmax(0.0, sigma_omegaW*potent[MUT][iW])); else GW = ((prop_b[MU_DYNAMIC_VISCOSITY][iW - maxelm]) + sigma_omega * potent[MUT][iW]);
 	}
 	if (iS > -1) {
-		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigma_omega*potent[MUT][iS])); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + sigma_omega * potent[MUT][iS]);
+		if (!bS) GS = ((prop[MU_DYNAMIC_VISCOSITY][iS]) + fmax(0.0, sigma_omegaS*potent[MUT][iS])); else GS = ((prop_b[MU_DYNAMIC_VISCOSITY][iS - maxelm]) + sigma_omega * potent[MUT][iS]);
 	}
 	if (iB > -1) {
-		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigma_omega*potent[MUT][iB])); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + sigma_omega * potent[MUT][iB]);
+		if (!bB) GB = ((prop[MU_DYNAMIC_VISCOSITY][iB]) + fmax(0.0, sigma_omegaB*potent[MUT][iB])); else GB = ((prop_b[MU_DYNAMIC_VISCOSITY][iB - maxelm]) + sigma_omega * potent[MUT][iB]);
 	}
 
 	if (iE2 > -1) {
-		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigma_omega*potent[MUT][iE2])); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + sigma_omega * potent[MUT][iE2]);
+		if (!bE2) GE2 = ((prop[MU_DYNAMIC_VISCOSITY][iE2]) + fmax(0.0, sigma_omegaE2*potent[MUT][iE2])); else GE2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE2 - maxelm]) + sigma_omega * potent[MUT][iE2]);
 	}
 	if (iN2 > -1) {
-		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigma_omega*potent[MUT][iN2])); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + sigma_omega * potent[MUT][iN2]);
+		if (!bN2) GN2 = ((prop[MU_DYNAMIC_VISCOSITY][iN2]) + fmax(0.0, sigma_omegaN2*potent[MUT][iN2])); else GN2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN2 - maxelm]) + sigma_omega * potent[MUT][iN2]);
 	}
 	if (iT2 > -1) {
-		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigma_omega*potent[MUT][iT2])); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + sigma_omega * potent[MUT][iT2]);
+		if (!bT2) GT2 = ((prop[MU_DYNAMIC_VISCOSITY][iT2]) + fmax(0.0, sigma_omegaT2*potent[MUT][iT2])); else GT2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT2 - maxelm]) + sigma_omega * potent[MUT][iT2]);
 	}
 	if (iW2 > -1) {
-		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigma_omega*potent[MUT][iW2])); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + sigma_omega * potent[MUT][iW2]);
+		if (!bW2) GW2 = ((prop[MU_DYNAMIC_VISCOSITY][iW2]) + fmax(0.0, sigma_omegaW2*potent[MUT][iW2])); else GW2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW2 - maxelm]) + sigma_omega * potent[MUT][iW2]);
 	}
 	if (iS2 > -1) {
-		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigma_omega*potent[MUT][iS2])); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + sigma_omega * potent[MUT][iS2]);
+		if (!bS2) GS2 = ((prop[MU_DYNAMIC_VISCOSITY][iS2]) + fmax(0.0, sigma_omegaS2*potent[MUT][iS2])); else GS2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS2 - maxelm]) + sigma_omega * potent[MUT][iS2]);
 	}
 	if (iB2 > -1) {
-		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigma_omega*potent[MUT][iB2])); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + sigma_omega * potent[MUT][iB2]);
+		if (!bB2) GB2 = ((prop[MU_DYNAMIC_VISCOSITY][iB2]) + fmax(0.0, sigma_omegaB2*potent[MUT][iB2])); else GB2 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB2 - maxelm]) + sigma_omega * potent[MUT][iB2]);
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigma_omega*potent[MUT][iE3])); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + sigma_omega * potent[MUT][iE3]);
+		if (!bE3) GE3 = ((prop[MU_DYNAMIC_VISCOSITY][iE3]) + fmax(0.0, sigma_omegaE3*potent[MUT][iE3])); else GE3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE3 - maxelm]) + sigma_omega * potent[MUT][iE3]);
 	}
 	if (iN3 > -1) {
-		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigma_omega*potent[MUT][iN3])); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + sigma_omega * potent[MUT][iN3]);
+		if (!bN3) GN3 = ((prop[MU_DYNAMIC_VISCOSITY][iN3]) + fmax(0.0, sigma_omegaN3*potent[MUT][iN3])); else GN3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN3 - maxelm]) + sigma_omega * potent[MUT][iN3]);
 	}
 	if (iT3 > -1) {
-		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigma_omega*potent[MUT][iT3])); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + sigma_omega * potent[MUT][iT3]);
+		if (!bT3) GT3 = ((prop[MU_DYNAMIC_VISCOSITY][iT3]) + fmax(0.0, sigma_omegaT3*potent[MUT][iT3])); else GT3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT3 - maxelm]) + sigma_omega * potent[MUT][iT3]);
 	}
 	if (iW3 > -1) {
-		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigma_omega*potent[MUT][iW3])); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + sigma_omega * potent[MUT][iW3]);
+		if (!bW3) GW3 = ((prop[MU_DYNAMIC_VISCOSITY][iW3]) + fmax(0.0, sigma_omegaW3*potent[MUT][iW3])); else GW3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW3 - maxelm]) + sigma_omega * potent[MUT][iW3]);
 	}
 	if (iS3 > -1) {
-		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigma_omega*potent[MUT][iS3])); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + sigma_omega * potent[MUT][iS3]);
+		if (!bS3) GS3 = ((prop[MU_DYNAMIC_VISCOSITY][iS3]) + fmax(0.0, sigma_omegaS3*potent[MUT][iS3])); else GS3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS3 - maxelm]) + sigma_omega * potent[MUT][iS3]);
 	}
 	if (iB3 > -1) {
-		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigma_omega*potent[MUT][iB3])); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + sigma_omega * potent[MUT][iB3]);
+		if (!bB3) GB3 = ((prop[MU_DYNAMIC_VISCOSITY][iB3]) + fmax(0.0, sigma_omegaB3*potent[MUT][iB3])); else GB3 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB3 - maxelm]) + sigma_omega * potent[MUT][iB3]);
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigma_omega*potent[MUT][iE4])); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + sigma_omega * potent[MUT][iE4]);
+		if (!bE4) GE4 = ((prop[MU_DYNAMIC_VISCOSITY][iE4]) + fmax(0.0, sigma_omegaE4*potent[MUT][iE4])); else GE4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iE4 - maxelm]) + sigma_omega * potent[MUT][iE4]);
 	}
 	if (iN4 > -1) {
-		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigma_omega*potent[MUT][iN4])); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + sigma_omega * potent[MUT][iN4]);
+		if (!bN4) GN4 = ((prop[MU_DYNAMIC_VISCOSITY][iN4]) + fmax(0.0, sigma_omegaN4*potent[MUT][iN4])); else GN4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iN4 - maxelm]) + sigma_omega * potent[MUT][iN4]);
 	}
 	if (iT4 > -1) {
-		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigma_omega*potent[MUT][iT4])); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + sigma_omega * potent[MUT][iT4]);
+		if (!bT4) GT4 = ((prop[MU_DYNAMIC_VISCOSITY][iT4]) + fmax(0.0, sigma_omegaT4*potent[MUT][iT4])); else GT4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iT4 - maxelm]) + sigma_omega * potent[MUT][iT4]);
 	}
 	if (iW4 > -1) {
-		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigma_omega*potent[MUT][iW4])); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + sigma_omega * potent[MUT][iW4]);
+		if (!bW4) GW4 = ((prop[MU_DYNAMIC_VISCOSITY][iW4]) + fmax(0.0, sigma_omegaW4*potent[MUT][iW4])); else GW4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iW4 - maxelm]) + sigma_omega * potent[MUT][iW4]);
 	}
 	if (iS4 > -1) {
-		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigma_omega*potent[MUT][iS4])); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + sigma_omega * potent[MUT][iS4]);
+		if (!bS4) GS4 = ((prop[MU_DYNAMIC_VISCOSITY][iS4]) + fmax(0.0, sigma_omegaS4*potent[MUT][iS4])); else GS4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iS4 - maxelm]) + sigma_omega * potent[MUT][iS4]);
 	}
 	if (iB4 > -1) {
-		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigma_omega*potent[MUT][iB4])); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + sigma_omega * potent[MUT][iB4]);
+		if (!bB4) GB4 = ((prop[MU_DYNAMIC_VISCOSITY][iB4]) + fmax(0.0, sigma_omegaB4*potent[MUT][iB4])); else GB4 = ((prop_b[MU_DYNAMIC_VISCOSITY][iB4 - maxelm]) + sigma_omega * potent[MUT][iB4]);
 	}
 
 	doublereal Ge = GP, Gw = GP, Gn = GP, Gs = GP, Gt = GP, Gb = GP;
@@ -4874,7 +5062,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 			}
 			else {
-				// TODO 25 07 2015
+				//  25 07 2015
 				// Вычисление коэффициентов дискретного аналога:
 				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(-(Fe), 0);
 				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw = Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(Fw, 0);
@@ -5020,14 +5208,22 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			*/
 		}
 		else {
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
-			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
+			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
+			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
+			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Ds * ApproxConvective(fabs(Ps), ishconvection) + fmax(-(Fs), 0);
+			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Dt * ApproxConvective(fabs(Pt), ishconvection) + fmax(+(Ft), 0);
+			//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += Db * ApproxConvective(fabs(Pb), ishconvection) + fmax(-(Fb), 0);
+
+
+			sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ae +
+				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].aw + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].an +
+				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].as + sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].at +
+				sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ab;
 		}
 
+
+		
 		// 13 августа 2016
 		// Это ошибочно. Это нигде не написано в литературе. Да конечно это усиливает диагональное преобладание, НО
 		// распределения получаются хоть и похожие, но не удовлетворяющие при более тщательном рассмотрении физическому смыслу задачи.
@@ -5247,7 +5443,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW]; // Attantion !! Debug TODO
+			SpeedW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW]; // Attantion !! Debug 
 			SpeedWW = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iW];
 			//printf("SpeedW==%e\n",SpeedW); getchar();
 			positionxw = positionxP - 0.5*dx;
@@ -5309,7 +5505,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		}
 		else {
 			// это граничный узел
-			SpeedS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // ATTANTION !!!! TODO 
+			SpeedS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // ATTANTION !!!!  
 			SpeedSS = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iS]; // нулевая скорость внутри твёрдого тела.
 			positionys = positionyP - 0.5*dy;
 			positionyS = positionyP - 0.5*dy;
@@ -5554,7 +5750,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 			// Так делать нельзя по видимому, решение хоть и получается и даже похожим получается,
 			// НО при более тщательном рассмотрении оно не удовлетворяет физическому смыслу.
 		   // 30 07 2015
-		   // TODO
+		   // 
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
 				// строго внутренняя.
@@ -5691,7 +5887,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		else {
 			// Неверно.
 		   // 30 07 2015
-		   // TODO
+		   // 
 		   // Вблизи стенки порядок схемы понижается до UDS.
 			if (!bE) {
 				attrs += -fmax((Fe), 0)*(Speede - SpeedP) + fmax(-(Fe), 0)*(Speede - SpeedE);
@@ -5720,7 +5916,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 
 	// Временная зависимость полностью проигнорирована.
 	// Только статика. Нестационарная постановка не используется.
-	// TODO Future.
+	// 
 
 	// источниковый член
 	doublereal dSc = 0.0, dSp = 0.0;
@@ -5753,7 +5949,7 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap);
 		system("pause");
 	}
-	sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += deltaF;//-->//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
+	//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap += deltaF;//-->//sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
 	if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap) {
 		printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap);
 		system("pause");
@@ -5779,17 +5975,22 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 		//fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
 		//fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
 	// Попробовать еще k*Omega.
-
+	
+	if (brthdsd_ON) {
 		//doublereal gamma = (F1*eqin.fluidinfo[0].beta1 + (1.0 - F1)*eqin.fluidinfo[0].beta2) / eqin.fluidinfo[0].beta_zvezda;
 		//dSc = gamma * rP*Pk / fmax(potent[MUT][iP], 0.01*prop[MU][iP]); // Генерация.
 		dSc = Pk_omega;
 		// диссипация
-		dSc -= (F1*eqin.fluidinfo[0].beta1 + (1.0 - F1)*eqin.fluidinfo[0].beta2)*rP*
-			fmax(Omega_limiter_min,potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
-			fmax(Omega_limiter_min,potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
+		dSc -= (F1 * eqin.fluidinfo[0].beta1 + (1.0 - F1) * eqin.fluidinfo[0].beta2) * rP *
+			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
+			fmax(Omega_limiter_min, potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]);
 		// cross-diffusion term
 		//dSc += (1.0 - F1)*Dkw;
-		dSc += (1.0 - F1)*CDkw;// Всегда больше нуля.
+		dSc += (1.0 - F1) * CDkw;// Всегда больше нуля.
+	}
+	else {
+		dSc = 0.0;
+	}
 		if (dSc != dSc) {
 			//printf("Pk=%e generation=%e\n", Pk, gamma * rP*Pk / fmax(potent[MUT][iP], 0.01*prop[MU][iP]));
 			printf("Pk_omega=%e\n", Pk_omega);
@@ -5809,7 +6010,8 @@ void my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 	if (fabs(sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap) < 1.0e-30) {
 		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].ap = 1.0;
 		sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b = potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP];
-
+		printf("Error! negative ap\n");
+		system("pause");
 		if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b != sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][iP].b) {
 			printf("Zero ap in TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA component.\n");
 		}
@@ -5958,7 +6160,7 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound(integer inumber, integer 
 
 
 
-	// bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+	// bDirichlet   осуществляется сборка только граничных условий Дирихле.
 	// bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
 	// inumber - номер граничного КО.
@@ -6303,7 +6505,7 @@ void my_elmatr_quad_OmegaSSTMenter3D_bound(integer inumber, integer maxelm,
 
 	// hx, hy, hz - размер ближайшей внутренней ячейки сетки покрывающей расчётную область.
 
-	// bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+	// bDirichlet   осуществляется сборка только граничных условий Дирихле.
 	// bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
 	// inumber - номер граничного КО.

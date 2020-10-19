@@ -242,11 +242,13 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 
 	// Печать подготовленной информации в текстовый файл blasius_1908.txt
 	FILE *fpblas=NULL; // файл в который будет записываться информация о задаче Блазиуса.
-	errno_t err_blas=0;
+	
 #ifdef MINGW_COMPILLER
+	int err_blas = 0;
 	fpblas=fopen64("blasius_1908.txt", "w");
 	if (fpblas == NULL) err_blas = 1;
 #else
+	errno_t err_blas = 0;
 	err_blas = fopen_s(&fpblas, "blasius_1908.txt", "w");
 #endif
 

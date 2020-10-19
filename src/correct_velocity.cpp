@@ -380,39 +380,39 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	// Линейная интерполяция давления на грань КО.
 	doublereal deltaP=0.0, gradP=0.0;
 	switch (iVar) {
-		case VELOCITY_X_COMPONENT: if (iderivative_pressure== FIRST_ORDER) {
+	case VELOCITY_X_COMPONENT: if (iderivative_pressure== ORDER_DERIVATIVE::FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 				      deltaP=(fwplus*PAmW+(1-fwplus)*PAmP);
 			          deltaP-=(feplus*PAmE+(1-feplus)*PAmP); 
 				      gradP=deltaP/dl; // первая производная от давления.
 				  }
-				  else if (iderivative_pressure== SECOND_ORDER) {
+				  else if (iderivative_pressure== ORDER_DERIVATIVE::SECOND_ORDER) {
 					  // аппроксимация второго порядка точности.
 					  // обязательно нужен знак минус иначе скорость
 					  // будет направлена в другую сторону.
 					  gradP=-rgradF(PAmW, PAmP, PAmE, hxminus, hxplus);
 				  }
 				  break;
-		case VELOCITY_Y_COMPONENT: if (iderivative_pressure== FIRST_ORDER) {
+		case VELOCITY_Y_COMPONENT: if (iderivative_pressure== ORDER_DERIVATIVE::FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 				      deltaP=(fsplus*PAmS+(1-fsplus)*PAmP);
 			          deltaP-=(fnplus*PAmN+(1-fnplus)*PAmP);
 				      gradP=deltaP/dl; // первая производная от давления.
 				  }
-				  else if (iderivative_pressure== SECOND_ORDER) {
+				  else if (iderivative_pressure== ORDER_DERIVATIVE::SECOND_ORDER) {
 					  // аппроксимация второго порядка точности.
 					  // обязательно нужен знак минус иначе скорость
 					  // будет направлена в другую сторону.
 					  gradP=-rgradF(PAmS, PAmP, PAmN, hyminus, hyplus);
 				  }
 			      break;
-        case VELOCITY_Z_COMPONENT: if (iderivative_pressure== FIRST_ORDER) {
+        case VELOCITY_Z_COMPONENT: if (iderivative_pressure== ORDER_DERIVATIVE::FIRST_ORDER) {
 			          // естественная аппроксимация первого порядка.
 			          deltaP=(fbplus*PAmB+(1-fbplus)*PAmP);
 			          deltaP-=(ftplus*PAmT+(1-ftplus)*PAmP);
 				      gradP=deltaP/dl; // первая производная от давления.
 				  }
-				  else if (iderivative_pressure== SECOND_ORDER) {
+				  else if (iderivative_pressure== ORDER_DERIVATIVE::SECOND_ORDER) {
 					  // аппроксимация второго порядка точности.
 					  // обязательно нужен знак минус иначе скорость
 					  // будет направлена в другую сторону.
@@ -431,13 +431,13 @@ void correct_internal_volume(integer iP, integer iVar, equation3D** sl,
 	// Так предлагает делать Гаврилов Андрей в расчётном комплексе Sigma-flow.
 	// Это должно быть согласовано с составлением уравнения для поправки давления.
 	// potent[iVar][iP]+=(tau/rho)*deltaP;
-	if (iSIMPLE_alg==SIMPLE_Carretto) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 		// SIMPLE алгоритм: Carretto et al., 1973.
 		// tau ~ (alpha[iVar]*rho*ds)/(sl[iVar][iP].ap);
 		//potent[iVar][iP]+=alpha[iVar]*ds*(deltaP)/sl[iVar][iP].ap;// см. статьи Гаврилова Андрея.
 		potent[iVar][iP]+=alpha[iVar]*dv*(gradP)/sl[iVar][iP].ap;// см. статьи Гаврилова Андрея.
 	}
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 		// SIMPLEC алгоритм: Van Doormal and Raithby., 1984
 		// tau ~ (alpha[iVar]*rho*ds)/((1.0-alpha[iVar])*sl[iVar][iP].ap);
         //potent[iVar][iP]+=alpha[iVar]*ds*(deltaP)/((1.0-alpha[iVar])*sl[iVar][iP].ap);// см. статьи Гаврилова Андрея.
@@ -504,13 +504,13 @@ void correct_internal_volume2(integer iP, integer iVar, equation3D** sl,
 	// Так предлагает делать Гаврилов Андрей в расчётном комплексе Sigma-flow.
 	// Это должно быть согласовано с составлением уравнения для поправки давления.
 	// potent[iVar][iP]+=(tau/rho)*deltaP;
-	if (iSIMPLE_alg==SIMPLE_Carretto) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 		// SIMPLE алгоритм: Carretto et al., 1973.
 		// tau ~ (alpha[iVar]*rho*ds)/(sl[iVar][iP].ap);
 		//potent[iVar][iP]+=alpha[iVar]*ds*(deltaP)/sl[iVar][iP].ap;// см. статьи Гаврилова Андрея.
 		potent[iVar][iP]+=alpha[iVar]*dv*(gradP)/sl[iVar][iP].ap;// см. статьи Гаврилова Андрея.
 	}
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 		// SIMPLEC алгоритм: Van Doormal and Raithby., 1984
 		// tau ~ (alpha[iVar]*rho*ds)/((1.0-alpha[iVar])*sl[iVar][iP].ap);
         //potent[iVar][iP]+=alpha[iVar]*ds*(deltaP)/((1.0-alpha[iVar])*sl[iVar][iP].ap);// см. статьи Гаврилова Андрея.
@@ -690,7 +690,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	}
 
 	
-
+#pragma omp parallel for
 	for (integer iP=0; iP<maxelm; iP++) {
 
 		// iP - номер центрального контрольного объёма
@@ -1543,7 +1543,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 
 		// значение псевдовремени на грани контрольного объёма.
-		doublereal taue=0.0, tauw = 0.0, taun = 0.0, taus = 0.0, taut = 0.0, taub = 0.0;
+		doublereal taue = 0.0, tauw = 0.0, taun = 0.0, taus = 0.0, taut = 0.0, taub = 0.0;
 		doublereal taue2 = 0.0, tauw2 = 0.0, taun2 = 0.0, taus2 = 0.0, taut2 = 0.0, taub2 = 0.0;
 		doublereal taue3 = 0.0, tauw3 = 0.0, taun3 = 0.0, taus3 = 0.0, taut3 = 0.0, taub3 = 0.0;
 		doublereal taue4 = 0.0, tauw4 = 0.0, taun4 = 0.0, taus4 = 0.0, taut4 = 0.0, taub4 = 0.0;
@@ -1626,7 +1626,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 		}
 
 		// Градиент поправки давления на грани контрольного объёма.
-		doublereal gradpame=0.0, gradpamw=0.0, gradpamn=0.0, gradpams=0.0, gradpamt=0.0, gradpamb=0.0;
+		doublereal gradpame = 0.0, gradpamw = 0.0, gradpamn = 0.0, gradpams = 0.0, gradpamt = 0.0, gradpamb = 0.0;
 		doublereal gradpame2 = 0.0, gradpamw2 = 0.0, gradpamn2 = 0.0, gradpams2 = 0.0, gradpamt2 = 0.0, gradpamb2 = 0.0;
 		doublereal gradpame3 = 0.0, gradpamw3 = 0.0, gradpamn3 = 0.0, gradpams3 = 0.0, gradpamt3 = 0.0, gradpamb3 = 0.0;
 		doublereal gradpame4 = 0.0, gradpamw4 = 0.0, gradpamn4 = 0.0, gradpams4 = 0.0, gradpamt4 = 0.0, gradpamb4 = 0.0;
@@ -1769,6 +1769,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 	// Однако есть границы где массовый поток задан пользователем,
 	// очевидно это надо как-то учесть.
+#pragma omp parallel for
 	for (integer iP=0; iP<maxelm; iP++) {
 		// iP - номер центрального контрольного объёма
 	    integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
@@ -2038,6 +2039,7 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 	// Обратное копирование.
 	for (integer iG=0; iG<6; iG++) {
+#pragma omp parallel for
 		for (integer iP=0; iP<maxelm; iP++) {
 			mfcurrentretune[iP][iG]=mfloc[iP][iG];
 		}
@@ -2637,7 +2639,7 @@ void iscorrectmf(doublereal** &mf,
 	}
 
 	if (bdiagnostic_message) {
-		if (biscorrectmf == true) {
+		if (biscorrectmf  ) {
 			system("PAUSE");
 		}
 	}
@@ -2649,10 +2651,14 @@ void iscorrectOk(doublereal** &potent,
 	ALICE_PARTITION** neighbors_for_the_internal_node, BOUND* &border_neighbor,
 	integer ls, integer lw, WALL* w)
 {
-	integer iP = 0;
-	integer inumber;
+	
+	
 	// iP - номер центрального контрольного объёма
-	for (iP = 0; iP < maxelm; iP++) {
+#pragma omp parallel for
+	for (integer iP = 0; iP < maxelm; iP++) {
+
+		integer inumber;
+
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 		iE = neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN = neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT = neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
 		iW = neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS = neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB = neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;
@@ -4594,14 +4600,18 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 	// сходимости обеспечивается значением 2 (квадратичная интерполяция).
 	// 1 использовать линейную интерполяцию на границе. (0 не использовать).
 	//const integer binterpol=0; // 2 - использовать квадратичную интерполяцию.
-	bool brelax_bound = false;
-	bool brelax_val2 = true;
+	const bool brelax_bound = false;
+	const bool brelax_val2 = true;
 	const doublereal relaxboundconstvel = 1.0;
 
-    integer iP=0;
-	integer inumber;
+    
+	
     // iP - номер центрального контрольного объёма
-	for (iP=0; iP<maxelm; iP++) {
+#pragma omp parallel for 
+	for (integer iP=0; iP<maxelm; iP++) {
+
+		integer inumber;
+
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 	    iE=neighbors_for_the_internal_node[E_SIDE][iP].iNODE1; iN=neighbors_for_the_internal_node[N_SIDE][iP].iNODE1; iT=neighbors_for_the_internal_node[T_SIDE][iP].iNODE1;
 	    iW=neighbors_for_the_internal_node[W_SIDE][iP].iNODE1; iS=neighbors_for_the_internal_node[S_SIDE][iP].iNODE1; iB=neighbors_for_the_internal_node[B_SIDE][iP].iNODE1;

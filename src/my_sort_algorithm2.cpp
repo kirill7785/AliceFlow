@@ -24,11 +24,11 @@ void swap(Ak2& Amat, integer i, integer j)
 } // swap
 
 
-bool comparei(Ak2& Amat, integer index, Ak1& Amat2) {
+bool comparei(const Ak2& Amat, integer index, const Ak1& Amat2) {
 	return ((Amat.i[index] < Amat2.i) || ((Amat.i[index] == Amat2.i) && (Amat.j[index] < Amat2.j)));
 }
 
-bool comparej(Ak2& Amat, integer index, Ak1& Amat2) {
+bool comparej(const Ak2& Amat, integer index, const Ak1& Amat2) {
 	return ((Amat.j[index] < Amat2.j) || ((Amat.j[index] == Amat2.j) && (Amat.i[index] < Amat2.i)));
 }
 
@@ -45,10 +45,10 @@ integer PivotList(Ak2& Amat, integer first, integer last,
 	Afirst.j = Amat.j[first]; 
 	integer PivotPoint = first;
 
-	for (integer index = (first + 1); index <= last; index++) {
-		if (compare(Amat, index, Afirst)) {
+	for (integer index_1 = (first + 1); index_1 <= last; index_1++) {
+		if (compare(Amat, index_1, Afirst)) {
 			PivotPoint++;
-			swap(Amat, PivotPoint, index);
+			swap(Amat, PivotPoint, index_1);
 		}
 	}
 
@@ -165,18 +165,18 @@ void mergeTim_amg(Ak2& Amat, integer l, integer m, integer r)
 	left.j = nullptr;
 	left.aij = nullptr;
 	if (len1 >= 0) {
-		left.i = new integer[len1 + 1];
-		left.j = new integer[len1 + 1];
-		left.aij = new doublereal[len1 + 1];
+		left.i = new integer_mix_precision[len1 + 1];
+		left.j = new integer_mix_precision[len1 + 1];
+		left.aij = new real_mix_precision[len1 + 1];
 	}
 	Ak2 right;
 	right.i = nullptr;
 	right.j = nullptr;
 	right.aij = nullptr;
 	if (len2 >= 0) {
-		right.i = new integer[len2 + 1];
-		right.j = new integer[len2 + 1];
-		right.aij = new doublereal[len2 + 1];
+		right.i = new integer_mix_precision[len2 + 1];
+		right.j = new integer_mix_precision[len2 + 1];
+		right.aij = new real_mix_precision[len2 + 1];
 	}
 
 	for (integer i = 0; i < len1; i++) {
@@ -270,18 +270,18 @@ void mergeTim_amg_j(Ak2& Amat, integer l, integer m, integer r)
 	left.j = nullptr;
 	left.aij = nullptr;
 	if (len1 >= 0) {
-		left.i = new integer[len1 + 1];
-		left.j = new integer[len1 + 1];
-		left.aij = new doublereal[len1 + 1];
+		left.i = new integer_mix_precision[len1 + 1];
+		left.j = new integer_mix_precision[len1 + 1];
+		left.aij = new real_mix_precision[len1 + 1];
 	}
 	Ak2 right;
 	right.i = nullptr;
 	right.j = nullptr;
 	right.aij = nullptr;
 	if (len2 >= 0) {
-		right.i = new integer[len2 + 1];
-		right.j = new integer[len2 + 1];
-		right.aij = new doublereal[len2 + 1];
+		right.i = new integer_mix_precision[len2 + 1];
+		right.j = new integer_mix_precision[len2 + 1];
+		right.aij = new real_mix_precision[len2 + 1];
 	}
 
 	for (integer i = 0; i < len1; i++) {
@@ -965,7 +965,7 @@ void FixHeap_j(Ak2& Amat,
 	integer iadd)
 {
 	integer vacant;
-	integer largerChild;
+	
 
 	// list сортируемый список пирамида
 	// root номер корня пирамиды
@@ -974,6 +974,7 @@ void FixHeap_j(Ak2& Amat,
 	vacant = root;
 	while (2 * vacant <= bound)
 	{
+		integer largerChild;
 		largerChild = 2 * vacant;
 		integer lCadd = largerChild + iadd;
 		integer lCadd1 = lCadd + 1;
@@ -1032,7 +1033,7 @@ void FixHeap(Ak2& Amat,
 	integer iadd)
 {
 	integer vacant;
-	integer largerChild;
+	
 
 	// list сортируемый список пирамида
 	// root номер корня пирамиды
@@ -1041,6 +1042,7 @@ void FixHeap(Ak2& Amat,
 	vacant = root;
 	while (2 * vacant <= bound)
 	{
+		integer largerChild;
 		largerChild = 2 * vacant;
 		integer lCadd = largerChild + iadd;
 		integer lCadd1 = lCadd + 1;
@@ -1225,8 +1227,9 @@ void Counting_Sort(Ak2& Amat, integer first, integer last, bool bmemo)
 	char c4[14] = "Counting_Sort";
 	handle_error(Bm, c3, c4, (last - first + 2));
 
-	integer ind;
+	
 	for (integer j = last; j >= first; j--) {
+		integer ind;
 		ind = Amat.i[j];
 		Bm[C[ind]].i = Amat.i[j];
 		Bm[C[ind]].j = Amat.j[j];
@@ -1419,8 +1422,9 @@ void Counting_Sortj(Ak2& Amat, integer first, integer last)
 	char c4[14] = "Counting_Sort";
 	handle_error(Bm, c3, c4, (last - first + 2));
 
-	integer ind;
+	
 	for (integer j = last; j >= first; j--) {
+		integer ind;
 		ind = Amat.j[j];
 		Bm[C[ind]].i = Amat.i[j];
 		Bm[C[ind]].j = Amat.j[j];
@@ -1480,8 +1484,9 @@ void Counting_Sortj(Ak2& Amat, integer first, integer last, integer bucket_len)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	integer ind;
+	
 	for (integer j = last; j >= first; j--) {
+		integer ind;
 		ind = Amat.j[j];
 		Bm[C[ind]].i = Amat.i[j];
 		Bm[C[ind]].j = Amat.j[j];
@@ -1563,8 +1568,9 @@ void Counting_Sort(Ak1*& Amat, integer first, integer last, bool bmemo, integer 
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	integer ind;
+	
 	for (integer j = last; j >= first; j--) {
+		integer ind;
 		ind = indx_compare(Amat[j]);
 		Bm[C[ind]] = Amat[j];
 		if (bmemo) {

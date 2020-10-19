@@ -323,10 +323,10 @@ L9:
 	//x_temper = new doublerealT[n_a[0] + 1];
 	u_old = (doublereal*)malloc(((integer)(n_a)+1) * sizeof(doublereal));
 
-	doublereal* rthdsd_no_radiosity_patch = nullptr;
-	rthdsd_no_radiosity_patch = (doublereal*)malloc(((integer)(n_a)+1) * sizeof(doublereal));
+	doublereal* rthdsd_no_radiosity_patch_1 = nullptr;
+	rthdsd_no_radiosity_patch_1 = (doublereal*)malloc(((integer)(n_a)+1) * sizeof(doublereal));
 	for (integer i23 = 0; i23 < n_a; i23++) {
-		rthdsd_no_radiosity_patch[i23] = f[i23 + iadd1];
+		rthdsd_no_radiosity_patch_1[i23] = f[i23 + iadd1];
 	}
 
 	doublereal* x_temper = nullptr;
@@ -418,9 +418,9 @@ L9:
 			// mysolver_v0_03 установить fHORF=1.0;
 			//(iVar == TEMP) && всегда выполняется, данная нелинейная функция вызывается всегда только для температуры.
 			if (/*(my_amg_manager.istabilization == 3)*/
-				(Non_Linear_amg1r5 == stabilization_amg1r5_algorithm))
+				(AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 == stabilization_amg1r5_algorithm))
 			{
-				if (bonly_solid_calculation == true) {
+				if (bonly_solid_calculation  ) {
 					if (bvacuumPrism) {
 						// предполагается неизменный порядок следования позиций в x
 						// и rthdsd.					
@@ -478,7 +478,7 @@ L9:
 						}						
 
 						for (integer i23 = 0; i23 < n_a; i23++) {
-							rthdsd_loc123[i23] = rthdsd_no_radiosity_patch[i23];
+							rthdsd_loc123[i23] = rthdsd_no_radiosity_patch_1[i23];
 							if ((i23 >= iadd_qnbc_maxelm) &&
 								(qnbc[i23 - iadd_qnbc_maxelm].bactive) &&
 								(qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on)) {
@@ -592,7 +592,7 @@ L9:
 							getchar();
 						}
 						for (integer i23 = 0; i23 < n_a; i23++) {
-							rthdsd_loc123[i23] = rthdsd_no_radiosity_patch[i23];
+							rthdsd_loc123[i23] = rthdsd_no_radiosity_patch_1[i23];
 							if (i23 >= iadd_qnbc_maxelm) {
 
 								if (qnbc[i23 - iadd_qnbc_maxelm].dS < 0.0) {
@@ -765,10 +765,10 @@ L9:
 		free(u_old);
 	}
 	u_old = nullptr;
-	if (rthdsd_no_radiosity_patch!=nullptr) {
-		free(rthdsd_no_radiosity_patch);
+	if (rthdsd_no_radiosity_patch_1!=nullptr) {
+		free(rthdsd_no_radiosity_patch_1);
 	}
-	rthdsd_no_radiosity_patch = nullptr;
+	rthdsd_no_radiosity_patch_1 = nullptr;
 
 	if (rthdsd_loc123 != nullptr) {
 		free(rthdsd_loc123);
@@ -792,10 +792,10 @@ L170:
 		free(u_old);
 	}
 	u_old = nullptr;
-	if (rthdsd_no_radiosity_patch!=nullptr) {
-		free(rthdsd_no_radiosity_patch);
+	if (rthdsd_no_radiosity_patch_1!=nullptr) {
+		free(rthdsd_no_radiosity_patch_1);
 	}
-	rthdsd_no_radiosity_patch = nullptr;
+	rthdsd_no_radiosity_patch_1 = nullptr;
 
 	if (rthdsd_loc123 != nullptr) {
 		free(rthdsd_loc123);

@@ -2993,7 +2993,7 @@ void my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(
 
 
 
-	// bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+	// bDirichlet   осуществляется сборка только граничных условий Дирихле.
 	// bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
 	// inumber - номер граничного КО.
@@ -6376,7 +6376,7 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 
 
 
-	// bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+	// bDirichlet   осуществляется сборка только граничных условий Дирихле.
 	// bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
 	// inumber - номер граничного КО.

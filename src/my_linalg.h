@@ -206,7 +206,7 @@ doublereal* MatrixByVector(doublereal** H,doublereal* V,integer n);
 doublereal NormaV(doublereal *V, integer n);
 
 // —кал€рное произведение двух векторов
-doublereal Scal(doublereal *v1, doublereal *v2, integer n);
+doublereal Scal(doublereal const *const v1, doublereal const *const v2, const integer n);
 
 //----------метод сопр€женных градиентов---------------
 /* ¬ходные параметры:
@@ -230,7 +230,7 @@ doublereal *SoprGrad(doublereal **A, doublereal *dV, doublereal *x, integer n);
 // используетс€ формат хранени€ CRS
 // –азреженна€ матрица A (val, col_ind, row_ptr) квадратна€ размером n*n.
 // „исло уравнений равно числу неизвестных и равно n.
-void MatrixCRSByVector(doublereal* val, integer* col_ind, integer* row_ptr, doublereal* V, doublereal* &tmp, integer n);
+void MatrixCRSByVector(doublereal *& val, integer *& col_ind, integer *& row_ptr, doublereal *& V, doublereal* &tmp, const integer n);
 
 // умножение транспонированной матрицы на вектор
 // (используетс€, например, в методе BiCG - бисопр€жЄнных градиентов)
@@ -685,7 +685,8 @@ void QuickSort(integer* &list, integer first, integer last);
 
 // ѕреобразует простейший формат хранени€ разреженной матрицы
 // в формат CRS. ¬сего nodes - уравнений.
-void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, integer* &row_ptr, integer nodes);
+template <typename MY_IND_TYPE>
+void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, MY_IND_TYPE* &col_ind, MY_IND_TYPE* &row_ptr, integer nodes);
 
 // ѕреобразует equation3D  формат хранени€ в CRS формат.
 // ÷ель написани€ этого преобразовател€: экономи€ оперативной пам€ти компьютера.

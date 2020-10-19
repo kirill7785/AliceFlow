@@ -31,9 +31,9 @@ void Seidel_network(integer n, integer maxelm,
 			}
 		}
 		else {
-			if ((w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
-				(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-				(w[id[i]].ifamily == NEIMAN_FAMILY)) {
+			if ((w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+				(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)) {
 				doublereal sum = rthdsd[i];
 				for (integer j = row_ptr[i] + 1; j < row_ptr[i + 1]; j++) {
 					sum += -(val[j] * potent[col_ind[j]]);
@@ -64,9 +64,9 @@ doublereal residual_network(integer n, integer maxelm,
 			s += (val[row_ptr[i]] * potent[col_ind[row_ptr[i]]] - sum)*(val[row_ptr[i]] * potent[col_ind[row_ptr[i]]] - sum);			
 		}
 		else {
-			if ((w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
-				(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)||
-				(w[id[i]].ifamily == NEIMAN_FAMILY)) {
+			if ((w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+				(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY)||
+				(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)) {
 				doublereal sum = rthdsd[i];
 				for (integer j = row_ptr[i] + 1; j < row_ptr[i + 1]; j++) {
 					sum += -(val[j] * potent[col_ind[j]]);
@@ -90,76 +90,84 @@ void visible_CRS_Matrix(integer n, integer nnz, doublereal*& val,
 {
 	if (b_first_start_matrix_print) {
 
-		errno_t err_inicialization_data = 0;
+		
 		FILE* fp_inicialization_data = NULL;
 
 #ifdef MINGW_COMPILLER
+		int err_inicialization_data = 0;
 		fp_inicialization_data = fopen64("graph.txt", "w");
 		if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
+		errno_t err_inicialization_data = 0;
 		err_inicialization_data = fopen_s(&fp_inicialization_data, "graph.txt", "w");
 #endif
 
-		for (integer i_1 = 0; i_1 < maxelm; i_1++) {
-			fprintf(fp_inicialization_data, "%s ", b[id[i_1]].name);
-		}
-		for (integer i_1 = maxelm; i_1 < n; i_1++) {
-			fprintf(fp_inicialization_data, "%s ", w[id[i_1]].name);
-		}
-		fprintf(fp_inicialization_data, "\n");
+		if (err_inicialization_data == 0) {
 
-		integer* is = new integer[n];
-		for (integer i_1 = 0; i_1 < n; i_1++) {
-			if (i_1 < maxelm) {
+			for (integer i_1 = 0; i_1 < maxelm; i_1++) {
 				fprintf(fp_inicialization_data, "%s ", b[id[i_1]].name);
 			}
-			else {
+			for (integer i_1 = maxelm; i_1 < n; i_1++) {
 				fprintf(fp_inicialization_data, "%s ", w[id[i_1]].name);
 			}
+			fprintf(fp_inicialization_data, "\n");
 
-			// Обработка одной строки.
-			for (integer j_1 = 0; j_1 < n; j_1++) {
-				is[j_1] = 0;
-			}
-			for (integer j = row_ptr[i_1] + 1; j < row_ptr[i_1 + 1]; j++) {
-				is[col_ind[j]] = 1;
-			}
-			
-			for (integer j_1 = 0; j_1 < n; j_1++) {
 
-				if (j_1 < n - 1) {
-					/*if (i_1 == j_1) {
-						if (i_1 < maxelm) {
-							std::cout << b[id[i_1]].name << ",";
-						}
-						else {
-							std::cout << w[id[i_1]].name << ",";
-						}
-					}
-					else*/ {
-						fprintf(fp_inicialization_data, "%lld ", is[j_1]);
-					}
+			integer* is = new integer[n];
+			for (integer i_1 = 0; i_1 < n; i_1++) {
+				if (i_1 < maxelm) {
+					fprintf(fp_inicialization_data, "%s ", b[id[i_1]].name);
 				}
 				else {
-					/*if (i_1 == j_1) {
-						if (i_1 < maxelm) {
-							std::cout << b[id[i_1]].name;
+					fprintf(fp_inicialization_data, "%s ", w[id[i_1]].name);
+				}
+
+				// Обработка одной строки.
+				for (integer j_1 = 0; j_1 < n; j_1++) {
+					is[j_1] = 0;
+				}
+				for (integer j = row_ptr[i_1] + 1; j < row_ptr[i_1 + 1]; j++) {
+					is[col_ind[j]] = 1;
+				}
+
+				for (integer j_1 = 0; j_1 < n; j_1++) {
+
+					if (j_1 < n - 1) {
+						/*if (i_1 == j_1) {
+							if (i_1 < maxelm) {
+								std::cout << b[id[i_1]].name << ",";
+							}
+							else {
+								std::cout << w[id[i_1]].name << ",";
+							}
 						}
-						else {
-							std::cout << w[id[i_1]].name;
+						else*/ {
+							fprintf(fp_inicialization_data, "%lld ", is[j_1]);
 						}
 					}
-					else*/ {
-						fprintf(fp_inicialization_data, "%lld ", is[j_1]);
+					else {
+						/*if (i_1 == j_1) {
+							if (i_1 < maxelm) {
+								std::cout << b[id[i_1]].name;
+							}
+							else {
+								std::cout << w[id[i_1]].name;
+							}
+						}
+						else*/ {
+							fprintf(fp_inicialization_data, "%lld ", is[j_1]);
+						}
 					}
 				}
+				//std::cout << std::endl;
+				fprintf(fp_inicialization_data, "\n");
 			}
-			//std::cout << std::endl;
-			fprintf(fp_inicialization_data, "\n");
-		}
-		delete[] is;
-		fclose(fp_inicialization_data);
+			delete[] is;
 
+
+			fclose(fp_inicialization_data);
+
+		}
 		std::cout << "Matrix is print..." << std::endl;
 		system("PAUSE");
 		b_first_start_matrix_print = false;
@@ -315,14 +323,14 @@ void calculate_Network_T(TEMPER& t,
 
 	integer maxelm = 0;
 	for (integer i = 1; i < lb; i++) {
-		if ((b[i].itype != HOLLOW) && (block_is_active[i])) maxelm++;
+		if ((b[i].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[i])) maxelm++;
 	}
 	integer* id = new integer[maxelm + lw];
 	integer* id_reverse = new integer[lb + lw];
 	integer* wall2block_link = new integer[lw];
 	integer ic = 0;
 	for (integer i = 1; i < lb; i++) {
-		if ((b[i].itype != HOLLOW) && (block_is_active[i])) {
+		if ((b[i].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[i])) {
 			id[ic] = i;// идентификатор блока.
 			id_reverse[i] = ic;
 			ic++;
@@ -349,9 +357,11 @@ void calculate_Network_T(TEMPER& t,
 		ilink_reverse[i] = nullptr;
 		dS[i] = nullptr;
 	}
-	ic = 0;
-	for (integer i = 1; i < lb; i++) {
-		if ((b[i].itype != HOLLOW) && (block_is_active[i])) {
+
+	{ // делаем у переменной ic локальную область видимости.
+		ic = 0;
+		for (integer i = 1; i < lb; i++) {
+		if ((b[i].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[i])) {
 			for (integer j_1 = 0; j_1 < lb; j_1++) {
 				hash[j_1] = false;
 			}
@@ -369,7 +379,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -380,7 +390,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -391,7 +401,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -402,7 +412,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -413,7 +423,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -424,7 +434,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -435,7 +445,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -446,7 +456,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -457,7 +467,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -468,7 +478,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -479,7 +489,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -490,7 +500,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -501,7 +511,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -512,7 +522,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -523,7 +533,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -534,7 +544,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -545,7 +555,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -556,7 +566,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -567,7 +577,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -578,7 +588,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -589,7 +599,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -600,7 +610,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -611,7 +621,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -622,7 +632,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ic1++;
 							}
@@ -647,10 +657,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -667,10 +677,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -687,10 +697,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -707,10 +717,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -725,10 +735,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -741,10 +751,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -757,10 +767,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -773,10 +783,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -791,10 +801,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -810,10 +820,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -829,10 +839,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -848,10 +858,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -865,10 +875,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -881,10 +891,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -897,10 +907,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -913,10 +923,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -931,10 +941,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -950,10 +960,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -969,10 +979,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -988,10 +998,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1005,10 +1015,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1021,10 +1031,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1037,10 +1047,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1053,10 +1063,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1097,7 +1107,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1110,7 +1120,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1123,7 +1133,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1136,7 +1146,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[E_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1149,7 +1159,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1162,7 +1172,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1175,7 +1185,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1188,7 +1198,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[W_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1201,7 +1211,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1214,7 +1224,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1227,7 +1237,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1240,7 +1250,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[N_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1253,7 +1263,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1266,7 +1276,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1279,7 +1289,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1292,7 +1302,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[S_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1305,7 +1315,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1318,7 +1328,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1331,7 +1341,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1344,7 +1354,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[T_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1357,7 +1367,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE1;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1370,7 +1380,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE2;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1383,7 +1393,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE3;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1396,7 +1406,7 @@ void calculate_Network_T(TEMPER& t,
 					{
 						integer i_1 = t.neighbors_for_the_internal_node[B_SIDE][j_1].iNODE4;
 						if (hash[t.whot_is_block[i_1]] == false) {
-							if ((b[t.whot_is_block[i_1]].itype != HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
+							if ((b[t.whot_is_block[i_1]].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) && (block_is_active[t.whot_is_block[i_1]])) {
 								hash[t.whot_is_block[i_1]] = true;
 								ilink[ic][ic1] = t.whot_is_block[i_1];// Соседи блока id[ic].
 								ilink_reverse[ic][t.whot_is_block[i_1]] = ic1;
@@ -1426,10 +1436,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -1449,10 +1459,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -1472,10 +1482,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -1495,10 +1505,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
@@ -1516,10 +1526,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1535,10 +1545,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1554,10 +1564,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1573,10 +1583,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1594,10 +1604,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1616,10 +1626,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1638,10 +1648,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1660,10 +1670,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1680,10 +1690,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1699,10 +1709,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1718,10 +1728,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1737,10 +1747,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1758,10 +1768,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1780,10 +1790,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1802,10 +1812,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1824,10 +1834,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							// стенка с условием Дирихле.
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле которая еще не встречалась.
@@ -1844,10 +1854,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1863,10 +1873,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1882,10 +1892,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -1901,10 +1911,10 @@ void calculate_Network_T(TEMPER& t,
 						integer inumber = i_1 - t.maxelm;
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY))) {
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))) {
 							if (hash_wall[t.border_neighbor[inumber].MCB - ls] == false) {
 								// Это стенка с условием Дирихле
 								hash_wall[t.border_neighbor[inumber].MCB - ls] = true;
@@ -2396,10 +2406,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2414,10 +2424,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2432,10 +2442,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2450,10 +2460,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2468,10 +2478,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2486,10 +2496,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2504,10 +2514,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2522,10 +2532,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2540,10 +2550,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2558,10 +2568,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2576,10 +2586,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2594,10 +2604,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2612,10 +2622,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2634,10 +2644,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2656,10 +2666,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2678,10 +2688,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2700,10 +2710,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2718,10 +2728,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2736,10 +2746,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2754,10 +2764,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2772,10 +2782,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2790,10 +2800,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2808,10 +2818,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2826,10 +2836,10 @@ void calculate_Network_T(TEMPER& t,
 						// идентификатор граничного узла.
 						if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 							(t.border_neighbor[inumber].MCB >= ls) &&
-							((w[t.border_neighbor[inumber].MCB - ls].ifamily == DIRICHLET_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-								(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEIMAN_FAMILY)))
+							((w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+								(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)))
 						{
 							doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
 							volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
@@ -2847,7 +2857,7 @@ void calculate_Network_T(TEMPER& t,
 			ic++;
 		}
 	}
-
+	}
 	doublereal* potent = new doublereal[maxelm + lw]; // вектор решения.
 	doublereal* rthdsd = new doublereal[maxelm + lw]; // правая часть.
 	
@@ -2864,7 +2874,7 @@ void calculate_Network_T(TEMPER& t,
 		}
 		else {
 			// стенка.
-			if (w[id[i]].ifamily == DIRICHLET_FAMILY) {
+			if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 				rthdsd[i] = w[id[i]].Tamb; // Только условия Дирихле.
 			}
 			else {
@@ -2880,9 +2890,9 @@ void calculate_Network_T(TEMPER& t,
 	for (integer i = 0; i < maxelm + lw; i++) {
 		nnz += inumber_neighbour[i]; // количество связей с соседями.
 		if (i >= maxelm) {
-			if ((w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
-				(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)||
-				(w[id[i]].ifamily == NEIMAN_FAMILY)) 
+			if ((w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+				(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY)||
+				(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY))
 			{
 				nnz++; // двухточечное нелинейное граничное условие.
 			}
@@ -2897,14 +2907,14 @@ void calculate_Network_T(TEMPER& t,
 	bool b_Newton_Richman = false;
 	bool b_Stefan_Bolcman = false;
 	for (integer i = maxelm; i < maxelm + lw; i++) {
-		if (w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) {
+		if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) {
 			b_Newton_Richman = true; // Нелинейность Ньютона-Рихмана.
 			b_nonlinear_network = true; // Задача нелинейна. Нужно применять нижнюю релаксацию.
 		}
 	}
 
 	for (integer i = maxelm; i < maxelm + lw; i++) {
-		if (w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY) {
+		if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 			b_Stefan_Bolcman = true; // Нелинейность Стефана - Больцмана, нужна более сильная релаксация.
 			b_Newton_Richman = false;
 			b_nonlinear_network = true; // Задача нелинейна. Нужно применять нижнюю релаксацию.
@@ -2932,7 +2942,7 @@ void calculate_Network_T(TEMPER& t,
 		iter++;
 		if (iter > 300000) break;
 
-		r1 = 1.0e-30;
+		//r1 = 1.0e-30;
 
 		doublereal tmax = -1.0e30;
 		doublereal tmin = 1.0e30;
@@ -2985,7 +2995,7 @@ void calculate_Network_T(TEMPER& t,
 			}
 			else {
 				// стенка.
-				if (w[id[i]].ifamily == DIRICHLET_FAMILY) {
+				if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 					rthdsd[i] = w[id[i]].Tamb; // Только условия Дирихле.
 				}
 				else {
@@ -3245,12 +3255,12 @@ void calculate_Network_T(TEMPER& t,
 					rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 					if (matlist[b[id[i]].imatid].blibmat == 1) {
 						// библиотечный, находящийся внутри программы AliceFlow материал.
-						if (b[id[i]].itype == SOLID) {
+						if (b[id[i]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							my_solid_properties(potent[i], rho, cp, lam, matlist[b[id[i]].imatid].ilibident);
 							// проверка на допустимость температур.
 							diagnostic_critical_temperature(potent[i], f, t, b, lb);
 						} // SOLID
-						if (b[id[i]].itype == FLUID) {
+						if (b[id[i]].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							doublereal mu, beta_t; // значения не используются но требуются.
 							doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 
@@ -3280,12 +3290,12 @@ void calculate_Network_T(TEMPER& t,
 						// Блок граничит с блоком.
 						if (matlist[b[ilink[i][j]].imatid].blibmat == 1) {
 							// библиотечный, находящийся внутри программы AliceFlow материал.
-							if (b[ilink[i][j]].itype == SOLID) {
+							if (b[ilink[i][j]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 								my_solid_properties(potent[i], rho, cp, lam, matlist[b[ilink[i][j]].imatid].ilibident);
 								// проверка на допустимость температур.
 								diagnostic_critical_temperature(potent[i], f, t, b, lb);
 							} // SOLID
-							if (b[ilink[i][j]].itype == FLUID) {
+							if (b[ilink[i][j]].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 								doublereal mu, beta_t; // значения не используются но требуются.
 								doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 
@@ -3339,15 +3349,15 @@ void calculate_Network_T(TEMPER& t,
 					//(w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
 					//(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)))
 
-				if (w[id[i]].ifamily == DIRICHLET_FAMILY) {
+				if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 					val[idiag] = 1.0; // Только условия Дирихле.
 					col_ind[idiag] = i;
 					row_ptr[i + 1] = idiag + 1;
 					idiag++;
 				}
-				else if ((w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) ||
-					(w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY)||
-					(w[id[i]].ifamily == NEIMAN_FAMILY)) {
+				else if ((w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+					(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY)||
+					(w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)) {
 					// Находим номер блока ib с которым контактирует стенка.
 					integer ib = wall2block_link[id[i]];
 					integer ic = id_reverse[ib];
@@ -3429,12 +3439,12 @@ void calculate_Network_T(TEMPER& t,
 					rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 					if (matlist[b[ib].imatid].blibmat == 1) {
 						// библиотечный, находящийся внутри программы AliceFlow материал.
-						if (b[ib].itype == SOLID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							my_solid_properties(potent[ic], rho, cp, lam, matlist[b[ib].imatid].ilibident);
 							// проверка на допустимость температур.
 							diagnostic_critical_temperature(potent[ic], f, t, b, lb);
 						} // SOLID
-						if (b[ib].itype == FLUID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							doublereal mu, beta_t; // значения не используются но требуются.
 							doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 
@@ -3462,7 +3472,7 @@ void calculate_Network_T(TEMPER& t,
 					idiag++;
 					row_ptr[i + 1] = idiag;
 					im = idiag + 1;
-					if (w[id[i]].ifamily == NEWTON_RICHMAN_FAMILY) {
+					if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) {
 
 						//printf("nonlinear:  potent[ic]=%e  potent[i]=%e Tamb=%e\n", potent[ic], potent[i], w[id[i]].Tamb);
 						//printf("lambda_G=%e distance=%e w[id[i]].film_coefficient=%e\n", lambda_G, distance, w[id[i]].film_coefficient);
@@ -3475,13 +3485,13 @@ void calculate_Network_T(TEMPER& t,
 							//rthdsd[i] = -w[id[i]].film_coefficient * (2.0); // Условия Ньютона-Рихмана.
 						}
 					}
-					if (w[id[i]].ifamily == STEFAN_BOLCMAN_FAMILY) {
+					if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 						// Условие Стефана - Больцмана.
 						rthdsd[i] = -w[id[i]].emissivity *w[id[i]].ViewFactor * STEFAN_BOLCMAN_CONST * 
 							((273.15 + potent[i]) * (273.15 + potent[i]) * (273.15 + potent[i]) * (273.15 + potent[i]) -
 							(273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb) * (273.15 + w[id[i]].Tamb));
 					}
-					if (w[id[i]].ifamily == NEIMAN_FAMILY) {
+					if (w[id[i]].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY) {
 						// Однородное условие Неймана
 						rthdsd[i] = 0.0;
 					}
@@ -3538,9 +3548,9 @@ void calculate_Network_T(TEMPER& t,
 					val[row_ptr[i_1]] = val[row_ptr[i_1]] / alphaA;
 				}
 				for (integer i_1 = maxelm; i_1 < maxelm + lw; i_1++) {
-					if ((w[id[i_1]].ifamily == NEWTON_RICHMAN_FAMILY) ||
-						(w[id[i_1]].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-						(w[id[i_1]].ifamily == NEIMAN_FAMILY)) {
+					if ((w[id[i_1]].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) ||
+						(w[id[i_1]].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+						(w[id[i_1]].ifamily == WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY)) {
 						// К нелинейному граничному условию применим также нижнюю релаксацию.
 						// Это нужно чтобы сошелся солвер решения СЛАУ.
 						rthdsd[i_1] += (1 - alphaA) * (val[row_ptr[i_1]] / alphaA) * potent_old[i_1];
@@ -3722,12 +3732,12 @@ void calculate_Network_T(TEMPER& t,
 					rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 					if (matlist[b[ib].imatid].blibmat == 1) {
 						// библиотечный, находящийся внутри программы AliceFlow материал.
-						if (b[ib].itype == SOLID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							my_solid_properties(potent[ic], rho, cp, lam, matlist[b[ib].imatid].ilibident);
 							// проверка на допустимость температур.
 							diagnostic_critical_temperature(potent[ic], f, t, b, lb);
 						} // SOLID
-						if (b[ib].itype == FLUID) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 							doublereal mu, beta_t; // значения не используются но требуются.
 							doublereal pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 

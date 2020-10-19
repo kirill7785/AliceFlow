@@ -21,6 +21,7 @@ my_agregat_amg.c 57054 строк кода.
 Поддерживаются призматические блоки и плоские прямоугольные источники и стенки в качестве геометрических объектов
 меширования.
 10.08.2019 Наконец правильное освобождение оперативной памяти из под octree дерева 42663 строк.
+26.08.2020 Универсализация нумерации nvtx ячейки. Начало 14.04.
 */
 
 #pragma once
@@ -3797,10 +3798,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link0->p1.x = rmaxx0;
 			oc->link0->p1.y = rminy0;
 			oc->link0->p1.z = rminz0;
-			oc->link0->p2.x = rmaxx0;
+			oc->link0->p2.x = rminx0;
 			oc->link0->p2.y = rmaxy0;
 			oc->link0->p2.z = rminz0;
-			oc->link0->p3.x = rminx0;
+			oc->link0->p3.x = rmaxx0;
 			oc->link0->p3.y = rmaxy0;
 			oc->link0->p3.z = rminz0;
 
@@ -3810,10 +3811,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link0->p5.x = rmaxx0;
 			oc->link0->p5.y = rminy0;
 			oc->link0->p5.z = rmaxz0;
-			oc->link0->p6.x = rmaxx0;
+			oc->link0->p6.x = rminx0;
 			oc->link0->p6.y = rmaxy0;
 			oc->link0->p6.z = rmaxz0;
-			oc->link0->p7.x = rminx0;
+			oc->link0->p7.x = rmaxx0;
 			oc->link0->p7.y = rmaxy0;
 			oc->link0->p7.z = rmaxz0;
 			oc->link0->link0 = nullptr;
@@ -4001,10 +4002,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link1->p1.x = rmaxx1;
 			oc->link1->p1.y = rminy1;
 			oc->link1->p1.z = rminz1;
-			oc->link1->p2.x = rmaxx1;
+			oc->link1->p2.x = rminx1;
 			oc->link1->p2.y = rmaxy1;
 			oc->link1->p2.z = rminz1;
-			oc->link1->p3.x = rminx1;
+			oc->link1->p3.x = rmaxx1;
 			oc->link1->p3.y = rmaxy1;
 			oc->link1->p3.z = rminz1;
 			oc->link1->p4.x = rminx1;
@@ -4013,10 +4014,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link1->p5.x = rmaxx1;
 			oc->link1->p5.y = rminy1;
 			oc->link1->p5.z = rmaxz1;
-			oc->link1->p6.x = rmaxx1;
+			oc->link1->p6.x = rminx1;
 			oc->link1->p6.y = rmaxy1;
 			oc->link1->p6.z = rmaxz1;
-			oc->link1->p7.x = rminx1;
+			oc->link1->p7.x = rmaxx1;
 			oc->link1->p7.y = rmaxy1;
 			oc->link1->p7.z = rmaxz1;
 			oc->link1->link0 = nullptr;
@@ -4199,10 +4200,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link2->p1.x = rmaxx2;
 			oc->link2->p1.y = rminy2;
 			oc->link2->p1.z = rminz2;
-			oc->link2->p2.x = rmaxx2;
+			oc->link2->p2.x = rminx2;
 			oc->link2->p2.y = rmaxy2;
 			oc->link2->p2.z = rminz2;
-			oc->link2->p3.x = rminx2;
+			oc->link2->p3.x = rmaxx2;
 			oc->link2->p3.y = rmaxy2;
 			oc->link2->p3.z = rminz2;
 			oc->link2->p4.x = rminx2;
@@ -4211,10 +4212,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link2->p5.x = rmaxx2;
 			oc->link2->p5.y = rminy2;
 			oc->link2->p5.z = rmaxz2;
-			oc->link2->p6.x = rmaxx2;
+			oc->link2->p6.x = rminx2;
 			oc->link2->p6.y = rmaxy2;
 			oc->link2->p6.z = rmaxz2;
-			oc->link2->p7.x = rminx2;
+			oc->link2->p7.x = rmaxx2;
 			oc->link2->p7.y = rmaxy2;
 			oc->link2->p7.z = rmaxz2;
 			oc->link2->link0 = nullptr;
@@ -4397,10 +4398,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link3->p1.x = rmaxx3;
 			oc->link3->p1.y = rminy3;
 			oc->link3->p1.z = rminz3;
-			oc->link3->p2.x = rmaxx3;
+			oc->link3->p2.x = rminx3;
 			oc->link3->p2.y = rmaxy3;
 			oc->link3->p2.z = rminz3;
-			oc->link3->p3.x = rminx3;
+			oc->link3->p3.x = rmaxx3;
 			oc->link3->p3.y = rmaxy3;
 			oc->link3->p3.z = rminz3;
 			oc->link3->p4.x = rminx3;
@@ -4409,10 +4410,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link3->p5.x = rmaxx3;
 			oc->link3->p5.y = rminy3;
 			oc->link3->p5.z = rmaxz3;
-			oc->link3->p6.x = rmaxx3;
+			oc->link3->p6.x = rminx3;
 			oc->link3->p6.y = rmaxy3;
 			oc->link3->p6.z = rmaxz3;
-			oc->link3->p7.x = rminx3;
+			oc->link3->p7.x = rmaxx3;
 			oc->link3->p7.y = rmaxy3;
 			oc->link3->p7.z = rmaxz3;
 			oc->link3->link0 = nullptr;
@@ -4566,10 +4567,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link4->p1.x = rmaxx4;
 			oc->link4->p1.y = rminy4;
 			oc->link4->p1.z = rminz4;
-			oc->link4->p2.x = rmaxx4;
+			oc->link4->p2.x = rminx4;
 			oc->link4->p2.y = rmaxy4;
 			oc->link4->p2.z = rminz4;
-			oc->link4->p3.x = rminx4;
+			oc->link4->p3.x = rmaxx4;
 			oc->link4->p3.y = rmaxy4;
 			oc->link4->p3.z = rminz4;
 			oc->link4->p4.x = rminx4;
@@ -4578,10 +4579,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link4->p5.x = rmaxx4;
 			oc->link4->p5.y = rminy4;
 			oc->link4->p5.z = rmaxz4;
-			oc->link4->p6.x = rmaxx4;
+			oc->link4->p6.x = rminx4;
 			oc->link4->p6.y = rmaxy4;
 			oc->link4->p6.z = rmaxz4;
-			oc->link4->p7.x = rminx4;
+			oc->link4->p7.x = rmaxx4;
 			oc->link4->p7.y = rmaxy4;
 			oc->link4->p7.z = rmaxz4;
 			oc->link4->link0 = nullptr;
@@ -4735,10 +4736,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link5->p1.x = rmaxx5;
 			oc->link5->p1.y = rminy5;
 			oc->link5->p1.z = rminz5;
-			oc->link5->p2.x = rmaxx5;
+			oc->link5->p2.x = rminx5;
 			oc->link5->p2.y = rmaxy5;
 			oc->link5->p2.z = rminz5;
-			oc->link5->p3.x = rminx5;
+			oc->link5->p3.x = rmaxx5;
 			oc->link5->p3.y = rmaxy5;
 			oc->link5->p3.z = rminz5;
 			oc->link5->p4.x = rminx5;
@@ -4747,10 +4748,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link5->p5.x = rmaxx5;
 			oc->link5->p5.y = rminy5;
 			oc->link5->p5.z = rmaxz5;
-			oc->link5->p6.x = rmaxx5;
+			oc->link5->p6.x = rminx5;
 			oc->link5->p6.y = rmaxy5;
 			oc->link5->p6.z = rmaxz5;
-			oc->link5->p7.x = rminx5;
+			oc->link5->p7.x = rmaxx5;
 			oc->link5->p7.y = rmaxy5;
 			oc->link5->p7.z = rmaxz5;
 			oc->link5->link0 = nullptr;
@@ -4901,10 +4902,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link6->p1.x = rmaxx6;
 			oc->link6->p1.y = rminy6;
 			oc->link6->p1.z = rminz6;
-			oc->link6->p2.x = rmaxx6;
+			oc->link6->p2.x = rminx6;
 			oc->link6->p2.y = rmaxy6;
 			oc->link6->p2.z = rminz6;
-			oc->link6->p3.x = rminx6;
+			oc->link6->p3.x = rmaxx6;
 			oc->link6->p3.y = rmaxy6;
 			oc->link6->p3.z = rminz6;
 			oc->link6->p4.x = rminx6;
@@ -4913,10 +4914,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link6->p5.x = rmaxx6;
 			oc->link6->p5.y = rminy6;
 			oc->link6->p5.z = rmaxz6;
-			oc->link6->p6.x = rmaxx6;
+			oc->link6->p6.x = rminx6;
 			oc->link6->p6.y = rmaxy6;
 			oc->link6->p6.z = rmaxz6;
-			oc->link6->p7.x = rminx6;
+			oc->link6->p7.x = rmaxx6;
 			oc->link6->p7.y = rmaxy6;
 			oc->link6->p7.z = rmaxz6;
 			oc->link6->link0 = nullptr;
@@ -5069,10 +5070,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link7->p1.x = rmaxx7;
 			oc->link7->p1.y = rminy7;
 			oc->link7->p1.z = rminz7;
-			oc->link7->p2.x = rmaxx7;
+			oc->link7->p2.x = rminx7;
 			oc->link7->p2.y = rmaxy7;
 			oc->link7->p2.z = rminz7;
-			oc->link7->p3.x = rminx7;
+			oc->link7->p3.x = rmaxx7;
 			oc->link7->p3.y = rmaxy7;
 			oc->link7->p3.z = rminz7;
 
@@ -5082,10 +5083,10 @@ void droblenie_internal(octree* &oc, integer minx, integer maxx, integer miny, i
 			oc->link7->p5.x = rmaxx7;
 			oc->link7->p5.y = rminy7;
 			oc->link7->p5.z = rmaxz7;
-			oc->link7->p6.x = rmaxx7;
+			oc->link7->p6.x = rminx7;
 			oc->link7->p6.y = rmaxy7;
 			oc->link7->p6.z = rmaxz7;
-			oc->link7->p7.x = rminx7;
+			oc->link7->p7.x = rmaxx7;
 			oc->link7->p7.y = rmaxy7;
 			oc->link7->p7.z = rmaxz7;
 			oc->link7->link0 = nullptr;
@@ -5931,10 +5932,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link0->p1.x = rmaxx0;
 			oc->link0->p1.y = rminy0;
 			oc->link0->p1.z = rminz0;
-			oc->link0->p2.x = rmaxx0;
+			oc->link0->p2.x = rminx0;
 			oc->link0->p2.y = rmaxy0;
 			oc->link0->p2.z = rminz0;
-			oc->link0->p3.x = rminx0;
+			oc->link0->p3.x = rmaxx0;
 			oc->link0->p3.y = rmaxy0;
 			oc->link0->p3.z = rminz0;
 
@@ -5944,10 +5945,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link0->p5.x = rmaxx0;
 			oc->link0->p5.y = rminy0;
 			oc->link0->p5.z = rmaxz0;
-			oc->link0->p6.x = rmaxx0;
+			oc->link0->p6.x = rminx0;
 			oc->link0->p6.y = rmaxy0;
 			oc->link0->p6.z = rmaxz0;
-			oc->link0->p7.x = rminx0;
+			oc->link0->p7.x = rmaxx0;
 			oc->link0->p7.y = rmaxy0;
 			oc->link0->p7.z = rmaxz0;
 			oc->link0->link0 = nullptr;
@@ -6459,10 +6460,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link1->p1.x = rmaxx1;
 			oc->link1->p1.y = rminy1;
 			oc->link1->p1.z = rminz1;
-			oc->link1->p2.x = rmaxx1;
+			oc->link1->p2.x = rminx1;
 			oc->link1->p2.y = rmaxy1;
 			oc->link1->p2.z = rminz1;
-			oc->link1->p3.x = rminx1;
+			oc->link1->p3.x = rmaxx1;
 			oc->link1->p3.y = rmaxy1;
 			oc->link1->p3.z = rminz1;
 			oc->link1->p4.x = rminx1;
@@ -6471,10 +6472,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link1->p5.x = rmaxx1;
 			oc->link1->p5.y = rminy1;
 			oc->link1->p5.z = rmaxz1;
-			oc->link1->p6.x = rmaxx1;
+			oc->link1->p6.x = rminx1;
 			oc->link1->p6.y = rmaxy1;
 			oc->link1->p6.z = rmaxz1;
-			oc->link1->p7.x = rminx1;
+			oc->link1->p7.x = rmaxx1;
 			oc->link1->p7.y = rmaxy1;
 			oc->link1->p7.z = rmaxz1;
 			oc->link1->link0 = nullptr;
@@ -6831,10 +6832,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link2->p1.x = rmaxx2;
 			oc->link2->p1.y = rminy2;
 			oc->link2->p1.z = rminz2;
-			oc->link2->p2.x = rmaxx2;
+			oc->link2->p2.x = rminx2;
 			oc->link2->p2.y = rmaxy2;
 			oc->link2->p2.z = rminz2;
-			oc->link2->p3.x = rminx2;
+			oc->link2->p3.x = rmaxx2;
 			oc->link2->p3.y = rmaxy2;
 			oc->link2->p3.z = rminz2;
 			oc->link2->p4.x = rminx2;
@@ -6843,10 +6844,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link2->p5.x = rmaxx2;
 			oc->link2->p5.y = rminy2;
 			oc->link2->p5.z = rmaxz2;
-			oc->link2->p6.x = rmaxx2;
+			oc->link2->p6.x = rminx2;
 			oc->link2->p6.y = rmaxy2;
 			oc->link2->p6.z = rmaxz2;
-			oc->link2->p7.x = rminx2;
+			oc->link2->p7.x = rmaxx2;
 			oc->link2->p7.y = rmaxy2;
 			oc->link2->p7.z = rmaxz2;
 			oc->link2->link0 = nullptr;
@@ -7088,10 +7089,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link3->p1.x = rmaxx3;
 			oc->link3->p1.y = rminy3;
 			oc->link3->p1.z = rminz3;
-			oc->link3->p2.x = rmaxx3;
+			oc->link3->p2.x = rminx3;
 			oc->link3->p2.y = rmaxy3;
 			oc->link3->p2.z = rminz3;
-			oc->link3->p3.x = rminx3;
+			oc->link3->p3.x = rmaxx3;
 			oc->link3->p3.y = rmaxy3;
 			oc->link3->p3.z = rminz3;
 			oc->link3->p4.x = rminx3;
@@ -7100,10 +7101,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link3->p5.x = rmaxx3;
 			oc->link3->p5.y = rminy3;
 			oc->link3->p5.z = rmaxz3;
-			oc->link3->p6.x = rmaxx3;
+			oc->link3->p6.x = rminx3;
 			oc->link3->p6.y = rmaxy3;
 			oc->link3->p6.z = rmaxz3;
-			oc->link3->p7.x = rminx3;
+			oc->link3->p7.x = rmaxx3;
 			oc->link3->p7.y = rmaxy3;
 			oc->link3->p7.z = rmaxz3;
 			oc->link3->link0 = nullptr;
@@ -7461,10 +7462,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link4->p1.x = rmaxx4;
 			oc->link4->p1.y = rminy4;
 			oc->link4->p1.z = rminz4;
-			oc->link4->p2.x = rmaxx4;
+			oc->link4->p2.x = rminx4;
 			oc->link4->p2.y = rmaxy4;
 			oc->link4->p2.z = rminz4;
-			oc->link4->p3.x = rminx4;
+			oc->link4->p3.x = rmaxx4;
 			oc->link4->p3.y = rmaxy4;
 			oc->link4->p3.z = rminz4;
 			oc->link4->p4.x = rminx4;
@@ -7473,10 +7474,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link4->p5.x = rmaxx4;
 			oc->link4->p5.y = rminy4;
 			oc->link4->p5.z = rmaxz4;
-			oc->link4->p6.x = rmaxx4;
+			oc->link4->p6.x = rminx4;
 			oc->link4->p6.y = rmaxy4;
 			oc->link4->p6.z = rmaxz4;
-			oc->link4->p7.x = rminx4;
+			oc->link4->p7.x = rmaxx4;
 			oc->link4->p7.y = rmaxy4;
 			oc->link4->p7.z = rmaxz4;
 			oc->link4->link0 = nullptr;
@@ -7832,10 +7833,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link5->p1.x = rmaxx5;
 			oc->link5->p1.y = rminy5;
 			oc->link5->p1.z = rminz5;
-			oc->link5->p2.x = rmaxx5;
+			oc->link5->p2.x = rminx5;
 			oc->link5->p2.y = rmaxy5;
 			oc->link5->p2.z = rminz5;
-			oc->link5->p3.x = rminx5;
+			oc->link5->p3.x = rmaxx5;
 			oc->link5->p3.y = rmaxy5;
 			oc->link5->p3.z = rminz5;
 			oc->link5->p4.x = rminx5;
@@ -7844,10 +7845,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link5->p5.x = rmaxx5;
 			oc->link5->p5.y = rminy5;
 			oc->link5->p5.z = rmaxz5;
-			oc->link5->p6.x = rmaxx5;
+			oc->link5->p6.x = rminx5;
 			oc->link5->p6.y = rmaxy5;
 			oc->link5->p6.z = rmaxz5;
-			oc->link5->p7.x = rminx5;
+			oc->link5->p7.x = rmaxx5;
 			oc->link5->p7.y = rmaxy5;
 			oc->link5->p7.z = rmaxz5;
 			oc->link5->link0 = nullptr;
@@ -8085,10 +8086,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link6->p1.x = rmaxx6;
 			oc->link6->p1.y = rminy6;
 			oc->link6->p1.z = rminz6;
-			oc->link6->p2.x = rmaxx6;
+			oc->link6->p2.x = rminx6;
 			oc->link6->p2.y = rmaxy6;
 			oc->link6->p2.z = rminz6;
-			oc->link6->p3.x = rminx6;
+			oc->link6->p3.x = rmaxx6;
 			oc->link6->p3.y = rmaxy6;
 			oc->link6->p3.z = rminz6;
 			oc->link6->p4.x = rminx6;
@@ -8097,10 +8098,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link6->p5.x = rmaxx6;
 			oc->link6->p5.y = rminy6;
 			oc->link6->p5.z = rmaxz6;
-			oc->link6->p6.x = rmaxx6;
+			oc->link6->p6.x = rminx6;
 			oc->link6->p6.y = rmaxy6;
 			oc->link6->p6.z = rmaxz6;
-			oc->link6->p7.x = rminx6;
+			oc->link6->p7.x = rmaxx6;
 			oc->link6->p7.y = rmaxy6;
 			oc->link6->p7.z = rmaxz6;
 			oc->link6->link0 = nullptr;
@@ -8310,10 +8311,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link7->p1.x = rmaxx7;
 			oc->link7->p1.y = rminy7;
 			oc->link7->p1.z = rminz7;
-			oc->link7->p2.x = rmaxx7;
+			oc->link7->p2.x = rminx7;
 			oc->link7->p2.y = rmaxy7;
 			oc->link7->p2.z = rminz7;
-			oc->link7->p3.x = rminx7;
+			oc->link7->p3.x = rmaxx7;
 			oc->link7->p3.y = rmaxy7;
 			oc->link7->p3.z = rminz7;
 
@@ -8323,10 +8324,10 @@ void droblenie_internal_old(octree* &oc, integer minx, integer maxx, integer min
 			oc->link7->p5.x = rmaxx7;
 			oc->link7->p5.y = rminy7;
 			oc->link7->p5.z = rmaxz7;
-			oc->link7->p6.x = rmaxx7;
+			oc->link7->p6.x = rminx7;
 			oc->link7->p6.y = rmaxy7;
 			oc->link7->p6.z = rmaxz7;
-			oc->link7->p7.x = rminx7;
+			oc->link7->p7.x = rmaxx7;
 			oc->link7->p7.y = rmaxy7;
 			oc->link7->p7.z = rmaxz7;
 			oc->link7->link0 = nullptr;
@@ -9295,10 +9296,10 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc->p1.x = xpos[maxx];
 	oc->p1.y = ypos[miny];
 	oc->p1.z = zpos[minz];
-	oc->p2.x = xpos[maxx];
+	oc->p2.x = xpos[minx];
 	oc->p2.y = ypos[maxy];
 	oc->p2.z = zpos[minz];
-	oc->p3.x = xpos[minx];
+	oc->p3.x = xpos[maxx];
 	oc->p3.y = ypos[maxy];
 	oc->p3.z = zpos[minz];
 	oc->p4.x = xpos[minx];
@@ -9307,10 +9308,10 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc->p5.x = xpos[maxx];
 	oc->p5.y = ypos[miny];
 	oc->p5.z = zpos[maxz];
-	oc->p6.x = xpos[maxx];
+	oc->p6.x = xpos[minx];
 	oc->p6.y = ypos[maxy];
 	oc->p6.z = zpos[maxz];
-	oc->p7.x = xpos[minx];
+	oc->p7.x = xpos[maxx];
 	oc->p7.y = ypos[maxy];
 	oc->p7.z = zpos[maxz];
 	oc->dlist = true;
@@ -9428,9 +9429,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									}
 									
 									
-									if ((ib84!=-1)&&(((b[ib83].itype == FLUID) && (b[ib84].itype == FLUID)) ||
-									    ((b[ib83].itype == HOLLOW) && (b[ib84].itype == HOLLOW)) ||
-									    ((b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)
+									if ((ib84!=-1)&&(((b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::FLUID)) ||
+									    ((b[ib83].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ||
+									    ((b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)
 										  && (b[ib83].imatid==b[ib84].imatid)))) {
 										// Ничего не делаем, продолжаем сканирование.
 										// Если два блока типа FLUID то у нас по определению 
@@ -9453,7 +9454,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										// Вывод в том что вблизи входной и выходной границ желательно мельчить
 										// АЛИС сетку чтобы не пропустить эти границы.
 
-										if ((b_thermal_source_refinement)&&(b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)&&
+										if ((b_thermal_source_refinement)&&(b[ib83].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib84].itype == PHYSICS_TYPE_IN_BODY::SOLID)&&
 											((fabs(b[ib83].arr_Sc[0])>1.0e-30)||(fabs(b[ib84].arr_Sc[0])>1.0e-30))) 
 										{
 											// 11.12.2019
@@ -9483,7 +9484,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							    else {
 									// ib83==ib84, Но мы вблизи входной или выходной границы.
 									// Дробим только жидкость и можно большим радиусом.
-									if (b[ib83].itype == FLUID) {
+									if (b[ib83].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 										doublereal cabinet_size = sqrt((b[0].g.xE - b[0].g.xS) * (b[0].g.xE - b[0].g.xS) + (b[0].g.yE - b[0].g.yS) * (b[0].g.yE - b[0].g.yS) + (b[0].g.zE - b[0].g.zS) * (b[0].g.zE - b[0].g.zS));
 										if (split_near_the_entrance_or_exit(xpos, ypos, zpos, i, j, k, lw, w, 48.0, cabinet_size)) {
 											oc->dlist = false; // будем дробить
@@ -10156,10 +10157,10 @@ DROBIM_NOW:
 			oc->p1.x = xpos[maxx];
 			oc->p1.y = ypos[miny];
 			oc->p1.z = zpos[minz];
-			oc->p2.x = xpos[maxx];
+			oc->p2.x = xpos[minx];
 			oc->p2.y = ypos[maxy];
 			oc->p2.z = zpos[minz];
-			oc->p3.x = xpos[minx];
+			oc->p3.x = xpos[maxx];
 			oc->p3.y = ypos[maxy];
 			oc->p3.z = zpos[minz];
 			oc->p4.x = xpos[minx];
@@ -10168,10 +10169,10 @@ DROBIM_NOW:
 			oc->p5.x = xpos[maxx];
 			oc->p5.y = ypos[miny];
 			oc->p5.z = zpos[maxz];
-			oc->p6.x = xpos[maxx];
+			oc->p6.x = xpos[minx];
 			oc->p6.y = ypos[maxy];
 			oc->p6.z = zpos[maxz];
-			oc->p7.x = xpos[minx];
+			oc->p7.x = xpos[maxx];
 			oc->p7.y = ypos[maxy];
 			oc->p7.z = zpos[maxz];
 			oc->link0 = nullptr;
@@ -10278,10 +10279,10 @@ DROBIM_NOW:
 			oc->p1.x = xpos[maxx];
 			oc->p1.y = ypos[miny];
 			oc->p1.z = zpos[minz];
-			oc->p2.x = xpos[maxx];
+			oc->p2.x = xpos[minx];
 			oc->p2.y = ypos[maxy];
 			oc->p2.z = zpos[minz];
-			oc->p3.x = xpos[minx];
+			oc->p3.x = xpos[maxx];
 			oc->p3.y = ypos[maxy];
 			oc->p3.z = zpos[minz];
 			oc->p4.x = xpos[minx];
@@ -10290,10 +10291,10 @@ DROBIM_NOW:
 			oc->p5.x = xpos[maxx];
 			oc->p5.y = ypos[miny];
 			oc->p5.z = zpos[maxz];
-			oc->p6.x = xpos[maxx];
+			oc->p6.x = xpos[minx];
 			oc->p6.y = ypos[maxy];
 			oc->p6.z = zpos[maxz];
-			oc->p7.x = xpos[minx];
+			oc->p7.x = xpos[maxx];
 			oc->p7.y = ypos[maxy];
 			oc->p7.z = zpos[maxz];
 			oc->link0 = nullptr;
@@ -14099,8 +14100,8 @@ void update_max_count_neighbour(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
-				//if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
+				//if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation  ) {
 
 
 					octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
@@ -17614,7 +17615,7 @@ void update_link_neighbor(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Внимание обязательно нужно оставить закомментированным 30.08.2016.
 				//if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation) 
 				//{
@@ -33716,7 +33717,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 		}
 		while (top_ALICE_STACK > 0) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 					if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation == false) {
 						// Во избежании повторного дробления узла за раз.
 						my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation = true;
@@ -34486,7 +34487,7 @@ void balance_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 								
 								//bool b54 = true;
 								//for (integer i_74 = i_76; i_74 < top_ALICE_STACK; i_74++) {
-								//if (my_ALICE_STACK[i_74].link->dlist == true) {
+								//if (my_ALICE_STACK[i_74].link->dlist  ) {
 								//	printf("true\n");
 								//}
 								//else {
@@ -34713,7 +34714,7 @@ void droblenie_disbalance(octree* &oc, doublereal* xpos, doublereal* ypos, doubl
 		}
 		while (top_ALICE_STACK > 0) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 					//if (my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation == false) {
 						// Во избежании повторного дробления узла за раз.
 						//my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation = true;
@@ -34969,7 +34970,7 @@ void balance_octree3(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 		}
 		while (top_ALICE_STACK > 0) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+				if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 
 					octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 					integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
@@ -35106,7 +35107,7 @@ void balance_octree3(octree* &oc, doublereal* xpos, doublereal* ypos, doublereal
 							
 							//bool b54 = true;
 							//for (integer i_74 = i_76; i_74 < top_ALICE_STACK; i_74++) {
-							//if (my_ALICE_STACK[i_74].link->dlist == true) {
+							//if (my_ALICE_STACK[i_74].link->dlist  ) {
 							//	printf("true\n");
 							//}
 							//else {
@@ -35322,7 +35323,7 @@ void droblenie_list_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, dou
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 
 
 
@@ -35384,7 +35385,7 @@ void droblenie_list_octree2(octree* &oc, doublereal* xpos, doublereal* ypos, dou
 				
 				//bool b54 = true;
 				//for (integer i_74 = i_76; i_74 < top_ALICE_STACK; i_74++) {
-				//if (my_ALICE_STACK[i_74].link->dlist == true) {
+				//if (my_ALICE_STACK[i_74].link->dlist  ) {
 				//printf("true\n");
 				//}
 				//else {
@@ -35623,7 +35624,7 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 	while (top_ALICE_STACK > 0) {
 
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
@@ -35977,7 +35978,7 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 	while (top_ALICE_STACK > 0) {
 
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
@@ -36201,10 +36202,15 @@ void expt(octree* &oc, integer inx, integer iny, integer inz, integer maxelm, do
 
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = nullptr;
-	errno_t err_4=0;
+	
 #ifdef MINGW_COMPILLER
+	int err_4 = 0;
 	fp_4= fopen64("ALICEFLOW0_24ALICEMESH.PLT", "w");
+	if (fp_4 == NULL) {
+		err_4 = 1;
+	}
 #else
+	errno_t err_4 = 0;
 	err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH.PLT", "w");
 #endif
 
@@ -36349,7 +36355,7 @@ void shutdown_visit(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				my_ALICE_STACK[top_ALICE_STACK - 1].link->b_the_geometric_fragmentation = false;
 				my_ALICE_STACK[top_ALICE_STACK - 1].link->bcrushing_when_balancing = false;
@@ -36533,7 +36539,7 @@ void shutdown_disbalance(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				my_ALICE_STACK[top_ALICE_STACK - 1].link->disbalance_now = false;
 				my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
@@ -36716,7 +36722,7 @@ void log_message(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 #if doubleintprecision == 1
@@ -36924,7 +36930,7 @@ void if_disbalnce_marker(octree* &oc)
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
@@ -37170,7 +37176,7 @@ integer if_disbalnce(octree* &oc, integer inx, integer iny, integer inz,
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
@@ -37562,7 +37568,7 @@ void marker_disbalnce_year2016(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
@@ -37844,7 +37850,7 @@ void marker_disbalnce_year2017_2(octree* &oc, doublereal* &xpos, doublereal* &yp
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
@@ -39946,7 +39952,7 @@ void marker_disbalnce_year2017(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (!octree1->b4N) {
 					if (octree1->linkN != nullptr) {
@@ -40965,7 +40971,7 @@ void marker_disbalnce_year2017(octree* &oc) {
 void marker_disbalnce(octree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 	// Первоначальная базовая версия.
 	// написана в 2016 году.
-	if (itype_ALICE_Mesh == MULTI_PASS_MEDIUM_ALICE_MESH/*1*/) {
+	if (itype_ALICE_Mesh == TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH/*1*/) {
 		// проблемы построения. Данный метод работает не всегда.
 		// Качество сетки, получаемое алгоритмом 2016 года не является удовлетворительным
 		// по ряду причин. В частности он допускает ячейки соседствующие по вершине, разность уровней у которых равна 2.
@@ -41065,7 +41071,7 @@ void is_b4N_found(octree* &oc) {
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				if (octree1->b4N) {
@@ -43174,7 +43180,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Важнейший контроль дисбаланса, никаких дисбалансов быть не должно.
 		integer iOk28 = 0;
 		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd,b,lb,w,lw,s,ls);
-		if ((MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh)&&(iOk28>0)) {
+		if ((TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH == itype_ALICE_Mesh)&&(iOk28>0)) {
 			// Только в том случае если мы строим многопроходовую АЛИС сетку высочайшего качества.
 			// Это долгий вычислительный процесс.
 #if doubleintprecision == 1

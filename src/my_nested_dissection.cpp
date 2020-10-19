@@ -74,7 +74,7 @@ void green_gauss_FI_(integer iP, doublereal** &potent, integer** nvtx, TOCHKA* p
 	ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
-	// если bbond == true то будут вычислены значения в граничных КО, иначе только во внутренних.
+	// если bbond   то будут вычислены значения в граничных КО, иначе только во внутренних.
     // Замечание во внутренних КО значения градиентов должны быть вычислены в первую очередь. Т.е.
 	// необходимо совершить два последовательных запуска данной функции.
 
@@ -197,7 +197,7 @@ void green_gauss_FI_union(integer iP, doublereal** &potent, integer** nvtx, TOCH
 	ALICE_PARTITION** neighbors_for_the_internal_node, integer maxelm, bool bbond) {
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты скоростей для внутренних КО.
-	// если bbond == true то будут вычислены значения в граничных КО, иначе только во внутренних.
+	// если bbond   то будут вычислены значения в граничных КО, иначе только во внутренних.
     // Замечание во внутренних КО значения градиентов должны быть вычислены в первую очередь. Т.е.
 	// необходимо совершить два последовательных запуска данной функции.
 
@@ -337,7 +337,7 @@ void my_nested_dissection_bound(integer inumber, integer maxelm,
 	 // В данном методе значения potent могут использоваться для граничного условия
 	 // Неймана повышенного порядка точности при соответствующем значении dbeta.
 
-     // bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+     // bDirichlet   осуществляется сборка только граничных условий Дирихле.
      // bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
      // inumber - номер граничного КО.
@@ -493,7 +493,7 @@ void my_nested_dissection_bound_union(integer inumber, integer maxelm,
 	 // В данном методе значения potent могут использоваться для граничного условия
 	 // Неймана повышенного порядка точности при соответствующем значении dbeta.
 
-     // bDirichlet == true осуществляется сборка только граничных условий Дирихле.
+     // bDirichlet   осуществляется сборка только граничных условий Дирихле.
      // bDirichlet == false осуществляется сборка только однородных условий Неймана.
 
      // inumber - номер граничного КО.
@@ -966,11 +966,13 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 
 	FILE *fp=nullptr;
     FILE *fp1=nullptr; // часть 1 или 3
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp=fopen64("ALICEFLOW0_07_temp.PLT", "w");
 	if (fp == nullptr) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
 #endif
 	// создание файла для записи:
@@ -1650,10 +1652,10 @@ void correct_marker_surface(integer* &color, integer iNorm, FLOW &f)
 // Дополнение будет симметричным: если закрашена лишь одна линия,
 // то дополнительно будут закрашены ещё две линии - сверху и снизу.
 // 6 апреля 2013 года.
-void correct_marker_surface_fill(integer* &color, integer iNorm, FLOW &f) 
-{
-	// TODO
-} // correct_marker_surface_fill
+//void correct_marker_surface_fill(integer* &color, integer iNorm, FLOW &f) 
+//{
+	// функция не реализована 27.09.2020
+//} // correct_marker_surface_fill
 
 integer uluchenie_katchestva_razbieniq(FLOW &f, integer* &ifrontregulation, integer igold, 
 								   const integer istart, const integer ifinish, 
@@ -2384,7 +2386,7 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 			    }
 		    }
 
-			// TODO
+			// 
 			// 8 августа 2015 года.
 			// этот код предназначен для улучшения качества разбиения.
 			// проверка баланса: если нарушен баланс (левая и правая части отличаются более чем
@@ -3198,7 +3200,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 			    }
 		    }
 
-			// TODO
+			// 
 			// 8 августа 2015 года.
 			// этот код предназначен для улучшения качества разбиения.
 			// проверка баланса: если нарушен баланс (левая и правая части отличаются более чем
@@ -3874,7 +3876,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 		    integer imin=ifinish+1;
 		
 		    // Здесь будет код my_separator самое последнее достижение в сепараторах.
-		    // TODO. 20 апреля 2013 года.
+		    //  20 апреля 2013 года.
 		    bool bseparate=true; // делим.
 		
 		    // Параметры t, fglobal, flow_interior нужны для графической визуализации.
@@ -3909,7 +3911,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 		        // нужно более точно определить какие элементы попадут в разделитель.
 		        for (integer i=istart; i<=ifinish; i++) {
 			        if (fabs(front[i]-l1)<delta) { // здесь именно переупорядоченный фронт.
-				        front[i]=dmax+2.0; // TODO возможно потребуется увеличить это значение, но смысл в том что эти значения записываются в конец массива inumerate. 
+				        front[i]=dmax+2.0; //  возможно потребуется увеличить это значение, но смысл в том что эти значения записываются в конец массива inumerate. 
 				        icount2++;
 				        imin=min(imin,i);
 			        }

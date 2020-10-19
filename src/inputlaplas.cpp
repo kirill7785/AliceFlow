@@ -63,9 +63,14 @@ const unsigned char XZ_PLANE = 2;
 const unsigned char YZ_PLANE = 3;
 
 // тип блока
-const unsigned char SOLID = 1;
-const unsigned char HOLLOW = 2;
-const unsigned char FLUID = 3;
+//const unsigned char SOLID = 1;
+//const unsigned char HOLLOW = 2;
+//const unsigned char FLUID = 3;
+enum class PHYSICS_TYPE_IN_BODY {
+	SOLID = 1,
+	HOLLOW = 2,
+	FLUID = 3
+};
 
 // Геометрическая форма блока
 const unsigned char PRISM = 0;
@@ -106,6 +111,8 @@ typedef struct TGEOM {
 	integer nsizei; // Количество опорных точек образующих выпуклый полигон.
 	doublereal *hi, *xi, *yi, *zi;
 	TGEOM() {
+		name[0] = '\0';
+
 		itypegeom= PRISM; // 0 - Prism, 1 - Cylinder, 2 - Polygon
 		// Prism
 		xS=0.0, yS=0.0, zS=0.0; // координаты начала объекта
@@ -165,7 +172,7 @@ typedef struct TSOURCE {
 	// Мощность может зависеть от температуры и смещения стока.
 	// Зависимость задаётся таблично на основе расчётов в программе Г.З. Гарбера.
 	bool bgarber_depend; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
-	// В случае bgarber_depend == true, значение power является коэффициентом на который домножается 
+	// В случае bgarber_depend  , значение power является коэффициентом на который домножается 
 	// истинное табличное значение мощности.
 	integer igarber_depend; // уникальный номер табличной зависимости. (нумерация начинается с нуля).
 	doublereal roperation_offset_drain; // рабочее значение смещения стока.
@@ -191,7 +198,7 @@ typedef struct TSOURCE {
 		// Мощность может зависеть от температуры и смещения стока.
 		// Зависимость задаётся таблично на основе расчётов в программе Г.З. Гарбера.
 		 bgarber_depend = false; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
-		// В случае bgarber_depend == true, значение power является коэффициентом на который домножается 
+		// В случае bgarber_depend  , значение power является коэффициентом на который домножается 
 		// истинное табличное значение мощности.
 		igarber_depend = -1; // уникальный номер табличной зависимости. (нумерация начинается с нуля).
 		roperation_offset_drain = 28.0; // рабочее значение смещения стока.
@@ -209,6 +216,24 @@ typedef struct TSOURCE {
 		iunion_id = 0;
 	}
 } SOURCE;
+
+// Thermal-Stress boundary condition
+		// 0 - free,
+		// 1 - x fixit,
+		// 2 - y fixit,
+		// 3 - z fixit,
+		// 4 - xy fixit,
+		// 5 - xz fixit,
+		// 6 - yz fixit,
+		// 7 - fixit all,
+		// 8 - x Force,
+		// 9 - y Force,
+		// 10 - z Force.
+enum class THERMAL_STRESS_BOUNDARY_CONDITION {
+	FREE=0, X_FIXIT=1, Y_FIXIT=2, Z_FIXIT=3,
+	XY_FIXIT=4, XZ_FIXIT=5, YZ_FIXIT=6, ALL_FIXIT=7,
+	X_FORCE=8, Y_FORCE=9, Z_FORCE=10
+};
 
 // стенка (идеальный теплоотвод)
 typedef struct TWALL {
@@ -234,7 +259,7 @@ typedef struct TWALL {
 	// 8 - x Force,
 	// 9 - y Force,
 	// 10 - z Force.
-	integer ithermal_Stress_boundary_condition;
+	THERMAL_STRESS_BOUNDARY_CONDITION ithermal_Stress_boundary_condition;
 	doublereal xForce, yForce, zForce; // Три компоненты силы, приложенные к узлу в Ньютонах.
 	integer iPlane; // плоскость в которой лежит стенка
 	// 1 - XY, 2 - XZ, 3 - YZ.
@@ -254,7 +279,7 @@ typedef struct TWALL {
 		// 1 - Дирихле, 2 - однородное условие Неймана(теплоизоляция),
 		// 3 - Ньютон-Рихман(конвекция),
 		// 4 - Стефан-Больцман(излучение).
-		ifamily = NEIMAN_FAMILY; // однородное условие Неймана по температуре (теплоизоляция).
+		ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; // однородное условие Неймана по температуре (теплоизоляция).
 		Tamb = 20.0, hf = 0.0; // значение температуры на идеальном теплоотводе и тепловой поток.
 		emissivity = 0.8, film_coefficient = 3.0;
 		ViewFactor = 1.0;
@@ -272,7 +297,7 @@ typedef struct TWALL {
 		// 8 - x Force,
 		// 9 - y Force,
 		// 10 - z Force.
-		ithermal_Stress_boundary_condition = 0;
+		ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::ALL_FIXIT;
 		// Три компоненты силы, приложенные к узлу в Ньютонах.
 		xForce = 0.0, yForce = 0.0, zForce = 0.0; 
 		iPlane = XZ_PLANE; // плоскость в которой лежит стенка
@@ -312,25 +337,26 @@ void CHECK_TYPE_GEOM(integer itypegeom) {
 typedef struct TPROP {
 	// Постоянные значения заданные пользователем:
 	// rho - плотность,
-	// cp - теплоёмкость,
+	// cp - удельная теплоёмкость при постоянном давлении,
 	// lam - теплопроводность,
 	// mu - динамическая вязкость,
 	// beta_t - коэффициент линейного температурного расширения.
-	//doublereal rho, cp, lam;
+	// doublereal rho, cp, lam;
 	doublereal rho;
 	// 16_11_2016
 	// температура передаётся в градусах Цельсия.
 	// температурно - зависимые теплопроводность и теплоёмкость.
-	integer n_lam, n_cp; // число точек для линейной интерполяции.
+	integer n_lam, n_cp, n_beta_t_solid, n_YoungModule, n_Poisson_ratio; // число точек для линейной интерполяции.
 	// arr_lam=f(temp_lam);
 	// arr_cp=f(temp_cp);
-	doublereal *temp_lam, *temp_cp, *arr_lam, *arr_cp;
+	// beta_t_solid для Механики.
+	doublereal *temp_lam, *temp_cp, *temp_beta_t_solid, *arr_lam, *arr_cp, *arr_beta_t_solid;
 	// Ортотропность теплопроводности:
 	// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью:
 	// CuMoCu, SiC и текстолитовые платы.
 	// теплопроводность в заданном координатном направлении домножается на этот множитель.
 	doublereal orthotropy_multiplyer_x, orthotropy_multiplyer_y, orthotropy_multiplyer_z;
-	doublereal mu,  beta_t, beta_t_solid;// beta_t_solid для Механики.
+	doublereal mu,  beta_t;
 	// Следующие два параметра относятся к внутренней библиотеке 
 	// материалов:
 	integer blibmat; // 0 - материал пользователя и используются 
@@ -364,7 +390,16 @@ typedef struct TPROP {
 
 	// 8.4.2017 
 	// Параметры прочности материала.
-	doublereal mu_Lame, lambda_Lame; // Коэффициенты Ламе.
+	doublereal *temp_Poisson_ratio, *arr_Poisson_ratio;
+	doublereal *temp_Young_Module, *arr_Young_Module;
+	doublereal orthotropy_multiplyer_Poisson_ratio_xy, orthotropy_multiplyer_Poisson_ratio_yz, orthotropy_multiplyer_Poisson_ratio_xz;
+	doublereal orthotropy_multiplyer_Poisson_ratio_yx, orthotropy_multiplyer_Poisson_ratio_zy, orthotropy_multiplyer_Poisson_ratio_zx;
+	doublereal orthotropy_multiplyer_x_Young_Module, orthotropy_multiplyer_y_Young_Module, orthotropy_multiplyer_z_Young_Module;
+	// Модуль сдвига
+	bool bActive_ShearModule;
+	doublereal ShearModule_xy, ShearModule_yz, ShearModule_xz;
+	doublereal orthotropy_multiplyer_x_beta_t_solid, orthotropy_multiplyer_y_beta_t_solid, orthotropy_multiplyer_z_beta_t_solid;
+	// Коэффициенты Ламе не используются.
 	TPROP() {
 		// Постоянные значения заданные пользователем:
 		// rho - плотность,
@@ -377,17 +412,27 @@ typedef struct TPROP {
 		// 16_11_2016
 		// температура передаётся в градусах Цельсия.
 		// температурно - зависимые теплопроводность и теплоёмкость.
-		n_lam = -1, n_cp = -1; // число точек для линейной интерполяции.
+		n_lam = -1, n_cp = -1, n_beta_t_solid=-1, n_YoungModule=-1, n_Poisson_ratio=-1; // число точек для линейной интерполяции.
 		// arr_lam=f(temp_lam);
 		// arr_cp=f(temp_cp);
 		temp_lam=nullptr; temp_cp=nullptr; arr_lam=nullptr;
-		arr_cp=nullptr;
+		arr_cp = nullptr; 
+		temp_beta_t_solid = nullptr; arr_beta_t_solid = nullptr;// beta_t_solid для Механики.
 		// Ортотропность теплопроводности:
 		// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью:
 		// CuMoCu, SiC и текстолитовые платы.
 		// теплопроводность в заданном координатном направлении домножается на этот множитель.
 		orthotropy_multiplyer_x=1.0, orthotropy_multiplyer_y = 1.0, orthotropy_multiplyer_z = 1.0;
-		mu = -1.0e30, beta_t = -1.0e30, beta_t_solid = -1.0e30;// beta_t_solid для Механики.
+		// Poisson_ratio в заданном координатном направлении домножается на этот множитель.
+		orthotropy_multiplyer_Poisson_ratio_xy = 1.0; orthotropy_multiplyer_Poisson_ratio_yz = 1.0; orthotropy_multiplyer_Poisson_ratio_xz=1.0;
+		orthotropy_multiplyer_Poisson_ratio_yx = 1.0; orthotropy_multiplyer_Poisson_ratio_zy = 1.0; orthotropy_multiplyer_Poisson_ratio_zx = 1.0;
+
+		// Young_Module в заданном координатном направлении домножается на этот множитель.
+		orthotropy_multiplyer_x_Young_Module = 1.0; orthotropy_multiplyer_y_Young_Module = 1.0; orthotropy_multiplyer_z_Young_Module=1.0;
+		// Коэффициент линейного теплового расширения в заданном координатном направлении домножается на этот множитель.
+		orthotropy_multiplyer_x_beta_t_solid = 1.0; orthotropy_multiplyer_y_beta_t_solid = 1.0; orthotropy_multiplyer_z_beta_t_solid=1.0;
+
+		mu = -1.0e30, beta_t = -1.0e30;
 		// Следующие два параметра относятся к внутренней библиотеке 
 		// материалов:
 		blibmat=-3; // 0 - материал пользователя и используются 
@@ -421,7 +466,18 @@ typedef struct TPROP {
 
 		// 8.4.2017 
 		// Параметры прочности материала.
-		mu_Lame = -1.0e30, lambda_Lame = -1.0e30; // Коэффициенты Ламе.
+		// Коэффициенты Ламе не используются в данном коде 23.08.2020.
+		// Коэффициент Пуассона.
+		temp_Poisson_ratio = nullptr;
+		arr_Poisson_ratio = nullptr;
+		
+		// Модуль Юнга.
+		temp_Young_Module = nullptr;
+		arr_Young_Module = nullptr;
+
+		// Модуль сдвига.
+		bActive_ShearModule=false; // не активен
+		ShearModule_xy = 200.0; ShearModule_yz = 200.0; ShearModule_xz=200.0;
 	}
 
 } PROP;
@@ -429,23 +485,49 @@ typedef struct TPROP {
 const integer FULL_F_to_F_INTERPOLATION = 0; // Интерполяция по расширенному шаблону.
 const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
 
+enum class AMGCL_ITERATOR_ALG {BiCGStab=0, FGMRes=1};
+enum class MY_SORT_ALGORITHM {COUNTING_SORT=0, QUICK_SORT=1, HEAP_SORT=2, TIM_SORT=3};
+
+// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
+// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
+// default - 3.
+enum class RS_COARSENING_KERNEL_DATA_STRUCTURE {AVL_TREE=0, SPLAY_TREE=1, BINARY_HEAP=2, TREAP=3, RED_BLACK_TREE=4, FIBONACCI_HEAP=5, VAN_EMDE_BOAS_TREE=6};
+
+// Алгоритм построения грубой сетки.
+// AMG Splitting (coarsening)
+// Способ построения C-F разбиения: 0 - standart, 1 - RS2, 2 - ST classical standart (по умолчанию), 3 - RS2 ST.	
+// RS2 улучшенная версия построения C-F разбиения содержащая второй проход.
+// ST - на основе STRONG Transpose (именно применение ST опции рекомендовано в литературе).
+// 8 - PMIS, 9 -HMIS.
+enum class MY_AMG_SPLITTING_COARSENING_ALGORITHM {
+	CLASSICAL_ALL_CONNECTION=0,
+	RS2_ALL_CONNECTION=1,
+	CLASSICAL_ST_ALL_CONNECTION=2, // ST - Strong Transpose.
+	RS2_ST_ALL_CONNECTION=3,
+	CLASSICAL_NEG_CONNECTION = 4,
+	RS2_NEG_CONNECTION = 5,
+	CLASSICAL_ST_NEG_CONNECTION = 6,
+	RS2_ST_NEG_CONNECTION = 7,
+	PMIS=8,
+	HMIS=9
+};
+
+
 // Управление алгебраическим многосеточным методом из интерфейса.
 typedef struct TMY_AMG_MANAGER {
 
 	// Алгоритм сортировки используемый в многосеточном методе РУМБА.
 	// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT, 4 - TimSort.
-	integer imySortAlgorithm; // 0 - Counting Sort Default.
+	MY_SORT_ALGORITHM imySortAlgorithm; // 0 - Counting Sort Default.
 
 	// 0 - не печатать портрет матрицы, 
 	// 1 - печатать портрет матрицы.
-	integer bTemperatureMatrixPortrait;
-	integer bSpeedMatrixPortrait;
-	integer bPressureMatrixPortrait;
-	integer bStressMatrixPortrait;
-	integer bMatrixPortrait;
-
+	bool bTemperatureMatrixPortrait;
+	bool bSpeedMatrixPortrait;
+	bool bPressureMatrixPortrait;
+	bool bStressMatrixPortrait;
+	bool bMatrixPortrait;
 	
-
 	// Temperature
 	doublereal theta_Temperature;
 	integer maximum_delete_levels_Temperature;
@@ -455,7 +537,7 @@ typedef struct TMY_AMG_MANAGER {
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Temperature;
+	RS_COARSENING_KERNEL_DATA_STRUCTURE iCFalgorithm_and_data_structure_Temperature;
 	// Speed
 	doublereal theta_Speed;
 	integer maximum_delete_levels_Speed;
@@ -465,7 +547,7 @@ typedef struct TMY_AMG_MANAGER {
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Speed;
+	RS_COARSENING_KERNEL_DATA_STRUCTURE iCFalgorithm_and_data_structure_Speed;
 	// Pressure
 	doublereal theta_Pressure;
 	integer maximum_delete_levels_Pressure;
@@ -475,7 +557,7 @@ typedef struct TMY_AMG_MANAGER {
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Pressure;
+	RS_COARSENING_KERNEL_DATA_STRUCTURE iCFalgorithm_and_data_structure_Pressure;
 	// Stress
 	doublereal theta_Stress;
 	integer maximum_delete_levels_Stress;
@@ -485,7 +567,7 @@ typedef struct TMY_AMG_MANAGER {
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Stress;
+	RS_COARSENING_KERNEL_DATA_STRUCTURE iCFalgorithm_and_data_structure_Stress;
 	// global
 	bool bCFJacoby; // C/F упорядочивание при сглаживании.
 	integer iRunge_Kutta_smoother; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
@@ -493,14 +575,14 @@ typedef struct TMY_AMG_MANAGER {
 	// Использование iluk разложения на глубоких уровнях вложенности для которых
 	// сеточный шаблон nnz/n имеет размер меньше либо равный 6 (шести).
 	bool b_ilu_smoothers_in_nnz_n_LE_6;
-	doublereal theta; // strength threshold
+	real_mix_precision theta; // strength threshold
 	//integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
 	integer maximum_delete_levels; // Количество уровней отсекаемых снизу в области грубой сетки.
 	integer nFinnest, nu1, nu2; // Количества сглаживаний.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 	// default - 2.
-	integer iCFalgorithm_and_data_structure;
+	RS_COARSENING_KERNEL_DATA_STRUCTURE iCFalgorithm_and_data_structure;
 	integer memory_size; // В размерах матрицы А.
 	// Для метода верхней релаксации в сглаживателе.
 	
@@ -539,8 +621,8 @@ typedef struct TMY_AMG_MANAGER {
 	// RS2 улучшенная версия построения C-F разбиения содержащая второй проход.
 	// ST - на основе STRONG Transpose.
 	// 8 - PMIS, 9 -HMIS.
-	integer icoarseningTemp, icoarseningSpeed, icoarseningPressure, icoarseningStress;
-	integer icoarseningtype;
+	MY_AMG_SPLITTING_COARSENING_ALGORITHM icoarseningTemp, icoarseningSpeed, icoarseningPressure, icoarseningStress;
+    MY_AMG_SPLITTING_COARSENING_ALGORITHM icoarseningtype;
 	// Stabilization BiCGStab.
 	// 8.01.2017
 	// предобусловленный алгебраическим многосеточным методом.
@@ -585,22 +667,23 @@ typedef struct TMY_AMG_MANAGER {
 	// AMGCL parameters
 	// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
 	// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
+	// 8 - iluk, k=4; 9 - iluk, k=6; 10 - iluk, k=8; 11 - iluk, k=10.
 	integer amgcl_smoother; 
 	integer amgcl_selector; // 0 - Ruge and Stuben (amg1r5 analog); 1 - smoother aggregation.
-	integer amgcl_iterator; // 0 - BiCGStab; 1 - FGMRes;
+	AMGCL_ITERATOR_ALG amgcl_iterator; // 0 - BiCGStab; 1 - FGMRes;
 
 	TMY_AMG_MANAGER() {
 		// Алгоритм сортировки используемый в многосеточном методе РУМБА.
 		// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT, 4 - TimSort.
-		imySortAlgorithm = 0; // 0 - Counting Sort Default.
+		imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT; // 0 - Counting Sort Default.
 
 		// 0 - не печатать портрет матрицы, 
 		// 1 - печатать портрет матрицы.
-		bTemperatureMatrixPortrait = 0;
-		bSpeedMatrixPortrait = 0;
-		bPressureMatrixPortrait = 0;
-		bStressMatrixPortrait = 0;
-		bMatrixPortrait = 0;
+		bTemperatureMatrixPortrait = false;
+		bSpeedMatrixPortrait = false;
+		bPressureMatrixPortrait = false;
+		bStressMatrixPortrait = false;
+		bMatrixPortrait = false;
 
 	
 
@@ -613,7 +696,7 @@ typedef struct TMY_AMG_MANAGER {
 		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 		// default - 3.
-		iCFalgorithm_and_data_structure_Temperature = 2;
+		iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
 		// Speed
 		theta_Speed = 0.24;
 		maximum_delete_levels_Speed = 0;
@@ -623,7 +706,7 @@ typedef struct TMY_AMG_MANAGER {
 		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 		// default - 3.
-		iCFalgorithm_and_data_structure_Speed = 2;
+		iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
 		// Pressure
 		theta_Pressure = 0.24;
 		maximum_delete_levels_Pressure = 0;
@@ -633,7 +716,7 @@ typedef struct TMY_AMG_MANAGER {
 		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 		// default - 3.
-		iCFalgorithm_and_data_structure_Pressure = 2;
+		iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
 		// Stress
 		theta_Stress = 0.24;
 		maximum_delete_levels_Stress = 0;
@@ -643,7 +726,7 @@ typedef struct TMY_AMG_MANAGER {
 		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 		// default - 3.
-		iCFalgorithm_and_data_structure_Stress = 2;
+		iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
 		// global
 		bCFJacoby = true; // C/F упорядочивание при сглаживании.
 		iRunge_Kutta_smoother = 0; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
@@ -651,14 +734,14 @@ typedef struct TMY_AMG_MANAGER {
 		// Использование iluk разложения на глубоких уровнях вложенности для которых
 		// сеточный шаблон nnz/n имеет размер меньше либо равный 6 (шести).
 		b_ilu_smoothers_in_nnz_n_LE_6 = false;
-		theta = 0.24; // strength threshold
+		theta = (real_mix_precision)(0.24); // strength threshold
 		//integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
 		maximum_delete_levels = 0; // Количество уровней отсекаемых снизу в области грубой сетки.
 		nFinnest = 2; nu1 = 1; nu2 = 2; // Количества сглаживаний.
 		// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 		// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
 		// default - 2.
-		iCFalgorithm_and_data_structure = 2;
+		iCFalgorithm_and_data_structure = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
 		memory_size = 13; // В размерах матрицы А.
 		// Для метода верхней релаксации в сглаживателе.
 		//const integer FULL_F_to_F_INTERPOLATION = 0; // Интерполяция по расширенному шаблону.
@@ -699,9 +782,11 @@ typedef struct TMY_AMG_MANAGER {
 		// RS2 улучшенная версия построения C-F разбиения содержащая второй проход.
 		// ST - на основе STRONG Transpose.
 		// 8 - PMIS, 9 -HMIS.
-		icoarseningTemp = 2; icoarseningSpeed = 2;
-		icoarseningPressure = 2; icoarseningStress = 2;
-		icoarseningtype = 2;
+		icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+		icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+		icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; 
+		icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+		icoarseningtype = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
 		// Stabilization BiCGStab.
 		// 8.01.2017
 		// предобусловленный алгебраическим многосеточным методом.
@@ -749,9 +834,10 @@ typedef struct TMY_AMG_MANAGER {
 		// AMGCL parameters
 		// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
 		// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
+		// 8 - iluk, k=4; 9 - iluk, k=6; 10 - iluk, k=8; 11 - iluk, k=10.
 		amgcl_smoother = 0; 
 		amgcl_selector = 0; // 0 - Ruge and Stuben (amg1r5 analog); 1 - smoother aggregation.
-		amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes;
+		amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab; // 0 - BiCGStab; 1 - FGMRes;
 	}
 
 } MY_AMG_MANAGER;
@@ -769,7 +855,7 @@ void my_amg_manager_init() {
 	// 1 - QUICK SORT Чарльз Хоар 1962г.
 	// 2 - HEAP SORT Вильямс 1964г.
 	// 3 - Tim SORT Тим Петерсом 2002 г.
-	my_amg_manager.imySortAlgorithm = 0; // default value COUNTING SORT
+	my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT; // default value COUNTING SORT
 
 	// Параметры собственного многосеточного метода о умолчанию.
 	// Настройки решателя СЛАУ зависят от типа уравнения которое подаётся на вход:
@@ -788,17 +874,17 @@ void my_amg_manager_init() {
 
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap, 4 - Red Black Tree,
 	// 5 - Fibonacci Heap, 6 - van Emde Boas Tree.
-	my_amg_manager.iCFalgorithm_and_data_structure = 3; // 3-Treap.
-	my_amg_manager.iCFalgorithm_and_data_structure_Temperature = 3;// 3-Treap.
-	my_amg_manager.iCFalgorithm_and_data_structure_Speed = 3;// 3-Treap.
-	my_amg_manager.iCFalgorithm_and_data_structure_Pressure = 3;// 3-Treap.
-	my_amg_manager.iCFalgorithm_and_data_structure_Stress = 3;// 3-Treap.	
+	my_amg_manager.iCFalgorithm_and_data_structure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP; // 3-Treap.
+	my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;// 3-Treap.
+	my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;// 3-Treap.
+	my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;// 3-Treap.
+	my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;// 3-Treap.	
 
-	my_amg_manager.bTemperatureMatrixPortrait = 0; // NO_PRINT
-	my_amg_manager.bSpeedMatrixPortrait = 0; // NO_PRINT
-	my_amg_manager.bPressureMatrixPortrait = 0; // NO_PRINT
-	my_amg_manager.bStressMatrixPortrait = 0; // NO_PRINT
-	my_amg_manager.bMatrixPortrait = 0; // NO_PRINT
+	my_amg_manager.bTemperatureMatrixPortrait = false; // NO_PRINT
+	my_amg_manager.bSpeedMatrixPortrait = false; // NO_PRINT
+	my_amg_manager.bPressureMatrixPortrait = false; // NO_PRINT
+	my_amg_manager.bStressMatrixPortrait = false; // NO_PRINT
+	my_amg_manager.bMatrixPortrait = false; // NO_PRINT
 
 
 	my_amg_manager.nFinnest = 2; // число итераций на подробной сетке.
@@ -824,7 +910,7 @@ void my_amg_manager_init() {
 	// ВНИМАНИЕ !!! устаревшие параметры, они больше не используются. 24.09.2019
 
 
-	my_amg_manager.theta = 0.24;
+	my_amg_manager.theta = (real_mix_precision)(0.24);
 	my_amg_manager.magic = 0.4;
 	my_amg_manager.F_to_F_Temperature = 0.4;
 	my_amg_manager.F_to_F_Speed = 0.4;
@@ -870,11 +956,11 @@ void my_amg_manager_init() {
 	// AMG Splitting (coarsening)
 	// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart ST, 3 - RS2 ST. ST - strong transpose.
 	// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
-	my_amg_manager.icoarseningTemp = 2; // standart strong transpose ST.
-	my_amg_manager.icoarseningSpeed = 2; // standart strong transpose ST.
-	my_amg_manager.icoarseningPressure = 2; // standart strong transpose ST.
-	my_amg_manager.icoarseningStress = 2; // standart strong transpose ST.
-	my_amg_manager.icoarseningtype = 2; // standart vs RS 2.
+	my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; // standart strong transpose ST.
+	my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; // standart strong transpose ST.
+	my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; // standart strong transpose ST.
+	my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; // standart strong transpose ST.
+	my_amg_manager.icoarseningtype = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; // standart vs RS 2.
 	// Stabilization BiCGStab.
 	// 8.01.2017 Метод ван дер Ворста BiCGStab 
 	// предобусловленный алгебраичесеким многосеточным методом.
@@ -936,9 +1022,10 @@ void my_amg_manager_init() {
 	// AMGCL parameters
 	// 0 - spai0; 1 - ilu0; 2- gauss-seidel; 3 - damped-jacobi;
 	// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
+	// 8 - iluk, k=4; 9 - iluk, k=6; 10 - iluk, k=8; 11 - iluk, k=10.
 	my_amg_manager.amgcl_smoother = 0; // 0 - spai0; default
 	my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (amg1r5 analog); 1 - smoother aggregation.
-	my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
+	my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab; // 0 - BiCGStab; 1 - FGMRes.
 
 }
 
@@ -1136,11 +1223,24 @@ typedef struct TBLOCKRADIATION {
 
 } BLOCKRADIATION;
 
+// стиль зависимости мощности тепловыделения от времени.
+// 0 - не зависит, 1 - square wave зависимость,
+// 2 - square wave 2, 3 - hot cold режим,
+// 4 - piecewise const.
+enum class POWER_TIME_DEPEND {
+	CONST_POWER = 0,
+	SQUARE_WAVE=1,
+	SQUARE_WAVE2 = 2,
+	HOT_COLD=3,
+	PIECEWISE_CONST=4
+};
+
+
 // блок
 typedef struct TBLOCK {
 	char name[80]; // имя объёмного геометрического объекта.
 
-	integer itype; // тип SOLID, HOLLOW или FLUID.
+	PHYSICS_TYPE_IN_BODY itype; // тип SOLID, HOLLOW или FLUID.
 	GEOM g;
 	integer imatid; // идентификатор материала в библиотеке
 	//doublereal Sc; // мощность тепловыделения на единицу объёма
@@ -1151,7 +1251,7 @@ typedef struct TBLOCK {
 	// 0 - не зависит, 1 - square wave зависимость,
 	// 2 - square wave 2, 3 - hot cold режим,
 	// 4 - piecewise const.
-	integer ipower_time_depend; 
+	POWER_TIME_DEPEND ipower_time_depend;
 	// Всё относящееся к теплообмену излучением:
 	// излучательные способности поверхностей, модель вакуумного промежутка.
 	BLOCKRADIATION radiation;
@@ -1167,7 +1267,7 @@ typedef struct TBLOCK {
 	TBLOCK() {
 		name[0] = '\0';
 
-		itype = -4; // тип SOLID, HOLLOW или FLUID.
+		itype = PHYSICS_TYPE_IN_BODY::HOLLOW; // тип SOLID, HOLLOW или FLUID.
 		//GEOM g;
 		imatid = -4; // идентификатор материала в библиотеке
 		//doublereal Sc; // мощность тепловыделения на единицу объёма
@@ -1178,7 +1278,7 @@ typedef struct TBLOCK {
 		// 0 - не зависит, 1 - square wave зависимость,
 		// 2 - square wave 2, 3 - hot cold режим,
 		// 4 - piecewise const.
-		ipower_time_depend = -4; 
+		ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
 		// Всё относящееся к теплообмену излучением:
 		// излучательные способности поверхностей, модель вакуумного промежутка.
 		//BLOCKRADIATION radiation;
@@ -1625,6 +1725,130 @@ doublereal get_lam(integer nsize_lam, doublereal* &temp_lam, doublereal* &arr_la
 	return 0.0;
 } // get_lam
 
+// 15.08.2020
+// Возвращает значение коэффициента линейного теплового расширения при температуре t_C в градусах.
+doublereal get_beta_t_solid(integer nsize_beta_t_solid, doublereal* &temp_beta_t_solid, doublereal* &arr_beta_t_solid, doublereal t_C) {
+	if (nsize_beta_t_solid == 1) {
+		return arr_beta_t_solid[0];
+	}
+	else if (nsize_beta_t_solid > 1) {
+		if (t_C < temp_beta_t_solid[0]) {
+			return arr_beta_t_solid[0];
+		}
+		else if (t_C > temp_beta_t_solid[nsize_beta_t_solid - 1]) {
+			return arr_beta_t_solid[nsize_beta_t_solid - 1];
+		}
+		else {
+			integer if_3 = -1;
+			for (integer i_sc = 0; i_sc < nsize_beta_t_solid - 1; i_sc++) {
+				if ((t_C >= temp_beta_t_solid[i_sc]) && (t_C <= temp_beta_t_solid[i_sc + 1])) {
+					if_3 = i_sc;
+					break;
+				}
+			}
+			if (if_3 > -1) {
+				doublereal af = (arr_beta_t_solid[if_3 + 1] - arr_beta_t_solid[if_3]) / (temp_beta_t_solid[if_3 + 1] - temp_beta_t_solid[if_3]);
+				doublereal bf = (arr_beta_t_solid[if_3] - af * temp_beta_t_solid[if_3]);
+				return (af*t_C + bf);
+			}
+			else {
+				printf("error in get_beta_t_solid function if_3==-1\n");
+				system("pause");
+				exit(1);
+			}
+		}
+	}
+	else {
+		printf("error in get_beta_t_solid function\n");
+		system("pause");
+		exit(1);
+	}
+	return 0.0;
+} // get_beta_t_solid
+
+
+// 23.08.2020
+// Возвращает значение модуля Юнга при температуре t_C в градусах.
+doublereal get_Young_Module(integer n_YoungModule, doublereal* &temp_Young_Module, doublereal* &arr_Young_Module, doublereal t_C) {
+	if (n_YoungModule == 1) {
+		return arr_Young_Module[0];
+	}
+	else if (n_YoungModule > 1) {
+		if (t_C < temp_Young_Module[0]) {
+			return arr_Young_Module[0];
+		}
+		else if (t_C > temp_Young_Module[n_YoungModule - 1]) {
+			return arr_Young_Module[n_YoungModule - 1];
+		}
+		else {
+			integer if_3 = -1;
+			for (integer i_sc = 0; i_sc < n_YoungModule - 1; i_sc++) {
+				if ((t_C >= temp_Young_Module[i_sc]) && (t_C <= temp_Young_Module[i_sc + 1])) {
+					if_3 = i_sc;
+					break;
+				}
+			}
+			if (if_3 > -1) {
+				doublereal af = (arr_Young_Module[if_3 + 1] - arr_Young_Module[if_3]) / (temp_Young_Module[if_3 + 1] - temp_Young_Module[if_3]);
+				doublereal bf = (arr_Young_Module[if_3] - af * temp_Young_Module[if_3]);
+				return (af*t_C + bf);
+			}
+			else {
+				printf("error in get_Young_Module function if_3==-1\n");
+				system("pause");
+				exit(1);
+			}
+		}
+	}
+	else {
+		printf("error in get_Young_Module function\n");
+		system("pause");
+		exit(1);
+	}
+	return 0.0;
+} // get_Young_Module
+
+// 23.08.2020
+// Возвращает значение коэффициента Пуассона при температуре t_C в градусах.
+doublereal get_Poisson_ratio(integer n_Poisson_ratio, doublereal* &temp_Poisson_ratio, doublereal* &arr_Poisson_ratio, doublereal t_C) {
+	if (n_Poisson_ratio == 1) {
+		return arr_Poisson_ratio[0];
+	}
+	else if (n_Poisson_ratio > 1) {
+		if (t_C < temp_Poisson_ratio[0]) {
+			return arr_Poisson_ratio[0];
+		}
+		else if (t_C > temp_Poisson_ratio[n_Poisson_ratio - 1]) {
+			return arr_Poisson_ratio[n_Poisson_ratio - 1];
+		}
+		else {
+			integer if_3 = -1;
+			for (integer i_sc = 0; i_sc < n_Poisson_ratio - 1; i_sc++) {
+				if ((t_C >= temp_Poisson_ratio[i_sc]) && (t_C <= temp_Poisson_ratio[i_sc + 1])) {
+					if_3 = i_sc;
+					break;
+				}
+			}
+			if (if_3 > -1) {
+				doublereal af = (arr_Poisson_ratio[if_3 + 1] - arr_Poisson_ratio[if_3]) / (temp_Poisson_ratio[if_3 + 1] - temp_Poisson_ratio[if_3]);
+				doublereal bf = (arr_Poisson_ratio[if_3] - af * temp_Poisson_ratio[if_3]);
+				return (af*t_C + bf);
+			}
+			else {
+				printf("error in get_Poisson_ratio function if_3==-1\n");
+				system("pause");
+				exit(1);
+			}
+		}
+	}
+	else {
+		printf("error in get_Poisson_ratio function\n");
+		system("pause");
+		exit(1);
+	}
+	return 0.0;
+} // get_Poisson_ratio
+
   // Возвращает значение теплоёмкости при температуре t_C в градусах.
 doublereal get_cp(integer nsize_cp, doublereal* &temp_cp, doublereal* &arr_cp, doublereal t_C) {
 	if (nsize_cp == 1) {
@@ -2053,6 +2277,17 @@ typedef struct TBOUND {
 	}
 } BOUND;
 
+enum class FLOW_REGIME {LAMINAR=0, TURBULENT=1};
+//const unsigned char LAMINAR = 0; // ламинарное течение
+//const unsigned char ZEROEQMOD = 1; // турбулентное течение - алгебраическая модель турбулентности Zero Equation Model
+//const unsigned char SMAGORINSKY = 2; // турбулентное течение - LES моделирование одна из разновидностей модели Смагоринского.
+//const unsigned char RNG_LES = 3; // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
+//const unsigned char RANS_SPALART_ALLMARES = 4; // RANS модель Спаларта - Аллмареса.
+//const unsigned char RANS_MENTER_SST = 5; //  Shear Stress Model SST Ментера.
+//const unsigned char RANS_STANDART_K_EPS = 6; // Двухслойная k-epsilon модель на основе стандартной k-epsilon модели.
+// Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
+enum class VISCOSITY_MODEL { LAMINAR = 0, ZEROEQMOD = 1, SMAGORINSKY = 2, RNG_LES = 3, RANS_SPALART_ALLMARES = 4, RANS_MENTER_SST = 5, RANS_STANDART_K_EPS = 6 };
+enum class TURBULENT_MODEL { ZEROEQMOD = 0, SMAGORINSKY = 1, RNG_LES = 2, RANS_SPALART_ALLMARES = 3, RANS_MENTER_SST = 4, RANS_STANDART_K_EPS = 5 };
 
 // информация о жидкой зоне
 typedef struct TFLOWINFO {
@@ -2061,7 +2296,7 @@ typedef struct TFLOWINFO {
 	// нужно ли рассчитывать поле течения
 	integer iflow;
 	// режим течения: 0 - ламинарный, 1 - турбулентный
-	integer iflowregime;
+	FLOW_REGIME iflowregime;
 	// модель турбулентности
 	// 0 - Zero Equation Turbulence Model (RANS).
 	// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
@@ -2069,10 +2304,10 @@ typedef struct TFLOWINFO {
 	// 3 - Spalart-Allmares (RANS). 19.04.2019
 	// 4 - K - Omega SST (RANS). 06.10.2019
 	// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
-	integer iturbmodel;
+	TURBULENT_MODEL iturbmodel;
 	// параметры модели Смагоринского:
 	doublereal Cs; // постоянная Смагоринского.
-	bool bDynamic_Stress ; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
+	bool bDynamic_Stress ; // если   то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
 	bool bLimiters_Cs; // включает ограничение на постоянную Смагоринского: ограничение на минимальное и максимальное значения.
 	doublereal rminCs, rmaxCs; // минимальное и максимальное ограничение для константы Смагоринского.
 	// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
@@ -2148,7 +2383,7 @@ typedef struct TFLOWINFO {
 		// нужно ли рассчитывать поле течения
 		iflow=0;
 		// режим течения: 0 - ламинарный, 1 - турбулентный
-		iflowregime=0;
+		iflowregime= FLOW_REGIME::LAMINAR;
 		// модель турбулентности
 		// 0 - Zero Equation Turbulence Model (RANS).
 		// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
@@ -2156,10 +2391,10 @@ typedef struct TFLOWINFO {
 		// 3 - Spalart-Allmares (RANS). 19.04.2019
 		// 4 - K - Omega SST (RANS). 06.10.2019
 		// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
-		iturbmodel=0;
+		iturbmodel= TURBULENT_MODEL::ZEROEQMOD;
 		// параметры модели Смагоринского:
 		Cs=0.151; // постоянная Смагоринского.
-		bDynamic_Stress = false; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
+		bDynamic_Stress = false; // если   то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
 		bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского: ограничение на минимальное и максимальное значения.
 		rminCs=-1.0e20; rmaxCs=1.0e23; // минимальное и максимальное ограничение для константы Смагоринского.
 		// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
@@ -2415,13 +2650,14 @@ typedef struct TTEMPER {
 										   // Свойства материалов разделяются для  
 										   // внутренних и для граничных КО.
 										   // сначала prop[0..2][0..maxelm-1]
+	bool *bActiveShearModule; // Задает ли пользователь модуль сдвига.
 	doublereal **prop; // свойства материалов для внутренних КО.
 							  // сначала prop_b[0..2][0..maxbound-1]
 	doublereal **prop_b; // свойства для граничных КО.
 
 
 	doublereal *Sc; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
-	integer *ipower_time_depend; // закон зависимости мощности тепловыделения от времени.
+	POWER_TIME_DEPEND  *ipower_time_depend; // закон зависимости мощности тепловыделения от времени.
 
 	doublereal alpha; // параметр релаксации для температуры
 	equation3D *slau; // коэффициенты матрицы СЛАУ для внутренних КО
@@ -2527,6 +2763,7 @@ typedef struct TTEMPER {
 										   // Свойства материалов разделяются для  
 										   // внутренних и для граничных КО.
 										   // сначала prop[0..2][0..maxelm-1]
+		bActiveShearModule = nullptr; // задаёт ли пользователь ЭВМ значение модуля сдвига.
 		prop = nullptr; // свойства материалов для внутренних КО.
 							  // сначала prop_b[0..2][0..maxbound-1]
 		prop_b = nullptr; // свойства для граничных КО.
@@ -2583,6 +2820,9 @@ typedef struct TTEMPER {
 
 }  TEMPER;
 
+
+
+
 typedef struct TFLOW {
 	integer maxnod; // максимальный номер узла (размерность массива)
 	integer maxelm; // число внутренних контрольных объёмов
@@ -2610,6 +2850,7 @@ typedef struct TFLOW {
 	// potent[iVar][0..maxp-1]
 	doublereal **potent; // массив узловых потенциалов (искомых функций)
 								// prop[0..2][0..maxelm-1]
+	
 	doublereal **prop; // свойства материалов
 							  // prop_b[0..2][0..maxbound-1]
 	doublereal **prop_b; // свойства материалов для граничных КО
@@ -2650,7 +2891,7 @@ typedef struct TFLOW {
 						  // В реальности большинство течений Турбулентны,
 						  // здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
 						  // режим течения для данной зоны FLUID
-	integer iflowregime; // default LAMINAR
+	VISCOSITY_MODEL iflowregime; // default LAMINAR
 						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
 	doublereal* rdistWall; // расстояние до ближайшей твёрдой стенки.
 								  // Толщина пограничного слоя в формуле Эскудиера
@@ -2705,11 +2946,13 @@ typedef struct TFLOW {
 		// potent[iVar][0..maxp-1]
 		potent = nullptr; // массив узловых потенциалов (искомых функций)
 								// prop[0..2][0..maxelm-1]
+
+		
 		prop = nullptr; // свойства материалов
 							  // prop_b[0..2][0..maxbound-1]
-		prop_b = nullptr; // свойства материалов для граничных КО
+		prop_b = nullptr; // свойства материалов для граничных КО.
 
-		alpha = nullptr; // параметры нижней релаксации
+		alpha = nullptr; // параметры нижней релаксации.
 		slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО.
 		slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
 									  // для реализации монотонизатора Рхи-Чоу 1983 требуется хранить диагональные коэффициенты.
@@ -2717,8 +2960,8 @@ typedef struct TFLOW {
 		 OpTemp=0.0; // Operating Temperature
 
 
-		bactive=true; // нужно-ли рассчитывать поле течения
-		bPressureFix = false; // нужно ли фиксировать давление в одной точке
+		bactive=true; // нужно-ли рассчитывать поле течения.
+		bPressureFix = false; // нужно ли фиксировать давление в одной точке.
 		bLR1free=false; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
 
 				   // для полилинейного метода:
@@ -2745,7 +2988,7 @@ typedef struct TFLOW {
 						  // В реальности большинство течений Турбулентны,
 						  // здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
 						  // режим течения для данной зоны FLUID
-		iflowregime= 0; // default LAMINAR
+		iflowregime= VISCOSITY_MODEL::LAMINAR; // default LAMINAR
 						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
 		rdistWall = nullptr; // расстояние до ближайшей твёрдой стенки.
 								  // Толщина пограничного слоя в формуле Эскудиера
@@ -2836,7 +3079,7 @@ typedef struct TUNION {
 
 		//  Тип сеточного генератора
 		// передаётся из интерфейса.
-		iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
+		iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 
 													 // Локальные объявления.
 													 //TEMPER t;
@@ -2858,7 +3101,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 		// Излучение в вакуумной призме не работает совместно с температурным солвером 
 		// на основе графового метода решения уравнения теплопередачи.
-		if ((b[i].radiation.binternalRadiation)&&(steady_or_unsteady_global_determinant == NETWORK_T)) {
+		if ((b[i].radiation.binternalRadiation)&&(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::NETWORK_T)) {
 			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
 			std::cout << "steady_or_unsteady_global_determinant == NETWORK_T" << std::endl;
 			std::cout << "synopsis: incompatible solver settings..." << std::endl;
@@ -2881,7 +3124,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		}
 
 		// Излучение в вакуумной призме не работает совместно с гидродинамическим расчётом.
-		if ((b[i].radiation.binternalRadiation) && (steady_or_unsteady_global_determinant == CFD_STEADY)) {
+		if ((b[i].radiation.binternalRadiation) && (steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY)) {
 			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
 			std::cout << "steady_or_unsteady_global_determinant == CFD_STEADY." << std::endl;
 			std::cout << "synopsis: incompatible solver settings..." << std::endl;
@@ -2894,7 +3137,7 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		// Излучение в вакуумной призме не работает с Адаптивными Локально Измельченными Сетками.
 		if ((b[i].radiation.binternalRadiation) && (b_on_adaptive_local_refinement_mesh)) {
 			std::cout << "Error:  body[" << i << "].name = " << b[i].name << " body[" << i << "] radiation.binternalRadiation is ON." << std::endl;
-			std::cout << "b_on_adaptive_local_refinement_mesh == true Adaptive Local Refinement Mesh is ON." << std::endl;
+			std::cout << "b_on_adaptive_local_refinement_mesh   Adaptive Local Refinement Mesh is ON." << std::endl;
 			std::cout << "synopsis: incompatible solver settings..." << std::endl;
 			std::cout << "recomended: set the control volume method as a temperature solver and a structured grid. turn OFF cfd." << std::endl;
 			system("pause");
@@ -3864,10 +4107,10 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		exit(1);
 	}
 
-	if ((lu==0)||((lu > 0) && ((steady_or_unsteady_global_determinant == MESHER_ONLY) ||
-		((steady_or_unsteady_global_determinant == STEADY_TEMPERATURE) && (eqin.itemper == 2))||
-		(steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL)||
-		(steady_or_unsteady_global_determinant == STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))))
+	if ((lu==0)||((lu > 0) && ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::MESHER_ONLY) ||
+		((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE) && (eqin.itemper == 2))||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL)||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))))
 	{
 		// Всё впорядке настройки совместимы.
 		// Асемблес может существовать при построении расчётной сетки,
@@ -4049,11 +4292,18 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	// eqin - информация о наборе решаемых уравнений.
 
 	// dgx, dgy, dgz - вектор силы тяжести.
-	// inx, iny, inz - количество точек по каждой из осей.
+	// inx, iny, inz - количество точек по каждой из осей.	
 
 	FILE *fp;
-	errno_t err1=0;
+	int err1=0;
 	fp=fopen64(fname, "r");
+
+	if (fp != nullptr) {
+		err1 = 0;
+	}
+	else {
+		err1 = 1; // ошибка открытия.
+	}
 	if (err1 != 0) {
 		printf("Error!!! No input File premeshin.txt.\n");
 		printf("You must use the graphical user interface\n");
@@ -4077,12 +4327,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			fscanf(fp, "%d", &din);
 			switch (din) {
-			case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
-			case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
-			default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 0: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 1: ionly_solid_visible= WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE; break;
+			default: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
 			}
 			//ionly_solid_visible=din;
-			std::cout<<"ionly_solid_visible ="<< ionly_solid_visible<<std::endl;
+			switch (ionly_solid_visible) {
+			case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE:
+				std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+				break;
+			case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE:
+				std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+				break;
+			}
 			fscanf(fp, "%f", &fin);
 			scale = fin;
 			fscanf(fp, "%d", &din);
@@ -4139,10 +4396,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			fscanf(fp, "%d", &din);
 			switch (din) {
-			case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
-			case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
-			case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
-			default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+			case 0: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+			case 1: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+			case 2: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+			default: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
 			}
 			//idirectional_for_XY_Plot = din;
 
@@ -4171,23 +4428,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			fscanf(fp, "%d", &din);
 			switch (din) {
-			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
-			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
-			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
-			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
-			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
-			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER; break;
+			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER; break;
+			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMGCL_SECONT_T_SOLVER; break;
+			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
 			}
 			//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf(fp, "%d", &din);
 			if (din == 1) {
 				// SIMPLEC algorithm.
-				iSIMPLE_alg = SIMPLEC_Van_Doormal_and_Raithby;
+				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby;
 			}
 			else {
 				// SIMPLE algorithm 1972.
-				iSIMPLE_alg = SIMPLE_Carretto;
+				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 			}
 
 			fscanf(fp, "%d", &din);
@@ -4240,18 +4497,18 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Выбор сеточного генератора.
 			fscanf(fp, "%d", &din);
 			switch (din) {
-				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
-				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
-				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
-				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				case 0: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
 			}
 			//iswitchMeshGenerator = din;
 
 
 			fscanf(fp, "%d", &din);
-			steady_or_unsteady_global_determinant = MESHER_ONLY;
+			steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY;
 			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| 
-				(din == 7) || (din == 8) || (din == 9)||(din == 10)||(din == 11)) {
+				(din == 7) || (din == 8) || (din == 9)||(din == 10)||(din == 11)||(din==12)||(din==13)) {
 				// 0 - thermal only steady state calculation,
 				// 1 - thermal only unsteady calculation,
 				// 2 - mesh generator only.
@@ -4263,19 +4520,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 9 - cfd unsteady fluid dynamic.
 				// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
 				// 11 - UNSTEADY NETWORK_T Нестационарный графовый метод решения уравнения теплопроводности.
+				// 12 - Нестационарная механика,
+				// 13 - Нестационарная механика совместно с нестационарной теплопередачей.
 				switch(din) {
-				case 0: steady_or_unsteady_global_determinant =STEADY_TEMPERATURE; break;
-				case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
-				case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
-				case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
-				case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
-				case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
-				case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
-				case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
-				case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
-				case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
-				case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
-				default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				case 0: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE; break;
+				case 1: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE; break;
+				case 2: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
+				case 3: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_STEADY; break;
+				case 5: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL; break;
+				case 6: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				case 7: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER; break;
+				case 8: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::PREOBRAZOVATEL_FOR_REPORT; break;
+				case 9: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY; break;
+				case 10: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T;  break;
+				case 11: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY; break;
+				case 12: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL; break;
+				case 13: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				default: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
 				}
 				//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady - 1 calculation.
 			}
@@ -4286,8 +4547,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			fscanf(fp, "%d", &din);
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3)) {
-				glTSL.id_law = din;
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3)||(din == 4)) {
+				switch (din) {
+				case 0: glTSL.id_law = TIME_STEP_lAW_SELECTOR::LINEAR;
+					break;
+				case 1: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE;
+					break;
+				case 2: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2;
+					break;
+				case 3: glTSL.id_law = TIME_STEP_lAW_SELECTOR::HOT_COLD;
+					break;
+				case 4: glTSL.id_law = TIME_STEP_lAW_SELECTOR::PIECEWISE_CONSTANT;
+					break;
+				}
 			}
 			else {
 				printf("error input parametr timestep law\n");
@@ -4371,11 +4643,11 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Newton-Richman condition.
 			fscanf(fp, "%d", &din);
 			switch (din) {
-			case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
-            case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
-	        case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
-		    case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
-			default :adiabatic_vs_heat_transfer_coeff =ADIABATIC_WALL_BC; break;
+			case 0: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
+            case 1: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC; break;
+	        case 2: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC; break;
+		    case 3: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC; break;
+			default :adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
 			}
 			//adiabatic_vs_heat_transfer_coeff = din;  // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 			fscanf(fp, "%f", &fin);
@@ -4392,9 +4664,9 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			fscanf(fp, "%d", &din);
 			switch (din) {
-			case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
-			case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
-			default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			case 0: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
+			case 1: itype_ALICE_Mesh= TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH; break;
+			default: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
 			}
 			//itype_ALICE_Mesh=din;
 			fscanf(fp, "%d", &din);
@@ -4402,7 +4674,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// classical algebraic multigrid parameters:
 			// only for my_agregat_amg.cu.
 			fscanf(fp, "%d", &din);
-			my_amg_manager.imySortAlgorithm = din;
+			switch (din) {
+			case 0: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+				break;
+			case 1: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::QUICK_SORT;
+				break;
+			case 2: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::HEAP_SORT;
+				break;
+			case 3: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::TIM_SORT;
+				break;
+			default:
+				my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+				break;
+			}
 			fscanf(fp, "%d", &din);
 			//my_amg_manager.maximum_levels = din;
 			my_amg_manager.maximum_delete_levels_Temperature = din;
@@ -4427,13 +4711,91 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.number_interpolation_procedure_Stress = din;
 
 			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Temperature = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
 			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Speed = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
+
 			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Pressure = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
+
 			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Stress = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
 
 			fscanf(fp, "%d", &din);
 			//my_amg_manager.itypemodifyinterpol = din;
@@ -4445,13 +4807,33 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// 23.02.2018
 			// print matrix portrait
 			fscanf(fp, "%d", &din);
-			my_amg_manager.bTemperatureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bTemperatureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bTemperatureMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 			fscanf(fp, "%d", &din);
-			my_amg_manager.bSpeedMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bSpeedMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bSpeedMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 			fscanf(fp, "%d", &din);
-			my_amg_manager.bPressureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bPressureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bPressureMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 			fscanf(fp, "%d", &din);
-			my_amg_manager.bStressMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bStressMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bStressMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 
 			// 01.05.2017
 			// truncation of interpolation:
@@ -4597,13 +4979,111 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningTemp = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
 			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningSpeed = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
+
 			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningPressure = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
+
 			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningStress = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
 
 			// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 			// Если din==1, Stabilization BiCGStab.
@@ -4638,7 +5118,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.amgcl_selector = din;
 
 			fscanf(fp, "%d", &din);
-			my_amg_manager.amgcl_iterator = din;
+			switch (din) {
+			case 0: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+				break;
+			case 1: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::FGMRes;
+				break;
+			default: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+				break;
+			}
 
 			fscanf(fp, "%d", &din);
 			my_amg_manager.lfil = din;
@@ -4739,22 +5226,157 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				matlist[i].orthotropy_multiplyer_y=fin;
 				fscanf(fp, "%f", &fin);
 				matlist[i].orthotropy_multiplyer_z=fin;
+
+
+				// 28.08.2020
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_x_beta_t_solid = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_y_beta_t_solid = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_z_beta_t_solid = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_x_Young_Module = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_y_Young_Module = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_z_Young_Module = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_xy = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_xz = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_yz = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_yx = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_zx = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_zy = fin;
+				fscanf(fp, "%d", &din);
+				if (din == 1) {
+					matlist[i].bActive_ShearModule = true;
+				}
+				else {
+					matlist[i].bActive_ShearModule = false;
+				}
+				fscanf(fp, "%f", &fin);
+				matlist[i].ShearModule_xy = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].ShearModule_yz = fin;
+				fscanf(fp, "%f", &fin);
+				matlist[i].ShearModule_xz = fin;
+
+
+
 				// 5.08.2017.
 				// Коэффициенты для задачи упругости.
 				// Модуль Юнга и коэффициент Пуассона.
-				doublereal Poissonratio = 0.154;
-				doublereal Youngmodule = 217.5e9;
-				fscanf(fp, "%f", &fin);
-				Poissonratio = fin;
-				fscanf(fp, "%f", &fin);
-				Youngmodule = fin*1e9;
-				fscanf(fp, "%f", &fin);
-				matlist[i].beta_t_solid = fin*1E-6;
-				// Коэффициенты Ламе.
-				doublereal E1_koef = Youngmodule / (1.0- Poissonratio*Poissonratio);
-				doublereal nu1_koef = Poissonratio / (1.0- Poissonratio);
-				matlist[i].mu_Lame = E1_koef/(2.0*(1.0+ nu1_koef));
-				matlist[i].lambda_Lame = (E1_koef*nu1_koef)/(1.0- nu1_koef*nu1_koef);
+				//doublereal Poissonratio = 0.154;
+				//doublereal Youngmodule = 217.5e9;
+				//fscanf(fp, "%f", &fin);
+				//Poissonratio = fin;
+				//if (fabs(fin) < 1.0e-30) {
+					//printf("ERROR !!! Zero Poisson Ratio in model. \n");
+					//printf("ERROR !!! Model is incorrect...\n");
+					//system("PAUSE");
+					//exit(1);
+				//}
+				//matlist[i].Poisson_ratio = fin; 
+
+				fscanf(fp, "%d", &din);
+				matlist[i].n_Poisson_ratio = din;
+				matlist[i].arr_Poisson_ratio = nullptr;
+				matlist[i].temp_Poisson_ratio = nullptr;
+				matlist[i].arr_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+				matlist[i].temp_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+				if (matlist[i].temp_Poisson_ratio == nullptr) {
+					printf("problem memory allocation for temp_Poisson_ratio\n");
+					system("pause");
+					exit(1);
+				}
+				if (matlist[i].arr_Poisson_ratio == nullptr) {
+					printf("problem memory allocation for arr_Poisson_ratio\n");
+					system("pause");
+					exit(1);
+				}
+				for (integer i_4 = 0; i_4 < matlist[i].n_Poisson_ratio; i_4++) {
+					// Температура в C.
+					fscanf(fp, "%f", &fin);
+					matlist[i].temp_Poisson_ratio[i_4] = fin;
+					fscanf(fp, "%f", &fin);
+					matlist[i].arr_Poisson_ratio[i_4] = fin;
+				}
+
+
+				//fscanf(fp, "%f", &fin);
+				//Youngmodule = fin*1e9;
+				//if (fabs(fin) < 1.0e-30) {
+					//printf("ERROR !!! Zero Young Module in model. \n");
+					//printf("ERROR !!! Model is incorrect...\n");
+					//system("PAUSE");
+					//exit(1);
+				//}
+				//matlist[i].Young_Module= fin * 1e9; // Модуль Юнга
+
+				fscanf(fp, "%d", &din);
+				matlist[i].n_YoungModule = din;
+				matlist[i].arr_Young_Module = nullptr;
+				matlist[i].temp_Young_Module = nullptr;
+				matlist[i].arr_Young_Module = new doublereal[matlist[i].n_YoungModule];
+				matlist[i].temp_Young_Module = new doublereal[matlist[i].n_YoungModule];
+				if (matlist[i].temp_Young_Module == nullptr) {
+					printf("problem memory allocation for temp_Young_Module\n");
+					system("pause");
+					exit(1);
+				}
+				if (matlist[i].arr_Young_Module == nullptr) {
+					printf("problem memory allocation for arr_Young_Module\n");
+					system("pause");
+					exit(1);
+				}
+				for (integer i_4 = 0; i_4 < matlist[i].n_YoungModule; i_4++) {
+					// Температура в C.
+					fscanf(fp, "%f", &fin);
+					matlist[i].temp_Young_Module[i_4] = fin;
+					fscanf(fp, "%f", &fin);
+					matlist[i].arr_Young_Module[i_4] = fin * 1.0e+9;
+				}
+
+
+				//fscanf(fp, "%f", &fin);
+				//matlist[i].n_beta_t_solid = 1;
+				//matlist[i].temp_beta_t_solid = new doublereal[1];
+				//matlist[i].temp_beta_t_solid[0] = 25.0;
+				//matlist[i].arr_beta_t_solid = new doublereal[1];
+				//matlist[i].arr_beta_t_solid[0]= fin * 1E-6;
+
+				fscanf(fp, "%d", &din);
+				matlist[i].n_beta_t_solid = din;
+				matlist[i].arr_beta_t_solid = nullptr;
+				matlist[i].temp_beta_t_solid = nullptr;
+				matlist[i].arr_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+				matlist[i].temp_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+				if (matlist[i].temp_beta_t_solid == nullptr) {
+					printf("problem memory allocation for temp_beta_t_solid\n");
+					system("pause");
+					exit(1);
+				}
+				if (matlist[i].arr_beta_t_solid == nullptr) {
+					printf("problem memory allocation for arr_beta_t_solid\n");
+					system("pause");
+					exit(1);
+				}
+				for (integer i_4 = 0; i_4 < matlist[i].n_beta_t_solid; i_4++) {
+					// Температура в C.
+					fscanf(fp, "%f", &fin);
+					matlist[i].temp_beta_t_solid[i_4] = fin;
+					fscanf(fp, "%f", &fin);
+					matlist[i].arr_beta_t_solid[i_4] = fin * 1.0e-6;
+				}
+			
+				// Коэффициенты Ламе не используются в данном коде.
+				
 				// коэффициент динамической вязкости
 				fscanf(fp, "%f", &fin);
 				matlist[i].mu = fin;
@@ -5062,15 +5684,39 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
                 // стиль зависимости мощности тепловыделения в блоке от времени.
 				fscanf(fp, "%d", &din);
-				b[i].ipower_time_depend=din;
+				switch (din) {
+				case 0: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+					break;
+				case 1: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE;
+					break;
+				case 2: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE2;
+					break;
+				case 3: b[i].ipower_time_depend = POWER_TIME_DEPEND::HOT_COLD;
+					break;
+				case 4: b[i].ipower_time_depend = POWER_TIME_DEPEND::PIECEWISE_CONST;
+					break;
+				default: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+					break;
+				}
+
 				// тип блока
 				fscanf(fp, "%d", &din);
-				b[i].itype = din;
+				switch (din) {
+				case 1: b[i].itype = PHYSICS_TYPE_IN_BODY::SOLID;
+					break;
+				case 2: b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+					break;
+				case 3: b[i].itype = PHYSICS_TYPE_IN_BODY::FLUID;
+					break;
+				default:
+					b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+					break;
+				}
 
 				// печать считанных значений на консоль
 				//printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
 				//std::cout << b[i].g.xS << " " << b[i].g.yS << " " << b[i].g.zS << " " << b[i].g.xE << " " << b[i].g.yE << " " << b[i].g.zE << std::endl;
-				//printf("%d %d %d\n", b[i].imatid,  b[i].itype, b[i].ipower_time_depend);
+				//printf("%d %d\n", b[i].imatid,  b[i].itype);
 				//printf("temperature depend power\n");
 				//printf("t_C power_W\n");
 				for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
@@ -5188,11 +5834,11 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				fscanf(fp, "%d", &din);
 				switch (din) {
-				case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
-				case 2: w[i].ifamily=NEIMAN_FAMILY; break;
-				case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
-				case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
-				default: w[i].ifamily=NEIMAN_FAMILY; break;
+				case 1 : w[i].ifamily= WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY; break;
+				case 2: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
+				case 3: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY; break;
+				case 4: w[i].ifamily= WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY; break;
+				default: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
 				}
 				//w[i].ifamily = din;
 				switch (din) {
@@ -5258,7 +5904,45 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				fscanf(fp, "%f", &fin);
 				w[i].P = fin;
 				fscanf(fp, "%d", &din);
-				w[i].ithermal_Stress_boundary_condition = din;
+				// Thermal-Stress boundary condition
+						// 0 - free,
+						// 1 - x fixit,
+						// 2 - y fixit,
+						// 3 - z fixit,
+						// 4 - xy fixit,
+						// 5 - xz fixit,
+						// 6 - yz fixit,
+						// 7 - fixit all,
+						// 8 - x Force,
+						// 9 - y Force,
+						// 10 - z Force.
+				switch (din) {
+				case 0: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+					break;
+				case 1: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FIXIT;
+					break;
+				case 2: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FIXIT;
+					break;
+				case 3: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FIXIT;
+					break;
+				case 4: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XY_FIXIT;
+					break;
+				case 5: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XZ_FIXIT;
+					break;
+				case 6: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::YZ_FIXIT;
+					break;
+				case 7: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::ALL_FIXIT;
+					break;
+				case 8: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FORCE;
+					break;
+				case 9: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FORCE;
+					break;
+				case 10: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FORCE;
+					break;
+				default:
+					w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // Free all
+					break;
+				}
 				fscanf(fp, "%f", &fin);
 				w[i].xForce = fin;
 				fscanf(fp, "%f", &fin);
@@ -5319,7 +6003,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -5378,9 +6062,31 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf(fp, "%d", &din);
 					eqin.fluidinfo[i].iflow = din;
 					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].iflowregime = din;
+					switch (din) {
+					case 0: eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+						break;
+					case 1:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::TURBULENT;
+						break;
+					default:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+						break;
+					}
 					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].iturbmodel = din;
+					switch (din) {
+					case 0: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+						break;
+					case 1: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::SMAGORINSKY;
+						break;
+					case 2: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RNG_LES;
+						break;
+					case 3: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_SPALART_ALLMARES;
+						break;
+					case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
+						break;
+					case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+						break;
+					default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+						break;
+					}
 					fscanf(fp, "%f", &fin);
 					eqin.fluidinfo[i].Cs = fin; // постоянная Смагоринского.
 					fscanf(fp, "%d", &din);
@@ -5451,10 +6157,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf(fp, "%d", &din);
 #endif
 					switch (din) {
-					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
-					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
-					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
-					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 0: pfpir.idir = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
 					}
 					//pfpir.idir = din;
 
@@ -5531,16 +6237,29 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf(fp, "%d", &din);
 #endif
 					switch (din) {
-					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+					case 0: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::NONE_only_amg1r5;
 						break;
-					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+					case 1: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 						break;
-					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+					case 2: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::FGMRes_plus_amg1r5;
+						break;
+					case 3: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5;
 						break;
 					default:
-						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 						break;
 					}
+
+#if doubleintprecision == 1
+					fscanf(fp, "%f", &fin);
+#else
+					fscanf(fp, "%f", &fin);
+#endif
+					 
+					// Найдено успешно.
+					// Свободный параметр передаваемый из интерфейса и используемый для отладки.
+					free_debug_parametr1 = (doublereal)(fin);
+					
 					 
 				}
 			}
@@ -5556,13 +6275,13 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	integer ipoly = 0, icyl = 0, iprism = 0;
 	integer ihol = 0, isol = 0, iflui = 0;
 	for (integer i_1 = 0; i_1 < lb; i_1++) {
-		if (b[i_1].itype == HOLLOW) {
+		if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 			ihol++;
 		}
-		if (b[i_1].itype == FLUID) {
+		if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 			iflui++;
 		}
-		if (b[i_1].itype == SOLID) {
+		if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 			isol++;
 		}
 		if (b[i_1].g.itypegeom == PRISM) {
@@ -5650,6 +6369,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				doublereal vol = 0.0;
 				
+				const doublereal MPI0 = 3.1415926535;
+
 				vol = b[i_1].g.Hcyl*MPI0*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
 				if (vol < 1.0e-40) {
 					printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
@@ -5746,12 +6467,20 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
-			case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
-			case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
-			default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 0: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
+			case 1: ionly_solid_visible= WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE; break;
+			default: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
 			}
 			//ionly_solid_visible = din;
-			std::cout<<"ionly_solid_visible ="<< ionly_solid_visible<<std::endl;
+			switch (ionly_solid_visible) {
+			case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE:
+				std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+				break;
+			case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE:
+				std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+				break;
+			}
+
 			fscanf_s(fp, "%f", &fin);
 			scale = fin;
 			fscanf_s(fp, "%d", &din);
@@ -5809,10 +6538,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// 0 - Ox, 1 - Oy, 2 - Oz.
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
-			case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
-			case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
-			case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
-			default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+			case 0: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+			case 1: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+			case 2: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+			default: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL;	break;
 			}
 			//idirectional_for_XY_Plot = din;
 
@@ -5845,23 +6574,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
-			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
-			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
-			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
-			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
-			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
-			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER; break;
+			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER; break;
+			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMGCL_SECONT_T_SOLVER; break;
+			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
 			}
 			//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf_s(fp, "%d", &din);
 			if (din == 1) {
 				// SIMPLEC algorithm.
-				iSIMPLE_alg = SIMPLEC_Van_Doormal_and_Raithby;
+				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby;
 			}
 			else {
 				// SIMPLE algorithm 1972.
-				iSIMPLE_alg = SIMPLE_Carretto;
+				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 			}
 
 			fscanf_s(fp, "%d", &din);
@@ -5915,17 +6644,17 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Выбор сеточного генератора.
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
-				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
-				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
-				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
-				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				case 0: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
 			}
 			//iswitchMeshGenerator = din;
 
 			fscanf_s(fp, "%d", &din);
-			steady_or_unsteady_global_determinant = MESHER_ONLY;
+			steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY;
 			if ((din == 0) || (din == 1) || (din == 2) || (din == 3)  || (din == 5) || (din == 6) || 
-				(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
+				(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)||(din==12)||(din==13)) {
 				// 0 - thermal only steady state calculation,
 				// 1 - thermal only unsteady calculation,
 				// 2 - mesh generator only.
@@ -5937,19 +6666,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 9 - cfd unsteady fluid dynamic.
 				// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
 				// 11 - UNSTEADY NETWORK_T Нестационврный графовый метод решения уравнения теплопроводности.
+				// 12 - Нестационарная механика,
+				// 13 - Нестационарная механика совместно с нестационарной теплопередачей.
 				switch (din) {
-				case 0: steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; break;
-				case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
-				case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
-				case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
-				case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
-				case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
-				case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
-				case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
-				case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
-				case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
-				case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
-				default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				case 0: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE; break;
+				case 1: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE; break;
+				case 2: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
+				case 3: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_STEADY; break;
+				case 5: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL; break;
+				case 6: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				case 7: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER; break;
+				case 8: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::PREOBRAZOVATEL_FOR_REPORT; break;
+				case 9: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY; break;
+				case 10: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T;  break;
+				case 11: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY; break;
+				case 12: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL;  break;
+				case 13: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				default: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
 				}
 				//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
 			}
@@ -5960,8 +6693,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			fscanf_s(fp, "%d", &din);
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3)) {
-				glTSL.id_law = din;
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 4)) {
+				switch (din) {
+				case 0: glTSL.id_law = TIME_STEP_lAW_SELECTOR::LINEAR;
+					break;
+				case 1: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE;
+					break;
+				case 2: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2;
+					break;
+				case 3: glTSL.id_law = TIME_STEP_lAW_SELECTOR::HOT_COLD;
+					break;
+				case 4: glTSL.id_law = TIME_STEP_lAW_SELECTOR::PIECEWISE_CONSTANT;
+					break;
+				}
 			}
 			else {
 				printf("error input parametr timestep law\n");
@@ -6048,11 +6792,11 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Newton-Richman condition.
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
-			case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
-            case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
-	        case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
-		    case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
-			default :adiabatic_vs_heat_transfer_coeff =ADIABATIC_WALL_BC; break;
+			case 0: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
+            case 1: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC; break;
+	        case 2: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC; break;
+		    case 3: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC; break;
+			default :adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
 			}
 			//adiabatic_vs_heat_transfer_coeff = din; // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 			fscanf_s(fp, "%f", &fin);
@@ -6069,9 +6813,9 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
-			case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
-			case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
-			default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			case 0: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
+			case 1: itype_ALICE_Mesh= TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH; break;
+			default: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
 			}
 			//itype_ALICE_Mesh = din;
 			fscanf_s(fp, "%d", &din);
@@ -6080,7 +6824,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// only for my_agregat_amg.cu.
 			// only for my_agregat_amg.cu.
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.imySortAlgorithm = din;
+			switch (din) {
+			case 0: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+				break;
+			case 1: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::QUICK_SORT;
+				break;
+			case 2: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::HEAP_SORT;
+				break;
+			case 3: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::TIM_SORT;
+				break;
+			default:
+				my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+				break;
+			}
 			fscanf_s(fp, "%d", &din);
 			//my_amg_manager.maximum_levels = din;
 			my_amg_manager.maximum_delete_levels_Temperature = din;
@@ -6105,13 +6861,89 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.number_interpolation_procedure_Stress = din;
 
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Temperature = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Speed = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Pressure = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Stress = din;// 3-Treap.
+			switch (din) {
+			case 0: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+				break;
+			case 1: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			case 2: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+				break;
+			case 3: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+				break;
+			case 4: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+				break;
+			case 5: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+				break;
+			case 6: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+				break;
+			default:
+				my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+				break;
+			}
+
 
 			fscanf_s(fp, "%d", &din);
 			//my_amg_manager.itypemodifyinterpol = din;
@@ -6124,13 +6956,34 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// 23.02.2018
 			// print matrix portrait
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.bTemperatureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bTemperatureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bTemperatureMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.bSpeedMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bSpeedMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bSpeedMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.bPressureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bPressureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bPressureMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.bStressMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+			if (din == 0) {
+				my_amg_manager.bStressMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+			}
+			else {
+				my_amg_manager.bStressMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+			}
+
 
 			// 01.05.2017
 			// truncation of interpolation:
@@ -6275,13 +7128,111 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.icoarseningTemp = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.icoarseningSpeed = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
+
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.icoarseningPressure = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
+
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.icoarseningStress = din;
+			switch (din) {
+			case 0: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+				break;
+			case 1: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+				break;
+			case 2: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+				break;
+			case 3: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+				break;
+			case 4: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+				break;
+			case 5: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+				break;
+			case 6: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+				break;
+			case 7: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+				break;
+			case 8: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			case 9: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+				break;
+			default:
+				my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+				break;
+			}
 
 			// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 			// Если din==1, Stabilization BiCGStab.
@@ -6316,7 +7267,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.amgcl_selector = din;
 
 			fscanf_s(fp, "%d", &din);
-			my_amg_manager.amgcl_iterator = din;
+			switch (din) {
+			case 0: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+				break;
+			case 1: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::FGMRes;
+				break;
+			default: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+				break;
+			}
 
 			fscanf_s(fp, "%d", &din);
 			my_amg_manager.lfil = din;
@@ -6418,23 +7376,155 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				matlist[i].orthotropy_multiplyer_y = fin;
 				fscanf_s(fp, "%f", &fin);
 				matlist[i].orthotropy_multiplyer_z = fin;
+
+				// 28.08.2020
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_x_beta_t_solid = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_y_beta_t_solid = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_z_beta_t_solid = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_x_Young_Module = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_y_Young_Module = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_z_Young_Module = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_xy = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_xz = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_yz = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_yx = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_zx = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].orthotropy_multiplyer_Poisson_ratio_zy = fin;
+				fscanf_s(fp, "%d", &din);
+				if (din == 1) {
+					matlist[i].bActive_ShearModule = true;
+				}
+				else {
+					matlist[i].bActive_ShearModule = false;
+				}
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].ShearModule_xy = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].ShearModule_yz = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].ShearModule_xz = fin;
+
+
 				// 5.08.2017.
 				// Коэффициенты для задачи упругости.
 				// Модуль Юнга и коэффициент Пуассона.
-				doublereal Poissonratio = 0.154;
-				doublereal Youngmodule = 217.5e9;
-				fscanf_s(fp, "%f", &fin);
-				Poissonratio = fin;
-				fscanf_s(fp, "%f", &fin);
-				Youngmodule = fin * 1e9;
-				fscanf_s(fp, "%f", &fin);
+				//doublereal Poissonratio = 0.154;
+				//doublereal Youngmodule = 217.5e9;
+				//fscanf_s(fp, "%f", &fin);
+				//Poissonratio = fin;
+				//if (fabs(fin) < 1.0e-30) {
+					//printf("ERROR !!! Zero Poisson Ratio in model. \n");
+					//printf("ERROR !!! Model is incorrect...\n");
+					//system("PAUSE");
+					//exit(1);
+				//}
+				//matlist[i].Poisson_ratio = fin;
+
+				fscanf_s(fp, "%d", &din);
+				matlist[i].n_Poisson_ratio = din;
+				matlist[i].arr_Poisson_ratio = nullptr;
+				matlist[i].temp_Poisson_ratio = nullptr;
+				matlist[i].arr_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+				matlist[i].temp_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+				if (matlist[i].temp_Poisson_ratio == nullptr) {
+					printf("problem memory allocation for temp_Poisson_ratio\n");
+					system("pause");
+					exit(1);
+				}
+				if (matlist[i].arr_Poisson_ratio == nullptr) {
+					printf("problem memory allocation for arr_Poisson_ratio\n");
+					system("pause");
+					exit(1);
+				}
+				for (integer i_4 = 0; i_4 < matlist[i].n_Poisson_ratio; i_4++) {
+					// Температура в C.
+					fscanf_s(fp, "%f", &fin);
+					matlist[i].temp_Poisson_ratio[i_4] = fin;
+					fscanf_s(fp, "%f", &fin);
+					matlist[i].arr_Poisson_ratio[i_4] = fin;
+				}
+
+
+				//fscanf_s(fp, "%f", &fin);
+				//Youngmodule = fin * 1e9;
+				//if (fabs(fin) < 1.0e-30) {
+					//printf("ERROR !!! Zero Young Module in model. \n");
+					//printf("ERROR !!! Model is incorrect...\n");
+					//system("PAUSE");
+					//exit(1);
+				//}
+				//matlist[i].Young_Module = fin * 1e9;
+
+				fscanf_s(fp, "%d", &din);
+				matlist[i].n_YoungModule = din;
+				matlist[i].arr_Young_Module = nullptr;
+				matlist[i].temp_Young_Module = nullptr;
+				matlist[i].arr_Young_Module = new doublereal[matlist[i].n_YoungModule];
+				matlist[i].temp_Young_Module = new doublereal[matlist[i].n_YoungModule];
+				if (matlist[i].temp_Young_Module == nullptr) {
+					printf("problem memory allocation for temp_Young_Module\n");
+					system("pause");
+					exit(1);
+				}
+				if (matlist[i].arr_Young_Module == nullptr) {
+					printf("problem memory allocation for arr_Young_Module\n");
+					system("pause");
+					exit(1);
+				}
+				for (integer i_4 = 0; i_4 < matlist[i].n_YoungModule; i_4++) {
+					// Температура в C.
+					fscanf_s(fp, "%f", &fin);
+					matlist[i].temp_Young_Module[i_4] = fin;
+					fscanf_s(fp, "%f", &fin);
+					matlist[i].arr_Young_Module[i_4] = fin * 1.0e+9;
+				}
+
+				//fscanf_s(fp, "%f", &fin);
 				// beta_t_solid*1E-6
-				matlist[i].beta_t_solid = fin * 1E-6;
-				// Коэффициенты Ламе.
-				doublereal E1_koef = Youngmodule / (1.0 - Poissonratio * Poissonratio);
-				doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
-				matlist[i].mu_Lame = E1_koef / (2.0 * (1.0 + nu1_koef));
-				matlist[i].lambda_Lame = (E1_koef * nu1_koef) / (1.0 - nu1_koef * nu1_koef);
+				//matlist[i].n_beta_t_solid = 1;
+				//matlist[i].temp_beta_t_solid = new doublereal[1];
+				//matlist[i].temp_beta_t_solid[0] = 25.0;
+				//matlist[i].arr_beta_t_solid = new doublereal[1];
+				//matlist[i].arr_beta_t_solid[0] = fin * 1E-6;
+
+				fscanf_s(fp, "%d", &din);
+				matlist[i].n_beta_t_solid = din;
+				matlist[i].arr_beta_t_solid = nullptr;
+				matlist[i].temp_beta_t_solid = nullptr;
+				matlist[i].arr_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+				matlist[i].temp_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+				if (matlist[i].temp_beta_t_solid == nullptr) {
+					printf("problem memory allocation for temp_beta_t_solid\n");
+					system("pause");
+					exit(1);
+				}
+				if (matlist[i].arr_beta_t_solid == nullptr) {
+					printf("problem memory allocation for arr_beta_t_solid\n");
+					system("pause");
+					exit(1);
+				}
+				for (integer i_4 = 0; i_4 < matlist[i].n_beta_t_solid; i_4++) {
+					// Температура в C.
+					fscanf_s(fp, "%f", &fin);
+					matlist[i].temp_beta_t_solid[i_4] = fin;
+					fscanf_s(fp, "%f", &fin);
+					matlist[i].arr_beta_t_solid[i_4] = fin * 1.0e-6;
+				}
+
+				// Коэффициенты Ламе не используются в данном коде.
+				
 				// коэффициент динамической вязкости
 				fscanf_s(fp, "%f", &fin);
 				matlist[i].mu = fin;
@@ -6765,14 +7855,37 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 2 - square wave 2 зависимость, 3 - hot cold режим,
 				// 4 - piecewise const.
 				fscanf_s(fp, "%d", &din);
-				b[i].ipower_time_depend = din;
+				switch (din) {
+				case 0: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+					break;
+				case 1: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE;
+					break;
+				case 2: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE2;
+					break;
+				case 3: b[i].ipower_time_depend = POWER_TIME_DEPEND::HOT_COLD;
+					break;
+				case 4: b[i].ipower_time_depend = POWER_TIME_DEPEND::PIECEWISE_CONST;
+					break;
+				default: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+					break;
+				}
 				// тип блока
 				fscanf_s(fp, "%d", &din);
-				b[i].itype = din;
+				switch (din) {
+				case 1: b[i].itype = PHYSICS_TYPE_IN_BODY::SOLID;
+					break;
+				case 2: b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+					break;
+				case 3: b[i].itype = PHYSICS_TYPE_IN_BODY::FLUID;
+					break;
+				default:
+					b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+					break;
+				}
 
 				// печать считанных значений на консоль
 				printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-				printf("%d %d %d\n", b[i].imatid, b[i].itype, b[i].ipower_time_depend);
+				printf("%d %d\n", b[i].imatid, b[i].itype);
 				printf("temperature depend power\n");
 				printf("t_C power_W\n");
 				for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
@@ -6883,15 +7996,15 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			for (i = 0; i < lw; i++) {
 
 				fscanf_s(fp, "%d", &din);
-				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+				w[i].iunion_id = din; // 0 == Кабинет или >0 - значит номер АССЕМБЛЕСА которому принадлежит.
 
 				fscanf_s(fp, "%d", &din);
 				switch (din) {
-				case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
-				case 2: w[i].ifamily=NEIMAN_FAMILY; break;
-				case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
-				case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
-				default: w[i].ifamily=NEIMAN_FAMILY; break;
+				case 1 : w[i].ifamily= WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY; break;
+				case 2: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
+				case 3: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY; break;
+				case 4: w[i].ifamily= WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY; break;
+				default: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
 				}
 				//w[i].ifamily = din;
 				switch (din) {
@@ -6901,7 +8014,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// termostability wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
-					fscanf(fp, "%f", &fin); // ViewFactor
+					fscanf_s(fp, "%f", &fin); // ViewFactor
 					w[i].ViewFactor = 1.0;
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
@@ -6912,7 +8025,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// adiabatic wall
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = 0.0;
-					fscanf(fp, "%f", &fin); // ViewFactor
+					fscanf_s(fp, "%f", &fin); // ViewFactor
 					w[i].ViewFactor = 1.0;
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
@@ -6923,7 +8036,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Newton-Richman condition, film coefficient.
 					w[i].emissivity = 0.0;
 					w[i].film_coefficient = fin;
-					fscanf(fp, "%f", &fin); // ViewFactor
+					fscanf_s(fp, "%f", &fin); // ViewFactor
 					w[i].ViewFactor = 1.0;
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
@@ -6934,7 +8047,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Stefan - Bolcman condition
 					w[i].emissivity = fin;
 					w[i].film_coefficient = 0.0;
-					fscanf(fp, "%f", &fin); // ViewFactor
+					fscanf_s(fp, "%f", &fin); // ViewFactor
 					w[i].ViewFactor = fmax(0.0,fmin(fin,1.0));
 					fscanf_s(fp, "%f", &fin);
 					w[i].hf = 0.0;
@@ -6956,7 +8069,45 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				fscanf_s(fp, "%f", &fin);
 				w[i].P = fin;
 				fscanf_s(fp, "%d", &din);
-				w[i].ithermal_Stress_boundary_condition = din;
+				// Thermal-Stress boundary condition
+							// 0 - free,
+							// 1 - x fixit,
+							// 2 - y fixit,
+							// 3 - z fixit,
+							// 4 - xy fixit,
+							// 5 - xz fixit,
+							// 6 - yz fixit,
+							// 7 - fixit all,
+							// 8 - x Force,
+							// 9 - y Force,
+							// 10 - z Force.
+				switch (din) {
+				case 0: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+					break;
+				case 1: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FIXIT;
+					break;
+				case 2: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FIXIT;
+					break;
+				case 3: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FIXIT;
+					break;
+				case 4: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XY_FIXIT;
+					break;
+				case 5: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XZ_FIXIT;
+					break;
+				case 6: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::YZ_FIXIT;
+					break;
+				case 7: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::ALL_FIXIT;
+					break;
+				case 8: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FORCE;
+					break;
+				case 9: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FORCE;
+					break;
+				case 10: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FORCE;
+					break;
+				default:
+					w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // Free all
+					break;
+				}
 				fscanf_s(fp, "%f", &fin);
 				w[i].xForce = fin;
 				fscanf_s(fp, "%f", &fin);
@@ -7016,7 +8167,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -7077,9 +8228,31 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf_s(fp, "%d", &din);
 					eqin.fluidinfo[i].iflow = din;
 					fscanf_s(fp, "%d", &din);
-					eqin.fluidinfo[i].iflowregime = din;
+					switch (din) {
+					case 0: eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+						break;
+					case 1:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::TURBULENT;
+						break;
+					default:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+						break;
+					}
 					fscanf_s(fp, "%d", &din);
-					eqin.fluidinfo[i].iturbmodel = din;
+					switch (din) {
+					case 0: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+						break;
+					case 1: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::SMAGORINSKY;
+						break;
+					case 2: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RNG_LES;
+						break;
+					case 3: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_SPALART_ALLMARES;
+						break;
+					case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
+						break;
+					case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+						break;
+					default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+						break;
+					}
 					fscanf_s(fp, "%f", &fin);
 					eqin.fluidinfo[i].Cs = fin; // постоянная Смагоринского.
 					fscanf_s(fp, "%d", &din);
@@ -7150,10 +8323,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf_s(fp, "%d", &din);
 #endif
 					switch (din) {
-					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
-					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
-					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
-					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 0: pfpir.idir = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
 					}
 					//pfpir.idir = din;
 
@@ -7230,16 +8403,28 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf_s(fp, "%d", &din);
 #endif
 					switch (din) {
-					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+					case 0: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::NONE_only_amg1r5;
 						break;
-					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+					case 1: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 						break;
-					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+					case 2: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::FGMRes_plus_amg1r5;
+						break;
+					case 3: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5;
 						break;
 					default:
-						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 						break;
 					}
+
+#if doubleintprecision == 1
+					fscanf_s(fp, "%f", &fin);
+#else
+					fscanf_s(fp, "%f", &fin);
+#endif
+
+					// Найдено успешно.
+					// Свободный параметр передаваемый из интерфейса и используемый для отладки.
+					free_debug_parametr1 = (doublereal)(fin);
 					
 
 				}
@@ -7283,12 +8468,19 @@ else
 
 		fscanf_s(fp, "%lld", &din);
 		switch (din) {
-			case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
-			case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
-			default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+		case 0: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
+		case 1: ionly_solid_visible= WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE; break;
+		default: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
 		}
 		//ionly_solid_visible = din;
-		std::cout<<"ionly_solid_visible ="<< ionly_solid_visible<<std::endl;
+		switch (ionly_solid_visible) {
+		case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE:
+			std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+			break;
+		case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE:
+			std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+			break;
+		}
 		fscanf_s(fp, "%f", &fin);
 		const doublereal scale = fin;
 		fscanf_s(fp, "%lld", &din);
@@ -7345,10 +8537,10 @@ else
 		// 0 - Ox, 1 - Oy, 2 - Oz.
 		fscanf_s(fp, "%lld", &din);
 		switch (din) {
-			case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
-			case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
-			case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
-			default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+			case 0: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+			case 1: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+			case 2: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+			default: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL;	break;
 		}
 		//idirectional_for_XY_Plot = din;
 
@@ -7377,23 +8569,23 @@ else
 
 		fscanf_s(fp, "%lld", &din);
 		switch (din) {
-			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
-			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
-			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
-			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
-			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
-			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+			case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER; break;
+			case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+			case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER; break;
+			case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMGCL_SECONT_T_SOLVER; break;
+			default: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
 		}
 		//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства: либо РУМБА0.14 либо BiCGStab+ILU6.
 
 		fscanf_s(fp, "%lld", &din);
 		if (din == 1) {
 			// SIMPLEC algorithm.
-			iSIMPLE_alg = SIMPLEC_Van_Doormal_and_Raithby;
+			iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby;
 		}
 		else {
 			// SIMPLE algorithm 1972.
-			iSIMPLE_alg = SIMPLE_Carretto;
+			iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 		}
 
 		fscanf_s(fp, "%lld", &din);
@@ -7447,17 +8639,17 @@ else
 		// Выбор сеточного генератора.
 		fscanf_s(fp, "%lld", &din);
 		switch (din) {
-				case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
-				case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
-				case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
-				default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+				case 0: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER; break;
+				case 1: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER; break;
+				case 2: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
+				default: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
 		}
 		//iswitchMeshGenerator = din;
 
 		fscanf_s(fp, "%lld", &din);
-		steady_or_unsteady_global_determinant = MESHER_ONLY;
+		steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY;
 		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) ||
-			(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
+			(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11) || (din == 12) || (din == 13)) {
 			// 0 - thermal only steady state calculation,
 			// 1 - thermal only unsteady calculation,
 			// 2 - mesh generator only.
@@ -7469,19 +8661,23 @@ else
 			// 9 - cfd unsteady fluid dynamic.
 			// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
 			// 11 - UNSTEADY NETWORK_T Нестационарный графовый метод решения уравнения теплопроводности.
+			// 12 - Нестационарная механика,
+			// 13 - Нестационарная механика совместно с нестационарной теплопередачей.
 			switch(din) {
-				case 0: steady_or_unsteady_global_determinant =STEADY_TEMPERATURE; break;
-				case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
-				case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
-				case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
-				case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
-				case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
-				case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
-				case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
-				case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
-				case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
-				case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
-				default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+				case 0: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE; break;
+				case 1: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE; break;
+				case 2: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
+				case 3: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_STEADY; break;
+				case 5: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL; break;
+				case 6: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				case 7: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER; break;
+				case 8: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::PREOBRAZOVATEL_FOR_REPORT; break;
+				case 9: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY; break;
+				case 10: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T;  break;
+				case 11: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY; break;
+				case 12: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL;  break;
+				case 13: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+				default: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
 			}
 			//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady - 1 calculation.
 			//printf("steady_or_unsteady_global_determinant =%lld\n",din);
@@ -7494,8 +8690,20 @@ else
 		}
 
 		fscanf_s(fp, "%lld", &din);
-		if ((din == 0) || (din == 1) || (din == 2) || (din == 3)) {
-			glTSL.id_law = din;
+		if ((din == 0) || (din == 1) || (din == 2) || (din == 3)|| (din == 4)) {
+			switch (din) {
+			case 0: glTSL.id_law = TIME_STEP_lAW_SELECTOR::LINEAR;
+				break;
+			case 1: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE;
+				break;
+			case 2: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2;
+				break;
+			case 3: glTSL.id_law = TIME_STEP_lAW_SELECTOR::HOT_COLD;
+				break;
+			case 4: glTSL.id_law = TIME_STEP_lAW_SELECTOR::PIECEWISE_CONSTANT;
+				break;
+			}
+			
 		}
 		else {
 			printf("error input parametr timestep law\n");
@@ -7580,11 +8788,11 @@ else
 		// Newton-Richman condition.
 		fscanf_s(fp, "%lld", &din);
 		switch (din) {
-			case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
-            case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
-	        case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
-		    case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
-			default :adiabatic_vs_heat_transfer_coeff =ADIABATIC_WALL_BC; break;
+			case 0: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
+            case 1: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC; break;
+	        case 2: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC; break;
+		    case 3: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC; break;
+			default :adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
 		}
 		//adiabatic_vs_heat_transfer_coeff = din; // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
 		fscanf_s(fp, "%f", &fin);
@@ -7601,9 +8809,9 @@ else
 		}
 		fscanf_s(fp, "%lld", &din);
 		switch (din) {
-			case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
-			case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
-			default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+			case 0: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
+			case 1: itype_ALICE_Mesh= TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH; break;
+			default: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
 		}
 		//itype_ALICE_Mesh = din;
 
@@ -7613,7 +8821,20 @@ else
 		// only for my_agregat_amg.cu.
 		// only for my_agregat_amg.cu.
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.imySortAlgorithm = din;
+		switch (din) {
+		case 0: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+			break;
+		case 1: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::QUICK_SORT;
+			break;
+		case 2: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::HEAP_SORT;
+			break;
+		case 3: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::TIM_SORT;
+			break;
+		default:
+			my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+			break;
+		}
+		 
 		fscanf_s(fp, "%lld", &din);
 		//my_amg_manager.maximum_levels = din;
 		my_amg_manager.maximum_delete_levels_Temperature = din;
@@ -7638,13 +8859,88 @@ else
 		my_amg_manager.number_interpolation_procedure_Stress = din;
 
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.iCFalgorithm_and_data_structure_Temperature = din;// 3-Treap.
+		switch (din) {
+		case 0: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+			break;
+		case 1: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		case 2: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+			break;
+		case 3: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+			break;
+		case 4: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+			break;
+		case 5: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+			break;
+		case 6: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+			break;
+		default:
+			my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		}
+		
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.iCFalgorithm_and_data_structure_Speed = din;// 3-Treap.
+		switch (din) {
+		case 0: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+			break;
+		case 1: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		case 2: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+			break;
+		case 3: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+			break;
+		case 4: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+			break;
+		case 5: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+			break;
+		case 6: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+			break;
+		default:
+			my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		}
+
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.iCFalgorithm_and_data_structure_Pressure = din;// 3-Treap.
+		switch (din) {
+		case 0: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+			break;
+		case 1: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		case 2: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+			break;
+		case 3: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+			break;
+		case 4: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+			break;
+		case 5: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+			break;
+		case 6: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+			break;
+		default:
+			my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		}
+
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.iCFalgorithm_and_data_structure_Stress = din;// 3-Treap.
+		switch (din) {
+		case 0: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+			break;
+		case 1: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		case 2: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+			break;
+		case 3: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+			break;
+		case 4: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+			break;
+		case 5: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+			break;
+		case 6: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+			break;
+		default:
+			my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+			break;
+		}
 
 		fscanf_s(fp, "%lld", &din);
 		//my_amg_manager.itypemodifyinterpol = din;
@@ -7657,13 +8953,33 @@ else
 		// 23.02.2018
 		// print matrix portrait
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.bTemperatureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+		if (din == 0) {
+			my_amg_manager.bTemperatureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+		}
+		else {
+			my_amg_manager.bTemperatureMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+		}
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.bSpeedMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+		if (din == 0) {
+			my_amg_manager.bSpeedMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+		}
+		else {
+			my_amg_manager.bSpeedMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+		}		
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.bPressureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+		if (din == 0) {
+			my_amg_manager.bPressureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+		}
+		else {
+			my_amg_manager.bPressureMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+		}
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.bStressMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
+		if (din == 0) {
+			my_amg_manager.bStressMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+		}
+		else {
+			my_amg_manager.bStressMatrixPortrait = true; // false - NO_PRINT, true - PRINT.
+		}
 
 		// truncation of interpolation:
 		fscanf_s(fp, "%lld", &din);
@@ -7808,13 +9124,113 @@ else
 		// Способ построения C-F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 		// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.icoarseningTemp = din;
+		switch (din) {
+		case 0: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+			break;
+		case 1: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+			break;
+		case 2: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+			break;
+		case 3: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+			break;
+		case 4: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+			break;
+		case 5: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+			break;
+		case 6: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+			break;
+		case 7: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+			break;
+		case 8: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		case 9: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+			break;
+		default:
+			my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		}
+		
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.icoarseningSpeed = din;
+		switch (din) {
+		case 0: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+			break;
+		case 1: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+			break;
+		case 2: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+			break;
+		case 3: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+			break;
+		case 4: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+			break;
+		case 5: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+			break;
+		case 6: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+			break;
+		case 7: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+			break;
+		case 8: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		case 9: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+			break;
+		default:
+			my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		}
+
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.icoarseningPressure = din;
+		switch (din) {
+		case 0: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+			break;
+		case 1: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+			break;
+		case 2: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+			break;
+		case 3: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+			break;
+		case 4: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+			break;
+		case 5: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+			break;
+		case 6: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+			break;
+		case 7: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+			break;
+		case 8: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		case 9: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+			break;
+		default:
+			my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		}
+
+
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.icoarseningStress = din;
+		switch (din) {
+		case 0: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+			break;
+		case 1: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+			break;
+		case 2: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+			break;
+		case 3: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+			break;
+		case 4: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+			break;
+		case 5: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+			break;
+		case 6: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+			break;
+		case 7: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+			break;
+		case 8: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		case 9: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+			break;
+		default:
+			my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+			break;
+		}
 
 		// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
 		// Если din==1, Stabilization BiCGStab.
@@ -7849,7 +9265,15 @@ else
 		my_amg_manager.amgcl_selector = din;
 
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.amgcl_iterator = din;
+		switch (din) {
+		case 0: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+			break;
+		case 1: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::FGMRes;
+			break;
+		default: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+			break;
+		}
+		 
 
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.lfil = din;
@@ -7951,6 +9375,46 @@ else
 			matlist[i].orthotropy_multiplyer_y = fin;
 			fscanf_s(fp, "%f", &fin);
 			matlist[i].orthotropy_multiplyer_z = fin;
+
+			// 28.08.2020
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_x_beta_t_solid = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_y_beta_t_solid = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_z_beta_t_solid = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_x_Young_Module = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_y_Young_Module = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_z_Young_Module = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_Poisson_ratio_xy = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_Poisson_ratio_xz = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_Poisson_ratio_yz = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_Poisson_ratio_yx = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_Poisson_ratio_zx = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].orthotropy_multiplyer_Poisson_ratio_zy = fin;
+			fscanf_s(fp, "%lld", &din);
+			if (din == 1) {
+				matlist[i].bActive_ShearModule = true;
+			}
+			else {
+				matlist[i].bActive_ShearModule = false;
+			}
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].ShearModule_xy = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].ShearModule_yz = fin;
+			fscanf_s(fp, "%f", &fin);
+			matlist[i].ShearModule_xz = fin;
+
 			// 5.08.2017.
 			// Коэффициенты для задачи упругости.
 			// Модуль Юнга и коэффициент Пуассона.
@@ -7965,24 +9429,110 @@ else
 			//doublereal Youngmodule = 217.5E9;
 			//doublereal Poissonratio = 0.3;
 			//doublereal Youngmodule = 200.0E9;
-			fscanf_s(fp, "%f", &fin);
-			doublereal Poissonratio = fin;
-			fscanf_s(fp, "%f", &fin);
-			doublereal Youngmodule = fin*1e9;
-			fscanf_s(fp, "%f", &fin);
+			//fscanf_s(fp, "%f", &fin);
+			//doublereal Poissonratio = fin;
+			//if (fabs(fin) < 1.0e-30) {
+				//printf("ERROR !!! Zero Poisson Ratio in model. \n");
+				//printf("ERROR !!! Model is incorrect...\n");
+				//system("PAUSE");
+				//exit(1);
+			//}
+			//matlist[i].Poisson_ratio = fin;
+
+			fscanf_s(fp, "%lld", &din);
+			matlist[i].n_Poisson_ratio = din;
+			matlist[i].arr_Poisson_ratio = nullptr;
+			matlist[i].temp_Poisson_ratio = nullptr;
+			matlist[i].arr_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+			matlist[i].temp_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+			if (matlist[i].temp_Poisson_ratio == nullptr) {
+				printf("problem memory allocation for temp_Poisson_ratio\n");
+				system("pause");
+				exit(1);
+			}
+			if (matlist[i].arr_Poisson_ratio == nullptr) {
+				printf("problem memory allocation for arr_Poisson_ratio\n");
+				system("pause");
+				exit(1);
+			}
+			for (integer i_4 = 0; i_4 < matlist[i].n_Poisson_ratio; i_4++) {
+				// Температура в C.
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].temp_Poisson_ratio[i_4] = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].arr_Poisson_ratio[i_4] = fin;
+			}
+
+
+			//fscanf_s(fp, "%f", &fin);
+			//doublereal Youngmodule = fin*1e9;
+			//if (fabs(fin) < 1.0e-30) {
+				//printf("ERROR !!! Zero Young Module in model. \n");
+				//printf("ERROR !!! Model is incorrect...\n");
+				//system("PAUSE");
+				//exit(1);
+			//}
+			//matlist[i].Young_Module = fin * 1e9;
+
+			fscanf_s(fp, "%lld", &din);
+			matlist[i].n_YoungModule = din;
+			matlist[i].arr_Young_Module = nullptr;
+			matlist[i].temp_Young_Module = nullptr;
+			matlist[i].arr_Young_Module = new doublereal[matlist[i].n_YoungModule];
+			matlist[i].temp_Young_Module = new doublereal[matlist[i].n_YoungModule];
+			if (matlist[i].temp_Young_Module == nullptr) {
+				printf("problem memory allocation for temp_Young_Module\n");
+				system("pause");
+				exit(1);
+			}
+			if (matlist[i].arr_Young_Module == nullptr) {
+				printf("problem memory allocation for arr_Young_Module\n");
+				system("pause");
+				exit(1);
+			}
+			for (integer i_4 = 0; i_4 < matlist[i].n_YoungModule; i_4++) {
+				// Температура в C.
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].temp_Young_Module[i_4] = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].arr_Young_Module[i_4] = fin * 1.0e+9;
+			}
+
+			//fscanf_s(fp, "%f", &fin);
 			// beta_t_solid*1E-6
-			matlist[i].beta_t_solid = fin*1E-6;
-			// Коэффициенты Ламе.
-			//doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
-			//doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
-			//matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
-			//matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef*nu1_koef);
-			// стр. 25 В.Н.Сидоров, В.В. Вершинин. Метод конечных элементов в расчёте сооружений.
-			//+ 19.10.2018 проверено.
-			matlist[i].mu_Lame = Youngmodule / (2.0*(1.0+ Poissonratio));
-		    matlist[i].lambda_Lame = (Poissonratio*Youngmodule) / ((1.0+ Poissonratio)*(1.0-2.0*Poissonratio));
-			//printf("E=%e N/m^2 mu=%e lambda=%e\n", Youngmodule, matlist[i].mu_Lame, matlist[i].lambda_Lame);
-			//system("PAUSE");
+			//matlist[i].n_beta_t_solid = 1;
+			//matlist[i].temp_beta_t_solid = new doublereal[1];
+			//matlist[i].temp_beta_t_solid[0] = 25.0;
+			//matlist[i].arr_beta_t_solid = new doublereal[1];
+			//matlist[i].arr_beta_t_solid[0] = fin * 1E-6;
+
+			fscanf_s(fp, "%lld", &din);
+			matlist[i].n_beta_t_solid = din;
+			matlist[i].arr_beta_t_solid = nullptr;
+			matlist[i].temp_beta_t_solid = nullptr;
+			matlist[i].arr_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+			matlist[i].temp_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+			if (matlist[i].temp_beta_t_solid == nullptr) {
+				printf("problem memory allocation for temp_beta_t_solid\n");
+				system("pause");
+				exit(1);
+			}
+			if (matlist[i].arr_beta_t_solid == nullptr) {
+				printf("problem memory allocation for arr_beta_t_solid\n");
+				system("pause");
+				exit(1);
+			}
+			for (integer i_4 = 0; i_4 < matlist[i].n_beta_t_solid; i_4++) {
+				// Температура в C.
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].temp_beta_t_solid[i_4] = fin;
+				fscanf_s(fp, "%f", &fin);
+				matlist[i].arr_beta_t_solid[i_4] = fin * 1.0e-6;
+			}
+
+
+			// Коэффициенты Ламе не используются в данном коде.
+			
 			// коэффициент динамической вязкости
 			fscanf_s(fp, "%f", &fin);
 			matlist[i].mu = fin;
@@ -8354,18 +9904,43 @@ else
 #else
 			fscanf_s(fp, "%d", &din);
 #endif
-			b[i].ipower_time_depend = din;
+			switch (din) {
+			case 0: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+				break;
+			case 1: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE;
+				break;
+			case 2: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE2;
+				break;
+			case 3: b[i].ipower_time_depend = POWER_TIME_DEPEND::HOT_COLD;
+				break;
+			case 4: b[i].ipower_time_depend = POWER_TIME_DEPEND::PIECEWISE_CONST;
+				break;
+			default: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+				break;
+			}
+			
 			// тип блока
 #if doubleintprecision == 1
 			fscanf_s(fp, "%lld", &din);
 #else
 			fscanf_s(fp, "%d", &din);
 #endif
-			b[i].itype = din;
+			switch (din) {
+			case 1: b[i].itype = PHYSICS_TYPE_IN_BODY::SOLID;
+				break;
+			case 2: b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+				break;
+			case 3: b[i].itype = PHYSICS_TYPE_IN_BODY::FLUID;
+				break;
+			default:
+				b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+				break;
+			}
+			
 
 			// печать считанных значений на консоль
 			//printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-			//printf("%lld %lld %lld\n", b[i].imatid, b[i].itype, b[i].ipower_time_depend);
+			//printf("%lld %lld\n", b[i].imatid, b[i].itype);
 			//printf("temperature depend power\n");
 			//printf("t_C power_W\n");
 			//for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
@@ -8494,11 +10069,11 @@ else
 			fscanf_s(fp, "%d", &din);
 #endif
 			switch (din) {
-				case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
-				case 2: w[i].ifamily=NEIMAN_FAMILY; break;
-				case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
-				case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
-				default: w[i].ifamily=NEIMAN_FAMILY; break;
+			case 1 : w[i].ifamily= WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY; break;
+				case 2: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
+				case 3: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY; break;
+				case 4: w[i].ifamily= WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY; break;
+				default: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
 			}
 			//w[i].ifamily = din;
 			switch (din) {
@@ -8584,13 +10159,52 @@ else
 #endif		
 			if (din >= 0 && din < 11) {
 				// 0- FREE
-				w[i].ithermal_Stress_boundary_condition = din;
+
+						// Thermal-Stress boundary condition
+						// 0 - free,
+						// 1 - x fixit,
+						// 2 - y fixit,
+						// 3 - z fixit,
+						// 4 - xy fixit,
+						// 5 - xz fixit,
+						// 6 - yz fixit,
+						// 7 - fixit all,
+						// 8 - x Force,
+						// 9 - y Force,
+						// 10 - z Force.
+				switch (din) {
+				case 0: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+					break;
+				case 1: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FIXIT;
+					break;
+				case 2: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FIXIT;
+					break;
+				case 3: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FIXIT;
+					break;
+				case 4: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XY_FIXIT;
+					break;
+				case 5: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XZ_FIXIT;
+					break;
+				case 6: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::YZ_FIXIT;
+					break;
+				case 7: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::ALL_FIXIT;
+					break;
+				case 8: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FORCE;
+					break;
+				case 9: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FORCE;
+					break;
+				case 10: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FORCE;
+					break;
+				default:
+					w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // Free all
+					break;
+				}
 			}
 			else {
 				printf("error: unknown ithermal_Stress_boundary_condition\n");
 				printf("ithermal_Stress_boundary_condition=%lld\n", din);
 				system("PAUSE");
-				w[i].ithermal_Stress_boundary_condition = 0; // Free all
+				w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // Free all
 			}
 			fscanf_s(fp, "%f", &fin);
 			w[i].xForce = fin;
@@ -8660,7 +10274,7 @@ else
 				my_union[i].xposadd = nullptr;
 				my_union[i].yposadd = nullptr;
 				my_union[i].zposadd = nullptr;
-				my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
+				my_union[i].iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 				my_union[i].inxadd = -1;
 				my_union[i].inyadd = -1;
 				my_union[i].inzadd = -1;
@@ -8753,13 +10367,37 @@ else
 #else
 				fscanf_s(fp, "%d", &din);
 #endif
-				eqin.fluidinfo[i].iflowregime = din;
+				switch (din) {
+				case 0: eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+					break;
+				case 1:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::TURBULENT;
+					break;
+				default:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+					break;
+				}
 #if doubleintprecision == 1
 				fscanf_s(fp, "%lld", &din);
 #else
 				fscanf_s(fp, "%d", &din);
 #endif
-				eqin.fluidinfo[i].iturbmodel = din;
+				// Режим течения: ламинарный или конкретная модель турбулентности.
+				switch (din) {
+				case 0: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+					break;
+				case 1: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::SMAGORINSKY;
+					break;
+				case 2: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RNG_LES;
+					break;
+				case 3: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_SPALART_ALLMARES;
+					break;
+				case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
+					break;
+				case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+					break;
+				default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+					break;
+				}
+				
 				fscanf_s(fp, "%f", &fin);
 				eqin.fluidinfo[i].Cs = fin; // постоянная Смагоринского.
 #if doubleintprecision == 1
@@ -8870,10 +10508,10 @@ else
 				fscanf_s(fp, "%d", &din);
 #endif
 				switch (din) {
-					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
-					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
-					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
-					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 0: pfpir.idir = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
 				}
 				//pfpir.idir = din;
 
@@ -8950,16 +10588,28 @@ else
 				fscanf_s(fp, "%d", &din);
 #endif
 				switch (din) {
-				case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+				case 0: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::NONE_only_amg1r5;
 					break;
-				case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+				case 1: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 					break;
-				case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+				case 2: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::FGMRes_plus_amg1r5;
+					break;
+				case 3: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5;
 					break;
 				default:
-					stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+					stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 					break;
 				}
+
+#if doubleintprecision == 1
+				fscanf_s(fp, "%f", &fin);
+#else
+				fscanf_s(fp, "%f", &fin);
+#endif
+
+				// Найдено успешно.
+				// Свободный параметр передаваемый из интерфейса и используемый для отладки.
+				free_debug_parametr1 = (doublereal)(fin);
 
 			}
 		}
@@ -8970,13 +10620,13 @@ else
 		integer ipoly = 0, icyl = 0, iprism = 0;
 		integer ihol = 0, isol = 0, iflui = 0;
 		for (integer i_1 = 0; i_1 < lb; i_1++) {
-			if (b[i_1].itype == HOLLOW) {
+			if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 				ihol++;
 			}
-			if (b[i_1].itype == FLUID) {
+			if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				iflui++;
 			}
-			if (b[i_1].itype == SOLID) {
+			if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				isol++;
 			}
 			if (b[i_1].g.itypegeom == PRISM) {
@@ -9178,9 +10828,10 @@ char ** StringList = new char*[ilimit_StringList];
 void loadFromFile()
 {
 	FILE *fp = NULL;
-	errno_t err;
+	
 
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp = fopen64("premeshin.txt", "r");
 	if (fp != nullptr) {
 		err = 0;
@@ -9189,6 +10840,7 @@ void loadFromFile()
 		err = 1; // ошибка открытия.
 	}
 #else
+	errno_t err;
 	err = fopen_s(&fp, "premeshin.txt", "r");
 #endif
 
@@ -9239,7 +10891,7 @@ void loadFromFile()
 						b1 = false;
 						k = 0;
 					}
-					if ((b1) && (bbeginstring == true)) {
+					if ((b1) && (bbeginstring  )) {
 						buf[k++] = c;
 						// printf("%c \n",c);
 					}
@@ -9976,10 +11628,11 @@ bool imakesource_old(char *name0, int &iret)
 {
 	bool bfound = false;
 	FILE *fp=NULL;
-	errno_t err;
+	
 
 #ifdef MINGW_COMPILLER
 	fp = fopen64("premeshin.txt", "r");
+	int err = 0;
 	if (fp != NULL) {
 		err = 0;
 	}
@@ -9987,6 +11640,7 @@ bool imakesource_old(char *name0, int &iret)
 		err = 1; // ошибка открытия.
 	}
 #else
+	errno_t err;
 	err = fopen_s(&fp, "premeshin.txt", "r");
 #endif
 
@@ -10030,7 +11684,7 @@ bool imakesource_old(char *name0, int &iret)
 						b1 = false;
 						k = 0;
 					}
-					if ((b1) && (bbeginstring == true)) {
+					if ((b1) && (bbeginstring  )) {
 						buf[k++] = c;
 						// printf("%c \n",c);
 					}
@@ -10068,10 +11722,11 @@ bool fmakesource_old(char *name0, double &fret)
 {
 	bool bfound = false;
 	FILE *fp = NULL;
-	errno_t err;
+	
 	// создание файла для чтения.
 #ifdef MINGW_COMPILLER
 	fp = fopen64("premeshin.txt", "r");
+	int err = 0;
 	if (fp != NULL) {
 		err = 0;
 	}
@@ -10079,6 +11734,7 @@ bool fmakesource_old(char *name0, double &fret)
 		err = 1; // ошибка открытия.
 	}
 #else
+	errno_t err;
 	err = fopen_s(&fp, "premeshin.txt", "r");
 #endif
 
@@ -10097,20 +11753,70 @@ bool fmakesource_old(char *name0, double &fret)
 			int k = 0;
 			const integer sizeN = 1024;
 			char* buf = (char*)malloc(sizeN); // строка буфер
-			c = fgetc(fp); // читает один символ
-			buf[k++] = c;
-			bool bfound_loc = false;
-			double fret_loc = 0.0;
-			while (!feof(fp)) {
-				b1 = true;
+			if (buf != nullptr) {
 				c = fgetc(fp); // читает один символ
-				if (c == '#') bbeginstring = false;
-				if (c == '\n') {
-					bbeginstring = true;
+				buf[k++] = c;
+				bool bfound_loc = false;
+				double fret_loc = 0.0;
+				while (!feof(fp)) {
+					b1 = true;
+					c = fgetc(fp); // читает один символ
+					if (c == '#') bbeginstring = false;
+					if (c == '\n') {
+						bbeginstring = true;
+						if (buf != nullptr) {
+							if (k < sizeN - 2) {
+								buf[k++] = '\n';
+								buf[k] = '\0';
+							}
+							else {
+								printf("size vector buf is greater %lld.\n", sizeN);
+								system("pause");
+								exit(1);
+							}
+						}
+						else {
+							printf("buf is nullptr pointer.\n");
+							system("pause");
+							exit(1);
+						}
+						//bfound_loc = false;
+						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
+						if (bfound_loc) {
+							bfound = true;
+							fret = fret_loc;
+							break;
+						}
+						//printf("%s \n",buf);
+						//getchar();
+						b1 = false;
+						k = 0;
+					}
+					if ((b1) && (bbeginstring  )) {
+						if (buf != nullptr) {
+							if (k < sizeN - 1) {
+								buf[k++] = c;
+							}
+							else {
+								printf("size vector buf is greater %lld.\n", sizeN);
+								system("pause");
+								exit(1);
+							}
+						}
+						else {
+							printf("buf is nullptr pointer.\n");
+							system("pause");
+							exit(1);
+						}
+						// printf("%c \n",c);
+					}
+
+				}// while
+				if (!bfound) {
 					if (buf != nullptr) {
 						if (k < sizeN - 2) {
-					        buf[k++] = '\n';
-					        buf[k] = '\0';
+							buf[k++] = '\n';
+							buf[k] = '\0';
 						}
 						else {
 							printf("size vector buf is greater %lld.\n", sizeN);
@@ -10128,60 +11834,14 @@ bool fmakesource_old(char *name0, double &fret)
 					if (bfound_loc) {
 						bfound = true;
 						fret = fret_loc;
-						break;
 					}
 					//printf("%s \n",buf);
-					//getchar();
-					b1 = false;
-					k = 0;
+					//getchar();	
 				}
-				if ((b1) && (bbeginstring == true)) {
-					if (buf != nullptr) {
-						if (k < sizeN - 1) {
-							buf[k++] = c;
-						}
-						else {
-							printf("size vector buf is greater %lld.\n", sizeN);
-							system("pause");
-							exit(1);
-						}
-					}
-					else {
-						printf("buf is nullptr pointer.\n");
-						system("pause");
-						exit(1);
-					}
-					// printf("%c \n",c);
-				}
-
-			}// while
-			if (!bfound) {
-				if (buf != nullptr) {
-					if (k < sizeN - 2) {
-						buf[k++] = '\n';
-						buf[k] = '\0';
-					}
-					else {
-						printf("size vector buf is greater %lld.\n", sizeN);
-						system("pause");
-						exit(1);
-					}
-				}
-				else {
-					printf("buf is nullptr pointer.\n");
-					system("pause");
-					exit(1);
-				}
-				//bfound_loc = false;
-				bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
-				if (bfound_loc) {
-					bfound = true;
-					fret = fret_loc;
-				}
-				//printf("%s \n",buf);
-				//getchar();	
+				free(buf);
 			}
-			free(buf);
+
+
 			fclose(fp);
 
 			return bfound;
@@ -10259,13 +11919,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 		}
 		if (bscalok) {
-			if (b[i_1].itype == HOLLOW) {
+			if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 				ihol++;
 			}
-			if (b[i_1].itype == FLUID) {
+			if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				iflui++;
 			}
-			if (b[i_1].itype == SOLID) {
+			if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				isol++;
 			}
 			if (b[i_1].g.itypegeom == PRISM) {
@@ -10291,7 +11951,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 
 				iprism++;
-				if (b[i_1].itype != HOLLOW) {
+				if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 					if (b[i_1].n_Sc > 0) {
 						doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 						doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS) * fabs(b[i_1].g.yE - b[i_1].g.yS) * fabs(b[i_1].g.zE - b[i_1].g.zS);
@@ -10351,7 +12011,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 				icyl++;
-				if (b[i_1].itype != HOLLOW) {
+				if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 					if (b[i_1].n_Sc > 0) {
 						doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 						doublereal vol = 0.0;
@@ -10375,7 +12035,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (b[i_1].g.itypegeom == POLYGON) {
 				// Polygon
 				ipoly++;
-				if (b[i_1].itype != HOLLOW) {
+				if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 					if (b[i_1].n_Sc > 0) {
 						doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 						if (pdiss > 0.0) {
@@ -10460,23 +12120,37 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			    // Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
 					switch (idin) {
-						case 0: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
-						case 1: ionly_solid_visible=ONLY_SOLID_BODY_VISIBLE; break;
-						default: ionly_solid_visible=FLUID_AND_SOLID_BODY_VISIBLE; break;
+						case 0: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
+						case 1: ionly_solid_visible= WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE; break;
+						default: ionly_solid_visible= WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; break;
 					}
 					//ionly_solid_visible = (integer)(idin);
-					std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
+					switch (ionly_solid_visible) {
+					case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE:
+						std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+						break;
+					case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE:
+						std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+						break;
+					}
 				}
 				else {
 					std::cout << "ionly_solid_visible must be equal 0 or 1. now value=" << idin << std::endl;
 					system("pause");
-					ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE;
+					ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE;
 				}
 			}
 			else {
 				printf("WARNING!!! only_solid_visible not found in file premeshin.txt\n");
-				ionly_solid_visible = FLUID_AND_SOLID_BODY_VISIBLE; // Показываем всё
-				std::cout << "ionly_solid_visible =" << ionly_solid_visible << std::endl;
+				ionly_solid_visible = WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE; // Показываем всё
+				switch (ionly_solid_visible) {
+				case WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE:
+					std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::FLUID_AND_SOLID_BODY_VISIBLE" << std::endl;
+					break;
+				case WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE:
+					std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
+					break;
+				}
 				if (bSTOP_Reading) system("pause");
 			}
 		
@@ -10788,17 +12462,17 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("line_directional", idin)) {
 				// Найдено успешно.
 				switch (idin) {
-					case 0: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL; break;
-					case 1: idirectional_for_XY_Plot =Y_LINE_DIRECTIONAL; break;
-					case 2: idirectional_for_XY_Plot =Z_LINE_DIRECTIONAL; break;
-					default: idirectional_for_XY_Plot =X_LINE_DIRECTIONAL;	break;
+					case 0: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+					case 1: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+					case 2: idirectional_for_XY_Plot = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+					default: idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL;	break;
 				}
 				//idirectional_for_XY_Plot  = (integer)(idin);
 				//printf("iny =%lld\n", iny);
 			}
 			else {
 				printf("WARNING!!! line_directional not found in file premeshin.txt\n");
-				idirectional_for_XY_Plot = X_LINE_DIRECTIONAL; // нет информации о количестве узлов сетки в направлении оси Оy.
+				idirectional_for_XY_Plot = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; // нет информации о количестве узлов сетки в направлении оси Оy.
 				printf("idirectional_for_XY_Plot =%d\n", idirectional_for_XY_Plot);
 				if (bSTOP_Reading) system("pause");
 			}
@@ -10901,19 +12575,19 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("StaticStructuralSolverSetting", idin)) {
 				// Найдено успешно.
 				switch ((integer)(idin)) {
-					case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
-					case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6=DIRECT_SECOND_T_SOLVER; break;
-					case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6=CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
-					case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMG1R5_SECOND_T_SOLVER; break;
-					case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6=AMGCL_SECONT_T_SOLVER; break;
-					default: iswitchsolveramg_vs_BiCGstab_plus_ILU6=BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+					case 0: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
+					case 1: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER; break;
+					case 2: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER; break;
+					case 3: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER; break;
+					case 4: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::AMGCL_SECONT_T_SOLVER; break;
+					default: iswitchsolveramg_vs_BiCGstab_plus_ILU6= SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; break;
 				}
 				//iswitchsolveramg_vs_BiCGstab_plus_ILU6 = (integer)(idin);
 				//printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU6);
 			}
 			else {
 				printf("WARNING!!! StaticStructuralSolverSetting not found in file premeshin.txt\n");
-				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; //BiCGStab +ILU* solver.
+				iswitchsolveramg_vs_BiCGstab_plus_ILU6 = SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER; //BiCGStab +ILU* solver.
 				printf("iswitchsolveramg_vs_BiCGstab_plus_ILU6 =BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -10924,11 +12598,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if ((idin == 0) || (idin == 1)) {
 					if (idin == 1) {
 						// SIMPLEC algorithm.
-						iSIMPLE_alg = SIMPLEC_Van_Doormal_and_Raithby;
+						iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby;
 					}
 					else {
 						// SIMPLE algorithm 1972.
-						iSIMPLE_alg = SIMPLE_Carretto;
+						iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 					}
 					//printf("iSIMPLE_alg =%d\n", idin);
 				}
@@ -10936,13 +12610,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					printf("ERROR!!! iSIMPLE_alg must be equal 0 or 1. Current value =%d\n",idin);
 					system("pause");
 					// SIMPLE algorithm 1972.
-					iSIMPLE_alg = SIMPLE_Carretto;
+					iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 				}
 			}
 			else {
 				printf("WARNING!!! PressureVelocityCoupling not found in file premeshin.txt\n");
 				// SIMPLE algorithm 1972.
-				iSIMPLE_alg = SIMPLE_Carretto;
+				iSIMPLE_alg = SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto;
 				printf("iSIMPLE_alg = SIMPLE_Carretto\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -11016,17 +12690,17 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// Найдено успешно.
 				// Выбор сеточного генератора.
 				switch (idin) {
-					case 0: iswitchMeshGenerator = SIMPLEMESHGEN_MESHER; break;
-					case 1: iswitchMeshGenerator = UNEVENSIMPLEMESHGEN_MESHER; break;
-					case 2: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
-					default: iswitchMeshGenerator = COARSEMESHGEN_MESHER; break;
+					case 0: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER; break;
+					case 1: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::UNEVENSIMPLEMESHGEN_MESHER; break;
+					case 2: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
+					default: iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; break;
 				}
 				//iswitchMeshGenerator = (integer)(idin);
 				//printf("iswitchMeshGenerator =%lld\n", iswitchMeshGenerator);
 			}
 			else {
 				printf("WARNING!!! mesh_generator_algorithm not found in file premeshin.txt\n");
-				iswitchMeshGenerator = COARSEMESHGEN_MESHER; // Coarse Mesh.
+				iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; // Coarse Mesh.
 				printf("iswitchMeshGenerator = COARSEMESHGEN_MESHER\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -11034,10 +12708,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			if (imakesource("Schedule", idin)) {
 				// Найдено успешно.
-				steady_or_unsteady_global_determinant = MESHER_ONLY;
+				steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY;
 				din = (integer)(idin);
 				if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || 
-					(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11)) {
+					(din == 7) || (din == 8) || (din == 9) || (din == 10) || (din == 11) || (din == 12) || (din == 13)) {
 					// 0 - thermal only steady state calculation,
 					// 1 - thermal only unsteady calculation,
 					// 2 - mesh generator only.
@@ -11049,19 +12723,23 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// 9 - cfd unsteady fluid dynamic.
 					// 10 - NETWORK_T Графовый метод решения уравнения теплопроводности.
 			        // 11 - UNSTEADY NETWORK_T Нестационарный графовый метод решения уравнения теплопроводности.
+					// 12 - Нестационарная механика,
+					// 13 - Нестационарная механика совместно с нестационарной теплопередачей.
 					switch(din) {
-						case 0: steady_or_unsteady_global_determinant = STEADY_TEMPERATURE; break;
-						case 1: steady_or_unsteady_global_determinant = UNSTEADY_TEMPERATURE; break;
-						case 2: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
-						case 3: steady_or_unsteady_global_determinant = CFD_STEADY; break;
-						case 5: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL; break;
-						case 6: steady_or_unsteady_global_determinant = STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
-						case 7: steady_or_unsteady_global_determinant = SECOND_TEMPERATURE_SOLVER; break;
-						case 8: steady_or_unsteady_global_determinant = PREOBRAZOVATEL_FOR_REPORT; break;
-						case 9: steady_or_unsteady_global_determinant = CFD_UNSTEADY; break;
-						case 10: steady_or_unsteady_global_determinant = NETWORK_T;  break;
-						case 11: steady_or_unsteady_global_determinant = NETWORK_T_UNSTEADY; break;
-						default: steady_or_unsteady_global_determinant = MESHER_ONLY; break;
+						case 0: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_TEMPERATURE; break;
+						case 1: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE; break;
+						case 2: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
+						case 3: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_STEADY; break;
+						case 5: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL; break;
+						case 6: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE; break;
+						case 7: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::SECOND_TEMPERATURE_SOLVER; break;
+						case 8: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::PREOBRAZOVATEL_FOR_REPORT; break;
+						case 9: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY; break;
+						case 10: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T;  break;
+						case 11: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::NETWORK_T_UNSTEADY; break;
+						case 12: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL;  break;
+						case 13: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE;  break;
+						default: steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; break;
 					}
 					//steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
 					//printf("steady_or_unsteady_global_determinant =%lld\n",din);
@@ -11076,7 +12754,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! Schedule not found in file premeshin.txt\n");
-				steady_or_unsteady_global_determinant = MESHER_ONLY; // Mesh Generator only
+				steady_or_unsteady_global_determinant = PHYSICAL_MODEL_SWITCH::MESHER_ONLY; // Mesh Generator only
 				printf("steady_or_unsteady_global_determinant =Mesh Generator only\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -11086,7 +12764,18 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// Закон изменения шага по времени.
 				din = (integer)(idin);
 				if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 4)) {
-					glTSL.id_law = din;
+					switch (din) {
+					case 0: glTSL.id_law = TIME_STEP_lAW_SELECTOR::LINEAR;
+						break;
+					case 1: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE;
+						break;
+					case 2: glTSL.id_law = TIME_STEP_lAW_SELECTOR::SQUARE_WAVE2;
+						break;
+					case 3: glTSL.id_law = TIME_STEP_lAW_SELECTOR::HOT_COLD;
+						break;
+					case 4: glTSL.id_law = TIME_STEP_lAW_SELECTOR::PIECEWISE_CONSTANT;
+						break;
+					}
 				}
 				else {
 					printf("error input parametr timestep law\n");
@@ -11097,7 +12786,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 			else {
 				printf("WARNING!!! TimeStep not found in file premeshin.txt\n");
-				glTSL.id_law = 0; // default Linear.
+				glTSL.id_law = TIME_STEP_lAW_SELECTOR::LINEAR; // default Linear.
 				printf("glTSL.id_law =Linear\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -11304,7 +12993,6 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					system("PAUSE");
 					exit(1);
 				}
-				//printf("glTSL.id_law =%lld\n", glTSL.id_law);
 			}
 			else {
 				printf("WARNING!!! timestep law PiecewiseConst not found in file premeshin.txt\n");
@@ -11423,11 +13111,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// 0 - adiabatic wall, 1 - Newton Richman condition,
 					// 2 - Stefan Bolcman condition, 3 - mix condition.
 					switch (idin) {
-						case 0: adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
-						case 1: adiabatic_vs_heat_transfer_coeff = NEWTON_RICHMAN_BC; break;
-						case 2: adiabatic_vs_heat_transfer_coeff = STEFAN_BOLCMAN_BC; break;
-						case 3: adiabatic_vs_heat_transfer_coeff = MIX_CONDITION_BC; break;
-						default :adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; break;
+						case 0: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
+						case 1: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC; break;
+						case 2: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC; break;
+						case 3: adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC; break;
+						default :adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; break;
 					}
 					//adiabatic_vs_heat_transfer_coeff = (integer)(idin);
 					//printf("adiabatic_vs_heat_transfer_coeff =%lld\n", idin);
@@ -11436,12 +13124,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("Error!!! adiabatic_vs_heat_transfer_coeff must be equal 0==ADIABATIC_WALL_BC or 1==NEWTON_RICHMAN_BC or 2==STEFAN_BOLCMAN_BC or 3==MIX_CONDITION_BC. Current value %d\n",idin);
 					system("pause");
-					adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; // adiabatic wall
+					adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; // adiabatic wall
 				}
 			}
 			else {
 				printf("WARNING!!! adiabatic_vs_heat_transfer_coeff not found in file premeshin.txt\n");
-				adiabatic_vs_heat_transfer_coeff = ADIABATIC_WALL_BC; //  0 - adiabatic wall.
+				adiabatic_vs_heat_transfer_coeff = DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC; //  0 - adiabatic wall.
 				printf("adiabatic_vs_heat_transfer_coeff =%d\n", adiabatic_vs_heat_transfer_coeff);
 				if (bSTOP_Reading) system("pause");
 			}			
@@ -11482,16 +13170,16 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("version_ALICE_Mesh", idin)) {
 				// Найдено успешно.
 				switch (idin) {
-					case 0: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
-					case 1: itype_ALICE_Mesh= MULTI_PASS_MEDIUM_ALICE_MESH; break;
-					default: itype_ALICE_Mesh=ONE_PASS_COARSE_ALICE_MESH; break;
+					case 0: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
+					case 1: itype_ALICE_Mesh= TYPE_ALICE_MESH::MULTI_PASS_MEDIUM_ALICE_MESH; break;
+					default: itype_ALICE_Mesh= TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; break;
 				}
 				//itype_ALICE_Mesh = (integer)(idin);
 				//printf("itype_ALICE_Mesh =%lld\n", itype_ALICE_Mesh);
 			}
 			else {
 				printf("WARNING!!! version_ALICE_Mesh not found in file premeshin.txt\n");
-				itype_ALICE_Mesh = ONE_PASS_COARSE_ALICE_MESH; // Coarse Mesh.
+				itype_ALICE_Mesh = TYPE_ALICE_MESH::ONE_PASS_COARSE_ALICE_MESH; // Coarse Mesh.
 				printf("itype_ALICE_Mesh =ONE_PASS_COARSE_ALICE_MESH\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -11514,13 +13202,27 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// only for my_agregat_amg.cu.
 			if (imakesource("amg_manager_sorting_alg", idin)) {
 				// Найдено успешно.
-				my_amg_manager.imySortAlgorithm = (integer)(idin);
+				switch (idin) {
+				case 0: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+					break;
+				case 1: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::QUICK_SORT;
+					break;
+				case 2: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::HEAP_SORT;
+					break;
+				case 3: my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::TIM_SORT;
+					break;
+				default:
+					printf("ERROR!!! amg_manager_sorting_alg out of diapazon <0 && >3\n");
+					system("PAUSE");
+					my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT;
+					break;
+				}
 				//printf("my_amg_manager.imySortAlgorithm =%lld\n", my_amg_manager.imySortAlgorithm);
 			}
 			else {
 				printf("WARNING!!! amg_manager_sorting_alg not found in file premeshin.txt\n");
-				my_amg_manager.imySortAlgorithm = 0; // Counting Sort Х.Г. Сьювард 1954г.
-				printf("my_amg_manager.imySortAlgorithm =%lld\n", my_amg_manager.imySortAlgorithm);
+				my_amg_manager.imySortAlgorithm = MY_SORT_ALGORITHM::COUNTING_SORT; // Counting Sort Х.Г. Сьювард 1954г.
+				printf("my_amg_manager.imySortAlgorithm =MY_SORT_ALGORITHM::COUNTING_SORT\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -11623,49 +13325,126 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			if (imakesource("CFalgorithmandDataStruct_Temperature", idin)) {
 				// Найдено успешно.
-				my_amg_manager.iCFalgorithm_and_data_structure_Temperature = (integer)(idin);
+				
+				switch (idin) {
+				case 0: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+					break;
+				case 1: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				case 2: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+					break;
+				case 3: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+					break;
+				case 4: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+					break;
+				case 5: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+					break;
+				case 6: my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+					break;
+				default:
+					my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				}
 				//printf("my_amg_manager.iCFalgorithm_and_data_structure_Temperature =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Temperature);
 			}
 			else {
 				printf("WARNING!!! CFalgorithmandDataStruct_Temperature not found in file premeshin.txt\n");
-				my_amg_manager.iCFalgorithm_and_data_structure_Temperature = 3; //  3-Treap.
-				printf("my_amg_manager.iCFalgorithm_and_data_structure_Temperature =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Temperature);
+				my_amg_manager.iCFalgorithm_and_data_structure_Temperature = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP; //  3-Treap.
+				printf("my_amg_manager.iCFalgorithm_and_data_structure_Temperature =RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("CFalgorithmandDataStruct_Speed", idin)) {
 				// Найдено успешно.
-				my_amg_manager.iCFalgorithm_and_data_structure_Speed = (integer)(idin);
+				
+				switch (idin) {
+				case 0: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+					break;
+				case 1: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				case 2: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+					break;
+				case 3: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+					break;
+				case 4: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+					break;
+				case 5: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+					break;
+				case 6: my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+					break;
+				default:
+					my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				}
 				//printf("my_amg_manager.iCFalgorithm_and_data_structure_Speed =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Speed);
 			}
 			else {
 				printf("WARNING!!! CFalgorithmandDataStruct_Speed not found in file premeshin.txt\n");
-				my_amg_manager.iCFalgorithm_and_data_structure_Speed = 3; //  3-Treap.
-				printf("my_amg_manager.iCFalgorithm_and_data_structure_Speed =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Speed);
+				my_amg_manager.iCFalgorithm_and_data_structure_Speed = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP; //  3-Treap.
+				printf("my_amg_manager.iCFalgorithm_and_data_structure_Speed =RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("CFalgorithmandDataStruct_Pressure", idin)) {
 				// Найдено успешно.
-				my_amg_manager.iCFalgorithm_and_data_structure_Pressure = (integer)(idin);
+				
+				switch (idin) {
+				case 0: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+					break;
+				case 1: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				case 2: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+					break;
+				case 3: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+					break;
+				case 4: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+					break;
+				case 5: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+					break;
+				case 6: my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+					break;
+				default:
+					my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				}
+
 				//printf("my_amg_manager.iCFalgorithm_and_data_structure_Pressure =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Pressure);
 			}
 			else {
 				printf("WARNING!!! CFalgorithmandDataStruct_Pressure not found in file premeshin.txt\n");
-				my_amg_manager.iCFalgorithm_and_data_structure_Pressure = 0; //  3-Treap.
-				printf("my_amg_manager.iCFalgorithm_and_data_structure_Pressure =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Pressure);
+				my_amg_manager.iCFalgorithm_and_data_structure_Pressure = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP; //  3-Treap.
+				printf("my_amg_manager.iCFalgorithm_and_data_structure_Pressure =RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP\n");
 				if (bSTOP_Reading) system("pause");
 			}
 						
 			if (imakesource("CFalgorithmandDataStruct_Stress", idin)) {
 				// Найдено успешно.
-				my_amg_manager.iCFalgorithm_and_data_structure_Stress  = (integer)(idin);
+				
+				switch (idin) {
+				case 0: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE;
+					break;
+				case 1: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				case 2: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP;
+					break;
+				case 3: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP;
+					break;
+				case 4: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE;
+					break;
+				case 5: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP;
+					break;
+				case 6: my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE;
+					break;
+				default:
+					my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE;
+					break;
+				}
 				//printf("my_amg_manager.iCFalgorithm_and_data_structure_Stress =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Stress);
 			}
 			else {
 				printf("WARNING!!! CFalgorithmandDataStruct_Stress not found in file premeshin.txt\n");
-				my_amg_manager.iCFalgorithm_and_data_structure_Stress = 3; // 3-Treap.
-				printf("my_amg_manager.iCFalgorithm_and_data_structure_Stress =%lld\n", my_amg_manager.iCFalgorithm_and_data_structure_Stress);
+				my_amg_manager.iCFalgorithm_and_data_structure_Stress = RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP; // 3-Treap.
+				printf("my_amg_manager.iCFalgorithm_and_data_structure_Stress =RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -11695,76 +13474,96 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("TemperatureMatrixPortrait", idin)) {
 				// Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
-					my_amg_manager.bTemperatureMatrixPortrait = (integer)(idin);
+					if (idin == 0) {
+						my_amg_manager.bTemperatureMatrixPortrait = false;
+					}
+					else {
+						my_amg_manager.bTemperatureMatrixPortrait = true;
+					}
 					//printf("my_amg_manager.bTemperatureMatrixPortrait =%lld\n", my_amg_manager.bTemperatureMatrixPortrait);
 				}
 				else {
 					printf("my_amg_manager.bTemperatureMatrixPortrait must be equal 1 or 0. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.bTemperatureMatrixPortrait = 0; // 0 - NO_PRINT, 1 - PRINT.
+					my_amg_manager.bTemperatureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
 				}
 			}
 			else {
 				printf("WARNING!!! TemperatureMatrixPortrait not found in file premeshin.txt\n");
-				my_amg_manager.bTemperatureMatrixPortrait = 0; // 0 - NO_PRINT, 1 - PRINT.
-				printf("my_amg_manager.bTemperatureMatrixPortrait =%lld\n", my_amg_manager.bTemperatureMatrixPortrait);
+				my_amg_manager.bTemperatureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
+				printf("my_amg_manager.bTemperatureMatrixPortrait =NO_PRINT\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("SpeedMatrixPortrait", idin)) {
 				// Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
-					my_amg_manager.bSpeedMatrixPortrait = (integer)(idin);
+					if (idin == 0) {
+						my_amg_manager.bSpeedMatrixPortrait = false;
+					}
+					else {
+						my_amg_manager.bSpeedMatrixPortrait = true;
+					}
 					//printf("my_amg_manager.bSpeedMatrixPortrait =%lld\n", my_amg_manager.bSpeedMatrixPortrait);
 				}
 				else {
 					printf("my_amg_manager.bSpeedMatrixPortrait must be equal 1 or 0. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.bSpeedMatrixPortrait = 0; // 0 - NO_PRINT, 1 - PRINT.
+					my_amg_manager.bSpeedMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
 				}
 			}
 			else {
 				printf("WARNING!!! SpeedMatrixPortrait not found in file premeshin.txt\n");
-				my_amg_manager.bSpeedMatrixPortrait = 0; //  0 - NO_PRINT, 1 - PRINT.
-				printf("my_amg_manager.bSpeedMatrixPortrait =%lld\n", my_amg_manager.bSpeedMatrixPortrait);
+				my_amg_manager.bSpeedMatrixPortrait = false; //  false - NO_PRINT, true - PRINT.
+				printf("my_amg_manager.bSpeedMatrixPortrait =NO_PRINT\n");
 				if (bSTOP_Reading) system("pause");
 			}
 						
 			if (imakesource("PressureMatrixPortrait", idin)) {
 				// Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
-					my_amg_manager.bPressureMatrixPortrait = (integer)(idin);
+					if (idin == 0) {
+						my_amg_manager.bPressureMatrixPortrait = false;
+					}
+					else {
+						my_amg_manager.bPressureMatrixPortrait = true;
+					}
 					//printf("my_amg_manager.bPressureMatrixPortrait =%lld\n", my_amg_manager.bPressureMatrixPortrait);
 				}
 				else {
 					printf("my_amg_manager.bPressureMatrixPortrait must be equal 1 or 0. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.bPressureMatrixPortrait = 0; // 0 - NO_PRINT, 1 - PRINT.
+					my_amg_manager.bPressureMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
 				}
 			}
 			else {
 				printf("WARNING!!! PressureMatrixPortrait not found in file premeshin.txt\n");
-				my_amg_manager.bPressureMatrixPortrait = 0; //  0 - NO_PRINT, 1 - PRINT.
-				printf("my_amg_manager.bPressureMatrixPortrait =%lld\n", my_amg_manager.bPressureMatrixPortrait);
+				my_amg_manager.bPressureMatrixPortrait = false; //  false - NO_PRINT, true - PRINT.
+				printf("my_amg_manager.bPressureMatrixPortrait =NO_PRINT\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("StressMatrixPortrait", idin)) {
 				// Найдено успешно.
 				if ((idin == 0) || (idin == 1)) {
-					my_amg_manager.bStressMatrixPortrait = (integer)(idin);
+					if (idin == 0) {
+						my_amg_manager.bStressMatrixPortrait = false;
+					}
+					else {
+						my_amg_manager.bStressMatrixPortrait = true;
+					}
 					//printf("my_amg_manager.bStressMatrixPortrait =%lld\n", my_amg_manager.bStressMatrixPortrait);
 				}
 				else {
 					printf("my_amg_manager.bStressMatrixPortrait must be equal 1 or 0. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.bStressMatrixPortrait = 0; // 0 - NO_PRINT, 1 - PRINT.
+					my_amg_manager.bStressMatrixPortrait = false; // false - NO_PRINT, true - PRINT.
 				}
 			}
 			else {
 				printf("WARNING!!! StressMatrixPortrait not found in file premeshin.txt\n");
-				my_amg_manager.bStressMatrixPortrait = 0; //  0 - NO_PRINT, 1 - PRINT.
-				printf("my_amg_manager.bStressMatrixPortrait =%lld\n", my_amg_manager.bStressMatrixPortrait);
+				my_amg_manager.bStressMatrixPortrait = false; //  false - NO_PRINT, true - PRINT.
+				printf("my_amg_manager.bStressMatrixPortrait =NO_PRINT\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -12380,50 +14179,150 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Способ построения C/F разбиения: 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
 			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
 			if (imakesource("coarseningTemp", idin)) {
-				// Найдено успешно.
-				my_amg_manager.icoarseningTemp = (integer)(idin);
+				// Найдено успешно.			
+
+				switch (idin) {
+				case 0: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+					break;
+				case 1: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+					break;
+				case 2: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+					break;
+				case 3: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+					break;
+				case 4: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+					break;
+				case 5: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+					break;
+				case 6: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+					break;
+				case 7: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+					break;
+				case 8: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				case 9: my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+					break;
+				default:
+					my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				}
+
 				//printf("my_amg_manager.icoarseningTemp =%lld\n", my_amg_manager.icoarseningTemp);
 			}
 			else {
 				printf("WARNING!!! coarseningTemp not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningTemp = 2; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
-				printf("my_amg_manager.icoarseningTemp =%lld\n", my_amg_manager.icoarseningTemp);
+				my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
+				printf("my_amg_manager.icoarseningTemp = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("coarseningSpeed", idin)) {
 				// Найдено успешно.
-				my_amg_manager.icoarseningSpeed = (integer)(idin);
+				switch (idin) {
+				case 0: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+					break;
+				case 1: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+					break;
+				case 2: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+					break;
+				case 3: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+					break;
+				case 4: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+					break;
+				case 5: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+					break;
+				case 6: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+					break;
+				case 7: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+					break;
+				case 8: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				case 9: my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+					break;
+				default:
+					my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				}
+
 				//printf("my_amg_manager.icoarseningSpeed =%lld\n", my_amg_manager.icoarseningSpeed);
 			}
 			else {
 				printf("WARNING!!! coarseningSpeed not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningSpeed = 0; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
-				printf("my_amg_manager.icoarseningSpeed =%lld\n", my_amg_manager.icoarseningSpeed);
+				my_amg_manager.icoarseningSpeed = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
+				printf("my_amg_manager.icoarseningSpeed =MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("coarseningPressure", idin)) {
 				// Найдено успешно.
-				my_amg_manager.icoarseningPressure = (integer)(idin);
+				switch (idin) {
+				case 0: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+					break;
+				case 1: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+					break;
+				case 2: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+					break;
+				case 3: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+					break;
+				case 4: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+					break;
+				case 5: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+					break;
+				case 6: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+					break;
+				case 7: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+					break;
+				case 8: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				case 9: my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+					break;
+				default:
+					my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				}
+
 				//printf("my_amg_manager.icoarseningPressure =%lld\n", my_amg_manager.icoarseningPressure);
 			}
 			else {
 				printf("WARNING!!! coarseningPressure not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningPressure = 0; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
-				printf("my_amg_manager.icoarseningPressure =%lld\n", my_amg_manager.icoarseningPressure);
+				my_amg_manager.icoarseningPressure = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
+				printf("my_amg_manager.icoarseningPressure =MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
 			if (imakesource("coarseningStress", idin)) {
 				// Найдено успешно.
-				my_amg_manager.icoarseningStress = (integer)(idin);
+				switch (idin) {
+				case 0: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
+					break;
+				case 1: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+					break;
+				case 2: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+					break;
+				case 3: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+					break;
+				case 4: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION;
+					break;
+				case 5: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION;
+					break;
+				case 6: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION;
+					break;
+				case 7: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION;
+					break;
+				case 8: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				case 9: my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS;
+					break;
+				default:
+					my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS;
+					break;
+				}
 				//printf("my_amg_manager.icoarseningStress =%lld\n", my_amg_manager.icoarseningStress);
 			}
 			else {
 				printf("WARNING!!! coarseningStress not found in file premeshin.txt\n");
-				my_amg_manager.icoarseningStress = 0; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
-				printf("my_amg_manager.icoarseningStress =%lld\n", my_amg_manager.icoarseningStress);
+				my_amg_manager.icoarseningStress = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION; // 0 - standart, 1 - RS 2, 2 - standart Strong Transpose, 3 - RS2 Strong Transpose.
+				printf("my_amg_manager.icoarseningStress =MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -12606,15 +14505,16 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			if (imakesource("amgcl_smoother", idin)) {
 				// Найдено успешно.
-				if ((idin >= 0) && (idin <= 7)) {
+				if ((idin >= 0) && (idin <= 11)) {
 					my_amg_manager.amgcl_smoother = (integer)(idin);
 					//printf("my_amg_manager.amgcl_smoother =%lld\n", my_amg_manager.amgcl_smoother);
 				}
 				else {
-					printf("my_amg_manager.amgcl_smoother must be 0<= value <=7. current_value=%d\n", idin);
+					printf("my_amg_manager.amgcl_smoother must be 0<= value <=11. current_value=%d\n", idin);
 					system("pause");
 					// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
 					// 4 - spai1; 5 - chebyshev; 6 - ilu1 (iluk,k=1); 7 - ilu2 (iluk,k=2);
+					// 8 - iluk, k=4; 9 - iluk, k=6; 10 - iluk, k=8; 11 - iluk, k=10.
 					my_amg_manager.amgcl_smoother = 0; 
 				}
 			}
@@ -12622,10 +14522,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				printf("WARNING!!! amgcl_smoother not found in file premeshin.txt\n");
 				// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
                 // 4 - spai1; 5 - chebyshev; 6 - ilu1 (iluk,k=1); 7 - ilu2 (iluk,k=2);
+				// 8 - iluk, k=4; 9 - iluk, k=6; 10 - iluk, k=8; 11 - iluk, k=10.
 				my_amg_manager.amgcl_smoother = 0; 
 				printf("my_amg_manager.amgcl_smoother =%lld\n", my_amg_manager.amgcl_smoother);
 				printf("0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi;\n");
 				printf("4 - spai1; 5 - chebyshev; 6 - ilu1 (iluk,k=1); 7 - ilu2 (iluk,k=2).\n");
+				printf("8 - iluk, k=4; 9 - iluk, k=6; 10 - iluk, k=8; 11 - iluk, k=10.\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -12652,19 +14554,26 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("amgcl_iterator", idin)) {
 				// Найдено успешно.
 				if ((idin >= 0) && (idin <= 1)) {
-					my_amg_manager.amgcl_iterator = (integer)(idin);
+					switch (idin) {
+					case 0: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+						break;
+					case 1: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::FGMRes;
+						break;
+					default: my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab;
+						break;
+					}
 					//printf("my_amg_manager.amgcl_iterator =%lld\n", my_amg_manager.amgcl_iterator);
 				}
 				else {
 					printf("my_amg_manager.amgcl_iterator must be 0<= value <=1. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
+					my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab; // 0 - BiCGStab; 1 - FGMRes.
 				}
 			}
 			else {
 				printf("WARNING!!! amgcl_iterator not found in file premeshin.txt\n");
-				my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
-				printf("my_amg_manager.amgcl_iterator =%lld\n", my_amg_manager.amgcl_iterator);
+				my_amg_manager.amgcl_iterator = AMGCL_ITERATOR_ALG::BiCGStab; // 0 - BiCGStab; 1 - FGMRes.
+				printf("my_amg_manager.amgcl_iterator =AMGCL_ITERATOR_ALG::BiCGStab\n");
 				printf("0 - BiCGStab; 1 - FGMRes.\n");
 				if (bSTOP_Reading) system("pause");
 			}
@@ -13042,84 +14951,636 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					printf(" matlist[%d].orthotropy_multiplyer_z=%e\n", i, matlist[i].orthotropy_multiplyer_z);
 					if (bSTOP_Reading) system("pause");
 				}
+
+				// 28.08.2020.
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Linear_expansion_coefficient_x");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_x_beta_t_solid = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_x_beta_t_solid = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_x_beta_t_solid=%e\n", i, matlist[i].orthotropy_multiplyer_x_beta_t_solid);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Linear_expansion_coefficient_y");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_y_beta_t_solid = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_y_beta_t_solid = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_y_beta_t_solid=%e\n", i, matlist[i].orthotropy_multiplyer_y_beta_t_solid);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Linear_expansion_coefficient_z");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_z_beta_t_solid = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_z_beta_t_solid = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_z_beta_t_solid=%e\n", i, matlist[i].orthotropy_multiplyer_z_beta_t_solid);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// Ортотропность модуля Юнга.
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Young_Module_x");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_x_Young_Module = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_x_Young_Module = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_x_Young_Module=%e\n", i, matlist[i].orthotropy_multiplyer_x_Young_Module);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Young_Module_y");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_y_Young_Module = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_y_Young_Module = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_y_Young_Module=%e\n", i, matlist[i].orthotropy_multiplyer_y_Young_Module);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Young_Module_z");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_z_Young_Module = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_z_Young_Module = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_z_Young_Module=%e\n", i, matlist[i].orthotropy_multiplyer_z_Young_Module);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// mult_Poisson_ratio_xy
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Poisson_ratio_xy");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_xy = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_xy = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_Poisson_ratio_xy=%e\n", i, matlist[i].orthotropy_multiplyer_Poisson_ratio_xy);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// mult_Poisson_ratio_xz
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Poisson_ratio_xz");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_xz = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_xz = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_Poisson_ratio_xz=%e\n", i, matlist[i].orthotropy_multiplyer_Poisson_ratio_xz);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// mult_Poisson_ratio_yz
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Poisson_ratio_yz");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_yz = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_yz = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_Poisson_ratio_yz=%e\n", i, matlist[i].orthotropy_multiplyer_Poisson_ratio_yz);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// mult_Poisson_ratio_yx
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Poisson_ratio_yx");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_yx = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_yx = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_Poisson_ratio_yx=%e\n", i, matlist[i].orthotropy_multiplyer_Poisson_ratio_yx);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// mult_Poisson_ratio_zx
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Poisson_ratio_zx");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_zx = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_zx = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_Poisson_ratio_zx=%e\n", i, matlist[i].orthotropy_multiplyer_Poisson_ratio_zx);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				// mult_Poisson_ratio_zy
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "mult_Poisson_ratio_zy");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_zy = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].orthotropy_multiplyer_Poisson_ratio_zy = 1.0; // no orthotropy .
+					printf(" matlist[%d].orthotropy_multiplyer_Poisson_ratio_zy=%e\n", i, matlist[i].orthotropy_multiplyer_Poisson_ratio_zy);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				//bShearModuleActive
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "bShearModuleActive");
+
+				if (imakesource(name0, idin)) {
+					// Найдено успешно.
+					if (idin == 1) {
+						matlist[i].bActive_ShearModule = true;
+					}
+					else {
+						matlist[i].bActive_ShearModule = false;
+					}
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].bActive_ShearModule = false; // no orthotropy .
+					printf(" matlist[%d].bActive_ShearModule=false\n", i);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				//ShearModuleGxy
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "ShearModuleGxy");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].ShearModule_xy = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].ShearModule_xy = 1.0; // no orthotropy .
+					printf(" matlist[%d].ShearModule_xy=%e\n", i, matlist[i].ShearModule_xy);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				//ShearModuleGyz
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "ShearModuleGyz");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].ShearModule_yz = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].ShearModule_yz = 1.0; // no orthotropy .
+					printf(" matlist[%d].ShearModule_yz=%e\n", i, matlist[i].ShearModule_yz);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				//ShearModuleGxz
+				name0[0] = '\0'; strcat_s(name0, "matherial");
+				buffer[0] = '\0';
+				_itoa_s(i, buffer, 10);
+				strcat_s(name0, buffer);
+				strcat_s(name0, "ShearModuleGxz");
+
+				if (fmakesource(name0, fin)) {
+					// Найдено успешно.
+					matlist[i].ShearModule_xz = (doublereal)(fin);
+				}
+				else {
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].ShearModule_xz = 1.0; // no orthotropy .
+					printf(" matlist[%d].ShearModule_xz=%e\n", i, matlist[i].ShearModule_xz);
+					if (bSTOP_Reading) system("pause");
+				}
+
+
 				// 5.08.2017.
 				// Коэффициенты для задачи упругости.
 				// Модуль Юнга и коэффициент Пуассона.
-				// Алюминий стр. 232 В.Н.Сидоров, В.В. Вершинин Метод конечных элементов в расчёте сооружений.
-				//doublereal Poissonratio = 0.33;
-				//doublereal Youngmodule = 71.7e9;
-				// steel
-				// Tensile Yield Strength 4.12E+8
-				// Compressive Yield Strength 4.12E+8
-				// Tensile Ultimate Strength 5.7E+8
-				//doublereal Poissonratio = 0.154;
-				//doublereal Youngmodule = 217.5E9;
-				doublereal Poissonratio = 0.3;
-				doublereal Youngmodule = 200.0E9;
+				// В.Н.Сидоров, В.В. Вершинин Метод конечных элементов в расчёте сооружений.
+				
 
 				name0[0] = '\0'; strcat_s(name0, "matherial");
 				buffer[0] = '\0';
 				_itoa_s(i, buffer, 10);
 				strcat_s(name0, buffer);
-				strcat_s(name0, "Poisson_ratio");
-				
-				if (fmakesource(name0, fin)) {
+				strcat_s(name0, "n_Poisson_ratio");
+				// Коэффициент Пуассона
+				//fscanf(fp, "%f", &fin);
+				//matlist[i].arr_Poisson_ratio[0]= fin;
+
+				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					Poissonratio  = (doublereal)(fin);
+					matlist[i].n_Poisson_ratio = (integer)(idin);
+					//printf("matlist[i].n_Poisson_ratio =%lld\n",matlist[i].n_Poisson_ratio);
+
+					delete[] matlist[i].arr_Poisson_ratio;
+					delete[] matlist[i].temp_Poisson_ratio;
+
+					matlist[i].arr_Poisson_ratio = nullptr;
+					matlist[i].temp_Poisson_ratio = nullptr;
+					matlist[i].arr_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+					matlist[i].temp_Poisson_ratio = new doublereal[matlist[i].n_Poisson_ratio];
+					if (matlist[i].temp_Poisson_ratio == nullptr) {
+						printf("problem memory allocation for temp_Poisson_ratio\n");
+						system("pause");
+						exit(1);
+					}
+					if (matlist[i].arr_Poisson_ratio == nullptr) {
+						printf("problem memory allocation for arr_Poisson_ratio\n");
+						system("pause");
+						exit(1);
+					}
+					for (int i_4 = 0; i_4 < matlist[i].n_Poisson_ratio; i_4++) {
+						// Температура в C.
+						name0[0] = '\0'; strcat_s(name0, "matherial");
+						buffer[0] = '\0';
+						_itoa_s(i, buffer, 10);
+						strcat_s(name0, buffer);
+						strcat_s(name0, "temp_Poisson_ratio");
+
+						buffer[0] = '\0'; _itoa_s(i_4, buffer, 10); strcat_s(name0, buffer);
+
+						if (fmakesource(name0, fin)) {
+							// Найдено успешно.
+							matlist[i].temp_Poisson_ratio[i_4] = (doublereal)(fin);
+						}
+						else {
+
+							printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+							matlist[i].temp_Poisson_ratio[i_4] = 30.0; // .
+							printf(" matlist[%d].temp_Poisson_ratio[%d]=%e\n", i, i_4, matlist[i].temp_Poisson_ratio[i_4]);
+							if (bSTOP_Reading) system("pause");
+						}
+
+						name0[0] = '\0'; strcat_s(name0, "matherial");
+						buffer[0] = '\0';
+						_itoa_s(i, buffer, 10);
+						strcat_s(name0, buffer);
+						strcat_s(name0, "arr_Poisson_ratio");
+						buffer[0] = '\0'; _itoa_s(i_4, buffer, 10); strcat_s(name0, buffer);
+
+						if (fmakesource(name0, fin)) {
+							// Найдено успешно.
+							matlist[i].arr_Poisson_ratio[i_4] = (doublereal)(fin);
+						}
+						else {
+
+							printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+							matlist[i].arr_Poisson_ratio[i_4] = 0.3; // .
+							printf("matlist[%d].arr_Poisson_ratio[%d]  =%e\n", i, i_4, matlist[i].arr_Poisson_ratio[i_4]);
+							if (bSTOP_Reading) system("pause");
+
+						}
+
+					}
+
 				}
 				else {
-					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
-					Poissonratio  = 0.3; // default 0.3.
-					printf(" Poissonratio =%e\n", Poissonratio);
-					if (bSTOP_Reading) system("pause");
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].n_Poisson_ratio = 1; // .
+					printf("matlist[i].n_Poisson_ratio =%lld\n", matlist[i].n_Poisson_ratio);
+					name0[0] = '\0'; strcat_s(name0, "matherial");
+					buffer[0] = '\0';
+					_itoa_s(i, buffer, 10);
+					strcat_s(name0, buffer);
+					strcat_s(name0, "Poisson_ratio");
+
+					// Poisson ratio
+
+					if (fmakesource(name0, fin)) {
+						// Найдено успешно.
+						matlist[i].n_Poisson_ratio = 1;
+						matlist[i].temp_Poisson_ratio = new doublereal[1];
+						matlist[i].temp_Poisson_ratio[0] = 25.0;
+						matlist[i].arr_Poisson_ratio = new doublereal[1];
+						matlist[i].arr_Poisson_ratio[0] = (doublereal)(fin);
+					}
+					else {
+						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+						matlist[i].n_Poisson_ratio = 1;
+						matlist[i].temp_Poisson_ratio = new doublereal[1];
+						matlist[i].temp_Poisson_ratio[0] = 25.0;
+						matlist[i].arr_Poisson_ratio = new doublereal[1];
+						matlist[i].arr_Poisson_ratio[0] = 0.3; // default 0.3.
+						printf(" matlist[%d].arr_Poisson_ratio =%e\n", i, matlist[i].arr_Poisson_ratio[0]);
+						if (bSTOP_Reading) system("pause");
+					}
 				}
 
 				name0[0] = '\0'; strcat_s(name0, "matherial");
 				buffer[0] = '\0';
 				_itoa_s(i, buffer, 10);
 				strcat_s(name0, buffer);
-				strcat_s(name0, "Young_Module");
-				
-				if (fmakesource(name0, fin)) {
+				strcat_s(name0, "n_Young_Module");
+				// Модуль Юнга
+				//fscanf(fp, "%f", &fin);
+				//matlist[i].arr_Young_Module[0]= fin*1e9;
+
+				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					Youngmodule = (doublereal)(fin)* 1e9;
+					matlist[i].n_YoungModule = (integer)(idin);
+					//printf("matlist[i].n_YoungModule =%lld\n",matlist[i].n_YoungModule);
+
+					delete[] matlist[i].arr_Young_Module;
+					delete[] matlist[i].temp_Young_Module;
+
+					matlist[i].arr_Young_Module = nullptr;
+					matlist[i].temp_Young_Module = nullptr;
+					matlist[i].arr_Young_Module = new doublereal[matlist[i].n_YoungModule];
+					matlist[i].temp_Young_Module = new doublereal[matlist[i].n_YoungModule];
+					if (matlist[i].temp_Young_Module == nullptr) {
+						printf("problem memory allocation for temp_Young_Module\n");
+						system("pause");
+						exit(1);
+					}
+					if (matlist[i].arr_Young_Module == nullptr) {
+						printf("problem memory allocation for arr_Young_Module\n");
+						system("pause");
+						exit(1);
+					}
+					for (int i_4 = 0; i_4 < matlist[i].n_YoungModule; i_4++) {
+						// Температура в C.
+						name0[0] = '\0'; strcat_s(name0, "matherial");
+						buffer[0] = '\0';
+						_itoa_s(i, buffer, 10);
+						strcat_s(name0, buffer);
+						strcat_s(name0, "temp_Young_Module");
+
+						buffer[0] = '\0'; _itoa_s(i_4, buffer, 10); strcat_s(name0, buffer);
+
+						if (fmakesource(name0, fin)) {
+							// Найдено успешно.
+							matlist[i].temp_Young_Module[i_4] = (doublereal)(fin);
+						}
+						else {
+							
+								printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+								matlist[i].temp_Young_Module[i_4] = 30.0; // .
+								printf(" matlist[%d].temp_Young_Module[%d]=%e\n", i, i_4, matlist[i].temp_Young_Module[i_4]);
+								if (bSTOP_Reading) system("pause");
+						}
+
+						name0[0] = '\0'; strcat_s(name0, "matherial");
+						buffer[0] = '\0';
+						_itoa_s(i, buffer, 10);
+						strcat_s(name0, buffer);
+						strcat_s(name0, "arr_Young_Module");
+						buffer[0] = '\0'; _itoa_s(i_4, buffer, 10); strcat_s(name0, buffer);
+
+						if (fmakesource(name0, fin)) {
+							// Найдено успешно.
+							matlist[i].arr_Young_Module[i_4] = (doublereal)(fin)*1.0e+9;
+						}
+						else {
+							
+								printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+								matlist[i].arr_Young_Module[i_4] = 200.0e+9; // .
+								printf("matlist[%d].arr_Young_Module[%d]  =%e\n", i, i_4, matlist[i].arr_Young_Module[i_4]);
+								if (bSTOP_Reading) system("pause");
+							
+						}
+
+					}
+
 				}
 				else {
-					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
-					Youngmodule  = 200.0E9; // default 200.0e9.
-					printf("Youngmodule =%e\n", Youngmodule);
-					if (bSTOP_Reading) system("pause");
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].n_YoungModule = 1; // .
+					printf("matlist[i].n_YoungModule =%lld\n", matlist[i].n_YoungModule);
+					name0[0] = '\0'; strcat_s(name0, "matherial");
+					buffer[0] = '\0';
+					_itoa_s(i, buffer, 10);
+					strcat_s(name0, buffer);
+					strcat_s(name0, "Young_Module");
+
+					// Young_Module*1E+9
+
+					if (fmakesource(name0, fin)) {
+						// Найдено успешно.
+						matlist[i].n_YoungModule = 1;
+						matlist[i].temp_Young_Module = new doublereal[1];
+						matlist[i].temp_Young_Module[0] = 25.0;
+						matlist[i].arr_Young_Module = new doublereal[1];
+						matlist[i].arr_Young_Module[0] = (doublereal)(fin)* 1E+9;
+					}
+					else {
+						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+						matlist[i].n_YoungModule = 1;
+						matlist[i].temp_Young_Module  = new doublereal[1];
+						matlist[i].temp_Young_Module[0] = 25.0;
+						matlist[i].arr_Young_Module  = new doublereal[1];
+						matlist[i].arr_Young_Module[0] = 200.0E+9; // default 200GPa.
+						printf(" matlist[%d].Young_Module =%e\n", i, matlist[i].arr_Young_Module[0]);
+						if (bSTOP_Reading) system("pause");
+					}
 				}
+								
+				
 
 				name0[0] = '\0'; strcat_s(name0, "matherial");
 				buffer[0] = '\0';
 				_itoa_s(i, buffer, 10);
 				strcat_s(name0, buffer);
-				strcat_s(name0, "Linear_expansion_coefficient");
-				
-				// beta_t_solid*1E-6
-				 
-				if (fmakesource(name0, fin)) {
+				strcat_s(name0, "n_Linear_expansion_coefficient");
+				// теплоёмкость при постоянном давлении
+				//fscanf(fp, "%f", &fin);
+				//matlist[i].cp = fin;
+
+				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					matlist[i].beta_t_solid = (doublereal)(fin)* 1E-6;
+					matlist[i].n_beta_t_solid = (integer)(idin);
+					//printf("matlist[i].n_beta_t_solid =%lld\n",matlist[i].n_beta_t_solid );
+
+					delete[] matlist[i].arr_beta_t_solid;
+					delete[] matlist[i].temp_beta_t_solid;
+
+					matlist[i].arr_beta_t_solid = nullptr;
+					matlist[i].temp_beta_t_solid = nullptr;
+					matlist[i].arr_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+					matlist[i].temp_beta_t_solid = new doublereal[matlist[i].n_beta_t_solid];
+					if (matlist[i].temp_beta_t_solid == nullptr) {
+						printf("problem memory allocation for temp_beta_t_solid\n");
+						system("pause");
+						exit(1);
+					}
+					if (matlist[i].arr_beta_t_solid == nullptr) {
+						printf("problem memory allocation for arr_beta_t_solid\n");
+						system("pause");
+						exit(1);
+					}
+					for (int i_4 = 0; i_4 < matlist[i].n_beta_t_solid; i_4++) {
+						// Температура в C.
+						name0[0] = '\0'; strcat_s(name0, "matherial");
+						buffer[0] = '\0';
+						_itoa_s(i, buffer, 10);
+						strcat_s(name0, buffer);
+						strcat_s(name0, "temp_Linear_expansion_coefficient");
+
+						buffer[0] = '\0'; _itoa_s(i_4, buffer, 10); strcat_s(name0, buffer);
+
+						if (fmakesource(name0, fin)) {
+							// Найдено успешно.
+							matlist[i].temp_beta_t_solid[i_4] = (doublereal)(fin);
+						}
+						else {
+							
+								printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+								matlist[i].temp_beta_t_solid[i_4] = 30.0; // .
+								printf(" matlist[%d].temp_beta_t_solid[%d]=%e\n", i, i_4, matlist[i].temp_beta_t_solid[i_4]);
+								if (bSTOP_Reading) system("pause");
+							
+						}
+
+						name0[0] = '\0'; strcat_s(name0, "matherial");
+						buffer[0] = '\0';
+						_itoa_s(i, buffer, 10);
+						strcat_s(name0, buffer);
+						strcat_s(name0, "arr_Linear_expansion_coefficient");
+						buffer[0] = '\0'; _itoa_s(i_4, buffer, 10); strcat_s(name0, buffer);
+
+						if (fmakesource(name0, fin)) {
+							// Найдено успешно.
+							matlist[i].arr_beta_t_solid[i_4] = (doublereal)(fin)*1.0e-6;
+						}
+						else {
+							
+								printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+								matlist[i].arr_beta_t_solid[i_4] = 1.0e-6; // .
+								printf("matlist[%d].arr_beta_t_solid[%d]  =%e\n", i, i_4, matlist[i].arr_beta_t_solid[i_4]);
+								if (bSTOP_Reading) system("pause");
+							
+						}
+
+					}
+
+
 				}
 				else {
-					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
-					matlist[i].beta_t_solid = 1.0e-6; // default 1.0e-6.
-					printf(" matlist[%d].beta_t_solid =%e\n", i, matlist[i].beta_t_solid);
-					if (bSTOP_Reading) system("pause");
+					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+					matlist[i].n_beta_t_solid = 1; // .
+					printf("matlist[i].n_beta_t_solid =%lld\n", matlist[i].n_beta_t_solid);
+					name0[0] = '\0'; strcat_s(name0, "matherial");
+					buffer[0] = '\0';
+					_itoa_s(i, buffer, 10);
+					strcat_s(name0, buffer);
+					strcat_s(name0, "Linear_expansion_coefficient");
+
+					// beta_t_solid*1E-6
+
+					if (fmakesource(name0, fin)) {
+						// Найдено успешно.
+						matlist[i].n_beta_t_solid = 1;
+						matlist[i].temp_beta_t_solid = new doublereal[1];
+						matlist[i].temp_beta_t_solid[0] = 25.0;
+						matlist[i].arr_beta_t_solid = new doublereal[1];
+						matlist[i].arr_beta_t_solid[0] = (doublereal)(fin)* 1E-6;
+					}
+					else {
+						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+						matlist[i].n_beta_t_solid = 1;
+						matlist[i].temp_beta_t_solid = new doublereal[1];
+						matlist[i].temp_beta_t_solid[0] = 25.0;
+						matlist[i].arr_beta_t_solid = new doublereal[1];
+						matlist[i].arr_beta_t_solid[0] = 1.0E-6; // default 1.0e-6.
+						printf(" matlist[%d].beta_t_solid =%e\n", i, matlist[i].arr_beta_t_solid[0]);
+						if (bSTOP_Reading) system("pause");
+					}					
 				}
-				// Коэффициенты Ламе.
-				//doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
-				//doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
-				//matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
-				//matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef*nu1_koef);
-				// стр. 25 В.Н.Сидоров, В.В. Вершинин. Метод конечных элементов в расчёте сооружений.
-				//+ 19.10.2018 проверено.
-				matlist[i].mu_Lame = Youngmodule / (2.0*(1.0 + Poissonratio));
-				matlist[i].lambda_Lame = (Poissonratio*Youngmodule) / ((1.0 + Poissonratio)*(1.0 - 2.0*Poissonratio));
-				//printf("E=%e N/m^2 mu=%e lambda=%e\n", Youngmodule, matlist[i].mu_Lame, matlist[i].lambda_Lame);
-				//system("PAUSE");
+
+				
+
+
+				// Коэффициенты Ламе не используются в коде.
+				
 				// коэффициент динамической вязкости
 				name0[0] = '\0'; strcat_s(name0, "matherial");
 				buffer[0] = '\0';
@@ -14139,13 +16600,26 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					b[i].ipower_time_depend = (integer)(idin);
+					switch (idin) {
+					case 0: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+						break;
+					case 1: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE;
+						break;
+					case 2: b[i].ipower_time_depend = POWER_TIME_DEPEND::SQUARE_WAVE2;
+						break;
+					case 3: b[i].ipower_time_depend = POWER_TIME_DEPEND::HOT_COLD;
+						break;
+					case 4: b[i].ipower_time_depend = POWER_TIME_DEPEND::PIECEWISE_CONST;
+						break;
+					default: b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER;
+						break;
+					}
 					//printf("b[%lld].ipower_time_depend =%lld\n", i, b[i].ipower_time_depend);
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					b[i].ipower_time_depend = 0; // не зависит от времени.
-					printf("b[%d].ipower_time_depend =%lld\n", i, b[i].ipower_time_depend);
+					b[i].ipower_time_depend = POWER_TIME_DEPEND::CONST_POWER; // не зависит от времени.
+					printf("b[%d].ipower_time_depend =POWER_TIME_DEPEND::CONST\n", i);
 					if (bSTOP_Reading) system("pause");
 				}
 				// тип блока
@@ -14155,19 +16629,30 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 				if (imakesource(name0, idin)) {
 					// Найдено успешно.
-					b[i].itype = (integer)(idin);
+					
+					switch (idin) {
+					case 1: b[i].itype = PHYSICS_TYPE_IN_BODY::SOLID;
+						break;
+					case 2: b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+						break;
+					case 3: b[i].itype = PHYSICS_TYPE_IN_BODY::FLUID;
+						break;
+					default:
+						b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW;
+						break;
+					}
 					//printf("b[%lld].itype  =%lld\n",i,b[i].itype  );
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					b[i].itype = 0; // 0 - SOLID, 1 - HOLLOW, 2 - FLUID.
-					printf(" b[%d].itype =%lld\n", i, b[i].itype);
+					b[i].itype = PHYSICS_TYPE_IN_BODY::HOLLOW; // 1 - SOLID, 2 - HOLLOW, 3 - FLUID.
+					printf(" b[%d].itype =PHYSICS_TYPE_IN_BODY::HOLLOW\n", i);
 					if (bSTOP_Reading) system("pause");
 				}
 
 				// печать считанных значений на консоль
 				//printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-				//printf("%lld %lld %lld\n", b[i].imatid, b[i].itype, b[i].ipower_time_depend);
+				//printf("%lld %lld\n", b[i].imatid, b[i].itype);
 				//printf("temperature depend power\n");
 				//printf("t_C power_W\n");
 				//for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
@@ -14493,11 +16978,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (imakesource(name0, idin)) {
 					// Найдено успешно.
 					switch (idin) {
-						case 1 : w[i].ifamily=DIRICHLET_FAMILY; break;
-						case 2: w[i].ifamily=NEIMAN_FAMILY; break;
-						case 3: w[i].ifamily=NEWTON_RICHMAN_FAMILY; break;
-						case 4: w[i].ifamily=STEFAN_BOLCMAN_FAMILY; break;
-						default: w[i].ifamily=NEIMAN_FAMILY; break;
+						case 1 : w[i].ifamily= WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY; break;
+						case 2: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
+						case 3: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY; break;
+						case 4: w[i].ifamily= WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY; break;
+						default: w[i].ifamily= WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; break;
 					}
 					//w[i].ifamily = (integer)(idin);
 					din= (integer)(idin); // for switch() см. далее.
@@ -14505,7 +16990,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					w[i].ifamily = NEIMAN_FAMILY; // Однородное условие Неймана.
+					w[i].ifamily = WALL_BOUNDARY_CONDITION::NEIMAN_FAMILY; // Однородное условие Неймана.
 					din=2;//NEIMAN_FAMILY
 					printf("w[%d].ifamily =%d\n", i, w[i].ifamily);
 					if (bSTOP_Reading) system("pause");
@@ -14818,19 +17303,58 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 					if (din >= 0 && din < 11) {
 						// 0- FREE
-						w[i].ithermal_Stress_boundary_condition = din;
+						
+						// Thermal-Stress boundary condition
+						// 0 - free,
+						// 1 - x fixit,
+						// 2 - y fixit,
+						// 3 - z fixit,
+						// 4 - xy fixit,
+						// 5 - xz fixit,
+						// 6 - yz fixit,
+						// 7 - fixit all,
+						// 8 - x Force,
+						// 9 - y Force,
+						// 10 - z Force.
+						switch (din) {
+						case 0: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE;
+							break;
+						case 1: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FIXIT;
+							break;
+						case 2: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FIXIT;
+							break;
+						case 3: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FIXIT;
+							break;
+						case 4: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XY_FIXIT;
+							break;
+						case 5: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::XZ_FIXIT;
+							break;
+						case 6: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::YZ_FIXIT;
+							break;
+						case 7: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::ALL_FIXIT;
+							break;
+						case 8: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::X_FORCE;
+							break;
+						case 9: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Y_FORCE;
+							break;
+						case 10: w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::Z_FORCE;
+							break;
+						default:
+							w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // Free all
+							break;
+						}
 					}
 					else {
 						printf("error: unknown ithermal_Stress_boundary_condition\n");
 						printf("ithermal_Stress_boundary_condition=%lld\n", din);
 						system("PAUSE");
-						w[i].ithermal_Stress_boundary_condition = 0; // Free all
+						w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // Free all
 					}
 					//printf("w[%lld].ithermal_Stress_boundary_condition =%lld\n",i,din );
 				}
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-					w[i].ithermal_Stress_boundary_condition = 0; // 0 - FREE.
+					w[i].ithermal_Stress_boundary_condition = THERMAL_STRESS_BOUNDARY_CONDITION::FREE; // 0 - FREE.
 					printf(" w[%d].ithermal_Stress_boundary_condition=FREE BOUNDARY\n",i );
 					if (bSTOP_Reading) system("pause");
 				}
@@ -15031,7 +17555,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					my_union[i].xposadd = nullptr;
 					my_union[i].yposadd = nullptr;
 					my_union[i].zposadd = nullptr;
-					my_union[i].iswitchMeshGenerator = COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
+					my_union[i].iswitchMeshGenerator = CONFORMAL_MESH_GENERATOR_SELECTOR::COARSEMESHGEN_MESHER; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
 					my_union[i].inzadd = -1;
@@ -15310,13 +17834,21 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 					if (imakesource(name0, idin)) {
 						// Найдено успешно.
-						eqin.fluidinfo[i].iflowregime = (integer)(idin);
+						switch (idin) {
+						case 0: eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+							break;
+						case 1:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::TURBULENT;
+							break;
+						default:  eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR;
+							break;
+						}
+						
 						//printf(" eqin.fluidinfo[%lld].iflowregime=%lld\n",i,eqin.fluidinfo[i].iflowregime );
 					}
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-						eqin.fluidinfo[i].iflowregime = 0; // Laminar.
-						printf(" eqin.fluidinfo[%d].iflowregime=%lld\n", i, eqin.fluidinfo[i].iflowregime);
+						eqin.fluidinfo[i].iflowregime = FLOW_REGIME::LAMINAR; // Laminar.
+						printf(" eqin.fluidinfo[%d].iflowregime=FLOW_REGIME::LAMINAR\n", i);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -15325,13 +17857,29 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 					if (imakesource(name0, idin)) {
 						// Найдено успешно.
-						eqin.fluidinfo[i].iturbmodel = (integer)(idin);
+						// Режим течения: ламинарный или конкретная модель турбулентности.
+						switch (idin) {
+						case 0: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+							break;
+						case 1: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::SMAGORINSKY;
+							break;
+						case 2: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RNG_LES;
+							break;
+						case 3: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_SPALART_ALLMARES;
+							break;
+						case 4: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_MENTER_SST;
+							break;
+						case 5: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::RANS_STANDART_K_EPS;
+							break;
+						default: eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD;
+							break;
+						}
 						//printf(" eqin.fluidinfo[%lld].iturbmodel=%lld\n", i, eqin.fluidinfo[i].iturbmodel);
 					}
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
-						eqin.fluidinfo[i].iturbmodel = 0; // Zero Equation Turbulence Model.
-						printf(" eqin.fluidinfo[%d].iturbmodel=%lld\n", i, eqin.fluidinfo[i].iturbmodel);
+						eqin.fluidinfo[i].iturbmodel = TURBULENT_MODEL::ZEROEQMOD; // Zero Equation Turbulence Model.
+						printf(" eqin.fluidinfo[%d].iturbmodel=VISCOSITY_MODEL::LAMINAR\n", i);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -15630,17 +18178,17 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (imakesource("report_directional", idin)) {
 					// Найдено успешно.
 					switch (idin) {
-					case 0: pfpir.idir = X_LINE_DIRECTIONAL; break;
-					case 1: pfpir.idir = Y_LINE_DIRECTIONAL; break;
-					case 2: pfpir.idir = Z_LINE_DIRECTIONAL; break;
-					default: pfpir.idir = Y_LINE_DIRECTIONAL; break;
+					case 0: pfpir.idir = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL; break;
+					case 1: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
+					case 2: pfpir.idir = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL; break;
+					default: pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL; break;
 					}
 					//pfpir.idir = (integer)(idin);
 					//printf(" pfpir.idir=%lld\n", pfpir.idir);
 				}
 				else {
 					printf("WARNING!!! report_directional not found in file premeshin.txt\n");
-					pfpir.idir = Y_LINE_DIRECTIONAL; 
+					pfpir.idir = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL;
 					printf(" pfpir.idir=%d\n", pfpir.idir);
 					if (bSTOP_Reading) system("pause");
 				}
@@ -15749,25 +18297,42 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (imakesource("stabilization_amg1r5_algorithm", idin)) {
 					// Найдено успешно.
 					switch (idin) {
-					case 0: stabilization_amg1r5_algorithm = NONE_only_amg1r5;
+					case 0: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::NONE_only_amg1r5;
 						break;
-					case 1: stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+					case 1: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 						break;
-					case 2: stabilization_amg1r5_algorithm = FGMRes_plus_amg1r5;
+					case 2: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::FGMRes_plus_amg1r5;
 						break;
-					case 3: stabilization_amg1r5_algorithm = Non_Linear_amg1r5;
+					case 3: stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5;
 						break;
 					default:
-						stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5;
+						stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5;
 						break;
 					}
 					//printf(" stabilization_amg1r5_algorithm=%lld\n",din );
 				}
 				else {
 					printf("WARNING!!! stabilization_amg1r5_algorithm not found in file premeshin.txt\n");
-					stabilization_amg1r5_algorithm = BiCGStab_plus_amg1r5; // default BiCGStab+amg1r5.
+					stabilization_amg1r5_algorithm = AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5; // default BiCGStab+amg1r5.
 					printf(" stabilization_amg1r5_algorithm= BiCGStab_plus_amg1r5\n");
 					if (bSTOP_Reading) system("pause");
+				}
+
+				{
+					char name0[1000] = "egddata";
+					name0[0] = '\0'; strcat_s(name0, "free_debug_parametr1");
+
+					if (fmakesource(name0, fin)) {
+						// Найдено успешно.
+						// Свободный параметр для выполнения отладки передаваемый из интерфейса внутрь солвера.
+						free_debug_parametr1 = (doublereal)(fin);
+					}
+					else {
+						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
+						free_debug_parametr1 = 0.0; // Свободный параметр для выполнения отладки передаваемый из интерфейса внутрь солвера.
+						printf(" free_debug_parametr1=%e\n", free_debug_parametr1);
+						if (bSTOP_Reading) system("pause");
+					}
 				}
 
 			}
@@ -15893,13 +18458,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					}
 				}
 				if (bscalok) {
-					if (b[i_1].itype == HOLLOW) {
+					if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 						ihol++;
 					}
-					if (b[i_1].itype == FLUID) {
+					if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 						iflui++;
 					}
-					if (b[i_1].itype == SOLID) {
+					if (b[i_1].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 						isol++;
 					}
 					if (b[i_1].g.itypegeom == PRISM) {
@@ -15925,7 +18490,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						}
 
 						iprism++;
-						if (b[i_1].itype != HOLLOW) {
+						if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							if (b[i_1].n_Sc > 0) {
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS)*fabs(b[i_1].g.yE - b[i_1].g.yS)*fabs(b[i_1].g.zE - b[i_1].g.zS);
@@ -15987,7 +18552,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 						icyl++;
-						if (b[i_1].itype != HOLLOW) {
+						if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							if (b[i_1].n_Sc > 0) {
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								doublereal vol = 0.0;
@@ -16013,7 +18578,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (b[i_1].g.itypegeom == POLYGON) {
 						// Polygon
 						ipoly++;
-						if (b[i_1].itype != HOLLOW) {
+						if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							if (b[i_1].n_Sc > 0) {
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 								if (pdiss > 0.0) {
@@ -16070,9 +18635,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 {
 
 	FILE* fp = nullptr;
-	errno_t err1;
+	
 
 #ifdef MINGW_COMPILLER
+	int err1 = 0;
 	fp = fopen64(fname, "r");
 	if (fp != nullptr) {
 		err1 = 0;
@@ -16081,6 +18647,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 		err1 = 1;
 	}
 #else
+	errno_t err1;
 	err1 = fopen_s(&fp, fname, "r");
 #endif
 

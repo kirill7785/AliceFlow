@@ -1134,7 +1134,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				}
 				else {
 #if doubleintprecision == 1
-					printf("igmoring a[%lld][%lld]=%e istr=%lld\n", Amat.i[ii1], Amat.j[ii1], fabs(Amat.aij[ii1]), istr);
+					printf("igmoring a[%d][%d]=%e istr=%lld\n", Amat.i[ii1], Amat.j[ii1], fabs(Amat.aij[ii1]), istr);
 #else
 					printf("igmoring a[%d][%d]=%e istr=%d\n", Amat.i[ii1], Amat.j[ii1], fabs(Amat.aij[ii1]), istr);
 #endif
@@ -1566,28 +1566,33 @@ void residualq2(Ak2 &Amat, integer istartq, integer iendq, doublerealT1* &x, dou
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT1, typename doublerealT2>
-void residualq2(Ak2& Amat, integer istartq, integer iendq, doublerealT1*& x, doublerealT1*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT2*& residual, doublerealT2*& my_diag, doublerealT2*& diag_minus_one)
+void residualq2(Ak2& Amat, integer istartq, integer iendq, doublerealT1*& x, doublerealT1*& b,
+	integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT2*& residual,
+	doublerealT2*& my_diag, doublerealT2*& diag_minus_one)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
-	integer startpos = istartq + iadd;
-	integer endpos = iendq + iadd;
-	doublerealT2 dsum = 0.0;
+	const integer startpos = istartq + iadd;
+	const integer endpos = iendq + iadd;
+	//doublerealT2 dsum = 0.0;
 
 #pragma omp parallel for 
 	for (integer ii = startpos; ii <= endpos; ii++) {
 		integer istr = ii - iadd;
 		// домножаем на минус 1.0 если требуется.
 		residual[istr] = diag_minus_one[istr]*b[istr];
-		for (integer ii1 = row_ptr_start[ii] + 1; ii1 <= row_ptr_end[ii]; ii1++) {
-			if (1 || (Amat.aij[ii1] < 0.0)) {
-				residual[istr] += -Amat.aij[ii1] * x[Amat.j[ii1]];
-			}
-			else {
+		const integer istart = row_ptr_start[ii] + 1;
+		const integer iend = row_ptr_end[ii];
+		for (integer ii1 = istart; ii1 <= iend; ii1++) {
+			residual[istr] += -Amat.aij[ii1] * x[Amat.j[ii1]];
+			//if (1 || (Amat.aij[ii1] < 0.0)) {
+				//residual[istr] += -Amat.aij[ii1] * x[Amat.j[ii1]];
+			//}
+			//else {
 				// 16 августа 2016.
 				// не работает.
 				//dsum += Amat.aij[ii1];
-			}
+			//}
 		}
 		residual[istr] -= (1.0 / Amat.aij[row_ptr_start[ii]]) * x[istr];  // 1 april 2017
 		//residual[istr] -= (my_diag[Amat.i[row_ptr_start[ii]]] + dsum)* x[istr]; // 3 jan 2016
@@ -1951,7 +1956,7 @@ template <typename doublerealT>
 void seidelqsor2(Ak2& Amat, integer istartq, integer iendq,
 	doublerealT*& x, doublerealT*& b,
 	integer*& row_ptr_start, integer*& row_ptr_end,
-	integer iadd, doublereal* &diag_minus_one)
+	integer iadd, doublerealT* &diag_minus_one)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -2213,7 +2218,7 @@ void seidelq(Ak2 &Amat, integer istartq, integer iendq,
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublereal* &diag_minus_one)
+void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT* &diag_minus_one)
 {
 
 	//seidelqstable<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -2866,7 +2871,7 @@ void seidelqsor2Pcpu(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublereal* &diag_minus_one)
+void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT* &diag_minus_one)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -3019,7 +3024,7 @@ void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, bool*& bnested_desection, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublereal*& diag_minus_one)
+void seidelqsor2Pcpu(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, bool*& bnested_desection, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT*& diag_minus_one)
 {
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -3920,7 +3925,7 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) {
+					if (F_false_C_true[ii]  ) {
 
 						integer istr = ii - iadd;
 						doublerealT rold = x_jacoby_buffer[istr];
@@ -3980,7 +3985,7 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) {
+					if (F_false_C_true[ii]  ) {
 
 						integer istr = ii - iadd;
 						doublerealT rold = x_jacoby_buffer[istr];
@@ -4192,7 +4197,7 @@ void spai0_smoother(Ak2 &Amat, integer istartq, integer iendq,
 template <typename doublerealT>
 void spai0_smoother(Ak2 &Amat, integer istartq, integer iendq,
 	doublerealT* &x, doublerealT* &b, integer* &row_ptr_start,
-	integer* &row_ptr_end, integer iadd, doublereal* &diag_minus_one)
+	integer* &row_ptr_end, integer iadd, doublerealT* &diag_minus_one)
 {
 
 	integer startpos = istartq + iadd;
@@ -4249,7 +4254,7 @@ void spai0_smoother(Ak2 &Amat, integer istartq, integer iendq,
   // q - quick.
 template <typename doublerealT>
 void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, 
-	integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, integer iorder, doublereal* &diag_minus_one)
+	integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, integer iorder, doublerealT* &diag_minus_one)
 {
 	// iorder == 3 or 5. Трёхшаговый или пятишаговый методы Рунге - Кутты.
 
@@ -4418,7 +4423,7 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
   // q - quick.
 template <typename doublerealT>
 void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start,
-	integer*& row_ptr_end, integer iadd, integer iorder, bool*& F_false_C_true, integer idirect, doublereal* &diag_minus_one)
+	integer*& row_ptr_end, integer iadd, integer iorder, bool*& F_false_C_true, integer idirect, doublerealT* &diag_minus_one)
 {
 	// iorder == 3 or 5. Трёхшаговый или пятишаговый методы Рунге - Кутты.
 
@@ -4574,7 +4579,7 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) {
+					if (F_false_C_true[ii]  ) {
 
 						integer istr = ii - iadd;
 						doublerealT rold = x_jacoby_buffer[istr];
@@ -4634,7 +4639,7 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 				//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) {
+					if (F_false_C_true[ii]  ) {
 
 						integer istr = ii - iadd;
 						doublerealT rold = x_jacoby_buffer[istr];
@@ -5012,7 +5017,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 			//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii] == true) { // C nodes
+				if (F_false_C_true[ii]  ) { // C nodes
 
 					integer istr = ii - iadd;
 					doublerealT rold = x_jacoby_buffer[istr];
@@ -5072,7 +5077,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 			//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii] == true) { // C nodes
+				if (F_false_C_true[ii]  ) { // C nodes
 
 					integer istr = ii - iadd;
 					doublerealT rold = x_jacoby_buffer[istr];
@@ -5257,7 +5262,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 
 				//---->#pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -5331,7 +5336,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 
 //---->#pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -5526,7 +5531,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 
 				//----->#pragma omp parallel for
 				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -5578,7 +5583,7 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 
 //--->#pragma omp parallel for
 				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -5682,7 +5687,9 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, bool*& F_false_C_true, integer idirect, doublereal* &diag_minus_one)
+void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b,
+	integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, bool*& F_false_C_true,
+	integer idirect, doublerealT* &diag_minus_one)
 {
 	// F_false_C_true - нумерация начинается с 1.
 	// idirect==0 douwn
@@ -5755,7 +5762,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 			//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii] == false) { // F nodes
+				if (F_false_C_true[ii]) { // F nodes
 
 					integer istr = ii - iadd;
 					doublerealT rold = x_jacoby_buffer[istr];
@@ -5809,7 +5816,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 			//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii] == true) { // C nodes
+				if (F_false_C_true[ii]  ) { // C nodes
 
 					integer istr = ii - iadd;
 					doublerealT rold = x_jacoby_buffer[istr];
@@ -5869,7 +5876,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 			//#pragma loop(hint_parallel(8))
 #pragma omp parallel for
 			for (integer ii = startpos; ii <= endpos; ii++) {
-				if (F_false_C_true[ii] == true) { // C nodes
+				if (F_false_C_true[ii]  ) { // C nodes
 
 					integer istr = ii - iadd;
 					doublerealT rold = x_jacoby_buffer[istr];
@@ -6054,7 +6061,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 
 				//---->#pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -6128,7 +6135,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 
 //---->#pragma omp parallel for
 				for (integer ii = startpos; ii <= endpos; ii++) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -6323,7 +6330,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 
 				//----->#pragma omp parallel for
 				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -6375,7 +6382,7 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 
 //--->#pragma omp parallel for
 				for (integer ii = endpos; ii >= startpos; ii--) {
-					if (F_false_C_true[ii] == true) { // C nodes
+					if (F_false_C_true[ii]  ) { // C nodes
 
 						integer istr = ii - iadd;
 						doublerealT rold = x[istr];
@@ -6487,7 +6494,7 @@ void seidelq(Ak2 &Amat, integer istartq, integer iendq,
 		spai0_smoother<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
 	}
 	else if (my_amg_manager.b_gmres) {
-		if (my_amg_manager.bCFJacoby == true) {
+		if (my_amg_manager.bCFJacoby  ) {
 			seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, F_false_C_true, idirect);
 		}
 		else {
@@ -6498,7 +6505,7 @@ void seidelq(Ak2 &Amat, integer istartq, integer iendq,
 	}
 	else {
 		// лучший выбор
-		if (my_amg_manager.bCFJacoby == true) {
+		if (my_amg_manager.bCFJacoby  ) {
 			if ((my_amg_manager.iRunge_Kutta_smoother == 3) || (my_amg_manager.iRunge_Kutta_smoother == 5)) {
 				// Трёхшаговый метод Рунге-Кутты.
 				integer iorder = my_amg_manager.iRunge_Kutta_smoother;
@@ -6533,13 +6540,13 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq,
 	doublerealT*& x, doublerealT*& b,
 	integer*& row_ptr_start, integer*& row_ptr_end, 
 	integer iadd, bool*& F_false_C_true, integer idirect,
-	doublereal* &diag_minus_one, integer ilevel)
+	doublerealT* &diag_minus_one, integer ilevel)
 {
 	if (my_amg_manager.b_spai0) {
 		spai0_smoother<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, diag_minus_one);
 	}
 	else if (my_amg_manager.b_gmres) {
-		if (my_amg_manager.bCFJacoby == true) {
+		if (my_amg_manager.bCFJacoby  ) {
 			seidelqsor2<doublerealT>(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd, F_false_C_true, idirect, diag_minus_one);
 		}
 		else {
@@ -6550,7 +6557,7 @@ void seidelq(Ak2& Amat, integer istartq, integer iendq,
 	}
 	else {
 		// лучший выбор
-		if (my_amg_manager.bCFJacoby == true) {
+		if (my_amg_manager.bCFJacoby  ) {
 			if ((my_amg_manager.iRunge_Kutta_smoother == 3) || (my_amg_manager.iRunge_Kutta_smoother == 5)) {
 				// Трёхшаговый метод Рунге-Кутты.
 				integer iorder = my_amg_manager.iRunge_Kutta_smoother;
@@ -6594,7 +6601,7 @@ void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doubler
 // 9 september 2015.
 // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, bool*& bnested_desection, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublereal*& diag_minus_one)
+void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, bool*& bnested_desection, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, doublerealT*& diag_minus_one)
 {
 	seidelqsor2Pcpu<doublerealT>(Amat, istartq, iendq, x, b, bnested_desection, row_ptr_start, row_ptr_end, iadd, diag_minus_one);
 	//seidelqsor2Pcpu(Amat, istartq, iendq, x, b, row_ptr_start, row_ptr_end, iadd);
@@ -6621,7 +6628,9 @@ void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doubler
   // 9 september 2015.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, bool*& bnested_desection, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, bool*& F_false_C_true, integer idirect, doublereal*& diag_minus_one)
+void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b,
+	bool*& bnested_desection, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, 
+	bool*& F_false_C_true, integer idirect, doublerealT* &diag_minus_one)
 {
 	// , bool* &F_false_C_true, integer idirect Заглушка, параметры не используются.
 	// Внимание обратная совместимость.
@@ -6764,14 +6773,14 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 
 			// Amat*e=r;
 			//doublerealT* error_approx_coarse = new doublerealT[n_a[1] + 1];
-			if ((imyinit == ZERO_INIT)) {
+			if ((imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT)) {
 #pragma omp parallel for
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
 					error_approx_coarse[0][ii] = 0.0;
 				}
 			}
 
-			if ((imyinit == RANDOM_INIT)) {
+			if ((imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::RANDOM_INIT)) {
 				// (1,110); (0.8, 37); (0.7, 29); (0.6, 25); (0.5, 20); (0.4, 17); (0.3, 18); (0.0, 19);
 #pragma omp parallel for
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
@@ -6937,13 +6946,13 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 							}
 						}
 						else {
-							if (imyinit == ZERO_INIT) {
+							if (imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT) {
 #pragma omp parallel for
 								for (integer ii = 1; ii <= n_a[i_id_level_local]; ii++) {
 									error_approx_coarse[i_id_level_local - 1][ii] = 0.0;
 								}
 							}
-							if (imyinit == RANDOM_INIT) {
+							if (imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::RANDOM_INIT) {
 #pragma omp parallel for
 								for (integer ii = 1; ii <= n_a[i_id_level_local]; ii++) {
 									// (1,110); (0.8, 37); (0.7, 29); (0.6, 25); (0.5, 20); (0.4, 17); (0.3, 18); (0.0, 19);
@@ -7172,7 +7181,7 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 				//center
 				// ЭТО сердцевина SOLUTION PHASE.
 
-				// TODO нижний 3.12.2016 (осталось один нижний и один верхний).
+				//  нижний 3.12.2016 (осталось один нижний и один верхний).
 
 
 				// 21
@@ -7540,15 +7549,15 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 // Для плохих строк при их наличии мы домножаем правую часть на минус 1.0
 template <typename doublerealT>
 void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_flow_logic, integer*& row_ptr_start,
-	integer*& row_ptr_end, doublerealT**& residual_fine, doublerealT**& diag, 
-	doublerealT**& diag_minus_one, integer* n_a, bool bonly_serial,
+	integer*& row_ptr_end, doublereal**& residual_fine, doublereal**& diag, 
+	doublereal**& diag_minus_one, integer* n_a, bool bonly_serial,
 	doublerealT process_flow_beta, bool*& F_false_C_true, integer& nu1, integer& nu2, integer bILU2smoother,
 	integer ilevel, integer inumberVcyclelocbicgstab, INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit, const integer idim_diag,
 	LEVEL_ADDITIONAL_DATA*& milu2, LEVEL_ADDITIONAL_DATA0* milu0, bool**& nested_desection,
 	Ak1*& P, // prolongation он же restriction (метод не чувствителен к сортировке).
-	integer* nnz_aRP, doublerealT**& residual_coarse, integer igam, integer* nnz_a,
-	doublerealT**& error_approx_coarse, doublerealT dapply_ilu_max_pattern_size,
-	doublerealT process_flow_alpha, doublerealT**& error_approx_fine,
+	integer* nnz_aRP, doublereal**& residual_coarse, integer igam, integer* nnz_a,
+	doublereal**& error_approx_coarse, doublerealT dapply_ilu_max_pattern_size,
+	doublerealT process_flow_alpha, doublereal**& error_approx_fine,
 	integer nFinestSweeps) {
 
 	// Один V - цикл алгебраического многосеточного метода.
@@ -7668,14 +7677,14 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 
 			// Amat*e=r;
 			//doublerealT* error_approx_coarse = new doublerealT[n_a[1] + 1];
-			if ((imyinit == ZERO_INIT)) {
+			if ((imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT)) {
 #pragma omp parallel for
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
 					error_approx_coarse[0][ii] = 0.0;
 				}
 			}
 
-			if ((imyinit == RANDOM_INIT)) {
+			if ((imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::RANDOM_INIT)) {
 				// (1,110); (0.8, 37); (0.7, 29); (0.6, 25); (0.5, 20); (0.4, 17); (0.3, 18); (0.0, 19);
 #pragma omp parallel for
 				for (integer ii = 1; ii <= n_a[1]; ii++) {
@@ -7841,13 +7850,13 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 							}
 						}
 						else {
-							if (imyinit == ZERO_INIT) {
+							if (imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT) {
 #pragma omp parallel for
 								for (integer ii = 1; ii <= n_a[i_id_level_local]; ii++) {
 									error_approx_coarse[i_id_level_local - 1][ii] = 0.0;
 								}
 							}
-							if (imyinit == RANDOM_INIT) {
+							if (imyinit == INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::RANDOM_INIT) {
 #pragma omp parallel for
 								for (integer ii = 1; ii <= n_a[i_id_level_local]; ii++) {
 									// (1,110); (0.8, 37); (0.7, 29); (0.6, 25); (0.5, 20); (0.4, 17); (0.3, 18); (0.0, 19);
@@ -8076,7 +8085,7 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 				//center
 				// ЭТО сердцевина SOLUTION PHASE.
 
-				// TODO нижний 3.12.2016 (осталось один нижний и один верхний).
+				// 3.12.2016 (осталось один нижний и один верхний).
 
 
 				// 21

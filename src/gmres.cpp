@@ -179,7 +179,7 @@ void ApplyPlaneRotation(float128& dx, float128& dy, float128& cs, float128& sn)
 
 //#endif
 
-long double Scal(long double* v1, long double* v2, integer n) {
+long double Scal(long double const *const v1, long double const *const v2, const integer n) {
 	long double sum_squares = 0.0;
 
 
@@ -198,7 +198,7 @@ long double Scal(long double* v1, long double* v2, integer n) {
 } // Scal
 
 
-double Scal(double *v1, double *v2, integer n) {
+double Scal(double const *const v1, double const *const v2, const integer n) {
 	double sum_squares = 0.0;
 
 
@@ -216,7 +216,9 @@ double Scal(double *v1, double *v2, integer n) {
 	return sum_squares;
 } // Scal
 
-float Scal(float *v1, float *v2, integer n) {
+
+
+float Scal(float const *const v1, float const *const v2, const integer n) {
 	float sum_squares = 0.0;
 	 
 
@@ -310,8 +312,8 @@ void MatrixCRSByVector(doublerealT1* val, integer* col_ind, integer* row_ptr, do
 // используется формат хранения CRS
 // Разреженная матрица A (val, col_ind, row_ptr) квадратная размером n*n.
 // Число уравнений равно числу неизвестных и равно n.
-// У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
-void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, double* V, double* &tmp, integer n)
+// У данной функции четыре эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+void MatrixCRSByVector(double *& val, integer *& col_ind, integer *& row_ptr, double *& V, double* &tmp, const integer n)
 {
 
 
@@ -354,8 +356,8 @@ void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, double* 
 // используется формат хранения CRS
 // Разреженная матрица A (val, col_ind, row_ptr) квадратная размером n*n.
 // Число уравнений равно числу неизвестных и равно n.
-// У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
-void MatrixCRSByVector(long double* val, integer* col_ind, integer* row_ptr, long double* V, long double*& tmp, integer n)
+// У данной функции четыре эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+void MatrixCRSByVector(long double *& val, integer *& col_ind, integer *& row_ptr, long double *& V, long double*& tmp, const integer n)
 {
 
 
@@ -395,8 +397,8 @@ void MatrixCRSByVector(long double* val, integer* col_ind, integer* row_ptr, lon
 } // MatrixCRSByVector
 
 
-  // У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
-void MatrixCRSByVector(float* val, integer* col_ind, integer* row_ptr, float* V, float* &tmp, integer n)
+// У данной функции четыре эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+void MatrixCRSByVector(float *& val, integer *& col_ind, integer *& row_ptr, float *& V, float* &tmp, const integer n)
 {
 
 
@@ -435,8 +437,8 @@ void MatrixCRSByVector(float* val, integer* col_ind, integer* row_ptr, float* V,
 	//return tmp;
 } // MatrixCRSByVector
 
-  // У данной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
-void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, float* V, float* &tmp, integer n)
+// У данной функции четыре эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+void MatrixCRSByVector(double *& val, integer *& col_ind, integer *& row_ptr, float *& V, float* &tmp, const integer n)
 {
 
 
@@ -501,7 +503,7 @@ void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, float* V
 //*****************************************************************
 
 template <typename doublerealT>
-void mult_givens(doublerealT c, doublerealT s, integer k, doublerealT* &g)
+void mult_givens(const doublerealT c, const doublerealT s, const integer k, doublerealT* &g)
 
 //****************************************************************************80
 //
@@ -571,14 +573,18 @@ void mult_givens(doublerealT c, doublerealT s, integer k, doublerealT* &g)
 
 // Норма вектора
 // как корень квадратный из суммы квадратов.
-long double NormaV_for_gmres(long double* dV, integer isize)
+long double NormaV_for_gmres(long double const *const dV, const integer isize)
 {
-	integer i; // Счетчик цикла
+	
 	long double dnorma, dsum;
 
 	// инициализация переменных
 	dsum = 0.0;
-	for (i = 0; i <= (isize - 1); i++)
+
+	const integer ISIZE = (isize - 1);
+
+#pragma omp parallel for reduction(+ : dsum) 
+	for (integer i = 0; i <= ISIZE; i++)
 	{
 		dsum += dV[i] * dV[i];
 	}
@@ -588,14 +594,18 @@ long double NormaV_for_gmres(long double* dV, integer isize)
 
 // Норма вектора
 // как корень квадратный из суммы квадратов.
-double NormaV_for_gmres( double *dV, integer isize)
+double NormaV_for_gmres( double const *const dV, const integer isize)
 {
-	integer i; // Счетчик цикла
+	
 	double dnorma, dsum;
 
 	// инициализация переменных
 	dsum = 0.0;
-	for (i = 0; i <= (isize - 1); i++)
+
+	const integer ISIZE = (isize - 1);
+
+#pragma omp parallel for reduction(+ : dsum) 
+	for (integer i = 0; i <= ISIZE; i++)
 	{
 		dsum += dV[i] * dV[i];
 	}
@@ -605,14 +615,18 @@ double NormaV_for_gmres( double *dV, integer isize)
 
  // Норма вектора
  // как корень квадратный из суммы квадратов.
-float NormaV_for_gmres(float *dV, integer isize)
+float NormaV_for_gmres(float const *const dV, const integer isize)
 {
-	integer i; // Счетчик цикла
+	
 	float dnorma, dsum;
 
 	// инициализация переменных
 	dsum = 0.0;
-	for (i = 0; i <= (isize - 1); i++)
+
+	const integer ISIZE = (isize - 1);
+
+#pragma omp parallel for reduction(+ : dsum) 
+	for (integer i = 0; i <= ISIZE; i++)
 	{
 		dsum += dV[i] * dV[i];
 	}
@@ -930,7 +944,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 		//v[0] = r * (1.0 / beta);    // ??? r / beta
 		for (integer j_1 = 0; j_1 < n; j_1++)
 		{
-			v[0][j_1] = r[j_1] * (1.0 / beta);
+			v[0][j_1] = (doublerealT)(r[j_1] * (1.0 / beta));
 		}
 		//s = 0.0;
 		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
@@ -949,11 +963,11 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 				}
 			}
 			//H[i + 1][i] = norm(w);
-			H[i + 1][i] = NormaV_for_gmres(w, n);// евклидова
+			H[i + 1][i] = NormaV_for_gmres(w, n);// Евклидова
 
 			for (integer j_1 = 0; j_1 < n; j_1++)
 			{
-				v[i + 1][j_1] = w[j_1] * (1.0 / H[i + 1][i]); // ??? w / H(i+1, i)
+				v[i + 1][j_1] = (doublerealT)(w[j_1] * (1.0 / H[i + 1][i])); // ??? w / H(i+1, i)
 			}
 
 			for (k = 0; k < i; k++)
@@ -1218,7 +1232,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	doublereal beta = 0.0;
 	doublereal norm_r = 0.0;
 	const integer maxit = 2000;// максимальное число итераций
-	integer i_1 = 0; // счётчик цикла for
+	
 
 	doublereal** v = nullptr;
 	doublereal** Z = nullptr;
@@ -1929,8 +1943,8 @@ L20:
 		/*
 		if (ibackregulationgl != nullptr) {
 		// nested desection версия алгоритма.
-		integer ierr = equation3DtoCRSnd(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, nullptr, nullptr);
-		if (ierr > 0) {
+		integer ierr_1 = equation3DtoCRSnd(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, nullptr, nullptr);
+		if (ierr_1 > 0) {
 		switch (iVar) {
 		case VX: printf("VX equation problem.\n"); break;
 		case VY: printf("VY equation problem.\n"); break;
@@ -1941,8 +1955,8 @@ L20:
 		}
 		else {
 		*/
-		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
-		if (ierr > 0) {
+		integer ierr_1 = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
+		if (ierr_1 > 0) {
 			switch (iVar) {
 			case VELOCITY_X_COMPONENT: printf("VX equation problem.\n"); break;
 			case VELOCITY_Y_COMPONENT: printf("VY equation problem.\n"); break;
@@ -1953,8 +1967,8 @@ L20:
 		//}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
-		if (ierr > 0) {
+		integer ierr_1 = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
+		if (ierr_1 > 0) {
 			printf("Temperature equation problem.\n");
 		}
 	}
@@ -2060,10 +2074,10 @@ L20:
 	
 
 	H = new doublereal*[m_restart + 2]; // Hessenberg
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
 
 
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 	{
 		for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 		{
@@ -2076,10 +2090,10 @@ L20:
 	//Vector *v = new Vector[m_restart + 1];
 	
 		v = new doublereal*[m_restart + 2];
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n75];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n75];
 
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 		for (integer j_1 = 0; j_1 < n75; j_1++)
 		{
 			v[i_1][j_1] = 0.0;
@@ -2088,9 +2102,9 @@ L20:
 
 	 Z = new doublereal*[m_restart + 2];
 	 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n75];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n75];
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 		for (integer j_1 = 0; j_1 < n75; j_1++)
 		{
 			Z[i_1][j_1] = 0.0;
@@ -2111,12 +2125,12 @@ L20:
 		}
 
 		//s = 0.0;
-		for (i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
+		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
 		s[0] = beta;
 		//s[0] = 1.0;
 
 
-		for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+		for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 		{ // DOPOLNENIE
 			for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 			{
@@ -2138,7 +2152,7 @@ L20:
 			// multigrid Ruge and Stuben preconditioning [1986].
 			// достаточно одного V цикла.
 			// K*Z = v;
-			for (i_1 = 0; i_1 < n75; i_1++) {
+			for (integer i_1 = 0; i_1 < n75; i_1++) {
 				Zcopy[i_1+1] = 0.0;
 				vCopy[i_1+1] = v[i][i_1];
 			}
@@ -2154,7 +2168,7 @@ L20:
 				//getchar();
 			}
 		
-			for (i_1 = 0; i_1 < n75; i_1++) {
+			for (integer i_1 = 0; i_1 < n75; i_1++) {
 				Z[i][i_1] = Zcopy[i_1+1];
 			}
 
@@ -2292,14 +2306,14 @@ L20:
 				//tol = resid;
 				//maxit = j;
 
-				for (i_1 = 0; i_1<n75; i_1++) {
+				for (integer i_1 = 0; i_1<n75; i_1++) {
 					u[i_1 + 1] = dx[i_1];
 				}
 
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 				delete[] v;
 				v = nullptr;
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 				delete[] Z;
 				Z = nullptr;
 				for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
@@ -2352,7 +2366,7 @@ L20:
 
 										//r = M.solve(b - A * x);
 		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // Результат занесён в r
-		for (i_1 = 0; i_1 < n75; i_1++) r[i_1] = f[i_1 + 1] - r[i_1];
+		for (integer i_1 = 0; i_1 < n75; i_1++) r[i_1] = f[i_1 + 1] - r[i_1];
 
 		//beta = norm(r);
 		beta = NormaV_for_gmres(r, n75);
@@ -2368,14 +2382,14 @@ L20:
 				//getchar();
 			}
 
-			for (i_1 = 0; i_1<n75; i_1++) {
+			for (integer i_1 = 0; i_1<n75; i_1++) {
 				u[i_1 + 1] = dx[i_1];
 
 			}
 
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 			delete[] v;
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 			delete[] Z;
 			for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 			delete[] H;
@@ -2412,14 +2426,14 @@ L20:
 	}
 
 	//tol = resid;
-	for (i_1 = 0; i_1<n75; i_1++) {
+	for (integer i_1 = 0; i_1<n75; i_1++) {
 		u[i_1 + 1] = dx[i_1];
 
 	}
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 	delete[] v;
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+	for (integer  i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 	delete[] Z;
 	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 	delete[] H;
@@ -2649,7 +2663,6 @@ L70:
 
 	//if (iVar == TEMP)
 	{
-		integer ierr = 0;
 
 		val75 = new doublereal[nnzsize];
 		col_ind75 = new integer[nnzsize];
@@ -2668,12 +2681,7 @@ L70:
 				getchar();
 			}
 			*/
-		}
-
-
-		if (ierr > 0) {
-			printf("Temperature equation problem.\n");
-		}
+		}		
 	}
 
 	if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
@@ -4107,8 +4115,6 @@ L70:
 		integer nsize = n;
 		integer nnzsize = ia[n];
 
-		integer ierr = 0;
-
 		val75 = new doublereal[nnzsize];
 		col_ind75 = new integer[nnzsize];
 
@@ -4128,11 +4134,6 @@ L70:
 				getchar();
 			}
 			*/
-		}
-
-
-		if (ierr > 0) {
-			printf("Temperature equation problem.\n");
 		}
 	}
 
@@ -4160,7 +4161,7 @@ L70:
 	doublereal beta = 0.0;
 	doublereal norm_r = 0.0;
 	const integer maxit = 2000; // максимальное число итераций.
-	integer i_1 = 0; // счётчик цикла for
+	
 
 	doublereal** v = nullptr;
 	doublereal** Z = nullptr;
@@ -4954,10 +4955,10 @@ L20:
 
 
 	H = new doublereal*[m_restart + 2]; // Hessenberg
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
 
 
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 	{
 		for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 		{
@@ -4970,10 +4971,10 @@ L20:
 	//Vector *v = new Vector[m_restart + 1];
 
 	v = new doublereal*[m_restart + 2];
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n75];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n75];
 
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 		for (integer j_1 = 0; j_1 < n75; j_1++)
 		{
 			v[i_1][j_1] = 0.0;
@@ -4982,9 +4983,9 @@ L20:
 
 	Z = new doublereal*[m_restart + 2];
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n75];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n75];
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 		for (integer j_1 = 0; j_1 < n75; j_1++)
 		{
 			Z[i_1][j_1] = 0.0;
@@ -5005,12 +5006,12 @@ L20:
 		}
 
 		//s = 0.0;
-		for (i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
+		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
 		s[0] = beta;
 		//s[0] = 1.0;
 
 
-		for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+		for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 		{ // DOPOLNENIE
 			for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 			{
@@ -5032,7 +5033,7 @@ L20:
 			// multigrid Ruge and Stuben preconditioning [1986].
 			// достаточно одного V цикла.
 			// K*Z = v;
-			for (i_1 = 0; i_1 < n75; i_1++) {
+			for (integer i_1 = 0; i_1 < n75; i_1++) {
 				Zcopy[i_1 + 1] = 0.0;
 				vCopy[i_1 + 1] = v[i][i_1];
 			}
@@ -5048,7 +5049,7 @@ L20:
 				//getchar();
 			}
 
-			for (i_1 = 0; i_1 < n75; i_1++) {
+			for (integer i_1 = 0; i_1 < n75; i_1++) {
 				Z[i][i_1] = Zcopy[i_1 + 1];
 			}
 
@@ -5056,7 +5057,7 @@ L20:
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 			#pragma omp parallel for shared(m) private(i_1) schedule (guided)
-			for (i_1 = 0; i_1<n75; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
+			for (integer i_1 = 0; i_1<n75; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 			//  9 августа 2015 при внедрении перенумерации узлов nested desection
 			if (bpam_gsp && (iVar == PAM)) {
@@ -5097,9 +5098,9 @@ L20:
 			}
 
 			}
-			//for (i_1 = 0; i_1 < n75; i_1++) w[i_1] = m.y[i_1];
-			for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = m.y[i_1];
-			//for (i_1 = 0; i_1 < n75; i_1++)  v[i + 1][i_1] = m.y[i_1];
+			//for (integer i_1 = 0; i_1 < n75; i_1++) w[i_1] = m.y[i_1];
+			for (integer i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = m.y[i_1];
+			//for (integer i_1 = 0; i_1 < n75; i_1++)  v[i + 1][i_1] = m.y[i_1];
 
 
 			}
@@ -5108,17 +5109,17 @@ L20:
 			if (iVar == TEMP) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 			//#pragma omp parallel for shared(m) private(i) schedule (guided)
-			for (i_1 = 0; i_1<n75; i_1++) m.ty[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
+			for (integer i_1 = 0; i_1<n75; i_1++) m.ty[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
 
 			lusol_(n, v[i], m.ty, m.talu, m.tjlu, m.tju, maxelm); // M*ty=v[i];
-			for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = m.ty[i_1];
-			//for (i_1 = 0; i_1 < n75; i_1++) v[i + 1][i_1] = m.ty[i_1];
+			for (integer i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = m.ty[i_1];
+			//for (integer i_1 = 0; i_1 < n75; i_1++) v[i + 1][i_1] = m.ty[i_1];
 
 			}
 			*/
 
 			// Совсем без предобуславливателя.
-			//for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = v[i][i_1];
+			//for (integer i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = v[i][i_1];
 
 			// закомментировано без предобуславливания.
 			//w = A * Z[i];
@@ -5175,13 +5176,13 @@ L20:
 				//tol = resid;
 				//maxit = j;
 
-				for (i_1 = 0; i_1<n75; i_1++) {
+				for (integer i_1 = 0; i_1<n75; i_1++) {
 					u[i_1 + 1] = dx[i_1];
 				}
 
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 				delete[] v;
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 				delete[] Z;
 				for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 				delete[] H;
@@ -5223,7 +5224,7 @@ L20:
 
 										//r = M.solve(b - A * x);
 		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // Результат занесён в r
-		for (i_1 = 0; i_1 < n75; i_1++) r[i_1] = f[i_1 + 1] - r[i_1];
+		for (integer i_1 = 0; i_1 < n75; i_1++) r[i_1] = f[i_1 + 1] - r[i_1];
 
 		//beta = norm(r);
 		beta = NormaV_for_gmres(r, n75);
@@ -5238,14 +5239,14 @@ L20:
 			printf("end\n");
 			//getchar();
 
-			for (i_1 = 0; i_1<n75; i_1++) {
+			for (integer i_1 = 0; i_1<n75; i_1++) {
 				u[i_1 + 1] = dx[i_1];
 
 			}
 
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 			delete[] v;
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 			delete[] Z;
 			for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 			delete[] H;
@@ -5282,14 +5283,14 @@ L20:
 	}
 
 	//tol = resid;
-	for (i_1 = 0; i_1<n75; i_1++) {
+	for (integer i_1 = 0; i_1<n75; i_1++) {
 		u[i_1 + 1] = dx[i_1];
 
 	}
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 	delete[] v;
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 	delete[] Z;
 	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 	delete[] H;

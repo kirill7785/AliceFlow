@@ -23,7 +23,7 @@
 
 // аппроксимация обобщённого уравнения конвекции-диффузии
 // на совмещённой сетке
-#include "my_elmatr_quad_f3D.c"
+#include "my_elmatr_quad_f3D.cpp"
 // вычисление шага по псевдовремени так как рекомендовал Гаврилов Андрей.
 #include "pseudo_time.cpp"
 // коррекция скорости на совмещённой сетке
@@ -214,7 +214,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -230,7 +230,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 
 					/*
 					*  Итак лапласиан от поправки давления равен дивергенции скорости.
@@ -264,7 +264,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -280,7 +280,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 
 				    break;
 
@@ -290,7 +290,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -306,7 +306,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 
@@ -316,7 +316,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -332,7 +332,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					
 					break;
 
@@ -342,7 +342,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -358,7 +358,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					
 				   break;
 
@@ -368,7 +368,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -384,7 +384,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 	        } // switch
@@ -468,7 +468,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[1][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -484,7 +484,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 
 					/*
 					*  Итак лапласиан от поправки давления равен дивергенции скорости.
@@ -518,7 +518,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -534,7 +534,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 
 				    break;
 
@@ -544,7 +544,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -560,7 +560,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 
@@ -570,7 +570,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_X_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_X_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -586,7 +586,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_X_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_X_COMPONENT]);
 					
 					break;
 
@@ -596,7 +596,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[4][border_neighbor[inumber].iI]-1].z-pa[nvtx[0][border_neighbor[inumber].iI]-1].z); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Y_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Y_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -612,7 +612,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Y_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Y_COMPONENT]);
 					
 				   break;
 
@@ -622,7 +622,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 					dS=pa[nvtx[1][border_neighbor[inumber].iI]-1].x-pa[nvtx[0][border_neighbor[inumber].iI]-1].x; 
 					dS*=(pa[nvtx[2][border_neighbor[inumber].iI]-1].y-pa[nvtx[0][border_neighbor[inumber].iI]-1].y); // площадь грани
 					slb[PAM][inumber].ai=dbeta*alpha[VELOCITY_Z_COMPONENT]*prop_b[RHO][border_neighbor[inumber].iB-maxelm]*dS*dS/slb[VELOCITY_Z_COMPONENT][border_neighbor[inumber].iB-maxelm].aw;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].ai/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					slb[PAM][inumber].iI=border_neighbor[inumber].iI;
 					slb[PAM][inumber].aw=slb[PAM][inumber].ai;
 					slb[PAM][inumber].iW=border_neighbor[inumber].iB;
@@ -638,7 +638,7 @@ void my_elmatr_quad_PAm_bon(equation3D_bon** &slb, equation3D** sl,
 			        
                     // правая часть:  
 					slb[PAM][inumber].b=(dbeta-1.0)*alpha[VELOCITY_Z_COMPONENT]*rhoi*dS*dS*(potent[PAM][border_neighbor[inumber].iI]-potent[PAM][border_neighbor[inumber].iII])/aUPi;
-					if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
+					if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) slb[PAM][inumber].b/=(1.0-alpha[VELOCITY_Z_COMPONENT]);
 					
 				    break;
 	        } // switch
@@ -3679,13 +3679,13 @@ doublereal calcFg(bool bG, doublereal fgplus, doublereal VG, doublereal VP,
 			// внутренний контрольный объём
 		    doublereal dc_e=dP*dG/(fgplus*dG+(1.0-fgplus)*dP); // диагональный коэффициент на грани
 		    doublereal tau_e=(rhog*alpha*dV)/(dc_e); // псевдовремя (rhog - плотность на грани контрольного объёма.
-			if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) tau_e/=(1.0-alpha);
+			if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) tau_e/=(1.0-alpha);
 		    Fg+=(tau_e/dtimestep)*(mfoldtimestep[G]-rhog*ugold*dS);
 		}
 		else {
 			// граничный контрольный объём
 			doublereal tau_e=(rhog*alpha*dV)/dG;
-			if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) tau_e/=(1.0-alpha);
+			if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) tau_e/=(1.0-alpha);
 			Fg+=(tau_e/dtimestep)*(mfoldtimestep[G]-rhog*ugold*dS);
 		}
 
@@ -7323,13 +7323,13 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	// I.Sezai - Eastern Mediterranean University. Revised January, 2011.
 	// 3. Гаврилов Андрей sigma-flow.
 	// Такие значения также должны быть согласованы с теми что используются при коррекции скоростей.
-	if (iSIMPLE_alg==SIMPLE_Carretto) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 		// SIMPLE
 		de=alpha[VELOCITY_X_COMPONENT]*dy*dz/apue; dw=alpha[VELOCITY_X_COMPONENT]*dy*dz/apuw; 
 	    dn=alpha[VELOCITY_Y_COMPONENT]*dx*dz/apvn; ds=alpha[VELOCITY_Y_COMPONENT]*dx*dz/apvs;
 	    dt=alpha[VELOCITY_Z_COMPONENT]*dx*dy/apwt; db=alpha[VELOCITY_Z_COMPONENT]*dx*dy/apwb;
 	}
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 		// SIMPLEC
 		de=alpha[VELOCITY_X_COMPONENT]*dy*dz/((1.0-alpha[VELOCITY_X_COMPONENT])*apue); dw=alpha[VELOCITY_X_COMPONENT]*dy*dz/((1.0-alpha[VELOCITY_X_COMPONENT])*apuw); 
 	    dn=alpha[VELOCITY_Y_COMPONENT]*dx*dz/((1.0-alpha[VELOCITY_Y_COMPONENT])*apvn); ds=alpha[VELOCITY_Y_COMPONENT]*dx*dz/((1.0-alpha[VELOCITY_Y_COMPONENT])*apvs);
@@ -7416,7 +7416,7 @@ void my_elmatr_quad_PAm(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	doublereal baddDFLUX2=0.0;
 	if (bhighorder) {
 		// если bborder == false то узел строго внутренний.
-		// если bborder == true то мы находимся вблизи граничного узла.
+		// если bborder   то мы находимся вблизи граничного узла.
 		bool bborder=false;
 		doublereal myflux=0.0;
 		myflux=De*(dxe*DFDXiP(potent[PAM], iP, E_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
@@ -7835,7 +7835,7 @@ void my_elmatr_quad_PAm2(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	doublereal baddDFLUX2=0.0;
 	if (bhighorder) {
 		// если bborder == false то узел строго внутренний.
-		// если bborder == true то мы находимся вблизи граничного узла.
+		// если bborder   то мы находимся вблизи граничного узла.
 		bool bborder=false;
 		doublereal myflux=0.0;
 		myflux=De*(dxe*DFDXiP(potent[PAM], iP, E_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));
@@ -9844,7 +9844,7 @@ if (iB4 > -1) {
 		// На АЛИС сетке это использовать не представляется возможным.
 
 		// если bborder == false то узел строго внутренний.
-		// если bborder == true то мы находимся вблизи граничного узла.
+		// если bborder   то мы находимся вблизи граничного узла.
 		bool bborder=false;
 		doublereal myflux=0.0;
 		myflux=De*(dxe*DFDXiP(potent[PAM], iP, E_SIDE, neighbors_for_the_internal_node, maxelm, nvtx, pa, bborder)-(potent[PAM][iE]-potent[PAM][iP]));

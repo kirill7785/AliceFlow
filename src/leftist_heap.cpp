@@ -167,8 +167,8 @@ leftist_heap* decrease_key(leftist_heap* heap, leftist_heap* q, integer new_key)
 void LeftistHeapSort(Ak2& Amat, integer first, integer last) {
 	leftist_heap* heap = singlton(Amat.i[first],0);
 	for (integer i = first + 1; i <= last; i++) heap = insert(heap, Amat.i[i], i-first);
-	doublereal* a = new doublereal[last-first+1];
-	integer* j_a = new integer[last - first + 1];
+	real_mix_precision* a = new real_mix_precision[last-first+1];
+	integer_mix_precision* j_a = new integer_mix_precision[last - first + 1];
 	for (integer i = first; i <= last; i++) {
 		a[i - first] = Amat.aij[i];
 		j_a[i - first] = Amat.j[i];
@@ -191,8 +191,8 @@ void LeftistHeapSort(Ak2& Amat, integer first, integer last) {
 void LeftistHeapSort_j(Ak2& Amat, integer first, integer last) {
 	leftist_heap* heap = singlton(Amat.j[first], 0);
 	for (integer i = first + 1; i <= last; i++) heap = insert(heap, Amat.j[i], i - first);
-	doublereal* a = new doublereal[last - first + 1];
-	integer* i_a = new integer[last - first + 1];
+	real_mix_precision* a = new real_mix_precision[last - first + 1];
+	integer_mix_precision* i_a = new integer_mix_precision[last - first + 1];
 	for (integer i = first; i <= last; i++) {
 		a[i - first] = Amat.aij[i];
 		i_a[i - first] = Amat.i[i];
@@ -215,7 +215,7 @@ void LeftistHeapSort_j(Ak2& Amat, integer first, integer last) {
 void LeftistHeapSort(Ak1* &Amat, integer first, integer last) {
 	leftist_heap* heap = singlton(Amat[first].i, 0);
 	for (integer i = first + 1; i <= last; i++) heap = insert(heap, Amat[i].i, i - first);
-	doublereal* a = new doublereal[last - first + 1];
+	real_mix_precision* a = new real_mix_precision[last - first + 1];
 	integer* j_a = new integer[last - first + 1];
 	for (integer i = first; i <= last; i++) {
 		a[i - first] = Amat[i].aij;
@@ -239,7 +239,7 @@ void LeftistHeapSort(Ak1* &Amat, integer first, integer last) {
 void LeftistHeapSort_j(Ak1* &Amat, integer first, integer last) {
 	leftist_heap* heap = singlton(Amat[first].j, 0);
 	for (integer i = first + 1; i <= last; i++) heap = insert(heap, Amat[i].j, i - first);
-	doublereal* a = new doublereal[last - first + 1];
+	real_mix_precision* a = new real_mix_precision[last - first + 1];
 	integer* i_a = new integer[last - first + 1];
 	for (integer i = first; i <= last; i++) {
 		a[i - first] = Amat[i].aij;

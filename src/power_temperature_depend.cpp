@@ -60,10 +60,15 @@ void my_read_power_table(char* sname, integer &intemp, integer &inoffset_drain,
 	intemp=0; inoffset_drain=0; // эти значения останутся нулевыми если файл не сможет быть открыт.
 	
 	FILE *fpt=NULL; // файл из которого будет считываться таблица мощностей.
-	errno_t err=0;
+	
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fpt = fopen64(sname, "r");
+	if (fpt == NULL) {
+		err = 1;
+	}
 #else
+	errno_t err = 0;
 	err = fopen_s(&fpt, sname, "r");
 #endif
 

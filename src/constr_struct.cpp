@@ -9,6 +9,14 @@
 #ifndef _CONSTR_STRUCT_CPP_
 #define _CONSTR_STRUCT_CPP_ 1
 
+// Число вершин конечного элемента.
+// 23.09.2020
+int NUMBER_OF_VERTEX_FINITE_ELEMENT() {
+	// Конечный элемент в форме гексаэдра.
+	return 8;
+}
+
+
 // Обёртка для сортировки (выбор метода сортировки).
 // не использует дополнительной оперативной памяти.
 // in - предполагается достаточно малым меньше 500,
@@ -81,62 +89,149 @@ void CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(integer identifikator,
 	integer*** &oct_load1, integer** &i_22,
 	doublereal avgx[], doublereal avgy[], doublereal avgz[],
 	doublereal* &x47, doublereal* &y47, doublereal* &z47,
-	integer** &nvtx47, bool &bfound, integer &ifound) {
+	integer** &nvtx47, bool &bfound_gl, integer &ifound_gl) {
 
 if (xc47 < avgx[identifikator]) {
 	if (yc47 < avgy[identifikator]) {
 		if (zc47 < avgz[identifikator]) {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][0]; i_471++) {
-				integer i_47 = oct_load1[identifikator][0][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
-				{
-					ifound = i_47;
-					bfound = true;
-					break;
+
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][0]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][0][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
 				}
+
+#pragma omp critical 
+				{
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
+				}
+
 			}
 		}
 		else {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][1]; i_471++) {
-				integer i_47 = oct_load1[identifikator][1][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
-				{
-					ifound = i_47;
-					bfound = true;
-					break;
+
+
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][1]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][1][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
 				}
+
+#pragma omp critical 
+				{
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
+				}
+
 			}
 		}
 	}
 	else {
+
+
 		if (zc47 < avgz[identifikator]) {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][2]; i_471++) {
-				integer i_47 = oct_load1[identifikator][2][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
-				{
-					ifound = i_47;
-					bfound = true;
-					break; 
+
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][2]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][2][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
 				}
+
+
+#pragma omp critical 
+				{
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
+				}
+
 			}
 		}
 		else {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][3]; i_471++) {
-				integer i_47 = oct_load1[identifikator][3][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
-				{
-					ifound = i_47;
-					bfound = true;
-					break;
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][3]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][3][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
 				}
+
+#pragma omp critical 
+				{
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
+				}
+
 			}
 		}
 	}
@@ -144,56 +239,137 @@ if (xc47 < avgx[identifikator]) {
 else {
 	if (yc47 < avgy[identifikator]) {
 		if (zc47 < avgz[identifikator]) {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][4]; i_471++) {
-				integer i_47 = oct_load1[identifikator][4][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
-				{
-					ifound = i_47; 
-					bfound = true; 
-					break; 
+
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][4]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][4][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
 				}
+
+#pragma omp critical 
+				{
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
+				}
+
 			}
+
 		}
 		else {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][5]; i_471++) {
-				integer i_47 = oct_load1[identifikator][5][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][5]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][5][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
+				}
+
+#pragma omp critical 
 				{
-					ifound = i_47;
-					bfound = true;
-					break;
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
 				}
 			}
 		}
 	}
 	else {
 		if (zc47 < avgz[identifikator]) {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][6]; i_471++) {
-				integer i_47 = oct_load1[identifikator][6][i_471];
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][6]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][6][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
+				}
+
+#pragma omp critical 
 				{
-					ifound = i_47;
-					bfound = true;
-					break;
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
 				}
 			}
 		}
 		else {
-			for (integer i_471 = 0; i_471 < i_22[identifikator][7]; i_471++) {
-				integer i_47 = oct_load1[identifikator][7][i_471]; 
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
-					(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) && 
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+
+#pragma omp parallel
+			{
+
+				bool bfound = false;
+				integer ifound = -1;
+
+#pragma omp for 
+				for (integer i_471 = 0; i_471 < i_22[identifikator][7]; i_471++) {
+					if (bfound) continue;
+
+					integer i_47 = oct_load1[identifikator][7][i_471];
+					if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+						(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+						(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+					{
+						ifound = i_47;
+						bfound = true;
+						//break;
+					}
+				}
+
+#pragma omp critical 
 				{
-					ifound = i_47; 
-					bfound = true; 
-					break; 
+					if (bfound) {
+						bfound_gl = true;
+						ifound_gl = ifound;
+					}
 				}
 			}
 		}
@@ -212,10 +388,33 @@ const unsigned char LAM = 2; // теплопроводность
 const unsigned char MULT_LAM_X = 3;
 const unsigned char MULT_LAM_Y = 4;
 const unsigned char MULT_LAM_Z = 5;
-const unsigned char MU_LAME = 6;  // Коэффициент Ламе
-const unsigned char LAMBDA_LAME = 7; // Коэффициент Ламе.
+//const unsigned char MU_LAME = 6;  // Коэффициент Ламе
+//const unsigned char LAMBDA_LAME = 7; // Коэффициент Ламе.
 const unsigned char BETA_T_MECHANICAL = 8; // коэффициент линейного теплового расширения для Механики.
+const unsigned char YOUNG_MODULE = 9; // Молдуль Юнга.
+const unsigned char POISSON_RATIO = 10; // Poisson ratio
+// множитель к коэффициенту линейного теплового расширения.
+const unsigned char MULT_BETA_T_MECHANICAL_X = 11;
+const unsigned char MULT_BETA_T_MECHANICAL_Y = 12;
+const unsigned char MULT_BETA_T_MECHANICAL_Z = 13;
+// множитель к модулю Юнга.
+const unsigned char MULT_YOUNG_MODULE_X = 14;
+const unsigned char MULT_YOUNG_MODULE_Y = 15;
+const unsigned char MULT_YOUNG_MODULE_Z = 16;
+// Множитель к ортотропному коэффициенту Пуассона.
+const unsigned char MULT_POISSON_RATIO_YZ = 17;
+const unsigned char MULT_POISSON_RATIO_XZ = 18;
+const unsigned char MULT_POISSON_RATIO_XY = 19;
+const unsigned char MULT_POISSON_RATIO_ZY = 20;
+const unsigned char MULT_POISSON_RATIO_ZX = 21;
+const unsigned char MULT_POISSON_RATIO_YX = 22;
+// Модуль сдвига
+const unsigned char SHEAR_MODULE_YZ = 23;
+const unsigned char SHEAR_MODULE_XZ = 24;
+const unsigned char SHEAR_MODULE_XY = 25;
 
+// Число параметров, задающих свойства материала при расчёте.
+const unsigned char SIZE_PROPERTIES_ARRAY = 26;
 
 const unsigned char MU_DYNAMIC_VISCOSITY = 1; // динамическая вязкость
 const unsigned char BETA_T = 2; // коэффициент линейного температурного расширения
@@ -286,13 +485,38 @@ const unsigned char GRADZTURBULENT_KINETIK_ENERGY_STD_K_EPS = 45;
 const unsigned char GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 46;
 const unsigned char GRADYTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 47;
 const unsigned char GRADZTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 48;
+
+// Число вектор функции хранимых при расчёте cfd задачи.
+const unsigned int SIZE_FLOW_POTENT_ARRAY = 49;
+
 // Static Structural
 // Деформации:
 const unsigned char TOTALDEFORMATION = 0; // полная
 const unsigned char XDEFORMATION = 1; // х компонента
 const unsigned char YDEFORMATION = 2; // y компонента
 const unsigned char ZDEFORMATION = 3; // z компонента
-// von-Mises
+const unsigned char STRAIN_X = 4; // Деформация по оси ox
+const unsigned char STRAIN_Y = 5; // Деформация по оси oy
+const unsigned char STRAIN_Z = 6; // Деформация по оси oz
+const unsigned char STRAIN_XY = 7;
+const unsigned char STRAIN_YZ = 8;
+const unsigned char STRAIN_ZX = 9;
+// STRAIN von-Mises
+const unsigned char STRAIN_VON_MIZES = 10;
+const unsigned char LOG10_STRAIN_VON_MIZES = 11;
+// 22.08.2020
+const unsigned char STRESS_X = 12; // Напряжение по оси ox
+const unsigned char STRESS_Y = 13; // Напряжение по оси oy
+const unsigned char STRESS_Z = 14; // Напряжение по оси oz
+const unsigned char STRESS_XY = 15;
+const unsigned char STRESS_YZ = 16;
+const unsigned char STRESS_ZX = 17;
+// STRESS von-Mises
+const unsigned char STRESS_VON_MIZES = 18;
+const unsigned char LOG10_STRESS_VON_MIZES = 19;
+
+// Число вектор функции хранимых при расчёте деформации.
+const unsigned int SIZE_DEFORMATION_ARRAY = 20;
 
 
 //const unsigned char SPEED = 99; // velocity magnitude (модуль скорости) константа используется при создании анимации.
@@ -303,14 +527,7 @@ const unsigned char ENUMERATECONTVOL = 0; // слой нумерации КО
 const unsigned char MASKDOMAINFLUID = 1; // слой маска определяет зону FLUID
 
 
-const unsigned char LAMINAR = 0; // ламинарное течение
-const unsigned char ZEROEQMOD = 1; // турбулентное течение - алгебраическая модель турбулентности Zero Equation Model
-const unsigned char SMAGORINSKY = 2; // турбулентное течение - LES моделирование одна из разновидностей модели Смагоринского.
-const unsigned char RNG_LES = 3; // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
-const unsigned char RANS_SPALART_ALLMARES = 4; // RANS модель Спаларта - Аллмареса.
-const unsigned char RANS_MENTER_SST = 5; //  Shear Stress Model SST Ментера.
-const unsigned char RANS_STANDART_K_EPS = 6; // Двухслойная k-epsilon модель на основе стандартной k-epsilon модели.
-// Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
+
 
 typedef struct TTOCKA_INT {
 	integer i, j, k;
@@ -340,11 +557,18 @@ void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w);
 // для уравнения теплопроводности.
 void free_level1_temp(TEMPER &t) {
 
+	// По видимому операцию удаления лучше не распараллеливать т.к. 
+	// каждое освобождение памяти это запрос к ядру ОС. 
+	// По крайней мере приложение упало когда в этой функции стояло распараллеливание. 06.10.2020.
 
 	printf("delete temperature internally nodal neighbors\n");
 	// neighbors_for_the_internal_node
+
+	delete[] t.bActiveShearModule;
+	t.bActiveShearModule = nullptr;
+
 	if (t.neighbors_for_the_internal_node != nullptr) {
-#pragma omp parallel for
+//#pragma omp parallel for
 		for (int i = 0; i<12; i++) {
 			if (t.neighbors_for_the_internal_node[i] != nullptr) {
 				delete[] t.neighbors_for_the_internal_node[i]; // -12N
@@ -357,7 +581,7 @@ void free_level1_temp(TEMPER &t) {
 		t.neighbors_for_the_internal_node = nullptr;
 	}
 
-#pragma omp parallel sections
+//#pragma omp parallel sections
 	{
 
 		{
@@ -367,7 +591,7 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature Sc\n");
 			if (t.Sc != nullptr) {
@@ -376,7 +600,7 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature ipower_time_depend\n");
 			if (t.ipower_time_depend != nullptr) {
@@ -386,7 +610,7 @@ void free_level1_temp(TEMPER &t) {
 		}
 
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature pa\n");
 			if (t.pa != nullptr) {
@@ -395,7 +619,7 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature neighbors in boundary nodes\n");
 			// border_neighbor
@@ -405,7 +629,7 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature binternal source\n");
 			if (t.binternalsource != nullptr) {
@@ -414,12 +638,12 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature internal node properties\n");
 			// prop
 			if (t.prop != nullptr) {
-				for (int i = 0; i < 9; i++) {
+				for (int i = 0; i < SIZE_PROPERTIES_ARRAY; i++) {
 					if (t.prop[i] != nullptr) {
 						delete[] t.prop[i]; // -3N
 					}
@@ -429,10 +653,11 @@ void free_level1_temp(TEMPER &t) {
 				delete[] t.prop;
 				t.prop = nullptr;
 			}
+			
 		}
 
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature ptr\n");
 			if (t.ptr != nullptr) {
@@ -447,7 +672,7 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature boundary node properties\n");
 			// prop_b
@@ -465,10 +690,10 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			printf("delete temperature nvtx and nvtxcell\n");
-			for (int i = 0; i < 8; i++) { // -8N
+			for (int i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) { // -NUMBER_OF_VERTEX_FINITE_ELEMENT()*N
 				if (t.nvtx != nullptr) {
 					if (t.nvtx[i] != nullptr) {
 						delete[] t.nvtx[i];
@@ -483,9 +708,9 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
-			for (int i = 0; i < 8; i++) { // -8N
+			for (int i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) { // -NUMBER_OF_VERTEX_FINITE_ELEMENT()*N
 
 				if (t.nvtxcell != nullptr) {
 					if (t.nvtxcell[i] != nullptr) {
@@ -500,7 +725,7 @@ void free_level1_temp(TEMPER &t) {
 			}
 		}
 
-#pragma omp section 
+//#pragma omp section 
 		{
 			// 26_09_2016.
 			printf("delete ilevel_alice\n");
@@ -541,7 +766,7 @@ void free_level2_temp(TEMPER &t) {
 
 	printf("delete total deformation \n");
 	if (t.total_deformation != nullptr) {
-		for (integer i_1 = 0; i_1 < 4; i_1++) {
+		for (integer i_1 = 0; i_1 < SIZE_DEFORMATION_ARRAY; i_1++) {
 			if (t.total_deformation[i_1] != nullptr) {
 				delete[] t.total_deformation[i_1];
 				t.total_deformation[i_1] = nullptr;
@@ -749,11 +974,14 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 
 	// Вычисляем количество непризматических объектов QSBid.lb_non_prism и заносим их в отдельный список QSBid.b_non_prism.
 	QSBid.lb_non_prism = 0;
+	integer isum = 0;
+#pragma omp parallel for reduction(+ : isum)
 	for (integer i = 0; i < lb; i++) {
 		if (b[i].g.itypegeom != PRISM) {
-			QSBid.lb_non_prism++;
+			isum++;
 		}
 	}
+	QSBid.lb_non_prism = isum;
 	if (QSBid.lb_non_prism > 0) {
 		if (QSBid.b_non_prism != nullptr) {
 			delete[] QSBid.b_non_prism;
@@ -769,102 +997,124 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 		}
 	}
 
-	// X
-	QSBid.ix11 = 1;
-	QSBid.x11 = new doublereal[QSBid.ix11 + 1]; // число границ по оси x
+#pragma omp sections 
+	{
+#pragma omp section
+		{
+			// X
+			QSBid.ix11 = 1;
+			QSBid.x11 = new doublereal[QSBid.ix11 + 1]; // число границ по оси x
 
-	QSBid.x11[0] = b[0].g.xS; // начало области
-	QSBid.x11[QSBid.ix11] = b[0].g.xE; // конец области
+			QSBid.x11[0] = b[0].g.xS; // начало области
+			QSBid.x11[QSBid.ix11] = b[0].g.xE; // конец области
 
-	for (integer i = 1; i < lb; i++) {
+			for (integer i = 1; i < lb; i++) {
 
-		if (b[i].g.itypegeom == PRISM) {
-			doublereal x_1 = b[i].g.xS;
-			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ_PLANE,b,lb, w, lw, s, ls);
+				if (b[i].g.itypegeom == PRISM) {
+					doublereal x_1 = b[i].g.xS;
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(QSBid.x11, QSBid.ix11, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
+					}
+					x_1 = b[i].g.xE;
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(QSBid.x11, QSBid.ix11, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
+					}
+				}
 			}
-			x_1 = b[i].g.xE;
-			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ_PLANE, b, lb, w, lw, s, ls);
+
+			Sort_method(QSBid.x11, QSBid.ix11);
+		}
+#pragma omp section
+		{
+			// Y
+			QSBid.iy11 = 1;
+			QSBid.y11 = new doublereal[QSBid.iy11 + 1]; // число границ по оси y
+
+			QSBid.y11[0] = b[0].g.yS; // начало области
+			QSBid.y11[QSBid.iy11] = b[0].g.yE; // конец области
+
+			for (integer i = 1; i < lb; i++) {
+
+				if (b[i].g.itypegeom == PRISM) {
+					doublereal y_1 = b[i].g.yS;
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(QSBid.y11, QSBid.iy11, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
+					}
+					y_1 = b[i].g.yE;
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(QSBid.y11, QSBid.iy11, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
+					}
+				}
 			}
+
+			Sort_method(QSBid.y11, QSBid.iy11);
+		}
+#pragma omp section
+		{
+			// Z
+			QSBid.iz11 = 1;
+			QSBid.z11 = new doublereal[QSBid.iz11 + 1]; // число границ по оси z
+
+			QSBid.z11[0] = b[0].g.zS; // начало области
+			QSBid.z11[QSBid.iz11] = b[0].g.zE; // конец области
+
+			for (integer i = 1; i < lb; i++) {
+
+				if (b[i].g.itypegeom == PRISM) {
+					doublereal z_1 = b[i].g.zS;
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(QSBid.z11, QSBid.iz11, z_1, XY_PLANE, b, lb, w, lw, s, ls);
+					}
+					z_1 = b[i].g.zE;
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(QSBid.z11, QSBid.iz11, z_1, XY_PLANE, b, lb, w, lw, s, ls);
+					}
+				}
+			}
+
+			Sort_method(QSBid.z11, QSBid.iz11);
 		}
 	}
-
-	Sort_method(QSBid.x11, QSBid.ix11);
-
-	// Y
-	QSBid.iy11 = 1;
-	QSBid.y11 = new doublereal[QSBid.iy11 + 1]; // число границ по оси y
-
-	QSBid.y11[0] = b[0].g.yS; // начало области
-	QSBid.y11[QSBid.iy11] = b[0].g.yE; // конец области
-
-	for (integer i = 1; i < lb; i++) {
-
-		if (b[i].g.itypegeom == PRISM) {
-			doublereal y_1 = b[i].g.yS;
-			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(QSBid.y11, QSBid.iy11, y_1,XZ_PLANE, b, lb, w, lw, s, ls);
-			}
-			y_1 = b[i].g.yE;
-			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(QSBid.y11, QSBid.iy11, y_1, XZ_PLANE, b, lb, w, lw, s, ls);
-			}
-		}
-	}
-
-	Sort_method(QSBid.y11, QSBid.iy11);
-
-	// Z
-	QSBid.iz11 = 1;
-	QSBid.z11 = new doublereal[QSBid.iz11 + 1]; // число границ по оси z
-
-	QSBid.z11[0] = b[0].g.zS; // начало области
-	QSBid.z11[QSBid.iz11] = b[0].g.zE; // конец области
-
-	for (integer i = 1; i < lb; i++) {
-
-		if (b[i].g.itypegeom == PRISM) {
-			doublereal z_1 = b[i].g.zS;
-			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(QSBid.z11, QSBid.iz11, z_1,XY_PLANE, b, lb, w, lw, s, ls);
-			}
-			z_1 = b[i].g.zE;
-			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(QSBid.z11, QSBid.iz11, z_1,XY_PLANE, b, lb, w, lw, s, ls);
-			}
-		}
-	}
-
-	Sort_method(QSBid.z11, QSBid.iz11);
 
 	delete[] QSBid.ijk_block_id;
 	const integer isize_ijk_block_id = (QSBid.ix11 + 1) * (QSBid.iy11 + 1) * (QSBid.iz11 + 1);
 	QSBid.ijk_block_id = new integer[isize_ijk_block_id];
 	integer* ilink_ijk_block_id = QSBid.ijk_block_id;
-#pragma omp parallel for shared(ilink_ijk_block_id)
+#pragma omp parallel for //shared(ilink_ijk_block_id)
 	for (integer i_94 = 0; i_94 < isize_ijk_block_id; i_94++) {
 		ilink_ijk_block_id[i_94] = lb;
 	}
 	ilink_ijk_block_id = nullptr;
 
 	// Вычисление допуска.
-	QSBid.epsTolx = 1.0e40;
-	QSBid.epsToly = 1.0e40;
-	QSBid.epsTolz = 1.0e40;
-	for (integer i = 0; i < QSBid.ix11; i++) {
-		if (fabs(QSBid.x11[i + 1] - QSBid.x11[i]) < QSBid.epsTolx) {
-			QSBid.epsTolx = 0.5*fabs(QSBid.x11[i + 1] - QSBid.x11[i]);
+#pragma omp sections 
+	{
+#pragma omp section
+		{
+			QSBid.epsTolx = 1.0e40;
+			for (integer i = 0; i < QSBid.ix11; i++) {
+				if (fabs(QSBid.x11[i + 1] - QSBid.x11[i]) < QSBid.epsTolx) {
+					QSBid.epsTolx = 0.5*fabs(QSBid.x11[i + 1] - QSBid.x11[i]);
+				}
+			}
 		}
-	}
-	for (integer i = 0; i < QSBid.iy11; i++) {
-		if (fabs(QSBid.y11[i + 1] - QSBid.y11[i]) < QSBid.epsToly) {
-			QSBid.epsToly = 0.5*fabs(QSBid.y11[i + 1] - QSBid.y11[i]);
+#pragma omp section
+		{
+			QSBid.epsToly = 1.0e40;
+			for (integer i = 0; i < QSBid.iy11; i++) {
+				if (fabs(QSBid.y11[i + 1] - QSBid.y11[i]) < QSBid.epsToly) {
+					QSBid.epsToly = 0.5*fabs(QSBid.y11[i + 1] - QSBid.y11[i]);
+				}
+			}
 		}
-	}
-	for (integer i = 0; i < QSBid.iz11; i++) {
-		if (fabs(QSBid.z11[i + 1] - QSBid.z11[i]) < QSBid.epsTolz) {
-			QSBid.epsTolz = 0.5*fabs(QSBid.z11[i + 1] - QSBid.z11[i]);
+#pragma omp section
+		{
+			QSBid.epsTolz = 1.0e40;
+			for (integer i = 0; i < QSBid.iz11; i++) {
+				if (fabs(QSBid.z11[i + 1] - QSBid.z11[i]) < QSBid.epsTolz) {
+					QSBid.epsTolz = 0.5*fabs(QSBid.z11[i + 1] - QSBid.z11[i]);
+				}
+			}
 		}
 	}
 
@@ -898,6 +1148,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 		//}
 
 	// initialization 30.07.2019
+#pragma omp parallel for
 	for (integer i_54 = 0; i_54 < lb; i_54++) {
 		block_indexes[i_54].iL = -1;
 		block_indexes[i_54].iR = -2;
@@ -1434,8 +1685,9 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 	
 	// Так делать нельзя т.к. мы заполняли только на призмах и не рассматривали цилиндры и полигоны.
 	// Поэтому какие-то позиции из ijk_block_id[iP] останутся равными lb т.е. незаполненными.
-	// Это нормально. НО!!! здесь мы добавили проверку if (bvisit[iP] == true)  и поэтому гарантируется
+	// Это нормально. НО!!! здесь мы добавили проверку if (bvisit[iP]  )  и поэтому гарантируется
 	// Что блоки только призматические и только.
+#pragma omp parallel for
 	for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
 	{
 		integer iP_k1=k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
@@ -1445,7 +1697,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
 			{
 				integer iP = i1 +  iP_j1;
-				if (bvisit[iP] == true) {
+				if (bvisit[iP]  ) {
 					// Если мы ранее посещали данную ячейку при обходе призматических объектов.
 					if (QSBid.ijk_block_id[iP] == lb) {
 						// Мы что-то пропустили и из-за этого возможен сбой в дальнейшем.
@@ -1563,7 +1815,11 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 	integer k1 = 0, k2 = 0, k3 = 0, k4 = 0;
 #pragma omp parallel shared(k1,k2,k3,k4) num_threads(4)
 	{
-		integer tid = omp_get_thread_num();
+#ifdef _OPENMP 
+				int tid = omp_get_thread_num();
+#else
+				int tid = 0;
+#endif
 		if (tid == 0) {
 			// цикл по всем блокам
 			//for (integer i1 = 0; i1<lb4; i1++) {
@@ -2168,7 +2424,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		ret = false;
 	}
 	else {
-		if (b[ib].itype == HOLLOW) ret = false;
+		if (b[ib].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) ret = false;
 	}
 	return ret;
 
@@ -2187,7 +2443,7 @@ bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		ret = false;
 	}
 	else {
-		if ((b[ib].itype == SOLID) || (b[ib].itype == HOLLOW)) ret = false;
+		if ((b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[ib].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ret = false;
 	}
 	return ret;
 
@@ -2235,7 +2491,11 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		integer k1 = 0, k2 = 0, k3 = 0, k4 = 0;
 #pragma omp parallel shared(k1,k2,k3,k4) num_threads(4)
 		{
-			integer tid = omp_get_thread_num();
+#ifdef _OPENMP 
+			int tid = omp_get_thread_num();
+#else
+			int tid = 0;
+#endif
 			if (tid == 0) {
 				// цикл по всем блокам
 				//for (integer i1 = 0; i1<lb4; i1++) {
@@ -2570,8 +2830,9 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 			}
 
 		}
-
+#ifdef _OPENMP
 		omp_set_num_threads(1);
+#endif
 		k = k1;
 		if (k2 > k) k = k2;
 		if (k3 > k) k = k3;
@@ -2796,7 +3057,7 @@ bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 
 OUTOF_IN_MODEL_TEMP1:
 
-	if (b[k].itype == HOLLOW) ret = false;
+	if (b[k].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) ret = false;
 	ib = k;
 
 	/*
@@ -2936,7 +3197,7 @@ bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* &b, integer lb) {
 
 OUTOF_IN_MODEL_FLOW:
 
-	if ((b[k].itype == SOLID) || (b[k].itype == HOLLOW)) ret = false;
+	if ((b[k].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[k].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) ret = false;
 	ib = k;
 
 	return ret;
@@ -2965,7 +3226,7 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
 #ifdef _OPENMP
-	int i_my_num_core_parallelesation = omp_get_num_threads();
+	int i_my_num_core_parallelesation = omp_get_max_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
 #else
 	int i_my_num_core_parallelesation = 1;
@@ -3154,7 +3415,7 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 	ib_stub = 0;
 	doublereal vol_stub = -1.0;
 	for (i = 0; i < lb; i++) {
-		if (b[i].itype == HOLLOW) {
+		if (b[i].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 			if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
 				ib_stub = i;
 				vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
@@ -3187,7 +3448,7 @@ const integer isize_xyz=inx*iny*inz;
                     integer iP=i1+iP_j1;
 					switch (iflag) {
 						case TEMPERATURE:
-						if (b[m7].itype == HOLLOW) {
+						if (b[m7].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							evt[iP] = -1;
 						}
 						else {
@@ -3195,7 +3456,7 @@ const integer isize_xyz=inx*iny*inz;
 						}
 						break;
 						case HYDRODINAMIC:
-						if ((b[m7].itype == SOLID) || (b[m7].itype == HOLLOW)) {
+						if ((b[m7].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m7].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 							evt[iP] = -1;
 						}
 						else {
@@ -3289,7 +3550,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
 #ifdef _OPENMP
-	int i_my_num_core_parallelesation = omp_get_num_threads();
+	int i_my_num_core_parallelesation = omp_get_max_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
 #else
 	int i_my_num_core_parallelesation = 1;
@@ -3881,7 +4142,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 							switch (iflag) {
 							case TEMPERATURE:
-								if (b[m8].itype == HOLLOW) {
+								if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 									evt[iP] = -1;
 								}
 								else {
@@ -3889,7 +4150,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 								}
 								break;
 							case HYDRODINAMIC:
-								if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+								if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 									evt[iP] = -1;
 								}
 								else {
@@ -3906,7 +4167,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		}
 		else if (b[m8].g.itypegeom == CYLINDER) {
 
-			// TODO как был сформирован призматический объект для цилиндра ? 
+			// как был сформирован призматический объект для цилиндра ? 
 			// Надо также сократить число проверяемых точек.
 			// Cylinder
 			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
@@ -3946,7 +4207,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 									switch (iflag) {
 									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
+										if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 											evt[iP] = -1;
 										}
 										else {
@@ -3954,7 +4215,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 										}
 										break;
 									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+										if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 											evt[iP] = -1;
 										}
 										else {
@@ -3974,7 +4235,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 										switch (iflag) {
 										case TEMPERATURE:
-											if (b[m8].itype == HOLLOW) {
+											if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 												evt[iP] = -1;
 											}
 											else {
@@ -3982,7 +4243,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 											}
 											break;
 										case HYDRODINAMIC:
-											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 												evt[iP] = -1;
 											}
 											else {
@@ -4004,7 +4265,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 									switch (iflag) {
 									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
+										if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 											evt[iP] = -1;
 										}
 										else {
@@ -4012,7 +4273,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 										}
 										break;
 									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+										if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 											evt[iP] = -1;
 										}
 										else {
@@ -4032,7 +4293,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 										switch (iflag) {
 										case TEMPERATURE:
-											if (b[m8].itype == HOLLOW) {
+											if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 												evt[iP] = -1;
 											}
 											else {
@@ -4040,7 +4301,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 											}
 											break;
 										case HYDRODINAMIC:
-											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 												evt[iP] = -1;
 											}
 											else {
@@ -4062,7 +4323,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 									switch (iflag) {
 									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
+										if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 											evt[iP] = -1;
 										}
 										else {
@@ -4070,7 +4331,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 										}
 										break;
 									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+										if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 											evt[iP] = -1;
 										}
 										else {
@@ -4089,7 +4350,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 										switch (iflag) {
 										case TEMPERATURE:
-											if (b[m8].itype == HOLLOW) {
+											if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 												evt[iP] = -1;
 											}
 											else {
@@ -4097,7 +4358,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 											}
 											break;
 										case HYDRODINAMIC:
-											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 												evt[iP] = -1;
 											}
 											else {
@@ -4156,7 +4417,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 						switch (iflag) {
 						case TEMPERATURE:
-							if (b[m8].itype == HOLLOW) {
+							if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 								evt[iP] = -1;
 							}
 							else {
@@ -4164,7 +4425,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							}
 							break;
 						case HYDRODINAMIC:
-							if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+							if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 								evt[iP] = -1;
 							}
 							else {
@@ -4670,7 +4931,7 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag,
 					integer iP = i + iP_j;
 					switch (iflag) {
 					case TEMPERATURE:
-						if (b[m7].itype == HOLLOW) {
+						if (b[m7].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							evt[iP] = -1;
 						}
 						else {
@@ -4678,7 +4939,7 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag,
 						}
 						break;
 					case HYDRODINAMIC:
-						if ((b[m7].itype == SOLID) || (b[m7].itype == HOLLOW)) {
+						if ((b[m7].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m7].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 							evt[iP] = -1;
 						}
 						else {
@@ -5351,7 +5612,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 							switch (iflag) {
 							case TEMPERATURE:
-								if (b[m8].itype == HOLLOW) {
+								if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 									evt[iP] = -1;
 								}
 								else {
@@ -5359,7 +5620,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 								}
 								break;
 							case HYDRODINAMIC:
-								if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+								if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 									evt[iP] = -1;
 								}
 								else {
@@ -5376,7 +5637,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 		}
 		else if (b[m8].g.itypegeom == CYLINDER) {
 
-			// TODO как был сформирован призматический объект для цилиндра ? 
+			// как был сформирован призматический объект для цилиндра ? 
 			// Надо также сократить число проверяемых точек.
 			// Cylinder
 			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
@@ -5409,7 +5670,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 										switch (iflag) {
 										case TEMPERATURE:
-											if (b[m8].itype == HOLLOW) {
+											if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 												evt[iP] = -1;
 											}
 											else {
@@ -5417,7 +5678,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 											}
 											break;
 										case HYDRODINAMIC:
-											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 												evt[iP] = -1;
 											}
 											else {
@@ -5439,7 +5700,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 											switch (iflag) {
 											case TEMPERATURE:
-												if (b[m8].itype == HOLLOW) {
+												if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 													evt[iP] = -1;
 												}
 												else {
@@ -5447,7 +5708,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 												}
 												break;
 											case HYDRODINAMIC:
-												if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 													evt[iP] = -1;
 												}
 												else {
@@ -5469,7 +5730,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 										switch (iflag) {
 										case TEMPERATURE:
-											if (b[m8].itype == HOLLOW) {
+											if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 												evt[iP] = -1;
 											}
 											else {
@@ -5477,7 +5738,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 											}
 											break;
 										case HYDRODINAMIC:
-											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 												evt[iP] = -1;
 											}
 											else {
@@ -5498,7 +5759,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 											switch (iflag) {
 											case TEMPERATURE:
-												if (b[m8].itype == HOLLOW) {
+												if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 													evt[iP] = -1;
 												}
 												else {
@@ -5506,7 +5767,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 												}
 												break;
 											case HYDRODINAMIC:
-												if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 													evt[iP] = -1;
 												}
 												else {
@@ -5530,7 +5791,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 										switch (iflag) {
 										case TEMPERATURE:
-											if (b[m8].itype == HOLLOW) {
+											if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 												evt[iP] = -1;
 											}
 											else {
@@ -5538,7 +5799,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 											}
 											break;
 										case HYDRODINAMIC:
-											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+											if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 												evt[iP] = -1;
 											}
 											else {
@@ -5561,7 +5822,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 											switch (iflag) {
 											case TEMPERATURE:
-												if (b[m8].itype == HOLLOW) {
+												if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 													evt[iP] = -1;
 												}
 												else {
@@ -5569,7 +5830,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 												}
 												break;
 											case HYDRODINAMIC:
-												if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 													evt[iP] = -1;
 												}
 												else {
@@ -5627,7 +5888,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 								switch (iflag) {
 									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
+										if (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 											evt[iP] = -1;
 										}
 										else {
@@ -5635,7 +5896,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 										}
 									break;
 									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+										if ((b[m8].itype == PHYSICS_TYPE_IN_BODY::SOLID) || (b[m8].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) {
 											evt[iP] = -1;
 										}
 										else {
@@ -6272,7 +6533,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	) {
 
 #ifdef _OPENMP
-	int i_my_num_core_parallelesation = omp_get_num_threads();
+	int i_my_num_core_parallelesation = omp_get_max_threads();
 	//omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
 	unsigned int nthreads = number_cores();
 	omp_set_num_threads(nthreads); // установка числа потоков
@@ -6895,7 +7156,8 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			//printf("ilk==%d\n",ilk);
 		}
 #ifdef _OPENMP
-		omp_set_num_threads(8);// i_my_num_core_parallelesation
+		int inum_core = number_cores();
+		omp_set_num_threads(inum_core);// i_my_num_core_parallelesation
 #endif
 		printf("\n");
 		//system("PAUSE");
@@ -8001,7 +8263,7 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent,
 		    iP = evt[i_1];
 			if (iP > 0) {
 				ib = whot_is_block[iP-1];
-				if (b[ib].itype == HOLLOW) {
+				if (b[ib].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 					inDomain = false;
 				}
 				else inDomain = true;
@@ -8014,7 +8276,7 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent,
 			iP = evt[i_1];
 			if (iP > 0) {
 				ib = whot_is_block[iP - 1];
-				if (b[ib].itype != FLUID) {
+				if (b[ib].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 					inDomain = false;
 				}
 				else inDomain = true;
@@ -8238,7 +8500,7 @@ void constr_nodes_not_optimaze(TOCHKA* &pa, integer &maxnode, integer* &ent,
 			iP = evt[i_1];
 			if (iP > 0) {
 				ib = whot_is_block[iP - 1];
-				if (b[ib].itype == HOLLOW) {
+				if (b[ib].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 					inDomain = false;
 				}
 				else inDomain = true;
@@ -8251,7 +8513,7 @@ void constr_nodes_not_optimaze(TOCHKA* &pa, integer &maxnode, integer* &ent,
 			iP = evt[i_1];
 			if (iP > 0) {
 				ib = whot_is_block[iP - 1];
-				if (b[ib].itype != FLUID) {
+				if (b[ib].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 					inDomain = false;
 				}
 				else inDomain = true;
@@ -8654,7 +8916,7 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 	}
 	*/
 	nvtx = nullptr;
-	nvtx = new integer*[8];
+	nvtx = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 	if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem: not enough memory on your equipment for nvtx constr struct...\n");
@@ -8663,8 +8925,8 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 		system("pause");
 		exit(1);
 	}
-	for (integer i = 0; i<8; i++) nvtx[i] = nullptr;
-	for (integer i = 0; i<8; i++) {
+	for (integer i = 0; i<NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) nvtx[i] = nullptr;
+	for (integer i = 0; i<NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
 		nvtx[i] = new integer[maxelm];
 		if (nvtx[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
@@ -8690,9 +8952,9 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 			 integer i = tck_int_list[iscan].i;
 			 integer j = tck_int_list[iscan].j;
 			 integer  k = tck_int_list[iscan].k;
-			integer ic = i + j * inx + k * inx*iny;
+			 integer ic = i + j * inx + k * inx*iny;
 
-			// контрольный объём принадлежит расчётной области.
+			 // контрольный объём принадлежит расчётной области.
 			 integer iP_k=k*(inx + 1)*(iny + 1);
 			 integer iP_j=j*(inx + 1);
              integer iP_k_p1=(k+1)*(inx + 1)*(iny + 1);
@@ -8840,7 +9102,7 @@ void walk_in_octree_icolor_different_fluid_domain(octree* &oc,
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 
 
 
@@ -8986,6 +9248,7 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 		exit(1);
 	}
 
+#pragma omp parallel for private(i)
 	for (i = 0; i < maxelm_flow; i++) {
 		// инициализация не существующим значением.
 		// Нумерация гидродинамических областей начинается с единицы.
@@ -9080,6 +9343,8 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 
 	// инвариантная проверка - заполнены ли все жидкие ячейки.
 	integer ic_err1 = 0, ic_err2 = 0;
+
+#pragma omp parallel for reduction(+ : ic_err1, ic_err2) private(i)
 	for (i = 0; i < maxelm_flow; i++) {
 		// инициализация не существующим значением.
 		// Нумерация гидродинамических областей начинается с единицы.
@@ -9103,11 +9368,14 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer*& i
 // Вычисляет maxelm;
 void calculate_max_elm(integer &maxelm, integer** evt_f2, 
 	integer inx, integer iny, integer inz, integer iDom) {
+
 	maxelm = 0;
+	integer im = 0;
 	// integer i, j, k;
 	// integer ic, ic_k, ic_j;
 	// подсчёт количества контрольных объёмов 
 	// принадлежащих расчётной области.
+#pragma omp parallel for reduction(+ : im)
 	for (integer k = 0; k < inz; k++) 
 	{
 		integer  ic_k=k * inx * iny;
@@ -9118,11 +9386,13 @@ void calculate_max_elm(integer &maxelm, integer** evt_f2,
 	        {
 				integer ic = i +  ic_j;
 				if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
-					maxelm++;
+					im++;
 				}
 			}
 		}
 	}
+
+	maxelm = im;
 }//calculate_max_elm
 
 
@@ -9132,6 +9402,7 @@ void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain
 	integer iDom, integer* &ent,
 	integer** &nvtx, integer maxelm,
 	integer inx, integer iny, integer inz) {
+
 	// проити по всем контрольным объёмам принадлежащим
 	// расчётной области
 	// maxelm - число контрольных объёмов принадлежащих расчётной области
@@ -9152,6 +9423,7 @@ void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain
 		exit(1);
 	}
 
+#pragma omp parallel for
 	for (integer i = 0; i < maxelm; i++) {
 		// Для структурированной сетки.
 		icolor_different_fluid_domain[i] = -1;// заглушка инициализация не существующим значением.
@@ -9159,6 +9431,8 @@ void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain
 	// integer ic_k, ic_j;
 
 	integer ic64 = 0;
+
+#pragma omp parallel for reduction(+ : ic64)	
 	 for (integer  k = 0; k<inz; k++)
 	 {
 		integer  ic_k=k*inx*iny;
@@ -9170,15 +9444,22 @@ void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain
 
 				integer  ic = i +  ic_j;
 				if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
-					// Это точно активная жидкая ячейка. У нас только одна слитая воедино гидродинамическая подобласть, поэтому просто присвоим 1.
-					icolor_different_fluid_domain[ic64] = 1;
+		
 					ic64++;
 				}
 			}
 		}
 	}
+
+#pragma omp parallel for
+	 for (integer i = 0; i < ic64; i++) {
+		 // Для структурированной сетки.
+		 // Это точно активная жидкая ячейка. У нас только одна слитая воедино гидродинамическая подобласть, поэтому просто присвоим 1
+		 icolor_different_fluid_domain[i] = 1;
+	 }
+
 	nvtx = nullptr;
-	nvtx = new integer*[8];
+	nvtx = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 	if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		std::cout << "Problem: not enough memory on your equipment for nvtx flow constr struct..." << std::endl;
@@ -9187,8 +9468,8 @@ void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain
 		system("pause");
 		exit(1);
 	}
-	for (integer  i = 0; i<8; i++) nvtx[i] = nullptr;
-	for (integer   i = 0; i<8; i++) {
+	for (integer  i = 0; i<NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) nvtx[i] = nullptr;
+	for (integer   i = 0; i<NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
 		nvtx[i] = new integer[maxelm];
 		if (nvtx[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
@@ -9275,21 +9556,29 @@ void constr_nvtx_flow(integer** &evt_f2, integer* &icolor_different_fluid_domain
 
 // Заносит свойства материалов в структуру
 void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal** &prop, integer maxelm, integer iflag, BLOCK* b,
-	integer lb, integer inx, integer iny, integer inz, doublereal* &Sc, integer* &ipower_time_depend,
-				 doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist, TOCKA_INT* &tck_int_list) {
-	integer i;
+	integer lb, integer inx, integer iny, integer inz, doublereal* &Sc, POWER_TIME_DEPEND* &ipower_time_depend,
+				 doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist, TOCKA_INT* &tck_int_list, 
+	bool* &bActiveShearModule) {
+
+	if (bActiveShearModule != nullptr) {
+		delete[] bActiveShearModule;
+		bActiveShearModule = nullptr;
+	}
+	bActiveShearModule = new bool[maxelm];
+
+	
 	prop=nullptr;
-	prop=new doublereal*[9];
+	prop=new doublereal*[SIZE_PROPERTIES_ARRAY];
 	if (prop==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
-		std::cout << "Problem: not enough memory on your equipment for prop constr struct..."<<std::endl;
-		std::cout << "Please any key to exit..."<<std::endl;
+		std::cout << "Problem: not enough memory on your equipment for prop constr struct..." << std::endl;
+		std::cout << "Please any key to exit..." << std::endl;
 		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
-	for (i=0; i<9; i++) prop[i]=nullptr;
-	for (i=0; i<9; i++) {
+	for (integer i=0; i<SIZE_PROPERTIES_ARRAY; i++) prop[i]=nullptr;
+	for (integer i=0; i<SIZE_PROPERTIES_ARRAY; i++) {
 		prop[i]=new doublereal[maxelm];
 		if (prop[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
@@ -9312,7 +9601,7 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 		exit(1);
 	}
 	ipower_time_depend = nullptr;
-	ipower_time_depend = new integer[maxelm];
+	ipower_time_depend = new POWER_TIME_DEPEND[maxelm];
 	if (ipower_time_depend == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		std::cout << "Problem: not enough memory on your equipment for ipower_time_depend constr struct..."<<std::endl;
@@ -9322,9 +9611,9 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 		exit(1);
 	}
 
-	TOCHKA p;
-    bool inDomain=false;
-	integer ib,l=0; 
+	
+   
+	integer l=0; 
 	
 	// Проход по всем контрольным объёмам в порядке обхода:
 	//for (integer i=0; i<inx; i++) for (integer j=0; j<iny; j++) for (integer k=0; k<inz; k++) {
@@ -9338,6 +9627,8 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 			integer k = tck_int_list[iscan].k;
 			integer ic = i + j * inx + k * inx*iny;
 
+			TOCHKA p;
+
 				p.x = 0.5*(xpos[i] + xpos[i + 1]);
 				p.y = 0.5*(ypos[j] + ypos[j + 1]);
 				p.z = 0.5*(zpos[k] + zpos[k + 1]);
@@ -9347,6 +9638,10 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 				  case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
 				}
 				*/
+
+				bool inDomain = false;
+				integer ib;
+
 				integer iP = 0;
 				switch (iflag) {
 				case TEMPERATURE:
@@ -9355,7 +9650,7 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 					iP = evt[ic];
 					if (iP > 0) {
 						ib = whot_is_block[iP - 1];
-						if (b[ib].itype == HOLLOW) {
+						if (b[ib].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							inDomain = false;
 						}
 						else inDomain = true;
@@ -9368,7 +9663,7 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 					iP = evt[ic];
 					if (iP > 0) {
 						ib = whot_is_block[iP - 1];
-						if (b[ib].itype != FLUID) {
+						if (b[ib].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 							inDomain = false;
 						}
 						else inDomain = true;
@@ -9398,10 +9693,45 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 							prop[MULT_LAM_X][l] = matlist[imat_id_loc].orthotropy_multiplyer_x;
 							prop[MULT_LAM_Y][l] = matlist[imat_id_loc].orthotropy_multiplyer_y;
 							prop[MULT_LAM_Z][l] = matlist[imat_id_loc].orthotropy_multiplyer_z;
-							// Коэффициенты Ламе.
-							prop[MU_LAME][l] = matlist[imat_id_loc].mu_Lame;
-							prop[LAMBDA_LAME][l] = matlist[imat_id_loc].lambda_Lame;
-							prop[BETA_T_MECHANICAL][l] = matlist[imat_id_loc].beta_t_solid;
+							
+							if (matlist[imat_id_loc].n_beta_t_solid == 1) {
+								prop[BETA_T_MECHANICAL][l] = matlist[imat_id_loc].arr_beta_t_solid[0];
+							}
+							else {
+								prop[BETA_T_MECHANICAL][l] = get_beta_t_solid(matlist[imat_id_loc].n_beta_t_solid, matlist[imat_id_loc].temp_beta_t_solid, matlist[imat_id_loc].arr_beta_t_solid, 25.0);
+							}
+							
+							if (matlist[imat_id_loc].n_Poisson_ratio == 1) {
+								prop[POISSON_RATIO][l] = matlist[imat_id_loc].arr_Poisson_ratio[0];
+							}
+							else {
+								prop[POISSON_RATIO][l] = get_Poisson_ratio(matlist[imat_id_loc].n_Poisson_ratio, matlist[imat_id_loc].temp_Poisson_ratio, matlist[imat_id_loc].arr_Poisson_ratio, 25.0);
+							}
+							
+							if (matlist[imat_id_loc].n_YoungModule == 1) {
+								prop[YOUNG_MODULE][l] = matlist[imat_id_loc].arr_Young_Module[0];
+							}
+							else {
+								prop[YOUNG_MODULE][l] = get_Young_Module(matlist[imat_id_loc].n_YoungModule, matlist[imat_id_loc].temp_Young_Module, matlist[imat_id_loc].arr_Young_Module, 25.0);
+							}
+							prop[MULT_BETA_T_MECHANICAL_X][l] = matlist[imat_id_loc].orthotropy_multiplyer_x_beta_t_solid;
+							prop[MULT_BETA_T_MECHANICAL_Y][l] = matlist[imat_id_loc].orthotropy_multiplyer_y_beta_t_solid;
+							prop[MULT_BETA_T_MECHANICAL_Z][l] = matlist[imat_id_loc].orthotropy_multiplyer_z_beta_t_solid;
+							prop[MULT_YOUNG_MODULE_X][l] = matlist[imat_id_loc].orthotropy_multiplyer_x_Young_Module;
+							prop[MULT_YOUNG_MODULE_Y][l] = matlist[imat_id_loc].orthotropy_multiplyer_y_Young_Module;
+							prop[MULT_YOUNG_MODULE_Z][l] = matlist[imat_id_loc].orthotropy_multiplyer_z_Young_Module;
+							// множитель коэффициента Пуассона.
+							prop[MULT_POISSON_RATIO_YZ][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_yz;
+							prop[MULT_POISSON_RATIO_XZ][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_xz;
+							prop[MULT_POISSON_RATIO_XY][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_xy;
+							prop[MULT_POISSON_RATIO_ZY][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_zy;
+							prop[MULT_POISSON_RATIO_ZX][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_zx;
+							prop[MULT_POISSON_RATIO_YX][l] = matlist[imat_id_loc].orthotropy_multiplyer_Poisson_ratio_yx;
+
+							bActiveShearModule[l] = matlist[imat_id_loc].bActive_ShearModule;
+							prop[SHEAR_MODULE_YZ][l] = matlist[imat_id_loc].ShearModule_yz;
+							prop[SHEAR_MODULE_XZ][l] = matlist[imat_id_loc].ShearModule_xz;
+							prop[SHEAR_MODULE_XY][l] = matlist[imat_id_loc].ShearModule_xy;
 
 							//Sc[evt[ic] - 1] = b[ib].Sc;
 							if (b[ib].n_Sc == 1) {
@@ -9496,7 +9826,7 @@ void constr_prop_flow(integer* &evt, integer* &whot_is_block,
 						integer iP = evt[ic];
 						if (iP > 0) {
 							ib = whot_is_block[iP - 1];
-							if (b[ib].itype != FLUID) {
+							if (b[ib].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 								inDomain = false;
 							}
 							else inDomain = true;
@@ -9555,9 +9885,9 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
 		system("pause");
 		exit(1);
 	}
-	integer i=0, j=0;
-	for (i=0; i<6; i++) gran[i]=nullptr;
-	for (i=0; i<6; i++) {
+	
+	for (integer i=0; i<6; i++) gran[i]=nullptr;
+	for (integer i=0; i<6; i++) {
 		gran[i]=new integer[maxelm];
 		if (gran[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
@@ -9570,7 +9900,13 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
 	    }
 	}
 	// инициализация:
-    for (i=0; i<6; i++) for (j=0; j<maxelm; j++) gran[i][j]=-1;
+	for (integer i = 0; i < 6; i++) {
+
+#pragma omp parallel for
+		for (integer j = 0; j < maxelm; j++) {
+			gran[i][j] = -1;
+		}
+	}
 
 	bool *bvisit=nullptr;
 	bvisit=new bool[maxelm];
@@ -9583,26 +9919,31 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
 		//system("pause");
 		//exit(1);
 	//}
-    for (j=0; j<maxelm; j++) bvisit[j]=false; // признак посещения узла.
+#pragma omp parallel for 
+	for (integer j = 0; j < maxelm; j++) {
+		bvisit[j] = false; // признак посещения узла.
+	}
 
 	maxbound=0; // общее число граней
-	integer G; // текущая грань
-	doublereal x_c=0.0, y_c=0.0, z_c=0.0;
-	integer iplane;
+	
 	bool bfind=false;
-	integer GR; // G Reverse
-	for (i=0; i<maxelm; i++) {
+	
+	for (integer i=0; i<maxelm; i++) {
 		// цикл по всем соседям
-		for (G=0; G<6; G++) {
+		// G текущая грань.
+		for (integer G=0; G<6; G++) {
 			if (neighbour[G][i]==0) {
 				// сосед не существует
-				gran[G][i]=maxbound++;
+				gran[G][i]=maxbound;
+				maxbound++;
 				// записываем идентификатор грани и
 				// увеличиваем счётчик граней.
 			}
 			else {
 				// сосед существует, грань внутренняя
 				if (bvisit[neighbour[G][i]-1]) {
+
+					integer GR; // G Reverse
 					// узел уже был посещён
 					switch (G) {
 						case E_SIDE: GR=W_SIDE; break;
@@ -9615,6 +9956,10 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
 					gran[G][i]=gran[GR][neighbour[G][i]-1];
 				}
 				else {
+
+					doublereal x_c = 0.0, y_c = 0.0, z_c = 0.0;
+					integer iplane;
+
 					// узнать координаты центра грани и ориентацию в пространстве
 					switch (G) {
 						case E_SIDE: x_c=pa[nvtx[1][i]-1].x;
@@ -9649,11 +9994,11 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
 							     break;
 					} // end case
 					bfind=false;
-					for (j=0; j<ls; j++) {
+					for (integer j=0; j<ls; j++) {
 						if (s[j].iPlane==iplane) {
 							switch (iplane) {
 							case XY_PLANE: s[j].g.zE = s[j].g.zS;
-									      if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) bfind=true;
+									if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) bfind=true;
 									      break;
 							case XZ_PLANE:  s[j].g.yE = s[j].g.yS;
 									if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (z_c>s[j].g.zS) && (z_c<s[j].g.zE) && (fabs(y_c-s[j].g.yE)<admission)) bfind=true;
@@ -9667,7 +10012,8 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** &nvtx,
 					}
 					if (bfind) {
 						// нужно присвоить грани соответствующий номер maxbound.
-                        gran[G][i]=maxbound++;
+                        gran[G][i]=maxbound;
+						maxbound++;
 					}
 				}
 			}
@@ -9716,7 +10062,12 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** &nvtx,
 	    }
 	}
 	// инициализация:
-    for (i=0; i<6; i++) for (j=0; j<maxelm; j++) gran[i][j]=-1;
+	for (i = 0; i < 6; i++) {
+#pragma omp for private(j)
+		for (j = 0; j < maxelm; j++) {
+			gran[i][j] = -1;
+		}
+	}
 
 	maxbound=0; // общее число граней
 	integer G; // текущая грань
@@ -9749,7 +10100,12 @@ void constr_neighbors_for_the_internal_node(
 						integer** &neighbour) 
 {
 	int inumcor = number_cores();
+
+#ifdef _OPENMP
 	omp_set_num_threads(inumcor); // установка числа потоков
+#else
+	inumcor = 1; // один поток.
+#endif
 
 	// Многократное выделение оперативной памяти для neighbors_for_the_internal_node занимает очень много времени.
 	//printf("incomming maxelm=%lld\n",maxelm);
@@ -9932,15 +10288,12 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 	//bool bfluidsolid=false;
 
     // Проход по всем внутренним КО принадлежащим расчётной области.
-	integer i=0,j,jpos; // счётчик цикла.
-	for (i=0; i<maxbound; i++) binternalsource[i]=false; // инициализация.
-	bool bfind; 
-	integer G=-1; // текущая грань.
-    doublereal x_c=0.0, y_c=0.0, z_c=0.0; // координаты центра грани
-	integer iplane; // плоскость в которой лежит грань.
-	TOCHKA p_c;
-	integer ib; // номер блока
-	bool bi_fluid; // КО i принадлежит жидкой зоне.
+	
+#pragma omp parallel for 
+	for (integer i = 0; i < maxbound; i++) {
+		binternalsource[i] = false; // инициализация.
+	}
+	    	
 
 	bool *bvisit=nullptr;
 	bvisit=new bool[maxbound];
@@ -9953,7 +10306,10 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 		//system("pause");
 		//exit(1);
 	//}
-	for (i=0; i<maxbound; i++) bvisit[i]=false;
+#pragma omp parallel for 
+	for (integer i = 0; i < maxbound; i++) {
+		bvisit[i] = false;
+	}
 
 	//integer il=0; // debug
     //for (i=0; i<maxelm; i++) for (G=0; G<6; G++) if (gran[G][i]>-1) il++;
@@ -9984,7 +10340,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 	}
 
 
-	for (j = 0; j < lw; j++) {
+	for (integer j = 0; j < lw; j++) {
 		switch (w[j].iPlane) {
 		case XY_PLANE:
 			if (w[j].g.xS <= pavg.x) {
@@ -10060,10 +10416,16 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 		}
 	}
 
-	for (i=0; i<maxelm; i++) {
+
+#pragma omp parallel for
+	for (integer i=0; i<maxelm; i++) {
 		// проход по всем граням внутреннего КО в особом порядке.
-		for (G=0; G<6; G++) {
+		for (integer G=0; G<6; G++) {
 			if (gran[G][i]>-1) {
+
+				doublereal x_c = 0.0, y_c = 0.0, z_c = 0.0; // координаты центра грани
+				integer iplane; // плоскость в которой лежит грань.
+
 				// граничная грань
 				doublereal dS = 0.0;
 				TOCHKA control_volume_size_dopusk;
@@ -10180,8 +10542,9 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						exit(1);
 					}
 
-					bfind=false;
-					for (j=0; j<ls; j++) {
+					bool bfind=false;
+					integer jpos=-1;
+					for (integer j=0; j<ls; j++) {
 						if (s[j].iPlane==iplane) {
 							// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 							switch (iplane) {
@@ -10206,7 +10569,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							case XY_PLANE:
 								if (x_c <= pavg.x) {
 									if (y_c <= pavg.y) {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][0][j];
@@ -10222,7 +10585,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 										}
 									}
 									else {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][1][j];
@@ -10240,7 +10603,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 								}
 								else {
 									if (y_c <= pavg.y) {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][2][j];
@@ -10256,7 +10619,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 										}
 									}
 									else {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][3][j];
@@ -10278,7 +10641,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							case YZ_PLANE:
 								if (y_c <= pavg.y) {
 									if (z_c <= pavg.z) {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 
@@ -10296,7 +10659,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 										}
 									}
 									else {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 
@@ -10316,7 +10679,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 								}
 								else {
 									if (z_c <= pavg.z) {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 
@@ -10334,7 +10697,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 										}
 									}
 									else {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 
@@ -10358,7 +10721,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							case XZ_PLANE:
 								if (x_c <= pavg.x) {
 									if (z_c <= pavg.z) {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][0][j];
@@ -10374,7 +10737,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 										}
 									}
 									else {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][1][j];
@@ -10392,7 +10755,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 								}
 								else {
 									if (z_c <= pavg.z) {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][2][j];
@@ -10408,7 +10771,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 										}
 									}
 									else {
-										for (j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
+										for (integer j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
 											//if (w[wlist[iplane][j]].iPlane==iplane)
 											{
 												integer j_ind = wlist[iplane][3][j];
@@ -10430,7 +10793,7 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 							}
 						}
 						else {
-							for (j = 0; j < lw; j++) {
+							for (integer j = 0; j < lw; j++) {
 								if (w[j].iPlane == iplane) {
 									// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 									switch (iplane) {
@@ -10465,12 +10828,14 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 						// Нужно проверить где находится твёрдое тело:
 						// Нормаль будет направлена в сторону твёрдого тела.
 						// координаты центра контрольного объёма
-						
+
+						TOCHKA p_c;
 						p_c.x=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
 						p_c.y=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
 						p_c.z=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
 
-						bi_fluid=in_model_flow(p_c,ib,b,lb);
+						integer ib; // номер блока
+						bool bi_fluid=in_model_flow(p_c,ib,b,lb); // КО i принадлежит жидкой зоне.
 
 						if (bi_fluid) {
 							// КО i принадлежит жидкой зоне
@@ -10592,9 +10957,11 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
                         // портрета матрицы СЛАУ.
                         constr_boundary_neighbour(G,i,border_neighbor, gran, neighbour, neighbors_for_the_internal_node, maxelm);
 
+						integer jpos=-1;
+
 						// Нужно определить MCB:
-                        bfind=false;
-					    for (j=0; j<ls; j++) {
+                        bool bfind=false;
+					    for (integer j=0; j<ls; j++) {
 						   if (s[j].iPlane==iplane) {
 							  switch (iplane) {
 									case XY_PLANE: if ((x_c>s[j].g.xS) && (x_c<s[j].g.xE) && (y_c>s[j].g.yS) && (y_c<s[j].g.yE) && (fabs(z_c-s[j].g.zE)<admission)) { bfind=true; jpos=j; } break;
@@ -10625,11 +10992,14 @@ void constr_border_neighbor_temp(BOUND* &border_neighbor, integer* &whot_is_bloc
 					}
 					else
 					{
+
+						TOCHKA p_c;
 						p_c.x = 0.5*(pa[nvtx[0][i] - 1].x + pa[nvtx[1][i] - 1].x);
 						p_c.y = 0.5*(pa[nvtx[1][i] - 1].y + pa[nvtx[3][i] - 1].y);
 						p_c.z = 0.5*(pa[nvtx[0][i] - 1].z + pa[nvtx[4][i] - 1].z);
 
-						bi_fluid = in_model_flow(p_c, ib, b, lb);
+						integer ib; // номер блока
+						bool bi_fluid = in_model_flow(p_c, ib, b, lb);
 
 						if (bi_fluid) {
 							// КО i принадлежит жидкой зоне
@@ -10702,20 +11072,21 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 	}
 
     // Проход по всем внутренним КО принадлежащим расчётной области.
-	integer i=0,j=0,jpos=0; // счётчик цикла.
-	bool bfind; 
-	integer G=-1; // текущая грань.
-    doublereal x_c=0.0, y_c=0.0, z_c=0.0; // координаты центра грани
-	integer iplane; // плоскость в которой лежит грань.
+	    
 
-
-	for (i=0; i<maxelm; i++) {
+#pragma omp parallel for
+	for (integer i=0; i<maxelm; i++) {
 		// проход по всем граням внутреннего КО в особом порядке.
-		for (G=0; G<6; G++) {
+		// G - текущая грань.
+		for (integer G=0; G<6; G++) {
 			if (gran[G][i]>-1) {
 				// граничная грань
 				
 				doublereal dS = 0.0;
+
+				doublereal x_c = 0.0, y_c = 0.0, z_c = 0.0; // координаты центра грани
+				integer iplane; // плоскость в которой лежит грань.
+
                 // узнать координаты центра грани и ориентацию в пространстве
 				switch (G) {
 					case E_SIDE: x_c=pa[nvtx[1][i]-1].x;
@@ -10819,9 +11190,9 @@ void constr_border_neighbor_flow(BOUND* &border_neighbor,  integer* &whot_is_blo
 						exit(1);
 					}
 					
-
-					bfind=false;
-					for (j=0; j<lw; j++) {
+					integer jpos = 0; // счётчик цикла.
+					bool bfind=false;
+					for (integer j=0; j<lw; j++) {
 						if (w[j].iPlane==iplane) {
 							switch (iplane) {
 								case XY_PLANE: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(z_c-w[j].g.zE)<admission)) 
@@ -11103,27 +11474,33 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 	}
 
 	total_deformation = nullptr;
-	total_deformation = new doublereal*[4];	
-	if (total_deformation == nullptr) {
-		// недостаточно памяти на данном оборудовании.
-		printf("Problem: not enough memory on your equipment for total_deformation constr struct...\n");
-		printf("Please any key to exit...\n");
-		//system("PAUSE");
-		system("pause");
-		exit(1);
-	}
-	for (integer i_1 = 0; i_1 < 4; i_1++) {
-		total_deformation[i_1] = nullptr;
-	}
-	for (integer i_1 = 0; i_1 < 4; i_1++) {
-		total_deformation[i_1] = new doublereal[maxelm + maxbound];
-		if (total_deformation[i_1] == nullptr) {
+	if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+		(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+	{
+		total_deformation = new doublereal*[SIZE_DEFORMATION_ARRAY];
+		if (total_deformation == nullptr) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem: not enough memory on your equipment for total_deformation[%lld] constr struct...\n",i_1);
+			printf("Problem: not enough memory on your equipment for total_deformation constr struct...\n");
 			printf("Please any key to exit...\n");
 			//system("PAUSE");
 			system("pause");
 			exit(1);
+		}
+		for (integer i_1 = 0; i_1 < SIZE_DEFORMATION_ARRAY; i_1++) {
+			total_deformation[i_1] = nullptr;
+		}
+		for (integer i_1 = 0; i_1 < SIZE_DEFORMATION_ARRAY; i_1++) {
+			total_deformation[i_1] = new doublereal[maxelm + maxbound];
+			if (total_deformation[i_1] == nullptr) {
+				// недостаточно памяти на данном оборудовании.
+				printf("Problem: not enough memory on your equipment for total_deformation[%lld] constr struct...\n", i_1);
+				printf("Please any key to exit...\n");
+				//system("PAUSE");
+				system("pause");
+				exit(1);
+			}
 		}
 	}
 
@@ -11135,7 +11512,7 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 	      for (integer i=0; i<maxbound; i++) {
 		      if (((border_neighbor[i].MCB<(ls+lw))&&
 				  (border_neighbor[i].MCB>=ls)) && 
-				  (w[border_neighbor[i].MCB-ls].ifamily==DIRICHLET_FAMILY)) {
+				  (w[border_neighbor[i].MCB-ls].ifamily== WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY)) {
 			      // на границе задана температура
 			      Tamb=fmin(Tamb,w[border_neighbor[i].MCB-ls].Tamb);
                   bTamb=true;
@@ -11150,8 +11527,16 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 	integer j=0;
 	for (j = 0; j < (maxelm + maxbound); j++) {
 		potent[j] = Tamb; // ноль градусов цельсия начальная температура.
-		for (integer i_1 = 0; i_1 < 4; i_1++) {
-			total_deformation[i_1][j] = 0.0; // нулевая полная деформация
+		if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+		{
+			if (total_deformation != nullptr) {
+				for (integer i_1 = 0; i_1 < SIZE_DEFORMATION_ARRAY; i_1++) {
+					total_deformation[i_1][j] = 0.0; // нулевая полная деформация
+				}
+			}
 		}
 	}
 
@@ -11252,14 +11637,19 @@ void allocation_memory_flow(doublereal** &potent,
 	TOCHKA* &pa, doublereal** prop, ALICE_PARTITION** &neighbors_for_the_internal_node,
 	doublereal eps_minx, doublereal eps_miny, doublereal eps_minz,
 	doublereal eps_maxx, doublereal eps_maxy, doublereal eps_maxz,
-	integer &iflowregime, doublereal** &prop_b) {
+	VISCOSITY_MODEL &iflowregime, doublereal** &prop_b) {
 
 	int inumcor = number_cores();
+
+#ifdef _OPENMP
 	omp_set_num_threads(inumcor); // установка числа потоков
+#else 
+	inumcor = 1;// один поток.
+#endif
 
 	// выделение памяти под искомые полевые величины.
 	potent=nullptr;
-    potent=new doublereal*[49];
+    potent=new doublereal*[SIZE_FLOW_POTENT_ARRAY];
 	if (potent==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem: not enough memory on your equipment for potent constr struct...\n");
@@ -11268,8 +11658,8 @@ void allocation_memory_flow(doublereal** &potent,
 		system("pause");
 		exit(1);
 	}
-	for (integer i=0; i<49; i++) potent[i]=nullptr;
-	for (integer i=0; i<49; i++) {
+	for (integer i=0; i<SIZE_FLOW_POTENT_ARRAY; i++) potent[i]=nullptr;
+	for (integer i=0; i<SIZE_FLOW_POTENT_ARRAY; i++) {
 		potent[i]=new doublereal[maxelm+maxbound];
 		if (potent[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
@@ -11287,7 +11677,26 @@ void allocation_memory_flow(doublereal** &potent,
 	}
 
 	// обнуление
-    for (integer i=0; i<49; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
+	for (integer i = 0; i < SIZE_FLOW_POTENT_ARRAY; i++) {
+		if (i == TURBULENT_KINETIK_ENERGY) {
+#pragma omp parallel for
+			for (integer j = 0; j < (maxelm + maxbound); j++) {
+				potent[TURBULENT_KINETIK_ENERGY][j] = 4.0e-12;
+			}
+		}
+		else if (i== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
+#pragma omp parallel for
+			for (integer j = 0; j < (maxelm + maxbound); j++) {
+				potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][j] = 200.0;
+			}
+		}
+		else {
+#pragma omp parallel for
+			for (integer j = 0; j < (maxelm + maxbound); j++) {
+				potent[i][j] = 0.0;
+			}
+		}
+	}
 
 	// Паскалевская составляющая давления при естественной конвекции 
 	// не вычисляется из уравнений Навье-Стокса а просто добавляется при 
@@ -11463,14 +11872,16 @@ void allocation_memory_flow(doublereal** &potent,
 
 
 	// Загрузка распределения начальной скорости.
-	errno_t err_inicialization_data=0;
+	
 	FILE* fp_inicialization_data=NULL;	
 #ifdef MINGW_COMPILLER
+	int err_inicialization_data = 0;
 	fp_inicialization_data=fopen64("load.txt", "r");
 	if (fp_inicialization_data == NULL) {
 		err_inicialization_data = 1; // Файла несуществует.
 	}
 #else
+	errno_t err_inicialization_data = 0;
     err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 
@@ -11555,14 +11966,50 @@ void allocation_memory_flow(doublereal** &potent,
 			fscanf(fp_inicialization_data, "%lld", &din47);
 			maxelm47 = din47;
 			fscanf(fp_inicialization_data, "%lld", &din47);
-			iflowregime = din47;
+			// Режим течения: ламинарный или конкретная модель турбулентности.
+			switch (din47) {
+			case 0: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			case 1: iflowregime = VISCOSITY_MODEL::ZEROEQMOD;
+				break;
+			case 2: iflowregime = VISCOSITY_MODEL::SMAGORINSKY;
+				break;
+			case 3: iflowregime = VISCOSITY_MODEL::RNG_LES;
+				break;
+			case 4: iflowregime = VISCOSITY_MODEL::RANS_SPALART_ALLMARES;
+				break;
+			case 5: iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST;
+				break;
+			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
+				break;
+			default: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			}
 #else
 			fscanf(fp_inicialization_data, "%d", &din47);
 			maxnode47 = din47;
 			fscanf(fp_inicialization_data, "%d", &din47);
 			maxelm47 = din47;
 			fscanf(fp_inicialization_data, "%d", &din47);
-			iflowregime = din47;
+			// Режим течения: ламинарный или конкретная модель турбулентности.
+			switch (din47) {
+			case 0: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			case 1: iflowregime = VISCOSITY_MODEL::ZEROEQMOD;
+				break;
+			case 2: iflowregime = VISCOSITY_MODEL::SMAGORINSKY;
+				break;
+			case 3: iflowregime = VISCOSITY_MODEL::RNG_LES;
+				break;
+			case 4: iflowregime = VISCOSITY_MODEL::RANS_SPALART_ALLMARES;
+				break;
+			case 5: iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST;
+				break;
+			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
+				break;
+			default: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			}
 #endif	
 #else
 #if doubleintprecision == 1
@@ -11571,14 +12018,51 @@ void allocation_memory_flow(doublereal** &potent,
 			fscanf_s(fp_inicialization_data, "%lld", &din47);
 			maxelm47 = din47;
 			fscanf_s(fp_inicialization_data, "%lld", &din47);
-			iflowregime = din47; // Режим течения: ламинарный или конкретная модель турбулентности.
+			// Режим течения: ламинарный или конкретная модель турбулентности.
+			switch (din47) {
+			case 0: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			case 1: iflowregime = VISCOSITY_MODEL::ZEROEQMOD;
+				break;
+			case 2: iflowregime = VISCOSITY_MODEL::SMAGORINSKY;
+				break;
+			case 3: iflowregime = VISCOSITY_MODEL::RNG_LES;
+				break;
+			case 4: iflowregime = VISCOSITY_MODEL::RANS_SPALART_ALLMARES;
+				break;
+			case 5: iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST;
+				break;
+			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
+				break;
+			default : iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			}
+			  
 #else
 			fscanf_s(fp_inicialization_data, "%d", &din47);
 			maxnode47 = din47;
 			fscanf_s(fp_inicialization_data, "%d", &din47);
 			maxelm47 = din47;
 			fscanf_s(fp_inicialization_data, "%d", &din47);
-			iflowregime = din47;
+			// Режим течения: ламинарный или конкретная модель турбулентности.
+			switch (din47) {
+			case 0: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			case 1: iflowregime = VISCOSITY_MODEL::ZEROEQMOD;
+				break;
+			case 2: iflowregime = VISCOSITY_MODEL::SMAGORINSKY;
+				break;
+			case 3: iflowregime = VISCOSITY_MODEL::RNG_LES;
+				break;
+			case 4: iflowregime = VISCOSITY_MODEL::RANS_SPALART_ALLMARES;
+				break;
+			case 5: iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST;
+				break;
+			case 6: iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
+				break;
+			default: iflowregime = VISCOSITY_MODEL::LAMINAR;
+				break;
+			}
 #endif	
 #endif
 			
@@ -11618,19 +12102,19 @@ void allocation_memory_flow(doublereal** &potent,
 
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf(fp_inicialization_data, "%f", &fin47);
-				Vx47[i_47] = fin47;
+				Vx47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf(fp_inicialization_data, "%f", &fin47);
-				Vy47[i_47] = fin47;
+				Vy47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf(fp_inicialization_data, "%f", &fin47);
-				Vz47[i_47] = fin47;
+				Vz47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf(fp_inicialization_data, "%f", &fin47);
-				Mut47[i_47] = fin47;
+				Mut47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 #else
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
@@ -11648,19 +12132,19 @@ void allocation_memory_flow(doublereal** &potent,
 
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
-				Vx47[i_47] = fin47;
+				Vx47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
-				Vy47[i_47] = fin47;
+				Vy47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
-				Vz47[i_47] = fin47;
+				Vz47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
-				Mut47[i_47] = fin47;
+				Mut47[i_47] = my_multiplyer_velocity_load*fin47;
 			}
 #endif
 			doublereal Speed_min = 1.0e60, Speed_max=-1.0e60;
@@ -11678,13 +12162,13 @@ void allocation_memory_flow(doublereal** &potent,
 			}
 			printf("LOAD: Minimum speed = %e, Maximum speed = %e \n", Speed_min, Speed_max);
 
-			nvtx47 = new integer*[8];
-			for (integer i_47 = 0; i_47 < 8; i_47++) {
+			nvtx47 = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
+			for (integer i_47 = 0; i_47 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i_47++) {
 				nvtx47[i_47] = new integer[maxelm47];
 			}
 
 			for (integer j_47 = 0; j_47 < maxelm47; j_47++) {
-				for (integer i_47 = 0; i_47 < 8; i_47++) {
+				for (integer i_47 = 0; i_47 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i_47++) {
 #ifdef MINGW_COMPILLER
 #if doubleintprecision == 1
 					fscanf(fp_inicialization_data, "%lld", &din47);
@@ -11726,7 +12210,7 @@ void allocation_memory_flow(doublereal** &potent,
 			doublereal max_z = -1e60;
 
 			for (integer i_48 = 0; i_48 < maxelm47; i_48++) {
-				for (integer i_47 = 0; i_47 < 8; i_47++) {
+				for (integer i_47 = 0; i_47 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i_47++) {
 					if (x47[nvtx47[i_47][i_48]] < min_x) {
 						min_x = x47[nvtx47[i_47][i_48]];
 					}
@@ -11815,8 +12299,8 @@ void allocation_memory_flow(doublereal** &potent,
 			TOCHKA** pointerlist = new TOCHKA*[maxelm];
 			doublereal** rthdsd_Gauss = new doublereal*[maxelm];
 			for (integer i_47 = 0; i_47 < maxelm; i_47++) {
-				pointerlist[i_47] = new TOCHKA[8];
-				rthdsd_Gauss[i_47] = new doublereal[8];
+				pointerlist[i_47] = new TOCHKA[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
+				rthdsd_Gauss[i_47] = new doublereal[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 			}
 
 
@@ -11827,10 +12311,10 @@ void allocation_memory_flow(doublereal** &potent,
 			doublereal avgy[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 			doublereal avgz[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 			integer** i_22 = nullptr;
-			i_22 = new integer*[8];
-			for (integer i_1 = 0; i_1 < 8; i_1++) {
-				i_22[i_1] = new integer[8];
-				for (integer i_2 = 0; i_2 < 8; i_2++) {
+			i_22 = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
+			for (integer i_1 = 0; i_1 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i_1++) {
+				i_22[i_1] = new integer[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
+				for (integer i_2 = 0; i_2 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i_2++) {
 					i_22[i_1][i_2] = 0;
 				}
 			}
@@ -11848,7 +12332,7 @@ void allocation_memory_flow(doublereal** &potent,
 			// Были ли вычислены компоненты скорости на АЛИС ? 22,03,2019
 			bool b_load_has_been_saved_on_ALICE = !bext_flow;
 			if (b_load_has_been_saved_on_ALICE) {
-				if ((maxelm > 8000000) || (maxelm47 > 100000)) {
+				if ((maxelm > 6000000) || (maxelm47 > 100000)) {
 					if (!b_on_adaptive_local_refinement_mesh) {
 						// Сетка структурированная, число тепловых узлов
 						// более 8М, число гидродинамических узлов более 100К
@@ -11859,18 +12343,19 @@ void allocation_memory_flow(doublereal** &potent,
 				}			
 			}
 
-			b_load_has_been_saved_on_ALICE = true;// true ускорение не применяется.
+			// Был активен запрещающий оператор до 03.09.2020
+			//b_load_has_been_saved_on_ALICE = true;// true ускорение не применяется.
 
 			if (!b_load_has_been_saved_on_ALICE) {
 
 				printf("maxelm CFD=%lld \n", maxelm47);	
 				integer** oct_load = nullptr;
-				oct_load = new integer*[8];
+				oct_load = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 				if (oct_load == nullptr) {
 					printf("ERROR ALLOCATION MEMORY: array oct_load is nullptr.");
 					system("PAUSE");
 				}
-				for (integer i = 0; i < 8; i++) {
+				for (integer i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
 					oct_load[i] = nullptr;
 					oct_load[i] = new integer[maxelm47];
 					if (oct_load[i] == nullptr) {
@@ -11885,7 +12370,7 @@ void allocation_memory_flow(doublereal** &potent,
 				for (integer i_47 = 0; i_47 < maxelm47; i_47++) {
 					// Вычисляем координаты центра ячейки i47.
 					doublereal xc47 = 0.0, yc47 = 0.0, zc47 = 0.0;
-					for (integer i_9 = 0; i_9 < 8; i_9++) {
+					for (integer i_9 = 0; i_9 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i_9++) {
 						xc47 += 0.125*(x47[nvtx47[i_9][i_47]]);
 						yc47 += 0.125*(y47[nvtx47[i_9][i_47]]);
 						zc47 += 0.125*(z47[nvtx47[i_9][i_47]]);
@@ -11941,19 +12426,19 @@ void allocation_memory_flow(doublereal** &potent,
 				// Для задач внешнего обтекания одного уровня octree дерева мало.
 				// Чтобы ещё ускорить моделирование нужен ещё один уровень octree дерева.
 				
-				oct_load1 = new integer**[8];
+				oct_load1 = new integer**[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 				if (oct_load1 == nullptr) {
 					printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
 					system("PAUSE");
 				}
-				for (integer i = 0; i < 8; i++) {
+				for (integer i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
 					oct_load1[i] = nullptr;
-					oct_load1[i] = new integer*[8];
+					oct_load1[i] = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 					if (oct_load1 == nullptr) {
 						printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
 						system("PAUSE");
 					}
-					for (integer j = 0; j < 8; j++) {
+					for (integer j = 0; j < NUMBER_OF_VERTEX_FINITE_ELEMENT(); j++) {
 						oct_load1[i][j] = new integer[i_11[i]];
 						if (oct_load1[i][j] == nullptr) {
 							printf("ERROR ALLOCATION MEMORY: array oct_load1[%lld][%lld] is nullptr.", i, j);
@@ -11970,7 +12455,7 @@ void allocation_memory_flow(doublereal** &potent,
 
 
 				
-				for (integer i = 0; i < 8; i++) {
+				for (integer i = 0; i < NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
 
 					// Разбиение максимально близкое 
 					// к способу построения octree дерева
@@ -12157,66 +12642,422 @@ void allocation_memory_flow(doublereal** &potent,
 
 			
 
+			if (b_load_has_been_saved_on_ALICE) {
+				//printf("b_load_has_been_saved_on_ALICE\n");
+				//system("pause");
 
-			for (integer i = 0; i < maxelm; i++) {
-				doublereal xc47, yc47, zc47;
+				for (integer i = 0; i < maxelm; i++) {
+					doublereal xc47, yc47, zc47;
 
-				TOCHKA p;
-				center_cord3D(i, nvtx, pa, p, 100);
-				xc47 = p.x;
-				yc47 = p.y;
-				zc47 = p.z;
+					TOCHKA p;
+					center_cord3D(i, nvtx, pa, p, 100);
+					xc47 = p.x;
+					yc47 = p.y;
+					zc47 = p.z;
 
 
-				// Найдем номер конечного изопараметрического элемента 
-				// в котором содержится точка p.
-				bool bfound = false;
-				integer ifound = -1;
+					// Найдем номер конечного изопараметрического элемента 
+			        // в котором содержится точка p.
+					bool bfound = false;
+					integer ifound = -1;
 
-				// Только если точка лежит внутри жидкой зоны мы запускаем поиск её местоположения.
-				// Эффективность этого предиктора сильно снижена если жидких зон несколько.
-				if ((xc47 >= min_x1) && (xc47 <= max_x1) &&
-					(yc47 >= min_y1) && (yc47 <= max_y1) &&
-					(zc47 >= min_z1) && (zc47 <= max_z1))
-				{
+					// Только если точка лежит внутри жидкой зоны мы запускаем поиск её местоположения.
+					// Эффективность этого предиктора сильно снижена если жидких зон несколько.
+					if ((xc47 >= min_x1) && (xc47 <= max_x1) &&
+						(yc47 >= min_y1) && (yc47 <= max_y1) &&
+						(zc47 >= min_z1) && (zc47 <= max_z1))
+					{
 
-					if (b_load_has_been_saved_on_ALICE) {
-						
+
+
 						// 22.03.2019 Для АЛИС сетки мы не можем разбить на три уровня octree дерева так как 
 						// границы ячеек сетки не вдоль координатных линий а уступами, ступеньками сильно неравномерные
 						// отклоняющиеся от линии разбиения тов меньшую то в большую сторону.
-						for (integer i_47 = 0; i_47 < maxelm47; i_47++) {
-							if (x47[nvtx47[0][i_47]]>= x47[nvtx47[1][i_47]]) {
-								printf("ERROR logic X !!! if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]])\n");
-								printf("0=%e 1=%e %lld %lld\n", x47[nvtx47[0][i_47]], x47[nvtx47[1][i_47]], nvtx47[0][i_47], nvtx47[1][i_47]);
+#pragma omp parallel
+						{
 
-								printf("in function allocation memory flow!!! constr_struct.cpp\n");
-								system("PAUSE");
+							bool bfound_loc = false;
+							integer ifound_loc = -1;
+
+#pragma omp for 
+							for (integer i_47 = 0; i_47 < maxelm47; i_47++) {
+								if (bfound_loc) continue;
+
+								if (x47[nvtx47[0][i_47]] >= x47[nvtx47[1][i_47]]) {
+									printf("ERROR logic X !!! if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]])\n");
+									printf("0=%e 1=%e %lld %lld\n", x47[nvtx47[0][i_47]], x47[nvtx47[1][i_47]], nvtx47[0][i_47], nvtx47[1][i_47]);
+
+									printf("in function allocation memory flow!!! constr_struct.cpp\n");
+									system("PAUSE");
+								}
+								if (y47[nvtx47[0][i_47]] >= y47[nvtx47[3][i_47]]) {
+									printf("ERROR logic Y if ((yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) !!!\n");
+									printf("0=%e 3=%e\n", y47[nvtx47[0][i_47]], y47[nvtx47[3][i_47]]);
+									printf("in function allocation memory flow!!! constr_struct.cpp\n");
+									system("PAUSE");
+								}
+								if (z47[nvtx47[0][i_47]] >= z47[nvtx47[4][i_47]]) {
+									printf("ERROR logic Z if (zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))!!!\n");
+									printf("0=%e 4=%e\n", z47[nvtx47[0][i_47]], z47[nvtx47[4][i_47]]);
+									printf("in function allocation memory flow!!! constr_struct.cpp\n");
+									system("PAUSE");
+								}
+								if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) &&
+									(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
+									(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+								{
+									ifound_loc = i_47;
+									bfound_loc = true;
+									//break;
+								}
 							}
-							if (y47[nvtx47[0][i_47]]>= y47[nvtx47[3][i_47]]) {
-								printf("ERROR logic Y if ((yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) !!!\n");
-								printf("0=%e 3=%e\n", y47[nvtx47[0][i_47]], y47[nvtx47[3][i_47]]);
-								printf("in function allocation memory flow!!! constr_struct.cpp\n");
-								system("PAUSE");
-							}
-							if (z47[nvtx47[0][i_47]]>= z47[nvtx47[4][i_47]]) {
-								printf("ERROR logic Z if (zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))!!!\n");
-								printf("0=%e 4=%e\n", z47[nvtx47[0][i_47]], z47[nvtx47[4][i_47]]);
-								printf("in function allocation memory flow!!! constr_struct.cpp\n");
-								system("PAUSE");
-							}
-							if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) && 
-								(yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-								(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+
+#pragma omp critical
 							{
-								ifound = i_47;
-								bfound = true;
-								break;
+								if (bfound_loc) {
+									bfound = true;
+									ifound = ifound_loc;
+								}
 							}
 						}
-						
 					}
-					else {
+				
+					// МНК
+					// Три раза, для каждой компоненты скорости.
+					doublereal starting_speed_Vx_47 = 0.0;
+					doublereal starting_speed_Vy_47 = 0.0;
+					doublereal starting_speed_Vz_47 = 0.0;
+					doublereal starting_Mut_47 = 0.0;
+
+					if (bfound) {
+
+						//TOCHKA p;
+						//center_cord3D(i, nvtx, pa, p, 100);
+						p.x = p.x + min_x;
+						p.y = p.y + min_y;
+						p.z = p.z + min_z;
+
+						// VX
+
+						for (integer j = 0; j <= 7; j++) {
+							TOCHKA p1;
+							p1.x = x47[nvtx47[j][ifound]];
+							p1.y = y47[nvtx47[j][ifound]];
+							p1.z = z47[nvtx47[j][ifound]];
+							p1.x = p1.x + min_x;
+							p1.y = p1.y + min_y;
+							p1.z = p1.z + min_z;
+
+							pointerlist[i][j] = p1;
+							if (fabs(p1.x) < 1.0e-40) {
+								printf("problem x=%e\n", p1.x);
+								system("PAUSE");
+							}
+							if (fabs(p1.y) < 1.0e-40) {
+								printf("problem y=%e\n", p1.y);
+								system("PAUSE");
+							}
+							if (fabs(p1.z) < 1.0e-40) {
+								printf("problem z=%e\n", p1.z);
+								system("PAUSE");
+							}
+							rthdsd_Gauss[i][j] = Vx47[nvtx47[j][ifound]];
+						}
+
+						doublereal** Xmatr = new doublereal * [4];
+						for (integer j = 0; j <= 3; j++) {
+							Xmatr[j] = new doublereal[4];
+						}
+
+
+						doublereal* bmatr = new doublereal[4];
+						doublereal* koefmatr = new doublereal[4];
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_speed_Vx_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+						// VY
+
+						for (integer j = 0; j <= 7; j++) {
+							rthdsd_Gauss[i][j] = Vy47[nvtx47[j][ifound]];
+						}
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_speed_Vy_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+						// VZ
+
+						for (integer j = 0; j <= 7; j++) {
+							rthdsd_Gauss[i][j] = Vz47[nvtx47[j][ifound]];
+						}
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_speed_Vz_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+						// Mut
+
+						for (integer j = 0; j <= 7; j++) {
+							rthdsd_Gauss[i][j] = Mut47[nvtx47[j][ifound]];
+						}
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_Mut_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+
+						for (integer j = 0; j <= 3; j++) {
+							delete[] Xmatr[j];
+						}
+						delete[] Xmatr;
+						delete[] bmatr;
+						delete[] koefmatr;
+					}
+
+					if (starting_speed_Vx_47 != starting_speed_Vx_47) {
+						printf("NAN pri interpolation Vx %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+					if (starting_speed_Vy_47 != starting_speed_Vy_47) {
+						printf("NAN pri interpolation Vy %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+					if (starting_speed_Vz_47 != starting_speed_Vz_47) {
+						printf("NAN pri interpolation Vz %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+					if (starting_Mut_47 != starting_Mut_47) {
+						printf("NAN pri interpolation Mut %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+
+					potent[VELOCITY_X_COMPONENT][i] = starting_speed_Vx_47;
+					potent[VELOCITY_Y_COMPONENT][i] = starting_speed_Vy_47;
+					potent[VELOCITY_Z_COMPONENT][i] = starting_speed_Vz_47;
+					potent[MUT][i] = starting_Mut_47;
+					// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
+					potent[VXCOR][i] = starting_speed_Vx_47;
+					potent[VYCOR][i] = starting_speed_Vy_47;
+					potent[VZCOR][i] = starting_speed_Vz_47;
+
+					if ((i!=0)&&(i % 100 == 0)) {
+						// Хронология выполнения. Сколько осталось до конца.
+						printf("\b\b\b%2d%%", (int)(100 * (maxelm - i) / maxelm));
+					}
+				
+				}
+
+			}
+			else {
+				//printf("not b_load_has_been_saved_on_ALICE\n");
+				//system("pause");
+
+				for (integer i = 0; i < maxelm; i++) {
+					doublereal xc47, yc47, zc47;
+
+					TOCHKA p;
+					center_cord3D(i, nvtx, pa, p, 100);
+					xc47 = p.x;
+					yc47 = p.y;
+					zc47 = p.z;
+
+
+					// Найдем номер конечного изопараметрического элемента 
+					// в котором содержится точка p.
+					
+					bool bfound = false;
+					integer ifound = -1;
+
+					// Только если точка лежит внутри жидкой зоны мы запускаем поиск её местоположения.
+					// Эффективность этого предиктора сильно снижена если жидких зон несколько.
+					if ((xc47 >= min_x1) && (xc47 <= max_x1) &&
+						(yc47 >= min_y1) && (yc47 <= max_y1) &&
+						(zc47 >= min_z1) && (zc47 <= max_z1))
+					{
+
+
+
 						// Редуцируем (уменьшим) сложность поиска в 8 раз.
 						// За счёт одного уровня octree дерева.
 						if (xc47 < avgx_separator) {
@@ -12227,356 +13068,381 @@ void allocation_memory_flow(doublereal** &potent,
 
 								}
 								else {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(1, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
 
 								}
 							}
 							else {
 								if (zc47 < avgz_separator) {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(2, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
 
 								}
 								else {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(3, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
-									
+
 								}
 							}
 						}
 						else {
 							if (yc47 < avgy_separator) {
 								if (zc47 < avgz_separator) {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(4, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
-																		
+
 								}
 								else {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(5, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
-																		
+
 								}
 							}
 							else {
 								if (zc47 < avgz_separator) {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(6, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
-																		
+
 								}
 								else {
-									
+
 									CONSTRUCT_SECONDARY_LEVEL_OCTREE_LOAD1(7, xc47, yc47, zc47, oct_load1, i_22, avgx, avgy, avgz, x47, y47, z47, nvtx47, bfound, ifound);
 
 								}
 							}
 						}
+
+
+					}
+				
+				
+					// МНК
+						// Три раза, для каждой компоненты скорости.
+					doublereal starting_speed_Vx_47 = 0.0;
+					doublereal starting_speed_Vy_47 = 0.0;
+					doublereal starting_speed_Vz_47 = 0.0;
+					doublereal starting_Mut_47 = 0.0;
+
+					if (bfound) {
+
+						//TOCHKA p;
+						//center_cord3D(i, nvtx, pa, p, 100);
+						p.x = p.x + min_x;
+						p.y = p.y + min_y;
+						p.z = p.z + min_z;
+
+						// VX
+
+						for (integer j = 0; j <= 7; j++) {
+							TOCHKA p1;
+							p1.x = x47[nvtx47[j][ifound]];
+							p1.y = y47[nvtx47[j][ifound]];
+							p1.z = z47[nvtx47[j][ifound]];
+							p1.x = p1.x + min_x;
+							p1.y = p1.y + min_y;
+							p1.z = p1.z + min_z;
+
+							pointerlist[i][j] = p1;
+							if (fabs(p1.x) < 1.0e-40) {
+								printf("problem x=%e\n", p1.x);
+								system("PAUSE");
+							}
+							if (fabs(p1.y) < 1.0e-40) {
+								printf("problem y=%e\n", p1.y);
+								system("PAUSE");
+							}
+							if (fabs(p1.z) < 1.0e-40) {
+								printf("problem z=%e\n", p1.z);
+								system("PAUSE");
+							}
+							rthdsd_Gauss[i][j] = Vx47[nvtx47[j][ifound]];
+						}
+
+						doublereal** Xmatr = new doublereal * [4];
+						for (integer j = 0; j <= 3; j++) {
+							Xmatr[j] = new doublereal[4];
+						}
+
+
+						doublereal* bmatr = new doublereal[4];
+						doublereal* koefmatr = new doublereal[4];
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 16; j1++) {
+#pragma omp sections 
+{
+#pragma omp section
+	{
+		koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+	}
+#pragma omp section
+	{
+		koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+	}
+#pragma omp section
+	{
+		koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+	}
+#pragma omp section
+	{
+		koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+	}							
+}
+						}
+
+						starting_speed_Vx_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+						// VY
+
+						for (integer j = 0; j <= 7; j++) {
+							rthdsd_Gauss[i][j] = Vy47[nvtx47[j][ifound]];
+						}
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_speed_Vy_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+						// VZ
+
+						for (integer j = 0; j <= 7; j++) {
+							rthdsd_Gauss[i][j] = Vz47[nvtx47[j][ifound]];
+						}
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_speed_Vz_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+						// Mut
+
+						for (integer j = 0; j <= 7; j++) {
+							rthdsd_Gauss[i][j] = Mut47[nvtx47[j][ifound]];
+						}
+
+						for (integer j1 = 0; j1 <= 3; j1++) {
+							for (integer j2 = 0; j2 <= 3; j2++) {
+								Xmatr[j1][j2] = 0.0;
+							}
+							bmatr[j1] = 0.0;
+							koefmatr[j1] = 0.0;
+						}
+
+
+
+
+						for (integer j = 0; j < 8; j++) {
+
+							Xmatr[0][0] += 1.0;
+							Xmatr[0][1] += pointerlist[i][j].x;
+							Xmatr[0][2] += pointerlist[i][j].y;
+							Xmatr[0][3] += pointerlist[i][j].z;
+
+							Xmatr[1][0] += pointerlist[i][j].x;
+							Xmatr[1][1] += pointerlist[i][j].x * pointerlist[i][j].x;
+							Xmatr[1][2] += pointerlist[i][j].x * pointerlist[i][j].y;
+							Xmatr[1][3] += pointerlist[i][j].x * pointerlist[i][j].z;
+
+							Xmatr[2][0] += pointerlist[i][j].y;
+							Xmatr[2][1] += pointerlist[i][j].y * pointerlist[i][j].x;
+							Xmatr[2][2] += pointerlist[i][j].y * pointerlist[i][j].y;
+							Xmatr[2][3] += pointerlist[i][j].y * pointerlist[i][j].z;
+
+							Xmatr[3][0] += pointerlist[i][j].z;
+							Xmatr[3][1] += pointerlist[i][j].z * pointerlist[i][j].x;
+							Xmatr[3][2] += pointerlist[i][j].z * pointerlist[i][j].y;
+							Xmatr[3][3] += pointerlist[i][j].z * pointerlist[i][j].z;
+
+							bmatr[0] += rthdsd_Gauss[i][j];
+							bmatr[1] += pointerlist[i][j].x * rthdsd_Gauss[i][j];
+							bmatr[2] += pointerlist[i][j].y * rthdsd_Gauss[i][j];
+							bmatr[3] += pointerlist[i][j].z * rthdsd_Gauss[i][j];
+						}
+
+
+						for (integer j1 = 0; j1 <= 100; j1++) {
+							koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+							koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+							koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+							koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+						}
+
+						starting_Mut_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+
+						for (integer j = 0; j <= 3; j++) {
+							delete[] Xmatr[j];
+						}
+						delete[] Xmatr;
+						delete[] bmatr;
+						delete[] koefmatr;
 					}
 
+					if (starting_speed_Vx_47 != starting_speed_Vx_47) {
+						printf("NAN pri interpolation Vx %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+					if (starting_speed_Vy_47 != starting_speed_Vy_47) {
+						printf("NAN pri interpolation Vy %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+					if (starting_speed_Vz_47 != starting_speed_Vz_47) {
+						printf("NAN pri interpolation Vz %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+					if (starting_Mut_47 != starting_Mut_47) {
+						printf("NAN pri interpolation Mut %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+					}
+
+					potent[VELOCITY_X_COMPONENT][i] = starting_speed_Vx_47;
+					potent[VELOCITY_Y_COMPONENT][i] = starting_speed_Vy_47;
+					potent[VELOCITY_Z_COMPONENT][i] = starting_speed_Vz_47;
+					potent[MUT][i] = starting_Mut_47;
+					// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
+					potent[VXCOR][i] = starting_speed_Vx_47;
+					potent[VYCOR][i] = starting_speed_Vy_47;
+					potent[VZCOR][i] = starting_speed_Vz_47;
+
+					if ((i!=0)&&(i % 100 == 0)) {
+						// Хронология выполнения. Сколько осталось до конца.
+						printf("\b\b\b%2d%%", (int)(100 * (maxelm - i) / maxelm));
+					}
+				
 				}
 
-
-
-
-				// МНК
-				// Три раза, для каждой компоненты скорости.
-				doublereal starting_speed_Vx_47 = 0.0;
-				doublereal starting_speed_Vy_47 = 0.0;
-				doublereal starting_speed_Vz_47 = 0.0;
-				doublereal starting_Mut_47 = 0.0;
-
-				if (bfound) {
-
-					//TOCHKA p;
-					//center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-					// VX
-
-					for (integer j = 0; j <= 7; j++) {
-						TOCHKA p1;
-						p1.x = x47[nvtx47[j][ifound]];
-						p1.y = y47[nvtx47[j][ifound]];
-						p1.z = z47[nvtx47[j][ifound]];
-						p1.x = p1.x + min_x;
-						p1.y = p1.y + min_y;
-						p1.z = p1.z + min_z;
-
-						pointerlist[i][j] = p1;
-						if (fabs(p1.x) < 1.0e-40) {
-							printf("problem x=%e\n", p1.x);
-							system("PAUSE");
-						}
-						if (fabs(p1.y) < 1.0e-40) {
-							printf("problem y=%e\n", p1.y);
-							system("PAUSE");
-						}
-						if (fabs(p1.z) < 1.0e-40) {
-							printf("problem z=%e\n", p1.z);
-							system("PAUSE");
-						}
-						rthdsd_Gauss[i][j] = Vx47[nvtx47[j][ifound]];
-					}
-
-					doublereal** Xmatr = new doublereal*[4];
-					for (integer j = 0; j <= 3; j++) {
-						Xmatr[j] = new doublereal[4];
-					}
-
-
-					doublereal* bmatr = new doublereal[4];
-					doublereal* koefmatr = new doublereal[4];
-
-					for (integer j1 = 0; j1 <= 3; j1++) {
-						for (integer j2 = 0; j2 <= 3; j2++) {
-							Xmatr[j1][j2] = 0.0;
-						}
-						bmatr[j1] = 0.0;
-						koefmatr[j1] = 0.0;
-					}
-
-
-
-
-					for (integer j = 0; j < 8; j++) {
-
-						Xmatr[0][0] += 1.0;
-						Xmatr[0][1] += pointerlist[i][j].x;
-						Xmatr[0][2] += pointerlist[i][j].y;
-						Xmatr[0][3] += pointerlist[i][j].z;
-
-						Xmatr[1][0] += pointerlist[i][j].x;
-						Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-						Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-						Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-						Xmatr[2][0] += pointerlist[i][j].y;
-						Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-						Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-						Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-						Xmatr[3][0] += pointerlist[i][j].z;
-						Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-						Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-						Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-						bmatr[0] += rthdsd_Gauss[i][j];
-						bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-						bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-						bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-					}
-
-
-					for (integer j1 = 0; j1 <= 100; j1++) {
-						koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
-						koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
-						koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
-						koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
-					}
-
-					starting_speed_Vx_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
-
-					// VY
-
-					for (integer j = 0; j <= 7; j++) {
-						rthdsd_Gauss[i][j] = Vy47[nvtx47[j][ifound]];
-					}
-
-					for (integer j1 = 0; j1 <= 3; j1++) {
-						for (integer j2 = 0; j2 <= 3; j2++) {
-							Xmatr[j1][j2] = 0.0;
-						}
-						bmatr[j1] = 0.0;
-						koefmatr[j1] = 0.0;
-					}
-
-
-
-
-					for (integer j = 0; j < 8; j++) {
-
-						Xmatr[0][0] += 1.0;
-						Xmatr[0][1] += pointerlist[i][j].x;
-						Xmatr[0][2] += pointerlist[i][j].y;
-						Xmatr[0][3] += pointerlist[i][j].z;
-
-						Xmatr[1][0] += pointerlist[i][j].x;
-						Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-						Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-						Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-						Xmatr[2][0] += pointerlist[i][j].y;
-						Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-						Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-						Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-						Xmatr[3][0] += pointerlist[i][j].z;
-						Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-						Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-						Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-						bmatr[0] += rthdsd_Gauss[i][j];
-						bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-						bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-						bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-					}
-
-
-					for (integer j1 = 0; j1 <= 100; j1++) {
-						koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
-						koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
-						koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
-						koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
-					}
-
-					starting_speed_Vy_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
-
-
-					// VZ
-
-					for (integer j = 0; j <= 7; j++) {
-						rthdsd_Gauss[i][j] = Vz47[nvtx47[j][ifound]];
-					}
-
-					for (integer j1 = 0; j1 <= 3; j1++) {
-						for (integer j2 = 0; j2 <= 3; j2++) {
-							Xmatr[j1][j2] = 0.0;
-						}
-						bmatr[j1] = 0.0;
-						koefmatr[j1] = 0.0;
-					}
-
-
-
-
-					for (integer j = 0; j < 8; j++) {
-
-						Xmatr[0][0] += 1.0;
-						Xmatr[0][1] += pointerlist[i][j].x;
-						Xmatr[0][2] += pointerlist[i][j].y;
-						Xmatr[0][3] += pointerlist[i][j].z;
-
-						Xmatr[1][0] += pointerlist[i][j].x;
-						Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-						Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-						Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-						Xmatr[2][0] += pointerlist[i][j].y;
-						Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-						Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-						Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-						Xmatr[3][0] += pointerlist[i][j].z;
-						Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-						Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-						Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-						bmatr[0] += rthdsd_Gauss[i][j];
-						bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-						bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-						bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-					}
-
-
-					for (integer j1 = 0; j1 <= 100; j1++) {
-						koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
-						koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
-						koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
-						koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
-					}
-
-					starting_speed_Vz_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
-
-
-					// Mut
-
-					for (integer j = 0; j <= 7; j++) {
-						rthdsd_Gauss[i][j] = Mut47[nvtx47[j][ifound]];
-					}
-
-					for (integer j1 = 0; j1 <= 3; j1++) {
-						for (integer j2 = 0; j2 <= 3; j2++) {
-							Xmatr[j1][j2] = 0.0;
-						}
-						bmatr[j1] = 0.0;
-						koefmatr[j1] = 0.0;
-					}
-
-
-
-
-					for (integer j = 0; j < 8; j++) {
-
-						Xmatr[0][0] += 1.0;
-						Xmatr[0][1] += pointerlist[i][j].x;
-						Xmatr[0][2] += pointerlist[i][j].y;
-						Xmatr[0][3] += pointerlist[i][j].z;
-
-						Xmatr[1][0] += pointerlist[i][j].x;
-						Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-						Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-						Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-						Xmatr[2][0] += pointerlist[i][j].y;
-						Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-						Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-						Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-						Xmatr[3][0] += pointerlist[i][j].z;
-						Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-						Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-						Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-						bmatr[0] += rthdsd_Gauss[i][j];
-						bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-						bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-						bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-					}
-
-
-					for (integer j1 = 0; j1 <= 100; j1++) {
-						koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
-						koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
-						koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
-						koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
-					}
-
-					starting_Mut_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
-
-
-
-					for (integer j = 0; j <= 3; j++) {
-						delete[] Xmatr[j];
-					}
-					delete[] Xmatr;
-					delete[] bmatr;
-					delete[] koefmatr;
-				}
-
-				if (starting_speed_Vx_47 != starting_speed_Vx_47) {
-					printf("NAN pri interpolation Vx %lld in allocation_memory_flow in constr_struct.cpp\n", i);
-				}
-				if (starting_speed_Vy_47 != starting_speed_Vy_47) {
-					printf("NAN pri interpolation Vy %lld in allocation_memory_flow in constr_struct.cpp\n", i);
-				}
-				if (starting_speed_Vz_47 != starting_speed_Vz_47) {
-					printf("NAN pri interpolation Vz %lld in allocation_memory_flow in constr_struct.cpp\n", i);
-				}
-				if (starting_Mut_47 != starting_Mut_47) {
-					printf("NAN pri interpolation Mut %lld in allocation_memory_flow in constr_struct.cpp\n", i);
-				}
-
-				potent[VELOCITY_X_COMPONENT][i] = starting_speed_Vx_47;
-				potent[VELOCITY_Y_COMPONENT][i] = starting_speed_Vy_47;
-				potent[VELOCITY_Z_COMPONENT][i] = starting_speed_Vz_47;
-				potent[MUT][i] = starting_Mut_47;
-				// скорректированнное поле скорости должно удовлетворять уравнению неразрывности.
-				potent[VXCOR][i] = starting_speed_Vx_47;
-				potent[VYCOR][i] = starting_speed_Vy_47;
-				potent[VZCOR][i] = starting_speed_Vz_47;
 			}
+
+
+				
+			
 
 
 			doublereal Speed_min1 = 1.0e60, Speed_max1 = -1.0e60;
@@ -13111,7 +13977,12 @@ void constr_nvtxcell(integer* &evt, BOUND* &border_neighbor, integer maxbound,
 	// Сокращает число просмотров на больших моделях.
 
 	int incore = number_cores();
+
+#ifdef _OPENMP
 	omp_set_num_threads(incore); // установка числа потоков
+#else
+	incore = 1; // один поток.
+#endif
 
 	integer ncell = 0;
 	// integer i,j,k;
@@ -13306,7 +14177,7 @@ void constr_nvtxcell(integer* &evt, BOUND* &border_neighbor, integer maxbound,
 	// Выделение ОП 
 	ncell_gl = ncell;
 	nvtxcell = nullptr;
-	nvtxcell = new integer*[8];
+	nvtxcell = new integer*[NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 	if (nvtxcell == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem: not enough memory on your equipment for nvtxcell constr struct...\n");
@@ -13316,7 +14187,7 @@ void constr_nvtxcell(integer* &evt, BOUND* &border_neighbor, integer maxbound,
 		exit(1);
 	}
 	integer l = 0;
-	for (integer i = 0; i<8; i++) {
+	for (integer i = 0; i<NUMBER_OF_VERTEX_FINITE_ELEMENT(); i++) {
 		nvtxcell[i] = nullptr;
 		nvtxcell[i] = new integer[ncell];
 		if (nvtxcell[i] == nullptr) {
@@ -13904,7 +14775,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 			if ((eqin.itemper==1)&&(eqin.imaxflD==0)) {
 				for (integer i=0; i<flow_interior; i++) {
 				    f[i].rdistWall=nullptr; // инициализация
-					f[i].iflowregime=LAMINAR; // LAMINAR
+					f[i].iflowregime= VISCOSITY_MODEL::LAMINAR; // VISCOSITY_MODEL::LAMINAR
 				}
 				printf("pure heat calculation.\n");
 			}
@@ -13939,29 +14810,29 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 			if (flow_interior==1) {
 				// всё впорядке т.к. имеем только одну жидкую зону.
 				
-				if (eqin.fluidinfo[0].iflowregime==0) {
+				if (eqin.fluidinfo[0].iflowregime== FLOW_REGIME::LAMINAR) {
 					// Ламинарный режим
-					f[0].iflowregime=LAMINAR; // LAMINAR
+					f[0].iflowregime= VISCOSITY_MODEL::LAMINAR; // LAMINAR
 				}
 				else {
-					if (eqin.fluidinfo[0].iturbmodel==0) {
-                       f[0].iflowregime=ZEROEQMOD; // ZEROEQMOD
+					if (eqin.fluidinfo[0].iturbmodel== TURBULENT_MODEL::ZEROEQMOD) {
+                       f[0].iflowregime= VISCOSITY_MODEL::ZEROEQMOD; // ZEROEQMOD
 					}
-					if (eqin.fluidinfo[0].iturbmodel==1) {
-                       f[0].iflowregime=SMAGORINSKY; // SMAGORINSKY
+					if (eqin.fluidinfo[0].iturbmodel== TURBULENT_MODEL::SMAGORINSKY) {
+                       f[0].iflowregime= VISCOSITY_MODEL::SMAGORINSKY; // SMAGORINSKY
 					}
-					if (eqin.fluidinfo[0].iturbmodel==2) {
-                       f[0].iflowregime=RNG_LES; // RNG_LES
+					if (eqin.fluidinfo[0].iturbmodel== TURBULENT_MODEL::RNG_LES) {
+                       f[0].iflowregime= VISCOSITY_MODEL::RNG_LES; // RNG_LES
 					}
-					if (eqin.fluidinfo[0].iturbmodel == 3) {
-					   f[0].iflowregime = RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
+					if (eqin.fluidinfo[0].iturbmodel == TURBULENT_MODEL::RANS_SPALART_ALLMARES) {
+					   f[0].iflowregime = VISCOSITY_MODEL::RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
 					}
-					if (eqin.fluidinfo[0].iturbmodel == 4) {
-						f[0].iflowregime = RANS_MENTER_SST; // K-Omega SST Menter
+					if (eqin.fluidinfo[0].iturbmodel == TURBULENT_MODEL::RANS_MENTER_SST) {
+						f[0].iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST; // K-Omega SST Menter
 					}
-					if (eqin.fluidinfo[0].iturbmodel == 5) {
+					if (eqin.fluidinfo[0].iturbmodel == TURBULENT_MODEL::RANS_STANDART_K_EPS) {
 						// Двухслойная модель на основе стандартной K-epsilon модели [2001]
-						f[0].iflowregime = RANS_STANDART_K_EPS;  
+						f[0].iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
 					}
 					
 					// заполнение параметров модели Смагоринского.
@@ -14021,13 +14892,13 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				// Вычисление вспомогательных величин для моделей турбулентности:
 			    bool bdist=false; // вычислять ли расстояние до стенки.
 			    switch (f[0].iflowregime) {
-			      case LAMINAR: bdist=false; break;  // Ламинарное течение.
-			      case ZEROEQMOD: bdist=true; break; // Zero Equation Turbulence model (RANS)
-				  case SMAGORINSKY: bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
-				  case RNG_LES: bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
-				  case RANS_SPALART_ALLMARES: bdist = true;  break; // Spallart Allmares (RANS).
-				  case RANS_MENTER_SST: bdist = true; break; // K-Omega SST (RANS)
-				  case RANS_STANDART_K_EPS: bdist = true; break; // Стандартная KE модель (RANS) на основе двухслойной модели.
+			      case VISCOSITY_MODEL::LAMINAR: bdist=false; break;  // Ламинарное течение.
+			      case VISCOSITY_MODEL::ZEROEQMOD: bdist=true; break; // Zero Equation Turbulence model (RANS)
+				  case VISCOSITY_MODEL::SMAGORINSKY: bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
+				  case VISCOSITY_MODEL::RNG_LES: bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
+				  case VISCOSITY_MODEL::RANS_SPALART_ALLMARES: bdist = true;  break; // Spallart Allmares (RANS).
+				  case VISCOSITY_MODEL::RANS_MENTER_SST: bdist = true; break; // K-Omega SST (RANS)
+				  case VISCOSITY_MODEL::RANS_STANDART_K_EPS: bdist = true; break; // Стандартная KE модель (RANS) на основе двухслойной модели.
 				}
 				f[0].rdistWall=nullptr; // инициализация
 			    if (bdist) {
@@ -14179,29 +15050,29 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				key=nullptr;
 
 				for (i=0; i<flow_interior; i++) {
-					if (eqin.fluidinfo[i].iflowregime==0) {
+					if (eqin.fluidinfo[i].iflowregime== FLOW_REGIME::LAMINAR) {
 					    // Ламинарный режим
-					    f[i].iflowregime=LAMINAR; // LAMINAR
+					    f[i].iflowregime= VISCOSITY_MODEL::LAMINAR; // LAMINAR
 				    }
 				    else {
-					    if (eqin.fluidinfo[i].iturbmodel==0) {
-                            f[i].iflowregime=ZEROEQMOD; // ZEROEQMOD
+					    if (eqin.fluidinfo[i].iturbmodel== TURBULENT_MODEL::ZEROEQMOD) {
+                            f[i].iflowregime= VISCOSITY_MODEL::ZEROEQMOD; // ZEROEQMOD
 					    }
-						if (eqin.fluidinfo[i].iturbmodel==1) {
-                            f[i].iflowregime=SMAGORINSKY; // SMAGORINSKY	
+						if (eqin.fluidinfo[i].iturbmodel== TURBULENT_MODEL::SMAGORINSKY) {
+                            f[i].iflowregime= VISCOSITY_MODEL::SMAGORINSKY; // SMAGORINSKY	
 					    }
-                        if (eqin.fluidinfo[i].iturbmodel==2) {
-                            f[i].iflowregime=RNG_LES; // RNG_LES	
+                        if (eqin.fluidinfo[i].iturbmodel== TURBULENT_MODEL::RNG_LES) {
+                            f[i].iflowregime= VISCOSITY_MODEL::RNG_LES; // RNG_LES	
 					    }						
-						if (eqin.fluidinfo[i].iturbmodel == 3) {
-							f[i].iflowregime = RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
+						if (eqin.fluidinfo[i].iturbmodel == TURBULENT_MODEL::RANS_SPALART_ALLMARES) {
+							f[i].iflowregime = VISCOSITY_MODEL::RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
 						}
-						if (eqin.fluidinfo[i].iturbmodel == 4) {
-							f[i].iflowregime = RANS_MENTER_SST; // K-Omega SST
+						if (eqin.fluidinfo[i].iturbmodel == TURBULENT_MODEL::RANS_MENTER_SST) {
+							f[i].iflowregime = VISCOSITY_MODEL::RANS_MENTER_SST; // K-Omega SST
 						}						
-						if (eqin.fluidinfo[i].iturbmodel == 5) {
+						if (eqin.fluidinfo[i].iturbmodel == TURBULENT_MODEL::RANS_STANDART_K_EPS) {
 							// Двухслойная модель на основе стандартной k-epsilon модели [2001].
-							f[i].iflowregime = RANS_STANDART_K_EPS; 
+							f[i].iflowregime = VISCOSITY_MODEL::RANS_STANDART_K_EPS;
 						}
 
 						f[i].smaginfo.Cs=eqin.fluidinfo[i].Cs; // постоянная Смагоринского.
@@ -14251,13 +15122,13 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				    // Вычисление вспомогательных величин для моделей турбулентности:
 			        bool bdist=false; // вычислять ли расстояние до стенки.
 			        switch (f[i].iflowregime) {
-			           case LAMINAR: bdist=false; break;
-			           case ZEROEQMOD: bdist=true; break; // Zero Equation Model (RANS)
-					   case SMAGORINSKY: bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
-					   case RNG_LES: bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
-					   case RANS_SPALART_ALLMARES: bdist = true; break; // RANS Спалларт Аллмарес (Spallart Allmares)
-					   case RANS_MENTER_SST: bdist = true; break; // RANS k-Omega SST Menter [1993].
-					   case RANS_STANDART_K_EPS: bdist = true; break; // RANS двухслойная модель на основе стандартной KE модели
+			           case VISCOSITY_MODEL::LAMINAR: bdist=false; break;
+			           case VISCOSITY_MODEL::ZEROEQMOD: bdist=true; break; // Zero Equation Model (RANS)
+					   case VISCOSITY_MODEL::SMAGORINSKY: bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
+					   case VISCOSITY_MODEL::RNG_LES: bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
+					   case VISCOSITY_MODEL::RANS_SPALART_ALLMARES: bdist = true; break; // RANS Спалларт Аллмарес (Spallart Allmares)
+					   case VISCOSITY_MODEL::RANS_MENTER_SST: bdist = true; break; // RANS k-Omega SST Menter [1993].
+					   case VISCOSITY_MODEL::RANS_STANDART_K_EPS: bdist = true; break; // RANS двухслойная модель на основе стандартной KE модели
 					}
 					f[i].rdistWall=nullptr; // инициализация
 			        if (bdist) {
@@ -16147,7 +17018,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 		
 			if (fglobal[iflow].potent != nullptr) { // -26N
-				for (integer i = 0; i<49; i++) {
+				for (integer i = 0; i<SIZE_FLOW_POTENT_ARRAY; i++) {
 					if (fglobal[iflow].potent[i] != nullptr) {
 						delete[] fglobal[iflow].potent[i];
 						fglobal[iflow].potent[i] = nullptr;
@@ -16267,7 +17138,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// Оставляет пустым neighbour=nullptr.
 		// Эта функция за раз вычисляет части 1-6. part 1..6.
 		constr_nodes_nvtx_prop_alice(oc_global, inx, iny, inz, t.maxelm, xpos, ypos, zpos, TEMPERATURE, b, lb, t.whot_is_block, t.pa, t.maxnod, t.nvtx,
-			t.prop, t.Sc, t.ipower_time_depend, matlist, t.ilevel_alice);
+			t.prop, t.Sc, t.ipower_time_depend, matlist, t.ilevel_alice,t.bActiveShearModule);
 
 		if (b_on_adaptive_local_refinement_mesh) {
 			// Инвариант корректности АЛИС сетки.
@@ -16334,7 +17205,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
                     // Заносит свойства материалов в структуру prop для внутренних КО.
                     // prop[0..2][0..maxelm-1]
-					constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
+					constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list, t.bActiveShearModule);
 				}
 			}
 		}
@@ -16367,7 +17238,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
         // Заносит свойства материалов в структуру prop для внутренних КО.
         // prop[0..2][0..maxelm-1]
-		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
+		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list, t.bActiveShearModule);
 
 #endif
 	}
@@ -17105,7 +17976,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				// 25.09.2016 Заполнение t.ptr. 
 				constr_nodes_nvtx_prop_flow_alice(oc_global, inx, iny, inz, f[i].maxelm, xpos, ypos, zpos,
 					HYDRODINAMIC, b, lb, f[i].pa, f[i].maxnod, f[i].nvtx, f[i].prop, matlist, f[i].ptr, 
-					f[i].whot_is_block, t.ptr, t.maxelm);
+					f[i].whot_is_block, t.ptr, t.maxelm, t.bActiveShearModule);
 
 				// 22 сентября 2016 вычисление функции цвета для АЛИС сетки.
 				// Вычисление icolor_different_fluid_domain.
@@ -17395,7 +18266,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				}
 			}
 
+#ifdef _OPENMP
 			omp_set_num_threads(1);
+#endif
+
 #else
 			  // Заполнение информации о граничных узлах:
 			if (!bALICEflag) {
@@ -17467,18 +18341,23 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 			{
 				// Загрузка распределения начальной скорости.
-				errno_t err_inicialization_data = 0;
+				
 				FILE* fp_inicialization_data;
 #ifdef MINGW_COMPILLER
+				int err_inicialization_data = 0;
 				fp_inicialization_data=fopen64("load.txt", "r");
+				if (fp_inicialization_data == NULL) {
+					err_inicialization_data = 1;
+				}
 #else
+				errno_t err_inicialization_data = 0;
 				err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 				if ((f[i].maxelm>0)&&((err_inicialization_data == 0) ||
 					((starting_speed_Vx*starting_speed_Vx +
 						starting_speed_Vy * starting_speed_Vy + 
 						starting_speed_Vz * starting_speed_Vz > 1.0e-30) &&
-						(steady_or_unsteady_global_determinant != CFD_STEADY)))) {
+						(steady_or_unsteady_global_determinant != PHYSICAL_MODEL_SWITCH::CFD_STEADY)))) {
 					// Только если присутствуют жидкие ячейки.
 
 
@@ -17582,7 +18461,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			gran_f=nullptr;
 
 			// инициализация для полилинейного метода:
-			// TODO
+			// 
 
 			f[i].OpTemp=temp_ref; // Operating Temperature
 
@@ -17679,7 +18558,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		   f[0].iN = nullptr;
 		   f[0].id = nullptr;
 	   }
-	   f[0].iflowregime=LAMINAR;
+	   f[0].iflowregime= VISCOSITY_MODEL::LAMINAR;
 
 	   // Вся выделенная память должна быть освобождена.
 	   if (evt_f2 != nullptr) {

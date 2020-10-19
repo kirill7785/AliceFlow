@@ -15,10 +15,11 @@
 #include <iostream> // для _finite
 
 #include "my_cusp_alg.cpp" // Cusp 0.5.1
+//#include "my_paralution.cpp" 
 // закомментировать #include "my_vienna_alg.cpp"  если она не используется.
 // Задать GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0; Если viennacl 1.7.1 lib не используется.
 const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
-#define AMGCL_INCLUDE_IN_MY_PROJECT 1
+//#define AMGCL_INCLUDE_IN_MY_PROJECT 1
 //#include "my_vienna_alg.cpp" // ViennaCL 1.7.1
 #ifdef AMGCL_INCLUDE_IN_MY_PROJECT
 #include "my_amgcl_alg.cpp" // Библиотека Дениса Демидова AMGCL.
@@ -1329,6 +1330,10 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 	doublereal fsum1=0.0, fsum2=0.0;
 
 	// внутренние контрольные объёмы.
+	doublereal fsum1_loc1 = 0.0;
+	doublereal fsum2_loc1 = 0.0;
+
+#pragma omp parallel for reduction (+ : fsum1_loc1, fsum2_loc1)
 	for (integer i=0; i<maxelm; i++) {
 		// числитель
 		doublereal sE=0.0,sW=0.0,sN=0.0,sS=0.0,sT=0.0,sB=0.0;
@@ -1402,21 +1407,31 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 		fbuf1 += sE2 + sW2 + sN2 + sS2 + sT2 + sB2;
 		fbuf1 += sE3 + sW3 + sN3 + sS3 + sT3 + sB3;
 		fbuf1 += sE4 + sW4 + sN4 + sS4 + sT4 + sB4;
-		fsum1+=fabs(fbuf1-sl[i].ap*x[sl[i].iP]);
-		fsum2+=fabs(sl[i].ap*x[sl[i].iP]); // знаменатель.
+		fsum1_loc1 +=fabs(fbuf1-sl[i].ap*x[sl[i].iP]);
+		fsum2_loc1 +=fabs(sl[i].ap*x[sl[i].iP]); // знаменатель.
 	}
 
 	
+	fsum1 += fsum1_loc1;
+	fsum2 += fsum2_loc1;
+
 	// граничные контрольные объёмы.
+	doublereal fsum1_loc = 0.0;
+	doublereal fsum2_loc = 0.0;
+
+#pragma omp parallel for reduction (+ : fsum1_loc, fsum2_loc)
 	for (integer i=0; i<maxbound; i++) {
 		// числитель
 		doublereal sI;
 		if (slb[i].iI>-1) sI=slb[i].ai*x[slb[i].iI]; else sI=0.0;
-		fsum1+=fabs(sI+slb[i].b-slb[i].aw*x[slb[i].iW]);
+		fsum1_loc+=fabs(sI+slb[i].b-slb[i].aw*x[slb[i].iW]);
 		//fsum1 += fabs(sI + rthdsd[slb[i].iW] - slb[i].aw*x[slb[i].iW]);
 		// знаменатель
-		fsum2+=fabs(slb[i].aw*x[slb[i].iW]);
+		fsum2_loc+=fabs(slb[i].aw*x[slb[i].iW]);
 	}
+
+	fsum1 += fsum1_loc;
+	fsum2 += fsum2_loc;
 	
 	switch (iVar) {
 	  case VELOCITY_X_COMPONENT: fluent_resformat.icVX++;
@@ -3461,14 +3476,14 @@ void inverseL_ITL(doublereal* f, doublereal* val, integer* indx, integer* pntr, 
 		// параллельный код требует правильного разрешения зависимостей по данным.
 
 		// Нам понадобиться 
-		// n=omp_get_num_threads(); 
+		// n=omp_get_max_threads(); 
 		// дополнительных векторов.
 
 		integer nt=0;
 #pragma omp parallel shared(nt)
 		{
 			// число нитей.
-			nt=omp_get_num_threads();
+			nt=omp_get_max_threads();
 		}
 
 		
@@ -5480,9 +5495,10 @@ void QuickSort(integer* &list, integer first, integer last) {
 // сортировка. Здесь будет реализована быстрая сортировка.
 // Брайан Керниган и Денис Ритчи "The C programming language".
 // swap: Обмен местами v[i] и v[j]
-void swapCSIR(integer* &v, doublereal* &dr, integer i, integer j)
+template <typename MY_IND_TYPE>
+void swapCSIR(MY_IND_TYPE* &v, doublereal* &dr, integer i, integer j)
 {
-        integer tempi;
+	    MY_IND_TYPE tempi;
 		doublereal tempr;
 
 		// change v[i] <-> v[j]
@@ -5497,7 +5513,8 @@ void swapCSIR(integer* &v, doublereal* &dr, integer i, integer j)
 } // swap
 
 // Вот алгоритм PivotList
-integer PivotListCSIR(integer* &jptr, doublereal* &altr, integer first, integer last) {
+template <typename MY_IND_TYPE>
+integer PivotListCSIR(MY_IND_TYPE* &jptr, doublereal* &altr, integer first, integer last) {
 	// list==jptr and altr обрабатываемый список
 	// first номер первого элемента
 	// last номер последнего элемента
@@ -5515,13 +5532,14 @@ integer PivotListCSIR(integer* &jptr, doublereal* &altr, integer first, integer 
 	swapCSIR(jptr, altr, first, PivotPoint);
 
 	return PivotPoint;
-} // PivotList
+} // PivotListCSIR
 
 
 // Быстрая сортировка Хоара.
 // Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
 // стр. 106.
-void QuickSortCSIR(integer* &jptr, doublereal* &altr, integer first, integer last) {
+template <typename MY_IND_TYPE>
+void QuickSortCSIR(MY_IND_TYPE* &jptr, doublereal* &altr, integer first, integer last) {
 	// list упорядочиваемый список элементов
 	// first номер первого элемента в сортируемой части списка
 	// last номер последнего элемента в сортируемой части списка
@@ -5534,7 +5552,7 @@ void QuickSortCSIR(integer* &jptr, doublereal* &altr, integer first, integer las
 			 numberOfPairs--;
 			 swappedElements=false;
 			 for (integer i=first; i<=first+numberOfPairs-1; i++) {
-				 if (jptr[i]>jptr[i+1]) {
+				 if (jptr[i] > jptr[i+1]) {
 					 swapCSIR(jptr, altr, i, i+1);
 					 swappedElements=true;
 				 }
@@ -5543,13 +5561,13 @@ void QuickSortCSIR(integer* &jptr, doublereal* &altr, integer first, integer las
 	}
 	else
 	{
-	integer pivot;
+	    integer pivot;
 
-	if (first < last) {
-        pivot = PivotListCSIR(jptr, altr, first, last);
-        QuickSortCSIR(jptr, altr, first, pivot-1);
-		QuickSortCSIR(jptr, altr, pivot+1, last);
-	}
+		if (first < last) {
+			pivot = PivotListCSIR(jptr, altr, first, last);
+			QuickSortCSIR(jptr, altr, first, pivot-1);
+			QuickSortCSIR(jptr, altr, pivot+1, last);
+		}
 	}
 } // QuickSortCSIR
 
@@ -5589,7 +5607,8 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 // Реализация на связном списке.
 // Преобразует простейший формат хранения разреженной матрицы
 // в формат CRS. Всего nodes - уравнений.
-void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, integer* &row_ptr, integer nodes) {
+template <typename MY_IND_TYPE>
+void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, MY_IND_TYPE* &col_ind, MY_IND_TYPE* &row_ptr, integer nodes) {
 	bool flag=true;
     integer k; // счётчик
 	for (k=0; k<nodes; k++) if (M.root[k]==nullptr) {
@@ -5598,8 +5617,8 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 
 	if (flag) {
 		val = new doublereal[M.n];
-		col_ind = new integer[M.n];
-		row_ptr = new integer[nodes+1];
+		col_ind = new MY_IND_TYPE[M.n];
+		row_ptr = new MY_IND_TYPE[nodes+1];
 
 		bool* bcheck = new bool[M.n];
 		for (integer i_1 = 0; i_1 < M.n; i_1++) {
@@ -6739,10 +6758,13 @@ void simplesparsetoCSIR(SIMPLESPARSE &M, doublereal* &adiag, doublereal* &altr, 
 void printM_and_CSIR(SIMPLESPARSE &sparseM, integer  n) {
 
 	FILE *fp=nullptr;
-    errno_t err=0;
+   
 #ifdef MINGW_COMPILLER
+	int err = 0;
 	fp=fopen64("matrix.txt", "w");
+	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "matrix.txt", "w");
 #endif
 
@@ -8441,11 +8463,11 @@ void Bi_CGStab_internal1(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 } // Bi_CGStab_internal1
 
 // Возвращает максимум из двух целых чисел.
-integer imax(integer ia, integer ib) {
+integer my_imax(integer ia, integer ib) {
 	integer ir=ia;
 	if (ib>ia) ir=ib;
 	return ir;
-} // imax
+} // my_imax
 
 // А.А.Фомин, Л.Н.Фомина 
 // Ускорение полилинейного рекуррентного метода в подпространствах крылова.
@@ -8688,7 +8710,7 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
 			imaxdubl++;
 		}
 		else if (fabs(dres)<LBAR) {
-			imaxdubl=imax(1,imaxdubl-1);
+			imaxdubl=my_imax(1,imaxdubl-1);
 		}
 		*/
 
@@ -9005,7 +9027,7 @@ void LR1sK_temp(TEMPER &tGlobal, equation3D* &sl, equation3D_bon* &slb,
 			imaxdubl++;
 		}
 		else if (fabs(dres)<LBAR) {
-			imaxdubl=imax(1,imaxdubl-1);
+			imaxdubl=my_imax(1,imaxdubl-1);
 		}
 		*/
 
@@ -9476,17 +9498,17 @@ void reorder_direct(integer*& col_ind, integer*& row_ptr, doublereal* &val, inte
 
 	// CountingSort по строкам.
 	Ak2 Amat;
-	Amat.i= new integer[nnz];
-	Amat.j= new integer[nnz];
-	Amat.aij = new doublereal[nnz];
-	Amat.abs_aij = new doublereal[nnz];
+	Amat.i= new integer_mix_precision[nnz];
+	Amat.j= new integer_mix_precision[nnz];
+	Amat.aij = new real_mix_precision[nnz];
+	Amat.abs_aij = new real_mix_precision[nnz];
 
 	// Прямое копирование.
 	for (integer i_1 = 0; i_1 < nnz; i_1++) {
 		Amat.i[i_1] = ia[i_1];
 		Amat.j[i_1] = col_ind[i_1];
-		Amat.aij[i_1] = val[i_1];
-		Amat.abs_aij[i_1] = abs(val[i_1]);
+		Amat.aij[i_1] = (real_mix_precision)(val[i_1]);
+		Amat.abs_aij[i_1] = (real_mix_precision)(abs(val[i_1]));
 	}
 
 	// Сортировка Тима Петерсона по строкам.
@@ -9695,17 +9717,17 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 		 // Это не специальная нелинейная версия кода amg1r5 CAMG.
 		 for (integer k = 0; k < lw; k++) {
-			 if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-				 (w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			 if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				 (w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 					 alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
 					 // 0.9999 - недостаточное значение, температуры не те получаются.
 					 bnonlinear18 = true;
 			 }
 		 }
 
-		 if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-			 (adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-			 (adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		 if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			 (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			 (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 			 alpharelax = 0.99999;
 			 bnonlinear18 = true;
 		 }
@@ -10203,7 +10225,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					m.iwk = (3 * lfil + 1) * (m.row_ptr[n] + 2 * maxbound + 2) + 4 * n; // размерность памяти под матрицу предобуславливания.
 				}
 				else if (lfil>=6) {
-					m.iwk = (4*lfil + 1) * (m.row_ptr[n] + 2 * maxbound + 2) + 4 * n; // размерность памяти под матрицу предобуславливания.
+					m.iwk = (5*lfil + 1) * (m.row_ptr[n] + 2 * maxbound + 2) + 4 * n; // размерность памяти под матрицу предобуславливания.
 				}
 
 				m.alu=new doublereal[m.iwk+2]; // +2 запас по памяти.
@@ -10234,8 +10256,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					m.jw_dubl = new integer[4 * lfil * n + 2]; // +2 запас по памяти.
 				}
 				else if (lfil>=6) {
-					m.jw = new integer[5*lfil * n + 2]; // +2 запас по памяти.				
-					m.jw_dubl = new integer[5*lfil * n + 2]; // +2 запас по памяти.
+					m.jw = new integer[6*lfil * n + 2]; // +2 запас по памяти.				
+					m.jw_dubl = new integer[6*lfil * n + 2]; // +2 запас по памяти.
 				}
 				m.ballocCRScfd=true; // память выделена.
 
@@ -10272,7 +10294,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					m.tiwk = (3 * lfil + 1) * (m.trow_ptr[n] + 2 * maxbound + 2) + 4 * n; // размерность памяти под матрицу предобуславливания.
 				}
 				else if (lfil>=6) {
-					m.tiwk = (4*lfil + 1) * (m.trow_ptr[n] + 2 * maxbound + 2) + 4 * n; // размерность памяти под матрицу предобуславливания.
+					m.tiwk = (5*lfil + 1) * (m.trow_ptr[n] + 2 * maxbound + 2) + 4 * n; // размерность памяти под матрицу предобуславливания.
 				}
 			   m.talu=new doublereal[m.tiwk+2]; // +2 запас по памяти.
 	           m.tjlu=new integer[m.tiwk+2];
@@ -10289,7 +10311,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				   m.tjw = new integer[4 * lfil* n + 2]; // +2 запас по памяти.
 			   }
 			   else if (lfil>=6) {
-				   m.tjw = new integer[5 *lfil* n + 2]; // +2 запас по памяти.
+				   m.tjw = new integer[6 *lfil* n + 2]; // +2 запас по памяти.
 			   }
 			   m.ballocCRSt=true; // память выделена.
 
@@ -10351,7 +10373,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					   m.iwk = (3 * lfil + 1) * (m.row_ptr[n] + 2 * maxbound + 2) + ((1 + 3 + 3 * ipassage)*n);
 				   }
 				   else if (lfil>=6) {
-					   m.iwk = (4*lfil + 1) * (m.row_ptr[n] + 2 * maxbound + 2) + ((1 + 3 + 3 * ipassage)*n);
+					   m.iwk = (6*lfil + 1) * (m.row_ptr[n] + 2 * maxbound + 2) + ((1 + 3 + 3 * ipassage)*n);
 				   }
 
 				   m.alu=new doublereal[m.iwk+2]; // +2 запас по памяти.
@@ -10461,7 +10483,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					   m.tiwk = (3 * lfil + 1) * (m.trow_ptr[n] + 2 * maxbound + 2) + ((1 + 3 + 3 * ipassage)*n);
 				   }
 				   else if (lfil>=6) {
-					   m.tiwk = (4 * lfil + 1) * (m.trow_ptr[n] + 2 * maxbound + 2) + ((1 + 3 + 3 * ipassage)*n);
+					   m.tiwk = (6 * lfil + 1) * (m.trow_ptr[n] + 2 * maxbound + 2) + ((1 + 3 + 3 * ipassage)*n);
 				   }
 				   
 				   m.talu=new doublereal[m.tiwk+2]; // +2 запас по памяти.
@@ -10785,7 +10807,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			iN = 2;
 			//printf("%e\n", epsilon);
 			epsilon = fmin(0.1*fabs(delta0), epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -10832,7 +10854,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (iVar==TEMP) {
 			iN=2;
 			epsilon=fmin(0.1*fabs(delta0),epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -10879,7 +10901,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (iVar==TEMP) {
 			iN=4;
 			epsilon=fmin(0.1*fabs(delta0),epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -10929,7 +10951,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (iVar == TEMP) {
 			iN = 4;
 			epsilon = fmin(0.1*fabs(delta0), epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -10973,7 +10995,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (iVar==TEMP) {
 			iN=4;
 			epsilon=fmin(0.1*fabs(delta0),epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -11015,7 +11037,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (iVar==TEMP) {
 			iN=4;
 			epsilon=fmin(0.1*fabs(delta0),epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -11057,7 +11079,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		if (iVar==TEMP) {
 			iN=8;
 			epsilon=fmin(0.1*fabs(delta0),epsilon);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -12499,16 +12521,16 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 
 		// Это не специальная нелинейная версия кода amg1r5 CAMG.
 		for (integer k = 0; k < lw; k++) {
-			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 				alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
 				// 0.9999 - недостаточное значение, температуры не те получаются.
 			}
 		}
 
-		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 			alpharelax = 0.99999; // Для того чтобы решение СЛАУ сходилось.
 			// 0.9999 - недостаточное значение, температуры не те получаются.
 		}
@@ -13296,9 +13318,19 @@ if (itype_ilu == ILU_lfil)
 			deltai = NormaV(m.ri, n);
 		
 			doublereal max_deformation = -1.0e+30;
-			for (i = 0; i < n; i++) {
-				if (m.dx[i] > max_deformation) {
-					max_deformation = m.dx[i];
+			if (iVar == TOTALDEFORMATION) {
+				for (i = 0; i < n; i=i+3) {
+					doublereal total_deformation = sqrt(m.dx[i]* m.dx[i]+ m.dx[i+1] * m.dx[i+1]+ m.dx[i+2] * m.dx[i+2]);
+					if (total_deformation > max_deformation) {
+						max_deformation = total_deformation;
+					}
+				}
+			}
+			else {
+				for (i = 0; i < n; i++) {
+					if (m.dx[i] > max_deformation) {
+						max_deformation = m.dx[i];
+					}
 				}
 			}
 
@@ -19029,7 +19061,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	// настройка параметров РУМБА 0.14 решателя.
 	switch (iVar) {
 	case TEMP:
-		my_amg_manager.theta = my_amg_manager.theta_Temperature;
+		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Temperature);
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Temperature;
 		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Temperature;
 		my_amg_manager.nu1 = my_amg_manager.nu1_Temperature;
@@ -19050,7 +19082,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		my_amg_manager.bMatrixPortrait = my_amg_manager.bTemperatureMatrixPortrait;
 		break;
 	case PAM:
-		my_amg_manager.theta = my_amg_manager.theta_Pressure;
+		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Pressure);
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Pressure;
 		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Pressure;
 		my_amg_manager.nu1 = my_amg_manager.nu1_Pressure;
@@ -19070,9 +19102,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		my_amg_manager.bMatrixPortrait = my_amg_manager.bPressureMatrixPortrait;
 		break;
 		// 10.10.2019 Для турбулентных характеристик настройка решателя такая же как и для компонент скорости.
-	case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT: case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
+	case VELOCITY_X_COMPONENT: case VELOCITY_Y_COMPONENT: case VELOCITY_Z_COMPONENT:
+	case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
 	case TURBULENT_KINETIK_ENERGY_STD_K_EPS: case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
-		my_amg_manager.theta = my_amg_manager.theta_Speed;
+		my_amg_manager.theta = (real_mix_precision)(my_amg_manager.theta_Speed);
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
 		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Speed;
 		my_amg_manager.nu1 = my_amg_manager.nu1_Speed;
@@ -19162,7 +19195,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			// BiCGStab + ILU(k). k=1 or 2 recomended.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+			const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 			
 			//integer L = 2;
 			//Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
@@ -19178,19 +19212,21 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// дата первого успешного запуска в коде AliceFlow_v0_07:
 			// 15 июля 2015 года. Среда. 
 
-			if (NONE_only_amg1r5 ==stabilization_amg1r5_algorithm) {
+			if (AMG1R5_OUT_ITERATOR::NONE_only_amg1r5 ==stabilization_amg1r5_algorithm) {
 
 				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
+					const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 				}
 				else {
 					bool worked_successfully = false;
 					if ((iVar==PAM) && (inumber_iteration_SIMPLE < 10)) {
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+						const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 
 					}
 					else {
@@ -19215,13 +19251,14 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+							const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 						}
 					}
 				}
 			}
 
-			if (BiCGStab_plus_amg1r5 ==stabilization_amg1r5_algorithm) {
+			if (AMG1R5_OUT_ITERATOR::BiCGStab_plus_amg1r5 ==stabilization_amg1r5_algorithm) {
 				// BiCGStab[1992] + amg1r5[1986]
 			// Предобуславливание, Многосеточные технологии, Стабилизация.
 			// 23-24 декабря 2017.
@@ -19230,7 +19267,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+					const bool breordering = false;
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 				}
 				else {
 
@@ -19241,7 +19279,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					const integer iHAVorstModification_id = 1;
 					if ((iVar == PAM) && (inumber_iteration_SIMPLE < 10)) {
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+						const bool breordering = false;
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 
 					}
 					else {
@@ -19266,14 +19305,15 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
+							const bool breordering = false;
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 						}
 					}
 
 				}
 			}
 
-			if (FGMRes_plus_amg1r5 == stabilization_amg1r5_algorithm) {
+			if (AMG1R5_OUT_ITERATOR::FGMRes_plus_amg1r5 == stabilization_amg1r5_algorithm) {
 				// FGMRes[1986] + amg1r5[1986]
 			// Предобуславливание, Многосеточные технологии.
 			// 31 декабря 2017.
@@ -19282,7 +19322,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
+					const bool breordering = false;
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 				}
 				else {
 
@@ -19295,7 +19336,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					const integer iHAVorstModification_id = 2;
 					if ((iVar == PAM) && (inumber_iteration_SIMPLE < 10)) {
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+						const bool breordering = false;
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 
 					}
 					else {
@@ -19322,7 +19364,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+							const bool breordering = false;
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 						}
 					}
 
@@ -19330,7 +19373,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			}
 
 
-			if (Non_Linear_amg1r5 == stabilization_amg1r5_algorithm) {
+			if (AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 == stabilization_amg1r5_algorithm) {
 				// BiCGStab[1992] + amg1r5[1986]
 				// Предобуславливание, Многосеточные технологии, Стабилизация.
 				// 23-24 декабря 2017.
@@ -19339,7 +19382,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true,w,lw);
+					const bool breordering = false;
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 				}
 				else {
 
@@ -19371,7 +19415,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+							const bool breordering = false;
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 						}
 					}
 					else {
@@ -19407,7 +19452,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			}
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			system("PAUSE");
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, true, w, lw);
+			const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
 			
 			//getchar();
 			//system("PAUSE");
@@ -19426,7 +19472,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			printf("WARNING: CUSP 0.5.1 library is not connected\n");
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+			const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 #endif
 		}
 		else if (11 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
@@ -19545,19 +19592,49 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				// в amgcl отключил проверку в bicgstab для rhs.
 
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+				const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 			}
 			else {
 
 #ifdef AMGCL_INCLUDE_IN_MY_PROJECT 
-				printf("*********Denis Demidov AMGCL...***********\n");
-				if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
-					const bool bprint_preconditioner_amgcl = false;
-					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE,w,lw);
-				}
-				else {
-					const bool bprint_preconditioner_amgcl = true;
-					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE,w,lw);
+				//if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9) {
+					//if (doubleintprecision == 1) {
+						//printf("ERROR ViennaCL Library!!! type int64_t is usage.\n");
+						//printf("Library ViennaCL 1.7.1 not supported type int64_t for long long int.\n");
+						//system("PAUSE");
+					//}
+				//	else
+				    //{
+						//Для того чтобы заработало Vienna CL bicgstab+ilu0 решатель необходимо использовать тип int
+						// а не int64t.
+						//--->//viennacl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+						// serial - однопоточная версия.
+						//viennacl_solver_serial(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+					//}
+					
+				//}
+				//else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 5) {
+					//{
+						// Vienna AMG
+						//amg из ViennaCL так и не заработал. Он строит иерархию уровней сетки
+						// за 44с на задаче в 1.1млн неизвестных. Потом долго что то итерирует и выдает 
+						// переполнение inf в векторе результата. 
+						//viennacl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+					//}
+				//}
+				//else 
+				{
+
+					printf("*********Denis Demidov AMGCL...***********\n");
+					if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
+						const bool bprint_preconditioner_amgcl = false;
+						amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE, w, lw);
+					}
+					else {
+						const bool bprint_preconditioner_amgcl = true;
+						amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE, w, lw);
+					}
 				}
 #endif
 			}
@@ -19577,7 +19654,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+			const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 #endif
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 8) {
@@ -19596,7 +19674,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+			const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 #endif
 		}
 		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) 
@@ -19612,7 +19691,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+					const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering,w,lw);
 				}
 				else {
 					// Для температуры и поправки давления.
@@ -19620,7 +19700,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 					
 
-					doublereal ret74 = 0.0;
+					real_mix_precision ret74 = 0.0;
 					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE,w,lw);
 
 
@@ -19643,14 +19723,22 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			    //--->doublereal magic82 = 0.4; // 0.35; // 0.4 // 0.43
 			    //----->doublereal magic83 = 0.4;// 0.35; // 0.42
 
-				doublereal theta82 = my_amg_manager.theta;
-				doublereal theta83 = my_amg_manager.theta;
-				doublereal magic82 = my_amg_manager.magic;
-				doublereal magic83 = my_amg_manager.magic;
+				if ((iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w, lw);
+				}
+				else {
 
-				doublereal ret74 = 0.0;
-				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m,  ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE,w,lw);
+					real_mix_precision theta82 = (real_mix_precision)(my_amg_manager.theta);
+					real_mix_precision theta83 = (real_mix_precision)(my_amg_manager.theta);
+					real_mix_precision magic82 = (real_mix_precision)(my_amg_manager.magic);
+					real_mix_precision magic83 = (real_mix_precision)(my_amg_manager.magic);
 
+					real_mix_precision ret74 = 0.0;
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE, w, lw);
+				
+				}
 				/*
 				}
 				else {
@@ -19704,7 +19792,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 #else
 				printf("Redirecting to BiCGStab + ILU2 solver.\n");
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max,true,w,lw);
+				const bool breordering = false; // только false никакого reordering переупорядочивания 17,10,2020.
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE, color, dist_max, breordering, w,lw);
 #endif
 			}
 

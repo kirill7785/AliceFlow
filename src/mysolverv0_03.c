@@ -9,6 +9,27 @@
 #include "my_RNG_LES.cpp"
 #include "test_filtr.cpp" // всё для применения двойной фильтрации.
 
+// Проверено 08,08,2020
+// index_of(i_1,'x');
+integer index_of(integer ibase, char ch) {
+	// 0 << ibase < t.maxnod
+	// 0 <= return < 3 * t.maxnod
+	switch (ch) {
+	case 'x': return (3*ibase + 0); break; // X
+	case 'y': return (3*ibase + 1); break; // Y
+	case 'z': return (3*ibase + 2); break; // Z
+	case 'X': return (3*ibase + 0); break; // X
+	case 'Y': return (3*ibase + 1); break; // Y
+	case 'Z': return (3*ibase + 2); break; // Z
+	default: 
+		printf("ERROR !!! index_of 08.08.2020\n");
+		system("PAUSE");
+		exit(1);
+		break; 
+	}
+}// index_of
+
+/*
 // index_of(i_1,'x');
 integer index_of(integer ibase, char ch) {
 	// 0 <= return < 3 * t.maxnod
@@ -22,6 +43,7 @@ integer index_of(integer ibase, char ch) {
 	default: return (3 * ibase + 0); break; // X
 	}
 }// index_of
+*/
 
 /*
 integer index_of(integer ibase, char ch) {
@@ -40,13 +62,18 @@ integer index_of(integer ibase, char ch) {
 
 // Данная функция используется для отладки.
 // Она печатает матрицу СЛАУ для уравнения теплопередачи.
-void print_temp_slau(TEMPER &t) {
-	FILE *fptslau=nullptr; // файл в который будут записываться коэффициенты матрицы СЛАУ.
-	errno_t err=0;
+void print_temp_slau(TEMPER& t) {
+	FILE* fptslau = nullptr; // файл в который будут записываться коэффициенты матрицы СЛАУ.
+
 	// создание файла для записи значений собранной матрицы теплопроводности.
 #ifdef MINGW_COMPILLER
-	fptslau=fopen64("temperslau.txt", "w");
+	int err = 0;
+	fptslau = fopen64("temperslau.txt", "w");
+	if (fptslau == NULL) {
+		err = 1;
+    }
 #else
+	errno_t err = 0;
 	err = fopen_s(&fptslau, "temperslau.txt", "w");
 #endif
 	
@@ -392,7 +419,8 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	// для нестационарного температурного моделирования 10.11.2018
 	bool btimedep, doublereal timestep_seq_current_step,
 	doublereal* &toldtimestep, doublereal* &tnewtimestep, integer &maxelm_global_ret,
-	doublereal poweron_multiplier_sequence, integer irealesation_selector)
+	doublereal poweron_multiplier_sequence, integer irealesation_selector,
+	doublereal* &t_for_Mechanical)
 {
      // tnewtimestep - результат вычисления нестационарного моделирования.
 
@@ -851,7 +879,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				bwall_active[j_1] = true;// Пользовательская стенка.
 
 				// Фиксированный потенциал.
-				if (w[i_1].ifamily == DIRICHLET_FAMILY) {
+				if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 					constr[j_1] = true;
 					temp_potent[j_1] = w[i_1].Tamb;
 					rthdsd[j_1]= w[i_1].Tamb;
@@ -859,7 +887,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					//getchar();
 				}
 				// граничное условие Стефана - Больцмана
-				if (w[i_1].ifamily == STEFAN_BOLCMAN_FAMILY) {
+				if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 					// 16.12.2018
 
 					breakRUMBAcalc_for_nonlinear_boundary_condition = true;
@@ -959,7 +987,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				}// Stefan-Bolcman
 
 				// Граничное условие Ньютона-Рихмана.
-				if (w[i_1].ifamily == NEWTON_RICHMAN_FAMILY) {
+				if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) {
 					// 16.12.2018
 
 					breakRUMBAcalc_for_nonlinear_boundary_condition = true;
@@ -1053,9 +1081,9 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		emissivity_default_non_linear[i32] = 0.0;
 	}
 
-	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {	
+	if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+		(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 
 
 		for (integer ie1 = 0; ie1 < t.maxelm; ie1++) {
@@ -1385,7 +1413,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
 			if (((icount_number_visit[j_1] >= 2)) && (icount_number_visit[j_1] <= 4) && (bwall_active[j_1] == false)) {
 					
-				if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+				if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 						
 
 					breakRUMBAcalc_for_nonlinear_boundary_condition = true;
@@ -1407,7 +1435,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 				} // Newton-Richman
 
-				if (adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) {
+				if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) {
 
 					breakRUMBAcalc_for_nonlinear_boundary_condition = true;
 					doublereal alpha_relax1 = 0.25;
@@ -1475,7 +1503,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					}
 				} // Stefan-Bolcman
 
-				if (adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC) {
+				if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC) {
 
 					boundary[j_1] = true;
 
@@ -1601,7 +1629,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				
 
 				// граничное условие Стефана - Больцмана
-				if (w[i_1].ifamily == STEFAN_BOLCMAN_FAMILY) {
+				if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 					// 16.12.2018
 
 					{
@@ -1673,7 +1701,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				} // Stefan-Bolcman
 
 				// Граничное условие Ньютона-Рихмана.
-				if (w[i_1].ifamily == NEWTON_RICHMAN_FAMILY) {
+				if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) {
 					// 16.12.2018
 
 
@@ -1850,7 +1878,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 					boundary[j_1] = true;
 					// Фиксированный потенциал.
-					if (w[i_1].ifamily == DIRICHLET_FAMILY) {
+					if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 						//constr[j_1] = true;
 						//temp_potent[j_1] = w[i_1].Tamb;
 						rthdsd[j_1] = w[i_1].Tamb;
@@ -1859,7 +1887,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					}
 
 					// граничное условие Стефана - Больцмана
-					if (w[i_1].ifamily == STEFAN_BOLCMAN_FAMILY) {
+					if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 						// 16.12.2018
 
 						breakRUMBAcalc_for_nonlinear_boundary_condition = true;
@@ -1893,7 +1921,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					} // Stefan-Bolcman
 
 					// Граничное условие Ньютона-Рихмана.
-					if (w[i_1].ifamily == NEWTON_RICHMAN_FAMILY) {
+					if (w[i_1].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY) {
 						// 16.12.2018
 
 						breakRUMBAcalc_for_nonlinear_boundary_condition = true;
@@ -1909,14 +1937,14 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 		
 		
-		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 
 				for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
 					if (((icount_number_visit[j_1] >= 2)) && (icount_number_visit[j_1] <= 4) && (bwall_active[j_1] == false)) {
 						
-						if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+						if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 
 
 							breakRUMBAcalc_for_nonlinear_boundary_condition = true;
@@ -1938,7 +1966,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 						}  // Newton-Richman
 
-						if (adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) {
+						if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) {
 
 							breakRUMBAcalc_for_nonlinear_boundary_condition = true;
 							doublereal alpha_relax1 = 0.25;
@@ -2007,7 +2035,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							}
 						} // Stefan-Bolcman
 
-						if (adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC) {
+						if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC) {
 
 							boundary[j_1] = true;
 
@@ -2176,7 +2204,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			// Добавление локальной матрицы жёсткости в глобальную.
 
 
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) {
+			if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER) {
 				// Будет использован прямой метод решения. 
 			elembdSparse3(ie, sparseS, nvtx_global,
 				constr, rthdsd,
@@ -2197,7 +2225,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 		
 
-		if (!(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER)) {
+		if (!(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER)) {
 			for (integer i_check = 0; i_check < maxelm_global; i_check++) {
 				if (sparseM.root[i_check] == nullptr) {
 					printf("error: zero string %lld \n", i_check);
@@ -2289,27 +2317,35 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			}
 		}*/
 
-
+		doublereal Pdiss_actual = 0.0;
 		// Объёмные источники тепла.
 		for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
 			// вычисление размеров текущего контрольного объёма:
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
 			volume3D(i_1, nvtx_global, pa_global, dx, dy, dz);
 
-			for (integer j = 0; j <= 7; j++) {
-				if (!constr[nvtx_global[j][i_1] - 1]) {
-					if (i_1 < t.maxelm) {
-						rthdsd[nvtx_global[j][i_1] - 1] += 
-							0.125*dx*dy*dz*t.Sc[i_1]*poweron_multiplier_sequence;
-						//if (t.Sc[i_1] > 1.0e-30) {
-							//printf("1 %e \n", 0.125 * dx * dy * dz * t.Sc[i_1] * poweron_multiplier_sequence);
-							//getchar();
-						//}
+			if (fabs(t.Sc[i_1]) > 1.0e-30) {
+				for (integer j = 0; j <= 7; j++) {
+					if (!constr[nvtx_global[j][i_1] - 1]) {
+						if (i_1 < t.maxelm) {
+							rthdsd[nvtx_global[j][i_1] - 1] +=
+								0.125*dx*dy*dz*t.Sc[i_1] * poweron_multiplier_sequence;
+							Pdiss_actual += 0.125*dx*dy*dz*t.Sc[i_1];
+							//if (t.Sc[i_1] > 1.0e-30) {
+								//printf("1 %e \n", 0.125 * dx * dy * dz * t.Sc[i_1] * poweron_multiplier_sequence);
+								//getchar();
+							//}
+						}
+					}
+					else {
+						printf("ERROR!!! 23.08.2020.  zanichenie power Pdiss.\n");
+						system("PAUSE");
 					}
 				}
 			}
 
 		}
+		
 		integer ic_now = t.maxelm;
 		for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
 			for (integer i_1 = 0; i_1 < my_union[iu_74].t.maxelm; i_1++) {
@@ -2322,7 +2358,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 						if (i_1 < my_union[iu_74].t.maxelm) {
 							rthdsd[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]] +=
 								0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1] * poweron_multiplier_sequence;
-							
+							Pdiss_actual += 0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1];
 							//if (my_union[iu_74].t.Sc[i_1] > 1.0e-30) {
 								//printf("2 %e \n", 0.125 * dx * dy * dz * my_union[iu_74].t.Sc[i_1] * poweron_multiplier_sequence);
 								//getchar();
@@ -2332,7 +2368,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				}
 			}
 		}
-
+		printf("Pdiss actual value is equal=%e\n", Pdiss_actual);
 		/*
 			doublereal* square = new doublereal[3 * t.maxnod];
 			for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
@@ -2376,7 +2412,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		//getchar();
 		// Решение СЛАУ TODO.
 
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) {
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER) {
 			// Прямой метод решения.
 			calculateSPARSEgaussArray(&sparseS, temp_potent, rthdsd);
 		}
@@ -2392,27 +2428,27 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 								 //Bi_CGStabCRS((3 * t.maxnod), val, col_ind, row_ptr, rthdsd, deformation, maxiter);//->//
 
 								 // BiCGStab + ILU6 сходимость есть.
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER) {
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER) {
 			// BiCGStab + ILU(lfil), lfil=1..6.
 			Bi_CGStab_internal4(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m,w,lw,boundary,TEMP);			
 		}
 		// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 		//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == CAMG_RUMBA_v0_14_SECOND_T_SOLVER) {
-			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m,b,lb,w,lw, boundary);
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER) {
+			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m,b,lb,w,lw, boundary, TEMP);
 		}
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == AMG1R5_SECOND_T_SOLVER) {
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER) {
 			// if (NONE_only_amg1r5==stabilization_amg1r5_algorithm) -> amg1r5 Руге и Штубена.
 			// if (BiCGStab_plus_amg1r5==stabilization_amg1r5_algorithm) -> BiCGStab + amg1r5 Хенк Ван Дер Ворст + Руге и Штубен.
 			// if (FGMRes_plus_amg1r5==stabilization_amg1r5_algorithm) -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Штубен. // 16.10.2018
 			amg_loc_memory_for_Matrix_assemble2(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m, w, lw, boundary);//13.10.2018
 		}
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == AMGCL_SECONT_T_SOLVER)
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::AMGCL_SECONT_T_SOLVER)
 		{
 #if AMGCL_INCLUDE_IN_MY_PROJECT == 1
 			// AMGCL Denis Demidov
 			// 20.11.2019
-			amgcl_secondT_solver(sparseM, (maxelm_global), rthdsd, temp_potent, bprintmessage,w,lw,boundary);
+			amgcl_secondT_solver(sparseM, (maxelm_global), rthdsd, temp_potent, bprintmessage,w,lw,boundary,false);
 #endif
 		}
 		// Нужна специальная версия BicgStab+ILU2.
@@ -2423,7 +2459,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		//getchar();
 
 		// Освобождение оперативной памяти.
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) {
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER) {
 			freeIMatrix(&sparseS);
 		}
 		//simplesparsefree(sparseM, 3 * t.maxnod);
@@ -2432,16 +2468,16 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 	    // Это не специальная нелинейная версия кода amgcl CAMG.
 		for (integer k = 0; k < lw; k++) {
-			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 				alpha = 0.2; // Для того чтобы решение СЛАУ сходилось.
 				
 			}
 		}
 
-		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
+		if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
 			alpha = 0.2; // Для того чтобы решение СЛАУ сходилось.
 		}
 
@@ -2482,6 +2518,8 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	} while ((iprohod<=2)||(fabs(told_iter - temp_max) > 0.05*fabs(temp_max-temp_min)));
 	
 	
+
+
 	delete[] temp_potent_old;
 	
 	delete[] boundary;
@@ -2506,8 +2544,8 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	/*
 	// Запись результата для визуализации.
 	if (t.total_deformation == nullptr) {
-		t.total_deformation = new doublereal*[4];
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		t.total_deformation = new doublereal*[SIZE_DEFORMATION_ARRAY];
+		for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 			t.total_deformation[j_6] = nullptr;
 			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
@@ -2516,22 +2554,22 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 	}
 	else {
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 			delete[] t.total_deformation[j_6];
 			t.total_deformation[j_6] = nullptr;
 		}
 		delete[] t.total_deformation;
 		t.total_deformation = nullptr;
 
-		t.total_deformation = new doublereal*[4];
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		t.total_deformation = new doublereal*[SIZE_DEFORMATION_ARRAY];
+		for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 			t.total_deformation[j_6] = nullptr;
 			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
 			}
 		}
 	}
-	for (integer j_6 = 0; j_6 < 4; j_6++) {
+	for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
 			t.total_deformation[j_6][i_1] = 0.0;
 		}
@@ -2753,6 +2791,12 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	*/
 	// Сохранение деформации.
 	// TODO.
+    delete[] t_for_Mechanical;
+    t_for_Mechanical = new doublereal[t.maxnod + 2];
+	for (integer i = 0; i < t.maxnod; i++) {
+		// Сохранение температуры в узлах для механики.
+		t_for_Mechanical[i] = temp_potent[i];
+	}
 
     // С асемблесами репорт не работает корректно.
 
@@ -2767,7 +2811,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	for (integer i = 0; i < t.maxbound; i++) {
 		if ((t.border_neighbor[i].MCB < (ls + lw)) &&
 			(t.border_neighbor[i].MCB >= ls) &&
-			(w[t.border_neighbor[i].MCB - ls].ifamily == DIRICHLET_FAMILY)) {
+			(w[t.border_neighbor[i].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY)) {
 			t.potent[i + t.maxelm] = w[t.border_neighbor[i].MCB - ls].Tamb; // На стенке точное значение.
 		}
 		else {
@@ -3716,8 +3760,8 @@ void init_total_deformation(TEMPER &t) {
 	
 	// allocation memomory
 	if (t.total_deformation == nullptr) {
-		t.total_deformation = new doublereal*[4];
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		t.total_deformation = new doublereal*[SIZE_DEFORMATION_ARRAY];
+		for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 			t.total_deformation[j_6] = nullptr;
 			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
@@ -3726,15 +3770,15 @@ void init_total_deformation(TEMPER &t) {
 
 	}
 	else {
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 			delete[] t.total_deformation[j_6];
 			t.total_deformation[j_6] = nullptr;
 		}
 		delete[] t.total_deformation;
 		t.total_deformation = nullptr;
 
-		t.total_deformation = new doublereal*[4];
-		for (integer j_6 = 0; j_6 < 4; j_6++) {
+		t.total_deformation = new doublereal*[SIZE_DEFORMATION_ARRAY];
+		for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 			t.total_deformation[j_6] = nullptr;
 			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
@@ -3742,7 +3786,7 @@ void init_total_deformation(TEMPER &t) {
 		}
 	}
 	// init zero (0.0)
-	for (integer j_6 = 0; j_6 < 4; j_6++) {
+	for (integer j_6 = 0; j_6 < SIZE_DEFORMATION_ARRAY; j_6++) {
 		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
 			t.total_deformation[j_6][i_1] = 0.0;
 		}
@@ -3958,12 +4002,48 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 
 } //Stress2Thermal_vector_translate
 
+// Возвращает квадрат числа.
+doublereal  sqr(doublereal x) {
+	return x * x;
+}
+
+doublereal epsilon(doublereal current, doublereal min, doublereal max, doublereal center) {
+	// Для фиксированного координатного напрпвления.
+	// min,max - границы объекта по оси Ох.
+	// center - координата центра масс.
+	// current - координата текущей точки.
+	if (current - center > 0.0) {
+		return ((current - center) / (max-center));
+	}
+	else {
+		return ((current - center) / (center-min));
+	}
+} // для силы линейного теплового расширения.
+
+
+  
 
 
 // Решение прочностной задачи в 3D.
-// 6 августа 2017.
-void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
-	bool bThermalStress, doublereal operatingtemperature, BLOCK* &b, integer &lb) {
+// 6 августа 2017. август 2020.
+void solve_Structural(TEMPER &t, WALL* &w, integer lw, 
+	bool bThermalStress, doublereal operatingtemperature, 
+	BLOCK* &b, integer &lb, integer &lu,
+	bool btimedep, doublereal timestep_sizenow,
+	doublereal* &uoldtimestep, doublereal* &uolddoubletimestep,
+	doublereal poweron_multiplyer_sequence, TPROP* &matlist,
+	doublereal* &t_for_Mechanical) {
+
+	// btimedep==true - нестационарное моделирование,
+	// btimedep==false - стационарная задача механики.
+	// timestep_sizenow - размер шага по времени,
+	// uoldtimestep - перемещения на один шаг назад,
+	// uolddoubletimestep - перемещения на два шага назад.
+	// uoldtimestep, uolddoubletimestep - память выделена заранее в вызывающем внешнем коде.
+	// poweron_multiplyer_sequence==0.0 вектор силы выключен,
+	// poweron_multiplyer_sequence==1.0 вектор силы полностью включён,
+	// 0 < poweron_multiplyer_sequence < 1 - вектор силы частично активен.
+
 
 	printf("Stress n=%lld\n", 3 * t.maxnod);
 
@@ -3990,6 +4070,18 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 		if (0.3*hz < epsz) epsz = 0.3*hz;
 	}
 
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		for (integer ie = 0; ie < my_union[iu_74].t.maxelm; ie++) {
+			doublereal hx = 0.0, hy = 0.0, hz = 0.0;
+			volume3D(ie, my_union[iu_74].t.nvtx, my_union[iu_74].t.pa, hx, hy, hz);
+			if (0.3*hx < epsx) epsx = 0.3*hx;
+			if (0.3*hy < epsy) epsy = 0.3*hy;
+			if (0.3*hz < epsz) epsz = 0.3*hz;
+		}
+	}
+	// Для асемблесов не работает.
+
+
 	// В каждом узле хранит список nvtx которые имеют вершиной этот узел.
 	integer *nvtx_link_count = new integer[t.maxnod];
 	integer **nvtx_link = new integer*[t.maxnod];
@@ -4012,7 +4104,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	//for (integer j = 0; j < 8; j++) {
 	//	printf("%e %e %e\n", t.pa[t.nvtx[j][ie] - 1].x, t.pa[t.nvtx[j][ie] - 1].y, t.pa[t.nvtx[j][ie] - 1].z);
 	//}
-//	getchar();
+    //	getchar();
 	// Учёт граничных условий.
 	// На зафиксированных участках границы мы выставляем флаг true.
 	for (integer i_1 = 0; i_1 < lw; i_1++) {
@@ -4022,13 +4114,14 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 			for (integer j_1 = 0; j_1 < t.maxnod; j_1++) {
 				bool bfound = false;
 				switch (w[i_1].iPlane) {
-				case XY_PLANE: if ((fabs(t.pa[j_1].z-w[i_1].g.zS)<epsz)&&
-					         (t.pa[j_1].x<w[i_1].g.xE+epsx)&&
+				case XY_PLANE: 
+					if ((fabs(t.pa[j_1].z-w[i_1].g.zS) < epsz)&&
+					         (t.pa[j_1].x<w[i_1].g.xE + epsx)&&
 					         (t.pa[j_1].x>w[i_1].g.xS - epsx)&&
 					         (t.pa[j_1].y>w[i_1].g.yS - epsy)&&
 					         (t.pa[j_1].y<w[i_1].g.yE + epsy)) 
 				{
-					printf("found: plane XY wall[%lld]\n",i_1);
+					//printf("found: plane XY wall[%lld]\n",i_1);
 					bfound = true;
 				}
 					break;
@@ -4039,7 +4132,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 						&& (t.pa[j_1].y>w[i_1].g.yS - epsy)
 						&& (t.pa[j_1].y<w[i_1].g.yE + epsy)) 
 					{
-						printf("found: plane YZ wall[%lld]\n", i_1);
+						//printf("found: plane YZ wall[%lld]\n", i_1);
 						bfound = true;
 					}
 					break;
@@ -4050,7 +4143,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 						&& (t.pa[j_1].x>w[i_1].g.xS - epsx)
 						&& (t.pa[j_1].x<w[i_1].g.xE + epsx))
 					{
-						printf("found: plane XZ wall[%lld]\n", i_1);
+						//printf("found: plane XZ wall[%lld]\n", i_1);
 						bfound = true;
 					}
 					break;
@@ -4070,33 +4163,40 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 					// 9 - y Force,
 					// 10 - z Force.
 					switch (w[i_1].ithermal_Stress_boundary_condition) {
-					case 0: //FREE all
+					case THERMAL_STRESS_BOUNDARY_CONDITION::FREE: //FREE all
+						// Граница не фиксирована.
 						break;
-					case 1:  constr[index_of(j_1, 'x')] = true; // X
+					case THERMAL_STRESS_BOUNDARY_CONDITION::X_FIXIT:  constr[index_of(j_1, 'x')] = true; // X
 						break;
-						// Поменял местами Y и Z 19.04.2019
-					case 2:  constr[index_of(j_1, 'y')] = true; // Y
+					case THERMAL_STRESS_BOUNDARY_CONDITION::Y_FIXIT:  constr[index_of(j_1, 'y')] = true; // Y
 						break;
-					case 3:  constr[index_of(j_1, 'z')] = true; // Z
+					case THERMAL_STRESS_BOUNDARY_CONDITION::Z_FIXIT:  constr[index_of(j_1, 'z')] = true; // Z
 						break;
-					case 4:  constr[index_of(j_1, 'x')] = true; // X
+					case THERMAL_STRESS_BOUNDARY_CONDITION::XY_FIXIT: 
+							constr[index_of(j_1, 'x')] = true; // X
 						     constr[index_of(j_1, 'y')] = true; // Y
 						break;
-					case 5:  constr[index_of(j_1, 'x')] = true; //X
+					case THERMAL_STRESS_BOUNDARY_CONDITION::XZ_FIXIT:  
+							constr[index_of(j_1, 'x')] = true; //X
 						     constr[index_of(j_1, 'z')] = true; //Z
 						break;
-					case 6: constr[index_of(j_1, 'y')] = true; // Y 
+					case THERMAL_STRESS_BOUNDARY_CONDITION::YZ_FIXIT:
+							constr[index_of(j_1, 'y')] = true; // Y 
 						    constr[index_of(j_1, 'z')] = true; // Z
 						break;
-					case 7: 
+					case THERMAL_STRESS_BOUNDARY_CONDITION::ALL_FIXIT:
 						//printf("ok");
 						//getchar();//ok
+						// Граница полностью фиксирована
+						// по всем трём координатам.
 						constr[index_of(j_1, 'x')] = true;//X
 						constr[index_of(j_1, 'y')] = true;//Y
 						constr[index_of(j_1, 'z')] = true;//Z
-						printf("ALL Fixit Ok\n");
+						//printf("ALL Fixit Ok\n");
 						break;
-					case 8: case 9: case 10:
+					case  THERMAL_STRESS_BOUNDARY_CONDITION::X_FORCE:
+					case  THERMAL_STRESS_BOUNDARY_CONDITION::Y_FORCE:
+					case  THERMAL_STRESS_BOUNDARY_CONDITION::Z_FORCE:
 						// Здесь обязательно нужно умножить на площадь.
 						// По размерности в правой части стоит именно сила в Ньютонах.
 						// Площадь нужна если задано давление.
@@ -4110,7 +4210,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							dSl = 1.0;
-							rthdsd[index_of(j_1, 'z')] = w[i_1].zForce;// Normal component.
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'z')] = poweron_multiplyer_sequence*w[i_1].zForce; // Normal component.
+							}
+							else {
+								rthdsd[index_of(j_1, 'z')] = w[i_1].zForce; // Normal component.
+							}
+							//rthdsd[index_of(j_1, 'z')] *= hzl * hzl;
 							// На границе где приложена нормальная сила 
 							//разрешаем лишь нормальные деформации.
 							//constr[3 * j_1] = true;//X
@@ -4126,7 +4232,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 							}
 							if (nvtx_link_count[j_1] == 4) dSl *= 0.5;
 							dSl = 1.0;
-							rthdsd[index_of(j_1, 'x')] = w[i_1].xForce;
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'x')] = poweron_multiplyer_sequence*w[i_1].xForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'x')] = w[i_1].xForce;
+							}
+							//rthdsd[index_of(j_1, 'x')] *= hxl * hxl;
 							dSl = 0;
 							for (k_1l = 0; k_1l < 8; k_1l++) {
 								if (nvtx_link[j_1][k_1l] > -1) {
@@ -4136,7 +4248,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 							}
 							if (nvtx_link_count[j_1] == 4) dSl *= 0.5;
 							dSl = 1.0;
-							rthdsd[index_of(j_1, 'y')] = w[i_1].yForce;
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'y')] = poweron_multiplyer_sequence*w[i_1].yForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'y')] = w[i_1].yForce;
+							}
+							//rthdsd[index_of(j_1, 'y')] *= hyl * hyl;
 							break;
 						case YZ_PLANE:
 							dSl = 0.0; dln = 0.0; vol_l = 0.0;
@@ -4149,7 +4267,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							//dSl = 1.0;
-							rthdsd[index_of(j_1, 'x')] = w[i_1].xForce;// Normal component.
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'x')] = poweron_multiplyer_sequence*w[i_1].xForce;// Normal component.
+							}
+							else {
+								rthdsd[index_of(j_1, 'x')] = w[i_1].xForce;// Normal component.
+							}
+							//rthdsd[index_of(j_1, 'x')] *= hxl * hxl;
 							// На границе где приложена нормальная сила 
 							//разрешаем лишь нормальные деформации.
 							//constr[3 * j_1] = true;//X
@@ -4164,7 +4288,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							if (nvtx_link_count[j_1] == 4) dSl *= 0.5; dSl = 1.0;
-							rthdsd[index_of(j_1, 'y')] = w[i_1].yForce;
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'y')] = poweron_multiplyer_sequence*w[i_1].yForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'y')] = w[i_1].yForce;
+							}
+							//rthdsd[index_of(j_1, 'y')] *= hyl * hyl;
 							dSl = 0;
 							for (k_1l = 0; k_1l < 8; k_1l++) {
 								if (nvtx_link[j_1][k_1l] > -1) {
@@ -4173,7 +4303,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							if (nvtx_link_count[j_1] == 4) dSl *= 0.5; dSl = 1.0;
-							rthdsd[index_of(j_1, 'z')] = w[i_1].zForce;
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'z')] = poweron_multiplyer_sequence*w[i_1].zForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'z')] = w[i_1].zForce;
+							}
+							//rthdsd[index_of(j_1, 'z')] *= hzl * hzl;
 							break;
 						case XZ_PLANE:
 							dSl = 0.0;
@@ -4184,7 +4320,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							dSl = 1.0;
-							rthdsd[index_of(j_1, 'y')] = w[i_1].yForce;// Normal component.
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'y')] = poweron_multiplyer_sequence*w[i_1].yForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'y')] = w[i_1].yForce;// Normal component.
+							}
+							//rthdsd[index_of(j_1, 'y')] *= hyl * hyl;
 							//printf("w[i_1].yForce=%e\n", w[i_1].yForce);
 							//getchar();
 							// На границе где приложена нормальная сила 
@@ -4201,7 +4343,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							if (nvtx_link_count[j_1] == 4) dSl *= 0.5; dSl = 1.0;
-							rthdsd[index_of(j_1, 'x')] = w[i_1].xForce;
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'x')] = poweron_multiplyer_sequence*w[i_1].xForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'x')] = w[i_1].xForce;
+							}
+							///rthdsd[index_of(j_1, 'x')] *= hxl * hxl;
 							dSl = 0;
 							for (k_1l = 0; k_1l < 8; k_1l++) {
 								if (nvtx_link[j_1][k_1l] > -1) {
@@ -4210,7 +4358,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 								}
 							}
 							if (nvtx_link_count[j_1] == 4) dSl *= 0.5; dSl = 1.0;
-							rthdsd[index_of(j_1, 'z')] = w[i_1].zForce;
+							if (btimedep) {
+								rthdsd[index_of(j_1, 'z')] = poweron_multiplyer_sequence*w[i_1].zForce;
+							}
+							else {
+								rthdsd[index_of(j_1, 'z')] = w[i_1].zForce;
+							}
+							//rthdsd[index_of(j_1, 'z')] *= hzl * hzl;
 							break;
 						}
 						//rthdsd[3 * j_1] = w[i_1].xForce;
@@ -4219,15 +4373,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 						//printf("Fotce X =%e %e %e\n", w[i_1].xForce, w[i_1].yForce, w[i_1].zForce);
 						//getchar();//ok
 						break;
-					}
-					
+					}					
 					
 				}
-			}
-		
+			}		
 	}
 
-
+	// Учёт граничных условий закрепления.
 	for (integer j_11 = 0; j_11 < t.maxelm; j_11++) {
 		for (integer i_11 = 0; i_11 < 8; i_11++) {
 			//for (integer j_1 = 0; j_1 < t.maxnod; j_1++) {
@@ -4242,9 +4394,9 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 				}
 			}
 			*/
-			if (constr[index_of(j_1, 'x')]) rthdsd[index_of(j_1, 'x')] = 0.0; //X
-			if (constr[index_of(j_1, 'y')]) rthdsd[index_of(j_1, 'y')] = 0.0; //Y TODO
-			if (constr[index_of(j_1, 'z')]) rthdsd[index_of(j_1, 'z')] = 0.0; //Z TODO
+			if (constr[index_of(j_1, 'x')]) rthdsd[index_of(j_1, 'x')] = 0.0; // X
+			if (constr[index_of(j_1, 'y')]) rthdsd[index_of(j_1, 'y')] = 0.0; // Y 
+			if (constr[index_of(j_1, 'z')]) rthdsd[index_of(j_1, 'z')] = 0.0; // Z 
 		}
 	}
 
@@ -4323,27 +4475,27 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 						switch (b[i_1].g.iPlane) {
 						case XY_PLANE: if (sqrt((t.pa[j_1].x - b[i_1].g.xC)*(t.pa[j_1].x - b[i_1].g.xC) + (t.pa[j_1].y - b[i_1].g.yC)*(t.pa[j_1].y - b[i_1].g.yC)) < b[i_1].g.R_out_cyl + sqrt(epsx1*epsx1 + epsy1*epsy1)) {
 							if ((t.pa[j_1].z > b[i_1].g.zC - 3 * epsz1) && (t.pa[j_1].z < b[i_1].g.zC + b[i_1].g.Hcyl + 3 * epsz1)) {
-								constr[index_of(j_1, 'x')] = true;//X
-								constr[index_of(j_1, 'y')] = true;//Y
-								constr[index_of(j_1, 'z')] = true;//Z
+								constr[index_of(j_1, 'x')] = true; //X
+								constr[index_of(j_1, 'y')] = true; //Y
+								constr[index_of(j_1, 'z')] = true; //Z
 							}
 						}
 								 break;
 						case XZ_PLANE:
 							if (sqrt((t.pa[j_1].x - b[i_1].g.xC)*(t.pa[j_1].x - b[i_1].g.xC) + (t.pa[j_1].z - b[i_1].g.zC)*(t.pa[j_1].z - b[i_1].g.zC)) < b[i_1].g.R_out_cyl + sqrt(epsx1*epsx1 + epsz1*epsz1)) {
 								if ((t.pa[j_1].y > b[i_1].g.yC - 3 * epsy1) && (t.pa[j_1].y < b[i_1].g.yC + b[i_1].g.Hcyl + 3 * epsy1)) {
-									constr[index_of(j_1, 'x')] = true;//X
-									constr[index_of(j_1, 'y')] = true;//Y
-									constr[index_of(j_1, 'z')] = true;//Z
+									constr[index_of(j_1, 'x')] = true; //X
+									constr[index_of(j_1, 'y')] = true; //Y
+									constr[index_of(j_1, 'z')] = true; //Z
 								}
 							}
 							break;
 						case YZ_PLANE:
 							if (sqrt((t.pa[j_1].y - b[i_1].g.yC)*(t.pa[j_1].y - b[i_1].g.yC) + (t.pa[j_1].z - b[i_1].g.zC)*(t.pa[j_1].z - b[i_1].g.zC)) < b[i_1].g.R_out_cyl + sqrt(epsz1*epsz1 + epsy1*epsy1)) {
 								if ((t.pa[j_1].x > b[i_1].g.xC - 3 * epsx1) && (t.pa[j_1].x < b[i_1].g.xC + b[i_1].g.Hcyl + 3 * epsx1)) {
-									constr[index_of(j_1, 'x')] = true;//X
-									constr[index_of(j_1, 'y')] = true;//Y
-									constr[index_of(j_1, 'z')] = true;//Z
+									constr[index_of(j_1, 'x')] = true; //X
+									constr[index_of(j_1, 'y')] = true; //Y
+									constr[index_of(j_1, 'z')] = true; //Z
 								}
 							}
 							break;
@@ -4463,6 +4615,8 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	}
 
 	doublereal* square = new doublereal[3 * t.maxnod];
+
+#pragma omp parallel for
 	for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
 		square[i_1] = 0.0;
 	}
@@ -4544,72 +4698,216 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	}
 	delete[] zashita_ot_dublirovaniq;
 
-	doublereal* Tx_transform = new doublereal[t.maxnod];
-	doublereal* Ty_transform = new doublereal[t.maxnod];
-	doublereal* Tz_transform = new doublereal[t.maxnod];
-	doublereal* T_transform = new doublereal[t.maxnod];
+	
 
-	doublereal* volume = new doublereal[t.maxnod];
-
+	// Деформации вызванные тепловым расширением.
 	if (bThermalStress) {
 
-		// Вычисление градиентов температуры.
-		doublereal *gradTx = nullptr;
-		doublereal *gradTy = nullptr;
-		doublereal *gradTz = nullptr;
-		gradTx = new doublereal[t.maxelm + t.maxbound];
-		gradTy = new doublereal[t.maxelm + t.maxbound];
-		gradTz = new doublereal[t.maxelm + t.maxbound];
+		TOCHKA center_source;
+		doublereal dcount = 0.0;
+		center_source.x = 0.0;
+		center_source.y = 0.0;
+		center_source.z = 0.0;
+		for (integer i_43 = 0; i_43 < t.maxelm; i_43++) {
+			/*if (fabs(t.Sc[i_43]) > 1.0e-30) {
+				TOCHKA p;
+				center_cord3D(i_43, t.nvtx, t.pa, p, 100);
+				dcount += 1.0;
+				center_source.x += p.x;
+				center_source.y += p.y;
+				center_source.z += p.z;
+			}*/
+			// Центр масс
+			doublereal hx = 1.0, hy = 1.0, hz = 1.0;
+			volume3D(i_43, t.nvtx, t.pa, hx, hy, hz);
 
-		// инициализация нулём.
-		for (integer i = 0; i<t.maxelm + t.maxbound; i++) {
-			gradTx[i] = 0.0;
-			gradTy[i] = 0.0;
-			gradTz[i] = 0.0;
+			TOCHKA p;
+			center_cord3D(i_43, t.nvtx, t.pa, p, 100);
+			dcount += t.prop[RHO][i_43] * hx*hy*hz;
+			center_source.x += p.x*t.prop[RHO][i_43]*hx*hy*hz;
+			center_source.y += p.y*t.prop[RHO][i_43] * hx*hy*hz;
+			center_source.z += p.z*t.prop[RHO][i_43] * hx*hy*hz;
+
+		}
+		//if (dcount > 0.5) 
+		integer indf = -1;
+		{
+			center_source.x /= dcount;
+			center_source.y /= dcount;
+			center_source.z /= dcount;
+			printf("center mass: x=%e y=%e z=%e\n", center_source.x, center_source.y, center_source.z);
+			doublereal dist_m = 1.0e30;
+			
+			for (integer i_43 = 0; i_43 < t.maxelm; i_43++) {
+				TOCHKA p;
+				center_cord3D(i_43, t.nvtx, t.pa, p, 100);
+				if (sqrt((p.x - center_source.x)*(p.x - center_source.x) + (p.y - center_source.y)*(p.y - center_source.y) + (p.z - center_source.z)*(p.z - center_source.z)) < dist_m) {
+					dist_m = sqrt((p.x - center_source.x)*(p.x - center_source.x) + (p.y - center_source.y)*(p.y - center_source.y) + (p.z - center_source.z)*(p.z - center_source.z));
+					indf = i_43;
+				}
+			}
 		}
 
+		doublereal temp_cm0 = t.potent[indf];
+		printf("temperature center mass=%e\n", temp_cm0);
+
+		//else {
+			//printf("center power model not be found. Power source not be found...\n");
+			//system("PAUSE");
+			//exit(1);
+		//}
+
+		doublereal* Tx_transform = new doublereal[t.maxnod];
+		doublereal* Ty_transform = new doublereal[t.maxnod];
+		doublereal* Tz_transform = new doublereal[t.maxnod];
+		doublereal* T_transform = new doublereal[t.maxnod];
+
+		doublereal* volume = new doublereal[t.maxnod];
+
+
+		// Вычисление градиентов температуры.		
+		
+		doublereal *gradTx1 = nullptr;
+		doublereal *gradTy1 = nullptr;
+		doublereal *gradTz1 = nullptr;
+		gradTx1 = new doublereal[t.maxelm + t.maxbound];
+		gradTy1 = new doublereal[t.maxelm + t.maxbound];
+		gradTz1 = new doublereal[t.maxelm + t.maxbound];
+
+		doublereal* potent2 = nullptr;
+		doublereal *gradTx2 = nullptr;
+		doublereal *gradTy2 = nullptr;
+		doublereal *gradTz2 = nullptr;
+		potent2 = new doublereal[t.maxelm + t.maxbound];
+		gradTx2 = new doublereal[t.maxelm + t.maxbound];
+		gradTy2 = new doublereal[t.maxelm + t.maxbound];
+		gradTz2 = new doublereal[t.maxelm + t.maxbound];
+
+		
+
+		// инициализация нулём.
+#pragma omp parallel for
+		for (integer i = 0; i<t.maxelm + t.maxbound; i++) {
+			
+
+			gradTx1[i] = 0.0;
+			gradTy1[i] = 0.0;
+			gradTz1[i] = 0.0;
+
+			potent2[i] = 0.0;
+			gradTx2[i] = 0.0;
+			gradTy2[i] = 0.0;
+			gradTz2[i] = 0.0;
+
+		}
+
+
+
 		// нахождение градиентов.
-		for (integer i = 0; i<t.maxelm; i++) {
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
 			// Только внутренние узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
 				t.neighbors_for_the_internal_node, t.maxelm, false,
-				t.border_neighbor, gradTx, gradTy, gradTz, t.ilevel_alice);
+				t.border_neighbor, gradTx1, gradTy1, gradTz1, t.ilevel_alice);
 		}
 
-		for (integer i = 0; i<t.maxelm; i++) {
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
 			// Только граничные узлы.
 			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
 				t.neighbors_for_the_internal_node, t.maxelm, true,
-				t.border_neighbor, gradTx, gradTy, gradTz, t.ilevel_alice);
+				t.border_neighbor, gradTx1, gradTy1, gradTz1, t.ilevel_alice);
+		}
+		
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+			potent2[i] = t.potent[i] - operatingtemperature;
+		}
+		// нахождение градиентов.
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gaussTemperature(i, potent2, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, gradTx2, gradTy2, gradTz2, t.ilevel_alice);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gaussTemperature(i, potent2, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, gradTx2, gradTy2, gradTz2, t.ilevel_alice);
 		}
 
 
+		// Метод линейного порядка.
+		doublereal min_x = 1e60;
+		doublereal min_y = 1e60;
+		doublereal min_z = 1e60;
+		doublereal max_x = -1e60;
+		doublereal max_y = -1e60;
+		doublereal max_z = -1e60;
 
+		for (integer i = 0; i < t.maxnod; i++) {
+			if (t.pa[i].x < min_x) {
+				min_x = t.pa[i].x;
+			}
+			if (t.pa[i].y < min_y) {
+				min_y = t.pa[i].y;
+			}
+			if (t.pa[i].z < min_z) {
+				min_z = t.pa[i].z;
+			}
+			if (t.pa[i].x > max_x) {
+				max_x = t.pa[i].x;
+			}
+			if (t.pa[i].y > max_y) {
+				max_y = t.pa[i].y;
+			}
+			if (t.pa[i].z > max_z) {
+				max_z = t.pa[i].z;
+			}
+		}
+
+		//min_x *= 1.2;
+		//min_y *= 1.2;
+		//min_z *= 1.2;
+		doublereal minx1 = min_x, miny1 = min_y, minz1 = min_z;
+		doublereal maxx1 = max_x, maxy1 = max_y, maxz1 = max_z;
+			
 
 		// Силы вызванные тепловыми деформациями.
 	
-		
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxnod; i_1++) {
 			volume[i_1] = 0.0; // inicialization.
 		}
 		doublereal* YoungModule = new doublereal[t.maxnod];
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxnod; i_1++) {
 			YoungModule[i_1] = 0.0; // inicialization.
-		}		
+		}	
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxnod; i_1++) {
 			Tx_transform[i_1] = 0.0; // inicialization.
-		}		
+		}
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxnod; i_1++) {
 			Ty_transform[i_1] = 0.0; // inicialization.
-		}		
+		}	
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxnod; i_1++) {
 			Tz_transform[i_1] = 0.0; // inicialization.
-		}		
+		}
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < t.maxnod; i_1++) {
 			T_transform[i_1] = 0.0; // inicialization.
 		}
 
 		if (0) {
+			/* // 28.08.2020 Устаревший код.
 			for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
 				doublereal hx = 1.0, hy = 1.0, hz = 1.0;
 				volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
@@ -4627,10 +4925,11 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 					system("PAUSE");
 				}
 
-				doublereal mu, lambda, beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+				//doublereal mu, lambda; // Коэффициенты Ламе.
+				doublereal beta_t_solid; //  коэффициент линейного теплового расширения.
 
-				mu = t.prop[MU_LAME][i_1];
-				lambda = t.prop[LAMBDA_LAME][i_1];
+				//mu = t.prop[MU_LAME][i_1];
+				//lambda = t.prop[LAMBDA_LAME][i_1];
 				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения
 				//printf("beta_t_solid=%e\n", beta_t_solid); getchar(); // debug Ok.
 
@@ -4647,13 +4946,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 
 					// умножаем на объём, на модуль Юнга, на градиент, на коэффициент линейного теплового расширения
 					// Минус градиент !!! чтобы расширялось в направлении от источника тепла.
-					Tx_transform[t.nvtx[j_1][i_1] - 1] -= beta_t_solid * 0.125 * hx * hy * hz * 0.125 * hx * hy * hz * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTx[i_1];
+					//Tx_transform[t.nvtx[j_1][i_1] - 1] -= beta_t_solid * 0.125 * hx * hy * hz * 0.125 * hx * hy * hz * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTx[i_1];
 
-					Ty_transform[t.nvtx[j_1][i_1] - 1] -= beta_t_solid * 0.125 * hx * hy * hz * 0.125 * hx * hy * hz * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTy[i_1];
+					//Ty_transform[t.nvtx[j_1][i_1] - 1] -= beta_t_solid * 0.125 * hx * hy * hz * 0.125 * hx * hy * hz * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTy[i_1];
 
-					Tz_transform[t.nvtx[j_1][i_1] - 1] -= beta_t_solid * 0.125 * hx * hy * hz * 0.125 * hx * hy * hz * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTz[i_1];
+					//Tz_transform[t.nvtx[j_1][i_1] - 1] -= beta_t_solid * 0.125 * hx * hy * hz * 0.125 * hx * hy * hz * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTz[i_1];
 
-					T_transform[t.nvtx[j_1][i_1] - 1] += 0.125 * hx * hy * hz * (t.potent[i_1]);
+					//T_transform[t.nvtx[j_1][i_1] - 1] += 0.125 * hx * hy * hz * (t.potent[i_1]);
 
 				}
 
@@ -4667,9 +4966,14 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 				T_transform[i_1] = T_transform[i_1] / volume[i_1];
 			}
 			// E*vol*beta_t_solid*gradT
+			*/
 
 		}
-		else {//3226
+		else if (0) {// На основе температуры хранящейся в центре ячейки (Метод Контрольного Объёма).
+			// 22.08.2020 
+			// Такое представление не подходит по видимому из за очень низкой
+			// точности процедуры переноса из центра ячейки в вершины. 
+			// Полностью переходим на хранение в вершинах ячейки для задач Механики.
 
 			// Метод линейного порядка.
 			doublereal min_x = 1e60;
@@ -4703,6 +5007,8 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 			//min_x *= 1.2;
 			//min_y *= 1.2;
 			//min_z *= 1.2;
+			doublereal minx1 = min_x, miny1=min_y, minz1=min_z;
+			doublereal maxx1 = max_x, maxy1 = max_y, maxz1 = max_z;
 
 
 
@@ -4726,35 +5032,143 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 				doublereal hx = 1.0, hy = 1.0, hz = 1.0;
 				volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
 
+				TOCHKA p;
+				center_cord3D(i_1, t.nvtx, t.pa, p, 100);
+
+				doublereal dist = sqrt((p.x - center_source.x)*(p.x - center_source.x) + (p.y - center_source.y)*(p.y - center_source.y) + (p.z - center_source.z)*(p.z - center_source.z));
+
+
+				
+				doublereal directional_forcex = 1.0;
+				if (gradTx1[i_1] > 0.0) {
+					//directional_forcex = -1.0;
+				}
+				doublereal directional_forcey = 1.0;
+				if (gradTy1[i_1] > 0.0) {
+					//directional_forcey = -1.0;
+				}
+				doublereal directional_forcez = 1.0;
+				if (gradTz1[i_1] > 0.0) {
+					//directional_forcez = -1.0;
+				}
+				if (p.x < center_source.x) {
+					directional_forcex = -1.0;
+				}
+				if (p.y < center_source.y) {
+					directional_forcey = -1.0;
+				}
+				if (p.z < center_source.z) {
+					directional_forcez = -1.0;
+				}
+				
+
 				if (hx <= 0.0) {
 					printf("negative hx\n");
 					system("PAUSE");
+					exit(1);
 				}
 				if (hy <= 0.0) {
 					printf("negative hy\n");
 					system("PAUSE");
+					exit(1);
 				}
 				if (hz <= 0.0) {
 					printf("negative hz\n");
 					system("PAUSE");
+					exit(1);
 				}
 
-				doublereal mu, lambda, beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+				doublereal  beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
 
-				mu = t.prop[MU_LAME][i_1];
-				lambda = t.prop[LAMBDA_LAME][i_1];
-				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения
+				//mu = t.prop[MU_LAME][i_1];
+				//lambda = t.prop[LAMBDA_LAME][i_1];
+				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i_1] * t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения 1/K.
+				doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal E =  t.prop[YOUNG_MODULE][i_1];
+				doublereal nu_x = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu_y = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu_z = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu= t.prop[POISSON_RATIO][i_1];
+				doublereal mu_x = (1 - 2.0*nu_x) / (2.0*(1.0 - nu_x));
+				doublereal mu_y = (1 - 2.0*nu_y) / (2.0*(1.0 - nu_y));
+				doublereal mu_z = (1 - 2.0*nu_z) / (2.0*(1.0 - nu_z));
+				doublereal mu = (1 - 2.0*nu) / (2.0*(1.0 - nu));
+				doublereal lambda_x = nu_x / (1.0 - nu_x);
+				doublereal lambda_y = nu_y / (1.0 - nu_y);
+				doublereal lambda_z = nu_z / (1.0 - nu_z);
+				doublereal lambda = nu / (1.0 - nu);
+				doublereal Em = E * (1.0 - nu) / ((1.0+nu)*(1.0-2.0*nu));
+				doublereal Em_x = Ex * (1.0 - nu_x) / ((1.0 + nu_x)*(1.0 - 2.0*nu_x));
+				doublereal Em_y = Ey * (1.0 - nu_y) / ((1.0 + nu_y)*(1.0 - 2.0*nu_y));
+				doublereal Em_z = Ez * (1.0 - nu_z) / ((1.0 + nu_z)*(1.0 - 2.0*nu_z));
+
+				// E==((mu * (3 * lambda + 2 * mu)) / (lambda + mu));
 
 				// Ненужно домножать на объём !!!
-				//potent_loc[i_1] = -( beta_t_solid *   ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTx[i_1]);
+				//potent_loc[i_1] = -(hx * hy * hz) * ( beta_t_solid * E * gradTx[i_1]);
+				// Сила это тензор. Без учёта ортотропности материала.
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid * Em * gradTx[i_1]+
+					//beta_t_solid * Em * lambda * gradTy[i_1] +
+					//beta_t_solid * Em * lambda * gradTz[i_1]);
+				// Сила это тензор. С учётом ортотропности материала.
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid_x * Em_x * gradTx[i_1] +
+					//beta_t_solid_y * Em_y * lambda_y * gradTy[i_1] +
+					//beta_t_solid_z * Em_z * lambda_z * gradTz[i_1]);
+				
+				//potent_loc[i_1] = E * hy*hz*beta_t_solid_x*(t.potent[i_1] - operatingtemperature)*(p.x - center_source.x) / dist;
+				//epsilon(doublereal current, doublereal min, doublereal max, doublereal center)
+				//potent_loc[i_1] = E * hy*hz*beta_t_solid_x*(t.potent[i_1] - operatingtemperature)*epsilon(p.x,minx1,maxx1, center_source.x);
+				//temp_cm0
+			    //potent_loc[i_1] = E * hy*hz*beta_t_solid_x*fabs(t.potent[i_1] - temp_cm0)*epsilon(p.x, minx1, maxx1, center_source.x);
+				//potent_loc[i_1] =  (hx * hy * hz) *Em * (beta_t_solid_x + lambda * (beta_t_solid_y + beta_t_solid_z))*gradTx1[i_1];
+
+				// рабочий вариант.
+				potent_loc[i_1] = (hx * hy * hz) *Em * (beta_t_solid_x + lambda * (beta_t_solid_y + beta_t_solid_z))*gradTx2[i_1];
+				
+
 				// Вычитал в статье https://cyberleninka.ru/article/v/vliyanie-koeffitsienta-teplovogo-rasshireniya-na-termouprugie-napryazheniya-v-keramicheskoy-probke
-				potent_loc[i_1] = ((beta_t_solid * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * (t.potent[i_1]-operatingtemperature))/(hx));
+				//potent_loc[i_1] = (hx*hy*hz)*((beta_t_solid * E * (t.potent[i_1]-operatingtemperature))/(hx));
 			}
+			//ZERO_ORDER_RECONSTRUCT(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tx_transform, eps_mashine,
+				//potent_loc, nullptr, nullptr, true);
 			SECOND_ORDER_QUADRATIC_RECONSTRUCTA(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tx_transform, min_x, min_y, min_z, potent_loc, t, eps_mashine, false);
 			for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
 				doublereal hx = 1.0, hy = 1.0, hz = 1.0;
 				volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
 
+				TOCHKA p;
+				center_cord3D(i_1, t.nvtx, t.pa, p, 100);
+
+				doublereal dist = sqrt((p.x - center_source.x)*(p.x - center_source.x) + (p.y - center_source.y)*(p.y - center_source.y) + (p.z - center_source.z)*(p.z - center_source.z));
+
+				
+				doublereal directional_forcex = 1.0;
+				if (gradTx1[i_1] > 0.0) {
+					//directional_forcex = -1.0;
+				}
+				doublereal directional_forcey = 1.0;
+				if (gradTy1[i_1] > 0.0) {
+					//directional_forcey = -1.0;
+				}
+				doublereal directional_forcez = 1.0;
+				if (gradTz1[i_1] > 0.0) {
+					//directional_forcez = -1.0;
+				}
+				if (p.x < center_source.x) {
+					directional_forcex = -1.0;
+				}
+				if (p.y < center_source.y) {
+					directional_forcey = -1.0;
+				}
+				if (p.z < center_source.z) {
+					directional_forcez = -1.0;
+				}
+
 				if (hx <= 0.0) {
 					printf("negative hx\n");
 					system("PAUSE");
@@ -4768,22 +5182,96 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 					system("PAUSE");
 				}
 
-				doublereal mu, lambda, beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+				doublereal /*mu, lambda,*/ beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
 
-				mu = t.prop[MU_LAME][i_1];
-				lambda = t.prop[LAMBDA_LAME][i_1];
-				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения
+				//mu = t.prop[MU_LAME][i_1];
+				//lambda = t.prop[LAMBDA_LAME][i_1];
+				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i_1] * t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения 1/K.
+				doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal E = t.prop[YOUNG_MODULE][i_1];
+				doublereal nu_x = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu_y = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu_z = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu = t.prop[POISSON_RATIO][i_1];
+				doublereal mu_x = (1 - 2.0*nu_x) / (2.0*(1.0 - nu_x));
+				doublereal mu_y = (1 - 2.0*nu_y) / (2.0*(1.0 - nu_y));
+				doublereal mu_z = (1 - 2.0*nu_z) / (2.0*(1.0 - nu_z));
+				doublereal mu = (1 - 2.0*nu) / (2.0*(1.0 - nu));
+				doublereal lambda_x = nu_x / (1.0 - nu_x);
+				doublereal lambda_y = nu_y / (1.0 - nu_y);
+				doublereal lambda_z = nu_z / (1.0 - nu_z);
+				doublereal lambda = nu / (1.0 - nu);
+				doublereal Em = E * (1.0 - nu) / ((1.0 + nu)*(1.0 - 2.0*nu));
+				doublereal Em_x = Ex * (1.0 - nu_x) / ((1.0 + nu_x)*(1.0 - 2.0*nu_x));
+				doublereal Em_y = Ey * (1.0 - nu_y) / ((1.0 + nu_y)*(1.0 - 2.0*nu_y));
+				doublereal Em_z = Ez * (1.0 - nu_z) / ((1.0 + nu_z)*(1.0 - 2.0*nu_z));
+				// E==((mu * (3 * lambda + 2 * mu)) / (lambda + mu));
 
 				// Ненужно домножать на объём !!!
-				//potent_loc[i_1] = -(beta_t_solid *   ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTy[i_1]);
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid * E * gradTy[i_1]);
+				// Сила это тензор. Без учёта ортотропности материала.
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid * Em * lambda * gradTx[i_1]+
+					//beta_t_solid * Em * gradTy[i_1] + 
+					//beta_t_solid * Em * lambda * gradTz[i_1]);
+				// Сила это тензор. С учётом ортотропности материала.
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid_x * Em_x * lambda_x * gradTx[i_1] +
+				//	beta_t_solid_y * Em_y * gradTy[i_1] +
+				//	beta_t_solid_z * Em_z * lambda_z * gradTz[i_1]);
+				
+
+				//potent_loc[i_1] = E * hx*hz*beta_t_solid_y*(t.potent[i_1] - operatingtemperature)*(p.y - center_source.y) / dist;
+				//potent_loc[i_1] = E * hx*hz*beta_t_solid_y*(t.potent[i_1] - operatingtemperature)*epsilon(p.y, miny1, maxy1, center_source.y);
+				//temp_cm0
+				//potent_loc[i_1] = E * hx*hz*beta_t_solid_y*fabs(t.potent[i_1] - temp_cm0)*epsilon(p.y, miny1, maxy1, center_source.y);
+				
+				// рабочий вариант.
+				potent_loc[i_1] = (hx * hy * hz) *Em * (beta_t_solid_y + lambda * (beta_t_solid_x + beta_t_solid_z))*gradTy2[i_1];
+				
+
 				// Вычитал в статье https://cyberleninka.ru/article/v/vliyanie-koeffitsienta-teplovogo-rasshireniya-na-termouprugie-napryazheniya-v-keramicheskoy-probke
-				potent_loc[i_1] = ((beta_t_solid * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * (t.potent[i_1] - operatingtemperature)) / (hy));
+				//potent_loc[i_1] = (hx * hy * hz) * ((beta_t_solid * E * (t.potent[i_1] - operatingtemperature)) / (hy));
 			}
+			//ZERO_ORDER_RECONSTRUCT(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Ty_transform, eps_mashine,
+				//potent_loc, nullptr, nullptr, true);
 			SECOND_ORDER_QUADRATIC_RECONSTRUCTA(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Ty_transform, min_x, min_y, min_z, potent_loc, t, eps_mashine, false);
 			for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
 				doublereal hx = 1.0, hy = 1.0, hz = 1.0;
 				volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
 
+				
+				TOCHKA p;
+				center_cord3D(i_1, t.nvtx, t.pa, p, 100);
+
+				doublereal dist = sqrt((p.x - center_source.x)*(p.x - center_source.x) + (p.y - center_source.y)*(p.y - center_source.y) + (p.z - center_source.z)*(p.z - center_source.z));
+
+
+				doublereal directional_forcex = 1.0;
+				if (gradTx1[i_1] > 0.0) {
+					//directional_forcex = -1.0;
+				}
+				doublereal directional_forcey = 1.0;
+				if (gradTy1[i_1] > 0.0) {
+					//directional_forcey = -1.0;
+				}
+				doublereal directional_forcez = 1.0;
+				if (gradTz1[i_1] > 0.0) {
+					//directional_forcez = -1.0;
+				}
+				if (p.x < center_source.x) {
+					directional_forcex = -1.0;
+				}
+				if (p.y < center_source.y) {
+					directional_forcey = -1.0;
+				}
+				if (p.z < center_source.z) {
+					directional_forcez = -1.0;
+				}
+
 				if (hx <= 0.0) {
 					printf("negative hx\n");
 					system("PAUSE");
@@ -4797,23 +5285,257 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 					system("PAUSE");
 				}
 
-				doublereal mu, lambda, beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+				doublereal /*mu, lambda,*/ beta_t_solid; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
 
-				mu = t.prop[MU_LAME][i_1];
-				lambda = t.prop[LAMBDA_LAME][i_1];
-				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения
+				//mu = t.prop[MU_LAME][i_1];
+				//lambda = t.prop[LAMBDA_LAME][i_1];
+				beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i_1] * t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения 1/K.
+				doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+				doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+				doublereal E = t.prop[YOUNG_MODULE][i_1];
+				doublereal nu_x = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu_y = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu_z = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+				doublereal nu = t.prop[POISSON_RATIO][i_1];
+				doublereal mu_x = (1 - 2.0*nu_x) / (2.0*(1.0 - nu_x));
+				doublereal mu_y = (1 - 2.0*nu_y) / (2.0*(1.0 - nu_y));
+				doublereal mu_z = (1 - 2.0*nu_z) / (2.0*(1.0 - nu_z));
+				doublereal mu = (1 - 2.0*nu) / (2.0*(1.0 - nu));
+				doublereal lambda_x = nu_x / (1.0 - nu_x);
+				doublereal lambda_y = nu_y / (1.0 - nu_y);
+				doublereal lambda_z = nu_z / (1.0 - nu_z);
+				doublereal lambda = nu / (1.0 - nu);
+				doublereal Em = E * (1.0 - nu) / ((1.0 + nu)*(1.0 - 2.0*nu));
+				doublereal Em_x = Ex * (1.0 - nu_x) / ((1.0 + nu_x)*(1.0 - 2.0*nu_x));
+				doublereal Em_y = Ey * (1.0 - nu_y) / ((1.0 + nu_y)*(1.0 - 2.0*nu_y));
+				doublereal Em_z = Ez * (1.0 - nu_z) / ((1.0 + nu_z)*(1.0 - 2.0*nu_z));
+				// E==((mu * (3 * lambda + 2 * mu)) / (lambda + mu));
+
 
 				// Ненужно домножать на объём !!!
-				//potent_loc[i_1] = -(beta_t_solid *   ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * gradTz[i_1]);
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid * E * gradTz[i_1]);
+				// Сила это тензор. Без учёта ортотропности материала.
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid * Em * lambda * gradTx[i_1]+
+					//beta_t_solid * Em * lambda * gradTy[i_1] + 
+					//beta_t_solid * Em * gradTz[i_1]);
+				// Сила это тензор. С учётом ортотропности материала.
+				//potent_loc[i_1] = -(hx * hy * hz) * (beta_t_solid_x * Em_x * lambda_x * gradTx[i_1] +
+					//beta_t_solid_y * Em_y * lambda_y * gradTy[i_1] +
+					//beta_t_solid_z * Em_z * gradTz[i_1]);
+				
+
+				//potent_loc[i_1] = E * hx*hy*beta_t_solid_z*(t.potent[i_1] - operatingtemperature)*(p.z - center_source.z) / dist;
+				//potent_loc[i_1] = E * hx*hy*beta_t_solid_z*(t.potent[i_1] - operatingtemperature)*epsilon(p.z, minz1, maxz1, center_source.z);
+				//temp_cm0
+				//potent_loc[i_1] = E * hx*hy*beta_t_solid_z*fabs(t.potent[i_1] - temp_cm0)*epsilon(p.z, minz1, maxz1, center_source.z);
+				
+				// рабочий вариант.
+				potent_loc[i_1] = (hx * hy * hz) *Em * (beta_t_solid_z + lambda * (beta_t_solid_x + beta_t_solid_y))*gradTz2[i_1];
+			
 				// Вычитал в статье https://cyberleninka.ru/article/v/vliyanie-koeffitsienta-teplovogo-rasshireniya-na-termouprugie-napryazheniya-v-keramicheskoy-probke
-				potent_loc[i_1] = ((beta_t_solid * ((mu * (3 * lambda + 2 * mu)) / (lambda + mu)) * (t.potent[i_1] - operatingtemperature)) / (hz));
+				//potent_loc[i_1] = (hx * hy * hz) * ((beta_t_solid * E * (t.potent[i_1] - operatingtemperature)) / (hz));
 			}
+			//ZERO_ORDER_RECONSTRUCT(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tz_transform, eps_mashine,
+				//potent_loc, nullptr, nullptr, true);
 			SECOND_ORDER_QUADRATIC_RECONSTRUCTA(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tz_transform, min_x, min_y, min_z, potent_loc, t, eps_mashine, false);
 			delete[] vol;
 			delete[] potent_loc;
 
 			//T_transform не заполнен
 		}
+		else {
+		   
+            // Абсолютно верно 22.08.2020 Но требует второго температурного солвера.
+
+			for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+
+					doublereal hx = 1.0, hy = 1.0, hz = 1.0;
+					volume3D(j_1, t.nvtx, t.pa, hx, hy, hz);
+
+				    
+					doublereal beta_t_solid = t.prop[BETA_T_MECHANICAL][j_1]; //  Коэффициент линейного теплового расширения.
+					doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][j_1] * t.prop[BETA_T_MECHANICAL][j_1];// Коэффициент линейного теплового расширения 1/K.
+					doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][j_1] * t.prop[BETA_T_MECHANICAL][j_1];
+					doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][j_1] * t.prop[BETA_T_MECHANICAL][j_1];
+					doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][j_1] * t.prop[YOUNG_MODULE][j_1]; // Модуль Юнга Па.
+					doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][j_1] * t.prop[YOUNG_MODULE][j_1]; // Модуль Юнга Па.
+					doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][j_1] * t.prop[YOUNG_MODULE][j_1]; // Модуль Юнга Па.
+					doublereal E = t.prop[YOUNG_MODULE][j_1];
+					doublereal nuyz = t.prop[MULT_POISSON_RATIO_YZ][j_1] * t.prop[POISSON_RATIO][j_1];
+					doublereal nuxz = t.prop[MULT_POISSON_RATIO_XZ][j_1] * t.prop[POISSON_RATIO][j_1];
+					doublereal nuxy = t.prop[MULT_POISSON_RATIO_XY][j_1] * t.prop[POISSON_RATIO][j_1];
+					doublereal nuzy = t.prop[MULT_POISSON_RATIO_ZY][j_1] * t.prop[POISSON_RATIO][j_1];
+					doublereal nuzx = t.prop[MULT_POISSON_RATIO_ZX][j_1] * t.prop[POISSON_RATIO][j_1];
+					doublereal nuyx = t.prop[MULT_POISSON_RATIO_YX][j_1] * t.prop[POISSON_RATIO][j_1];
+					doublereal nu = t.prop[POISSON_RATIO][j_1];
+					
+					doublereal Gxy, Gyz, Gxz;
+					if (!t.bActiveShearModule[j_1]) {
+						Gxy = Gyz = Gxz = Ex / (2.0 * (1.0 + nuxy));
+					}
+					else {
+						Gyz = t.prop[SHEAR_MODULE_YZ][j_1];
+						Gxz = t.prop[SHEAR_MODULE_XZ][j_1];
+						Gxy = t.prop[SHEAR_MODULE_XY][j_1];
+					}
+
+					// 0.125 09.09.2020
+					doublereal Am = 0.125; // 1.0;
+
+					Tx_transform[t.nvtx[0][j_1] - 1] = (Am *hx*hy*hz)*(-1.0 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+								* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hx * (nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[0][j_1] - 1] = (Am*hx*hy*hz)*(1 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz
+							* nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature) + 1 / hy * (nuxz*nuyx + nuyz)
+						/ (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[0][j_1] - 1] = (Am*hx*hy*hz)*(1 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hz * (nuxy*nuyx - 1.0)
+						/ (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[0][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[1][j_1] - 1] = (Am*hx*hy*hz)*(1 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+						nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hx * (nuxy*nuyz
+								+ nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[1][j_1] - 1] = (Am*hx*hy*hz)*(1 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz
+							* nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature) + 1 / hy * (nuxz*nuyx + nuyz)
+						/ (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[1][j_1] - 1] = (Am*hx*hy*hz)*(1 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hz * (nuxy*nuyx - 1.0)
+						/ (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[1][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[2][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+								* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hx * (nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[2][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+								nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hy * (nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[2][j_1] - 1] = (Am*hx*hy*hz)*(1 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hz * (nuxy*nuyx - 1.0)
+						/ (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[2][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[3][j_1] - 1] = (Am*hx*hy*hz)*(1 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+						nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hx * (nuxy*nuyz
+								+ nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[3][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+								nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hy * (nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[3][j_1] - 1] = (Am*hx*hy*hz)*(1 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+								* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hz * (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz
+							* nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[3][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[4][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+								* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hx * (nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[4][j_1] - 1] = (Am*hx*hy*hz)*(1 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*
+							operatingtemperature) - 1.0 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+								nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*
+									operatingtemperature) + 1 / hy * (nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+										* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[4][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*
+							operatingtemperature) - 1.0 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+								nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*
+									operatingtemperature) + 1 / hz * (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+										nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[4][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[5][j_1] - 1] = (Am*hx*hy*hz)*(1 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hx * (nuxy*nuyz
+								+ nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[5][j_1] - 1] = (Am*hx*hy*hz)*(1 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*
+							operatingtemperature) - 1.0 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+								nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*
+									operatingtemperature) + 1 / hy * (nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+										* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[5][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*
+							operatingtemperature) - 1.0 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+								nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*
+									operatingtemperature) + 1 / hz * (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+										nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[5][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[6][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+								* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*operatingtemperature) +
+						1 / hx * (nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz *
+							nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[6][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+								nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hy * (nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[6][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*
+							operatingtemperature) - 1.0 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+								nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*
+									operatingtemperature) + 1 / hz * (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+										nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[6][j_1] - 1] - 1.0*operatingtemperature));
+					Tx_transform[t.nvtx[7][j_1] - 1] = (Am*hx*hy*hz)*(1 / hx * (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy
+						* nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hx * (nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*operatingtemperature) - 1.0 / hx * (nuxy*nuyz
+								+ nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*
+						beta_t_solid_z*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*operatingtemperature));
+					Ty_transform[t.nvtx[7][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hy * (nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*
+							operatingtemperature) + 1 / hy * (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+								nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*operatingtemperature)
+						- 1.0 / hy * (nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz * nuzx +
+							nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*operatingtemperature));
+					Tz_transform[t.nvtx[7][j_1] - 1] = (Am*hx*hy*hz)*(-1.0 / hz * (nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+						nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ex*beta_t_solid_x*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*
+							operatingtemperature) - 1.0 / hz * (nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy +
+								nuxy * nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ey*beta_t_solid_y*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*
+									operatingtemperature) + 1 / hz * (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy *
+										nuyx + nuxz * nuzx + nuyz * nuzy - 1.0)*Ez*beta_t_solid_z*(t_for_Mechanical[t.nvtx[7][j_1] - 1] - 1.0*operatingtemperature));
+
+									   
+
+			}
+
+        }
 
 		integer ibconstrX = 0;
 		integer ibconstrY = 0;
@@ -4835,7 +5557,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 				//rthdsd[i_1] += YoungModule[inode] * square[i_1] * betaT*(T_transform[inode] - operatingtemperature);
 				//21.02.2019 Уже все учтено, см. выше.
 
-				rthdsd[i_1] = gradT;		
+				rthdsd[i_1] += gradT;		
 
 			}
 			else {
@@ -4858,7 +5580,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 				//rthdsd[i_1] += YoungModule[inode] * square[i_1] * betaT*(T_transform[inode] - operatingtemperature);
 				//21.02.2019 Уже все учтено, см. выше.
 
-				rthdsd[i_1] = gradT;
+				rthdsd[i_1] += gradT;
 
 			}
 			else {
@@ -4881,7 +5603,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 				//rthdsd[i_1] += YoungModule[inode] * square[i_1] * betaT*(T_transform[inode] - operatingtemperature);
 				//21.02.2019 Уже все учтено, см. выше.
 
-				rthdsd[i_1] = gradT;
+				rthdsd[i_1] += gradT;
 
 			}
 			else {
@@ -4890,28 +5612,333 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 			}
 		}
 
+
+		if (btimedep) {
+			{//3226
+
+// Метод линейного порядка.
+				doublereal min_x = 1e60;
+				doublereal min_y = 1e60;
+				doublereal min_z = 1e60;
+				doublereal max_x = -1e60;
+				doublereal max_y = -1e60;
+				doublereal max_z = -1e60;
+
+				for (integer i = 0; i < t.maxnod; i++) {
+					if (t.pa[i].x < min_x) {
+						min_x = t.pa[i].x;
+					}
+					if (t.pa[i].y < min_y) {
+						min_y = t.pa[i].y;
+					}
+					if (t.pa[i].z < min_z) {
+						min_z = t.pa[i].z;
+					}
+					if (t.pa[i].x > max_x) {
+						max_x = t.pa[i].x;
+					}
+					if (t.pa[i].y > max_y) {
+						max_y = t.pa[i].y;
+					}
+					if (t.pa[i].z > max_z) {
+						max_z = t.pa[i].z;
+					}
+				}
+
+				//min_x *= 1.2;
+				//min_y *= 1.2;
+				//min_z *= 1.2;
+
+
+
+				min_x = 1.05 * fabs(max_x - min_x);
+				if (min_x < 1.0e-30) {
+					min_x = 1.05 * fabs(max_x);
+				}
+				min_y = 1.05 * fabs(max_y - min_y);
+				if (min_y < 1.0e-30) {
+					min_y = 1.05 * fabs(max_y);
+				}
+				min_z = 1.05 * fabs(max_z - min_z);
+				if (min_z < 1.0e-30) {
+					min_z = 1.05 * fabs(max_z);
+				}
+				doublereal eps_mashine = 1.0e-308; // double
+
+				doublereal* vol = new doublereal[t.maxnod];
+				doublereal* potent_loc = new doublereal[t.maxelm];
+				for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+					doublereal hx = 1.0, hy = 1.0, hz = 1.0;
+					volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
+
+					if (hx <= 0.0) {
+						printf("negative hx\n");
+						system("PAUSE");
+					}
+					if (hy <= 0.0) {
+						printf("negative hy\n");
+						system("PAUSE");
+					}
+					if (hz <= 0.0) {
+						printf("negative hz\n");
+						system("PAUSE");
+					}
+
+					doublereal rho; // плотность в ячейке кг/м!3.
+
+					rho = t.prop[RHO][i_1];
+
+					// Восстанавливаем значение добавки к правой части
+					// из вершин кубика в центр ячейки.
+					doublereal tmp = 0.0;
+					for (integer k_1 = 0; k_1 < 8; k_1++) {
+						integer i_10 = t.nvtx[k_1][i_1] - 1;
+						integer i_1a = index_of(i_10, 'x'); // X
+						tmp += 0.125*(2.0*uoldtimestep[i_1a] - uolddoubletimestep[i_1a]);
+					}
+					
+					potent_loc[i_1] = (rho*(hx * hy * hz) / (timestep_sizenow*timestep_sizenow))*(tmp);
+					
+				}
+				//ZERO_ORDER_RECONSTRUCT(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tx_transform, eps_mashine,
+				//potent_loc, nullptr, nullptr, true);
+				SECOND_ORDER_QUADRATIC_RECONSTRUCTA(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tx_transform, min_x, min_y, min_z, potent_loc, t, eps_mashine, false);
+				for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+					doublereal hx = 1.0, hy = 1.0, hz = 1.0;
+					volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
+
+					if (hx <= 0.0) {
+						printf("negative hx\n");
+						system("PAUSE");
+					}
+					if (hy <= 0.0) {
+						printf("negative hy\n");
+						system("PAUSE");
+					}
+					if (hz <= 0.0) {
+						printf("negative hz\n");
+						system("PAUSE");
+					}
+
+					doublereal rho; // плотность в ячейке кг/м!3.
+
+					rho = t.prop[RHO][i_1];
+
+					// Восстанавливаем значение добавки к правой части
+					// из вершин кубика в центр ячейки.
+					doublereal tmp = 0.0;
+					for (integer k_1 = 0; k_1 < 8; k_1++) {
+						integer i_10 = t.nvtx[k_1][i_1] - 1;
+						integer i_1a = index_of(i_10, 'y'); // Y
+						tmp += 0.125*(2.0*uoldtimestep[i_1a] - uolddoubletimestep[i_1a]);
+					}
+
+					potent_loc[i_1] = (rho*(hx * hy * hz) / (timestep_sizenow*timestep_sizenow))*(tmp);
+
+				}
+				//ZERO_ORDER_RECONSTRUCT(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Ty_transform, eps_mashine,
+				//potent_loc, nullptr, nullptr, true);
+				SECOND_ORDER_QUADRATIC_RECONSTRUCTA(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Ty_transform, min_x, min_y, min_z, potent_loc, t, eps_mashine, false);
+				for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+					doublereal hx = 1.0, hy = 1.0, hz = 1.0;
+					volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
+
+					if (hx <= 0.0) {
+						printf("negative hx\n");
+						system("PAUSE");
+					}
+					if (hy <= 0.0) {
+						printf("negative hy\n");
+						system("PAUSE");
+					}
+					if (hz <= 0.0) {
+						printf("negative hz\n");
+						system("PAUSE");
+					}
+
+					doublereal rho; // плотность в ячейке кг/м!3.
+
+					rho = t.prop[RHO][i_1];
+
+					// Восстанавливаем значение добавки к правой части
+					// из вершин кубика в центр ячейки.
+					doublereal tmp = 0.0;
+					for (integer k_1 = 0; k_1 < 8; k_1++) {
+						integer i_10 = t.nvtx[k_1][i_1] - 1;
+						integer i_1a = index_of(i_10, 'z'); // Z
+						tmp += 0.125*(2.0*uoldtimestep[i_1a] - uolddoubletimestep[i_1a]);
+					}
+
+					potent_loc[i_1] = (rho*(hx * hy * hz) / (timestep_sizenow*timestep_sizenow))*(tmp);
+
+				}
+				//ZERO_ORDER_RECONSTRUCT(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tz_transform, eps_mashine,
+				//potent_loc, nullptr, nullptr, true);
+				SECOND_ORDER_QUADRATIC_RECONSTRUCTA(t.maxnod, t.maxelm, t.pa, t.nvtx, vol, Tz_transform, min_x, min_y, min_z, potent_loc, t, eps_mashine, false);
+				delete[] vol;
+				delete[] potent_loc;
+
+				//T_transform не заполнен
+			}
+
+			integer ibconstrX = 0;
+			integer ibconstrY = 0;
+			integer ibconstrZ = 0;
+			//for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
+			for (integer i_10 = 0; i_10 < t.maxnod; i_10++) {
+				integer i_1 = index_of(i_10, 'x'); // X
+				if ((!constr[i_1]) && (!cylsup[i_1].bactive)) {
+
+					// Если узел не зафиксирован.
+					doublereal ForceAdditional = 0.0;
+					ForceAdditional = Tx_transform[i_10];
+
+					rthdsd[i_1] += ForceAdditional;
+
+				}
+				else {
+					rthdsd[i_1] = 0.0;// FIXIT
+					//ibconstrX++;
+				}
+
+				i_1 = index_of(i_10, 'y'); // Y
+				if ((!constr[i_1]) && (!cylsup[i_1].bactive)) {
+
+					
+					// Если узел не зафиксирован.
+					doublereal ForceAdditional = 0.0;
+					ForceAdditional = Ty_transform[i_10];
+
+					rthdsd[i_1] += ForceAdditional;
+
+				}
+				else {
+					rthdsd[i_1] = 0.0;// FIXIT
+					//ibconstrY++;
+				}
+
+				i_1 = index_of(i_10, 'z'); // Z
+				if ((!constr[i_1]) && (!cylsup[i_1].bactive)) {
+
+					// Если узел не зафиксирован.
+					doublereal ForceAdditional = 0.0;
+					ForceAdditional = Tz_transform[i_10];
+
+					rthdsd[i_1] += ForceAdditional;
+
+				}
+				else {
+					rthdsd[i_1] = 0.0;// FIXIT
+					//ibconstrZ++;
+				}
+			}
+		}
+
+		// При обнаружении фиксации вершины
+		// зануляем правую часть во всей ячейке содержащей 
+		// данную вершину. 09.08.2020
+		// Учёт граничных условий закрепления.
+		for (integer j_11 = 0; j_11 < t.maxelm; j_11++) {
+			for (integer i_11 = 0; i_11 < 8; i_11++) {
+				//for (integer j_1 = 0; j_1 < t.maxnod; j_1++) {
+				integer j_1 = t.nvtx[i_11][j_11] - 1;
+				/*
+				if (constr[3 * j_1+1] && fabs(rthdsd[3 * j_1]) > 0.0) {
+					for (integer i_111 = 0; i_111 < 8; i_111++) {
+						integer j_111 = t.nvtx[i_111][j_11] - 1;
+						constr[3 * j_111] = false;
+						rthdsd[3 * j_111] = 0.0;
+						constr[3 * j_111 + 2] = 0.0;//Z -fix
+					}
+				}
+				*/
+				integer i_1 = index_of(j_1, 'x'); // X
+				if (constr[i_1]||(cylsup[i_1].bactive)) {
+					for (integer i_1a = 0; i_1a < 8; i_1a++) {
+						integer j_1a = t.nvtx[i_1a][j_11] - 1;
+						rthdsd[index_of(j_1a, 'x')] = 0.0; //X
+					}
+				}
+				i_1 = index_of(j_1, 'y');
+				if (constr[i_1]||(cylsup[i_1].bactive)) {
+					for (integer i_1a = 0; i_1a < 8; i_1a++) {
+						integer j_1a = t.nvtx[i_1a][j_11] - 1;
+						rthdsd[index_of(j_1a, 'y')] = 0.0; //Y 
+					}
+				}
+				i_1 = index_of(j_1, 'z');
+				if (constr[i_1]|| (cylsup[i_1].bactive)) {
+					for (integer i_1a = 0; i_1a < 8; i_1a++) {
+						integer j_1a = t.nvtx[i_1a][j_11] - 1;
+						rthdsd[index_of(j_1a, 'z')] = 0.0; //Z 
+					}
+				}
+			}
+		}
+
 		printf("FIXIT: X=%lld, Y=%lld, Z=%lld\n", ibconstrX, ibconstrY, ibconstrZ);
 
 		// Освобождение оперативной памяти из под градиентов температуры.
-		if (gradTx != nullptr) {
-			delete[] gradTx;
-			gradTx = nullptr;
-		}
-		if (gradTy != nullptr) {
-			delete[] gradTy;
-			gradTy = nullptr;
-		}
-		if (gradTz != nullptr) {
-			delete[] gradTz;
-			gradTz = nullptr;
-		}
 		
+
+		if (gradTx1 != nullptr) {
+			delete[] gradTx1;
+			gradTx1 = nullptr;
+		}
+		if (gradTy1 != nullptr) {
+			delete[] gradTy1;
+			gradTy1 = nullptr;
+		}
+		if (gradTz1 != nullptr) {
+			delete[] gradTz1;
+			gradTz1 = nullptr;
+		}
+
+		if (potent2 != nullptr) {
+			delete[] potent2;
+			potent2 = nullptr;
+		}
+
+		if (gradTx2 != nullptr) {
+			delete[] gradTx2;
+			gradTx2 = nullptr;
+		}
+		if (gradTy2 != nullptr) {
+			delete[] gradTy2;
+			gradTy2 = nullptr;
+		}
+		if (gradTz2 != nullptr) {
+			delete[] gradTz2;
+			gradTz2 = nullptr;
+		}	
+
 		if (YoungModule != nullptr) {
 			delete[] YoungModule;
 			YoungModule = nullptr;
 		}
 		
+		if (volume != nullptr) {
+			delete[] volume;
+			volume = nullptr;
+		}
 
+		if (Tx_transform != nullptr) {
+			delete[] Tx_transform;
+			Tx_transform = nullptr;
+		}
+		if (Ty_transform != nullptr) {
+			delete[] Ty_transform;
+			Ty_transform = nullptr;
+		}
+		if (Tz_transform != nullptr) {
+			delete[] Tz_transform;
+			Tz_transform = nullptr;
+		}
+		if (T_transform != nullptr) {
+			delete[] T_transform;
+			T_transform = nullptr;
+		}
+		
 	}
 
 	for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
@@ -4922,11 +5949,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 		//}
 	}
 
-	if (volume != nullptr) {
-		delete[] volume;
-		volume = nullptr;
-	}
-
+	
 	// Умножаем силу на площадь.
 	// Сила линейного теплового расширения E*vol*betaT*gradT или
 	// E*Square_ortho*betaT*DeltaT, DeltaT=l*gradT.
@@ -4951,7 +5974,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	}
 
 	IMatrix sparseS; // Разреженная матрица в формате IMatrix.
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) {		
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER) {
 		initIMatrix(&sparseS, 3 * t.maxnod);
 	}
 	SIMPLESPARSE sparseM; // разреженная матрица
@@ -4967,11 +5990,14 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 			}
 		}
 		// Сборка локальной матрицы жёсткости.
-		// Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 4.08.2017.
+		// Термоупругость сборка матрицы Жёсткости
+		// для шестигранной призмы. 4.08.2017.
 		//Thermal_Structural_assemble(ie, t.nvtx,
 			//t.pa, t.prop, Kmatrix_local);
-		Thermal_Structural_assemble_Volk(ie, t.nvtx,
-			t.pa, t.prop, Kmatrix_local);
+		//Thermal_Structural_assemble_Volk2(ie, t.nvtx,
+			//t.pa, t.prop, Kmatrix_local, btimedep, timestep_sizenow);
+		Thermal_Structural_assemble_Volk3(ie, t.nvtx,
+			t.pa, t.prop, Kmatrix_local, btimedep, timestep_sizenow,t.bActiveShearModule[ie]);
 
 		for (integer i_4 = 0; i_4 < 24; i_4++) {
 			for (integer j_4 = 0; j_4 < 24; j_4++) {
@@ -4987,6 +6013,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 					//printf("%1.2f ", Kmatrix_local[i_4][j_4]);
 					//printf("%e ", Kmatrix_local[i_4][j_4]);
 					if (fabs(Kmatrix_local[i_4][j_4] - Kmatrix_local[j_4][i_4]) > 1.0e-3) {
+						// Нарушена симметричность.
 						printf("i=%lld j=%lld %e %e", i_4 + 1, j_4 + 1, Kmatrix_local[i_4][j_4], Kmatrix_local[j_4][i_4]);
 					}
 					//printf("%d \n%d \n%1.9f\n", i_4 + 1, j_4 + 1, Kmatrix_local[i_4][j_4]);
@@ -5014,7 +6041,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 		bool bsecond_member_of_equation = true;
 		bsecond_member_of_equation = false;//
 		// Добавление локальной матрицы жёсткости в глобальную.
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) 
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER)
 		{
 			
 			elembdSparse2(ie, sparseS, t.nvtx,
@@ -5038,7 +6065,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 		}
 	}
 
-	if (!(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER)) {
+	if (!(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER)) {
 		for (integer i_check = 0; i_check < 3 * t.maxnod; i_check++) {
 			if (sparseM.root[i_check] == nullptr) {
 				printf("error: zero string %lld \n", i_check);
@@ -5094,7 +6121,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	//getchar();
 	// Решение СЛАУ TODO.
 
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) {
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER) {
 		calculateSPARSEgaussArray(&sparseS, deformation, rthdsd);
 	}
 	bool bprintmessage = true;
@@ -5105,45 +6132,96 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	//simplesparsetoCRS(sparseM, val, col_ind, row_ptr, (3 * t.maxnod)); // преобразование матрицы из одного формата хранения в другой.
 	//simplesparsefree(sparseM, 3 * t.maxnod);
 
+	QuickMemVorst m;
+	m.ballocCRSt = false; // Выделять память
+	m.bsignalfreeCRSt = true; // и сразу освобождать.
+
+							  // инициализация указателей.
+	m.tval = nullptr;
+	m.tcol_ind = nullptr;
+	m.trow_ptr = nullptr;
+	m.tri = nullptr;
+	m.troc = nullptr;
+	m.ts = nullptr;
+	m.tt = nullptr;
+	m.tvi = nullptr;
+	m.tpi = nullptr;
+	m.tdx = nullptr;
+	m.tdax = nullptr;
+	m.ty = nullptr;
+	m.tz = nullptr;
+	m.ta = nullptr;
+	m.tja = nullptr;
+	m.tia = nullptr;
+	m.talu = nullptr;
+	m.tjlu = nullptr;
+	m.tju = nullptr;
+	m.tiw = nullptr;
+	m.tlevs = nullptr;
+	m.tw = nullptr;
+	m.tjw = nullptr;
+	m.icount_vel = 100000; // очень большое число.
+
 	// Разрешающих свойств данного метода без предобуславливателя явно недостаточно.
 	//Bi_CGStabCRS((3 * t.maxnod), val, col_ind, row_ptr, rthdsd, deformation, maxiter);//->//
 	
 	// BiCGStab + ILU6 сходимость есть.
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER) {
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::BICGSTAB_PLUS_ILU6_SECOND_T_SOLVER) {
 		 // BiCGStab +ILU(lfil), lfil=1..6.
 		 bool* boundary = nullptr;
 	     Bi_CGStab_internal4(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m, w,lw,boundary, TOTALDEFORMATION);
 	}
 	// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 	//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == CAMG_RUMBA_v0_14_SECOND_T_SOLVER) {
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::CAMG_RUMBA_v0_14_SECOND_T_SOLVER) {
 		bool* boundary = nullptr;
-		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m,b,lb,w,lw, boundary);
+		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m,b,lb,w,lw, boundary, TOTALDEFORMATION);
 	}
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == AMG1R5_SECOND_T_SOLVER)  {
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::AMG1R5_SECOND_T_SOLVER)  {
 		bool* boundary = nullptr;
 	    //  if (NONE_only_amg1r5==stabilization_amg1r5_algorithm)  -> amg1r5 Руге и Штубена.
 		//  if (BiCGStab_plus_amg1r5==stabilization_amg1r5_algorithm)  -> BiCGStab + amg1r5 Хенк Ван дер Ворст + Руге и Штубен.
 		//  if (FGMRes_plus_amg1r5==stabilization_amg1r5_algorithm)  -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Штубен. // 16.10.2018.
 		amg_loc_memory_for_Matrix_assemble2(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m, w, lw, boundary); // 13.10.2018
 	}
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == AMGCL_SECONT_T_SOLVER)
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::AMGCL_SECONT_T_SOLVER)
 	{
 #if AMGCL_INCLUDE_IN_MY_PROJECT == 1
 		// Denis Demidov AMGCL
 		bool* boundary = nullptr;
 		amgcl_secondT_solver(sparseM, (3 * t.maxnod),
-			rthdsd, deformation, bprintmessage,w,lw,boundary);
+			rthdsd, deformation, bprintmessage,w,lw,boundary,true);
+#else
+		std::cout << "ERROR!!! Library AMGCL ddemidov not connected." << std::endl;
+		system("PAUSE");
 #endif
 	}
 
 	// Нужна специальная версия BicgStab+ILU2.
 
-	doublereal deform_max = -1.0e30;
-	doublereal deform_min = +1.0e30;
-	for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
-		if (deformation[i_1] > deform_max) deform_max = deformation[i_1];
-		if (deformation[i_1] < deform_max) deform_min = deformation[i_1];
+	doublereal deform_max_total = -1.0e30;
+	doublereal deform_min_total = +1.0e30;
+	doublereal deform_max_x = -1.0e30;
+	doublereal deform_min_x = +1.0e30;
+	doublereal deform_max_y = -1.0e30;
+	doublereal deform_min_y = +1.0e30;
+	doublereal deform_max_z = -1.0e30;
+	doublereal deform_min_z = +1.0e30;
+	for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1=i_1+3) {
+		if (deformation[i_1] > deform_max_x) deform_max_x = deformation[i_1];
+		if (deformation[i_1] < deform_max_x) deform_min_x = deformation[i_1];
+
+		if (deformation[i_1+1] > deform_max_y) deform_max_y = deformation[i_1+1];
+		if (deformation[i_1+1] < deform_max_y) deform_min_y = deformation[i_1+1];
+
+		if (deformation[i_1+2] > deform_max_z) deform_max_z = deformation[i_1+2];
+		if (deformation[i_1+2] < deform_max_z) deform_min_z = deformation[i_1+2];
+
+		doublereal td = sqrt(deformation[i_1]* deformation[i_1]+
+			deformation[i_1+1] * deformation[i_1+1] + 
+			deformation[i_1+2] * deformation[i_1+2]);
+		if (td > deform_max_total) deform_max_total = td;
+		if (td < deform_max_total) deform_min_total = td;
 
 		if (0) {
 			if (rthdsd[i_1] > 0.0) {
@@ -5154,10 +6232,21 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 			}
 		}
 	}
-	printf("deformation: min = %e, max=%e\n", deform_min, deform_max);
+	printf("deformation x directional: min = %e, max=%e\n", deform_min_x, deform_max_x);
+	printf("deformation y directional: min = %e, max=%e\n", deform_min_y, deform_max_y);
+	printf("deformation z directional: min = %e, max=%e\n", deform_min_z, deform_max_z);
+	printf("total deformation directional: min = %e, max=%e\n", deform_min_total, deform_max_total);
 
 	printf("SLAU is solve.\n");
 	//getchar();
+
+	if (btimedep) {
+		// Подготовка к следующему шагу по времени:
+		for (integer i = 0; i < 3 * t.maxnod; i++) {			
+			uolddoubletimestep[i] = uoldtimestep[i];
+			uoldtimestep[i] = deformation[i];
+		}
+	}
 
 	// Запись результата для визуализации.
 	// деформация: выделение памяти и инициализация нулём.
@@ -5171,37 +6260,18 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 			j_6,
 			t.total_deformation[j_6]); // output
 	}
-	//Stress2Thermal_vector_translate(t, T_transform, t.total_deformation[0]);
-	//Stress2Thermal_vector_translate(t, Tx_transform, t.total_deformation[1]);
-	//Stress2Thermal_vector_translate(t, Ty_transform, t.total_deformation[2]);
-	//Stress2Thermal_vector_translate(t, Tz_transform, t.total_deformation[3]);
+	
 	// Сохранение деформации.
 	// TODO.
 	
 	
-	if (Tx_transform != nullptr) {
-	delete[] Tx_transform;
-	Tx_transform = nullptr;
-	}
-	if (Ty_transform != nullptr) {
-	delete[] Ty_transform;
-	Ty_transform = nullptr;
-	}
-	if (Tz_transform != nullptr) {
-	delete[] Tz_transform;
-	Tz_transform = nullptr;
-	}
-	if (T_transform != nullptr) {
-		delete[] T_transform;
-		T_transform = nullptr;
-	}
-
+	
 
 	printf("deformation writing.\n");
 	//getchar();
 
 	// Освобождение оперативной памяти.
-	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == DIRECT_SECOND_T_SOLVER) {
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == SECOND_T_SOLVER_ID_SWITCH::DIRECT_SECOND_T_SOLVER) {
 	    freeIMatrix(&sparseS);
 	}
 	//simplesparsefree(sparseM, 3 * t.maxnod);
@@ -5214,6 +6284,437 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	}
 	delete[] Kmatrix_local;
 } // solve_Structural
+
+
+
+  // Решение прочностной задачи в 3D.
+  // 6 августа 2017. август 2020.
+// Природа силы непонятна, непонятно на поверхности она или в объеме.
+// Более того непонятно если ее учесть даст ли это совпадение картинок с ансис.
+void solve_Structural_foundation_stiffness(TEMPER &t, WALL* &w, integer lw,
+	bool bThermalStress, doublereal operatingtemperature,
+	BLOCK* &b, integer &lb, integer &lu,
+	bool btimedep, doublereal timestep_sizenow,
+	doublereal* &uoldtimestep, doublereal* &uolddoubletimestep,
+	doublereal poweron_multiplyer_sequence, TPROP* &matlist,
+	doublereal* &t_for_Mechanical) {
+
+	// btimedep==true - нестационарное моделирование,
+	// btimedep==false - стационарная задача механики.
+	// timestep_sizenow - размер шага по времени,
+	// uoldtimestep - перемещения на один шаг назад,
+	// uolddoubletimestep - перемещения на два шага назад.
+	// uoldtimestep, uolddoubletimestep - память выделена заранее в вызывающем внешнем коде.
+	// poweron_multiplyer_sequence==0.0 вектор силы выключен,
+	// poweron_multiplyer_sequence==1.0 вектор силы полностью включён,
+	// 0 < poweron_multiplyer_sequence < 1 - вектор силы частично активен.
+
+	doublereal** deformation_old_iteration = new doublereal*[4];
+	for (integer i_1 = 0; i_1 < 4; i_1++) {
+		deformation_old_iteration[i_1] = new doublereal[t.maxelm + t.maxbound];
+	}
+	// initialization
+	for (integer i_1 = 0; i_1 < 4; i_1++) {
+#pragma omp parallel for
+		for (integer j_1 = 0; j_1 < t.maxelm + t.maxbound; j_1++) {
+			deformation_old_iteration[i_1][j_1] = 0.0;
+		}
+	}
+
+	for (integer iter = 0; iter < 4; iter++) {
+
+		solve_Structural(t, w, lw,
+			bThermalStress, operatingtemperature,
+			b, lb, lu,
+			btimedep, timestep_sizenow,
+			uoldtimestep, uolddoubletimestep,
+			poweron_multiplyer_sequence, matlist,
+			t_for_Mechanical);
+
+
+		doublereal dmr = 0.0;
+		for (integer i_1 = 0; i_1 < 4; i_1++) {
+#pragma omp parallel for
+			for (integer j_1 = 0; j_1 < t.maxelm + t.maxbound; j_1++) {
+				deformation_old_iteration[i_1][j_1] = t.total_deformation[i_1][j_1];
+			}
+		}
+
+
+		for (integer i_1 = 1; i_1 < 4; i_1++) {
+#pragma omp parallel for
+			for (integer j_1 = 0; j_1 < t.maxelm + t.maxbound; j_1++) {
+				dmr += (deformation_old_iteration[i_1][j_1] - t.total_deformation[i_1][j_1])*(deformation_old_iteration[i_1][j_1] - t.total_deformation[i_1][j_1]);
+			}
+		}
+		dmr /= 3.0*(t.maxelm + t.maxbound);
+		std::cout << "residual foundation Mechanical=" << dmr << std::endl;
+
+		// gamma_xy
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 2, 4, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 2, 4, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 1, 5, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 1, 5, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_XY][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+		// gamma_yz
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 3, 4, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 3, 4, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 2, 5, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 2, 5, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_YZ][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+
+		// gamma_zx
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 1, 4, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 1, 4, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, 3, 5, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, 3, 5, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_ZX][i_1] = t.total_deformation[4][i_1] + t.total_deformation[5][i_1];
+
+		}
+
+		// epsilon_x
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, XDEFORMATION, STRAIN_X, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, XDEFORMATION, STRAIN_X, LINE_DIRECTIONAL::X_LINE_DIRECTIONAL);
+		}
+
+
+		// epsilon_y
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, YDEFORMATION, STRAIN_Y, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, YDEFORMATION, STRAIN_Y, LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL);
+		}
+
+		// epsilon_z
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, false,
+				t.border_neighbor, t.ilevel_alice, ZDEFORMATION, STRAIN_Z, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+#pragma omp parallel for
+		for (integer i = 0; i < t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gauss_Stress(i, t.total_deformation, t.nvtx, t.pa,
+				t.neighbors_for_the_internal_node, t.maxelm, true,
+				t.border_neighbor, t.ilevel_alice, ZDEFORMATION, STRAIN_Z, LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL);
+		}
+
+		double **Dirichlet = new doublereal*[6];
+		for (integer i_11 = 0; i_11 < 6; i_11++) {
+			Dirichlet[i_11] = new doublereal[6];
+		}
+		for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+
+
+			doublereal beta_t_solid = t.prop[BETA_T_MECHANICAL][i_1]; // Коэффициенты Ламе, коэффициент линейного теплового расширения.
+			doublereal beta_t_solid_x = t.prop[MULT_BETA_T_MECHANICAL_X][i_1] * t.prop[BETA_T_MECHANICAL][i_1];// Коэффициент линейного теплового расширения 1/K.
+			doublereal beta_t_solid_y = t.prop[MULT_BETA_T_MECHANICAL_Y][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+			doublereal beta_t_solid_z = t.prop[MULT_BETA_T_MECHANICAL_Z][i_1] * t.prop[BETA_T_MECHANICAL][i_1];
+			doublereal Ex = t.prop[MULT_YOUNG_MODULE_X][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			doublereal Ey = t.prop[MULT_YOUNG_MODULE_Y][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			doublereal Ez = t.prop[MULT_YOUNG_MODULE_Z][i_1] * t.prop[YOUNG_MODULE][i_1]; // Модуль Юнга Па.
+			doublereal E = t.prop[YOUNG_MODULE][i_1];
+			doublereal nuyz = t.prop[MULT_POISSON_RATIO_YZ][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuxz = t.prop[MULT_POISSON_RATIO_XZ][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuxy = t.prop[MULT_POISSON_RATIO_XY][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuzy = t.prop[MULT_POISSON_RATIO_ZY][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuzx = t.prop[MULT_POISSON_RATIO_ZX][i_1] * t.prop[POISSON_RATIO][i_1];
+			doublereal nuyx = t.prop[MULT_POISSON_RATIO_YX][i_1] * t.prop[POISSON_RATIO][i_1];
+
+			doublereal nu = t.prop[POISSON_RATIO][i_1];
+
+
+			doublereal Gxy, Gyz, Gxz;
+			if (!t.bActiveShearModule[i_1]) {
+				Gxy = Gyz = Gxz = Ex / (2.0 * (1.0 + nuxy));
+			}
+			else {
+				Gyz = t.prop[SHEAR_MODULE_YZ][i_1];
+				Gxz = t.prop[SHEAR_MODULE_XZ][i_1];
+				Gxy = t.prop[SHEAR_MODULE_XY][i_1];
+			}
+
+
+			Dirichlet[0][0] = (nuyz*nuzy - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[0][1] = -(nuxz*nuzy + nuxy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[0][2] = -(nuxy*nuyz + nuxz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[0][3] = 0.0;
+			Dirichlet[0][4] = 0.0;
+			Dirichlet[0][5] = 0.0;
+			Dirichlet[1][0] = -(nuyz*nuzx + nuyx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[1][1] = (nuxz*nuzx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[1][2] = -(nuxz*nuyx + nuyz) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[1][3] = 0.0;
+			Dirichlet[1][4] = 0.0;
+			Dirichlet[1][5] = 0.0;
+			Dirichlet[2][0] = -(nuyx*nuzy + nuzx) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ex;
+			Dirichlet[2][1] = -(nuxy*nuzx + nuzy) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx +
+				nuxz * nuzx + nuyz * nuzy - 1.0)*Ey;
+			Dirichlet[2][2] = (nuxy*nuyx - 1.0) / (nuxy*nuyz*nuzx + nuxz * nuyx*nuzy + nuxy * nuyx + nuxz
+				* nuzx + nuyz * nuzy - 1.0)*Ez;
+			Dirichlet[2][3] = 0.0;
+			Dirichlet[2][4] = 0.0;
+			Dirichlet[2][5] = 0.0;
+			Dirichlet[3][0] = 0.0;
+			Dirichlet[3][1] = 0.0;
+			Dirichlet[3][2] = 0.0;
+			Dirichlet[3][3] = Gxy;
+			Dirichlet[3][4] = 0.0;
+			Dirichlet[3][5] = 0.0;
+			Dirichlet[4][0] = 0.0;
+			Dirichlet[4][1] = 0.0;
+			Dirichlet[4][2] = 0.0;
+			Dirichlet[4][3] = 0.0;
+			Dirichlet[4][4] = Gyz;
+			Dirichlet[4][5] = 0.0;
+			Dirichlet[5][0] = 0.0;
+			Dirichlet[5][1] = 0.0;
+			Dirichlet[5][2] = 0.0;
+			Dirichlet[5][3] = 0.0;
+			Dirichlet[5][4] = 0.0;
+			Dirichlet[5][5] = Gxz;
+
+
+			t.total_deformation[STRESS_X][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+				}
+				else {
+					t.total_deformation[STRESS_X][i_1] += Dirichlet[0][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+			t.total_deformation[STRESS_Y][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+				}
+				else {
+					t.total_deformation[STRESS_Y][i_1] += Dirichlet[1][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+			t.total_deformation[STRESS_Z][i_1] = 0.0;
+			for (integer i_11 = 0; i_11 < 6; i_11++) {
+				if (((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+					(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))) {
+					if ((i_11 == 0)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_x * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 1)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_y * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+					if ((i_11 == 2)) {
+						t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * (t.total_deformation[i_11 + STRAIN_X][i_1] -
+							beta_t_solid_z * (t.potent[i_1] - t.operatingtemperature_copy));
+					}
+				}
+				else {
+					t.total_deformation[STRESS_Z][i_1] += Dirichlet[2][i_11] * t.total_deformation[i_11 + STRAIN_X][i_1];
+				}
+			}
+
+			t.total_deformation[STRESS_XY][i_1] = Dirichlet[3][3] * t.total_deformation[STRAIN_XY][i_1];
+			t.total_deformation[STRESS_YZ][i_1] = Dirichlet[4][4] * t.total_deformation[STRAIN_YZ][i_1];
+			t.total_deformation[STRESS_ZX][i_1] = Dirichlet[5][5] * t.total_deformation[STRAIN_ZX][i_1];
+		}
+		for (integer i_11 = 0; i_11 < 6; i_11++) {
+			delete[] Dirichlet[i_11];
+		}
+		delete[] Dirichlet;
+
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxbound; i_1++) {
+			t.total_deformation[STRESS_X][i_1] = t.total_deformation[STRESS_X][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_Y][i_1] = t.total_deformation[STRESS_Y][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_Z][i_1] = t.total_deformation[STRESS_Z][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_XY][i_1] = t.total_deformation[STRESS_XY][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_YZ][i_1] = t.total_deformation[STRESS_YZ][t.border_neighbor[i_1].iI];
+			t.total_deformation[STRESS_ZX][i_1] = t.total_deformation[STRESS_ZX][t.border_neighbor[i_1].iI];
+		}
+
+		// epsilon (STRAIN) von Mizes
+#pragma omp parallel for
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+
+			t.total_deformation[STRAIN_VON_MIZES][i_1] = sqrt(0.5*((t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1])*
+				(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Y][i_1]) + (t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				(t.total_deformation[STRAIN_Y][i_1] - t.total_deformation[STRAIN_Z][i_1]) + (t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1]) *
+				(t.total_deformation[STRAIN_X][i_1] - t.total_deformation[STRAIN_Z][i_1])));
+
+			t.total_deformation[LOG10_STRAIN_VON_MIZES][i_1] = log10(t.total_deformation[STRAIN_VON_MIZES][i_1]);
+
+
+			// STRESS
+
+			t.total_deformation[STRESS_VON_MIZES][i_1] = sqrt(0.5*((t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1])*
+				(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Y][i_1]) + (t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				(t.total_deformation[STRESS_Y][i_1] - t.total_deformation[STRESS_Z][i_1]) + (t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1]) *
+				(t.total_deformation[STRESS_X][i_1] - t.total_deformation[STRESS_Z][i_1])));
+
+			t.total_deformation[LOG10_STRESS_VON_MIZES][i_1] = log10(t.total_deformation[STRESS_VON_MIZES][i_1]);
+
+		}
+
+	}
+
+}
 
 
 // Предупреждает в случае нарушения физики (консервативности).
@@ -5289,6 +6790,12 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	unsigned int nthreads = number_cores();
 	omp_set_num_threads(nthreads); // установка числа потоков
 #endif
+
+	bool brthdsd_ON1 = true;
+	if (inumiter < 7) brthdsd_ON1 = false;
+
+	bool brthdsd_ON = true;
+	if (inumiter < 7) brthdsd_ON = false;
 
 	switch (iVar) {
 	case PAM:
@@ -5521,6 +7028,9 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 		else {
 			// Граничные условия Дирихле обязательно 
 			// должны собираться в первую очередь
+			integer icell_loc = 0;
+
+#pragma omp parallel for reduction(+:icell_loc)
 			for (integer  i = 0; i < f.maxbound; i++) {
 
 				breversedflow = false;
@@ -5567,9 +7077,11 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 					breversedflow,
 					tau);//*/
 
-				if (breversedflow) icell++;
+				if (breversedflow) icell_loc++;
 			}
-		}
+		
+			icell += icell_loc;
+}
 
 #else
 
@@ -5869,6 +7381,10 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	}
 }
 else {
+
+integer icell_loc = 0;
+
+#pragma omp parallel for reduction(+:icell_loc)
 	for (integer  i = 0; i<f.maxbound; i++) {
 
 
@@ -5918,10 +7434,13 @@ else {
 			tau);
 
 		//						  */
-		if (breversedflow) icell++;
+		if (breversedflow) icell_loc++;
 
 
 				  }
+
+
+	icell += icell_loc;
 }
 
 #else
@@ -5983,7 +7502,7 @@ else {
 
 				 // printf("step Neiman...\n");
 				 // getchar();
-
+#pragma omp parallel for
 				  for (integer  i = 0; i < f.maxbound; i++) {
 					  if (f.slau_bon[PAM][i].aw < 0.0) {
 						  printf("maxbound=%lld i=%lld problem PAM aw=%e\n", f.maxbound, i, f.slau_bon[PAM][i].aw);
@@ -6521,6 +8040,8 @@ else {
 					  }
 				  }
 				  else {
+
+#pragma omp parallel for
 					  for (integer  i = 0; i<f.maxelm; i++) {
 						  rhie_chow[0][i] = 0.0;
 						  rhie_chow[1][i] = 0.0;
@@ -6959,6 +8480,7 @@ else {
 				   else {
 					   // Нормировка:
 					   // Дополнено 19.03.2019
+#pragma omp parallel for
 					   for (integer  i = 0; i<f.maxelm; i++) {
 						   f.slau[PAM][i].ae /= f.slau[PAM][i].ap;
 						   f.slau[PAM][i].aw /= f.slau[PAM][i].ap;
@@ -6991,6 +8513,7 @@ else {
 						   f.slau[PAM][i].b /= f.slau[PAM][i].ap;
 						   f.slau[PAM][i].ap = 1.0;
 					   }
+#pragma omp parallel for
 					   for (integer  i = 0; i<f.maxbound; i++) {
 						   f.slau_bon[PAM][i].ai /= f.slau_bon[PAM][i].aw;
 						   f.slau_bon[PAM][i].b /= f.slau_bon[PAM][i].aw;
@@ -7080,7 +8603,7 @@ else {
 					}
 					*/
 #endif
-				  
+#pragma omp parallel for
 					for (integer  i = 0; i < f.maxelm; i++) {
 						if (f.slau[PAM][i].ap < 0.0) {
 							printf("maxelm=%lld i=%lld problem PAM\n",f.maxelm, i);
@@ -7492,6 +9015,7 @@ else {
 					   // Кинетическая энергия турбулентных пульсаций в ммодели SST Ментера.
 
 					   // init для проверки
+#pragma omp parallel for
 					   for (integer i = 0; i < f.maxbound; i++) {
 						   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].ai = 0.0;
 						   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].aw = -100.0;
@@ -7500,6 +9024,7 @@ else {
 
 					   // Граничные условия Дирихле обязательно 
 					   // должны собираться в первую очередь
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // условия Дирихле третий параметр равен true
 						   my_elmatr_quad_kinetik_turbulence_energy_3D_bound(i, f.maxelm,
@@ -7510,6 +9035,7 @@ else {
 					   }
 
 					   // Во вторую очередь собираются однородные условия Неймана.
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // однородные условия Неймана третий параметр равен false
 						   my_elmatr_quad_kinetik_turbulence_energy_3D_bound(i, f.maxelm,
@@ -7520,6 +9046,7 @@ else {
 					   }
 
 					   // Проверка.
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   if (f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].aw <0.0) {
 							   printf("maxbound=%lld i=%lld problem KE\n",f.maxbound, i);
@@ -7535,8 +9062,15 @@ else {
 					   // Выбор делается из графического интерфейса пользователя !
 					   imyscheme = iFLOWScheme; // 31 07 2015
 
+
+					   
+
 					   // Сборка строк матрицы для внутренних КО.
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxelm; i++) {
+
+						   
+
 						   my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 							   i,
 							   f.border_neighbor,
@@ -7575,11 +9109,13 @@ else {
 							   //doublereal &sumanb,
 							   t.ilevel_alice,
 							   f.rdistWall,
-							   f.SInvariantStrainRateTensor
+							   f.SInvariantStrainRateTensor,
+							   brthdsd_ON
 						   );
 					   }
 
 
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxelm; i++) {
 						   if (f.slau[TURBULENT_KINETIK_ENERGY_SL][i].ap < 0.0) {
 							   printf("maxelm=%lld i=%lld problem TURBULENT_KINETIK_ENERGY_SL ap=%e\n", f.maxelm, i, f.slau[TURBULENT_KINETIK_ENERGY_SL][i].ap);
@@ -7595,6 +9131,7 @@ else {
 					   // турбулентных пульсаций.
 
 						// init для проверки
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].ai = 0.0;
 						   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].aw = -100.0;
@@ -7603,6 +9140,7 @@ else {
 
 					   // Граничные условия Дирихле обязательно 
 					   // должны собираться в первую очередь
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // условия Дирихле третий параметр равен true
 						   my_elmatr_quad_OmegaSSTMenter3D_bound(i, f.maxelm,
@@ -7613,6 +9151,7 @@ else {
 					   }
 
 					   // Во вторую очередь собираются однородные условия Неймана.
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // однородные условия Неймана третий параметр равен false
 						   my_elmatr_quad_OmegaSSTMenter3D_bound(i, f.maxelm,
@@ -7623,6 +9162,7 @@ else {
 					   }
 
 					   // Проверка.
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxbound; i++) {
 						   if (f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].aw < 0.0) {
 							   printf("maxbound=%lld i=%lld problem OMEGA\n", f.maxbound, i);
@@ -7638,8 +9178,12 @@ else {
 					   // Выбор делается из графического интерфейса пользователя !
 					   imyscheme = iFLOWScheme; // 31 07 2015
 
+					   
+
 					   // Сборка строк матрицы для внутренних КО.
-					   for (integer  i = 0; i < f.maxelm; i++) {
+#pragma omp parallel for
+					   for (integer  i = 0; i < f.maxelm; i++) {					   
+
 						   my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 							   i,
 							   f.border_neighbor,
@@ -7678,11 +9222,12 @@ else {
 							   //doublereal &sumanb,
 							   t.ilevel_alice,
 							   f.rdistWall,
-							   f.SInvariantStrainRateTensor
+							   f.SInvariantStrainRateTensor,
+							   brthdsd_ON1
 						   );
 					   }
 
-
+#pragma omp parallel for
 					   for (integer  i = 0; i < f.maxelm; i++) {
 						   if (f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].ap < 0.0) {
 							   printf("maxelm=%lld i=%lld problem TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL ap=%e\n", f.maxelm, i, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].ap);
@@ -7982,6 +9527,7 @@ else {
 				// Свободный openmp без задания предварительно inumcore
 				// Граничные условия Дирихле обязательно 
 				// должны собираться в первую очередь
+#pragma omp parallel for
 				for (integer i = 0; i<f.maxbound; i++) {
 					// условия Дирихле третий параметр равен true
 					my_elmatr_quad_F3D_bound(i, f.maxelm,
@@ -8134,6 +9680,7 @@ else {
 					  }
 					  else {
 						  // Во вторую очередь собираются однородные условия Неймана.
+#pragma omp parallel for
 						  for (integer i = 0; i<f.maxbound; i++) {
 							  // однородные условия Неймана третий параметр равен false
 							  my_elmatr_quad_F3D_bound(i, f.maxelm,
@@ -8171,7 +9718,7 @@ else {
 					  
 
 #endif
-
+#pragma omp parallel for
 					  for (integer i = 0; i < f.maxbound; i++) {
 						  if (f.slau_bon[iVar][i].aw < 0.0) {
 							  printf("maxbound=%lld i=%lld problem iVar==%lld\n",f.maxbound,i, iVar);
@@ -8609,6 +10156,7 @@ TOCHKA p;
 						 // temp_ref = tavg;
 
 						  // Сборка строк матрицы для внутренних КО.
+#pragma omp parallel for
 						  for (integer i = 0; i<f.maxelm; i++) {
 							  TOCHKA p;
 							  center_cord3D(i, f.nvtx, f.pa, p, 100);
@@ -8684,7 +10232,7 @@ TOCHKA p;
 							  }
 						  }
 					  
-
+#pragma omp parallel for
 						  for (integer i = 0; i < f.maxbound; i++) {
 							  sumanb[iVar][f.maxelm + i] = f.slau_bon[iVar][i].aw;
 						  }
@@ -8692,6 +10240,7 @@ TOCHKA p;
 						  // Вычисление действия градиента давления.
 						// Это необходимо сделать строго после того как все
 						   // sumanb вычислены.
+#pragma omp parallel for
 						  for (integer i = 0; i < f.maxelm; i++) {
 							  pterm(i, f.slau,
 								  f.potent, iVar,
@@ -8807,7 +10356,7 @@ TOCHKA p;
 					  }
 
 #endif
-
+#pragma omp parallel for
 					  for (integer  i = 0; i < f.maxelm; i++) {
 						  if (f.slau[iVar][i].ap < 0.0) {
 							  printf("maxelm=%lld i=%lld problem iVar==%lld ap=%e\n", f.maxelm, i, iVar, f.slau[iVar][i].ap);
@@ -8988,7 +10537,7 @@ TOCHKA p;
 
 	if (iVar!=TEMP) {
 
-
+#pragma omp parallel for
 		for (integer  i = 0; i < f.maxelm + f.maxbound; i++) {
 			// инициализация.
 			rthdsd[i] = 0.0;
@@ -9052,6 +10601,7 @@ TOCHKA p;
 		
 
 		// Для внутренних узлов расчётной сетки:
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			switch (iVar) {
 			case VELOCITY_X_COMPONENT: if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau[iVar][i].ap / f.alpha[iVar], f.slau[iVar][i].iP, f.slau[iVar][i].iP, true); }
@@ -9225,6 +10775,7 @@ TOCHKA p;
 	   if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar == NUSHA) || (iVar == PAM) ||
 		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		   (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+#pragma omp parallel for
 		   for (integer i_1 = 0; i_1 < f.maxelm + f.maxbound; i_1++) {
 			   if (rthdsd[i_1] != rthdsd[i_1]) {
 				   switch (iVar) {
@@ -9264,6 +10815,7 @@ TOCHKA p;
 	   }
 
        // Для граничных узлов расчётной сетки:
+#pragma omp parallel for
 	   for (integer i=0; i<f.maxbound; i++) {
 
            // К граничным условиям Дирихле релаксации применять ненужно ? Это спорный вопрос.
@@ -9401,6 +10953,7 @@ TOCHKA p;
 	   if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) || (iVar==NUSHA) || (iVar==PAM)||
 		   (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 		   (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+#pragma omp parallel for
 		   for (integer i_1 = 0; i_1 < f.maxelm+f.maxbound; i_1++) {
 			   if (rthdsd[i_1] != rthdsd[i_1]) {
 				   switch (iVar) {
@@ -9479,6 +11032,7 @@ TOCHKA p;
 				t.slau_bon[i].aw=1.0;
 			}
 			*/
+#pragma omp parallel for
 			for (integer i=0; i<t.maxelm+t.maxbound; i++) {
 				rthdsd[i]=0.0; // обнуление
 			}
@@ -9486,6 +11040,7 @@ TOCHKA p;
 			// 7 августа 2016 введена нижняя релаксация для температуры в матрицу СЛАУ.
 
 		    // запись уравнений для внутренних узлов в матрицу.
+#pragma omp parallel for
 		    for (integer i=0; i<t.maxelm; i++) {
 #if doubleintprecision == 1
 				//printf("%lld %e %e %e %e %e %e %e %e\n",i, t.slau[i].ap,  t.slau[i].ae,  t.slau[i].aw,  t.slau[i].an,  t.slau[i].as,  t.slau[i].at,  t.slau[i].ab);
@@ -9645,6 +11200,7 @@ TOCHKA p;
 			}
 
             // Запись уравнений для граничных узлов в матрицу:
+#pragma omp parallel for
             for (integer i=0; i<t.maxbound; i++) {
                 
 				if (!bBiCGStabSaad) {
@@ -9678,6 +11234,7 @@ TOCHKA p;
 			}
 
 			if (rthdsd_no_radiosity_patch != nullptr) {
+#pragma omp parallel for
 				for (integer i23 = 0; i23 < t.maxelm + t.maxbound; i23++) {
 					rthdsd_no_radiosity_patch[i23] = rthdsd[i23];
 				}
@@ -11778,7 +13335,7 @@ void update_Stefan_Bolcman_condition_double_vacuum_PRISM(WALL* w, integer lw, in
 		if ((bBlockStefanBolcman && (
 			(((border_neighbor[inumber].MCB < (ls + lw)) &&
 			(border_neighbor[inumber].MCB >= ls) && 
-				(w[border_neighbor[inumber].MCB - ls].ifamily == STEFAN_BOLCMAN_FAMILY)))))) 
+				(w[border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY))))))
 		{
 		    
 
@@ -11852,6 +13409,121 @@ void update_Stefan_Bolcman_condition_double_vacuum_PRISM(WALL* w, integer lw, in
 	}
 }
 
+// возвращает максимальный элемент в массиве.
+template<typename doublerealT>
+doublerealT get_max_array_elm(doublerealT *& a, const integer n) {
+
+#ifdef _OPENMP
+	// многопоточная версия
+	doublerealT dmax = -1.0e27;
+
+#pragma omp parallel
+	{
+		doublerealT dmax_loc = -1.0e27;
+
+#pragma omp for 
+		for (integer i=0; i < n; i++) {
+			doublerealT z = a[i];
+			if (z > dmax_loc) dmax_loc = z;
+        }
+
+#pragma omp critical
+		{
+			if (dmax_loc > dmax) {
+				dmax = dmax_loc;
+			}
+		}
+	}
+
+	return dmax;
+#else
+	// однопточная версия
+	doublerealT dmax = -1.0e27;
+	for (integer i=0; i < n; i++) {
+		if (a[i] > dmax) dmax = a[i];
+	}
+	return dmax;
+#endif
+
+}
+
+// возвращает максимальный элемент в массиве.
+template<typename doublerealT>
+doublerealT get_max_array_elm(doublerealT *& a1, doublerealT *& a2, const integer n) {
+
+#ifdef _OPENMP
+	// многопоточная версия
+	doublerealT dmax = -1.0e27;
+
+#pragma omp parallel
+	{
+		doublerealT dmax_loc = -1.0e27;
+
+#pragma omp for 
+		for (integer i = 0; i < n; i++) {
+			doublerealT z = fabs(a1[i]-a2[i]);
+			if (z > dmax_loc) dmax_loc = z;
+		}
+
+#pragma omp critical
+		{
+			if (dmax_loc > dmax) {
+				dmax = dmax_loc;
+			}
+		}
+	}
+
+	return dmax;
+#else
+	// однопточная версия
+	doublerealT dmax = -1.0e27;
+	for (integer i = 0; i < n; i++) {
+		doublerealT z = fabs(a1[i]-a2[i]);
+		if (z > dmax) dmax = z;
+	}
+	return dmax;
+#endif
+
+}
+
+// возвращает максимальный элемент в массиве.
+template<typename doublerealT>
+doublerealT get_min_array_elm(doublerealT *& a, const integer n) {
+
+#ifdef _OPENMP
+	// многопоточная версия
+	doublerealT dmin = 1.0e37;
+
+#pragma omp parallel
+	{
+		doublerealT dmin_loc = 1.0e37;
+
+#pragma omp for 
+		for (integer i=0; i < n; i++) {
+			doublerealT z = a[i];
+			if (z < dmin_loc) dmin_loc = z;
+		}
+
+#pragma omp critical
+		{
+			if (dmin_loc < dmin) {
+				dmin = dmin_loc;
+			}
+		}
+	}
+
+	return dmin;
+#else
+	// однопточная версия
+	doublerealT dmin = 1.0e37;
+	for (integer i=0; i < n; i++) {
+		if (a[i] < dmin) dmin = a[i];
+	}
+	return dmin;
+#endif
+
+}
+
 // Если уравнение теплопроводности нелинейно, т.е.
 // коэффициенты теплоёмкости и тепловодности входящие в него 
 // зависят от температуры то следует применять данный решатель, 
@@ -11869,6 +13541,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	TEMP_DEP_POWER* gtdps, integer ltdp, doublereal  poweron_multiplier_sequence,
 	QuickMemVorst& m, doublereal** speedoldtimestep, doublereal** mfoldtimestep,
 	integer lu, UNION* &my_union, integer* &color, integer dist_max) {
+
+
 
 	//if (bconvective) {
 		//printf("bconvective. Ok.\n");
@@ -11891,15 +13565,17 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	doublereal power_diss_message_06_10_2018 = 0.0;
 
 	// Проверка есть ли файл с распределением начальной скорости.	
-	errno_t err_inicialization_data = 0;// используется далее по коду. Код нужен.
+	
 	FILE* fp_inicialization_data = nullptr;
 #ifdef MINGW_COMPILLER
+	int err_inicialization_data = 0;// используется далее по коду. Код нужен.
 	fp_inicialization_data = fopen64("load.txt", "r");
 	if (fp_inicialization_data == nullptr) {
 		// Ошибка открытия файла.
 		err_inicialization_data = 1;
     }
 #else
+	errno_t err_inicialization_data = 0;// используется далее по коду. Код нужен.
 	err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
 	if (0 == err_inicialization_data) {
@@ -11912,6 +13588,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	if (bglobal_first_start_radiation) {
 		doublereal pdiss = 0.0;
 
+#pragma omp parallel for reduction(+:pdiss)
 		for (integer i = 0; i < ls; i++) {
 			if (s[i].power < 0.0) {
 				//printf("warning source [%lld] is negative power = %e\n",i, s[i].power);
@@ -11924,6 +13601,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		//}
 		// 19 november 2016.
 		// Обновление мощности тепловыделения во всех внутренних узлах.
+
+#pragma omp parallel for reduction(+:pdiss)
 		for (integer i47 = 0; i47 < t.maxelm; i47++) {
 			// Скорость в том что значение не вычисляется как раньше а просто хранится.
 			integer ib = t.whot_is_block[i47];
@@ -11935,7 +13614,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			if (t.Sc[i47] * dx*dy*dz < 0.0) {
 				//printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
 				std::cout << "ERROR!!!  control volume [" << i47 << "] is negative power =" << (t.Sc[i47] * dx*dy*dz) << std::endl;
-				system("PAUSE");
+				//system("PAUSE");
 			}
 			pdiss += t.Sc[i47] * dx*dy*dz;
 			/*
@@ -11962,6 +13641,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				// тепловую мощность, чтобы в точности получить заданную пользователем мощность.
 				pdiss = 0.0;
 
+#pragma omp parallel for reduction(+:pdiss)
 				for (integer i = 0; i < ls; i++) {
 					if (s[i].power < 0.0) {
 						//printf("warning source [%lld] is negative power = %e\n",i, s[i].power);
@@ -11977,6 +13657,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				// 19 november 2016.
 				// Обновление мощности тепловыделения во всех внутренних узлах.
 
+#pragma omp parallel for 
 				for (int ib = 1; ib < lb; ib++) {
 					for (int i23 = 0; i23 < b[ib].n_Sc; i23++) {
 						if (fabs(b[ib].arr_Sc[i23]) > 1.0e-30) {
@@ -11989,6 +13670,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					}
 				}
 
+#pragma omp parallel for reduction(+:pdiss)
 				for (integer i47 = 0; i47 < t.maxelm; i47++) {
 					// Скорость в том что значение не вычисляется как раньше а просто хранится.
 					integer ib = t.whot_is_block[i47];
@@ -12008,7 +13690,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					if (t.Sc[i47] * dx*dy*dz < 0.0) {
 						//printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
 						std::cout << "ERROR!!!  control volume [" << i47 << "] is negative power =" << (t.Sc[i47] * dx*dy*dz) << std::endl;
-						system("PAUSE");
+						//system("PAUSE");
 					}
 					pdiss += t.Sc[i47] * dx*dy*dz;
 					/*
@@ -12045,8 +13727,10 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		if (pdiss>0.0) {
 			doublereal square_bolc = 0.0;
 			doublereal emissivity = 1.0;
+
+#pragma omp parallel for reduction(+:square_bolc) 
 			for (integer i = 0; i < lw; i++) {
-				if (w[i].ifamily == STEFAN_BOLCMAN_FAMILY) {
+				if (w[i].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 					switch (w[i].iPlane) {
 					  case XY_PLANE: square_bolc += fabs(w[i].g.xE - w[i].g.xS)*fabs(w[i].g.yE - w[i].g.yS); break;
 					  case XZ_PLANE: square_bolc += fabs(w[i].g.xE - w[i].g.xS)*fabs(w[i].g.zE - w[i].g.zS); break;
@@ -12054,9 +13738,14 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					}
 					// Здесь мы предполагаем что на всех излучающих поверхностях излучающая способность одна и таже.
 					// Если это не так то возникнет ошибка.
+				}
+			}
+			for (integer i = 0; i < lw; i++) {
+				if (w[i].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) {
 					emissivity = w[i].emissivity;
 				}
 			}
+
 			if (fabs(square_bolc)>1e-23) {
 				//printf("Pdiss=%e, S=%e\n",pdiss, square_bolc);
 				std::cout << "Pdiss=" << pdiss << ", S=" << square_bolc << std::endl;
@@ -12073,10 +13762,13 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		else {
 			// идентифицирована отрицательная мощность тепловыделения.
 			bool bDirichlet = false;
+#pragma omp parallel for reduction(|| : bDirichlet)
 			for (integer i = 0; i < lw; i++) {
-				if (w[i].ifamily == DIRICHLET_FAMILY) {
+				if (w[i].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 					// условие идеального теплоотвода обнаружено.
-					bDirichlet = true;
+					
+					bDirichlet = bDirichlet || true;
+					
 				}
 			}
 			if (!bDirichlet) {
@@ -12089,7 +13781,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	}
 	else {
 		doublereal pdiss = 0.0;
-
+		
+#pragma omp parallel for reduction(+:pdiss)
 		for (integer i = 0; i < ls; i++) {
 			if (s[i].power < 0.0) {
 				//printf("warning source [%lld] is negative power = %e\n", i, s[i].power);
@@ -12102,6 +13795,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		//}
 		// 19 november 2016.
 		// Обновление мощности тепловыделения во всех внутренних узлах.
+#pragma omp parallel for reduction(+:pdiss)
 		for (integer i47 = 0; i47 < t.maxelm; i47++) {
 			// Скорость в том что значение не вычисляется как раньше а просто хранится.
 			integer ib = t.whot_is_block[i47];
@@ -12125,11 +13819,14 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	power_diss_message_06_10_2018*=poweron_multiplier_sequence;  // Включено или выключено.
 
 	// К этому значению источникового члена мы будем релаксировать.
-	for (integer i_init = 0; i_init < t.maxelm; i_init++) bsource_term_radiation_for_relax[i_init] = 0.0;
+#pragma omp parallel for 
+	for (integer i_init = 0; i_init < t.maxelm; i_init++) {
+		bsource_term_radiation_for_relax[i_init] = 0.0;
+	}
 
 	
 
-	if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
+	if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
 		//printf("film coefficient=%e, operating_temperature=%f\n", film_coefficient, operating_temperature_for_film_coeff);
 		std::cout << "film coefficient=" << film_coefficient 
 		<< ", operating_temperature=" << operating_temperature_for_film_coeff 
@@ -12140,7 +13837,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		// system("pause");
 	}
 
-	if (adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) {
+	if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) {
 		//printf(" operating_temperature=%f\n", operating_temperature_for_film_coeff);
 		std::cout << " operating_temperature=" << operating_temperature_for_film_coeff << std::endl;
 		//t.alpha = 0.8; // по видимому нужна нижняя релаксация.
@@ -12149,7 +13846,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		// system("pause");
 	}
 
-	if (adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC) {
+	if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC) {
 		//printf("film coefficient=%e, operating_temperature=%f\n", film_coefficient, operating_temperature_for_film_coeff);
 		std::cout << "film coefficient=" << film_coefficient << ", operating_temperature=" << operating_temperature_for_film_coeff << std::endl;
 		//t.alpha = 0.8; // по видимому нужна нижняя релаксация.
@@ -12182,24 +13879,30 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	doublereal res = 0.0;
 
 	bool bRichman = false;
-	for (i = 0; i < t.maxelm + t.maxbound; i++) {
-		if (i >= t.maxelm) {
-			integer inumber = i - t.maxelm;
+
+#pragma omp parallel for reduction(|| : bRichman)
+	for (integer inumber = 0; inumber < t.maxbound; inumber++) {
+			
 			//std::cout << t.border_neighbor[inumber].MCB << " " << ls + lw << " " << w[t.border_neighbor[inumber].MCB - ls].ifamily << std::endl;
-			if (adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) {
-				bRichman = true;
+			if (adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) {
+
+				bRichman = bRichman || true;
+				
+				//break;
 			}
 			
 			if ((t.border_neighbor[inumber].MCB < (ls + lw)) &&
 				(t.border_neighbor[inumber].MCB >= ls) &&
-				(w[t.border_neighbor[inumber].MCB - ls].ifamily == NEWTON_RICHMAN_FAMILY)) {
+				(w[t.border_neighbor[inumber].MCB - ls].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 				// на твёрдой стенке задано условие Ньютона Рихмана.
-				     bRichman = true;
-				}
-		}
+
+					bRichman = bRichman || true;
+					
+					// break;
+				}		
 	}
 
-#pragma omp parallel for shared (t,told) private (i) schedule (guided)
+#pragma omp parallel for shared (t,told) private (i) firstprivate(bglobal_first_start_radiation, bRichman) schedule (guided)
 	for (i = 0; i < t.maxelm + t.maxbound; i++) {
 		//t.potent[i] = -269.0;
 		told[i] = t.potent[i]; // копирование
@@ -12214,14 +13917,14 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				t.potent[i] = operating_temperature_for_film_coeff;
 			}
 
-			if (bdouble_vacuum_PRISM) {
-				if (i < t.maxelm) {
+			//if (bdouble_vacuum_PRISM) {
+				//if (i < t.maxelm) {
 					//printf("bdouble vacuum prism\n");
 					//system("pause");
 					//told[i] = 0.1*(rand() % 10) + balancet;
 					//t.potent[i] = 0.1*(rand() % 10) + balancet;
-				}
-			}
+				//}
+			//}
 		}
 		told_nonlinear[i]=told[i];
 	}
@@ -12289,7 +13992,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			//if ((err_inicialization_data == 0)&&(ibreak_counter_25_07_2017 > 19)) break;
 			// На некоторых задачах разница температур между прогонами не может стать менее 7С поэтому нужен досрочный выход.
 			if ((0 == err_inicialization_data) && (ibreak_counter_25_07_2017 > 6)&&
-				((steady_or_unsteady_global_determinant == UNSTEADY_TEMPERATURE))) break;
+				((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_TEMPERATURE))) break;
 			// 25.07.2017 Схема SuperC почему-то плохо сходится,
 			// температура основания корпуса не устанавливается, нестановится меньше 0.5 град С.
 			// Решалось уравнение конвекции-диффузии для модуля ВУМ на радиаторе водяного 
@@ -12365,6 +14068,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					//getchar();
 
 					// Обновление мощности тепловыделения во всех внутренних узлах.
+#pragma omp parallel for 
 					for (integer i47 = 0; i47 < t.maxelm; i47++) {
 						// Скорость в том что значение не вычисляется как раньше а просто хранится.
 						integer ib = t.whot_is_block[i47];
@@ -12372,7 +14076,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						if (t.Sc[i47]  < 0.0) {
 							//printf("ERROR!!! control volume [%lld] is negative t.Sc = %e\n", i47, t.Sc[i47] );
 							std::cout << "ERROR!!! control volume [" << i47 << "] is negative t.Sc = " << t.Sc[i47] << std::endl;
-							system("PAUSE");
+							//system("PAUSE");
 						}
 					}
 
@@ -12382,7 +14086,9 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						// У нас есть жидкие ячейки в которых задано поле скорости.
 
 						if ((0 == err_inicialization_data) || 
-							(starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
+							(starting_speed_Vx*starting_speed_Vx +
+								starting_speed_Vy * starting_speed_Vy + 
+								starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
 							// Диагностика ошибки: конвекцию надо учитывать но она не учитывается.
 
 
@@ -12470,6 +14176,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						}
 						else {
 							
+#pragma omp parallel for private(i)
 							for (i = 0; i < t.maxelm + t.maxbound; i++) {
 								if (t.potent[i] < -272.15) {
 									t.potent[i] = -272.15; // Идентифицируем абсолютный ноль.
@@ -12485,23 +14192,26 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							// Это требуется для отладки
 							//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, false, 0);
 
+							const integer ISIZE = t.maxelm + t.maxbound;
+
 							// вычисленние максимума разности температур между итерациями:
 							//for (i=0; i<t.maxelm+t.maxbound; i++) tmax=fmax(tmax,fabs(t.potent[i]-told[i])); 
 							// 23 декабря 2015
 							// На граничных гранях источников тепла мы имеем нефизично высокую температуру, поэтому
-							// физичнее не смущать людей и приводить температуру только во внутренних КО. 
-							for (i = 0; i < t.maxelm + t.maxbound; i++) tmax = fmax(tmax, fabs(t.potent[i] - told[i]));
-							doublereal maxdomain = -273.15; // Наименьшая температура в градусах Цельсия.
-							for (i = 0; i < t.maxelm + t.maxbound; i++) maxdomain = fmax(maxdomain, t.potent[i]);
+							// физичнее не смущать людей и приводить температуру только во внутренних КО.
+
+							tmax=get_max_array_elm(t.potent, told, ISIZE);
+
+							doublereal maxdomain = get_max_array_elm(t.potent, ISIZE); // Наименьшая температура в градусах Цельсия.
+
+							
+
 							if ((1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) &&
-								(Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) {
+								(AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) {
 									// Нелинейная версия amg1r5 алгоритма.
 									printf("incomming\n");
-									tmax=0.0;
-									for (i = 0; i < t.maxelm + t.maxbound; i++) {
-										tmax = fmax(tmax, fabs(t.potent[i] - told_nonlinear[i]));
-										told_nonlinear[i]=t.potent[i];
-									}
+									tmax= get_max_array_elm(t.potent, told_nonlinear, ISIZE);
+
 							}
 							deltat = tmax;
 							//if (deltat > 13.0) {
@@ -12512,7 +14222,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						//	}
 							// В случае нелинейного граничного условия применяем нижнюю релаксацию.
 							//if ((0 == err_inicialization_data) || (adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
-							if ((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) ||
+							if ((adiabatic_vs_heat_transfer_coeff > DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC) ||
 								(breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 
 
@@ -12529,7 +14239,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 									fHORF = 1.0;
 								}
 								if ((1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) &&
-									(Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) {
+									(AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) {
 									// специальная нелинейная версия amg1r5 алгоритма.
 									fHORF = 1.0;
 								}
@@ -12547,7 +14257,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 									}
 
 									if ((1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) &&
-										(Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
+										(AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 != stabilization_amg1r5_algorithm)) {
 										// Это не специальная нелинейная версия кода amg1r5 CAMG.
 										fHORF = 0.01; // 0.01!!!
 									}									
@@ -12556,6 +14266,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 								//printf("fHORF=%e\n", fHORF); getchar();
 								// Глобальное сокращение итераций по устранению нелинейности в системе.
 								//fHORF = 1.0;
+
+#pragma omp parallel for private(i)
 								for (i = 0; i < t.maxelm + t.maxbound; i++) {
 									if (t.potent[i] > -272.15) {
 										t.potent[i] = told[i] + fHORF * (t.potent[i] - told[i]);
@@ -12567,19 +14279,24 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							}
 
 							// Проверка на физическую корректность, не может опуститься ниже абсоютного нуля.
-							for (i = 0; i < t.maxelm + t.maxbound; i++)  if (t.potent[i] < -272.15) {
-								// В холодных режимах АППАРАТА прописанных Сидорчуком достижимы математически
-								// температуры ниже абсолютного нуля.
-								t.potent[i] = -272.15;
-								//printf("fatal error: temperature is < -273.15C\n");
-							  //getchar();
-							  //	exit(1);
+#pragma omp parallel for private(i)
+							for (i = 0; i < t.maxelm + t.maxbound; i++) {
+								if (t.potent[i] < -272.15) {
+									// В холодных режимах АППАРАТА прописанных Сидорчуком достижимы математически
+									// температуры ниже абсолютного нуля.
+									t.potent[i] = -272.15;
+									//printf("fatal error: temperature is < -273.15C\n");
+								  //getchar();
+								  //	exit(1);
+								}
 							}
 
 
 
-#pragma omp parallel for shared (t,told) private (i) schedule (guided)
-							for (i = 0; i < t.maxelm + t.maxbound; i++) told[i] = t.potent[i]; // копирование
+#pragma omp parallel for  private (i) schedule (guided)
+							for (i = 0; i < t.maxelm + t.maxbound; i++) {
+								told[i] = t.potent[i]; // копирование
+							}
 							// экспорт результата вычисления в программу tecplot360:
 							//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior,0);
 							if (bprintmessage) {
@@ -12592,15 +14309,17 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 								//printf("temperature difference between iterations %3.2f  oC. %e\n", deltat, maxdomain);
 								std::cout << "temperature difference between iterations " << deltat << "  oC. " << maxdomain << std::endl;
-								doublereal tmaxloc = -272.15e6;
-								for (i = 0; i < t.maxelm; i++) tmaxloc = fmax(tmaxloc, t.potent[i]);
+								doublereal tmaxloc = get_max_array_elm(t.potent, t.maxelm);
+
+								
+
 								if (bprintmessage) {
 									printf("Intermediate maximum temperature in default interior\n");
 									//printf("is equal %e  oC.\n", tmaxloc);
 									std::cout << "is equal " << tmaxloc << "  oC." << std::endl;
 								}
-								doublereal tminloc = 1.0e7;
-								for (i = 0; i < t.maxelm; i++) tminloc = fmin(tminloc, t.potent[i]);
+								doublereal tminloc = get_min_array_elm(t.potent, t.maxelm); // возвращает минимальный элемент в массиве.
+
 								if (bprintmessage) {
 									printf("Intermediate minimum temperature in default interior\n");
 									//printf("is equal %e  oC.\n", tminloc);
@@ -12617,7 +14336,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 									}
 
 								if ((1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) &&
-										(Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) {
+										(AMG1R5_OUT_ITERATOR::Non_Linear_amg1r5 == stabilization_amg1r5_algorithm)) {
 									// Печатает отдаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
 									// проходящий через выходную границу потока. 28.10.2019
 									report_out_boundary(fglobal[0], my_global_temperature_struct, ls, lw, w, b, lb, matlist, fglobal[0].OpTemp);
@@ -12627,6 +14346,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 								//fporogmax = fmax(fabs(tmaxloc), fabs(tminloc));
 								fporogmax = fabs(tmaxloc- tminloc);
 								integer ic62 = 0;
+
+#pragma omp parallel for private(i) reduction(+: ic62)
 								for (i = 0; i < t.maxelm; i++) {
 									if (t.potent[i] < t.operatingtemperature) {
 										ic62++;
@@ -12640,9 +14361,10 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 								//getchar();
 							}
-							tmax = -1.0e23;
 							// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-							for (i = 0; i < t.maxelm + t.maxbound; i++) tmax = fmax(tmax, t.potent[i]);
+							tmax = get_max_array_elm(t.potent, t.maxelm + t.maxbound); 
+							
+
 							diagnostic_critical_temperature( tmax, fglobal, t, b,lb); // предупреждение при превышении максимально допустимой температуры.
 							//getchar(); // debug режим отладки
 							ic++;
@@ -12676,8 +14398,9 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		// На граничных гранях источников тепла мы имеем нефизично высокую температуру, поэтому
 		// физичнее не смущать людей и приводить температуру только во внутренних КО. 
 		//for (i = 0; i<t.maxelm; i++) tmax = fmax(tmax, fabs(t.potent[i]));
-		tmax = -272.15;
-		for (i = 0; i < t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
+		tmax = get_max_array_elm(t.potent, t.maxelm); 
+
+
 		if (bprintmessage) {
 			printf("Finally maximum temperature in default interior\n");
 			//printf("is equal %3.2f  oC. Power %e, W\n", tmax, power_diss_message_06_10_2018);
@@ -12731,6 +14454,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			}
 
 			// Обновление мощности тепловыделения во всех внутренних узлах.
+#pragma omp parallel for 
 			for (integer i47 = 0; i47 < t.maxelm; i47++) {
 				// Скорость в том что значение не вычисляется как раньше а просто хранится.
 				integer ib = t.whot_is_block[i47];
@@ -12739,7 +14463,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					//printf("ERROR!!! control volume [%lld] is negative power t.Sc = %e\n", i47, t.Sc[i47]);
 					std::cout << "ERROR!!! control volume [" << i47
 					<< "] is negative power t.Sc = " << t.Sc[i47] << std::endl;
-					system("PAUSE");
+					//system("PAUSE");
 				}
 			}
 
@@ -12819,7 +14543,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				m, rthdsdt, resfluent_temp, lu, my_union, color, dist_max); // номер глобальной итерации
 
 
-
+#pragma omp parallel for private(i)
 			for (i = 0; i < t.maxelm + t.maxbound; i++) {
 				if (t.potent[i] < -273.15) {
 					t.potent[i] = -273.15; // Идентифицируем абсолютный ноль.
@@ -12828,22 +14552,26 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 
 
-			tmax = -273.15;
-			for (i = 0; i < t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
+			tmax = get_max_array_elm(t.potent, t.maxelm); 
+
+
 			if (bprintmessage) {
 				printf("Finally maximum temperature in default interior\n");
 				//printf("is equal %3.2f  oC. Pdiss= %e, W\n", tmax, power_diss_message_06_10_2018);
 				std::cout << "is equal " << tmax << "  oC. Pdiss= " 
 				<< power_diss_message_06_10_2018 << ", W" << std::endl;
 			}
-			doublereal tmin = 1.0e7;
-			for (i = 0; i < t.maxelm; i++) tmin = fmin(tmin, t.potent[i]);
+			doublereal tmin = get_min_array_elm(t.potent, t.maxelm);
+
+
 			if (bprintmessage) {
 				printf("Finally minimum temperature in default interior\n");
 				//printf("is equal %3.2f  oC.\n", tmin);
 				std::cout << "is equal " << tmin << "  oC." << std::endl;
 			}
 			integer ic62 = 0;
+
+#pragma omp parallel for private(i) reduction(+: ic62)
 			for (i = 0; i < t.maxelm; i++) {
 				if (t.potent[i] < t.operatingtemperature) {
 					ic62++;
@@ -13692,8 +15420,10 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 	// В случае Zero Equation Turbulence Model вычисление
 	// коэффициента динамической турбулентной вязкости.
-	if (f.iflowregime==ZEROEQMOD) {
+	if (f.iflowregime== VISCOSITY_MODEL::ZEROEQMOD) {
+#pragma omp parallel for
 		for (integer i=0; i<(f.maxelm+f.maxbound); i++) {
+
 			doublereal rho=0.0; // Вычисление плотности.
 			if (i<f.maxelm) rho=f.prop[RHO][i];
 			else rho=f.prop_b[RHO][i-f.maxelm];
@@ -13847,7 +15577,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		}
 	} // Zero Equation Model
 
-	if (f.iflowregime==SMAGORINSKY) {
+	if (f.iflowregime== VISCOSITY_MODEL::SMAGORINSKY) {
 		// Одна из разновидностей модели Смагоринского (LES моделирование).
 
 		// Вычисление для Selective Smagorinsky
@@ -13962,7 +15692,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		}
 	}
 
-	if (f.iflowregime==RNG_LES) {
+	if (f.iflowregime== VISCOSITY_MODEL::RNG_LES) {
 		// модель турбулентности базирующаяся на Renormalization Group Theory.
 		// в рамках LES подхода. Данная реализация придерживается классического
 		// описания на CFD-Wiki.
@@ -14077,6 +15807,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	doublereal** sumanb=new doublereal*[3];
 	for (integer i=0; i<3; i++) sumanb[i]=new doublereal[f.maxelm+f.maxbound];
 	// инициализация.
+#pragma omp parallel for
 	for (integer i=0; i<f.maxelm+f.maxbound; i++) {
 		sumanb[VELOCITY_X_COMPONENT][i]=0.0;
 		sumanb[VELOCITY_Y_COMPONENT][i]=0.0;
@@ -14134,11 +15865,13 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// именно здесь верно. 04.05.2017
 		rfluentres.res_vx = fluent_residual_for_x(f.slau[VELOCITY_X_COMPONENT], f.slau_bon[VELOCITY_X_COMPONENT], f.potent[VELOCITY_X_COMPONENT], f.maxelm, f.maxbound, VELOCITY_X_COMPONENT); // невязка по формуле fluent.
 
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxbound; i++) {
 			sumanb[VELOCITY_X_COMPONENT][f.maxelm + i] = f.slau_bon[VELOCITY_X_COMPONENT][i].aw;
 		}
 
 		if (bHORF_speed_on&&bHORF) {
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm + f.maxbound; i++) {
 				doublereal fHORF = 0.25;
 				if (btimedep) {
@@ -14218,11 +15951,13 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// именно здесь верно. 04.05.2017
 		rfluentres.res_vy = fluent_residual_for_x(f.slau[VELOCITY_Y_COMPONENT], f.slau_bon[VELOCITY_Y_COMPONENT], f.potent[VELOCITY_Y_COMPONENT], f.maxelm, f.maxbound, VELOCITY_Y_COMPONENT); // невязка по формуле fluent.
 
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxbound; i++) {
 			sumanb[VELOCITY_Y_COMPONENT][f.maxelm + i] = f.slau_bon[VELOCITY_Y_COMPONENT][i].aw;
 		}
 
 		if (bHORF_speed_on&&bHORF) {
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm + f.maxbound; i++) {
 				doublereal fHORF = 0.25;
 				if (btimedep) {
@@ -14271,7 +16006,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// именно здесь верно. 04.05.2017
 		rfluentres.res_vz = fluent_residual_for_x(f.slau[VELOCITY_Z_COMPONENT], f.slau_bon[VELOCITY_Z_COMPONENT], f.potent[VELOCITY_Z_COMPONENT], f.maxelm, f.maxbound, VELOCITY_Z_COMPONENT); // невязка по формуле fluent.
 
-
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxbound; i++) {
 			sumanb[VELOCITY_Z_COMPONENT][f.maxelm + i] = f.slau_bon[VELOCITY_Z_COMPONENT][i].aw;
 		}
@@ -14279,6 +16014,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		
 
 		if (bHORF_speed_on&&bHORF) {
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm + f.maxbound; i++) {
 				doublereal fHORF = 0.25;
 				if (btimedep) {
@@ -14428,9 +16164,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	doublereal max_tau_VX = -1.0e30;
 	doublereal max_tau_VY = -1.0e30;
 	doublereal max_tau_VZ = -1.0e30;
-	doublereal avg_tau_VX = 0.0;
-	doublereal avg_tau_VY = 0.0;
-	doublereal avg_tau_VZ = 0.0;
+	
 
 	for (integer i = 0; i < f.maxelm; i++) {
 		if (tau[VELOCITY_X_COMPONENT][i] < min_tau_VX) min_tau_VX = tau[VELOCITY_X_COMPONENT][i];
@@ -14440,7 +16174,14 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		if (tau[VELOCITY_X_COMPONENT][i] > max_tau_VX) max_tau_VX = tau[VELOCITY_X_COMPONENT][i];
 		if (tau[VELOCITY_Y_COMPONENT][i] > max_tau_VY) max_tau_VY = tau[VELOCITY_Y_COMPONENT][i];
 		if (tau[VELOCITY_Z_COMPONENT][i] > max_tau_VZ) max_tau_VZ = tau[VELOCITY_Z_COMPONENT][i];
-			   		 	  
+	}
+
+	doublereal avg_tau_VX = 0.0;
+	doublereal avg_tau_VY = 0.0;
+	doublereal avg_tau_VZ = 0.0;
+
+#pragma omp parallel for reduction(+ : avg_tau_VX, avg_tau_VY, avg_tau_VZ)
+	for (integer i = 0; i < f.maxelm; i++) {
 		avg_tau_VX += tau[VELOCITY_X_COMPONENT][i] / f.maxelm;
 		avg_tau_VY += tau[VELOCITY_Y_COMPONENT][i] / f.maxelm;
 		avg_tau_VZ += tau[VELOCITY_Z_COMPONENT][i] / f.maxelm;
@@ -14453,6 +16194,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	printf("avg: %e %e %e\n\n", avg_tau_VX, avg_tau_VY, avg_tau_VZ);
 	if (1&&(inumiter < 20)) {
 		doublereal m = 1.0; // (1.0 / my_amg_manager.theta_Stress);///debug //1.0
+
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 
 			doublereal avg_tau_VX_loc = avg_tau_VX;
@@ -14593,9 +16336,9 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// false может быть только в том случае если уравнение для поправки давления потом решается повторно с целью повысить точность
 	// аппроксимации.
 	// RANS Спалларт Аллмарес.
-	if (!((f.iflowregime == RANS_SPALART_ALLMARES)||
-		(f.iflowregime == RANS_MENTER_SST)||
-		(f.iflowregime == RANS_STANDART_K_EPS))) {
+	if (!((f.iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES)||
+		(f.iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)||
+		(f.iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS))) {
 		if (bflag_free_memory_cfd) {
 			m.bsignalfreeCRScfd = true; // Освобождаем память.
 		}
@@ -14635,6 +16378,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// 9 августа 2016 года. (нижняя релаксация для поправки давления).
 	// Сильно портит сходимость.
 	if (0&&bHORF) {
+
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm + f.maxbound; i++) {
 			doublereal fHORF = 0.25;
 			if (btimedep) {
@@ -14698,9 +16443,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// 13 08 2015 вынесено в глобальную область видимости см.
 	// my_unsteady_temperature.c файл.
 	//doublereal* xb=new doublereal[f.maxelm+f.maxbound];
+
+#pragma omp parallel for
 	for (integer i=0; i<f.maxelm; i++) {
 		xb[i]=f.slau[PAM][i].b;
 	}
+#pragma omp parallel for
 	for (integer i=0; i<f.maxbound; i++) {
 		xb[i+f.maxelm]=f.slau_bon[PAM][i].b;
 	}
@@ -14715,6 +16463,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				// Машинный ноль
 				delete[] f.potent[PAM];
 				f.potent[PAM] = new doublereal[f.maxelm + f.maxbound];
+#pragma omp parallel for
 				for (integer j = 0; j < f.maxelm + f.maxbound; j++) {
 					f.potent[PAM][j] = 0.0;
 				}
@@ -14937,11 +16686,15 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		}
 	}
 	else {
+		// Можно безболезненно распараллелить т.к. доступ между ячейками i независим.
+
 		// Вычисление градиентов поправки давления:
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты поправки давления для внутренних КО.
 			green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
 		}
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты скоростей для граничных КО.
 			green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
@@ -15085,12 +16838,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 	// коррекция давления:
 	doublereal ralphaP=1.0; // инициализация
-	if (iSIMPLE_alg==SIMPLEC_Van_Doormal_and_Raithby) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLEC_Van_Doormal_and_Raithby) {
 		// SIMPLEC 
 		ralphaP=1.0;
 		//ralphaP=1.0-(f.alpha[VX]+f.alpha[VY]+f.alpha[VZ])/3.0;
 	}
-	if (iSIMPLE_alg==SIMPLE_Carretto) {
+	if (iSIMPLE_alg== SIMPLE_CFD_ALGORITHM::SIMPLE_Carretto) {
 		// SIMPLE
 		ralphaP=f.alpha[PRESS];
 	}
@@ -15243,10 +16996,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// Вычисление градиентов давления:
 	    // на основе скорректированного поля давления.
 	    // Градиенты давления понадобятся при вычислении поправки Рхи-Чоу.
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты давления для внутренних КО.
 			green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
 		}
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты давления для граничных КО.
 			green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f.border_neighbor, ls, lw, w, f.bLR1free, t.ilevel_alice, f.ptr);
@@ -15342,6 +17097,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	}*/
 
 	// Основано на трёх скалярных сглаженных полях псевдовремени.
+#pragma omp parallel for
 	for (integer i=0; i<f.maxelm; i++) {
 	    correct_internal_volume4(i, VELOCITY_X_COMPONENT, f.prop, f.potent,  tau);
 		correct_internal_volume4(i, VELOCITY_Y_COMPONENT, f.prop, f.potent,  tau);
@@ -15365,7 +17121,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	correct_boundary_volume(VELOCITY_Y_COMPONENT, f.potent, f.maxelm, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.border_neighbor, ls, lw, w, SpeedCorOld[VELOCITY_Y_COMPONENT], binterpol);
 	correct_boundary_volume(VELOCITY_Z_COMPONENT, f.potent, f.maxelm, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.border_neighbor, ls, lw, w, SpeedCorOld[VELOCITY_Z_COMPONENT], binterpol);
 
-	
+#pragma omp parallel for
     for (integer i=0; i<(f.maxelm+f.maxbound); i++) {
 		// запоминаем поле скорости 
 		// удовлетворяющее уравнению
@@ -15563,7 +17319,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		//delete SpeedCorOld[i];
 	//}
 	//delete SpeedCorOld; 
-
+#pragma omp parallel for
 	for (integer i=0; i<f.maxelm; i++) {
 		for (integer j=0; j<6; j++) {
 			// именно этот поток должен использоваться при нижней релаксации
@@ -15721,10 +17477,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	
 		// Вычисление градиентов скорости:
 		// на основе поля скорости удовлетворяющего уравнению неразрывности.
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты скоростей для внутренних КО.
 			green_gauss(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, false, f, f.border_neighbor, t.ilevel_alice);
 		}
+#pragma omp parallel for
 		for (integer i = 0; i < f.maxelm; i++) {
 			// градиенты скоростей для граничных КО.
 			green_gauss(i, f.potent, f.nvtx, f.pa, f.neighbors_for_the_internal_node, f.maxelm, true, f, f.border_neighbor, t.ilevel_alice);
@@ -15773,11 +17531,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		
 
 		// RANS Спалларт Аллмарес [1992].
-		if (f.iflowregime == RANS_SPALART_ALLMARES) {
+		if (f.iflowregime == VISCOSITY_MODEL::RANS_SPALART_ALLMARES) {
 
 
 			doublereal *nusha_aprior = new doublereal[f.maxelm+f.maxbound];
 
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm+ f.maxbound); i++) {
 				nusha_aprior[i] = f.potent[NUSHA][i];
 			}
@@ -15803,6 +17562,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			if (btimedep) { // unsteady problems.
 				fHORF = 0.75; // ANSYS Fluent Theory Guide.
 			}
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				f.potent[NUSHA][i] = nusha_aprior[i] +
 					fHORF * (f.potent[NUSHA][i] - nusha_aprior[i]);
@@ -15815,6 +17575,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 
 			// Вычисление градиента модифицированной кинетической турбулентой вязкости
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_SpallartAllmares(i,
 					f.potent, f.nvtx, f.pa,
@@ -15822,6 +17583,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.border_neighbor, t.ilevel_alice);
 			}
 
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_SpallartAllmares(i,
 					f.potent, f.nvtx, f.pa,
@@ -15857,11 +17619,17 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 		}
 
+		//if (inumiter == 8) system("PAUSE");
+
 		// RANS SST Ментер [1993]
-		if (f.iflowregime == RANS_MENTER_SST) {
+		if ((inumiter>1)&&(f.iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST)) {
+
+			// inumiter>1 - скорости должны немного устаканиться, сразу запускать расчёт турбулентности
+			// на неустановившейся скорости нельзя, это приведет к расходимости итерационного процесса.
 
 			doublereal *turb_kinetik_energy_aprior = new doublereal[f.maxelm + f.maxbound];
 
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				turb_kinetik_energy_aprior[i] = f.potent[TURBULENT_KINETIK_ENERGY][i];
 			}
@@ -15883,6 +17651,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			if (btimedep) { // unsteady problems.
 				fHORF = 0.75; // ANSYS Fluent Theory Guide.
 			}
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				f.potent[TURBULENT_KINETIK_ENERGY][i] = fmax(K_limiter_min, turb_kinetik_energy_aprior[i] +
 					fHORF * (f.potent[TURBULENT_KINETIK_ENERGY][i] - turb_kinetik_energy_aprior[i]));
@@ -15896,6 +17665,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 
 			// Вычисление градиента кинетической энергии турбулентных пульсаций
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_turbulent_kinetik_energy_MenterSST(i,
 					f.potent, f.nvtx, f.pa,
@@ -15903,6 +17673,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.border_neighbor, t.ilevel_alice);
 			}
 
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_turbulent_kinetik_energy_MenterSST(i,
 					f.potent, f.nvtx, f.pa,
@@ -15912,6 +17683,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 			doublereal *omega_aprior = new doublereal[f.maxelm + f.maxbound];
 
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				omega_aprior[i] = f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i];
 			}
@@ -15933,7 +17705,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				rthdsd, rfluentres.res_turb_omega, lu, my_union, color, dist_max_fluid);
 			
 
-			
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i] = fmax(Omega_limiter_min, omega_aprior[i] +
 					fHORF * (f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i] - omega_aprior[i]));
@@ -15947,6 +17719,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 			// Вычисление градиента удельной скорости диссипации 
 			// кинетической энергии турбулентных пульсаций.
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_specific_dissipation_rate_omega_MenterSST(i,
 					f.potent, f.nvtx, f.pa,
@@ -15954,6 +17727,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.border_neighbor, t.ilevel_alice);
 			}
 
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_specific_dissipation_rate_omega_MenterSST(i,
 					f.potent, f.nvtx, f.pa,
@@ -15978,6 +17752,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				}
 
 				// нахождение градиентов.
+#pragma omp parallel for
 				for (integer i = 0; i < t.maxelm; i++) {
 					// Только внутренние узлы.
 					green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
@@ -15985,6 +17760,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 						t.border_neighbor, Tx, Ty, Tz, t.ilevel_alice);
 				}
 
+#pragma omp parallel for
 				for (integer i = 0; i < t.maxelm; i++) {
 					// Только граничные узлы.
 					green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
@@ -16193,10 +17969,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 
 		  // RANS двухслойная модель с двумя уравнениями [2001]
-		if (f.iflowregime == RANS_STANDART_K_EPS) {
+		if (f.iflowregime == VISCOSITY_MODEL::RANS_STANDART_K_EPS) {
 
 			doublereal *turb_kinetik_energy_aprior = new doublereal[f.maxelm + f.maxbound];
 
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				turb_kinetik_energy_aprior[i] = f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i];
 			}
@@ -16218,6 +17995,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			if (btimedep) { // unsteady problems.
 				fHORF = 0.75; // ANSYS Fluent Theory Guide.
 			}
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i] = fmax(K_limiter_min, turb_kinetik_energy_aprior[i] +
 					fHORF * (f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i] - turb_kinetik_energy_aprior[i]));
@@ -16234,6 +18012,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 
 			// Вычисление градиента кинетической энергии турбулентных пульсаций
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_turbulent_kinetik_energy_standart_k_epsilon(i,
 					f.potent, f.nvtx, f.pa,
@@ -16241,6 +18020,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.border_neighbor, t.ilevel_alice);
 			}
 
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_turbulent_kinetik_energy_standart_k_epsilon(i,
 					f.potent, f.nvtx, f.pa,
@@ -16250,6 +18030,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 			doublereal *epsilon_aprior = new doublereal[f.maxelm + f.maxbound];
 
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				epsilon_aprior[i] = f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i];
 			}
@@ -16272,7 +18053,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				rthdsd, rfluentres.res_turb_epsilon, lu, my_union, color, dist_max_fluid);
 			
 
-
+#pragma omp parallel for
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
 				f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i] = fmax(Epsilon_limiter_min, epsilon_aprior[i] +
 					fHORF * (f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i] - epsilon_aprior[i]));
@@ -16288,7 +18069,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				f.maxelm, f.maxbound, TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS); // невязка по формуле fluent.
 
 			// Вычисление градиента скорости диссипации 
-																																																																									 // кинетической энергии турбулентных пульсаций.
+#pragma omp parallel for																																																																						 // кинетической энергии турбулентных пульсаций.
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(i,
 					f.potent, f.nvtx, f.pa,
@@ -16296,6 +18077,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.border_neighbor, t.ilevel_alice);
 			}
 
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(i,
 					f.potent, f.nvtx, f.pa,
@@ -16315,6 +18097,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			// Для cross-diffusion term.
 			// Вычисление градиента удельной скорости диссипации 
 			// кинетической энергии турбулентных пульсаций.
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_specific_dissipation_rate_omega_MenterSST(i,
 					f.potent, f.nvtx, f.pa,
@@ -16322,6 +18105,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.border_neighbor, t.ilevel_alice);
 			}
 
+#pragma omp parallel for
 			for (integer i = 0; i < f.maxelm; i++) {
 				green_gauss_specific_dissipation_rate_omega_MenterSST(i,
 					f.potent, f.nvtx, f.pa,
@@ -16535,7 +18319,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	}
 
 	
-	// btempdepend == true если требуется совместное решение гидродинамики и теплопроводности.
+	// btempdepend   если требуется совместное решение гидродинамики и теплопроводности.
 	// совместное решение требуется в случае если параметры текучей среды зависят от температуры или
 	// в случае если мы имеем дело с приближением Буссинеска.
 	// btempdepend == false если уравнения гидродинамики и теплопроводности можно решить раздельно:
@@ -16641,12 +18425,13 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			// Нельзя вычислять невязку т.к. матрица ещё несобрана.
 			//rfluentrestemp = fluent_residual_for_x(t.slau, t.slau_bon, t.potent, t.maxelm, t.maxbound); // невязка по формуле fluent.
 			
-
+#pragma omp parallel for
 			for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 				told_temperature_global_for_HOrelax[i] = t.potent[i];
 			}
 
 			// Проверка на NAN до решения.
+#pragma omp parallel for
 			for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 				if (t.potent[i] != t.potent[i]) {
 					printf("function: my_version_SIMPLE_Algorithm3D apriory solve TEMP\n");
@@ -16681,6 +18466,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			//delete[] color_solid;
 
 			// Проверка на NAN после решения.
+#pragma omp parallel for
 			for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 				if (t.potent[i] != t.potent[i]) {
 					printf("function: my_version_SIMPLE_Algorithm3D post solve TEMP\n");
@@ -16714,10 +18500,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		if (btimedep) { // unsteady problems.
 			fHORF = 0.75; // ANSYS Fluent Theory Guide.
 		}
+#pragma omp parallel for
 		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 			t.potent[i] = told_temperature_global_for_HOrelax[i] + 
 				fHORF * (t.potent[i] - told_temperature_global_for_HOrelax[i]);
 		}
+#pragma omp parallel for
 		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 			told_temperature_global_for_HOrelax[i] = t.potent[i];
 		}

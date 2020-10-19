@@ -416,16 +416,36 @@ void amgcl_networkT_solver(doublereal* &val, integer* &col_ind, integer* &row_pt
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 2);
 		break;
+	case 8: // ilu4
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 4);
+		printf("precond.relax.type==ilu(k==4).\n");
+		break;
+	case 9: // ilu6
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 6);
+		printf("precond.relax.type==ilu(k==6).\n");
+		break;
+	case 10: // ilu8
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 8);
+		printf("precond.relax.type==ilu(k==8).\n");
+		break;
+	case 11: // ilu10
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 10);
+		printf("precond.relax.type==ilu(k==10).\n");
+		break;
 	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
 		break;
 	}
 	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
 	//amgcl_params_seti(prm, "solver.L", 1);
 	switch (my_amg_manager.amgcl_iterator) {
-	case 0: // BiCGStab
+	case AMGCL_ITERATOR_ALG::BiCGStab: // BiCGStab
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
 		break;
-	case 1: // FGMRes
+	case AMGCL_ITERATOR_ALG::FGMRes: // FGMRes
 		amgcl_params_sets(prm, "solver.type", "fgmres");
 		break;
 	default:
@@ -437,7 +457,7 @@ void amgcl_networkT_solver(doublereal* &val, integer* &col_ind, integer* &row_pt
 		// Нестационарные задачи требуется считать до меньших значений невязки.
 		// 14.05.2019
 		// 1.0e-12 точность достаточна.
-		if (my_amg_manager.amgcl_iterator == 1) {
+		if (my_amg_manager.amgcl_iterator == AMGCL_ITERATOR_ALG::FGMRes) {
 			amgcl_params_setf(prm, "solver.tol", 1.0e-12f);// пробовал 1e-7 для fgmres полотно АФАР расходится.
 		}
 		else {
@@ -448,6 +468,9 @@ void amgcl_networkT_solver(doublereal* &val, integer* &col_ind, integer* &row_pt
 		// 14.05.2019
 		amgcl_params_seti(prm, "solver.maxiter", 3000);
 	}
+
+
+	
 
 	if (bprintmessage) {
 		printf("Setup phase start...\n");
@@ -528,7 +551,8 @@ void amgcl_networkT_solver(doublereal* &val, integer* &col_ind, integer* &row_pt
 
 void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 	doublereal *dV, doublereal* &dX0, 
-	bool bprintmessage, WALL* &w, integer &lw, bool* &bondary)
+	bool bprintmessage, WALL* &w, integer &lw, bool* &bondary,
+	bool bStructural_Mechanic)
 {
 	// размерность квадратной матрицы.
 	// n
@@ -544,8 +568,8 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 								   // Разреженная матрица СЛАУ
 								   // в CRS формате.
 	doublereal* val=nullptr;
-	integer* col_ind = nullptr;
-	integer* row_ptr = nullptr;
+	integer_mix_precision* col_ind = nullptr;
+	integer_mix_precision* row_ptr = nullptr;
 
 
 	simplesparsetoCRS(sparseM, val, col_ind, row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
@@ -559,7 +583,7 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 
 	integer nnu = n;
 	integer nna = row_ptr[n];
-	printf("nna=%lld %lld\n",nna, row_ptr[n-1]);
+	printf("nna=%lld %d\n",nna, row_ptr[n-1]);
 	//system("pause");
 
 	/**
@@ -596,24 +620,27 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 
 	doublereal alpharelax = 1.0;
 
-	// Это не специальная нелинейная версия кода amg1r5 CAMG.
-	for (integer k = 0; k < lw; k++) {
-		if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-			(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
-			alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
-			// 0.9999 - недостаточное значение, температуры не те получаются.
+	if (!bStructural_Mechanic) {
+		// Уравнение теплопераедачи.
+
+		// Это не специальная нелинейная версия кода amg1r5 CAMG.
+		for (integer k = 0; k < lw; k++) {
+			if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
+				alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
+				// 0.9999 - недостаточное значение, температуры не те получаются.
+			}
 		}
+		if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
+			alpharelax = 0.99999;
+		}
+		//if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
+		//printf("ADIABATIC WALL BC"); getchar();
+		//}
+
 	}
-	if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-		(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
-		alpharelax = 0.99999;
-	}
-	//if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
-	//printf("ADIABATIC WALL BC"); getchar();
-	//}
-	
-	
 
 	row_jumper[nnu] = static_cast<indextype>(nna);
 	// initialize matrix entries on host
@@ -627,7 +654,8 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 			
 			for (integer j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
 				if (col_ind[j] == i) {
-					if (((bondary!=nullptr)&&(!bondary[i]))&&(row_ptr[i + 1] > row_ptr[i] + 1)) {
+					if ((!bStructural_Mechanic)&&((bondary!=nullptr)&&(!bondary[i]))&&(row_ptr[i + 1] > row_ptr[i] + 1)) {
+						// Уравнение теплопередачи.
 						// Релаксация к предыдущему значению.
 						elements[iscan] = static_cast<ScalarType>(val[j] / alpharelax);
 						rhs[i] += (1.0 - alpharelax)* val[j]*x[i] / alpharelax;
@@ -719,16 +747,36 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 		amgcl_params_sets(prm, "precond.relax.type", "iluk");
 		amgcl_params_seti(prm, "precond.relax.k", 2);
 		break;
+	case 8: // ilu4
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 4);
+		printf("precond.relax.type==ilu(k==4).\n");
+		break;
+	case 9: // ilu6
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 6);
+		printf("precond.relax.type==ilu(k==6).\n");
+		break;
+	case 10: // ilu8
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 8);
+		printf("precond.relax.type==ilu(k==8).\n");
+		break;
+	case 11: // ilu10
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 10);
+		printf("precond.relax.type==ilu(k==10).\n");
+		break;
 	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
 		break;
 	}
 	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
 	//amgcl_params_seti(prm, "solver.L", 1);
 	switch (my_amg_manager.amgcl_iterator) {
-	case 0: // BiCGStab
+	case AMGCL_ITERATOR_ALG::BiCGStab: // BiCGStab
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
 		break;
-	case 1: // FGMRes
+	case AMGCL_ITERATOR_ALG::FGMRes: // FGMRes
 		amgcl_params_sets(prm, "solver.type", "fgmres");
 		break;
 	default:
@@ -744,6 +792,13 @@ void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
 		// Нестационарные задачи требуется считать до меньших значений невязки.
 		// Может локально не сойтись поэтому не надо делать очень большого числа итераций.
 		// 14.05.2019
+		amgcl_params_seti(prm, "solver.maxiter", 3000);
+	}
+
+	if (bStructural_Mechanic) {
+		// Механика.
+		// 1.0e-12 точность достаточна.
+		amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
 		amgcl_params_seti(prm, "solver.maxiter", 3000);
 	}
 
@@ -861,18 +916,24 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		if ((sl[i].iP > -1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
 		if (sl[i].ap <= nonzeroEPS) {
 			printf("bad diagonal in string %lld ap=%e\n",i, sl[i].ap);
+			system("PAUSE");
+		}
+		if (sl[i].iP == -1) {
+			printf("bad diagonal in string %lld iP=%lld\n", i, sl[i].iP);
+			system("PAUSE");
 		}
 
-		if (1.00005*sl[i].ap< sl[i].ab+ sl[i].at+ sl[i].ae+ sl[i].aw+ sl[i].an+ sl[i].as+
+		if (1&&(1.00005*sl[i].ap< sl[i].ab+ sl[i].at+ sl[i].ae+ sl[i].aw+ sl[i].an+ sl[i].as+
 			sl[i].ab2 + sl[i].at2 + sl[i].ae2 + sl[i].aw2 + sl[i].an2 + sl[i].as2 + 
 				sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 + 
-					sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4)
+					sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4))
 		{
 			printf("bad diagonal preobladanie in string %lld ap=%e sum_anb=%e \n", i, sl[i].ap,
 				sl[i].ab + sl[i].at + sl[i].ae + sl[i].aw + sl[i].an + sl[i].as +
 				sl[i].ab2 + sl[i].at2 + sl[i].ae2 + sl[i].aw2 + sl[i].an2 + sl[i].as2 +
 				sl[i].ab3 + sl[i].at3 + sl[i].ae3 + sl[i].aw3 + sl[i].an3 + sl[i].as3 +
 				sl[i].ab4 + sl[i].at4 + sl[i].ae4 + sl[i].aw4 + sl[i].an4 + sl[i].as4);
+			system("PAUSE");
 		}
 
 		if ((sl[i].iB > -1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -981,10 +1042,16 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		if ((slb[i].iW > -1) && (fabs(slb[i].aw) > nonzeroEPS)) (nna)++;
 		if (slb[i].aw <= nonzeroEPS) {
 			printf("bad diagonal in string %lld ap=%e maxelm=%lld\n", maxelm + i, slb[i].aw,maxelm);
+			system("PAUSE");
+		}
+		if (slb[i].iW == -1) {
+			printf("bad diagonal in string %lld iP=%lld maxelm=%lld\n", maxelm + i, slb[i].iW, maxelm);
+			system("PAUSE");
 		}
 		if ((slb[i].iI > -1) && (fabs(slb[i].ai) > nonzeroEPS)) (nna)++;
 		if (slb[i].ai < -nonzeroEPS) {
 			printf("bad ai in string %lld ai=%e maxelm=%lld\n", maxelm + i, -slb[i].ai, maxelm);
+			system("PAUSE");
 		}
 	}
 
@@ -1038,17 +1105,18 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 		// Это не специальная нелинейная версия кода amg1r5 CAMG.
 		for (integer k = 0; k < lw; k++) {
-			if ((w[k].ifamily == STEFAN_BOLCMAN_FAMILY) ||
-				(w[k].ifamily == NEWTON_RICHMAN_FAMILY)) {
+			if ((w[k].ifamily == WALL_BOUNDARY_CONDITION::STEFAN_BOLCMAN_FAMILY) ||
+				(w[k].ifamily == WALL_BOUNDARY_CONDITION::NEWTON_RICHMAN_FAMILY)) {
 				alpharelax = 0.99999; // Для того чтобы СЛАУ сходилась.
 									  // 0.9999 - недостаточное значение, температуры не те получаются.
 				//printf("incomming\n");
 			}
 		}
-		if ((adiabatic_vs_heat_transfer_coeff == NEWTON_RICHMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == STEFAN_BOLCMAN_BC) ||
-			(adiabatic_vs_heat_transfer_coeff == MIX_CONDITION_BC)) {
-			alpharelax = 0.99999;
+		if ((adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::NEWTON_RICHMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::STEFAN_BOLCMAN_BC) ||
+			(adiabatic_vs_heat_transfer_coeff == DEFAULT_CABINET_BOUNDARY_CONDITION::MIX_CONDITION_BC)) {
+			alpharelax = 0.99999; //free_debug_parametr1; // 0.99999;
+			//printf("temperature alharelax = %e\n", free_debug_parametr1);
 		}
 		//if (adiabatic_vs_heat_transfer_coeff == ADIABATIC_WALL_BC) {
 			//printf("ADIABATIC WALL BC"); getchar();
@@ -1122,6 +1190,11 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 				//rhs[i] += (1 - alpharelax) * sl[i].ap * deltP_init[i] / alpharelax;
 				//elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
 				
+			}
+			else if ((iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)||(iVar== TURBULENT_KINETIK_ENERGY)) {
+				// Справляется только метод сглаженной аггрегации и нижняя релаксация безусловно нужна.
+				// С нижней релаксацией сходимость монотоная без всплексов.
+				elements[nna] = static_cast<ScalarType> (sl[i].ap / alpharelax);
 			}
 			else
 			{
@@ -1388,6 +1461,26 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		amgcl_params_seti(prm, "precond.relax.k", 2);
 		printf("precond.relax.type==ilu(k==2).\n");
 		break;
+	case 8: // ilu4
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 4);
+		printf("precond.relax.type==ilu(k==4).\n");
+		break;
+	case 9: // ilu6
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 6);
+		printf("precond.relax.type==ilu(k==6).\n");
+		break;
+	case 10: // ilu8
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 8);
+		printf("precond.relax.type==ilu(k==8).\n");
+		break;
+	case 11: // ilu10
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 10);
+		printf("precond.relax.type==ilu(k==10).\n");
+		break;
 	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
 		printf("precond.relax.type==spai0. \n");
 		break;
@@ -1395,11 +1488,11 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
 	//amgcl_params_seti(prm, "solver.L", 1);
 	switch (my_amg_manager.amgcl_iterator) {
-	case 0: // BiCGStab
+	case AMGCL_ITERATOR_ALG::BiCGStab: // BiCGStab
 		amgcl_params_sets(prm, "solver.type", "bicgstab");
 		printf("solver.type==bicgstab.\n");
 		break;
-	case 1: // FGMRes
+	case AMGCL_ITERATOR_ALG::FGMRes: // FGMRes
 		amgcl_params_sets(prm, "solver.type", "fgmres");
 		printf("solver.type==fgmres.\n");
 		break;
@@ -1414,7 +1507,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		// Нестационарные задачи требуется считать до меньших значений невязки.
 		// 14.05.2019
 		// 1.0e-12 точность достаточна.
-		if (my_amg_manager.amgcl_iterator == 1) {
+		if (my_amg_manager.amgcl_iterator == AMGCL_ITERATOR_ALG::FGMRes) {
 			//fgmres
 			// 29.12.2019 проверено что достаточно уровня невязки 1Е-7
 			// при использовании fgmres для нестационарного моделирования на АЛИС сетке.
@@ -1493,14 +1586,46 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 			// K-Omega SST Turbulence Model
 			if (iVar == TURBULENT_KINETIK_ENERGY) {
-				amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
-			}
-			if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-				amgcl_params_setf(prm, "solver.tol", 1.0e-20f);
-			}
+				if (my_amg_manager.amgcl_selector == 0) {
+					// Руге Штубен.
+					// Работает только с методом сглаженной агрегации.
+					amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
+					amgcl_params_seti(prm, "solver.maxiter", 1000);
+					amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+					amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+					printf("TURBULENCE k-omega redirect to precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
 
-			// Velocity or Spallart Allmares.
-			amgcl_params_seti(prm, "solver.maxiter", 100);
+				}
+				else {
+					amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
+					amgcl_params_seti(prm, "solver.maxiter", 1000);
+				}
+			}
+			else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
+				if (my_amg_manager.amgcl_selector == 0) {
+					// Руге Штубен.
+					// Работает только с методом сглаженной агрегации.
+					amgcl_params_setf(prm, "solver.tol", 1.0e-20f);
+					amgcl_params_seti(prm, "solver.maxiter", 1000);
+					amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+					amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+					printf("TURBULENCE k-omega redirect to precond.coarsening.type==smoothed_aggregation. precond.coarsening.aggr.eps_strong=1e-3f.\n");
+				}
+				else {
+					amgcl_params_setf(prm, "solver.tol", 1.0e-20f);
+					amgcl_params_seti(prm, "solver.maxiter", 1000);
+				}
+			}
+			else {
+
+				// Velocity or Spalart Allmares Turbulence model.
+				if ((iVar == VELOCITY_X_COMPONENT) ||
+					(iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) {
+					// Velocity component
+					amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
+				}
+				amgcl_params_seti(prm, "solver.maxiter", 100);
+			}
 		}
 
 	}

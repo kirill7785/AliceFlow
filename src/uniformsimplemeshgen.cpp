@@ -1624,7 +1624,7 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 			Sort_method<doublereal>(xpos,inx);
 			Sort_method<doublereal>(ypos,iny);
 			Sort_method<doublereal>(zpos,inz);
-			if (bcont == true) {
+			if (bcont  ) {
 				goto START_LAB;
 			}
 		//}
@@ -2421,7 +2421,7 @@ bool in_model_fluid_gap_1(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 			}
 		}
 	}
-	if ((b[k].itype == SOLID)) ret = false;
+	if ((b[k].itype == PHYSICS_TYPE_IN_BODY::SOLID)) ret = false;
 	ib = k;
 
 	return ret;
@@ -2547,7 +2547,7 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 
 OUTOF_IN_MODEL_FLOW_1:
 
-	if ((b[k].itype == SOLID)) ret = false;
+	if ((b[k].itype == PHYSICS_TYPE_IN_BODY::SOLID)) ret = false;
 	ib = k;
 
 	return ret;
@@ -3696,7 +3696,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	for (integer i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{
-			if (b[i].itype == HOLLOW) {
+			if (b[i].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 				if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
 					ib_stub = i;
 					vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
@@ -3829,7 +3829,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 				//p.y = yc;
 				//p.z = zc;
 				bool b_this_is_SOLID_block = false;
-				if (b[ib_marker[i9 +  i7_]].itype == SOLID) {
+				if (b[ib_marker[i9 +  i7_]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 					b_this_is_SOLID_block = true;
 				}
 				if ((bincomming) && ((b_this_is_SOLID_block))) {
@@ -3865,7 +3865,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 				//p.y = yc;
 				//p.z = zc;
 				bool b_this_is_SOLID_block = false;
-				if ((b[ib_marker_zxy[i9+ i7_]].itype == SOLID)) {
+				if ((b[ib_marker_zxy[i9+ i7_]].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 					b_this_is_SOLID_block = true;
 				}
 				if ((bincomming) && (b_this_is_SOLID_block)) {
@@ -3902,7 +3902,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 				//p.y = yc;
 				//p.z = zc;
 				bool b_this_is_SOLID_block = false;
-				if (b[ib_marker_yxz[i7_  +  i9]].itype == SOLID) {
+				if (b[ib_marker_yxz[i7_  +  i9]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 					b_this_is_SOLID_block = true;
 				}
 				if ((bincomming) && (b_this_is_SOLID_block)) {
@@ -4916,7 +4916,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				 }
 				 // определяет номер блока по координате точки.
 				 //myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-				 if (!((((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID))) || ((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID)) || (((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)))))
+				 if (!((((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID))) || ((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) || (((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 				 {
 					 // нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 					 b2div = true;
@@ -5160,7 +5160,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				 }
 				 // определяет номер блока по координате точки.
 				 //myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-				 if (!((((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)))))
+				 if (!((((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 				 {
 					 // нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 					 b2div = true;
@@ -5382,7 +5382,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				 }
 				 // определяет номер блока по координате точки.
 				 //myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-				 if (!((((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)))))
+				 if (!((((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 				 {
 					 // нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 					 b2div = true;
@@ -5641,8 +5641,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					}
 
 					if (i56_found >= 0) {
-						if (b[i56_found].itype == SOLID) {
-							if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 								// Мы помещаем источник тепла в блок с большей теплопроводностью.
 								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -5702,7 +5702,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						else {
 
 							if (i57_found >= 0) {
-								if (b[i57_found].itype == SOLID) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
 									s[i].g.zS = zg2;
 									s[i].g.zE = zg2;
@@ -5729,7 +5729,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					if (i57_found >= 0) {
-						if (b[i57_found].itype == SOLID) {
+						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// Найден Солид Блок.
 							s[i].g.zS = zg2;
 							s[i].g.zE = zg2;
@@ -5803,9 +5803,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 
 					if (i56_found >= 0) {
-						if (b[i56_found].itype == SOLID) {
+						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// TODO 11.07.2016
-							if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 								// Мы помещаем источник тепла в блок с большей теплопроводностью.
 								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -5861,7 +5861,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						else {
 							
 							if (i57_found >= 0) {
-								if (b[i57_found].itype == SOLID) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
 									s[i].g.xS = xg2;
 									s[i].g.xE = xg2;
@@ -5888,7 +5888,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					if (i57_found >= 0) {
-						if (b[i57_found].itype == SOLID) {
+						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// Найден Солид Блок.
 							s[i].g.xS = xg2;
 							s[i].g.xE = xg2;
@@ -5953,9 +5953,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 
 					if (i56_found >= 0) {
-						if (b[i56_found].itype == SOLID) {
+						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							
-							if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 								// Мы помещаем источник тепла в блок с большей теплопроводностью.
 								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -5981,7 +5981,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						else {
 							
 							if (i57_found >= 0) {
-								if (b[i57_found].itype == SOLID) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
 									s[i].g.yS = yg2;
 									s[i].g.yE = yg2;
@@ -6008,7 +6008,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					if (i57_found >= 0) {
-						if (b[i57_found].itype == SOLID) {
+						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// Найден Солид Блок.
 							s[i].g.yS = yg2;
 							s[i].g.yE = yg2;
@@ -6166,7 +6166,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	//printf("incomming\n");
 	//system("pause");
 
-	// если bgeom == true, то используется неравномерная сетка по закону геометрической прогрессии.
+	// если bgeom  , то используется неравномерная сетка по закону геометрической прогрессии.
 	bool bgeomx=false; // по оси Ox
 	bool bgeomy=false; // по оси Oy
 	bool bgeomz=true; // по оси Oz
@@ -6932,8 +6932,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 					}
 
 					if (i56_found >= 0) {
-						if (b[i56_found].itype == SOLID) {
-							if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 								// Мы помещаем источник тепла в блок с большей теплопроводностью.
 								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -6988,7 +6988,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						else {
 
 							if (i57_found >= 0) {
-								if (b[i57_found].itype == SOLID) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
 									s[i].g.zS = zg2;
 									s[i].g.zE = zg2;
@@ -7014,7 +7014,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						}
 					}
 					if (i57_found >= 0) {
-						if (b[i57_found].itype == SOLID) {
+						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// Найден Солид Блок.
 							s[i].g.zS = zg2;
 							s[i].g.zE = zg2;
@@ -7085,9 +7085,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 
 					if (i56_found >= 0) {
-						if (b[i56_found].itype == SOLID) {
+						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// TODO 11.07.2016
-							if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 								// Мы помещаем источник тепла в блок с большей теплопроводностью.
 								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -7143,7 +7143,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						else {
 
 							if (i57_found >= 0) {
-								if (b[i57_found].itype == SOLID) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
 									s[i].g.xS = xg2;
 									s[i].g.xE = xg2;
@@ -7169,7 +7169,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						}
 					}
 					if (i57_found >= 0) {
-						if (b[i57_found].itype == SOLID) {
+						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// Найден Солид Блок.
 							s[i].g.xS = xg2;
 							s[i].g.xE = xg2;
@@ -7230,9 +7230,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 
 					if (i56_found >= 0) {
-						if (b[i56_found].itype == SOLID) {
+						if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 
-							if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+							if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 								// Мы помещаем источник тепла в блок с большей теплопроводностью.
 								// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 								if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -7258,7 +7258,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						else {
 
 							if (i57_found >= 0) {
-								if (b[i57_found].itype == SOLID) {
+								if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 									// Найден Солид Блок.
 									s[i].g.yS = yg2;
 									s[i].g.yE = yg2;
@@ -7284,7 +7284,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 						}
 					}
 					if (i57_found >= 0) {
-						if (b[i57_found].itype == SOLID) {
+						if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 							// Найден Солид Блок.
 							s[i].g.yS = yg2;
 							s[i].g.yE = yg2;
@@ -7363,7 +7363,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	//*****************************************************************************************************************
 	// Изменяемые параметры автоматического сеточного генератора
 
-	// если bgeom == true, то используется неравномерная сетка по закону геометрической прогрессии.
+	// если bgeom  , то используется неравномерная сетка по закону геометрической прогрессии.
 	bool bgeomx = false; // по оси Ox
 	bool bgeomy = false; // по оси Oy
 	bool bgeomz = false; // по оси Oz
@@ -7637,7 +7637,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	for (i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{
-			if (b[i].itype == HOLLOW) {
+			if (b[i].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 				if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
 					ib_stub = i;
 					vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
@@ -7662,13 +7662,13 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 	for (m7 = 0; m7 < lb; m7++) {
 
 		bool bpowerON_loc = false;
-		if ((b[m7].itype == SOLID) && (fabs(b[m7].arr_Sc[0]) > 0.0)) {
+		if ((b[m7].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (fabs(b[m7].arr_Sc[0]) > 0.0)) {
 			// Обнаружена неудовлетворительная точность на источниках тепла,
 			// Около них сетку необходимо сгущать.
 			bpowerON_loc = true;
 		}
 		bool bFluidON = false;
-		if (b[m7].itype == FLUID) {
+		if (b[m7].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 			bFluidON = true;
 		}
 
@@ -7741,14 +7741,14 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 				}
 
 				//if (bpowerON == false) {// так медленнее.
-					//if ((b[ibcur].itype == SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
+					//if ((b[ibcur].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
 						// Обнаружена неудовлетворительная точность на источниках тепла,
 						// Около них сетку необходимо сгущать.
 						//bpowerON = true;
 					//}
 				//}
 
-				//if (b[ibcur].itype == FLUID) {
+				//if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				if (ib_marker_flag_fluid[iP]) {
 					// Делаем проверку: Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
@@ -7764,7 +7764,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							//}
 						//}
 						ibcur_plus = ib_marker[iP+1];
-						if (b[ibcur_plus].itype != FLUID) {
+						if (b[ibcur_plus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 							if (i > 0) {
 								doublereal cpos_minus = 0.5*(rxboundary[i] + rxboundary[i - 1]);
 								integer ibcur_minus = 0;
@@ -7777,7 +7777,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 									//}
 								//}
 								ibcur_minus = ib_marker[iP - 1];
-								if (b[ibcur_minus].itype != FLUID) {
+								if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 									// ОДИНОЧНЫЙ FLUID блок
 									bfound_onex_fluid_cv = true;
 									break;
@@ -7825,7 +7825,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 									//}
 									//integer iP = i + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz;
 									ibcur_minus = ib_marker[iP-1];
-									if (b[ibcur_minus].itype != FLUID) {
+									if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 										// ОДИНОЧНЫЙ FLUID блок
 										bfound_onex_fluid_cv = true;
 										break;
@@ -7869,7 +7869,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							//}
 							//integer iP = i + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz;
 							ibcur_minus = ib_marker[iP - 1];
-							if (b[ibcur_minus].itype != FLUID) {
+							if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 								// ОДИНОЧНЫЙ FLUID блок
 								bfound_onex_fluid_cv = true;
 								break;
@@ -7930,13 +7930,13 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 					integer ib1 = myisblock_id(lb, b, xp_1, yp_3, zp_3);
 					integer ib2 = myisblock_id(lb, b, xp_2, yp_3, zp_3);
 					integer ib3 = myisblock_id(lb, b, xp_3, yp_3, zp_3);
-					if (!((((b[ib1].itype == HOLLOW)||(b[ib1].itype == SOLID))
-						&& ((b[ib2].itype == HOLLOW)||(b[ib2].itype == SOLID)) 
-						&& ((b[ib3].itype == HOLLOW)||(b[ib3].itype == SOLID))) 
-						|| ((b[ib1].itype == SOLID) && (b[ib2].itype == SOLID) && (b[ib3].itype == SOLID)) 
-						|| (((b[ib1].itype == FLUID)||(b[ib1].itype == HOLLOW)) &&
-						   ((b[ib2].itype == FLUID)||(b[ib2].itype == HOLLOW)) && 
-						   ((b[ib3].itype == FLUID)||(b[ib3].itype == HOLLOW)))))
+					if (!((((b[ib1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[ib1].itype == PHYSICS_TYPE_IN_BODY::SOLID))
+						&& ((b[ib2].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[ib2].itype == PHYSICS_TYPE_IN_BODY::SOLID)) 
+						&& ((b[ib3].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[ib3].itype == PHYSICS_TYPE_IN_BODY::SOLID))) 
+						|| ((b[ib1].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib2].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib3].itype == PHYSICS_TYPE_IN_BODY::SOLID)) 
+						|| (((b[ib1].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[ib1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) &&
+						   ((b[ib2].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[ib2].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && 
+						   ((b[ib3].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[ib3].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 					{
 						// нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 						b2div = true;
@@ -8202,13 +8202,13 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 					bpowerON = true;
 				}
 
-				//if ((b[ibcur].itype == SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
+				//if ((b[ibcur].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
 					// Обнаружена неудовлетворительная точность на источниках тепла,
 					// Около них сетку необходимо сгущать.
 					//bpowerON = true;
 				//}
 
-				//if (b[ibcur].itype == FLUID) {
+				//if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				if (ib_marker_flag_fluid[iP]) {
 					// Делаем проверочку: Есть хоть один сосед (N,S) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
@@ -8224,7 +8224,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							//}
 						//}
 						ibcur_plus = ib_marker[ix + inumboundaryx*(i+1) + inumboundaryx*inumboundaryy*iz];
-						if (b[ibcur_plus].itype != FLUID) {
+						if (b[ibcur_plus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 							if (i > 0) {
 								doublereal cpos_minus = 0.5*(ryboundary[i] + ryboundary[i - 1]);
 								integer ibcur_minus = 0;
@@ -8237,7 +8237,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 									//}
 								//}
 								ibcur_minus = ib_marker[ix + inumboundaryx*(i - 1) + inumboundaryx*inumboundaryy*iz];
-								if (b[ibcur_minus].itype != FLUID) {
+								if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 									// ОДИНОЧНЫЙ FLUID блок
 									bfound_onex_fluid_cv = true;
 									break;
@@ -8284,7 +8284,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 										//}
 									//}
 									ibcur_minus = ib_marker[ix + inumboundaryx*(i - 1) + inumboundaryx*inumboundaryy*iz];
-									if (b[ibcur_minus].itype != FLUID) {
+									if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 										// ОДИНОЧНЫЙ FLUID блок
 										bfound_onex_fluid_cv = true;
 										break;
@@ -8327,7 +8327,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 								//}
 							//}
 							ibcur_minus = ib_marker[ix + inumboundaryx*(i - 1) + inumboundaryx*inumboundaryy*iz];
-							if (b[ibcur_minus].itype != FLUID) {
+							if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 								// ОДИНОЧНЫЙ FLUID блок
 								bfound_onex_fluid_cv = true;
 								break;
@@ -8392,13 +8392,13 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 					integer ib1 = myisblock_id(lb, b, xp_3, yp_1, zp_3);
 					integer ib2 = myisblock_id(lb, b, xp_3, yp_2, zp_3);
 					integer ib3 = myisblock_id(lb, b, xp_3, yp_3, zp_3);
-					if (!((((b[ib1].itype == HOLLOW)||(b[ib1].itype == SOLID))
-						&& ((b[ib2].itype == HOLLOW)||(b[ib2].itype == SOLID)) 
-						&& ((b[ib3].itype == HOLLOW)||(b[ib3].itype == SOLID))) 
-						|| ((b[ib1].itype == SOLID) && (b[ib2].itype == SOLID) && (b[ib3].itype == SOLID)) 
-						|| (((b[ib1].itype == FLUID)||(b[ib1].itype == HOLLOW)) &&
-						((b[ib2].itype == FLUID)||(b[ib2].itype == HOLLOW)) &&
-							((b[ib3].itype == FLUID)||(b[ib3].itype == HOLLOW)))))
+					if (!((((b[ib1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[ib1].itype == PHYSICS_TYPE_IN_BODY::SOLID))
+						&& ((b[ib2].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[ib2].itype == PHYSICS_TYPE_IN_BODY::SOLID)) 
+						&& ((b[ib3].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[ib3].itype == PHYSICS_TYPE_IN_BODY::SOLID))) 
+						|| ((b[ib1].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib2].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[ib3].itype == PHYSICS_TYPE_IN_BODY::SOLID)) 
+						|| (((b[ib1].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[ib1].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) &&
+						((b[ib2].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[ib2].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) &&
+							((b[ib3].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[ib3].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 					{
 						// нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 						b2div = true;
@@ -8609,13 +8609,13 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 				ibcur = i99;
 			}
 		}
-		if (b[ibcur].itype == SOLID) {
+		if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 			izintervalcount[i] = 1;
 		}
-		if (b[ibcur].itype == FLUID) {
+		if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 			izintervalcount[i] = 2;
 		}
-		if (b[ibcur].itype == HOLLOW) {
+		if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::HOLLOW) {
 			izintervalcount[i] = 1;
 		}
 	}
@@ -8659,14 +8659,14 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 					// Около них сетку необходимо сгущать.
 					bpowerON = true;
 				}
-				//if ((b[ibcur].itype == SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
+				//if ((b[ibcur].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
 					// Обнаружена неудовлетворительная точность на источниках тепла,
 					// Около них сетку необходимо сгущать.
 					//bpowerON = true;
 				//}
 
 
-				//if (b[ibcur].itype == FLUID) {
+				//if (b[ibcur].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				if (ib_marker_flag_fluid[iP]) {
 					// Делаем проверочку: Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
@@ -8682,7 +8682,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							//}
 						//}
 						ibcur_plus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i+1)];
-						if (b[ibcur_plus].itype != FLUID) {
+						if (b[ibcur_plus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 							if (i > 0) {
 								doublereal cpos_minus = 0.5*(rzboundary[i] + rzboundary[i - 1]);
 								integer ibcur_minus = 0;
@@ -8695,7 +8695,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 									//}
 								//}
 								ibcur_minus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i-1)];
-								if (b[ibcur_minus].itype != FLUID) {
+								if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 									// ОДИНОЧНЫЙ FLUID блок
 									bfound_onex_fluid_cv = true;
 									break;
@@ -8742,7 +8742,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 										//}
 									//}
 									ibcur_minus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i - 1)];
-									if (b[ibcur_minus].itype != FLUID) {
+									if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 										// ОДИНОЧНЫЙ FLUID блок
 										bfound_onex_fluid_cv = true;
 										break;
@@ -8785,7 +8785,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 								//}
 							//}
 							ibcur_minus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i - 1)];
-							if (b[ibcur_minus].itype != FLUID) {
+							if (b[ibcur_minus].itype != PHYSICS_TYPE_IN_BODY::FLUID) {
 								// ОДИНОЧНЫЙ FLUID блок
 								bfound_onex_fluid_cv = true;
 								break;
@@ -8846,7 +8846,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 					}
 					// определяет номер блока по координате точки.
 					//myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-					if (!((((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)))))
+					if (!((((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_1)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_2)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 					{
 						// нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 						b2div = true;
@@ -9011,8 +9011,8 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 						}
 
 						if (i56_found >= 0) {
-							if (b[i56_found].itype == SOLID) {
-								if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 									// Мы помещаем источник тепла в блок с большей теплопроводностью.
 									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -9038,7 +9038,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							else {
 
 								if (i57_found >= 0) {
-									if (b[i57_found].itype == SOLID) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 
 										// Найден Солид Блок.
 										printf("zg1==%e\n", zg1);
@@ -9095,7 +9095,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							}
 						}
 						if (i57_found >= 0) {
-							if (b[i57_found].itype == SOLID) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 								// Найден Солид Блок.
 								s[i].g.zS = zg2;
 								s[i].g.zE = zg2;
@@ -9181,9 +9181,9 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 
 						if (i56_found >= 0) {
-							if (b[i56_found].itype == SOLID) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 								// TODO 11.07.2016
-								if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 									// Мы помещаем источник тепла в блок с большей теплопроводностью.
 									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -9241,7 +9241,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							else {
 
 								if (i57_found >= 0) {
-									if (b[i57_found].itype == SOLID) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 										// Найден Солид Блок.
 										s[i].g.xS = xg2;
 										s[i].g.xE = xg2;
@@ -9267,7 +9267,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							}
 						}
 						if (i57_found >= 0) {
-							if (b[i57_found].itype == SOLID) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 								// Найден Солид Блок.
 								s[i].g.xS = xg2;
 								s[i].g.xE = xg2;
@@ -9350,9 +9350,9 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 
 
 						if (i56_found >= 0) {
-							if (b[i56_found].itype == SOLID) {
+							if (b[i56_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 
-								if ((i57_found >= 0) && (b[i57_found].itype == SOLID)) {
+								if ((i57_found >= 0) && (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID)) {
 									// Мы помещаем источник тепла в блок с большей теплопроводностью.
 									// comparison_lam выдаёт истину если теплопроводность блока i56 больше.
 									if (comparison_lam(matlist, b, i56_found, i57_found, 25.0)) {
@@ -9410,7 +9410,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							else {
 
 								if (i57_found >= 0) {
-									if (b[i57_found].itype == SOLID) {
+									if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 										// Найден Солид Блок.
 										s[i].g.yS = yg2;
 										s[i].g.yE = yg2;
@@ -9437,7 +9437,7 @@ void coarsemeshgen2(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, int
 							}
 						}
 						if (i57_found >= 0) {
-							if (b[i57_found].itype == SOLID) {
+							if (b[i57_found].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 								// Найден Солид Блок.
 								s[i].g.yS = yg2;
 								s[i].g.yE = yg2;
@@ -9603,15 +9603,15 @@ void cad_geometry_octree_meshgen(doublereal*& xpos, doublereal*& ypos, doublerea
 
 	doublereal base_min_side = fmin(b[0].g.xE - b[0].g.xS,fmin(b[0].g.yE - b[0].g.yS, b[0].g.zE - b[0].g.zS));
 	LINE_DIRECTIONAL side_id;
-	if (fabs(base_min_side - fabs(b[0].g.xE - b[0].g.xS)) < 1.0e-30) side_id = X_LINE_DIRECTIONAL;
-	if (fabs(base_min_side - fabs(b[0].g.yE - b[0].g.yS)) < 1.0e-30) side_id = Y_LINE_DIRECTIONAL;
-	if (fabs(base_min_side - fabs(b[0].g.zE - b[0].g.zS)) < 1.0e-30) side_id = Z_LINE_DIRECTIONAL;
+	if (fabs(base_min_side - fabs(b[0].g.xE - b[0].g.xS)) < 1.0e-30) side_id = LINE_DIRECTIONAL::X_LINE_DIRECTIONAL;
+	if (fabs(base_min_side - fabs(b[0].g.yE - b[0].g.yS)) < 1.0e-30) side_id = LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL;
+	if (fabs(base_min_side - fabs(b[0].g.zE - b[0].g.zS)) < 1.0e-30) side_id = LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL;
 
 	integer ing = (integer)(fmax(inx, fmax(iny, inz)));
 	doublereal cell_size = base_min_side / ing;
 
 	switch (side_id) {
-	case X_LINE_DIRECTIONAL: 
+	case LINE_DIRECTIONAL::X_LINE_DIRECTIONAL:
 		std::cout << "X" << std::endl;
 		inx = ing;
 		xpos = new doublereal[ing + 1];
@@ -9633,7 +9633,7 @@ void cad_geometry_octree_meshgen(doublereal*& xpos, doublereal*& ypos, doublerea
 		for (integer i = 1; i <= ing; i++) zpos[i] = b[0].g.zS + i * cell_size;
 		zpos[ing] = b[0].g.zE;
 		break;
-	case Y_LINE_DIRECTIONAL:
+	case LINE_DIRECTIONAL::Y_LINE_DIRECTIONAL:
 		std::cout << "Y" << std::endl;
 		iny = ing;
 		ypos = new doublereal[ing + 1];
@@ -9655,7 +9655,7 @@ void cad_geometry_octree_meshgen(doublereal*& xpos, doublereal*& ypos, doublerea
 		for (integer i = 1; i <= ing; i++) zpos[i] = b[0].g.zS + i * cell_size;
 		zpos[ing] = b[0].g.zE;
 		break;
-	case Z_LINE_DIRECTIONAL:
+	case LINE_DIRECTIONAL::Z_LINE_DIRECTIONAL:
 		std::cout << "Z" << std::endl;
 		inz = ing;
 		zpos = new doublereal[ing + 1];

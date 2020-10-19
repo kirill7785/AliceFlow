@@ -61,7 +61,7 @@ void calculate_light_flux2(doublereal* & myF, TEMPER& t,
 	for (integer ibid = 0; ibid < lb; ibid++) {
 		for (integer i = 0; i < t.maxelm; i++) {
 			distance[i] = 1.0e30;
-			if (b[t.whot_is_block[i]].itype == SOLID) {
+			if (b[t.whot_is_block[i]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				distance[i] = -0.1e-3;// одна десятая мм
 			}
 		}
@@ -2077,7 +2077,7 @@ void ray_tracing_fluid_only_Alice(TOCHKA p3, TOCHKA p0, TOCHKA p1, integer i0, i
 bool is_permisseble(TOCHKA p0, TOCHKA p1, integer i0, integer i1, TEMPER& t, BLOCK*& b)
 {
 	permissible758 = true; // По умолчанию точка достижима.
-	if (b[t.whot_is_block[i1]].itype == FLUID) {
+	if (b[t.whot_is_block[i1]].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 
 		TOCHKA p3;
 		p3.x = 0.5 * (p0.x + p1.x);
@@ -2128,19 +2128,19 @@ void calculate_light_flux(doublereal*& myF, TEMPER& t,
 	for (integer i = 0; i < t.maxelm; i++) {
 		myF[i] = 0.0;
 		size_cell[i] = kR_size_cell * volume3D_ray_tracing(i, t.nvtx, t.pa);
-		if (b[t.whot_is_block[i]].itype != FLUID) bray_tracing_fluid_only = false;
+		if (b[t.whot_is_block[i]].itype != PHYSICS_TYPE_IN_BODY::FLUID) bray_tracing_fluid_only = false;
 	}
 	for (integer ibid = 0; ibid < lb; ibid++) {
 		for (integer i = 0; i < t.maxelm; i++) {
 			distance[i] = 1.0e30;
-			if (b[t.whot_is_block[i]].itype == SOLID) {
+			if (b[t.whot_is_block[i]].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				distance[i] = -0.1e-3;// одна десятая мм
 			}
 		}
 
 		if (b[ibid].arr_Sc[0] > 1.0e-30) {
 			TOCHKA p0;
-			integer i0;
+			integer i0=-1;// Если не будет инициализировано далее, то со значением -1  намеренно вызовет ошибку памяти.
 
 			printf("power %e\n", b[ibid].arr_Sc[0]);
 			doublereal x0 = 0.5 * (b[ibid].g.xS + b[ibid].g.xE);

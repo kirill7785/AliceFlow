@@ -686,12 +686,12 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		// это граничный узел
         rho=1.1614; cp=1005; lam=0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat==1) {
-			if (b[ib].itype==SOLID) {
+			if (b[ib].itype== PHYSICS_TYPE_IN_BODY::SOLID) {
 		        my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 		    } // SOLID
-		    else if (b[ib].itype==FLUID) {
+		    else if (b[ib].itype== PHYSICS_TYPE_IN_BODY::FLUID) {
 		       doublereal mu, beta_t; // значения не используются но требуются.
 		       doublereal pressure;
 		       if (t.ptr[1][iP]==-1) {
@@ -744,12 +744,12 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		// это граничный узел
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
-			if (b[ib].itype == SOLID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
-			else if (b[ib].itype == FLUID) {
+			else if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
 				if (t.ptr[1][iP] == -1) {
@@ -800,12 +800,12 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		// это граничный узел
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
-			if (b[ib].itype == SOLID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
-			else if (b[ib].itype == FLUID) {
+			else if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
 				if (t.ptr[1][iP] == -1) {
@@ -857,12 +857,12 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		// это граничный узел
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
-			if (b[ib].itype == SOLID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				my_solid_properties(t.potent[iG], rho, cp, lam, matlist[b[ib].imatid].ilibident); // подставляется температура в граничном узле
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
-			else if (b[ib].itype == FLUID) {
+			else if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
 				if (t.ptr[1][iP] == -1) {
@@ -925,14 +925,17 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 
 	//TOCHKA p; // точка - центр рассматриваемого КО.	
 	
-	doublereal dmin = 1.0e30;
-	doublereal dmax = -1.0e30;
-	dgan = 1.0e30;
-	dsic = 1.0e30;
-	dcu = 1.0e30;
+	const integer ISIZE = t.maxelm;
 
-	for (integer iP=0; iP<t.maxelm; iP++) {
+#pragma omp parallel for
+	for (integer iP=0; iP<ISIZE; iP++) {
 		// проход по всем внутренним контрольным объёмам расчётной области.
+
+		doublereal dmin = 1.0e30;
+		doublereal dmax = -1.0e30;
+		dgan = 1.0e30;
+		dsic = 1.0e30;
+		dcu = 1.0e30;
 
 		//center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
 		//in_model_temp(p,ib,b,lb); // возвращает номер блока ib которому принадлежит контрольный объём с номером iP.
@@ -946,12 +949,12 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 		rho=1.1614; cp=1005; lam=0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat==1) {
 			// библиотечный, находящийся внутри программы AliceFlow материал.
-			if (b[ib].itype==SOLID) {
+			if (b[ib].itype== PHYSICS_TYPE_IN_BODY::SOLID) {
 			    my_solid_properties(t.potent[iP], rho, cp, lam, matlist[b[ib].imatid].ilibident);
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 		    } // SOLID
-		    if (b[ib].itype==FLUID) {
+		    if (b[ib].itype== PHYSICS_TYPE_IN_BODY::FLUID) {
 			   doublereal mu, beta_t; // значения не используются но требуются.
 		       doublereal pressure;
 			   if ((t.ptr==nullptr)||(t.ptr[1][iP]==-1)) {
@@ -970,6 +973,10 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iP]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iP]);
 
+			// Механические свойства материала, зависящие от температуры.
+			t.prop[BETA_T_MECHANICAL][iP]= get_beta_t_solid(matlist[b[ib].imatid].n_beta_t_solid, matlist[b[ib].imatid].temp_beta_t_solid, matlist[b[ib].imatid].arr_beta_t_solid, t.potent[iP]);
+			t.prop[YOUNG_MODULE][iP] = get_Young_Module(matlist[b[ib].imatid].n_YoungModule, matlist[b[ib].imatid].temp_Young_Module, matlist[b[ib].imatid].arr_Young_Module, t.potent[iP]);
+		    t.prop[POISSON_RATIO][iP]= get_Poisson_ratio(matlist[b[ib].imatid].n_Poisson_ratio, matlist[b[ib].imatid].temp_Poisson_ratio, matlist[b[ib].imatid].arr_Poisson_ratio, t.potent[iP]);
 		}
 		// Свойства для внутреннего контрольного объёма.
 		if (t.ptr != NULL) {
@@ -978,7 +985,7 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 				if (lam < dmin) dmin = lam;
 			}
 			else {
-				if (b[ib].itype == FLUID) {
+				if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 					if (lam > dmax) dmax = lam;
 					if (lam < dmin) dmin = lam;
 				}
@@ -1003,25 +1010,27 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 		gran_prop(t, f, b, lb, iP, T_SIDE, ib, matlist); // Top Side
 		gran_prop(t, f, b, lb, iP, B_SIDE, ib, matlist); // Bottom Side
 
+		//if (bswitch_print_message) {
+			//printf("lam_min=%e lam_max=%e \n", dmin, dmax);
+			//if (fabs(dmin - dmax) > 1.0e-10) {
+				//std::cout << "thermal conductivity minimum=" << dmin << " thermal conductivity maximum=" << dmax << std::endl;
+			//}
+		//}
+		//if (dgan < 1.0e29) {
+			//printf("GaN nonlinear programm library Ok. %e\n",dgan);
+			//std::cout << "GaN nonlinear programm library Ok. " << dgan << std::endl;
+		//}
+		//if (dsic < 1.0e29) {
+			//printf("SiC4H nonlinear programm library Ok. %e\n",dsic);
+			//std::cout << "SiC4H nonlinear programm library Ok.  " << dsic << std::endl;
+		//}
+		//if (dcu < 1.0e29) {
+			//printf("Cu nonlinear programm library Ok.%e\n",dcu);
+			//std::cout << "Cu nonlinear programm library Ok." << dcu << std::endl;
+		//}
+
 	}
-	if (bswitch_print_message) {
-		//printf("lam_min=%e lam_max=%e \n", dmin, dmax);
-		if (fabs(dmin - dmax) > 1.0e-10) {
-			std::cout << "thermal conductivity minimum=" << dmin << " thermal conductivity maximum=" << dmax << std::endl;
-		}
-	}
-	if (dgan<1.0e29) {
-		//printf("GaN nonlinear programm library Ok. %e\n",dgan);
-		std::cout << "GaN nonlinear programm library Ok. "<< dgan << std::endl;
-	}
-	if (dsic<1.0e29) {
-		//printf("SiC4H nonlinear programm library Ok. %e\n",dsic);
-		std::cout << "SiC4H nonlinear programm library Ok.  "<< dsic  << std::endl;
-	}
-	if (dcu<1.0e29) {
-		//printf("Cu nonlinear programm library Ok.%e\n",dcu);
-		std::cout << "Cu nonlinear programm library Ok."<< dcu << std::endl;
-	}
+	
 	//getchar();
 	bswitch_print_message = !bswitch_print_message;
 } // update_temp_properties 
@@ -1066,12 +1075,12 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
 			// библиотечный, находящийся внутри программы AliceFlow материал.
-			if (b[ib].itype == SOLID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				my_solid_properties(Temperature_in_cell, rho, cp, lam, matlist[b[ib].imatid].ilibident);
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP], f, t, b, lb);
 			} // SOLID
-			if (b[ib].itype == FLUID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
 				if ((t.ptr==nullptr)||(t.ptr[1][iP-iadd] == -1)) {
@@ -1090,6 +1099,11 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, Temperature_in_cell);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, Temperature_in_cell);
 
+			// Загружает механические свойства материала зависящие от температуры.
+			t.prop[POISSON_RATIO][iP - iadd] = get_Poisson_ratio(matlist[b[ib].imatid].n_Poisson_ratio, matlist[b[ib].imatid].temp_Poisson_ratio, matlist[b[ib].imatid].arr_Poisson_ratio, Temperature_in_cell);
+			t.prop[YOUNG_MODULE][iP - iadd] = get_Young_Module(matlist[b[ib].imatid].n_YoungModule, matlist[b[ib].imatid].temp_Young_Module, matlist[b[ib].imatid].arr_Young_Module, Temperature_in_cell);
+			t.prop[BETA_T_MECHANICAL][iP - iadd] = get_beta_t_solid(matlist[b[ib].imatid].n_beta_t_solid, matlist[b[ib].imatid].temp_beta_t_solid, matlist[b[ib].imatid].arr_beta_t_solid, Temperature_in_cell);
+
 		}
 		// Свойства для внутреннего контрольного объёма.
 		if (t.ptr != NULL) {
@@ -1098,7 +1112,7 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 				if (lam < dmin) dmin = lam;
 			}
 			else {
-				if (b[ib].itype == FLUID) {
+				if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 					if (lam > dmax) dmax = lam;
 					if (lam < dmin) dmin = lam;
 				}
@@ -1274,7 +1288,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					}
 				}
                 // библиотечный находящийся внутри программы AliceFlow материал
-				if (b[ib].itype==FLUID) {
+				if (b[ib].itype== PHYSICS_TYPE_IN_BODY::FLUID) {
 					my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 				}
 		   }
@@ -1342,7 +1356,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 				   }
 			   }
 			   // библиотечный находящийся внутри программы AliceFlow материал
-			   if (b[ib].itype == FLUID) {
+			   if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				   my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 			   }
 		   }
@@ -1411,7 +1425,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 				   }
 			   }
 			   // библиотечный находящийся внутри программы AliceFlow материал
-			   if (b[ib].itype == FLUID) {
+			   if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				   my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 			   }
 		   }
@@ -1480,7 +1494,7 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 				   }
 			   }
 			   // библиотечный находящийся внутри программы AliceFlow материал
-			   if (b[ib].itype == FLUID) {
+			   if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				   my_fluid_properties(temperature, f[iflow].potent[PRESS][iG], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
 			   }
 		   }
@@ -1536,7 +1550,7 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 					doublereal cp, lam;
 					cp = 1005; lam = 0.025;
 					// библиотечный находящийся внутри программы AliceFlow материал
-					if (b[ib].itype == FLUID) {
+					if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 						//printf("rho=%e, mu=%e",rho,mu); // debug
 						//getchar();
 						my_fluid_properties(t.potent[f[ifi].ptr[iP]], f[ifi].potent[PRESS][iP], rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
@@ -1589,12 +1603,14 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 void export_User_Geom_in_STL_format(TEMPER& t) {
 
 	FILE* fp = NULL;
-	errno_t err = 0;
+	
 
 #ifdef MINGW_COMPILLER
+	int  err = 0;
 	fp = fopen64("user_geom.stl", "w");
 	if (fp == NULL) err = 1;
 #else
+	errno_t err = 0;
 	err = fopen_s(&fp, "user_geom.stl", "w");
 #endif
 
@@ -1808,12 +1824,12 @@ doublereal massa_cabinet(TEMPER &t, FLOW* &f,
 		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat == 1) {
 			// библиотечный, находящийся внутри программы AliceFlow материал.
-			if (b[ib].itype == SOLID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::SOLID) {
 				my_solid_properties(t.potent[iP], rho, cp, lam, matlist[b[ib].imatid].ilibident);
 				// проверка на допустимость температур.
 				diagnostic_critical_temperature(t.potent[iP],f,t,b,lb);
 			} // SOLID
-			if (b[ib].itype == FLUID) {
+			if (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
 				if (t.ptr[1][iP] == -1) {
@@ -1872,16 +1888,21 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 				dy = fabs(dy);
 				dz = fabs(dz);
 				doublereal dx1 = 0.0, dy1 = 0.0, dz1 = 0.0;
-				volume3D(t.border_neighbor[j].iII, t.nvtx, t.pa, dx1, dy1, dz1);
-				dx1 = fabs(dx1);
-				dy1 = fabs(dy1);
-				dz1 = fabs(dz1);
+				if (t.border_neighbor[j].iII > -1) {
+					volume3D(t.border_neighbor[j].iII, t.nvtx, t.pa, dx1, dy1, dz1);
+					dx1 = fabs(dx1);
+					dy1 = fabs(dy1);
+					dz1 = fabs(dz1);
+				}
 				integer ib; // номер искомого блока
 				in_model_temp(p, ib, b, lb);
 
 				doublereal lam= t.prop[LAM][iP]; // значения не используются но требуются
 				doublereal temperature_i = t.potent[iP]; // но на самом деле давление требуется с предыдущего временного слоя.
-				doublereal temperature_ii = t.potent[t.border_neighbor[j].iII];
+				doublereal temperature_ii = temperature_i;
+				if (t.border_neighbor[j].iII > -1) {
+					temperature_ii = t.potent[t.border_neighbor[j].iII];
+				}
 				doublereal temperature_w=t.potent[t.border_neighbor[j].iB];
 
 				switch (w[iwall_scan].iPlane) {
@@ -1979,7 +2000,7 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
 		// Определяем минимальную заданную температуру.
 		if ((!w[iwall_scan].bpressure) && (!w[iwall_scan].bsymmetry)) {
-			if (w[iwall_scan].ifamily == DIRICHLET_FAMILY) {
+			if (w[iwall_scan].ifamily == WALL_BOUNDARY_CONDITION::DIRICHLET_FAMILY) {
 				Tamb0 = fmin(Tamb0, w[iwall_scan].Tamb);
 			}
 		}

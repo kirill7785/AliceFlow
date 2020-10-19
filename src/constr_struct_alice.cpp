@@ -116,7 +116,7 @@ void calculate_max_elm(octree* &oc, integer &maxelm, integer iflag, BLOCK* b, in
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				TOCHKA p;
@@ -138,8 +138,7 @@ void calculate_max_elm(octree* &oc, integer &maxelm, integer iflag, BLOCK* b, in
 						// Причина этой ошибки в дефектности массивов xpos, ypos или zpos. По-моему это проявляется на этапе coarsemeshgen.
 						// Здесь эти сообщения об ошибках погашены.
 					}
-				}
-				if (inDomain) {
+				
 					if ((p.x >= b[0].g.xS) && (p.x <= b[0].g.xE) && (p.y >= b[0].g.yS) && (p.y <= b[0].g.yE) && (p.z >= b[0].g.zS) && (p.z <= b[0].g.zE)) {
 						// Точка точно внутри кабинета.
 						maxelm++;
@@ -248,12 +247,13 @@ void calculate_max_elm(octree* &oc, integer &maxelm, integer iflag, BLOCK* b, in
 
 // визуализация в tecplot 360 с учётом hollow блоков в программной модели.
 // Построение nodes, nvtx, prop. Частей 1..6 в программной модели.
-void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer inz, 
-	integer &maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
-	integer iflag, BLOCK* b, integer lb, integer* &whot_is_block, TOCHKA* &pa, integer &maxnode, integer** &nvtx, 
-	doublereal** &prop, doublereal* &Sc, integer* &ipower_time_depend, TPROP* matlist, integer* &ilevel_alice) {
+void constr_nodes_nvtx_prop_alice(octree*& oc, integer inx, integer iny, integer inz,
+	integer& maxelm, doublereal*& xpos, doublereal*& ypos, doublereal*& zpos,
+	integer iflag, BLOCK* b, integer lb, integer*& whot_is_block, TOCHKA*& pa, integer& maxnode, integer**& nvtx,
+	doublereal**& prop, doublereal*& Sc, POWER_TIME_DEPEND*& ipower_time_depend, TPROP* matlist, integer*& ilevel_alice,
+	bool*& bActiveShearModule) {
 
-	integer maxelm_loc = (inx + 1)*(iny + 1)*(inz + 1);
+	integer maxelm_loc = (inx + 1) * (iny + 1) * (inz + 1);
 	// Вычисление maxelm.
 	calculate_max_elm(oc, maxelm, iflag, b, lb, true);
 #if doubleintprecision == 1
@@ -261,9 +261,15 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 #else
 	//printf("maxelm=%d inx=%d iny=%d inz=%d all_in=%d\n",maxelm,inx,iny,inz,inx*iny*inz);
 #endif
-	
+
 	//system("PAUSE");
-	
+
+	if (bActiveShearModule != nullptr) {
+		delete[] bActiveShearModule;
+		bActiveShearModule = nullptr;
+	}
+	bActiveShearModule = new bool[maxelm];
+
 	ilevel_alice = nullptr;
 	ilevel_alice = new integer[maxelm];
 	if (ilevel_alice == nullptr) {
@@ -283,7 +289,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	}
 
 	prop = nullptr;
-	prop = new doublereal*[9];
+	prop = new doublereal * [SIZE_PROPERTIES_ARRAY];
 	if (prop == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem: not enough memory on your equipment for prop constr struct_alice...\n");
@@ -292,8 +298,9 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 		system("pause");
 		exit(1);
 	}
-	for (integer i = 0; i<9; i++) prop[i] = nullptr;
-	for (integer i = 0; i<9; i++) {
+	for (integer i = 0; i < SIZE_PROPERTIES_ARRAY; i++) prop[i] = nullptr;
+
+	for (integer i = 0; i < SIZE_PROPERTIES_ARRAY; i++) {
 		prop[i] = new doublereal[maxelm];
 		if (prop[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
@@ -303,7 +310,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 			printf("Problem: not enough memory on your equipment for prop[%d] constr struct_alice...\n", i);
 #endif
 
-			
+
 			printf("Please any key to exit...\n");
 			//getchar();
 			system("pause");
@@ -321,7 +328,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 		exit(1);
 	}
 	ipower_time_depend = nullptr;
-	ipower_time_depend = new integer[maxelm];
+	ipower_time_depend = new POWER_TIME_DEPEND[maxelm];
 	if (ipower_time_depend == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem: not enough memory on your equipment for ipower_time_depend constr struct_alice...\n");
@@ -339,27 +346,27 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	const doublereal mdop = 0.75;
 	for (integer i = 0; i < inx; i++) {
 		if (fabs(xpos[i + 1] - xpos[i]) < epsTolx) {
-			epsTolx = mdop*fabs(xpos[i + 1] - xpos[i]);
+			epsTolx = mdop * fabs(xpos[i + 1] - xpos[i]);
 		}
 	}
 	for (integer i = 0; i < iny; i++) {
 		if (fabs(ypos[i + 1] - ypos[i]) < epsToly) {
-			epsToly = mdop*fabs(ypos[i + 1] - ypos[i]);
+			epsToly = mdop * fabs(ypos[i + 1] - ypos[i]);
 		}
 	}
 	for (integer i = 0; i < inz; i++) {
 		if (fabs(zpos[i + 1] - zpos[i]) < epsTolz) {
-			epsTolz = mdop*fabs(zpos[i + 1] - zpos[i]);
+			epsTolz = mdop * fabs(zpos[i + 1] - zpos[i]);
 		}
 	}
 
 	printf("geometric precision tolerance: epsTolx=%e epsToly=%e epsTolz=%e\n", epsTolx, epsToly, epsTolz);
 	//system("PAUSE");
 
-	
-	
-	HASH_POLE* hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
-	for (integer i_1 = 0; i_1 < (inx + 1)*(iny + 1)*(inz + 1); i_1++) {
+
+
+	HASH_POLE* hash_table_export = new HASH_POLE[(inx + 1) * (iny + 1) * (inz + 1)];
+	for (integer i_1 = 0; i_1 < (inx + 1) * (iny + 1) * (inz + 1); i_1++) {
 		hash_table_export[i_1].flag = false;
 		hash_table_export[i_1].inum = NON_EXISTENT_NODE;
 	}
@@ -456,7 +463,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	while (top_ALICE_STACK > 0) {
 
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
@@ -466,9 +473,9 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 				bool bfound = false;
 
 				TOCHKA p;
-				p.x = 0.125*(octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
-				p.y = 0.125*(octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
-				p.z = 0.125*(octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
+				p.x = 0.125 * (octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
+				p.y = 0.125 * (octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
+				p.z = 0.125 * (octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
 				integer ib;
 				bool inDomain = false;
 				switch (iflag) {
@@ -493,7 +500,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 
 					if (!bfound) {
 						i0 = marker_pa_local;
-						
+
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
@@ -506,7 +513,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
 						i1 = marker_pa_local;
-						
+
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
@@ -519,7 +526,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
 						i2 = marker_pa_local;
-						
+
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
@@ -532,7 +539,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
 						i3 = marker_pa_local;
-						
+
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
@@ -545,7 +552,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 					bfound = hash_table_export[key_now].flag;
 					if (!bfound) {
 						i4 = marker_pa_local;
-						
+
 						hash_table_export[key_now].flag = true;
 						hash_table_export[key_now].inum = marker_pa_local;
 						marker_pa_local++;
@@ -589,7 +596,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 					else {
 						i7 = hash_table_export[key_now].inum;
 					}
-									
+
 				}
 
 				octree1 = nullptr;
@@ -698,7 +705,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	// визуализировать сетку.
 	TOCHKA* pa_alice = nullptr;
 	//pa_alice = new TOCHKA[(inx + 1)*(iny + 1)*(inz + 1)];
-	pa_alice = new TOCHKA[marker_pa_local+2];
+	pa_alice = new TOCHKA[marker_pa_local + 2];
 	// Оператор new не требует проверки.
 	//if (pa_alice == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -709,7 +716,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	integer marker_pa = 0;
 	// И тут же сразу формируем nvtx:
 	nvtx = nullptr;
-	nvtx = new integer*[8];
+	nvtx = new integer * [NUMBER_OF_VERTEX_FINITE_ELEMENT()];
 	// Оператор new не требует проверки.
 	//if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
@@ -717,7 +724,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
-	for (integer k_1 = 0; k_1 < 8; k_1++) {
+	for (integer k_1 = 0; k_1 < NUMBER_OF_VERTEX_FINITE_ELEMENT(); k_1++) {
 		nvtx[k_1] = nullptr;
 		nvtx[k_1] = new integer[maxelm];
 		//nvtx[k_1] = new integer[marker_pa_local + 2];
@@ -729,7 +736,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 //#else
 	//		printf("Problem: not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
 //#endif
-			
+
 	//		printf("Please any key to exit...\n");
 		//	exit(1);
 		//}
@@ -737,7 +744,7 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	integer imarker_nvtx = 0;
 
 	// Конец вычисления необходимого объема оперативной памяти.
-	const integer size_HASH_POLE = (inx + 1)*(iny + 1)*(inz + 1);
+	const integer size_HASH_POLE = (inx + 1) * (iny + 1) * (inz + 1);
 	hash_table_export = new HASH_POLE[size_HASH_POLE];
 	for (integer i_1 = 0; i_1 < size_HASH_POLE; i_1++) {
 		hash_table_export[i_1].flag = false;
@@ -827,23 +834,23 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 		top_ALICE_STACK++;
 	}
 
-	
+
 	while (top_ALICE_STACK > 0) {
-		
+
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
 				integer i0, i1, i2, i3, i4, i5, i6, i7;
-				
+
 				bool bfound = false;
-				
+
 				TOCHKA p;
-				p.x = 0.125*(octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
-				p.y = 0.125*(octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
-				p.z = 0.125*(octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
+				p.x = 0.125 * (octree1->p0.x + octree1->p1.x + octree1->p2.x + octree1->p3.x + octree1->p4.x + octree1->p5.x + octree1->p6.x + octree1->p7.x);
+				p.y = 0.125 * (octree1->p0.y + octree1->p1.y + octree1->p2.y + octree1->p3.y + octree1->p4.y + octree1->p5.y + octree1->p6.y + octree1->p7.y);
+				p.z = 0.125 * (octree1->p0.z + octree1->p1.z + octree1->p2.z + octree1->p3.z + octree1->p4.z + octree1->p5.z + octree1->p6.z + octree1->p7.z);
 				integer ib;
 				bool inDomain = false;
 				switch (iflag) {
@@ -983,10 +990,48 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 						prop[MULT_LAM_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x;
 						prop[MULT_LAM_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y;
 						prop[MULT_LAM_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z;
-						// Коэффициенты Ламе.
-						prop[MU_LAME][l] = matlist[b[ib].imatid].mu_Lame;
-						prop[LAMBDA_LAME][l] = matlist[b[ib].imatid].lambda_Lame;
-						prop[BETA_T_MECHANICAL][l] = matlist[b[ib].imatid].beta_t_solid;
+
+						if (matlist[b[ib].imatid].n_beta_t_solid == 1) {
+							prop[BETA_T_MECHANICAL][l] = matlist[b[ib].imatid].arr_beta_t_solid[0];
+						}
+						else {
+							prop[BETA_T_MECHANICAL][l] = get_beta_t_solid(matlist[b[ib].imatid].n_beta_t_solid, matlist[b[ib].imatid].temp_beta_t_solid, matlist[b[ib].imatid].arr_beta_t_solid, 25.0);
+						}
+
+						if (matlist[b[ib].imatid].n_Poisson_ratio == 1) {
+							prop[POISSON_RATIO][l] = matlist[b[ib].imatid].arr_Poisson_ratio[0];
+						}
+						else {
+							prop[POISSON_RATIO][l] = get_Poisson_ratio(matlist[b[ib].imatid].n_Poisson_ratio, matlist[b[ib].imatid].temp_Poisson_ratio, matlist[b[ib].imatid].arr_Poisson_ratio, 25.0);
+						}
+
+						if (matlist[b[ib].imatid].n_YoungModule == 1) {
+							prop[YOUNG_MODULE][l] = matlist[b[ib].imatid].arr_Young_Module[0];
+						}
+						else {
+							prop[YOUNG_MODULE][l] = get_Young_Module(matlist[b[ib].imatid].n_YoungModule, matlist[b[ib].imatid].temp_Young_Module, matlist[b[ib].imatid].arr_Young_Module, 25.0);
+						}
+						prop[MULT_BETA_T_MECHANICAL_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x_beta_t_solid;
+						prop[MULT_BETA_T_MECHANICAL_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y_beta_t_solid;
+						prop[MULT_BETA_T_MECHANICAL_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z_beta_t_solid;
+						// множитель модуля Юнга.
+						prop[MULT_YOUNG_MODULE_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x_Young_Module;
+						prop[MULT_YOUNG_MODULE_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y_Young_Module;
+						prop[MULT_YOUNG_MODULE_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z_Young_Module;
+						// множитель коэффициента Пуассона.
+						prop[MULT_POISSON_RATIO_YZ][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_yz;
+						prop[MULT_POISSON_RATIO_XZ][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_xz;
+						prop[MULT_POISSON_RATIO_XY][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_xy;
+						prop[MULT_POISSON_RATIO_ZY][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_zy;
+						prop[MULT_POISSON_RATIO_ZX][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_zx;
+						prop[MULT_POISSON_RATIO_YX][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_yx;
+
+						bActiveShearModule[l] = matlist[b[ib].imatid].bActive_ShearModule;
+						prop[SHEAR_MODULE_YZ][l] = matlist[b[ib].imatid].ShearModule_yz;
+						prop[SHEAR_MODULE_XZ][l] = matlist[b[ib].imatid].ShearModule_xz;
+						prop[SHEAR_MODULE_XY][l] = matlist[b[ib].imatid].ShearModule_xy;
+
+
 
 						//Sc[l] = b[ib].Sc;
 						Sc[l] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, 20.0);
@@ -1131,11 +1176,16 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 	pa_alice = nullptr;
 
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
-	FILE *fp_4 = nullptr;
-	errno_t err_4=0;
+	FILE* fp_4 = nullptr;
+
 #ifdef MINGW_COMPILLER
-	fp_4=fopen64("ALICEFLOW0_24ALICEMESH.PLT", "w");
+	int err_4 = 0;
+	fp_4 = fopen64("ALICEFLOW0_24ALICEMESH.PLT", "w");
+	if (fp_4 == NULL) {
+		err_4 = 1;
+    }
 #else
+	errno_t err_4 = 0;
 	err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH.PLT", "w");
 #endif
 
@@ -1176,9 +1226,17 @@ void constr_nodes_nvtx_prop_alice(octree* &oc, integer inx, integer iny, integer
 			fprintf(fp_4, "\n");
 			for (integer i = 0; i <= imarker_nvtx - 1; i++) {
 #if doubleintprecision == 1
-				fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", 
+				//	nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i],
+					//nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i],
+					nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
 #else
-				fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				fprintf(fp_4, "%d %d %d %d %d %d %d %d \n",
+				//	nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i],
+					//nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+					nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i],
+					nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
 #endif
 				}
 			fclose(fp_4);
@@ -2987,15 +3045,20 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 	
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = nullptr;
-	errno_t err_4=0;
+	
 #ifdef MINGW_COMPILLER
+	int err_4 = 0;
 	if (i_754 == 1) {
 		fp_4 = fopen64("ALICEFLOW0_07_temp_apparat_hot.PLT", "w");
 	}
 	else {
 		fp_4 = fopen64("ALICEFLOW0_07_temp.PLT", "w");
 	}
+	if (fp_4 == NULL) {
+		err_4 = 1;
+	}
 #else
+	errno_t err_4 = 0;
 	if (i_754 == 1) {
 		err_4 = fopen_s(&fp_4, "ALICEFLOW0_07_temp_apparat_hot.PLT", "w");
 	}
@@ -3023,24 +3086,51 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			if (b[t.whot_is_block[i]].bvisible) {
 				// Учитываем только те ячейки которые видимы, 
 				// а именно user указал для них в интерфейсе 
-				// bvisible == true.
+				// bvisible  .
 				maxelm_loc++;
 			}
 		}
 
 
 		fprintf(fp_4, "TITLE = \"ALICEFLOW0_24\"\n");
-		if (1 && steady_or_unsteady_global_determinant == MESHER_ONLY) {
+		if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::MESHER_ONLY) {
 			fprintf(fp_4, "VARIABLES = x, y, z,  F(microW/cm!2), log(F(microW/cm!2))\n");
 		}
 		else {
-			if (bSIMPLErun_now_for_temperature) {
-				// CFD
-				fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag, PAM, PRESS, VX, VY, VZ, SPEED, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, total_deformation, x_deformation, y_deformation, z_deformation\n");
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+			{
+				if (bSIMPLErun_now_for_temperature) {
+					// CFD
+					if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+						fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag, PAM, PRESS, VX, VY, VZ, SPEED, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, ke, omega, total_deformation, x_deformation, y_deformation, z_deformation\n");
+					}
+					else {
+						fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag, PAM, PRESS, VX, VY, VZ, SPEED, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, total_deformation, x_deformation, y_deformation, z_deformation\n");
+					}
+				}
+				else {
+					//VX, VY, VZ, SPEED,
+					fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag,   total_deformation, x_deformation, y_deformation, z_deformation\n");
+					
+				}
 			}
 			else {
-				//VX, VY, VZ, SPEED,
-				fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag,   total_deformation, x_deformation, y_deformation, z_deformation\n");
+				if (bSIMPLErun_now_for_temperature) {
+					// CFD
+					if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+						fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag, PAM, PRESS, VX, VY, VZ, SPEED, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, ke, omega\n");
+					}
+					else {
+						fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag, PAM, PRESS, VX, VY, VZ, SPEED, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz\n");
+					}
+				}
+				else {
+					//VX, VY, VZ, SPEED,
+					fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag\n");
+				}
 			}
 		}
 #if doubleintprecision == 1
@@ -3068,7 +3158,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 		}
 		fprintf(fp_4, "\n");
 
-		if (1 && steady_or_unsteady_global_determinant == MESHER_ONLY) {
+		if (1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::MESHER_ONLY) {
 
 			doublereal* my_F_1 = new doublereal[maxnod];
 			doublereal* vol = new doublereal[maxnod];
@@ -4183,6 +4273,15 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADYVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
 					//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
 					SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[GRADZVZ], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+					
+					if (fglobal[0].iflowregime == VISCOSITY_MODEL::RANS_MENTER_SST) {
+
+						//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_KINETIK_ENERGY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_KINETIK_ENERGY], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+						//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+						SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], t, eps_mashine, bptr_rule_namespace_of_hydrodynamic_variables_loc, heat_flux_X, heat_flux_Y, heat_flux_Z);
+
+					}
 					//**************END WRITE CFD DATA************************************
 				}
 				delete[] tmp_speed;
@@ -4190,58 +4289,65 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			}
 
 			// TODO 5.04.2019 повысить точность аппроксимации деформации в узлах.
+			if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::STEADY_STATIC_STRUCTURAL_AND_TEMPERATURE) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL) ||
+				(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::UNSTEADY_STATIC_STRUCTURAL_AND_TEMPERATURE))
+			{
+				if (t.total_deformation != nullptr) {
+					// TOTAL DEFORMATION
+					if (1) {
+						// Метод нулевого порядка.
+						ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+							t.total_deformation[XDEFORMATION], t.total_deformation[YDEFORMATION], t.total_deformation[ZDEFORMATION], false);
+					}
+					// запись TOTAL DEFORMATION
+					for (integer i = 0; i < maxnod; i++) {
+						fprintf(fp_4, "%+.16f ", lam[i]);
+						if (i % 10 == 0) fprintf(fp_4, "\n");
+					}
+					fprintf(fp_4, "\n");
 
-				// TOTAL DEFORMATION
-			if (1) {
-				// Метод нулевого порядка.
-				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
-					t.total_deformation[XDEFORMATION], t.total_deformation[YDEFORMATION], t.total_deformation[ZDEFORMATION], false);
-			}
-			// запись TOTAL DEFORMATION
-			for (integer i = 0; i < maxnod; i++) {
-				fprintf(fp_4, "%+.16f ", lam[i]);
-				if (i % 10 == 0) fprintf(fp_4, "\n");
-			}
-			fprintf(fp_4, "\n");
+					// Deformation X
+					if (1) {
+						// Метод нулевого порядка.
+						ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+							t.total_deformation[XDEFORMATION], nullptr, nullptr, true);
+					}
+					// запись XDEFORMATION
+					for (integer i = 0; i < maxnod; i++) {
+						fprintf(fp_4, "%+.16f ", lam[i]);
+						if (i % 10 == 0) fprintf(fp_4, "\n");
+					}
+					fprintf(fp_4, "\n");
 
-			// Deformation X
-			if (1) {
-				// Метод нулевого порядка.
-				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
-					t.total_deformation[XDEFORMATION], nullptr, nullptr, true);
-			}
-			// запись XDEFORMATION
-			for (integer i = 0; i < maxnod; i++) {
-				fprintf(fp_4, "%+.16f ", lam[i]);
-				if (i % 10 == 0) fprintf(fp_4, "\n");
-			}
-			fprintf(fp_4, "\n");
+					// Deformation Y
+					if (1) {
+						// Метод нулевого порядка.
+						ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+							t.total_deformation[YDEFORMATION], nullptr, nullptr, true);
+					}
+					// запись YDEFORMATION
+					for (integer i = 0; i < maxnod; i++) {
+						fprintf(fp_4, "%+.16f ", lam[i]);
+						if (i % 10 == 0) fprintf(fp_4, "\n");
+					}
+					fprintf(fp_4, "\n");
 
-			// Deformation Y
-			if (1) {
-				// Метод нулевого порядка.
-				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
-					t.total_deformation[YDEFORMATION], nullptr, nullptr, true);
+					// Deformation Z
+					if (1) {
+						// Метод нулевого порядка.
+						ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+							t.total_deformation[ZDEFORMATION], nullptr, nullptr, true);
+					}
+					// запись ZDeformation.
+					for (integer i = 0; i < maxnod; i++) {
+						fprintf(fp_4, "%+.16f ", lam[i]);
+						if (i % 10 == 0) fprintf(fp_4, "\n");
+					}
+					fprintf(fp_4, "\n");
+				}
 			}
-			// запись YDEFORMATION
-			for (integer i = 0; i < maxnod; i++) {
-				fprintf(fp_4, "%+.16f ", lam[i]);
-				if (i % 10 == 0) fprintf(fp_4, "\n");
-			}
-			fprintf(fp_4, "\n");
-
-			// Deformation Z
-			if (1) {
-				// Метод нулевого порядка.
-				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
-					t.total_deformation[ZDEFORMATION], nullptr, nullptr, true);
-			}
-			// запись ZDeformation.
-			for (integer i = 0; i < maxnod; i++) {
-				fprintf(fp_4, "%+.16f ", lam[i]);
-				if (i % 10 == 0) fprintf(fp_4, "\n");
-			}
-			fprintf(fp_4, "\n");
 
 			delete[] temp;
 			delete[] vol;
@@ -4281,7 +4387,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					if (b[t.whot_is_block[i]].bvisible) {
 						// Учитываем только те ячейки которые видимы, 
 						// а именно user указал для них в интерфейсе 
-						// bvisible == true.
+						// bvisible  .
 
 
 						integer invtx[8];
@@ -4463,8 +4569,12 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					if (b[t.whot_is_block[i]].bvisible) {
 						// Учитываем только те ячейки которые видимы, 
 						// а именно user указал для них в интерфейсе 
-						// bvisible == true.
-						fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+						// bvisible  .
+						fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", 
+							//nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i],
+							//nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
+						      nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i],
+							  nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
 					}
 				}
 
@@ -6854,9 +6964,11 @@ void ANES_ALICE_CORRECT(integer maxnod, TOCHKA* pa,
 
 // визуализация в tecplot 360 с учётом hollow блоков в программной модели.
 // Построение nodes, nvtx, prop для гидродинамической подобласти. Частей 19..22 в программной модели. 
-void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, integer inz, integer &maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
+void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, integer inz,
+	integer &maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	integer iflag, BLOCK* b, integer lb,  TOCHKA* &pa, integer &maxnode, integer** &nvtx,
-	doublereal** &prop, TPROP* matlist, integer* &ptr, integer* &whot_is_block, integer** &ptr_temp, integer maxelm_temp) {
+	doublereal** &prop, TPROP* matlist, integer* &ptr, integer* &whot_is_block,
+	integer** &ptr_temp, integer maxelm_temp, bool* &bActiveShearModule) {
 
 	integer maxelm_loc = (inx + 1)*(iny + 1)*(inz + 1);
 	// Вычисление maxelm. (maxelm_flow).
@@ -6932,7 +7044,8 @@ void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, in
 	prop = nullptr;
 	switch (iflag) {
 	case TEMPERATURE: 
-		prop = new doublereal*[9];
+		bActiveShearModule = new bool[maxelm];
+		prop = new doublereal*[SIZE_PROPERTIES_ARRAY];
 		if (prop == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem: not enough memory on your equipment for prop constr struct_alice...\n");
@@ -6941,8 +7054,9 @@ void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, in
 			system("pause");
 			exit(1);
 		}
-		for (integer i = 0; i<9; i++) prop[i] = nullptr;
-		for (integer i = 0; i<9; i++) {
+		for (integer i = 0; i<SIZE_PROPERTIES_ARRAY; i++) prop[i] = nullptr;
+		bActiveShearModule = new bool[maxelm];
+		for (integer i = 0; i<SIZE_PROPERTIES_ARRAY; i++) {
 			prop[i] = new doublereal[maxelm];
 			if (prop[i] == nullptr) {
 				// недостаточно памяти на данном оборудовании.
@@ -7156,7 +7270,7 @@ void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, in
 	while (top_ALICE_STACK > 0) {
 
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
@@ -7297,6 +7411,49 @@ void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, in
 						prop[MULT_LAM_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x;
 						prop[MULT_LAM_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y;
 						prop[MULT_LAM_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z;
+
+						
+						if (matlist[b[ib].imatid].n_beta_t_solid == 1) {
+							prop[BETA_T_MECHANICAL][l] = matlist[b[ib].imatid].arr_beta_t_solid[0];
+						}
+						else {
+							prop[BETA_T_MECHANICAL][l] = get_beta_t_solid(matlist[b[ib].imatid].n_beta_t_solid, matlist[b[ib].imatid].temp_beta_t_solid, matlist[b[ib].imatid].arr_beta_t_solid, 25.0);
+						}
+						
+						if (matlist[b[ib].imatid].n_Poisson_ratio == 1) {
+							prop[POISSON_RATIO][l] = matlist[b[ib].imatid].arr_Poisson_ratio[0];
+						}
+						else {
+							prop[POISSON_RATIO][l] = get_Poisson_ratio(matlist[b[ib].imatid].n_Poisson_ratio, matlist[b[ib].imatid].temp_Poisson_ratio, matlist[b[ib].imatid].arr_Poisson_ratio, 25.0);
+						}
+
+
+						if (matlist[b[ib].imatid].n_YoungModule == 1) {
+							prop[YOUNG_MODULE][l] = matlist[b[ib].imatid].arr_Young_Module[0];
+						}
+						else {
+							prop[YOUNG_MODULE][l] = get_Young_Module(matlist[b[ib].imatid].n_YoungModule, matlist[b[ib].imatid].temp_Young_Module, matlist[b[ib].imatid].arr_Young_Module, 25.0);
+						}
+						prop[MULT_BETA_T_MECHANICAL_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x_beta_t_solid;
+						prop[MULT_BETA_T_MECHANICAL_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y_beta_t_solid;
+						prop[MULT_BETA_T_MECHANICAL_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z_beta_t_solid;
+						prop[MULT_YOUNG_MODULE_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x_Young_Module;
+						prop[MULT_YOUNG_MODULE_Y][l] = matlist[b[ib].imatid].orthotropy_multiplyer_y_Young_Module;
+						prop[MULT_YOUNG_MODULE_Z][l] = matlist[b[ib].imatid].orthotropy_multiplyer_z_Young_Module;
+						// множитель коэффициента Пуассона.
+						prop[MULT_POISSON_RATIO_YZ][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_yz;
+						prop[MULT_POISSON_RATIO_XZ][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_xz;
+						prop[MULT_POISSON_RATIO_XY][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_xy;
+						prop[MULT_POISSON_RATIO_ZY][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_zy;
+						prop[MULT_POISSON_RATIO_ZX][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_zx;
+						prop[MULT_POISSON_RATIO_YX][l] = matlist[b[ib].imatid].orthotropy_multiplyer_Poisson_ratio_yx;
+
+						bActiveShearModule[l] = matlist[b[ib].imatid].bActive_ShearModule;
+						prop[SHEAR_MODULE_YZ][l] = matlist[b[ib].imatid].ShearModule_yz;
+						prop[SHEAR_MODULE_XZ][l] = matlist[b[ib].imatid].ShearModule_xz;
+						prop[SHEAR_MODULE_XY][l] = matlist[b[ib].imatid].ShearModule_xy;
+						
+
 						// Эти объекты при гидродинамической обработке не передаются к заполнению.
 						//Sc[l] = b[ib].Sc;
 						//ipower_time_depend[l] = b[ib].ipower_time_depend;
@@ -7452,10 +7609,15 @@ void constr_nodes_nvtx_prop_flow_alice(octree* &oc, integer inx, integer iny, in
 
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = nullptr;
-	errno_t err_4=0;
+	
 #ifdef MINGW_COMPILLER
+	int err_4 = 0;
 	fp_4= fopen64("ALICEFLOW0_24ALICEMESH_FLOW.PLT", "w");
+	if (fp_4 == NULL) {
+		err_4 = 1;
+	}
 #else
+	errno_t err_4 = 0;
 	err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH_FLOW.PLT", "w");
 #endif
 	if (err_4 != 0) {
@@ -7640,7 +7802,7 @@ void calculate_max_bound_temp(octree* &oc, integer &maxbound, integer maxelm_mem
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
@@ -8868,7 +9030,7 @@ void calculate_max_bound_flow(octree* &oc, integer &maxbound, integer maxelm_mem
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				// Гасим информацию о посещениях.
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
@@ -10820,7 +10982,7 @@ void constr_neighbors_for_the_internal_node_prop_b_alice(octree* &oc, BOUND* &bo
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 				
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				TOCHKA p;
@@ -10832,7 +10994,7 @@ void constr_neighbors_for_the_internal_node_prop_b_alice(octree* &oc, BOUND* &bo
 				inDomain = in_model_temp(p, ib, b, lb); // TEMPERATURE
 				//integer ib1;
 				//bool bi_fluid = in_model_flow(p, ib1, b, lb);
-				bool bi_fluid = (b[ib].itype == FLUID);
+				bool bi_fluid = (b[ib].itype == PHYSICS_TYPE_IN_BODY::FLUID);
 
 				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
 					// Лежит за пределами кабинета.
@@ -16943,7 +17105,7 @@ void constr_neighbors_for_the_internal_node_prop_b_flow_alice(octree* &oc, BOUND
 	integer iblock_FLUID_propb = NON_EXISTENT_NODE;// По умолчанию у нас только SOLID и HOLLOW блоки в проекте.
 	// Ищем идентификатор FLUID блока в проекте.
 	for (integer ib_scan = 0; ib_scan < lb; ib_scan++) {
-		if (b[ib_scan].itype == FLUID) {
+		if (b[ib_scan].itype == PHYSICS_TYPE_IN_BODY::FLUID) {
 			// FLUID блок проекта найден.
 			iblock_FLUID_propb = ib_scan;
 			break;
@@ -17081,7 +17243,7 @@ void constr_neighbors_for_the_internal_node_prop_b_flow_alice(octree* &oc, BOUND
 	}
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
-			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
+			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist  ) {
 
 				octree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 				TOCHKA p;
@@ -21232,7 +21394,7 @@ void constr_neighbors_for_the_internal_node_prop_b_flow_alice(octree* &oc, BOUND
 										printf("octree1->linkT->inum_FD-1=%lld\n", octree1->linkT->inum_FD - 1);
 
 										if (octree1->linkT->b4B) {
-											printf("octree1->linkT->b4B == true\n");
+											printf("octree1->linkT->b4B  \n");
 										}
 										else {
 											printf("octree1->linkT->b4B == false\n");

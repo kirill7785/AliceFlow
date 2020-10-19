@@ -2192,7 +2192,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 2;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2237,7 +2237,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2279,7 +2279,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2317,7 +2317,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -2355,7 +2355,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 8;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3775,7 +3775,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 2;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon=%e \n",epsilon);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3820,7 +3820,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3862,7 +3862,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3900,7 +3900,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 4;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -3938,7 +3938,7 @@ L20:
 		if (iVar == TEMP) {
 			iN75 = 8;
 			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
-			if (bSIMPLErun_now_for_temperature == true) {
+			if (bSIMPLErun_now_for_temperature  ) {
 				//printf("epsilon75=%e \n",epsilon75);
 				//getchar();
 				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
@@ -9224,7 +9224,7 @@ doublereal cgeps_(integer *k, doublereal *s2, doublereal *a, doublereal *u,
 
     /* System generated locals */
     integer i__1=0, i__2=0;
-    doublereal ret_val=0.0; // TODO инициализация была добавлена позже мной её не было изначально.
+    doublereal ret_val=0.0; // инициализация была добавлена позже мной её не было изначально.
 
     /* Builtin functions */
    // integer s_wsfe(cilist *), e_wsfe(void);
@@ -11738,7 +11738,7 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		// TODO: 
+		//  
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
         // в каждой строке элементы отсортированы по номерам столбцов:
@@ -12567,7 +12567,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		//****debug print message*******
 		
 
-		// TODO: 
+		//  
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
 		// в каждой строке элементы отсортированы по номерам столбцов:
@@ -13228,7 +13228,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == TEMP) && (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30)) {
 		ncyc = 10120; // 20 / 99 V циклов.
 	}
-	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition == true)) {
+	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition  )) {
 		ncyc = 1012; // 2 - V цикла.
 		eps = res_sum*sqrt((doublereal)(maxelm + maxbound))*0.0002;
 	}
@@ -13242,7 +13242,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	nrd=1131;
 	integer nsolco=0;
 	nsolco=110;
-	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition == true)) {
+	if ((iVar == TEMP) && (breakRUMBAcalc_for_nonlinear_boundary_condition  )) {
 		//nsolco = 122;
 	}
 	integer nru=0;
@@ -13789,7 +13789,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		//printf("ik=%d\n",ik);
 		//getchar();
 
-		// TODO: 
+		//  
 		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
 
         // в каждой строке элементы отсортированы по номерам столбцов:

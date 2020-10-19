@@ -1,54 +1,88 @@
-// classic_aglomerative_amg6_2018year.cpp
-// Очищенный от лишнего кода алгебраический многосеточный метод РУМБА_v0_14.
-// Код причёсан чтобы выглядеть компактнее и читабельнее.
+п»ї// classic_aglomerative_amg6_2018year.cpp
+// РћС‡РёС‰РµРЅРЅС‹Р№ РѕС‚ Р»РёС€РЅРµРіРѕ РєРѕРґР° Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ Р РЈРњР‘Рђ_v0_14.
+// РљРѕРґ РїСЂРёС‡С‘СЃР°РЅ С‡С‚РѕР±С‹ РІС‹РіР»СЏРґРµС‚СЊ РєРѕРјРїР°РєС‚РЅРµРµ Рё С‡РёС‚Р°Р±РµР»СЊРЅРµРµ.
+// Р”Р°РЅРЅР°СЏ РІРµСЂСЃРёСЏ classic_aglomerative_amg6() amg СЂРµС€Р°С‚РµР»СЏ РѕС‚РґРµР»РёР»Р°СЃСЊ РѕС‚ С„Р°Р№Р»Р° 
+// my_agregat_amg.cpp РѕСЃРЅРѕРІР°РЅР° РІРµСЂСЃРёРё amg Р°Р»РіРѕСЂРёС‚РјР° 
+// classic_aglomerative_amg4(). Р’РµСЂСЃРёСЏ amg Р°Р»РіРѕСЂРёС‚РјР°
+// classic_aglomerative_amg5() СЃС‚Р°Р»Р° С‚СѓРїРёРєРѕРІРѕР№ Рё Р±РѕР»СЊС€Рµ РјРЅРѕР№
+// РґР°РІРЅРѕ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°Р»Р°СЃСЊ. РЇ РїРѕРґРґРµСЂР¶РёРІР°Р» РєР°РєРѕРµ С‚Рѕ РІСЂРµРјСЏ 
+// РїРѕСЃР»Рµ РІРµСЂСЃРёРё classic_aglomerative_amg5() РІРµСЂСЃРёСЋ
+// classic_aglomerative_amg4(). РџРѕС‚РѕРј РѕС‚ РІРµСЂСЃРёРё 
+// classic_aglomerative_amg4() РѕС‚РґРµР»РёР»СЃСЏ С„Р°Р№Р»
+// classic_aglomerative_amg6_2018year.cpp РІ РєРѕС‚РѕСЂРѕРј 
+// СЂР°Р·РІРёРІР°РµС‚СЃСЏ РІРµСЂСЃРёСЏ classic_aglomerative_amg6().
+// РўРµРєСѓС‰Р°СЏ СЂР°Р·РІРёРІР°РµРјР°СЏ Рё РїРѕРґРґРµСЂР¶РёРІР°РµРјР°СЏ РІРµСЂСЃРёСЏ СЌС‚Рѕ
+// classic_aglomerative_amg6() СЂР°СЃРїРѕР»РѕР¶РµРЅРЅР°СЏ РІ 
+// С„Р°Р№Р»Рµ classic_aglomerative_amg6_2018year.cpp.
+// Р’РµСЂСЃРёРё amg СЂРµС€Р°С‚РµР»СЏ classic_aglomerative_amg5() Рё 
+// classic_aglomerative_amg6() Р° С‚Р°РєР¶Рµ СЃСѓС‰РµСЃС‚РІРµРЅРЅРѕ Р±РѕР»РµРµ
+// СЂР°РЅРЅРёРµ РІРµСЂСЃРёРё РІ С„Р°Р№Р»Рµ my_agregat_amg.cpp РЅРµ РїРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ Рё
+// РёС… РєРѕРґ РѕСЃС‚Р°РІР»РµРЅ РґР»СЏ РёСЃС‚РѕСЂРёРё.
 
 #pragma once
 #ifndef CLASSIC_AGLOMERATIVE_AMG6_2018YEAR_CPP
 #define CLASSIC_AGLOMERATIVE_AMG6_2018YEAR_CPP 1
 
+// РґР»СЏ С„СѓРЅРєС†РёРё setw().
+#include <conio.h>
+#include <iostream>
+#include <iomanip>
+#include <stdlib.h>
+
 #include "basic_interpolation_procedure_my_agregat_amg.cpp" // interpolation procedure for Ak2 type
 #include "basic_functions_my_agregat_amg.cpp"
 
-#define VEB_FLAG 1
+// Р”РµСЂРµРІРѕ РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР°.
+#define VEB_FLAG 1 
 
 #if VEB_FLAG
-// Исправлено 21.03.2019
-// Был конфликт имён члена класса min с функцией min(a,b) языка СИ.
-// Аналогично для поля класса max. Поля классов min и max переименованы 
-// в данные класса veb_min, veb_max. Теперь конфликт имён отсутствует.
-// Дерево ван Эмде Боаса.
-// Дерево Ван Эмде Боаса НАЧАЛО РЕАЛИЗАЦИИ 30.06.2018 - окончание 21.09.2018
-// Все операции за log(log(U))
+// РСЃРїСЂР°РІР»РµРЅРѕ 21.03.2019
+// Р‘С‹Р» РєРѕРЅС„Р»РёРєС‚ РёРјС‘РЅ С‡Р»РµРЅР° РєР»Р°СЃСЃР° min СЃ С„СѓРЅРєС†РёРµР№ min(a,b) СЏР·С‹РєР° РЎР.
+// РђРЅР°Р»РѕРіРёС‡РЅРѕ РґР»СЏ РїРѕР»СЏ РєР»Р°СЃСЃР° max. РџРѕР»СЏ РєР»Р°СЃСЃРѕРІ min Рё max РїРµСЂРµРёРјРµРЅРѕРІР°РЅС‹ 
+// РІ РґР°РЅРЅС‹Рµ РєР»Р°СЃСЃР° veb_min, veb_max. РўРµРїРµСЂСЊ РєРѕРЅС„Р»РёРєС‚ РёРјС‘РЅ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚.
+// Р”РµСЂРµРІРѕ РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР°.
+// Р”РµСЂРµРІРѕ Р’Р°РЅ Р­РјРґРµ Р‘РѕР°СЃР° РќРђР§РђР›Рћ Р Р•РђР›РР—РђР¦РР 30.06.2018 - РѕРєРѕРЅС‡Р°РЅРёРµ 21.09.2018
+// Р’СЃРµ РѕРїРµСЂР°С†РёРё Р·Р° log(log(U))
 //#include "veb.h"
 #include "veb.cpp"
 #endif
 
-// Строки с отрицательной диагональю запоминаем,
-// домножаем на минус 1.0. При итерировании
-// домножаем правую часть на минус 1.0.
+// РЎС‚СЂРѕРєРё СЃ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕР№ РґРёР°РіРѕРЅР°Р»СЊСЋ Р·Р°РїРѕРјРёРЅР°РµРј,
+// РґРѕРјРЅРѕР¶Р°РµРј РЅР° РјРёРЅСѓСЃ 1.0. РџСЂРё РёС‚РµСЂРёСЂРѕРІР°РЅРёРё
+// РґРѕРјРЅРѕР¶Р°РµРј РїСЂР°РІСѓСЋ С‡Р°СЃС‚СЊ РЅР° РјРёРЅСѓСЃ 1.0.
 typedef struct TBAD_STRING_PATCHING {
 	integer ilevel;
 	integer istring_number;
 } BAD_STRING_PATCHING;
 
-// Алгоритмы разреженного умножения матрицы на матрицу.
+// РђР»РіРѕСЂРёС‚РјС‹ СЂР°Р·СЂРµР¶РµРЅРЅРѕРіРѕ СѓРјРЅРѕР¶РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РЅР° РјР°С‚СЂРёС†Сѓ.
 #include "spgemm_Matrix_by_Matrix_sparse_multiplication.cpp"
 
-
+// row_ptr - РѕРґРёРЅ РёР· С‚СЂС‘С… РјР°СЃСЃРёРІРѕРІ СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС…
+// С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ РІ Column Row Storage С„РѕСЂРјР°С‚Рµ.
+// РґРІР° РґСЂСѓРіРёС… col_ind - РЅРѕРјРµСЂР° СЃС‚РѕР»Р±С†РѕРІ, Рё val -
+// СЃР°РјРё РЅРµРЅСѓР»РµРІС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РјР°С‚СЂРёС†С‹.
+// row_ptr - СЌС‚Рѕ РЅРѕРјРµСЂ РЅР°С‡Р°Р»Р° РЅРѕРІРѕР№ СЃС‚СЂРѕРєРё РІ CRS С„РѕСЂРјР°С‚Рµ
+// РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РІ РєРѕС‚РѕСЂРѕРј РјР°С‚СЂРёС†Р° РЎР›РђРЈ С…СЂР°РЅРёС‚СЃСЏ РїРѕСЃС‚СЂРѕС‡РЅРѕ.
+// Р¤СѓРЅРєС†РёСЏ calculate_row_ptr РІС‹С‡РёСЃР»СЏРµС‚ РјР°СЃСЃРёРІ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹
+// row_ind_SA, Р° С‚Р°РєР¶Рµ РјР°СЃСЃРёРІ РєРѕРЅС†Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё row_ind_EA РјР°С‚СЂРёС†С‹ Amat
+// С…СЂР°РЅСЏС‰РµР№СЃСЏ РїРѕ СЃС‚СЂРѕРєР°Рј РІ Ak2 С‚РёРїРµ С…СЂР°РЅРµРЅРёСЏ.
 void calculate_row_ptr(integer istart, integer iend,
 	integer* &row_ind_SA, integer* & row_ind_EA,
 	bool* &flag, const Ak2& Amat)
 {
-	// Многопоточная версия.
 
 	integer i_size_75 = 0;
-	// Это нельзя распараллелить.
+	// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 	for (integer ii = istart; ii <= iend; ii++) {
-		if (flag[Amat.i[ii]] == false) {
-			row_ind_SA[Amat.i[ii]] = ii;
-			flag[Amat.i[ii]] = true;
-			i_size_75++;
-		}
+		// cnd - condition.
+		bool cnd = (flag[Amat.i[ii]] == false);
+		if (!cnd) continue;
+		
+		row_ind_SA[Amat.i[ii]] = ii;
+		flag[Amat.i[ii]] = true;
+		i_size_75++;
+		
 	}
 #pragma omp parallel for
 	for (integer istr = 1; istr <= i_size_75; istr++) {
@@ -63,20 +97,30 @@ void calculate_row_ptr(integer istart, integer iend,
 
 }
 
+// row_ptr - РѕРґРёРЅ РёР· С‚СЂС‘С… РјР°СЃСЃРёРІРѕРІ СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС…
+// С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ РІ Column Row Storage С„РѕСЂРјР°С‚Рµ.
+// РґРІР° РґСЂСѓРіРёС… col_ind - РЅРѕРјРµСЂР° СЃС‚РѕР»Р±С†РѕРІ, Рё val -
+// СЃР°РјРё РЅРµРЅСѓР»РµРІС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РјР°С‚СЂРёС†С‹.
+// row_ptr - СЌС‚Рѕ РЅРѕРјРµСЂ РЅР°С‡Р°Р»Р° РЅРѕРІРѕР№ СЃС‚СЂРѕРєРё РІ CRS С„РѕСЂРјР°С‚Рµ
+// РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РІ РєРѕС‚РѕСЂРѕРј РјР°С‚СЂРёС†Р° РЎР›РђРЈ С…СЂР°РЅРёС‚СЃСЏ РїРѕСЃС‚СЂРѕС‡РЅРѕ.
+// Р¤СѓРЅРєС†РёСЏ calculate_row_ptr РІС‹С‡РёСЃР»СЏРµС‚ РјР°СЃСЃРёРІ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹
+// row_ind_SA, Р° С‚Р°РєР¶Рµ РјР°СЃСЃРёРІ РєРѕРЅС†Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё row_ind_EA РјР°С‚СЂРёС†С‹ Amat
+// С…СЂР°РЅСЏС‰РµР№СЃСЏ РїРѕ СЃС‚СЂРѕРєР°Рј РІ Ak1 С‚РёРїРµ С…СЂР°РЅРµРЅРёСЏ.
 void calculate_row_ptr(integer istart, integer iend,
 	integer*& row_ind_SA, integer*& row_ind_EA,
-	bool*& flag, Ak1* &Amat)
+	bool*& flag, Ak1 const *const Amat)
 {
-	// Многопоточная версия.
 
 	integer i_size_75 = 0;
-	// Это нельзя распараллелить.
+	// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 	for (integer ii = istart; ii <= iend; ii++) {
-		if (flag[Amat[ii].i] == false) {
-			row_ind_SA[Amat[ii].i] = ii;
-			flag[Amat[ii].i] = true;
-			i_size_75++;
-		}
+		bool cnd = (flag[Amat[ii].i] == false);
+		if (!cnd) continue;
+		
+		row_ind_SA[Amat[ii].i] = ii;
+		flag[Amat[ii].i] = true;
+		i_size_75++;
+		
 	}
 #pragma omp parallel for
 	for (integer istr = 1; istr <= i_size_75; istr++) {
@@ -89,76 +133,113 @@ void calculate_row_ptr(integer istart, integer iend,
 
 	}
 
-}
+}// calculate_row_ptr
 
+
+// row_ptr - РѕРґРёРЅ РёР· С‚СЂС‘С… РјР°СЃСЃРёРІРѕРІ СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС…
+// С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ РІ Column Row Storage С„РѕСЂРјР°С‚Рµ.
+// РґРІР° РґСЂСѓРіРёС… col_ind - РЅРѕРјРµСЂР° СЃС‚РѕР»Р±С†РѕРІ, Рё val -
+// СЃР°РјРё РЅРµРЅСѓР»РµРІС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РјР°С‚СЂРёС†С‹.
+// row_ptr - СЌС‚Рѕ РЅРѕРјРµСЂ РЅР°С‡Р°Р»Р° РЅРѕРІРѕР№ СЃС‚СЂРѕРєРё РІ CRS С„РѕСЂРјР°С‚Рµ
+// РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РІ РєРѕС‚РѕСЂРѕРј РјР°С‚СЂРёС†Р° РЎР›РђРЈ С…СЂР°РЅРёС‚СЃСЏ РїРѕСЃС‚СЂРѕС‡РЅРѕ.
+// Р¤СѓРЅРєС†РёСЏ calculate_row_ptr_j РІС‹С‡РёСЃР»СЏРµС‚ РјР°СЃСЃРёРІ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹
+// row_ind_SA, Р° С‚Р°РєР¶Рµ РјР°СЃСЃРёРІ РєРѕРЅС†Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё row_ind_EA С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРЅРѕР№ РјР°С‚СЂРёС†С‹ Amat
+// С…СЂР°РЅСЏС‰РµР№СЃСЏ РїРѕ СЃС‚РѕР»Р±С†Р°Рј РІ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РѕРїРµСЂР°С†РёРё С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРёСЏ РІ Ak1 С‚РёРїРµ С…СЂР°РЅРµРЅРёСЏ.
+// Рў.Рµ. Р·РґРµСЃСЊ РјР°С‚СЂРёС†Р° С…СЂР°РЅРёС‚СЃСЏ РїРѕ СЃС‚РѕР»Р±С†Р°Рј РєР°Рє Р±С‹ РІ CCS (Compress Column Storage) С„РѕСЂРјР°С‚Рµ.
+// РўСЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРёРµ РјР°С‚СЂРёС†С‹ РѕСЃСѓС‰РµСЃС‚РІР»СЏРµС‚СЃСЏ СЃ РїРѕРјРѕС‰СЊСЋ СЌРєРѕРЅРѕРјРёС‡РЅРѕРіРѕ Р°Р»РіРѕСЂРёС‚РјР° СЃРѕСЂС‚РёСЂРѕРІРєРё
+// Р·Р° Р»РёРЅРµР№РЅРѕРµ РІСЂРµРјСЏ.
 void calculate_row_ptr_j(integer istart, integer iend,
 	integer*& row_ind_SA, integer*& row_ind_EA,
-	bool*& flag, Ak1*& Amat)
+	bool*& flag, Ak1 const *const Amat)
 {
-	// Многопоточная версия.
 
 	
-	// Это нельзя распараллелить.
+	// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 	for (integer ii = istart; ii <= iend; ii++) {
-		if (flag[Amat[ii].j] == false) {
-			// сканируем построчно.
-			integer istr = Amat[ii].j;
-			integer ic = ii;
+		bool cnd = (flag[Amat[ii].j] == false);
+		if (!cnd) continue;
 
-			integer kf = ic;
+		
+		// СЃРєР°РЅРёСЂСѓРµРј РїРѕСЃС‚СЂРѕС‡РЅРѕ.
+		integer istr = Amat[ii].j;
+		integer ic = ii;
 
-			while ((kf <= iend) && (Amat[kf].j == istr)) {
-				kf++;
-			}
-			kf--;
-			row_ind_SA[istr] = ic;
-			row_ind_EA[istr] = kf;
-			flag[Amat[ii].j] = true;
-			ii = kf;
+		integer kf = ic;
+
+		while ((kf <= iend) && (Amat[kf].j == istr)) {
+			kf++;
 		}
-	}
+		kf--;
+		row_ind_SA[istr] = ic;
+		row_ind_EA[istr] = kf;
+		flag[Amat[ii].j] = true;
+		ii = kf;
+		
+	}// for
 
-}
+}// calculate_row_ptr_j
 
+
+// row_ptr - РѕРґРёРЅ РёР· С‚СЂС‘С… РјР°СЃСЃРёРІРѕРІ СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС…
+// С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ РІ Column Row Storage С„РѕСЂРјР°С‚Рµ.
+// РґРІР° РґСЂСѓРіРёС… col_ind - РЅРѕРјРµСЂР° СЃС‚РѕР»Р±С†РѕРІ, Рё val -
+// СЃР°РјРё РЅРµРЅСѓР»РµРІС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РјР°С‚СЂРёС†С‹.
+// row_ptr - СЌС‚Рѕ РЅРѕРјРµСЂ РЅР°С‡Р°Р»Р° РЅРѕРІРѕР№ СЃС‚СЂРѕРєРё РІ CRS С„РѕСЂРјР°С‚Рµ
+// РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РІ РєРѕС‚РѕСЂРѕРј РјР°С‚СЂРёС†Р° РЎР›РђРЈ С…СЂР°РЅРёС‚СЃСЏ РїРѕСЃС‚СЂРѕС‡РЅРѕ.
+// Р¤СѓРЅРєС†РёСЏ calculate_row_ptr РІС‹С‡РёСЃР»СЏРµС‚ РјР°СЃСЃРёРІ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹
+// row_ind_SA РґР»СЏ РјР°С‚СЂРёС†С‹ Amat
+// С…СЂР°РЅСЏС‰РµР№СЃСЏ РїРѕ СЃС‚СЂРѕРєР°Рј РІ Ak2 С‚РёРїРµ С…СЂР°РЅРµРЅРёСЏ.
+// Р­С‚Рѕ Р±С‹СЃС‚СЂР°СЏ РІРµСЂСЃРёСЏ С„СѓРЅРєС†РёРё.
 void calculate_row_ptr(integer istart, integer iend,
 	integer*& row_ind_SA, 
 	bool*& flag, const Ak2& Amat)
 {
-	// Многопоточная версия.
-
-	integer i_size_75 = 0;
-	// Это нельзя распараллелить.
+	
+	// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 	for (integer ii = istart; ii <= iend; ii++) {
-		if (flag[Amat.i[ii]] == false) {
-			row_ind_SA[Amat.i[ii]] = ii;
-			flag[Amat.i[ii]] = true;
-			i_size_75++;
-		}
-	}
+		bool cnd = (flag[Amat.i[ii]] == false);
+		if (!cnd) continue;
+		
+		row_ind_SA[Amat.i[ii]] = ii;
+		flag[Amat.i[ii]] = true;
+		
+	}// for
+
 	row_ind_SA[Amat.i[iend] + 1] = iend + 1;
 
-}
+}//calculate_row_ptr
 
+// row_ptr - РѕРґРёРЅ РёР· С‚СЂС‘С… РјР°СЃСЃРёРІРѕРІ СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС…
+// С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ РІ Column Row Storage С„РѕСЂРјР°С‚Рµ.
+// РґРІР° РґСЂСѓРіРёС… col_ind - РЅРѕРјРµСЂР° СЃС‚РѕР»Р±С†РѕРІ, Рё val -
+// СЃР°РјРё РЅРµРЅСѓР»РµРІС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РјР°С‚СЂРёС†С‹.
+// row_ptr - СЌС‚Рѕ РЅРѕРјРµСЂ РЅР°С‡Р°Р»Р° РЅРѕРІРѕР№ СЃС‚СЂРѕРєРё РІ CRS С„РѕСЂРјР°С‚Рµ
+// РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РІ РєРѕС‚РѕСЂРѕРј РјР°С‚СЂРёС†Р° РЎР›РђРЈ С…СЂР°РЅРёС‚СЃСЏ РїРѕСЃС‚СЂРѕС‡РЅРѕ.
+// Р¤СѓРЅРєС†РёСЏ calculate_row_ptr РІС‹С‡РёСЃР»СЏРµС‚ РјР°СЃСЃРёРІ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹
+// row_ind_SA РґР»СЏ РјР°С‚СЂРёС†С‹ Amat
+// С…СЂР°РЅСЏС‰РµР№СЃСЏ РїРѕ СЃС‚СЂРѕРєР°Рј РІ Ak1 С‚РёРїРµ С…СЂР°РЅРµРЅРёСЏ.
+// Р­С‚Рѕ Р±С‹СЃС‚СЂР°СЏ РІРµСЂСЃРёСЏ С„СѓРЅРєС†РёРё.
 void calculate_row_ptr(integer istart, integer iend,
 	integer*& row_ind_SA, 
-	bool*& flag, Ak1*& Amat)
+	bool*& flag, Ak1 const *const Amat)
 {
-	// Многопоточная версия.
-
-	integer i_size_75 = 0;
-	// Это нельзя распараллелить.
+		
+	// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 	for (integer ii = istart; ii <= iend; ii++) {
 		if (flag[Amat[ii].i] == false) {
 			row_ind_SA[Amat[ii].i] = ii;
 			flag[Amat[ii].i] = true;
-			i_size_75++;
 		}
 	}
 	row_ind_SA[Amat[iend].i + 1] = iend + 1;
 
-}
+} // calculate_row_ptr
 
-// для связи Solution и Setup phase
+// РґР»СЏ СЃРІСЏР·Рё Solution Рё Setup phase
+// Р­С‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ РѕР±С‰РёРµ РґР»СЏ РѕР±РѕРёС… С„Р°Р·
+// РЎ РїРѕРјРѕС‰СЊСЋ СЌС‚РѕР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РґР°РЅРЅС‹С… 
+// РѕСЃСѓС‰РµСЃС‚РІР»СЏРµС‚СЃСЏ РїРµСЂРµРґР°С‡Р° РґР°РЅРЅС‹С… РёР·
+// РѕРґРЅРѕР№ С„Р°Р·С‹ amg РІ РґСЂСѓРіСѓСЋ.
 typedef struct Tamg_precond_param {
 	integer maxlevel;
 	integer ilevel;
@@ -172,32 +253,41 @@ typedef struct Tamg_precond_param {
 	doublereal dapply_ilu_max_pattern_size;
 	doublereal RealZERO;
 	bool identiti;
-	integer memo_icoarseningtype;
+	MY_AMG_SPLITTING_COARSENING_ALGORITHM  memo_icoarseningtype;
 } amg_precond_param;
 
-// Фаза решения в amg методе 14.04.2020.
+// Р¤Р°Р·Р° СЂРµС€РµРЅРёСЏ РІ amg РјРµС‚РѕРґРµ 14.04.2020.
+// Р’С‹Р·С‹РІР°РµС‚ V С†РёРєР» amg СЂРµС€Р°С‚РµР»СЏ, СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РІС‹Р±СЂР°РЅРЅСѓСЋ
+// РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РІРѕ РІРЅРµС€РЅРµРј РёРЅС‚РµСЂС„РµР№СЃРµ РїСЂРѕС†РµРґСѓСЂСѓ СЃРіР»Р°Р¶РёРІР°РЅРёСЏ.
+// Р’ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РЅР°СЃС‚СЂРѕРµРє РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РІС‹Р·С‹РІР°РµС‚ Р°Р»РіРѕСЂРёС‚РјС‹ 
+// BiCGStab Рё FGMRes(m)  Рё V-С†РёРєР» amg РІ РєР°С‡РµСЃС‚РІРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ.
+// V- С†РёРєР» С‚Р°РєР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹Р·РІР°РЅ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ.
 template <typename doublerealT>
-bool solution_phase(Ak2& Amat,
-	integer nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
-	integer nnz, // number of non zero elements
+bool solution_phase(Ak2& Amat, // РњР°С‚СЂРёС†Р° РЎР›РђРЈ РІ CRS С„РѕСЂРјР°С‚Рµ.
+	integer nsizeA, // РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІС‹РґРµР»РµРЅРЅРѕРµ РёР·РІРЅРµ РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° РјР°С‚СЂРёС† Рђ	
+	integer nnz, // number of non zero elements РёСЃС…РѕРґРЅРѕР№ РјР°С‚СЂРёС†С‹ РЅСѓР»РµРІРѕРіРѕ СѓСЂРѕРІРЅСЏ.
 	integer n, // dimension of vectors x and b.	
-	doublereal*& x, // solution (решение) 
-	doublereal*& b, // rthdsd (правая часть).
-	doublerealT& ret74,
-	integer iVar,
+	doublereal*& x, // solution (СЂРµС€РµРЅРёРµ) 
+	doublereal*& b, // rthdsd (РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ).
+	real_mix_precision& ret74,
+	integer iVar,// РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С„РёР·РёС‡РµСЃРєРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№ РґР»СЏ РєРѕС‚РѕСЂРѕР№ РІС‹Р·РІР°РЅ Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ. РќР°РїСЂРёРјРµСЂ iVar==TEMP С‚РµРјРїРµСЂР°С‚СѓСЂР°. 
 	bool bmemory_savings,	
-	BLOCK*& my_body, integer& lb, integer maxelm_out,
-	// Параметры нужные только для solution phase.
+	BLOCK*& my_body, integer& lb, // Р‘Р»РѕРєРё (С‚РёРїРѕРІ HOLLOW, SOLID РёР»Рё FLUID) РёР· РєРѕС‚РѕСЂС‹С… СЃРѕСЃС‚РѕРёС‚ СЂР°СЃСЃС‡РёС‚С‹РІР°РµРјР°СЏ РјРѕРґРµР»СЊ. lb - С‡РёСЃР»Рѕ Р±Р»РѕРєРѕРІ.
+	integer maxelm_out,
+	// РџР°СЂР°РјРµС‚СЂС‹ РЅСѓР¶РЅС‹Рµ С‚РѕР»СЊРєРѕ РґР»СЏ solution phase.
 	amg_precond_param& amg_pp,
-	integer* &n_a, integer*& nnz_a, integer*& nnz_aRP,
+	// РёСЃС…РѕРґРЅС‹Р№ СѓСЂРѕРІРµРЅСЊ (РЅР°С‡Р°Р»СЊРЅС‹Р№ СѓСЂРѕРІРµРЅСЊ СЃ СЃР°РјРѕР№ РїРѕРґСЂРѕР±РЅРѕР№ РјР°С‚СЂРёС†РµР№) РёРјРµРµС‚ РЅРѕРјРµСЂ 0.
+	integer* &n_a, // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРёР·РІРµСЃС‚РЅС‹С… РЅР° РєР°Р¶РґРѕРј РёР· РїРѕСЃС‚СЂРѕРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№.
+	integer*& nnz_a, // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЅР° РєР°Р¶РґРѕРј РёР· РїРѕСЃС‚СЂРѕРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№.
+	integer*& nnz_aRP, // РљРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РЅР° РєР°Р¶РґРѕРј РёР· РїРѕСЃС‚СЂРѕРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№.
 	integer& ibsp_length,	
 	BAD_STRING_PATCHING*& bsp,
 	integer i_bsp_LIMIT,
 	bool* &flag,	
-	bool* &F_false_C_true, Ak1* &P,
+	bool* &F_false_C_true, // C/F СЂР°Р·Р±РёРµРЅРёРµ.
+	Ak1* &P, // РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
 	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit
-)
-{
+) {
 
 
 	 integer maxlevel = amg_pp.maxlevel;
@@ -212,43 +302,43 @@ bool solution_phase(Ak2& Amat,
 	 doublerealT dapply_ilu_max_pattern_size = amg_pp.dapply_ilu_max_pattern_size;
 	 doublerealT RealZERO = amg_pp.RealZERO;
 	 bool identiti = amg_pp.identiti;
-	 integer memo_icoarseningtype = amg_pp.memo_icoarseningtype;
+	 MY_AMG_SPLITTING_COARSENING_ALGORITHM  memo_icoarseningtype = amg_pp.memo_icoarseningtype;
 
 
 
-	// 4-5-6 30-31 dec 2016 Поддерживается не более 50 уровней вложенности
-	// 5.06.2017 Поддерживается не более 100 уровней вложенности включительно. const integer maxlevel=101;
+	// 4-5-6 30-31 dec 2016 РџРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РЅРµ Р±РѕР»РµРµ 50 СѓСЂРѕРІРЅРµР№ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё
+	// 5.06.2017 РџРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РЅРµ Р±РѕР»РµРµ 100 СѓСЂРѕРІРЅРµР№ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ. const integer maxlevel=101;
 	// 16.02.2019.
-	doublerealT** diag = nullptr;
-	diag = new doublerealT * [maxlevel];
+	doublereal** diag = nullptr;
+	diag = new doublereal * [maxlevel];
 	if (diag == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout << "Problem: not enough memory on your equipment for diag my_gregat_amg.cpp..." << std::endl;
 		std::cout << "Please any key to exit..." << std::endl;
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
-		diag[i_id_level_local] = nullptr; // инициализация.
+		diag[i_id_level_local] = nullptr; // РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
 		if (ilevel > i_id_level_local) {
-			diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
-			handle_error<doublerealT>(diag[i_id_level_local], "diag[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
+			diag[i_id_level_local] = (doublereal*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(diag[i_id_level_local], "diag[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
 		}
 	}
 
-
-	doublerealT** diag_minus_one = nullptr;
-	diag_minus_one = new doublerealT * [maxlevel];
+	// РёРјРµРЅРЅРѕ С‚РёРї double, С‚Р°Рє С‚СЂРµР±СѓРµС‚ С„СѓРЅРєС†РёСЏ seidelq.
+	doublereal** diag_minus_one = nullptr;
+	diag_minus_one = new doublereal * [maxlevel];
 	if (diag_minus_one == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout <<  "Problem: not enough memory on your equipment for diag_minus_one my_gregat_amg.cpp..." << std::endl;
 		std::cout <<  "Please any key to exit..." << std::endl;
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
-		diag_minus_one[i_id_level_local] = nullptr; // инициализация.
+		diag_minus_one[i_id_level_local] = nullptr; // РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
 		if (ilevel > i_id_level_local) {
-			diag_minus_one[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
-			handle_error<doublerealT>(diag_minus_one[i_id_level_local], "diag_minus_one[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
+			diag_minus_one[i_id_level_local] = (doublereal*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(diag_minus_one[i_id_level_local], "diag_minus_one[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
 		}
 	}
 
@@ -259,7 +349,7 @@ bool solution_phase(Ak2& Amat,
 			}
 		}
 	}
-	// Помечаем сигналы для правой части где её необходимо домножить на минус 1,0.
+	// РџРѕРјРµС‡Р°РµРј СЃРёРіРЅР°Р»С‹ РґР»СЏ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё РіРґРµ РµС‘ РЅРµРѕР±С…РѕРґРёРјРѕ РґРѕРјРЅРѕР¶РёС‚СЊ РЅР° РјРёРЅСѓСЃ 1,0.
 	for (integer i_96 = 0; i_96 < ibsp_length; i_96++) {
 		diag_minus_one[bsp[i_96].ilevel][bsp[i_96].istring_number] = -1.0;
 	}
@@ -268,7 +358,7 @@ bool solution_phase(Ak2& Amat,
 	bool** nested_desection = nullptr;
 	nested_desection = new bool* [maxlevel];
 	if (nested_desection == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout <<  "Problem: not enough memory on your equipment for nested_desection my_gregat_amg.cpp..." << std::endl;
 		std::cout <<  "Please any key to exit..." << std::endl;
 		exit(1);
@@ -312,15 +402,15 @@ bool solution_phase(Ak2& Amat,
 
 	// ILU2
 	LEVEL_ADDITIONAL_DATA* milu2 = nullptr;
-	// инициализация.
+	// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
 	init_level_additional_data(milu2, ilevel);
 
 	// ILU0
 	LEVEL_ADDITIONAL_DATA0* milu0 = nullptr;
-	// инициализация.
+	// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
 	init_level_additional_data(milu0, ilevel);
 
-	// Освобождение общей памяти в ILU буфере.
+	// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕР±С‰РµР№ РїР°РјСЏС‚Рё РІ ILU Р±СѓС„РµСЂРµ.
 	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
 	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
 	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
@@ -328,8 +418,8 @@ bool solution_phase(Ak2& Amat,
 	milu_gl_buffer.jlu_copy = nullptr;
 	milu_gl_buffer.ju_copy = nullptr;
 
-	// istart - начальная позиция ненулевых элементов в матрице А.
-	// iend - конечная позиция ненулевых элементов в матрице А.
+	// istart - РЅР°С‡Р°Р»СЊРЅР°СЏ РїРѕР·РёС†РёСЏ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ Рђ.
+	// iend - РєРѕРЅРµС‡РЅР°СЏ РїРѕР·РёС†РёСЏ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ Рђ.
 #pragma omp parallel for
 	for (integer i = 1; i <= n; i++) {
 		flag[i] = false;
@@ -347,23 +437,23 @@ bool solution_phase(Ak2& Amat,
 				exit(1);
 			}
 			row_ptr_start[istr] = ii;
-			doublerealT ap = 0.0; // значение на диагонали.
+			doublerealT ap = 0.0; // Р·РЅР°С‡РµРЅРёРµ РЅР° РґРёР°РіРѕРЅР°Р»Рё.
 								  //x[istr] = b[istr];
 			while ((ic <= nnz_a[0]) && (Amat.i[ic] == istr)) {
 				if (Amat.j[ic] != istr) {
 					//x[istr] += -Amat.aij[ic]*x[Amat.j[ic]];
-					// Все внедиагональные элементы должны быть строго отрицательны.
-					// Если это не так то надо выдавать предупреждение о логической ошибке пользователю.
+					// Р’СЃРµ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃС‚СЂРѕРіРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹.
+					// Р•СЃР»Рё СЌС‚Рѕ РЅРµ С‚Р°Рє С‚Рѕ РЅР°РґРѕ РІС‹РґР°РІР°С‚СЊ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ Рѕ Р»РѕРіРёС‡РµСЃРєРѕР№ РѕС€РёР±РєРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ.
 					if (Amat.aij[ic] >= 0.0) {
 						//std::cout << "polochitelnji vnediagonalnj element " <<  Amat.aij[ic] << " in matrix level 0 in string " << istr << "..." << std::endl;
 
-						// Вдруг это не страшно 26 октября 2016.
-						// Ну да на задача с конвекцией встречается даже и на нулевом уровне вложенности.
+						// Р’РґСЂСѓРі СЌС‚Рѕ РЅРµ СЃС‚СЂР°С€РЅРѕ 26 РѕРєС‚СЏР±СЂСЏ 2016.
+						// РќСѓ РґР° РЅР° Р·Р°РґР°С‡Р° СЃ РєРѕРЅРІРµРєС†РёРµР№ РІСЃС‚СЂРµС‡Р°РµС‚СЃСЏ РґР°Р¶Рµ Рё РЅР° РЅСѓР»РµРІРѕРј СѓСЂРѕРІРЅРµ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
 						//system("PAUSE");
 					}
 				}
 				else {
-					// диагональный элемент строго положителен.
+					// РґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚ СЃС‚СЂРѕРіРѕ РїРѕР»РѕР¶РёС‚РµР»РµРЅ.
 					ap = Amat.aij[ic];
 					icdiag = ic;
 				}
@@ -376,8 +466,8 @@ bool solution_phase(Ak2& Amat,
 				exit(1);
 			}
 			row_ptr_end[istr] = ic - 1;
-			if (fabs(ap) < RealZERO) {
-				std::cout <<  "zero diagonal elements in string " << istr <<"in basic matrix" << std::endl;
+			if (ap < RealZERO) {
+				std::cout <<  "zero or negative diagonal elements in string " << istr <<"in basic matrix" << std::endl;
 				system("PAUSE");
 				exit(1);
 			}
@@ -389,14 +479,14 @@ bool solution_phase(Ak2& Amat,
 			swap(Amat, ii, icdiag);
 
 			if (bmemory_savings) {
-				// По исходному номеру получаем текущий,
-				// но теперь два текущих поменялись.
+				// РџРѕ РёСЃС…РѕРґРЅРѕРјСѓ РЅРѕРјРµСЂСѓ РїРѕР»СѓС‡Р°РµРј С‚РµРєСѓС‰РёР№,
+				// РЅРѕ С‚РµРїРµСЂСЊ РґРІР° С‚РµРєСѓС‰РёС… РїРѕРјРµРЅСЏР»РёСЃСЊ.
 				the_original_order_of_values[the_original_order_of_values_reverse[ii]] = icdiag;
 				the_original_order_of_values[the_original_order_of_values_reverse[icdiag]] = ii;
 			}
 
-			diag[0][Amat.i[ii]] = ap; // для ускорения вычисления невязки.
-			Amat.aij[ii] = 1.0 / ap; // умножение быстрей деления.
+			diag[0][Amat.i[ii]] = ap; // РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РЅРµРІСЏР·РєРё.
+			Amat.aij[ii] = 1.0 / ap; // СѓРјРЅРѕР¶РµРЅРёРµ Р±С‹СЃС‚СЂРµР№ РґРµР»РµРЅРёСЏ.
 		}
 	}
 
@@ -408,18 +498,18 @@ bool solution_phase(Ak2& Amat,
 		equation3DtoCRSRUMBA1(milu2[0], true, Amat, 1, n_a[0], row_ptr_start, row_ptr_end, 0, 0);
 	}
 
-	// 14 сентября 2015 понедельник четвёртый уровень вложенности.
-	// Уровни вложенности с первого по седьмой сразу. 12.07.2016.
+	// 14 СЃРµРЅС‚СЏР±СЂСЏ 2015 РїРѕРЅРµРґРµР»СЊРЅРёРє С‡РµС‚РІС‘СЂС‚С‹Р№ СѓСЂРѕРІРµРЅСЊ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+	// РЈСЂРѕРІРЅРё РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё СЃ РїРµСЂРІРѕРіРѕ РїРѕ СЃРµРґСЊРјРѕР№ СЃСЂР°Р·Сѓ. 12.07.2016.
 
-	// Заголовок 29.10.2016.
+	// Р—Р°РіРѕР»РѕРІРѕРє 29.10.2016.
 	if (bprint_mesage_diagnostic) {
 		std::cout <<  "1. positive connections %, 2. max positive/ diagonal %" << std::endl;
 	}
 
 	for (integer ilevel_detector = 1; ilevel_detector <= maxlevel - 1; ilevel_detector++) {
 
-		// Обработка матрицы действует до 99 уровня включительно, но
-		// сбор статистики желательно сделать для всех уровней.
+		// РћР±СЂР°Р±РѕС‚РєР° РјР°С‚СЂРёС†С‹ РґРµР№СЃС‚РІСѓРµС‚ РґРѕ 99 СѓСЂРѕРІРЅСЏ РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ, РЅРѕ
+		// СЃР±РѕСЂ СЃС‚Р°С‚РёСЃС‚РёРєРё Р¶РµР»Р°С‚РµР»СЊРЅРѕ СЃРґРµР»Р°С‚СЊ РґР»СЏ РІСЃРµС… СѓСЂРѕРІРЅРµР№.
 		const integer istop_level_scan = maxlevel - 2;
 
 		if (ilevel > ilevel_detector) {
@@ -457,6 +547,9 @@ bool solution_phase(Ak2& Amat,
 			for (integer ilev = 0; ilev <= ilevel_detector; ilev++) {
 				iendPR += nnz_aRP[ilev];
 			}
+
+			const doublerealT theta7 = theta(ilevel); // РїРµСЂРµРґР°С‘С‚СЃСЏ РІ С„СѓРЅРєС†РёСЋ РёР·РІРЅРµ.
+
 			double dn_num = 0.0;
 			for (integer ii = ist; ii <= iend; ii++) {
 				if (flag[Amat.i[ii]] == false) {
@@ -485,7 +578,7 @@ bool solution_phase(Ak2& Amat,
 
 
 
-					const doublerealT theta7 = theta(ilevel); // передаётся в функцию извне.
+					
 					b_ne_menee_2_positive_con_in_string = false;
 					integer inum_pos_con_in_string = 0;
 					doublerealT threshold7 = -1.0;
@@ -499,7 +592,7 @@ bool solution_phase(Ak2& Amat,
 						}
 						ic7++;
 					}
-					// мы обнаружили не менее двух положительных связей в данной строке.
+					// РјС‹ РѕР±РЅР°СЂСѓР¶РёР»Рё РЅРµ РјРµРЅРµРµ РґРІСѓС… РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹С… СЃРІСЏР·РµР№ РІ РґР°РЅРЅРѕР№ СЃС‚СЂРѕРєРµ.
 					if (inum_pos_con_in_string >= 2) {
 						inum_pos_con_in_string = 0;
 						ic7 = ic;
@@ -523,8 +616,8 @@ bool solution_phase(Ak2& Amat,
 						if (Amat.j[ic] != istr) {
 							//x[istr] += -Amat.aij[ic]*x[Amat.j[ic]];
 							inum_vnediagonal_all += 1.0;
-							// Все внедиагональные элементы должны быть строго отрицательны.
-							// Если это не так то надо выдавать предупреждение о логической ошибке пользователю.
+							// Р’СЃРµ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ СЃС‚СЂРѕРіРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹.
+							// Р•СЃР»Рё СЌС‚Рѕ РЅРµ С‚Р°Рє С‚Рѕ РЅР°РґРѕ РІС‹РґР°РІР°С‚СЊ РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ Рѕ Р»РѕРіРёС‡РµСЃРєРѕР№ РѕС€РёР±РєРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ.
 							if (Amat.aij[ic] >= 0.0) {
 								//std::cout << "polochitelnji vnediagonalnj element " << Amat.aij[ic] << " in matrix level " << ilevel_detector << " in string " << istr << "..."<< std::endl;
 
@@ -537,7 +630,7 @@ bool solution_phase(Ak2& Amat,
 									}
 								}
 
-								// Определение величины максимальной внедиагональной связи.
+								// РћРїСЂРµРґРµР»РµРЅРёРµ РІРµР»РёС‡РёРЅС‹ РјР°РєСЃРёРјР°Р»СЊРЅРѕР№ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕР№ СЃРІСЏР·Рё.
 								if (max_positive_connections_element < Amat.aij[ic]) {
 									max_positive_connections_element = Amat.aij[ic];
 								}
@@ -578,8 +671,8 @@ bool solution_phase(Ak2& Amat,
 					flag[Amat.i[ii]] = true;
 					if (ilevel_detector <= istop_level_scan) {
 						swap(Amat,ii,icdiag);
-						diag[ilevel_detector][Amat.i[ii]] = ap;// для ускорения вычисления невязки.						
-						Amat.aij[ii] = 1.0 / ap; // умножение быстрей деления.
+						diag[ilevel_detector][Amat.i[ii]] = ap;// РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РЅРµРІСЏР·РєРё.						
+						Amat.aij[ii] = 1.0 / ap; // СѓРјРЅРѕР¶РµРЅРёРµ Р±С‹СЃС‚СЂРµР№ РґРµР»РµРЅРёСЏ.
 					}
 
 
@@ -616,12 +709,12 @@ bool solution_phase(Ak2& Amat,
 	}
 	
 	if (bILU2smoother > 0) {
-		// Пауза только в случае применения ILU декомпозиции.
+		// РџР°СѓР·Р° С‚РѕР»СЊРєРѕ РІ СЃР»СѓС‡Р°Рµ РїСЂРёРјРµРЅРµРЅРёСЏ ILU РґРµРєРѕРјРїРѕР·РёС†РёРё.
 		//system("PAUSE");
 		if (bILU2smoother == 2) {
-			// Осторожно возможно код быстро устареет.
-			// Выделение оперативной памяти под централизованное хранилище 
-			// для ILU.
+			// РћСЃС‚РѕСЂРѕР¶РЅРѕ РІРѕР·РјРѕР¶РЅРѕ РєРѕРґ Р±С‹СЃС‚СЂРѕ СѓСЃС‚Р°СЂРµРµС‚.
+			// Р’С‹РґРµР»РµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё РїРѕРґ С†РµРЅС‚СЂР°Р»РёР·РѕРІР°РЅРЅРѕРµ С…СЂР°РЅРёР»РёС‰Рµ 
+			// РґР»СЏ ILU.
 			memory_allocation_apostoriory_buffer_ilu(milu2, ilevel - 1);
 			//memory_allocation_apostoriory_buffer_ilu(milu2, ilevel-1);// 4.01.2017
 		}
@@ -630,9 +723,9 @@ bool solution_phase(Ak2& Amat,
 
 	if (!bonly_serial) {
 
-		// Готовим nested desection
-		// для двух потоков.
-		// Самая подробная матрица 1.
+		// Р“РѕС‚РѕРІРёРј nested desection
+		// РґР»СЏ РґРІСѓС… РїРѕС‚РѕРєРѕРІ.
+		// РЎР°РјР°СЏ РїРѕРґСЂРѕР±РЅР°СЏ РјР°С‚СЂРёС†Р° 1.
 		// nested_desection[1]		
 		// maxlevel==201
 		for (integer i_17 = 0; i_17 <= maxlevel - 1; i_17++) {
@@ -653,15 +746,15 @@ bool solution_phase(Ak2& Amat,
 
 
 	if (Amat.i != nullptr) {
-		// Освобождаем целую треть памяти для иерархии матриц, т.к. вместо 
-		// обращения к индексу i у нас есть row_ptr 
-		// row_ptr_start, row_ptr_end (ссылки на начало и конец каждой строки).
+		// РћСЃРІРѕР±РѕР¶РґР°РµРј С†РµР»СѓСЋ С‚СЂРµС‚СЊ РїР°РјСЏС‚Рё РґР»СЏ РёРµСЂР°СЂС…РёРё РјР°С‚СЂРёС†, С‚.Рє. РІРјРµСЃС‚Рѕ 
+		// РѕР±СЂР°С‰РµРЅРёСЏ Рє РёРЅРґРµРєСЃСѓ i Сѓ РЅР°СЃ РµСЃС‚СЊ row_ptr 
+		// row_ptr_start, row_ptr_end (СЃСЃС‹Р»РєРё РЅР° РЅР°С‡Р°Р»Рѕ Рё РєРѕРЅРµС† РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё).
 		free(Amat.i);
 		Amat.i = nullptr;
 	}
 	//if (R != nullptr) {
-		// Используется только оператор P, оператор R точно такой же что и P с точностью до сортировки.
-		// Методы restriction и prolongation не чувствительны к сортировке.
+		// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РѕРїРµСЂР°С‚РѕСЂ P, РѕРїРµСЂР°С‚РѕСЂ R С‚РѕС‡РЅРѕ С‚Р°РєРѕР№ Р¶Рµ С‡С‚Рѕ Рё P СЃ С‚РѕС‡РЅРѕСЃС‚СЊСЋ РґРѕ СЃРѕСЂС‚РёСЂРѕРІРєРё.
+		// РњРµС‚РѕРґС‹ restriction Рё prolongation РЅРµ С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅС‹ Рє СЃРѕСЂС‚РёСЂРѕРІРєРµ.
 		//free(R);
 		//R = nullptr;
 	//}
@@ -681,43 +774,43 @@ bool solution_phase(Ak2& Amat,
 	if (debug_reshime) system("pause");
 	//exit(1);
 
-	// 10 11 21 multigrid tutorial Вильм Бригг.
-	// Высокорейнольдсовое обтекание квадрата в DavisTest,
-	// решатель работал на x-компоненте скорости. Сетка сгущалась
-	// к поверхности квадрата достаточно сильно. Это дало расходимость
-	// amg v0.08 решателя на данной задаче с параметрами nu1=4, nu2=3.
-	// Параметры nu1=8, nu2=7 обеспечили сходимость вычислительного процесса.
+	// 10 11 21 multigrid tutorial Р’РёР»СЊРј Р‘СЂРёРіРі.
+	// Р’С‹СЃРѕРєРѕСЂРµР№РЅРѕР»СЊРґСЃРѕРІРѕРµ РѕР±С‚РµРєР°РЅРёРµ РєРІР°РґСЂР°С‚Р° РІ DavisTest,
+	// СЂРµС€Р°С‚РµР»СЊ СЂР°Р±РѕС‚Р°Р» РЅР° x-РєРѕРјРїРѕРЅРµРЅС‚Рµ СЃРєРѕСЂРѕСЃС‚Рё. РЎРµС‚РєР° СЃРіСѓС‰Р°Р»Р°СЃСЊ
+	// Рє РїРѕРІРµСЂС…РЅРѕСЃС‚Рё РєРІР°РґСЂР°С‚Р° РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СЃРёР»СЊРЅРѕ. Р­С‚Рѕ РґР°Р»Рѕ СЂР°СЃС…РѕРґРёРјРѕСЃС‚СЊ
+	// amg v0.08 СЂРµС€Р°С‚РµР»СЏ РЅР° РґР°РЅРЅРѕР№ Р·Р°РґР°С‡Рµ СЃ РїР°СЂР°РјРµС‚СЂР°РјРё nu1=4, nu2=3.
+	// РџР°СЂР°РјРµС‚СЂС‹ nu1=8, nu2=7 РѕР±РµСЃРїРµС‡РёР»Рё СЃС…РѕРґРёРјРѕСЃС‚СЊ РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°.
 
-	// Возможно имеет смысл сделать управляемый выход из сглаживателя, допустим
-	// если невязка опустилась ниже первоначальной в 0.1 раз то имеет смысл досрочно 
-	// оборвать итерации сглаживателя.
+	// Р’РѕР·РјРѕР¶РЅРѕ РёРјРµРµС‚ СЃРјС‹СЃР» СЃРґРµР»Р°С‚СЊ СѓРїСЂР°РІР»СЏРµРјС‹Р№ РІС‹С…РѕРґ РёР· СЃРіР»Р°Р¶РёРІР°С‚РµР»СЏ, РґРѕРїСѓСЃС‚РёРј
+	// РµСЃР»Рё РЅРµРІСЏР·РєР° РѕРїСѓСЃС‚РёР»Р°СЃСЊ РЅРёР¶Рµ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ РІ 0.1 СЂР°Р· С‚Рѕ РёРјРµРµС‚ СЃРјС‹СЃР» РґРѕСЃСЂРѕС‡РЅРѕ 
+	// РѕР±РѕСЂРІР°С‚СЊ РёС‚РµСЂР°С†РёРё СЃРіР»Р°Р¶РёРІР°С‚РµР»СЏ.
 
 
 	// nu1=0; nu2=2; nFinestSweeps=2 is recomended 
 	// Masashi Imano. Optimization of parameter setting for GAMG
 	// solver in simple solver. 
 	// Aug 26th 2012. OpeanFOAM study. 
-	// nu1=0 имеем расходимость на BSK Dmitrii.
-	// nFinestSweeps=2 имеем расходимость на BSK Dmitrii.
-	// BSK Dmitrii сходится при nu1=1, nu2=2, nFinestSweeps=3.
+	// nu1=0 РёРјРµРµРј СЂР°СЃС…РѕРґРёРјРѕСЃС‚СЊ РЅР° BSK Dmitrii.
+	// nFinestSweeps=2 РёРјРµРµРј СЂР°СЃС…РѕРґРёРјРѕСЃС‚СЊ РЅР° BSK Dmitrii.
+	// BSK Dmitrii СЃС…РѕРґРёС‚СЃСЏ РїСЂРё nu1=1, nu2=2, nFinestSweeps=3.
 
 	integer nu1 = 1; // minimum value 1 // 4 // 8
 	integer nu2 = 2; // minimum value 2 // 3 // 7
 
-					 // на задаче Finned Heat Sync из первого туториала Icepak была обнаружена расходимость 
-					 // для Y скорости и поправки давления. При этом обтекание куба отлично считалось на равномерной
-					 // сетки с nu1=1, nu2=2 даже при весьма больших числах Рейнольдса.
-					 // при nu1=10, nu2=10 скорости разрешаются хорошо и проблем с ними нет, но поправка давления по прежнему даёт сбой.
-					 // при nu==20 сбой всё равно есть.
-					 // не помогло.
+					 // РЅР° Р·Р°РґР°С‡Рµ Finned Heat Sync РёР· РїРµСЂРІРѕРіРѕ С‚СѓС‚РѕСЂРёР°Р»Р° Icepak Р±С‹Р»Р° РѕР±РЅР°СЂСѓР¶РµРЅР° СЂР°СЃС…РѕРґРёРјРѕСЃС‚СЊ 
+					 // РґР»СЏ Y СЃРєРѕСЂРѕСЃС‚Рё Рё РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ. РџСЂРё СЌС‚РѕРј РѕР±С‚РµРєР°РЅРёРµ РєСѓР±Р° РѕС‚Р»РёС‡РЅРѕ СЃС‡РёС‚Р°Р»РѕСЃСЊ РЅР° СЂР°РІРЅРѕРјРµСЂРЅРѕР№
+					 // СЃРµС‚РєРё СЃ nu1=1, nu2=2 РґР°Р¶Рµ РїСЂРё РІРµСЃСЊРјР° Р±РѕР»СЊС€РёС… С‡РёСЃР»Р°С… Р РµР№РЅРѕР»СЊРґСЃР°.
+					 // РїСЂРё nu1=10, nu2=10 СЃРєРѕСЂРѕСЃС‚Рё СЂР°Р·СЂРµС€Р°СЋС‚СЃСЏ С…РѕСЂРѕС€Рѕ Рё РїСЂРѕР±Р»РµРј СЃ РЅРёРјРё РЅРµС‚, РЅРѕ РїРѕРїСЂР°РІРєР° РґР°РІР»РµРЅРёСЏ РїРѕ РїСЂРµР¶РЅРµРјСѓ РґР°С‘С‚ СЃР±РѕР№.
+					 // РїСЂРё nu==20 СЃР±РѕР№ РІСЃС‘ СЂР°РІРЅРѕ РµСЃС‚СЊ.
+					 // РЅРµ РїРѕРјРѕРіР»Рѕ.
 					 //nu1 = 40;
 					 //nu2 = 40;
 
 	integer nFinestSweeps = 2;
 
 
-	// с 26 октября 2016 мы передаём настройки из интерфейса AliceMesh_v0_39.
-	// Т.к. есть трудносходящиеся задачи, то эти настройки должны помочь.
+	// СЃ 26 РѕРєС‚СЏР±СЂСЏ 2016 РјС‹ РїРµСЂРµРґР°С‘Рј РЅР°СЃС‚СЂРѕР№РєРё РёР· РёРЅС‚РµСЂС„РµР№СЃР° AliceMesh_v0_39.
+	// Рў.Рє. РµСЃС‚СЊ С‚СЂСѓРґРЅРѕСЃС…РѕРґСЏС‰РёРµСЃСЏ Р·Р°РґР°С‡Рё, С‚Рѕ СЌС‚Рё РЅР°СЃС‚СЂРѕР№РєРё РґРѕР»Р¶РЅС‹ РїРѕРјРѕС‡СЊ.
 	nu1 = my_amg_manager.nu1;
 	nu2 = my_amg_manager.nu2;
 	nFinestSweeps = my_amg_manager.nFinnest;
@@ -727,8 +820,8 @@ bool solution_phase(Ak2& Amat,
 	//nu1 = 0;
 	//nu2 = 20;
 	//}
-	// для Finner Heat Sink надо усилить сглаживания.
-	// Это не помогает будет перенаправление на другой алгоритм.
+	// РґР»СЏ Finner Heat Sink РЅР°РґРѕ СѓСЃРёР»РёС‚СЊ СЃРіР»Р°Р¶РёРІР°РЅРёСЏ.
+	// Р­С‚Рѕ РЅРµ РїРѕРјРѕРіР°РµС‚ Р±СѓРґРµС‚ РїРµСЂРµРЅР°РїСЂР°РІР»РµРЅРёРµ РЅР° РґСЂСѓРіРѕР№ Р°Р»РіРѕСЂРёС‚Рј.
 	//if (iVar == PAM) {
 	//nu1 = 3;
 	//nu2 = 3;
@@ -737,7 +830,7 @@ bool solution_phase(Ak2& Amat,
 	const bool btheoryGuideANSYSFluent = false;
 	if (iVar != PAM) {
 		if (btheoryGuideANSYSFluent) {
-			// Так написано в Theory Guide ANSYS Fluent.
+			// РўР°Рє РЅР°РїРёСЃР°РЅРѕ РІ Theory Guide ANSYS Fluent.
 			nu1 = 0;
 			nu2 = 1;
 			nFinestSweeps = 1;
@@ -746,16 +839,16 @@ bool solution_phase(Ak2& Amat,
 
 
 
-	// Двойной вакуумный промежуток вызывает проблемы сходимости:
+	// Р”РІРѕР№РЅРѕР№ РІР°РєСѓСѓРјРЅС‹Р№ РїСЂРѕРјРµР¶СѓС‚РѕРє РІС‹Р·С‹РІР°РµС‚ РїСЂРѕР±Р»РµРјС‹ СЃС…РѕРґРёРјРѕСЃС‚Рё:
 	//nu1 = 10;
 	//nu2 = 20;
 
-	// Смысл этих параметров в том что они экономят ресурсы процессора
-	// в теории осуществляя досрочный выход из пред и пост сглаживаний.
-	// Т.е. параметры nu1,nu2 задаются с запасом и алгоритм сам использует
-	// сколько ему взять итераций для оптимальной работы (сходимости). 
-	// Пользователь не ломает голову какие задавать параметры nu1, nu2 
-	// а задаёт их верхние предельные значения. 
+	// РЎРјС‹СЃР» СЌС‚РёС… РїР°СЂР°РјРµС‚СЂРѕРІ РІ С‚РѕРј С‡С‚Рѕ РѕРЅРё СЌРєРѕРЅРѕРјСЏС‚ СЂРµСЃСѓСЂСЃС‹ РїСЂРѕС†РµСЃСЃРѕСЂР°
+	// РІ С‚РµРѕСЂРёРё РѕСЃСѓС‰РµСЃС‚РІР»СЏСЏ РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· РїСЂРµРґ Рё РїРѕСЃС‚ СЃРіР»Р°Р¶РёРІР°РЅРёР№.
+	// Рў.Рµ. РїР°СЂР°РјРµС‚СЂС‹ nu1,nu2 Р·Р°РґР°СЋС‚СЃСЏ СЃ Р·Р°РїР°СЃРѕРј Рё Р°Р»РіРѕСЂРёС‚Рј СЃР°Рј РёСЃРїРѕР»СЊР·СѓРµС‚
+	// СЃРєРѕР»СЊРєРѕ РµРјСѓ РІР·СЏС‚СЊ РёС‚РµСЂР°С†РёР№ РґР»СЏ РѕРїС‚РёРјР°Р»СЊРЅРѕР№ СЂР°Р±РѕС‚С‹ (СЃС…РѕРґРёРјРѕСЃС‚Рё). 
+	// РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ Р»РѕРјР°РµС‚ РіРѕР»РѕРІСѓ РєР°РєРёРµ Р·Р°РґР°РІР°С‚СЊ РїР°СЂР°РјРµС‚СЂС‹ nu1, nu2 
+	// Р° Р·Р°РґР°С‘С‚ РёС… РІРµСЂС…РЅРёРµ РїСЂРµРґРµР»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ. 
 	doublerealT process_flow_beta = 0.7;
 	doublerealT process_flow_alpha = 0.1;
 	bool process_flow_logic = false;
@@ -777,44 +870,44 @@ bool solution_phase(Ak2& Amat,
 	doublerealT dres = 1.0;
 	integer iiter = 1;
 	//const doublerealT tolerance = 1.0e-12;
-	// 13 февраля 2016 калибруем точность солвера с целью ускорения получения результата.
-	// Т.к. нам ненужна точность выше чем десятая доля градуса по температуре.
-	// начальное значение невязки составляет примерно 7000.0.
-	doublerealT tolerance = 0.0001; // точность выхода по классическому определению L2 нормы.
-									// 23 октября 2016
+	// 13 С„РµРІСЂР°Р»СЏ 2016 РєР°Р»РёР±СЂСѓРµРј С‚РѕС‡РЅРѕСЃС‚СЊ СЃРѕР»РІРµСЂР° СЃ С†РµР»СЊСЋ СѓСЃРєРѕСЂРµРЅРёСЏ РїРѕР»СѓС‡РµРЅРёСЏ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
+	// Рў.Рє. РЅР°Рј РЅРµРЅСѓР¶РЅР° С‚РѕС‡РЅРѕСЃС‚СЊ РІС‹С€Рµ С‡РµРј РґРµСЃСЏС‚Р°СЏ РґРѕР»СЏ РіСЂР°РґСѓСЃР° РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ.
+	// РЅР°С‡Р°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РЅРµРІСЏР·РєРё СЃРѕСЃС‚Р°РІР»СЏРµС‚ РїСЂРёРјРµСЂРЅРѕ 7000.0.
+	doublerealT tolerance = 0.0001; // С‚РѕС‡РЅРѕСЃС‚СЊ РІС‹С…РѕРґР° РїРѕ РєР»Р°СЃСЃРёС‡РµСЃРєРѕРјСѓ РѕРїСЂРµРґРµР»РµРЅРёСЋ L2 РЅРѕСЂРјС‹.
+									// 23 РѕРєС‚СЏР±СЂСЏ 2016
 	if (bSIMPLErun_now_for_temperature) {
-		// Решаем cfd задачи.
+		// Р РµС€Р°РµРј cfd Р·Р°РґР°С‡Рё.
 		tolerance = 1.0e-8;
 	}
 
-	doublerealT** residual_fine = nullptr;
-	residual_fine = new doublerealT * [maxlevel];
+	doublereal** residual_fine = nullptr;
+	residual_fine = new doublereal * [maxlevel];
 	if (residual_fine == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout << "Problem: not enough memory on your equipment for residual_fine my_gregat_amg6.cpp..." << std::endl;
 		std::cout <<  "Please any key to exit..." << std::endl;
 		exit(1);
 	}
-	doublerealT** residual_coarse = nullptr;
-	residual_coarse = new doublerealT * [maxlevel];
+	doublereal** residual_coarse = nullptr;
+	residual_coarse = new doublereal * [maxlevel];
 	if (residual_coarse == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout <<  "Problem: not enough memory on your equipment for residual_coarse my_gregat_amg6.cpp..."  << std::endl;
 		std::cout <<  "Please any key to exit..." << std::endl;
 		exit(1);
 	}
-	doublerealT** error_approx_coarse = nullptr;
-	error_approx_coarse = new doublerealT * [maxlevel];
+	doublereal** error_approx_coarse = nullptr;
+	error_approx_coarse = new doublereal * [maxlevel];
 	if (error_approx_coarse == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout <<  "Problem: not enough memory on your equipment for error_approx_coarse my_gregat_amg6.cpp..."  << std::endl;
 		std::cout <<  "Please any key to exit..."  << std::endl;
 		exit(1);
 	}
-	doublerealT** error_approx_fine = nullptr;
-	error_approx_fine = new doublerealT * [maxlevel];
+	doublereal** error_approx_fine = nullptr;
+	error_approx_fine = new doublereal * [maxlevel];
 	if (error_approx_fine == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout <<  "Problem: not enough memory on your equipment for error_approx_fine my_gregat_amg6.cpp..." << std::endl;
 		std::cout <<  "Please any key to exit..." << std::endl;
 		exit(1);
@@ -827,16 +920,16 @@ bool solution_phase(Ak2& Amat,
 	}
 
 
-	// Устаревший код инициализации значением nullptr 4 декабря 2016. 
+	// РЈСЃС‚Р°СЂРµРІС€РёР№ РєРѕРґ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р·РЅР°С‡РµРЅРёРµРј nullptr 4 РґРµРєР°Р±СЂСЏ 2016. 
 
-	// Закомментированный код безнадёжно устарел. В данный момент 
-	//5.06.2017 поддерживается 100 уровней вложенности.
+	// Р—Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ РєРѕРґ Р±РµР·РЅР°РґС‘Р¶РЅРѕ СѓСЃС‚Р°СЂРµР». Р’ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ 
+	//5.06.2017 РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ 100 СѓСЂРѕРІРЅРµР№ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
 
-	// 25.04.2018 На этом месте удалён большой фрагмент устаревшего кода.
+	// 25.04.2018 РќР° СЌС‚РѕРј РјРµСЃС‚Рµ СѓРґР°Р»С‘РЅ Р±РѕР»СЊС€РѕР№ С„СЂР°РіРјРµРЅС‚ СѓСЃС‚Р°СЂРµРІС€РµРіРѕ РєРѕРґР°.
 
-	// лучше выделять оперативную память небольшими блоками т.к.
-	// оперативная память фрагментирована системными dll и
-	// большого свободного блока может не найтись.
+	// Р»СѓС‡С€Рµ РІС‹РґРµР»СЏС‚СЊ РѕРїРµСЂР°С‚РёРІРЅСѓСЋ РїР°РјСЏС‚СЊ РЅРµР±РѕР»СЊС€РёРјРё Р±Р»РѕРєР°РјРё С‚.Рє.
+	// РѕРїРµСЂР°С‚РёРІРЅР°СЏ РїР°РјСЏС‚СЊ С„СЂР°РіРјРµРЅС‚РёСЂРѕРІР°РЅР° СЃРёСЃС‚РµРјРЅС‹РјРё dll Рё
+	// Р±РѕР»СЊС€РѕРіРѕ СЃРІРѕР±РѕРґРЅРѕРіРѕ Р±Р»РѕРєР° РјРѕР¶РµС‚ РЅРµ РЅР°Р№С‚РёСЃСЊ.
 
 
 
@@ -850,21 +943,21 @@ bool solution_phase(Ak2& Amat,
 
 			// residual
 			//residual_fine[i_17_prev] = new doublerealT[n_a[i_17_prev] + 1];
-			residual_fine[i_17_prev] = (doublerealT*)malloc((n_a[i_17_prev] + 1) * sizeof(doublerealT));
-			handle_error<doublerealT>(residual_fine[i_17_prev], "residual_fine[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17_prev] + 1));
+			residual_fine[i_17_prev] = (doublereal*)malloc((n_a[i_17_prev] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(residual_fine[i_17_prev], "residual_fine[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17_prev] + 1));
 
 
 			//residual_coarse[i_17_prev] = new doublerealT[n_a[i_17] + 1];
-			residual_coarse[i_17_prev] = (doublerealT*)malloc((n_a[i_17] + 1) * sizeof(doublerealT));
-			handle_error<doublerealT>(residual_coarse[i_17_prev], "residual_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
+			residual_coarse[i_17_prev] = (doublereal*)malloc((n_a[i_17] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(residual_coarse[i_17_prev], "residual_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
 
 			//error_approx_coarse[i_17_prev] = new doublerealT[n_a[i_17] + 1];
-			error_approx_coarse[i_17_prev] = (doublerealT*)malloc((n_a[i_17] + 1) * sizeof(doublerealT));
-			handle_error<doublerealT>(error_approx_coarse[i_17_prev], "error_approx_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
+			error_approx_coarse[i_17_prev] = (doublereal*)malloc((n_a[i_17] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(error_approx_coarse[i_17_prev], "error_approx_coarse[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17] + 1));
 
 			//error_approx_fine[i_17_prev] = new doublerealT[n_a[i_17_prev] + 1];
-			error_approx_fine[i_17_prev] = (doublerealT*)malloc((n_a[i_17_prev] + 1) * sizeof(doublerealT));
-			handle_error<doublerealT>(error_approx_fine[i_17_prev], "error_approx_fine[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17_prev] + 1));
+			error_approx_fine[i_17_prev] = (doublereal*)malloc((n_a[i_17_prev] + 1) * sizeof(doublereal));
+			handle_error<doublereal>(error_approx_fine[i_17_prev], "error_approx_fine[", i_17_prev, "]", "classic_aglomerative_amg_6", (n_a[i_17_prev] + 1));
 		}
 	}
 
@@ -879,7 +972,7 @@ bool solution_phase(Ak2& Amat,
 	x_copy = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_copy, "x_copy", "classic_aglomerative_amg_6", (n_a[0] + 1));
 
-	// для ускорения счёта в вакуумном промежутке.
+	// РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ СЃС‡С‘С‚Р° РІ РІР°РєСѓСѓРјРЅРѕРј РїСЂРѕРјРµР¶СѓС‚РєРµ.
 	doublerealT* x_old = nullptr;
 	x_old = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_old, "x_old", "classic_aglomerative_amg_6", (n_a[0] + 1));
@@ -891,11 +984,11 @@ bool solution_phase(Ak2& Amat,
 		//x_copy[i47] = 0.0; // 28.07.2016
 	}
 
-	doublereal* x_best_search = nullptr;
-	x_best_search = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublereal));
+	doublerealT* x_best_search = nullptr;
+	x_best_search = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_best_search, "x_best_search", "classic_aglomerative_amg_6", (n_a[0] + 1));
 
-	doublerealT res_best_search = 1e40;
+	doublerealT res_best_search = 1e37;
 #pragma omp parallel for
 	for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 		x_best_search[i47] = x[i47];
@@ -903,16 +996,16 @@ bool solution_phase(Ak2& Amat,
 	}
 
 
-	// Для поправки давления возникает задача когда на всех границах стоит условие Неймана,
-	// это приводит к тому что метод работает бесконечно долго и не может сойтись, поэтому нужно 
-	// заложить критерий останова по превышению количества допустимых итераций (не более 1000 итераций).
-	// 1000 итераций это очень долго поэтому для поправки давления надо подобрать разумное количество 
-	// итераций т.к. от этого существенным образом зависит быстродействие гидродинамического алгоритма.
+	// Р”Р»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РІРѕР·РЅРёРєР°РµС‚ Р·Р°РґР°С‡Р° РєРѕРіРґР° РЅР° РІСЃРµС… РіСЂР°РЅРёС†Р°С… СЃС‚РѕРёС‚ СѓСЃР»РѕРІРёРµ РќРµР№РјР°РЅР°,
+	// СЌС‚Рѕ РїСЂРёРІРѕРґРёС‚ Рє С‚РѕРјСѓ С‡С‚Рѕ РјРµС‚РѕРґ СЂР°Р±РѕС‚Р°РµС‚ Р±РµСЃРєРѕРЅРµС‡РЅРѕ РґРѕР»РіРѕ Рё РЅРµ РјРѕР¶РµС‚ СЃРѕР№С‚РёСЃСЊ, РїРѕСЌС‚РѕРјСѓ РЅСѓР¶РЅРѕ 
+	// Р·Р°Р»РѕР¶РёС‚СЊ РєСЂРёС‚РµСЂРёР№ РѕСЃС‚Р°РЅРѕРІР° РїРѕ РїСЂРµРІС‹С€РµРЅРёСЋ РєРѕР»РёС‡РµСЃС‚РІР° РґРѕРїСѓСЃС‚РёРјС‹С… РёС‚РµСЂР°С†РёР№ (РЅРµ Р±РѕР»РµРµ 1000 РёС‚РµСЂР°С†РёР№).
+	// 1000 РёС‚РµСЂР°С†РёР№ СЌС‚Рѕ РѕС‡РµРЅСЊ РґРѕР»РіРѕ РїРѕСЌС‚РѕРјСѓ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РЅР°РґРѕ РїРѕРґРѕР±СЂР°С‚СЊ СЂР°Р·СѓРјРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ 
+	// РёС‚РµСЂР°С†РёР№ С‚.Рє. РѕС‚ СЌС‚РѕРіРѕ СЃСѓС‰РµСЃС‚РІРµРЅРЅС‹Рј РѕР±СЂР°Р·РѕРј Р·Р°РІРёСЃРёС‚ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІРёРµ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ Р°Р»РіРѕСЂРёС‚РјР°.
 	integer iter_limit = 0;
 	integer istop_porog_reconst = 5000;// 50
 
 	bool ret_value = false;
-	doublerealT dres_previos = 1.0e40;
+	doublerealT dres_previos = 1.0e37;
 	integer icount_bad_convergence_Vcycles = 0;
 	integer i_count_stagnation = 0;
 	doublerealT res0start = 1.0e-40;
@@ -921,39 +1014,39 @@ bool solution_phase(Ak2& Amat,
 	residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	doublerealT dres_initial = norma(residual_fine[0], n_a[0]);
 	if (((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) && (dres_initial > 20.0)) {
-		// Это признак ошибки в сборке матрицы СЛАУ на компоненты скорости.
+		// Р­С‚Рѕ РїСЂРёР·РЅР°Рє РѕС€РёР±РєРё РІ СЃР±РѕСЂРєРµ РјР°С‚СЂРёС†С‹ РЎР›РђРЈ РЅР° РєРѕРјРїРѕРЅРµРЅС‚С‹ СЃРєРѕСЂРѕСЃС‚Рё.
 		std::cout <<  "may be problem convergence Speed Flow: very big dres0=" << dres_initial << std::endl;
 		std::cout <<  "run residualq2 analysys." << std::endl;
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
 	if (((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) && (dres_initial > 20.0)) {
-		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики.
+		// Р­С‚Рѕ РїСЂРёР·РЅР°Рє РѕС€РёР±РєРё РІ СЃР±РѕСЂРєРµ РјР°С‚СЂРёС†С‹ РЎР›РђРЈ РЅР° С‚СѓСЂР±СѓР»РµРЅС‚РЅС‹Рµ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё.
 		std::cout <<  "may be problem convergence Turbulence equations: very big dres0=" << dres_initial << std::endl;
 		std::cout <<  "run residualq2 analysys." << std::endl;
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
 	if ((iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) && (dres_initial > 6.0e6)) {
-		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики - удельную скорость диссипации.
+		// Р­С‚Рѕ РїСЂРёР·РЅР°Рє РѕС€РёР±РєРё РІ СЃР±РѕСЂРєРµ РјР°С‚СЂРёС†С‹ РЎР›РђРЈ РЅР° С‚СѓСЂР±СѓР»РµРЅС‚РЅС‹Рµ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё - СѓРґРµР»СЊРЅСѓСЋ СЃРєРѕСЂРѕСЃС‚СЊ РґРёСЃСЃРёРїР°С†РёРё.
 		std::cout <<  "may be problem convergence Turbulence equations: very big dres0=" << dres_initial << std::endl;
 		std::cout <<  "run residualq2 analysys." << std::endl;
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
 	/*
-	// код заимствованный из amg5:
+	// РєРѕРґ Р·Р°РёРјСЃС‚РІРѕРІР°РЅРЅС‹Р№ РёР· amg5:
 	integer iflag_cont = 1;
 	if (iVar != PAM) {
 	dres = fabs(dres_initial);
 
 	if (iVar != TEMP) {
 	if (dres < dterminatedTResudual) {
-	// Вектор и так точно удовлетворяет решению, его не надо уточнять из решения СЛАУ.
+	// Р’РµРєС‚РѕСЂ Рё С‚Р°Рє С‚РѕС‡РЅРѕ СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ СЂРµС€РµРЅРёСЋ, РµРіРѕ РЅРµ РЅР°РґРѕ СѓС‚РѕС‡РЅСЏС‚СЊ РёР· СЂРµС€РµРЅРёСЏ РЎР›РђРЈ.
 	iflag_cont = 0;
 	}
 	}
 	else {
 	if (dres < 1.0e-4*dterminatedTResudual) {
-	// Вектор и так точно удовлетворяет решению, его не надо уточнять из решения СЛАУ.
+	// Р’РµРєС‚РѕСЂ Рё С‚Р°Рє С‚РѕС‡РЅРѕ СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ СЂРµС€РµРЅРёСЋ, РµРіРѕ РЅРµ РЅР°РґРѕ СѓС‚РѕС‡РЅСЏС‚СЊ РёР· СЂРµС€РµРЅРёСЏ РЎР›РђРЈ.
 	iflag_cont = 0;
 	}
 	}
@@ -966,7 +1059,7 @@ bool solution_phase(Ak2& Amat,
 		std::cout <<  0 << " " << dres_initial <<" rho=" << dres_initial / rho << std::endl;
 	}
 
-	// TODO 25 10 2016
+	// 25 10 2016
 	integer iflag_cont = 1;
 	if (iVar != PAM) {
 		dres = fabs(dres_initial);
@@ -974,15 +1067,15 @@ bool solution_phase(Ak2& Amat,
 
 
 	integer count_iter_for_film_coef = 0;
-	// Если число расходимостей превысит оговорённую константу то произойдёт выход из алгоритма.
+	// Р•СЃР»Рё С‡РёСЃР»Рѕ СЂР°СЃС…РѕРґРёРјРѕСЃС‚РµР№ РїСЂРµРІС‹СЃРёС‚ РѕРіРѕРІРѕСЂС‘РЅРЅСѓСЋ РєРѕРЅСЃС‚Р°РЅС‚Сѓ С‚Рѕ РїСЂРѕРёР·РѕР№РґС‘С‚ РІС‹С…РѕРґ РёР· Р°Р»РіРѕСЂРёС‚РјР°.
 	integer i_signal_break_pam_opening = 0;
-	// x хорошее значение.
+	// x С…РѕСЂРѕС€РµРµ Р·РЅР°С‡РµРЅРёРµ.
 	const integer i_limit_signal_pam_break_opening = 1000; // 8
 	doublerealT delta_old_iter = 1.0e10;
 
 
 
-	//if (iVar == PAM) {// бред
+	//if (iVar == PAM) {// Р±СЂРµРґ
 	//for (integer iter = 0; iter < 2; iter++) {
 	//seidelq(Amat, 1, n_a[0], b, x, row_ptr_start, row_ptr_end, 0);
 	//}
@@ -997,9 +1090,9 @@ bool solution_phase(Ak2& Amat,
 		if (x[i] > maxold) maxold = x[i];
 	}
 
-	// с 26 октября 2016 мы передаём настройки из интерфейса AliceMesh_v0_39.
-	// Т.к. есть трудносходящиеся задачи, то эти настройки должны помочь.
-	// Отсекаем уровни которые выше порогового значения указанного пользователем.
+	// СЃ 26 РѕРєС‚СЏР±СЂСЏ 2016 РјС‹ РїРµСЂРµРґР°С‘Рј РЅР°СЃС‚СЂРѕР№РєРё РёР· РёРЅС‚РµСЂС„РµР№СЃР° AliceMesh_v0_39.
+	// Рў.Рє. РµСЃС‚СЊ С‚СЂСѓРґРЅРѕСЃС…РѕРґСЏС‰РёРµСЃСЏ Р·Р°РґР°С‡Рё, С‚Рѕ СЌС‚Рё РЅР°СЃС‚СЂРѕР№РєРё РґРѕР»Р¶РЅС‹ РїРѕРјРѕС‡СЊ.
+	// РћС‚СЃРµРєР°РµРј СѓСЂРѕРІРЅРё РєРѕС‚РѕСЂС‹Рµ РІС‹С€Рµ РїРѕСЂРѕРіРѕРІРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ СѓРєР°Р·Р°РЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј.
 	//if (ilevel > my_amg_manager.maximum_levels) {
 	//ilevel = my_amg_manager.maximum_levels;
 	//}
@@ -1010,7 +1103,7 @@ bool solution_phase(Ak2& Amat,
 	doublereal* x_best_search2 = nullptr;
 	x_best_search2 = new doublereal[n_a[0] + 1];
 	if (x_best_search2 == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout << "Problem: not enough memory on your equipment for x_best_search2 my_agregat_amg.cpp..." << std::endl;
 		std::cout << "Please any key to exit..." << std::endl;
 		exit(1);
@@ -1018,7 +1111,7 @@ bool solution_phase(Ak2& Amat,
 	doublereal* x_best_search_init = nullptr;
 	x_best_search_init = new doublereal[n_a[0] + 1];
 	if (x_best_search_init == nullptr) {
-		// недостаточно памяти на данном оборудовании.
+		// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 		std::cout << "Problem: not enough memory on your equipment for x_best_search_init my_agregat_amg.cpp..." << std::endl;
 		std::cout << "Please any key to exit..." << std::endl;
 		exit(1);
@@ -1041,9 +1134,9 @@ bool solution_phase(Ak2& Amat,
 	if ((my_amg_manager.istabilization == 0) || ((iVar == TEMP) && (my_amg_manager.istabilization == 3))) {
 
 
-		// ((iVar==TEMP)&&(my_amg_manager.istabilization == 3)) - нелинейное граничное условие в уравнении теплопередачи.
+		// ((iVar==TEMP)&&(my_amg_manager.istabilization == 3)) - РЅРµР»РёРЅРµР№РЅРѕРµ РіСЂР°РЅРёС‡РЅРѕРµ СѓСЃР»РѕРІРёРµ РІ СѓСЂР°РІРЅРµРЅРёРё С‚РµРїР»РѕРїРµСЂРµРґР°С‡Рё.
 
-		// Только алгебраический многосеточный метод.
+		// РўРѕР»СЊРєРѕ Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ.
 
 		if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT)) tolerance *= 1e-11;
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
@@ -1062,12 +1155,12 @@ bool solution_phase(Ak2& Amat,
 			((iVar == TEMP) && bSIMPLErun_now_for_temperature && (icount_V_cycle < 9))
 			|| ((iVar == TOTALDEFORMATIONVAR) && (icount_V_cycle < 9))) {
 
-			// Обеспечивает колосальное быстродействие без потери сходимости.
+			// РћР±РµСЃРїРµС‡РёРІР°РµС‚ РєРѕР»РѕСЃР°Р»СЊРЅРѕРµ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІРёРµ Р±РµР· РїРѕС‚РµСЂРё СЃС…РѕРґРёРјРѕСЃС‚Рё.
 
 			if (bSIMPLErun_now_for_temperature) {
-				// гидродинамика.
+				// РіРёРґСЂРѕРґРёРЅР°РјРёРєР°.
 
-				//  Этот код непонятен, надо тестировать.
+				//  Р­С‚РѕС‚ РєРѕРґ РЅРµРїРѕРЅСЏС‚РµРЅ, РЅР°РґРѕ С‚РµСЃС‚РёСЂРѕРІР°С‚СЊ.
 				if (icount_V_cycle > istop_speed_cycling) {
 
 
@@ -1104,7 +1197,7 @@ bool solution_phase(Ak2& Amat,
 				}
 			}
 
-			if (bPhysics_stop == true) {
+			if (bPhysics_stop) {
 				if (icount_V_cycle > 0) {
 					doublerealT maxnew = -1.0e30;
 					for (integer i = 1; i <= n_a[0]; i++) {
@@ -1134,21 +1227,21 @@ bool solution_phase(Ak2& Amat,
 
 
 			if (icount_V_cycle > 0) {
-				// установить 0 в случае отката на предыдущую стабильную локально-линейную версию алгоритма.
-				// главная причина установки значения 1 является сокращение числа проходов для устранения
-				// нелинейности в системе с 26 до 4. При установке 1 в данном месте кода надо в модуле
-				// mysolver_v0_03 установить fHORF=1.0; 
+				// СѓСЃС‚Р°РЅРѕРІРёС‚СЊ 0 РІ СЃР»СѓС‡Р°Рµ РѕС‚РєР°С‚Р° РЅР° РїСЂРµРґС‹РґСѓС‰СѓСЋ СЃС‚Р°Р±РёР»СЊРЅСѓСЋ Р»РѕРєР°Р»СЊРЅРѕ-Р»РёРЅРµР№РЅСѓСЋ РІРµСЂСЃРёСЋ Р°Р»РіРѕСЂРёС‚РјР°.
+				// РіР»Р°РІРЅР°СЏ РїСЂРёС‡РёРЅР° СѓСЃС‚Р°РЅРѕРІРєРё Р·РЅР°С‡РµРЅРёСЏ 1 СЏРІР»СЏРµС‚СЃСЏ СЃРѕРєСЂР°С‰РµРЅРёРµ С‡РёСЃР»Р° РїСЂРѕС…РѕРґРѕРІ РґР»СЏ СѓСЃС‚СЂР°РЅРµРЅРёСЏ
+				// РЅРµР»РёРЅРµР№РЅРѕСЃС‚Рё РІ СЃРёСЃС‚РµРјРµ СЃ 26 РґРѕ 4. РџСЂРё СѓСЃС‚Р°РЅРѕРІРєРµ 1 РІ РґР°РЅРЅРѕРј РјРµСЃС‚Рµ РєРѕРґР° РЅР°РґРѕ РІ РјРѕРґСѓР»Рµ
+				// mysolver_v0_03 СѓСЃС‚Р°РЅРѕРІРёС‚СЊ fHORF=1.0; 
 				if ((iVar == TEMP) && (my_amg_manager.istabilization == 3)) {
-					if (bonly_solid_calculation == true) {
+					if (bonly_solid_calculation) {
 						if (bvacuumPrism) {
-							// предполагается неизменный порядок следования позиций в x
-							// и rthdsd.
+							// РїСЂРµРґРїРѕР»Р°РіР°РµС‚СЃСЏ РЅРµРёР·РјРµРЅРЅС‹Р№ РїРѕСЂСЏРґРѕРє СЃР»РµРґРѕРІР°РЅРёСЏ РїРѕР·РёС†РёР№ РІ x
+							// Рё rthdsd.
 
 							doublereal* x_temper = nullptr;
 							//x_temper = new doublerealT[n_a[0] + 1];
 							x_temper = (doublereal*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublereal));
 							if (x_temper == nullptr) {
-								// недостаточно памяти на данном оборудовании.
+								// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 								std::cout <<  "Problem: not enough memory on your equipment for x_temper my_agregat_amg.cpp..." << std::endl;
 								std::cout <<  "Please any key to exit..." << std::endl;
 								exit(1);
@@ -1157,7 +1250,7 @@ bool solution_phase(Ak2& Amat,
 							for (integer i23 = 0; i23 < n_a[0]; i23++) {
 								if (x[i23 + 1] < -272.15) x[i23 + 1] = -272.15;
 								//x_temper[i23] = x[i23 + 1];
-								// 0.01 параметр нижней релаксации.
+								// 0.01 РїР°СЂР°РјРµС‚СЂ РЅРёР¶РЅРµР№ СЂРµР»Р°РєСЃР°С†РёРё.
 								// 0.25; 0.2; 0.01.
 								// 0.005
 								// etalon 0.01 (1250it; 891it; 2it; 7s 770ms)
@@ -1168,15 +1261,15 @@ bool solution_phase(Ak2& Amat,
 								// experimental 0.07 (469it; 2it; 2s 800ms)
 								// experimental 0.08 (420it; 2it; 2s 570ms)
 								// experimental 0.09 (381 it; 2it; 2s 390ms)
-								// experimental 0.1 (1250it и не сходится, переборщил).
+								// experimental 0.1 (1250it Рё РЅРµ СЃС…РѕРґРёС‚СЃСЏ, РїРµСЂРµР±РѕСЂС‰РёР»).
 								if (fabs(x[i23 + 1] - x_old[i23 + 1]) > 5.0) {
-									// Порог 5С оптимум.
+									// РџРѕСЂРѕРі 5РЎ РѕРїС‚РёРјСѓРј.
 									// 0.04 14s 440ms 358it
 									// 0.09 13s 290ms 314it optimum
 									x_temper[i23] = x_old[i23 + 1] + 0.084 * (x[i23 + 1] - x_old[i23 + 1]);
 								}
 								else if (fabs(x[i23 + 1] - x_old[i23 + 1]) > 1.0) {
-									// Порог 1С оптимум.
+									// РџРѕСЂРѕРі 1РЎ РѕРїС‚РёРјСѓРј.
 									// 0.09 13s 290ms 314it
 									// 0.095 17s 10ms 318; 102; 22;
 									// 0.091 316it; 10; 10; 13s 350ms;
@@ -1184,7 +1277,7 @@ bool solution_phase(Ak2& Amat,
 									x_temper[i23] = x_old[i23 + 1] + 0.092 * (x[i23 + 1] - x_old[i23 + 1]);
 								}
 								else {
-									// 0.09 0.25 перебор.
+									// 0.09 0.25 РїРµСЂРµР±РѕСЂ.
 									// 0,09; 0.11; 314it; 9it; 9it; 2s 310ms optimum
 									// 0.09; 0.12; 300it; 33it; 20it; 2s 530ms; 
 									// 0.09; 0.1; 308it; 35it; 2s 400ms;
@@ -1195,12 +1288,12 @@ bool solution_phase(Ak2& Amat,
 								x[i23 + 1] = x_temper[i23];
 							}
 
-							// На старте мы блокируем Стефана Больцмана дав сойтись лучистым потокам.
-							// Вычисление осреднённых температур в К на границах вакуумных промежутков:
+							// РќР° СЃС‚Р°СЂС‚Рµ РјС‹ Р±Р»РѕРєРёСЂСѓРµРј РЎС‚РµС„Р°РЅР° Р‘РѕР»СЊС†РјР°РЅР° РґР°РІ СЃРѕР№С‚РёСЃСЊ Р»СѓС‡РёСЃС‚С‹Рј РїРѕС‚РѕРєР°Рј.
+							// Р’С‹С‡РёСЃР»РµРЅРёРµ РѕСЃСЂРµРґРЅС‘РЅРЅС‹С… С‚РµРјРїРµСЂР°С‚СѓСЂ РІ Рљ РЅР° РіСЂР°РЅРёС†Р°С… РІР°РєСѓСѓРјРЅС‹С… РїСЂРѕРјРµР¶СѓС‚РєРѕРІ:
 							for (integer i23 = 0; i23 < lb; i23++) {
 								update_avg_temperatures(x_temper, my_body[i23]);
 							}
-							// Вычисление плотностей радиационных тепловых потоков:
+							// Р’С‹С‡РёСЃР»РµРЅРёРµ РїР»РѕС‚РЅРѕСЃС‚РµР№ СЂР°РґРёР°С†РёРѕРЅРЅС‹С… С‚РµРїР»РѕРІС‹С… РїРѕС‚РѕРєРѕРІ:
 							for (integer i23 = 0; i23 < lb; i23++) {
 								calculation_density_radiation_heat_flux(my_body[i23]);
 							}
@@ -1210,7 +1303,7 @@ bool solution_phase(Ak2& Amat,
 							//rthdsd_loc123 = new doublerealT[n_a[0] + 1];
 							rthdsd_loc123 = (doublereal*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublereal));
 							if (rthdsd_loc123 == nullptr) {
-								// недостаточно памяти на данном оборудовании.
+								// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 								std::cout <<  "Problem: not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp..." << std::endl;
 								std::cout <<  "Please any key to exit..." << std::endl;
 								exit(1);
@@ -1226,7 +1319,7 @@ bool solution_phase(Ak2& Amat,
 									// 0.27 318; 13; 3;
 									// 0.28 325; 42; 13;
 									// 0.35 13s 560ms 347; //new optimum
-									// 0.09 1250; 1250; время запредельно большое.
+									// 0.09 1250; 1250; РІСЂРµРјСЏ Р·Р°РїСЂРµРґРµР»СЊРЅРѕ Р±РѕР»СЊС€РѕРµ.
 									doublerealT alpha_relax142 = 0.35;// d_my_optimetric1_6_12_2019;// 0.35;
 									rthdsd_loc123[i23] = alpha_relax142 *
 										(-qnbc[i23 - iadd_qnbc_maxelm].emissivity * STEFAN_BOLCMAN_CONST *
@@ -1270,8 +1363,8 @@ bool solution_phase(Ak2& Amat,
 							x_temper = nullptr;
 						}
 						else if (b_sign_on_nonlinear_bc) {
-							//  25 декабря 2015. Ускорение сходимости при использовании 
-							// нелинейных граничных условий.
+							//  25 РґРµРєР°Р±СЂСЏ 2015. РЈСЃРєРѕСЂРµРЅРёРµ СЃС…РѕРґРёРјРѕСЃС‚Рё РїСЂРё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРё 
+							// РЅРµР»РёРЅРµР№РЅС‹С… РіСЂР°РЅРёС‡РЅС‹С… СѓСЃР»РѕРІРёР№.
 
 
 							bool bNewtonRichman = false;
@@ -1282,20 +1375,20 @@ bool solution_phase(Ak2& Amat,
 									if ((qnbc[i23 - iadd_qnbc_maxelm].bactive) &&
 										(qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on) &&
 										(qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on == false)) {
-										// Стефан-Больцман.
+										// РЎС‚РµС„Р°РЅ-Р‘РѕР»СЊС†РјР°РЅ.
 										bStefanBolcman = true;
 									}
 									if ((qnbc[i23 - iadd_qnbc_maxelm].bactive) &&
 										(qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on) &&
 										(qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on == false)) {
 
-										// Ньютон-Рихман.
+										// РќСЊСЋС‚РѕРЅ-Р РёС…РјР°РЅ.
 										bNewtonRichman = true;
 									}
 									if ((qnbc[i23 - iadd_qnbc_maxelm].bactive) &&
 										(qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on) &&
 										(qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on)) {
-										// Условие смешанного типа.
+										// РЈСЃР»РѕРІРёРµ СЃРјРµС€Р°РЅРЅРѕРіРѕ С‚РёРїР°.
 										bStefanBolcman = true;
 										bNewtonRichman = true;
 									}
@@ -1308,7 +1401,7 @@ bool solution_phase(Ak2& Amat,
 							//x_temper = new doublerealT[n_a[0] + 1];
 							x_temper = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
 							if (x_temper == nullptr) {
-								// недостаточно памяти на данном оборудовании.
+								// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 								std::cout <<  "Problem: not enough memory on your equipment for x_temper my_agregat_amg.cpp..." << std::endl;
 								std::cout <<  "Please any key to exit..."<< std::endl;
 								exit(1);
@@ -1317,10 +1410,10 @@ bool solution_phase(Ak2& Amat,
 							for (integer i23 = 0; i23 < n_a[0]; i23++) {
 								if (x[i23 + 1] < -272.15) x[i23 + 1] = -272.15;
 								// x_temper[i23] = x[i23 + 1];
-								// 0.01 параметр нижней релаксации.
+								// 0.01 РїР°СЂР°РјРµС‚СЂ РЅРёР¶РЅРµР№ СЂРµР»Р°РєСЃР°С†РёРё.
 								// 0.25
 								// 0.2
-								// 10 июня 2018 года заменил на коэффициент нижней релаксации равный 0.9.
+								// 10 РёСЋРЅСЏ 2018 РіРѕРґР° Р·Р°РјРµРЅРёР» РЅР° РєРѕСЌС„С„РёС†РёРµРЅС‚ РЅРёР¶РЅРµР№ СЂРµР»Р°РєСЃР°С†РёРё СЂР°РІРЅС‹Р№ 0.9.
 								// 0.01
 								// 0.005
 
@@ -1338,7 +1431,7 @@ bool solution_phase(Ak2& Amat,
 							//rthdsd_loc123 = new doublerealT[n_a[0] + 1];
 							rthdsd_loc123 = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
 							if (rthdsd_loc123 == nullptr) {
-								// недостаточно памяти на данном оборудовании.
+								// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 								std::cout <<  "Problem: not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp..." << std::endl;
 								std::cout <<  "Please any key to exit..." << std::endl;
 								exit(1);
@@ -1347,20 +1440,20 @@ bool solution_phase(Ak2& Amat,
 							for (integer i23 = 0; i23 < n_a[0]; i23++) {
 								rthdsd_loc123[i23] = rthdsd_no_radiosity_patch[i23];
 								if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on) && (qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on == false)) {
-									// Стефан Больцман.
+									// РЎС‚РµС„Р°РЅ Р‘РѕР»СЊС†РјР°РЅ.
 									doublerealT alpha_relax142 = 0.25;
 									rthdsd_loc123[i23] = alpha_relax142 * (-qnbc[i23 - iadd_qnbc_maxelm].emissivity * STEFAN_BOLCMAN_CONST * ((273.15 + x_temper[i23]) * (273.15 + x_temper[i23]) * (273.15 + x_temper[i23]) * (273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb))) +
 										(1.0 - alpha_relax142) * (-qnbc[i23 - iadd_qnbc_maxelm].emissivity * STEFAN_BOLCMAN_CONST * ((273.15 + x_old[i23 + 1]) * (273.15 + x_old[i23 + 1]) * (273.15 + x_old[i23 + 1]) * (273.15 + x_old[i23 + 1]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
 									rthdsd_loc123[i23] *= qnbc[i23 - iadd_qnbc_maxelm].dS;
 								}
 								if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on == false)) {
-									// Ньютон-Рихман.
+									// РќСЊСЋС‚РѕРЅ-Р РёС…РјР°РЅ.
 									//doublerealT alpha_relax142 = 0.25;
 									rthdsd_loc123[i23] = -qnbc[i23 - iadd_qnbc_maxelm].film_coefficient * (x_temper[i23] - qnbc[i23 - iadd_qnbc_maxelm].Tamb);
 									rthdsd_loc123[i23] *= qnbc[i23 - iadd_qnbc_maxelm].dS;
 								}
 								if ((i23 >= iadd_qnbc_maxelm) && (qnbc[i23 - iadd_qnbc_maxelm].bactive) && (qnbc[i23 - iadd_qnbc_maxelm].bNewtonRichman_q_on) && (qnbc[i23 - iadd_qnbc_maxelm].bStefanBolcman_q_on)) {
-									// Условие смешанного типа.
+									// РЈСЃР»РѕРІРёРµ СЃРјРµС€Р°РЅРЅРѕРіРѕ С‚РёРїР°.
 									//doublerealT alpha_relax142 = 0.25;
 									rthdsd_loc123[i23] = (-qnbc[i23 - iadd_qnbc_maxelm].emissivity * STEFAN_BOLCMAN_CONST * ((273.15 + x_temper[i23]) * (273.15 + x_temper[i23]) * (273.15 + x_temper[i23]) * (273.15 + x_temper[i23]) - (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb) * (273.15 + qnbc[i23 - iadd_qnbc_maxelm].Tamb)));
 									rthdsd_loc123[i23] += -qnbc[i23 - iadd_qnbc_maxelm].film_coefficient * (x_temper[i23] - qnbc[i23 - iadd_qnbc_maxelm].Tamb);
@@ -1396,14 +1489,14 @@ bool solution_phase(Ak2& Amat,
 			icount_V_cycle++;
 			//if (icount_V_cycle > 8) break;
 			count_iter_for_film_coef++;
-			// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
-			// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
-			if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) ||
+			// Р’ СЃР»СѓС‡Р°Рµ Р·Р°РґР°С‡Рё РќСЊСЋС‚РѕРЅР° - Р РёС…РјР°РЅР°, РЎС‚РµС„Р°РЅР°-Р‘РѕР»СЊС†РјР°РЅР° Рё РјРёРєСЃРѕРІРѕРіРѕ СѓСЃР»РѕРІРёСЏ РЅРµ РёС‚РµСЂРёСЂСѓРµРј РґРѕ РєРѕРЅС†Р° РѕР±СЂС‹РІР°РµРј, 
+			// С‚.Рє. РЅР°Рј С‚СЂРµР±СѓРµС‚СЃСЏ С‡Р°СЃС‚Р°СЏ РїРµСЂРµСЃР±РѕСЂРєР° РјР°С‚СЂРёС†С‹. 13 РјР°СЂС‚Р° 2016.
+			if (((adiabatic_vs_heat_transfer_coeff > DEFAULT_CABINET_BOUNDARY_CONDITION::ADIABATIC_WALL_BC) ||
 				(breakRUMBAcalc_for_nonlinear_boundary_condition)) &&
 				(count_iter_for_film_coef > 1250)) break;
 
 			// 1 dec 2016.
-			//  Прерывание после 2 или 5 V циклов обязательно необходимо иначе не будет сходимости.
+			//  РџСЂРµСЂС‹РІР°РЅРёРµ РїРѕСЃР»Рµ 2 РёР»Рё 5 V С†РёРєР»РѕРІ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅРµРѕР±С…РѕРґРёРјРѕ РёРЅР°С‡Рµ РЅРµ Р±СѓРґРµС‚ СЃС…РѕРґРёРјРѕСЃС‚Рё.
 			if (bvacuumPrism) {
 				// 5
 				// 250
@@ -1425,23 +1518,23 @@ bool solution_phase(Ak2& Amat,
 				std::cout <<  "Operator A complexity=" <<dr_grid_complexity<<"  Opertator P complexity="<< (doublerealT)(nnz_P_memo_all / n_a[0]) <<"..."<<std::endl;
 				std::cout <<  "res_best_search=" << res_best_search << std::endl;
 				//getchar();
-				// пауза убрана 22 12 2016
+				// РїР°СѓР·Р° СѓР±СЂР°РЅР° 22 12 2016
 				//system("PAUSE");
 				break;
 			}
 
 			if (iter_limit == 1) {
-				// начальная невязка.
+				// РЅР°С‡Р°Р»СЊРЅР°СЏ РЅРµРІСЏР·РєР°.
 				res0start = fabs(dres);
 			}
 
-			// Невязка по температуре:
-			// НЕТ сходимости для поля температур в гидродинамическом решателе и параметры не помогают.
+			// РќРµРІСЏР·РєР° РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ:
+			// РќР•Рў СЃС…РѕРґРёРјРѕСЃС‚Рё РґР»СЏ РїРѕР»СЏ С‚РµРјРїРµСЂР°С‚СѓСЂ РІ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРј СЂРµС€Р°С‚РµР»Рµ Рё РїР°СЂР°РјРµС‚СЂС‹ РЅРµ РїРѕРјРѕРіР°СЋС‚.
 			//if (iVar == TEMP) std::cout << "temp res=" << fabs(dres) << std::endl;
 
 			if (fabs(dres) < res_best_search)
 			{
-				// Запоминаем лучшую попытку.
+				// Р—Р°РїРѕРјРёРЅР°РµРј Р»СѓС‡С€СѓСЋ РїРѕРїС‹С‚РєСѓ.
 				res_best_search = fabs(dres);
 #pragma omp parallel for
 				for (integer i47 = 1; i47 <= n_a[0]; i47++) {
@@ -1451,9 +1544,9 @@ bool solution_phase(Ak2& Amat,
 			/*
 			if (iVar == PAM) {
 			if (fabs(dres) < 1.0) {
-			// Идея в том что нам нужна хоть какая-то поправка давления,
-			// всё лучше чем тождественно нулевое распределение.
-			// невязка при этом у нас менее 1.0 что гарантирует что мы не сильно улетели.
+			// РРґРµСЏ РІ С‚РѕРј С‡С‚Рѕ РЅР°Рј РЅСѓР¶РЅР° С…РѕС‚СЊ РєР°РєР°СЏ-С‚Рѕ РїРѕРїСЂР°РІРєР° РґР°РІР»РµРЅРёСЏ,
+			// РІСЃС‘ Р»СѓС‡С€Рµ С‡РµРј С‚РѕР¶РґРµСЃС‚РІРµРЅРЅРѕ РЅСѓР»РµРІРѕРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ.
+			// РЅРµРІСЏР·РєР° РїСЂРё СЌС‚РѕРј Сѓ РЅР°СЃ РјРµРЅРµРµ 1.0 С‡С‚Рѕ РіР°СЂР°РЅС‚РёСЂСѓРµС‚ С‡С‚Рѕ РјС‹ РЅРµ СЃРёР»СЊРЅРѕ СѓР»РµС‚РµР»Рё.
 			for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 			x_best_search[i47] = x[i47];
 			}
@@ -1461,7 +1554,7 @@ bool solution_phase(Ak2& Amat,
 			}
 			*/
 
-			// debug 7 июня 2016
+			// debug 7 РёСЋРЅСЏ 2016
 			//if (iter_limit > 300) {
 			//std::cout << "amg divergense detected...9 june 2016" << std::endl;
 			//system("pause");
@@ -1484,8 +1577,8 @@ bool solution_phase(Ak2& Amat,
 				}
 				else {
 					if ((fabs(res_best_search / res0start) < 0.23) && (fabs(res_best_search) < 1.0e-3 * sqrt((doublereal)(n_a[0])))) {
-						// Если невязка меньше первоначальной на два порядка.
-						// Обратное копирование и выход и алгоритма.
+						// Р•СЃР»Рё РЅРµРІСЏР·РєР° РјРµРЅСЊС€Рµ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ РЅР° РґРІР° РїРѕСЂСЏРґРєР°.
+						// РћР±СЂР°С‚РЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РІС‹С…РѕРґ Рё Р°Р»РіРѕСЂРёС‚РјР°.
 #pragma omp parallel for
 						for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 							x[i47] = x_best_search[i47];
@@ -1493,37 +1586,37 @@ bool solution_phase(Ak2& Amat,
 						break;
 					}
 					else if ((fabs(res_best_search / res0start) <= 1.0) && (fabs(res_best_search) < 1.0e-4 * sqrt((doublereal)(n_a[0])))) {
-						// Если невязка меньше первоначальной на два порядка.
-						// Обратное копирование и выход и алгоритма.
+						// Р•СЃР»Рё РЅРµРІСЏР·РєР° РјРµРЅСЊС€Рµ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ РЅР° РґРІР° РїРѕСЂСЏРґРєР°.
+						// РћР±СЂР°С‚РЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РІС‹С…РѕРґ Рё Р°Р»РіРѕСЂРёС‚РјР°.
 #pragma omp parallel for
 						for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 							x[i47] = x_best_search[i47];
 						}
 						break;
 					}
-					// Обратное копирование и выход и алгоритма.
+					// РћР±СЂР°С‚РЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РІС‹С…РѕРґ Рё Р°Р»РіРѕСЂРёС‚РјР°.
 #pragma omp parallel for
 					for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 						x[i47] = x_best_search[i47];
 					}
 					break;
-					// закомментировал 11.01.2020
-					// как недостижимый код.
-					// Эта ветвь кода вообще никогда не вызовется.
+					// Р·Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°Р» 11.01.2020
+					// РєР°Рє РЅРµРґРѕСЃС‚РёР¶РёРјС‹Р№ РєРѕРґ.
+					// Р­С‚Р° РІРµС‚РІСЊ РєРѕРґР° РІРѕРѕР±С‰Рµ РЅРёРєРѕРіРґР° РЅРµ РІС‹Р·РѕРІРµС‚СЃСЏ.
 					/*
 					std::cout << "Fatal amg error: Strong divergence amg solver..."<<  fabs(res_best_search / res0start) << std::endl;
 					std::cout << "res_best_search=" << fabs(res_best_search)<<", res0start=" <<  fabs(res0start) << std::endl;
 					std::cout << "BiCGStab+ILU2 is start now..." << std::endl;
 					std::cout << "please wait...";
 					system("pause");
-					break; // досрочный выход из while цикла.
+					break; // РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· while С†РёРєР»Р°.
 					*/
 				}
 			}
 			iter_limit++;
 
 			if (fabs(dres) < fabs(dres_previos)) {
-				// все нормально процесс сходится.
+				// РІСЃРµ РЅРѕСЂРјР°Р»СЊРЅРѕ РїСЂРѕС†РµСЃСЃ СЃС…РѕРґРёС‚СЃСЏ.
 				icount_bad_convergence_Vcycles = 0;
 			}
 			else {
@@ -1546,13 +1639,13 @@ bool solution_phase(Ak2& Amat,
 			//	break;
 			//}
 			//else {
-			// Увеличение количества сглаживающих итераций ни коим образом не 
-			// исправляет факт расходимости. 
+			// РЈРІРµР»РёС‡РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° СЃРіР»Р°Р¶РёРІР°СЋС‰РёС… РёС‚РµСЂР°С†РёР№ РЅРё РєРѕРёРј РѕР±СЂР°Р·РѕРј РЅРµ 
+			// РёСЃРїСЂР°РІР»СЏРµС‚ С„Р°РєС‚ СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё. 
 			//	nu1++;
 			//	nu2++;
 			//	nFinestSweeps++;
-			// По видимому надо действовать очень тонкой настройкой параметра верхней релаксации omega optimal.
-			// Настройка omega optimal должна быть самообучающейся (адаптированной к задаче).
+			// РџРѕ РІРёРґРёРјРѕРјСѓ РЅР°РґРѕ РґРµР№СЃС‚РІРѕРІР°С‚СЊ РѕС‡РµРЅСЊ С‚РѕРЅРєРѕР№ РЅР°СЃС‚СЂРѕР№РєРѕР№ РїР°СЂР°РјРµС‚СЂР° РІРµСЂС…РЅРµР№ СЂРµР»Р°РєСЃР°С†РёРё omega optimal.
+			// РќР°СЃС‚СЂРѕР№РєР° omega optimal РґРѕР»Р¶РЅР° Р±С‹С‚СЊ СЃР°РјРѕРѕР±СѓС‡Р°СЋС‰РµР№СЃСЏ (Р°РґР°РїС‚РёСЂРѕРІР°РЅРЅРѕР№ Рє Р·Р°РґР°С‡Рµ).
 			//}
 			//}
 
@@ -1560,13 +1653,13 @@ bool solution_phase(Ak2& Amat,
 			if (icount_bad_convergence_Vcycles > 40) break;
 
 			if ((icount_bad_convergence_Vcycles >= istop_porog_reconst) || (fabs(dres) / sqrt((doublereal)(n_a[0])) > 1.0e30)) {
-				// детектировано 10 шагов расходимости подряд по-видимому метод расходится.
-				// Также о расходимости говорит невязка большая 1.0e30.
+				// РґРµС‚РµРєС‚РёСЂРѕРІР°РЅРѕ 10 С€Р°РіРѕРІ СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё РїРѕРґСЂСЏРґ РїРѕ-РІРёРґРёРјРѕРјСѓ РјРµС‚РѕРґ СЂР°СЃС…РѕРґРёС‚СЃСЏ.
+				// РўР°РєР¶Рµ Рѕ СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё РіРѕРІРѕСЂРёС‚ РЅРµРІСЏР·РєР° Р±РѕР»СЊС€Р°СЏ 1.0e30.
 
-				//if (fabs(dres) < 1.0e-3) break; // Будем считать сходимость достигнута успешно.
+				//if (fabs(dres) < 1.0e-3) break; // Р‘СѓРґРµРј СЃС‡РёС‚Р°С‚СЊ СЃС…РѕРґРёРјРѕСЃС‚СЊ РґРѕСЃС‚РёРіРЅСѓС‚Р° СѓСЃРїРµС€РЅРѕ.
 				if ((fabs((doublereal)(res_best_search / res0start)) < 1.0e-1) && (fabs(dres) / sqrt((doublereal)(n_a[0])) < 1.0e-3)) {
-					// Если невязка меньше первоначальной на два порядка.
-					// Обратное копирование и выход и алгоритма.
+					// Р•СЃР»Рё РЅРµРІСЏР·РєР° РјРµРЅСЊС€Рµ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ РЅР° РґРІР° РїРѕСЂСЏРґРєР°.
+					// РћР±СЂР°С‚РЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РІС‹С…РѕРґ Рё Р°Р»РіРѕСЂРёС‚РјР°.
 #pragma omp parallel for
 					for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 						x[i47] = x_best_search[i47];
@@ -1585,7 +1678,7 @@ bool solution_phase(Ak2& Amat,
 #pragma omp parallel for
 					for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 						//x[i47] = x_copy[i47];
-						x[i47] = x_best_search[i47]; // лучшее найденное решение
+						x[i47] = x_best_search[i47]; // Р»СѓС‡С€РµРµ РЅР°Р№РґРµРЅРЅРѕРµ СЂРµС€РµРЅРёРµ
 					}
 				}
 				if (i_count_stagnation == 20 || i_count_stagnation == 21) gold_const = 0.2;
@@ -1593,11 +1686,11 @@ bool solution_phase(Ak2& Amat,
 #pragma omp parallel for
 					for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 						//x[i47] = x_copy[i47];
-						// Можно еще единократно немного улучшить nu1 и nu2.
+						// РњРѕР¶РЅРѕ РµС‰Рµ РµРґРёРЅРѕРєСЂР°С‚РЅРѕ РЅРµРјРЅРѕРіРѕ СѓР»СѓС‡С€РёС‚СЊ nu1 Рё nu2.
 						doublerealT signumnow = 1.0;
 						if (rand() % 2 == 0) signumnow = -1.0;
 						doublereal drand = (doublereal)(((double)(rand()))/((double)(RAND_MAX+1)));
-						x[i47] = signumnow * 1.0 * drand; // Случайное число в интервале от 0 до 1.
+						x[i47] = signumnow * 1.0 * drand; // РЎР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ РІ РёРЅС‚РµСЂРІР°Р»Рµ РѕС‚ 0 РґРѕ 1.
 					}
 				}
 				if (i_count_stagnation == 30 || i_count_stagnation == 31) gold_const = 0.2;
@@ -1610,12 +1703,12 @@ bool solution_phase(Ak2& Amat,
 				if (bproblem_amg_convergence1) {
 					if (bproblem_amg_convergence2) {
 						if (bproblem_amg_convergence3) {
-							// выход к вызову BiCGStab+ILU2.
+							// РІС‹С…РѕРґ Рє РІС‹Р·РѕРІСѓ BiCGStab+ILU2.
 							ret_value = true;
 							break;
 						}
 						else {
-							// смена omega.
+							// СЃРјРµРЅР° omega.
 							bproblem_amg_convergence3 = true;
 							icount_bad_convergence_Vcycles = 0;
 							buffers3omega = dres / dres_previos;
@@ -1623,13 +1716,13 @@ bool solution_phase(Ak2& Amat,
 						}
 					}
 					else {
-						// смена omega.
+						// СЃРјРµРЅР° omega.
 						bproblem_amg_convergence2 = true;
 						icount_bad_convergence_Vcycles = 0;
 						buffers2omega = dres / dres_previos;
 						std::cout << "buffers1omega=" << buffers1omega <<", buffers2omega="<< buffers2omega <<std::endl; 
 						//istop_porog_reconst += 50; // 10, 20, 30, 40
-						// Увеличение количества сглаживающих итераций ничего не даёт.
+						// РЈРІРµР»РёС‡РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° СЃРіР»Р°Р¶РёРІР°СЋС‰РёС… РёС‚РµСЂР°С†РёР№ РЅРёС‡РµРіРѕ РЅРµ РґР°С‘С‚.
 						//nu1++;
 						//nu2++;
 						//nFinestSweeps++;
@@ -1637,7 +1730,7 @@ bool solution_phase(Ak2& Amat,
 				}
 				else {
 
-					bproblem_amg_convergence1 = true; // переход с SOR на стабильный Зейдель.
+					bproblem_amg_convergence1 = true; // РїРµСЂРµС…РѕРґ СЃ SOR РЅР° СЃС‚Р°Р±РёР»СЊРЅС‹Р№ Р—РµР№РґРµР»СЊ.
 					icount_bad_convergence_Vcycles = 0;
 					buffers1omega = dres / dres_previos;
 				}
@@ -1671,8 +1764,8 @@ bool solution_phase(Ak2& Amat,
 					Rnext_0 = norma(residual_fine[0], n_a[0]);
 					// this is process flow logic
 					if (Rnext_0 > process_flow_beta * Rprev_0) {
-						// Смысл модификации в том что мы экономим итерации на пресмутере.
-						break; // досрочно опускаемся на следующий уровень если он есть конечно.
+						// РЎРјС‹СЃР» РјРѕРґРёС„РёРєР°С†РёРё РІ С‚РѕРј С‡С‚Рѕ РјС‹ СЌРєРѕРЅРѕРјРёРј РёС‚РµСЂР°С†РёРё РЅР° РїСЂРµСЃРјСѓС‚РµСЂРµ.
+						break; // РґРѕСЃСЂРѕС‡РЅРѕ РѕРїСѓСЃРєР°РµРјСЃСЏ РЅР° СЃР»РµРґСѓСЋС‰РёР№ СѓСЂРѕРІРµРЅСЊ РµСЃР»Рё РѕРЅ РµСЃС‚СЊ РєРѕРЅРµС‡РЅРѕ.
 					}
 					else {
 						Rprev_0 = Rnext_0;
@@ -1736,7 +1829,7 @@ bool solution_phase(Ak2& Amat,
 				}
 
 				if (((iVar == TEMP) && (my_amg_manager.istabilization == 3))) {
-					//  Сходимость достигнута - досрочный выход из решения нелинейной задачи.
+					//  РЎС…РѕРґРёРјРѕСЃС‚СЊ РґРѕСЃС‚РёРіРЅСѓС‚Р° - РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· СЂРµС€РµРЅРёСЏ РЅРµР»РёРЅРµР№РЅРѕР№ Р·Р°РґР°С‡Рё.
 					if ((fabs(minx - minx_gl) < 2.0e-3) && (fabs(maxx - maxx_gl) < 2.0e-3)) {
 						std::cout <<  "Solution nonlinear problem converged succsefull. Ok..." << std::endl;
 						break;
@@ -1759,15 +1852,15 @@ bool solution_phase(Ak2& Amat,
 				if (!((iVar == TEMP) && (my_amg_manager.istabilization == 3))) {
 					if (fabs(1.0 - fabs(dres / rho)) < 1.0e-3) {
 						std::cout <<  "stagnation in amg solver determinate ..." << std::endl;
-						// Решение не сходится. Получаются сильно заниженные неверные значекния температуры.
-						// Возвращаем divergence detected с рекомендацией усилить процесс сходимости 
-						// внешним итерационным процессом Крыловского типа а также усилить сглаживатель.
+						// Р РµС€РµРЅРёРµ РЅРµ СЃС…РѕРґРёС‚СЃСЏ. РџРѕР»СѓС‡Р°СЋС‚СЃСЏ СЃРёР»СЊРЅРѕ Р·Р°РЅРёР¶РµРЅРЅС‹Рµ РЅРµРІРµСЂРЅС‹Рµ Р·РЅР°С‡РµРєРЅРёСЏ С‚РµРјРїРµСЂР°С‚СѓСЂС‹.
+						// Р’РѕР·РІСЂР°С‰Р°РµРј divergence detected СЃ СЂРµРєРѕРјРµРЅРґР°С†РёРµР№ СѓСЃРёР»РёС‚СЊ РїСЂРѕС†РµСЃСЃ СЃС…РѕРґРёРјРѕСЃС‚Рё 
+						// РІРЅРµС€РЅРёРј РёС‚РµСЂР°С†РёРѕРЅРЅС‹Рј РїСЂРѕС†РµСЃСЃРѕРј РљСЂС‹Р»РѕРІСЃРєРѕРіРѕ С‚РёРїР° Р° С‚Р°РєР¶Рµ СѓСЃРёР»РёС‚СЊ СЃРіР»Р°Р¶РёРІР°С‚РµР»СЊ.
 						printf("Recomended: Set up an external Krylov-type\n");
 						printf("iterative process BiCGStab or FGMRes.\n");
 						return true;
 						// 28_10_2016.
-						// Осуществляем досрочный выход из итерирования, 
-						// т.к. невязка перестала меняться.
+						// РћСЃСѓС‰РµСЃС‚РІР»СЏРµРј РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· РёС‚РµСЂРёСЂРѕРІР°РЅРёСЏ, 
+						// С‚.Рє. РЅРµРІСЏР·РєР° РїРµСЂРµСЃС‚Р°Р»Р° РјРµРЅСЏС‚СЊСЃСЏ.
 						//break;
 					}
 				}
@@ -1791,7 +1884,7 @@ bool solution_phase(Ak2& Amat,
 #pragma omp parallel for
 				for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 					///x[i47] = x_best_search[i47];
-					//x_copy[i47] = x[i47]; // 4 ноября 2016.
+					//x_copy[i47] = x[i47]; // 4 РЅРѕСЏР±СЂСЏ 2016.
 					x[i47] = x_copy[i47];
 				}
 				residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
@@ -1805,30 +1898,30 @@ bool solution_phase(Ak2& Amat,
 
 				}
 				if (bILU2smoother == 0) {
-					// переключение.
+					// РїРµСЂРµРєР»СЋС‡РµРЅРёРµ.
 					memory_allocation_apostoriory_buffer_ilu(milu2, ilevel - 1);
 					bILU2smoother = 2;
 				}
 
-				// Это по умолчанию для поправки давления.
+				// Р­С‚Рѕ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ.
 				doublerealT dresfinish_probably = 0.1 * norma(residual_fine[0], n_a[0]);
 				if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 					(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 					(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 					(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-					// Это по умолчанию для компонент скорости внутри SIMPLE алгоритма.
+					// Р­С‚Рѕ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ РєРѕРјРїРѕРЅРµРЅС‚ СЃРєРѕСЂРѕСЃС‚Рё РІРЅСѓС‚СЂРё SIMPLE Р°Р»РіРѕСЂРёС‚РјР°.
 					dresfinish_probably = 1.0e-3 * norma(residual_fine[0], n_a[0]);
 				}
-				if (bSIMPLErun_now_for_temperature == true) {
+				if (bSIMPLErun_now_for_temperature) {
 					if (iVar == TEMP) {
-						// Для поля температур при гидродинамическом расчёте.
-						// В BiCGStab Internal 3 домножается на 1e-10.
+						// Р”Р»СЏ РїРѕР»СЏ С‚РµРјРїРµСЂР°С‚СѓСЂ РїСЂРё РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРј СЂР°СЃС‡С‘С‚Рµ.
+						// Р’ BiCGStab Internal 3 РґРѕРјРЅРѕР¶Р°РµС‚СЃСЏ РЅР° 1e-10.
 						dresfinish_probably = 1.0e-3 * norma(residual_fine[0], n_a[0]);
 					}
 				}
 				if (iVar == TOTALDEFORMATIONVAR) {
-					// Для механических деформаций
+					// Р”Р»СЏ РјРµС…Р°РЅРёС‡РµСЃРєРёС… РґРµС„РѕСЂРјР°С†РёР№
 					dresfinish_probably = 1.0e-3 * norma(residual_fine[0], n_a[0]);
 				}
 				if (bonly_solid_calculation) {
@@ -1849,7 +1942,7 @@ bool solution_phase(Ak2& Amat,
 
 					std::cout <<  i_prob_detect_i << " residual=" << norma(residual_fine[0], n_a[0]) << " min=" << minx << " max=" << maxx << " \n";
 
-					// Досрочный выход из цикла.
+					// Р”РѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· С†РёРєР»Р°.
 					if (norma(residual_fine[0], n_a[0]) < dresfinish_probably) {
 						std::cout << "Ok!!! calculation local compleate... " << std::endl;
 						break;
@@ -1865,7 +1958,7 @@ bool solution_phase(Ak2& Amat,
 					}
 				}
 
-				// Детектируем возможные проблемы со сходимостью:
+				// Р”РµС‚РµРєС‚РёСЂСѓРµРј РІРѕР·РјРѕР¶РЅС‹Рµ РїСЂРѕР±Р»РµРјС‹ СЃРѕ СЃС…РѕРґРёРјРѕСЃС‚СЊСЋ:
 				if (norma(residual_fine[0], n_a[0]) >= dresfinish_probably) {
 					std::cout << "Fatal error !!! ilu2 divergence detected... "<< std::endl;
 					std::cout << "residual curent=" << norma(residual_fine[0], n_a[0]) <<" target residual="<< dresfinish_probably <<std::endl;
@@ -1876,7 +1969,7 @@ bool solution_phase(Ak2& Amat,
 #pragma omp parallel for
 				for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 					x_best_search[i47] = x[i47];
-					x_copy[i47] = x[i47]; // 4 ноября 2016.
+					x_copy[i47] = x[i47]; // 4 РЅРѕСЏР±СЂСЏ 2016.
 				}
 				system("PAUSE");
 
@@ -1886,14 +1979,14 @@ bool solution_phase(Ak2& Amat,
 
 			if (iVar == PAM) {
 				if ((fabs(dres / rho) > 0.99999) || (fabs(dres) > 1.0e7)) {
-					// Выход из мультигрида если достигнуто 20 циклов расходимости.
+					// Р’С‹С…РѕРґ РёР· РјСѓР»СЊС‚РёРіСЂРёРґР° РµСЃР»Рё РґРѕСЃС‚РёРіРЅСѓС‚Рѕ 20 С†РёРєР»РѕРІ СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё.
 					delta_old_iter = fabs(dres);
 					i_signal_break_pam_opening++;
 					if (i_signal_break_pam_opening > i_limit_signal_pam_break_opening) {
 
 						std::cout <<  "iter = " << iiter << std::endl;
 
-						// Обратное копирование и выход и алгоритма.
+						// РћР±СЂР°С‚РЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ Рё РІС‹С…РѕРґ Рё Р°Р»РіРѕСЂРёС‚РјР°.
 #pragma omp parallel for
 						for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 							x[i47] = x_best_search[i47];
@@ -1918,29 +2011,29 @@ bool solution_phase(Ak2& Amat,
 			// end 08.01.2018
 
 			//if (bfirst_start_nonlinear_process) {
-			// Во избежании расходимости по начальному условию в двойном 
-			// вакуумном промежутке.
+			// Р’Рѕ РёР·Р±РµР¶Р°РЅРёРё СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё РїРѕ РЅР°С‡Р°Р»СЊРЅРѕРјСѓ СѓСЃР»РѕРІРёСЋ РІ РґРІРѕР№РЅРѕРј 
+			// РІР°РєСѓСѓРјРЅРѕРј РїСЂРѕРјРµР¶СѓС‚РєРµ.
 			//bfirst_start_nonlinear_process = false;
 			//break;
 			//}
 			if (iVar != PAM) {
-				if (btheoryGuideANSYSFluent) break; // Делаем лишь один V  цикл.
+				if (btheoryGuideANSYSFluent) break; // Р”РµР»Р°РµРј Р»РёС€СЊ РѕРґРёРЅ V  С†РёРєР».
 			}
 			//system("pause");
 		}
 	} // bBiCGStab_plus_RUMBA_camg if (my_amg_manager.istabilization == 1)
 	else if (my_amg_manager.istabilization == 1) {
-		// Рекомендуется использовать гибридную точность: двойную для BiCGStab и одинарную для предобуславливания с помощью V - цикла.
-		// Алгебраический Многосеточный Метод как предобуславливатель
-		// к алгоритму Крыловского типа Хенка ван дер Ворста BiCGStab
-		// со стабилизацией.
-		// Требует ещё одну память под матрицу А на самом подробном уровне.
-		// 5.01.2017 Алгоритм BiCGStab изобретён в 1992 году.
+		// Р РµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РіРёР±СЂРёРґРЅСѓСЋ С‚РѕС‡РЅРѕСЃС‚СЊ: РґРІРѕР№РЅСѓСЋ РґР»СЏ BiCGStab Рё РѕРґРёРЅР°СЂРЅСѓСЋ РґР»СЏ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёСЏ СЃ РїРѕРјРѕС‰СЊСЋ V - С†РёРєР»Р°.
+		// РђР»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РњРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РњРµС‚РѕРґ РєР°Рє РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ
+		// Рє Р°Р»РіРѕСЂРёС‚РјСѓ РљСЂС‹Р»РѕРІСЃРєРѕРіРѕ С‚РёРїР° РҐРµРЅРєР° РІР°РЅ РґРµСЂ Р’РѕСЂСЃС‚Р° BiCGStab
+		// СЃРѕ СЃС‚Р°Р±РёР»РёР·Р°С†РёРµР№.
+		// РўСЂРµР±СѓРµС‚ РµС‰С‘ РѕРґРЅСѓ РїР°РјСЏС‚СЊ РїРѕРґ РјР°С‚СЂРёС†Сѓ Рђ РЅР° СЃР°РјРѕРј РїРѕРґСЂРѕР±РЅРѕРј СѓСЂРѕРІРЅРµ.
+		// 5.01.2017 РђР»РіРѕСЂРёС‚Рј BiCGStab РёР·РѕР±СЂРµС‚С‘РЅ РІ 1992 РіРѕРґСѓ.
 
 		integer inumberVcyclelocbicgstab = 1;
 
-		// нумерация векторов начинается с нуля.
-		integer n75 = n_a[0]; // число неизвестных на подробном уровне.
+		// РЅСѓРјРµСЂР°С†РёСЏ РІРµРєС‚РѕСЂРѕРІ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ РЅСѓР»СЏ.
+		integer n75 = n_a[0]; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С… РЅР° РїРѕРґСЂРѕР±РЅРѕРј СѓСЂРѕРІРЅРµ.
 		doublereal* val75 = nullptr;
 		val75 = new doublereal[nnz_a[0]];
 		integer* col_ind75 = nullptr;
@@ -1948,13 +2041,13 @@ bool solution_phase(Ak2& Amat,
 		integer* row_ptr75 = nullptr;
 		row_ptr75 = new integer[n_a[0] + 1];
 		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
-			// недостаточно памяти на данном оборудовании.
+			// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 			std::cout << "Problem: not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg..." <<std::endl;
 			std::cout <<  "Please any key to exit..." <<std::endl;
 			exit(1);
 		}
 
-		// инициализация матрицы.
+		// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РјР°С‚СЂРёС†С‹.
 #pragma omp parallel for
 		for (integer i_1 = 1; i_1 <= n_a[0]; i_1++) {
 
@@ -1980,7 +2073,7 @@ bool solution_phase(Ak2& Amat,
 
 		//system("PAUSE");
 		row_ptr75[n_a[0]] = row_ptr_end[n_a[0]];
-		// Вектора необходимые для работы BiCGStab.
+		// Р’РµРєС‚РѕСЂР° РЅРµРѕР±С…РѕРґРёРјС‹Рµ РґР»СЏ СЂР°Р±РѕС‚С‹ BiCGStab.
 		doublereal* ri75 = nullptr;
 		doublereal* roc75 = nullptr;
 		doublereal* s75 = nullptr;
@@ -1992,12 +2085,12 @@ bool solution_phase(Ak2& Amat,
 		doublereal* dax75 = nullptr;
 		doublereal* y75 = nullptr;
 		doublereal* z75 = nullptr;
-		// Первое предобуславливание:
+		// РџРµСЂРІРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ:
 		doublereal* y76 = nullptr;
 		doublereal* pi76 = nullptr;
 		y76 = new doublereal[n75 + 1];
 		pi76 = new doublereal[n75 + 1];
-		// Второе предобуславливание:
+		// Р’С‚РѕСЂРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ:
 		doublereal* z76 = nullptr;
 		doublereal* s76 = nullptr;
 		z76 = new doublereal[n75 + 1];
@@ -2015,7 +2108,7 @@ bool solution_phase(Ak2& Amat,
 		y75 = new doublereal[n75];
 		z75 = new doublereal[n75];
 		if ((ri75 == nullptr) || (roc75 == nullptr) || (s75 == nullptr) || (t75 == nullptr) || (vi75 == nullptr) || (pi75 == nullptr) || (dx75 == nullptr) || (dax75 == nullptr) || (y75 == nullptr) || (z75 == nullptr)) {
-			// недостаточно памяти на данном оборудовании.
+			// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 			std::cout << "Problem: not enough memory on your equipment for: bicgStab + camg..."<< std::endl;
 			std::cout << "Please any key to exit..." << std::endl;
 			exit(1);
@@ -2026,7 +2119,7 @@ bool solution_phase(Ak2& Amat,
 		doublereal bet75 = 0.0, roi75 = 0.0;
 		doublereal roim175 = 1.0, al75 = 1.0, wi75 = 1.0;
 
-		doublereal epsilon75 = dterminatedTResudual;  // точность вычисления
+		doublereal epsilon75 = dterminatedTResudual;  // С‚РѕС‡РЅРѕСЃС‚СЊ РІС‹С‡РёСЃР»РµРЅРёСЏ
 		if (iVar == TEMP) {
 			epsilon75 *= 1.0e-4; // 1.0e-4
 		}
@@ -2037,26 +2130,26 @@ bool solution_phase(Ak2& Amat,
 		integer i75 = 0;
 
 		// initialize
-#pragma omp parallel for
+#pragma omp parallel for private(i75)
 		for (i75 = 0; i75 < n75; i75++) {
 			s75[i75] = 0.0;
 			t75[i75] = 0.0;
 			vi75[i75] = 0.0;
 			pi75[i75] = 0.0;
-			// инициализатор массивов для предобуславливания
+			// РёРЅРёС†РёР°Р»РёР·Р°С‚РѕСЂ РјР°СЃСЃРёРІРѕРІ РґР»СЏ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёСЏ
 			y75[i75] = 0.0;
 			z75[i75] = 0.0;
-			// результат умножения матрицы на вектор.
+			// СЂРµР·СѓР»СЊС‚Р°С‚ СѓРјРЅРѕР¶РµРЅРёСЏ РјР°С‚СЂРёС†С‹ РЅР° РІРµРєС‚РѕСЂ.
 			dax75[i75] = 0.0;
-			// Начальное приближение.
+			// РќР°С‡Р°Р»СЊРЅРѕРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ.
 			dx75[i75] = x[i75 + 1];
 		}
 
-		// Умножение матрицы на вектор. Нумерации векторов начинаются с нуля.
-		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx75, dax75, n75); // результат занесён в  dax75
+		// РЈРјРЅРѕР¶РµРЅРёРµ РјР°С‚СЂРёС†С‹ РЅР° РІРµРєС‚РѕСЂ. РќСѓРјРµСЂР°С†РёРё РІРµРєС‚РѕСЂРѕРІ РЅР°С‡РёРЅР°СЋС‚СЃСЏ СЃ РЅСѓР»СЏ.
+		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx75, dax75, n75); // СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РЅРµСЃС‘РЅ РІ  dax75
 
-		// Вычисление ri75 и roc75.
-#pragma omp parallel for
+		// Р’С‹С‡РёСЃР»РµРЅРёРµ ri75 Рё roc75.
+#pragma omp parallel for private(i75)
 		for (i75 = 0; i75 < n75; i75++) {
 			ri75[i75] = b[i75 + 1] - dax75[i75];
 			roc75[i75] = 1.0;
@@ -2064,7 +2157,7 @@ bool solution_phase(Ak2& Amat,
 		delta075 = NormaV(ri75, n75);
 
 
-		// Если решение сразу хорошее то не считать:
+		// Р•СЃР»Рё СЂРµС€РµРЅРёРµ СЃСЂР°Р·Сѓ С…РѕСЂРѕС€РµРµ С‚Рѕ РЅРµ СЃС‡РёС‚Р°С‚СЊ:
 		if (iVar == TEMP) {
 			if (fabs(delta075) < 1.0e-4 * dterminatedTResudual) iflag75 = 0;
 		}
@@ -2094,14 +2187,14 @@ bool solution_phase(Ak2& Amat,
 
 		integer iN75 = 10;
 		if (n75 < 30000) {
-			// задача очень малой размерности !
+			// Р·Р°РґР°С‡Р° РѕС‡РµРЅСЊ РјР°Р»РѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё !
 			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-				iN75 = 1; // обязательно нужна хотя бы одна итерация.
-						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+				iN75 = 1; // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° С…РѕС‚СЏ Р±С‹ РѕРґРЅР° РёС‚РµСЂР°С†РёСЏ.
+						  // РµСЃР»Рё СЌС‚РѕРіРѕ Р±СѓРґРµС‚ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚Рѕ РјС‹ РІСЃС‘ СЂР°РІРЅРѕ Р±СѓРґРµРј РёС‚РµСЂРёСЂРѕРІР°С‚СЊ РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµРІСЏР·РєР° РЅРµ СЃС‚Р°РЅРµС‚ РјРµРЅСЊС€Рµ epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-3 * fabs(delta075);
 				}
@@ -2112,11 +2205,11 @@ bool solution_phase(Ak2& Amat,
 			if (iVar == TEMP) {
 				iN75 = 2;
 				epsilon75 = fmin(0.1 * fabs(delta075), epsilon75);
-				if (bSIMPLErun_now_for_temperature == true) {
+				if (bSIMPLErun_now_for_temperature) {
 					//std::cout << "epsilon=" << epsilon << std::endl;
 					//system("PAUSE");
-					// Экспериментальным образом обнаружена недоэтерированность по температуре для гидродинамического решателя.
-					// поэтому точность было решено увеличить на 5 порядков.
+					// Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅС‹Рј РѕР±СЂР°Р·РѕРј РѕР±РЅР°СЂСѓР¶РµРЅР° РЅРµРґРѕСЌС‚РµСЂРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ РґР»СЏ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ.
+					// РїРѕСЌС‚РѕРјСѓ С‚РѕС‡РЅРѕСЃС‚СЊ Р±С‹Р»Рѕ СЂРµС€РµРЅРѕ СѓРІРµР»РёС‡РёС‚СЊ РЅР° 5 РїРѕСЂСЏРґРєРѕРІ.
 					// 27.07.2016
 					epsilon75 *= 1e-10;
 					iN75 = 20;
@@ -2125,7 +2218,7 @@ bool solution_phase(Ak2& Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 12; // решение для поправки давления должно быть получено точно.
+				iN75 = 12; // СЂРµС€РµРЅРёРµ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅРѕ С‚РѕС‡РЅРѕ.
 
 				if (1.0e-10 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-10 * fabs(delta075);
@@ -2136,19 +2229,19 @@ bool solution_phase(Ak2& Amat,
 				//std::cout << epsilon75 << std::endl; system("pause");
 			}
 		}
-		else if ((n75 >= 30000) && (n75 < 100000)) {
-			// Здесь я немного увеличил число итераций и 
-			// скорректировал условие окончания чтобы считало 
-			// поточнее, но это не повлияло.
-			// Главный вопрос в том что невязка по температуре почему-то не меняется.
-			// задача небольшой размерности.
+		else if (n75 < 100000) {
+			// Р—РґРµСЃСЊ СЏ РЅРµРјРЅРѕРіРѕ СѓРІРµР»РёС‡РёР» С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№ Рё 
+			// СЃРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°Р» СѓСЃР»РѕРІРёРµ РѕРєРѕРЅС‡Р°РЅРёСЏ С‡С‚РѕР±С‹ СЃС‡РёС‚Р°Р»Рѕ 
+			// РїРѕС‚РѕС‡РЅРµРµ, РЅРѕ СЌС‚Рѕ РЅРµ РїРѕРІР»РёСЏР»Рѕ.
+			// Р“Р»Р°РІРЅС‹Р№ РІРѕРїСЂРѕСЃ РІ С‚РѕРј С‡С‚Рѕ РЅРµРІСЏР·РєР° РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ РјРµРЅСЏРµС‚СЃСЏ.
+			// Р·Р°РґР°С‡Р° РЅРµР±РѕР»СЊС€РѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё.
 			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-				iN75 = 3; // обязательно нужна хотя бы одна итерация.
-						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+				iN75 = 3; // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° С…РѕС‚СЏ Р±С‹ РѕРґРЅР° РёС‚РµСЂР°С†РёСЏ.
+						  // РµСЃР»Рё СЌС‚РѕРіРѕ Р±СѓРґРµС‚ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚Рѕ РјС‹ РІСЃС‘ СЂР°РІРЅРѕ Р±СѓРґРµРј РёС‚РµСЂРёСЂРѕРІР°С‚СЊ РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµРІСЏР·РєР° РЅРµ СЃС‚Р°РЅРµС‚ РјРµРЅСЊС€Рµ epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-3 * fabs(delta075);
 				}
@@ -2162,11 +2255,11 @@ bool solution_phase(Ak2& Amat,
 			if (iVar == TEMP) {
 				iN75 = 4;
 				epsilon75 = fmin(0.1 * fabs(delta075), epsilon75);
-				if (bSIMPLErun_now_for_temperature == true) {
+				if (bSIMPLErun_now_for_temperature) {
 					//std::cout << "epsilon75="<< epsilon75 << std::endl;
 					//system("PAUSE");
-					// Экспериментальным образом обнаружена недоэтерированность по температуре для гидродинамического решателя.
-					// поэтому точность было решено увеличить на 5 порядков.
+					// Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅС‹Рј РѕР±СЂР°Р·РѕРј РѕР±РЅР°СЂСѓР¶РµРЅР° РЅРµРґРѕСЌС‚РµСЂРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ РґР»СЏ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ.
+					// РїРѕСЌС‚РѕРјСѓ С‚РѕС‡РЅРѕСЃС‚СЊ Р±С‹Р»Рѕ СЂРµС€РµРЅРѕ СѓРІРµР»РёС‡РёС‚СЊ РЅР° 5 РїРѕСЂСЏРґРєРѕРІ.
 					// 27.07.2016
 					epsilon75 *= 1e-10;
 					iN75 = 20;
@@ -2175,7 +2268,7 @@ bool solution_phase(Ak2& Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 20; // решение для поправки давления должно быть получено точно.
+				iN75 = 20; // СЂРµС€РµРЅРёРµ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅРѕ С‚РѕС‡РЅРѕ.
 
 				if (1.0e-10 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-10 * fabs(delta075);
@@ -2189,16 +2282,16 @@ bool solution_phase(Ak2& Amat,
 				//iN75 = 20;
 			}
 		}
-		else if ((n75 >= 100000) && (n75 < 300000)) {
-			// задача небольшой средней размерности.
+		else if (n75 < 300000) {
+			// Р·Р°РґР°С‡Р° РЅРµР±РѕР»СЊС€РѕР№ СЃСЂРµРґРЅРµР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё.
 			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-				iN75 = 3; // обязательно нужна хотя бы одна итерация.
-						  // Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
-						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+				iN75 = 3; // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° С…РѕС‚СЏ Р±С‹ РѕРґРЅР° РёС‚РµСЂР°С†РёСЏ.
+						  // Р’РѕРѕР±С‰Рµ РіРѕРІРѕСЂСЏ РЅРµРІСЏР·РєР° РґР»СЏ СЃРєРѕСЂРѕСЃС‚РµР№ РїР°РґР°РµС‚ РѕС‡РµРЅСЊ Р±С‹СЃС‚СЂРѕ РїРѕСЌС‚РѕРјСѓ РІСЃРµРіРґР° РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ iN РёС‚РµСЂР°С†РёР№ РґР»СЏ СЃРєРѕСЂРѕСЃС‚Рё.
+						  // РµСЃР»Рё СЌС‚РѕРіРѕ Р±СѓРґРµС‚ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚Рѕ РјС‹ РІСЃС‘ СЂР°РІРЅРѕ Р±СѓРґРµРј РёС‚РµСЂРёСЂРѕРІР°С‚СЊ РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµРІСЏР·РєР° РЅРµ СЃС‚Р°РЅРµС‚ РјРµРЅСЊС€Рµ epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-3 * fabs(delta075);
 				}
@@ -2209,11 +2302,11 @@ bool solution_phase(Ak2& Amat,
 			if (iVar == TEMP) {
 				iN75 = 4;
 				epsilon75 = fmin(0.1 * fabs(delta075), epsilon75);
-				if (bSIMPLErun_now_for_temperature == true) {
+				if (bSIMPLErun_now_for_temperature) {
 					//std::cout << "epsilon75=" << epsilon75 << std::endl;
 					//system("PAUSE");
-					// Экспериментальным образом обнаружена недоэтерированность по температуре для гидродинамического решателя.
-					// поэтому точность было решено увеличить на 5 порядков.
+					// Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅС‹Рј РѕР±СЂР°Р·РѕРј РѕР±РЅР°СЂСѓР¶РµРЅР° РЅРµРґРѕСЌС‚РµСЂРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ РґР»СЏ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ.
+					// РїРѕСЌС‚РѕРјСѓ С‚РѕС‡РЅРѕСЃС‚СЊ Р±С‹Р»Рѕ СЂРµС€РµРЅРѕ СѓРІРµР»РёС‡РёС‚СЊ РЅР° 5 РїРѕСЂСЏРґРєРѕРІ.
 					// 27.07.2016
 					epsilon75 *= 1e-10;
 					iN75 = 20;
@@ -2222,7 +2315,7 @@ bool solution_phase(Ak2& Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 30; // решение для поправки давления должно быть получено точно.
+				iN75 = 30; // СЂРµС€РµРЅРёРµ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅРѕ С‚РѕС‡РЅРѕ.
 				if (1.0e-10 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-10 * fabs(delta075);
 				}
@@ -2232,15 +2325,15 @@ bool solution_phase(Ak2& Amat,
 				//std::cout << epsilon75; system("PAUSE");
 			}
 		}
-		else if ((n75 >= 300000) && (n75 < 1000000)) {
-			// задача истинно средней размерности.
+		else if (n75 < 1000000) {
+			// Р·Р°РґР°С‡Р° РёСЃС‚РёРЅРЅРѕ СЃСЂРµРґРЅРµР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё.
 			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-				iN75 = 3; // обязательно нужна хотя бы одна итерация.
-						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+				iN75 = 3; // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° С…РѕС‚СЏ Р±С‹ РѕРґРЅР° РёС‚РµСЂР°С†РёСЏ.
+						  // РµСЃР»Рё СЌС‚РѕРіРѕ Р±СѓРґРµС‚ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚Рѕ РјС‹ РІСЃС‘ СЂР°РІРЅРѕ Р±СѓРґРµРј РёС‚РµСЂРёСЂРѕРІР°С‚СЊ РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµРІСЏР·РєР° РЅРµ СЃС‚Р°РЅРµС‚ РјРµРЅСЊС€Рµ epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-3 * fabs(delta075);
 				}
@@ -2251,11 +2344,11 @@ bool solution_phase(Ak2& Amat,
 			if (iVar == TEMP) {
 				iN75 = 4;
 				epsilon75 = 1e-5 * fmin(0.1 * fabs(delta075), epsilon75);
-				if (bSIMPLErun_now_for_temperature == true) {
+				if (bSIMPLErun_now_for_temperature) {
 					//std::cout << "epsilon75=" << epsilon75 << std::endl;
 					//system("PAUSE");
-					// Экспериментальным образом обнаружена недоэтерированность по температуре для гидродинамического решателя.
-					// поэтому точность было решено увеличить на 5 порядков.
+					// Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅС‹Рј РѕР±СЂР°Р·РѕРј РѕР±РЅР°СЂСѓР¶РµРЅР° РЅРµРґРѕСЌС‚РµСЂРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ РґР»СЏ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ.
+					// РїРѕСЌС‚РѕРјСѓ С‚РѕС‡РЅРѕСЃС‚СЊ Р±С‹Р»Рѕ СЂРµС€РµРЅРѕ СѓРІРµР»РёС‡РёС‚СЊ РЅР° 5 РїРѕСЂСЏРґРєРѕРІ.
 					// 27.07.2016
 					epsilon75 *= 1e-8;
 					iN75 = 20;
@@ -2264,7 +2357,7 @@ bool solution_phase(Ak2& Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 16; // решение для поправки давления должно быть получено точно.
+				iN75 = 16; // СЂРµС€РµРЅРёРµ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅРѕ С‚РѕС‡РЅРѕ.
 				if (1.0e-4 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-4 * fabs(delta075);
 				}
@@ -2274,15 +2367,15 @@ bool solution_phase(Ak2& Amat,
 				//std::cout << epsilon75; system("PAUSE");
 			}
 		}
-		else if ((n75 >= 1000000) && (n75 < 3000000)) {
-			// задача достаточно большой размерности.
+		else if (n75 < 3000000) {
+			// Р·Р°РґР°С‡Р° РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ Р±РѕР»СЊС€РѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё.
 			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-				iN75 = 6; // обязательно нужна хотя бы одна итерация.
-						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+				iN75 = 6; // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° С…РѕС‚СЏ Р±С‹ РѕРґРЅР° РёС‚РµСЂР°С†РёСЏ.
+						  // РµСЃР»Рё СЌС‚РѕРіРѕ Р±СѓРґРµС‚ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚Рѕ РјС‹ РІСЃС‘ СЂР°РІРЅРѕ Р±СѓРґРµРј РёС‚РµСЂРёСЂРѕРІР°С‚СЊ РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµРІСЏР·РєР° РЅРµ СЃС‚Р°РЅРµС‚ РјРµРЅСЊС€Рµ epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-3 * fabs(delta075);
 				}
@@ -2293,11 +2386,11 @@ bool solution_phase(Ak2& Amat,
 			if (iVar == TEMP) {
 				iN75 = 8;
 				epsilon75 = 1e-5 * fmin(0.1 * fabs(delta075), epsilon75);
-				if (bSIMPLErun_now_for_temperature == true) {
+				if (bSIMPLErun_now_for_temperature) {
 					//std::cout << "epsilon75="<< epsilon75 << std::endl;
 					//system("PAUSE");
-					// Экспериментальным образом обнаружена недоэтерированность по температуре для гидродинамического решателя.
-					// поэтому точность было решено увеличить на 5 порядков.
+					// Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅС‹Рј РѕР±СЂР°Р·РѕРј РѕР±РЅР°СЂСѓР¶РµРЅР° РЅРµРґРѕСЌС‚РµСЂРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РїРѕ С‚РµРјРїРµСЂР°С‚СѓСЂРµ РґР»СЏ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ.
+					// РїРѕСЌС‚РѕРјСѓ С‚РѕС‡РЅРѕСЃС‚СЊ Р±С‹Р»Рѕ СЂРµС€РµРЅРѕ СѓРІРµР»РёС‡РёС‚СЊ РЅР° 5 РїРѕСЂСЏРґРєРѕРІ.
 					// 27.07.2016
 					epsilon75 *= 1e-8;
 					iN75 = 20;
@@ -2306,7 +2399,7 @@ bool solution_phase(Ak2& Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 23; // решение для поправки давления должно быть получено точно.
+				iN75 = 23; // СЂРµС€РµРЅРёРµ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅРѕ С‚РѕС‡РЅРѕ.
 				if (1.0e-4 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-4 * fabs(delta075);
 				}
@@ -2317,14 +2410,14 @@ bool solution_phase(Ak2& Amat,
 			}
 		}
 		else if (n75 >= 3000000) {
-			// задача очень большой размерности.
+			// Р·Р°РґР°С‡Р° РѕС‡РµРЅСЊ Р±РѕР»СЊС€РѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё.
 			if ((iVar == VELOCITY_X_COMPONENT) || (iVar == VELOCITY_Y_COMPONENT) || (iVar == VELOCITY_Z_COMPONENT) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
 				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
 				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
 				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
-				iN75 = 6; // обязательно нужна хотя бы одна итерация.
-						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+				iN75 = 6; // РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° С…РѕС‚СЏ Р±С‹ РѕРґРЅР° РёС‚РµСЂР°С†РёСЏ.
+						  // РµСЃР»Рё СЌС‚РѕРіРѕ Р±СѓРґРµС‚ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚Рѕ РјС‹ РІСЃС‘ СЂР°РІРЅРѕ Р±СѓРґРµРј РёС‚РµСЂРёСЂРѕРІР°С‚СЊ РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµРІСЏР·РєР° РЅРµ СЃС‚Р°РЅРµС‚ РјРµРЅСЊС€Рµ epsilon.
 				if (1.0e-3 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-3 * fabs(delta075);
 				}
@@ -2337,7 +2430,7 @@ bool solution_phase(Ak2& Amat,
 				epsilon75 = 1e-10 * fmin(0.1 * fabs(delta075), epsilon75);
 			}
 			if (iVar == PAM) {
-				iN75 = 36; // решение для поправки давления должно быть получено точно.
+				iN75 = 36; // СЂРµС€РµРЅРёРµ РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РїРѕР»СѓС‡РµРЅРѕ С‚РѕС‡РЅРѕ.
 				if (1.0e-4 * fabs(delta075) < epsilon75) {
 					epsilon75 = 1.0e-4 * fabs(delta075);
 				}
@@ -2371,27 +2464,27 @@ bool solution_phase(Ak2& Amat,
 				epsilon75 = 1.0e-4 * fabs(delta075);
 			}
 			epsilon75 = 1.0e-12;
-			iN75 = 8; // Количество обязательных итераций.
+			iN75 = 8; // РљРѕР»РёС‡РµСЃС‚РІРѕ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹С… РёС‚РµСЂР°С†РёР№.
 			if (iflag175 == 1) {
 				iflag75 = 1;
 			}
 
 		}
 
-		// Если число расходимостей превысит оговорённую константу то произойдёт выход из алгоритма.
+		// Р•СЃР»Рё С‡РёСЃР»Рѕ СЂР°СЃС…РѕРґРёРјРѕСЃС‚РµР№ РїСЂРµРІС‹СЃРёС‚ РѕРіРѕРІРѕСЂС‘РЅРЅСѓСЋ РєРѕРЅСЃС‚Р°РЅС‚Сѓ С‚Рѕ РїСЂРѕРёР·РѕР№РґС‘С‚ РІС‹С…РѕРґ РёР· Р°Р»РіРѕСЂРёС‚РјР°.
 		integer i_signal_break_pam_opening75 = 0;
-		// x хорошее значение.
+		// x С…РѕСЂРѕС€РµРµ Р·РЅР°С‡РµРЅРёРµ.
 		const integer i_limit_signal_pam_break_opening75 = 4000;//20
 		doublereal delta_old_iter75 = 1.0e10;
 
 		integer count_iter_for_film_coef75 = 0;
 
-		// Используется для досрочного прерывания вычислительного процесса
-		// как в алгоритме FGMRES Юсефа Саада и Мартина Г. Шульца.
+		// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РґРѕСЃСЂРѕС‡РЅРѕРіРѕ РїСЂРµСЂС‹РІР°РЅРёСЏ РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
+		// РєР°Рє РІ Р°Р»РіРѕСЂРёС‚РјРµ FGMRES Р®СЃРµС„Р° РЎР°Р°РґР° Рё РњР°СЂС‚РёРЅР° Р“. РЁСѓР»СЊС†Р°.
 		doublereal norma_b = NormaV_for_gmres(b, n75);
 
-		// Мы обязательно должны сделать несколько итераций. (не менее 10).
-		// Если только решение не удовлетворяет уравнению тождественно.
+		// РњС‹ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РґРѕР»Р¶РЅС‹ СЃРґРµР»Р°С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ РёС‚РµСЂР°С†РёР№. (РЅРµ РјРµРЅРµРµ 10).
+		// Р•СЃР»Рё С‚РѕР»СЊРєРѕ СЂРµС€РµРЅРёРµ РЅРµ СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ СѓСЂР°РІРЅРµРЅРёСЋ С‚РѕР¶РґРµСЃС‚РІРµРЅРЅРѕ.
 		//if (iVar == TURBULENT_KINETIK_ENERGY) {
 			//std::cout << "TURBULENT_KINETIK_ENERGY: iN75=="<< iN75 <<" iflag75==" << iflag75 << " iflag175==" << iflag175 << " maxit75=" << maxit75 << "\n delta075="<<delta075<<"  epsilon75=" << epsilon75<< "\n";
 			//system("pause");
@@ -2407,8 +2500,8 @@ bool solution_phase(Ak2& Amat,
 			icount75++;
 
 			count_iter_for_film_coef75++;
-			// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
-			// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
+			// Р’ СЃР»СѓС‡Р°Рµ Р·Р°РґР°С‡Рё РќСЊСЋС‚РѕРЅР° - Р РёС…РјР°РЅР°, РЎС‚РµС„Р°РЅР°-Р‘РѕР»СЊС†РјР°РЅР° Рё РјРёРєСЃРѕРІРѕРіРѕ СѓСЃР»РѕРІРёСЏ РЅРµ РёС‚РµСЂРёСЂСѓРµРј РґРѕ РєРѕРЅС†Р° РѕР±СЂС‹РІР°РµРј, 
+			// С‚.Рє. РЅР°Рј С‚СЂРµР±СѓРµС‚СЃСЏ С‡Р°СЃС‚Р°СЏ РїРµСЂРµСЃР±РѕСЂРєР° РјР°С‚СЂРёС†С‹. 13 РјР°СЂС‚Р° 2016.
 			//if (((adiabatic_vs_heat_transfer_coeff > ADIABATIC_WALL_BC) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 			roi75 = Scal(roc75, ri75, n75);
@@ -2418,24 +2511,24 @@ bool solution_phase(Ak2& Amat,
 			//std::cout << "roi75=="<< roi75 << ", roim175=="<< roim175<< ", al75==" << al75 << ", wi75==" << wi75 << std::endl;
 			//getchar();
 
-#pragma omp parallel for 
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
 				doublereal pibuf75 = ri75[i75] + (pi75[i75] - vi75[i75] * wi75) * bet75;
 				pi75[i75] = pibuf75;
 			}
 
-			// Первое предобуславливание.
+			// РџРµСЂРІРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ.
 			// Ky=pi
-#pragma omp parallel for
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
-				y75[i75] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
+				y75[i75] = 0.0; // Р•СЃР»Рё РЅР°С‡РёРЅР°С‚СЊ РЅРµ СЃ РЅСѓР»СЏ С‚Рѕ РЅРµР±СѓРґРµС‚ СЃС…РѕРґРёРјРѕСЃС‚Рё РґР»СЏ PAM !.
 				y76[i75 + 1] = 0.0;
 				pi76[i75 + 1] = pi75[i75];
 			}
 
 			// multigrid RUMBA preconditioner
-			// Вставлено 6.01.2017 begin
-			// одного V цикла недостаточно.
+			// Р’СЃС‚Р°РІР»РµРЅРѕ 6.01.2017 begin
+			// РѕРґРЅРѕРіРѕ V С†РёРєР»Р° РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ.
 			// A*y76=pi76;
 			V_cycle_solve<doublerealT>(Amat, y76, pi76, process_flow_logic, row_ptr_start,
 				row_ptr_end, residual_fine, diag, diag_minus_one, n_a, bonly_serial,
@@ -2445,10 +2538,10 @@ bool solution_phase(Ak2& Amat,
 				error_approx_coarse, dapply_ilu_max_pattern_size,
 				process_flow_alpha,
 				error_approx_fine, nFinestSweeps);
-			// Вставлено 6.01.2017 end
+			// Р’СЃС‚Р°РІР»РµРЅРѕ 6.01.2017 end
 
-			// Возвращение результата.
-#pragma omp parallel for
+			// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
 				y75[i75] = y76[i75 + 1];
 			}
@@ -2466,18 +2559,20 @@ bool solution_phase(Ak2& Amat,
 			}
 
 
-#pragma omp parallel for
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
 				s75[i75] = ri75[i75] - al75 * vi75[i75];
 			}
 
-			// Второе предобуславливание.
+			// Р’С‚РѕСЂРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ.
 			// Kz=s
 
-#pragma omp parallel for
-			for (i75 = 0; i75 < n75; i75++) z75[i75] = 0.0; // Если начинать не с нуля то не будет сходимости для PAM !.
+#pragma omp parallel for private(i75)
+			for (i75 = 0; i75 < n75; i75++) {
+				z75[i75] = 0.0; // Р•СЃР»Рё РЅР°С‡РёРЅР°С‚СЊ РЅРµ СЃ РЅСѓР»СЏ С‚Рѕ РЅРµ Р±СѓРґРµС‚ СЃС…РѕРґРёРјРѕСЃС‚Рё РґР»СЏ PAM !.
+			}
 
-#pragma omp parallel for
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
 				vec75[i75] = s75[i75];
 				z76[i75 + 1] = 0.0;
@@ -2485,8 +2580,8 @@ bool solution_phase(Ak2& Amat,
 			}
 
 			// multigrid RUMBA preconditioner
-			// Вставлено 6.01.2017 begin
-			// одного V цикла недостаточно.
+			// Р’СЃС‚Р°РІР»РµРЅРѕ 6.01.2017 begin
+			// РѕРґРЅРѕРіРѕ V С†РёРєР»Р° РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ.
 			// A*z76=s76;
 			V_cycle_solve<doublerealT>(Amat, z76, s76, process_flow_logic, row_ptr_start,
 				row_ptr_end, residual_fine, diag, diag_minus_one, n_a, bonly_serial,
@@ -2496,12 +2591,12 @@ bool solution_phase(Ak2& Amat,
 				error_approx_coarse, dapply_ilu_max_pattern_size,
 				process_flow_alpha,
 				error_approx_fine, nFinestSweeps);
-			// Вставлено 6.01.2017 end
+			// Р’СЃС‚Р°РІР»РµРЅРѕ 6.01.2017 end
 
-#pragma omp parallel for
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
 				s75[i75] = vec75[i75];
-				// Возвращаем результат.
+				// Р’РѕР·РІСЂР°С‰Р°РµРј СЂРµР·СѓР»СЊС‚Р°С‚.
 				z75[i75] = z76[i75 + 1];
 			}
 
@@ -2510,17 +2605,17 @@ bool solution_phase(Ak2& Amat,
 			wi75 = Scal(t75, s75, n75) / Scal(t75, t75, n75);
 			// std::cout << "Scal(t75,s75,n75)==" << Scal(t75,s75,n75) << ", Scal(t75,t75,n75)=="<< Scal(t75,t75,n75) << std::endl;
 
-#pragma omp parallel for
+#pragma omp parallel for private(i75)
 			for (i75 = 0; i75 < n75; i75++) {
-				//dx75[i75]+=al75*pi75[i75]+wi75*s75[i75]; // так было без предобуславливателя
-				dx75[i75] += al75 * y75[i75] + wi75 * z75[i75]; // так стало с предобуславливателем
+				//dx75[i75]+=al75*pi75[i75]+wi75*s75[i75]; // С‚Р°Рє Р±С‹Р»Рѕ Р±РµР· РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ
+				dx75[i75] += al75 * y75[i75] + wi75 * z75[i75]; // С‚Р°Рє СЃС‚Р°Р»Рѕ СЃ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»РµРј
 				ri75[i75] = s75[i75] - wi75 * t75[i75];
 			}
 			deltai75 = NormaV(ri75, n75);
 
 			//std::cout << "deltai75=" << deltai75 << std::endl; system("PAUSE");
 
-			// печать невязки на консоль
+			// РїРµС‡Р°С‚СЊ РЅРµРІСЏР·РєРё РЅР° РєРѕРЅСЃРѕР»СЊ
 			if (bprint_mesage_diagnostic) {
 				if ((icount75 % 10) == 0) {
 					std::cout << "iter  residual" << std::endl;
@@ -2537,14 +2632,14 @@ bool solution_phase(Ak2& Amat,
 			delta_old_iter75 = deltai75;
 			if (iVar == PAM) {
 				if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
-					// досрочный выход из цикла.
+					// РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· С†РёРєР»Р°.
 					std::cout <<  "icount PAM=" << icount75 << "\n";
 
 					break;
 				}
 			}
 
-			if (deltai75 < epsilon75) iflag75 = 0; // конец вычисления
+			if (deltai75 < epsilon75) iflag75 = 0; // РєРѕРЅРµС† РІС‹С‡РёСЃР»РµРЅРёСЏ
 			else roim175 = roi75;
 
 			if (iVar == TEMP) {
@@ -2553,15 +2648,15 @@ bool solution_phase(Ak2& Amat,
 			}
 
 			//04.04.2019
-			// Успешное условие окончания вычислительного процесса следуя алгоритму FGMRES Ю.Саада.
+			// РЈСЃРїРµС€РЅРѕРµ СѓСЃР»РѕРІРёРµ РѕРєРѕРЅС‡Р°РЅРёСЏ РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР° СЃР»РµРґСѓСЏ Р°Р»РіРѕСЂРёС‚РјСѓ FGMRES Р®.РЎР°Р°РґР°.
 			if (0 && ((NormaV_for_gmres(ri75, n75) / norma_b) <= 0.1 * dterminatedTResudual)) {
-				iflag75 = 0; // конец вычисления
+				iflag75 = 0; // РєРѕРЅРµС† РІС‹С‡РёСЃР»РµРЅРёСЏ
 				std::cout << "dosrochnji vjhod"<< std::endl;
-				icount_V_cycle = icount75; // количество итераций в BiCGStabP для лога.
+				icount_V_cycle = icount75; // РєРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№ РІ BiCGStabP РґР»СЏ Р»РѕРіР°.
 				break;
 			}
 
-			icount_V_cycle = icount75; // количество итераций в BiCGStabP для лога.
+			icount_V_cycle = icount75; // РєРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№ РІ BiCGStabP РґР»СЏ Р»РѕРіР°.
 
 			if (icount75 > 2600) break; // 15.02.2017
 
@@ -2570,107 +2665,85 @@ bool solution_phase(Ak2& Amat,
 
 		if (icount75 == maxit75) {
 			// amg solver divergence detected 
-			// Превышено допустимое число итераций.
+			// РџСЂРµРІС‹С€РµРЅРѕ РґРѕРїСѓСЃС‚РёРјРѕРµ С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№.
 			return true;
 		}
 
-		// Возвращение результата вычислений.
-#pragma omp parallel for
+		// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р° РІС‹С‡РёСЃР»РµРЅРёР№.
+#pragma omp parallel for private(i75)
 		for (i75 = 0; i75 < n75; i75++) {
 			x[i75 + 1] = dx75[i75];
 			x_best_search[i75 + 1] = dx75[i75];
 		}
 
-		// Освобождение оперативной памяти.
-		// Первое предобуславливание
-		if (pi76 != nullptr) {
+		// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
+		// РџРµСЂРІРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ
+		
 			delete[] pi76;
 			pi76 = nullptr;
-		}
-		if (y76 != nullptr) {
 			delete[] y76;
 			y76 = nullptr;
-		}
-		// Второе предобуславливание
-		if (z76 != nullptr) {
+			
+		// Р’С‚РѕСЂРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ
+		
 			delete[] z76;
-			z76 = nullptr;
-		}
-		if (s76 != nullptr) {
+			z76 = nullptr;		
 			delete[] s76;
 			s76 = nullptr;
-		}
-		if (ri75 != nullptr) {
+		
 			delete[] ri75;
-			ri75 = nullptr;
-		}
-		if (roc75 != nullptr) {
+			ri75 = nullptr;		
 			delete[] roc75;
 			roc75 = nullptr;
-		}
-		if (s75 != nullptr) {
+		
 			delete[] s75;
-			s75 = nullptr;
-		}
-		if (t75 != nullptr) {
+			s75 = nullptr;		
 			delete[] t75;
 			t75 = nullptr;
-		}
-		if (vec75 != nullptr) {
+		
 			delete[] vec75;
-			vec75 = nullptr;
-		}
-		if (vi75 != nullptr) {
+			vec75 = nullptr;		
 			delete[] vi75;
 			vi75 = nullptr;
-		}
-		if (pi75 != nullptr) {
+		
+		
 			delete[] pi75;
 			pi75 = nullptr;
-		}
-		if (dx75 != nullptr) {
 			delete[] dx75;
 			dx75 = nullptr;
-		}
-		if (dax75 != nullptr) {
+			
+		
 			delete[] dax75;
-			dax75 = nullptr;
-		}
-		if (y75 != nullptr) {
+			dax75 = nullptr;		
 			delete[] y75;
 			y75 = nullptr;
-		}
-		if (z75 != nullptr) {
+		
 			delete[] z75;
 			z75 = nullptr;
-		}
+		
 
-		// Освобождение оперативной памяти.
-		if (val75 != nullptr) {
+		// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
+		
 			delete[] val75;
-			val75 = nullptr;
-		}
-		if (col_ind75 != nullptr) {
+			val75 = nullptr;		
 			delete[] col_ind75;
-			col_ind75 = nullptr;
-		}
-		if (row_ptr75 != nullptr) {
+			col_ind75 = nullptr;		
 			delete[] row_ptr75;
 			row_ptr75 = nullptr;
-		}
+		
 
 	}
 	else
 	{   //  09.01.2018
-		// Рекомендуется использовать гибридную точность: двойную для FGMRES и одинарную для предобуславливания с помощью V - цикла.
+		// Р РµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РіРёР±СЂРёРґРЅСѓСЋ С‚РѕС‡РЅРѕСЃС‚СЊ: РґРІРѕР№РЅСѓСЋ РґР»СЏ FGMRES Рё РѕРґРёРЅР°СЂРЅСѓСЋ РґР»СЏ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёСЏ СЃ РїРѕРјРѕС‰СЊСЋ V - С†РёРєР»Р°.
 		// FGMRes if (my_amg_manager.istabilization == 2)
-		// Гибкий вариант обобщённого метода минимальных невязок в котором на каждой итерации
-		// однократно применяется многосеточный предобуславливатель. Алгорим Юсефа Саада и Мартина Г. Шульца 1986 года.
+		// Р“РёР±РєРёР№ РІР°СЂРёР°РЅС‚ РѕР±РѕР±С‰С‘РЅРЅРѕРіРѕ РјРµС‚РѕРґР° РјРёРЅРёРјР°Р»СЊРЅС‹С… РЅРµРІСЏР·РѕРє РІ РєРѕС‚РѕСЂРѕРј РЅР° РєР°Р¶РґРѕР№ РёС‚РµСЂР°С†РёРё
+		// РѕРґРЅРѕРєСЂР°С‚РЅРѕ РїСЂРёРјРµРЅСЏРµС‚СЃСЏ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ. РђР»РіРѕСЂРёРј Р®СЃРµС„Р° РЎР°Р°РґР° Рё РњР°СЂС‚РёРЅР° Р“. РЁСѓР»СЊС†Р° 1986 РіРѕРґР°.
 
 		integer inumberVcyclelocbicgstab = 1;
 
-		// нумерация векторов начинается с нуля.
-		integer n75 = n_a[0]; // число неизвестных на подробном уровне.
+		// РЅСѓРјРµСЂР°С†РёСЏ РІРµРєС‚РѕСЂРѕРІ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ РЅСѓР»СЏ.
+		integer n75 = n_a[0]; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С… РЅР° РїРѕРґСЂРѕР±РЅРѕРј СѓСЂРѕРІРЅРµ.
 		doublereal* val75 = nullptr;
 		val75 = new doublereal[nnz_a[0]];
 		integer* col_ind75 = nullptr;
@@ -2678,14 +2751,14 @@ bool solution_phase(Ak2& Amat,
 		integer* row_ptr75 = nullptr;
 		row_ptr75 = new integer[n_a[0] + 1];
 		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
-			// недостаточно памяти на данном оборудовании.
+			// РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РЅР° РґР°РЅРЅРѕРј РѕР±РѕСЂСѓРґРѕРІР°РЅРёРё.
 			std::cout << "Problem: not enough memory on your equipment for val, col_ind or row_ptr: FGMRes + camg..." << std::endl;
 			std::cout << "Please any key to exit..." << std::endl;
 			exit(1);
 		}
 
-		// инициализация матрицы.
-		// Преобразование к формату CRS.
+		// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РјР°С‚СЂРёС†С‹.
+		// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ Рє С„РѕСЂРјР°С‚Сѓ CRS.
 #pragma omp parallel for
 		for (integer i_1 = 1; i_1 <= n_a[0]; i_1++) {
 
@@ -2708,10 +2781,10 @@ bool solution_phase(Ak2& Amat,
 		}
 
 		row_ptr75[n_a[0]] = row_ptr_end[n_a[0]];
-		// Преобразовано к формату CRS.
+		// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРѕ Рє С„РѕСЂРјР°С‚Сѓ CRS.
 
 
-		bool bnorelax = true; // Для уравнения теплопроводности не используется релаксация.
+		bool bnorelax = true; // Р”Р»СЏ СѓСЂР°РІРЅРµРЅРёСЏ С‚РµРїР»РѕРїСЂРѕРІРѕРґРЅРѕСЃС‚Рё РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЂРµР»Р°РєСЃР°С†РёСЏ.
 		integer m_restart = my_amg_manager.m_restart;
 
 		doublereal resid;
@@ -2727,17 +2800,18 @@ bool solution_phase(Ak2& Amat,
 		doublereal* Zcopy = new doublereal[n75 + 1];
 		doublereal* vCopy = new doublereal[n75 + 1];
 
-		// A*x=b, x - решение, b - правая часть. 
-		// Индексация в х и b начинается с единицы.
+		// A*x=b, x - СЂРµС€РµРЅРёРµ, b - РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ. 
+		// РРЅРґРµРєСЃР°С†РёСЏ РІ С… Рё b РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ РµРґРёРЅРёС†С‹.
 
-		// начальное приближение
+		// РЅР°С‡Р°Р»СЊРЅРѕРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ
+		#pragma omp parallel for private(i)
 		for (i = 0; i < n75; i++) dx[i] = x[i + 1];
 
 
 		//doublereal normb = norm(M.solve(b));
 		doublereal normb = 0.0;
-		// здесь реализованы все три нормы
-		// вообще говоря они все эквивалентны
+		// Р·РґРµСЃСЊ СЂРµР°Р»РёР·РѕРІР°РЅС‹ РІСЃРµ С‚СЂРё РЅРѕСЂРјС‹
+		// РІРѕРѕР±С‰Рµ РіРѕРІРѕСЂСЏ РѕРЅРё РІСЃРµ СЌРєРІРёРІР°Р»РµРЅС‚РЅС‹
 
 
 
@@ -2746,7 +2820,9 @@ bool solution_phase(Ak2& Amat,
 
 		//Vector r = &b[1] - A * x;
 		doublereal* r = new doublereal[n75];
-		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // результат занесён в  r
+		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РЅРµСЃС‘РЅ РІ  r
+
+#pragma omp parallel for private(i)
 		for (i = 0; i < n75; i++) r[i] = b[i + 1] - r[i];
 
 		//  calculate residual precontidioning;
@@ -2788,12 +2864,12 @@ bool solution_phase(Ak2& Amat,
 			goto LABEL_FGMRES_CONTINUE;
 		}
 
-		//integer i_1 = 0; // счётчик цикла for
+		//integer i_1 = 0; // СЃС‡С‘С‚С‡РёРє С†РёРєР»Р° for
 
 		doublereal** H = new doublereal * [m_restart + 2]; // Hessenberg
 		for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
 
-
+#pragma omp parallel for 
 		for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 		{
 			for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
@@ -2806,7 +2882,7 @@ bool solution_phase(Ak2& Amat,
 		doublereal** v = new doublereal * [m_restart + 2];
 		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n75];
 
-
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 			for (integer j_1 = 0; j_1 < n75; j_1++)
 			{
@@ -2817,6 +2893,7 @@ bool solution_phase(Ak2& Amat,
 		doublereal** Z = new doublereal * [m_restart + 2];
 		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n75];
 
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 			for (integer j_1 = 0; j_1 < n75; j_1++)
 			{
@@ -2824,7 +2901,7 @@ bool solution_phase(Ak2& Amat,
 			}
 		}
 
-		j = 1; // номер первой итерации
+		j = 1; // РЅРѕРјРµСЂ РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё
 			   //doublereal delta = 1.0e-3;// DOPOLNENIE
 
 		integer i_copy;
@@ -2832,17 +2909,21 @@ bool solution_phase(Ak2& Amat,
 		while (j <= maxit) {
 
 			//v[0] = r * (1.0 / beta);    // ??? r / beta
+#pragma omp parallel for firstprivate(beta)
 			for (integer j_1 = 0; j_1 < n75; j_1++)
 			{
 				v[0][j_1] = r[j_1] * (1.0 / beta);
 			}
 
 			//s = 0.0;
-			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
+#pragma omp parallel for
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+				s[i_1] = 0.0;
+			}
 			s[0] = beta;
 			//s[0] = 1.0;
 
-
+#pragma omp parallel for
 			for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 			{ // DOPOLNENIE
 				for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
@@ -2852,7 +2933,7 @@ bool solution_phase(Ak2& Amat,
 			}
 
 
-			// Ортогонализация Арнольди.
+			// РћСЂС‚РѕРіРѕРЅР°Р»РёР·Р°С†РёСЏ РђСЂРЅРѕР»СЊРґРё.
 			for (i = 0; i < m_restart && j <= maxit; i++, j++) {
 
 				i_copy = i;
@@ -2863,19 +2944,20 @@ bool solution_phase(Ak2& Amat,
 				// (LU)Z[i]=v[i];
 
 				// multigrid Ruge and Stuben preconditioning [1986].
-				// достаточно одного V цикла.
+				// РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РѕРґРЅРѕРіРѕ V С†РёРєР»Р°.
 				// K*Z = v;
+#pragma omp parallel for
 				for (integer i_1 = 0; i_1 < n75; i_1++) {
 					Zcopy[i_1 + 1] = 0.0;
 					vCopy[i_1 + 1] = v[i][i_1];
 				}
 
-				// Предобуславливание с помощью V цикла многосеточного метода.
-				// Нулевое начальное приближение
+				// РџСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ СЃ РїРѕРјРѕС‰СЊСЋ V С†РёРєР»Р° РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅРѕРіРѕ РјРµС‚РѕРґР°.
+				// РќСѓР»РµРІРѕРµ РЅР°С‡Р°Р»СЊРЅРѕРµ РїСЂРёР±Р»РёР¶РµРЅРёРµ
 				for (integer i_numberV_cycle = 0; i_numberV_cycle < 1; i_numberV_cycle++) {
-					// достаточно одного V цикла.
+					// РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РѕРґРЅРѕРіРѕ V С†РёРєР»Р°.
 					// A*Zcopy=vCopy;
-					// В Zcopy и vCopy нумерация начинается с единицы.
+					// Р’ Zcopy Рё vCopy РЅСѓРјРµСЂР°С†РёСЏ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ РµРґРёРЅРёС†С‹.
 					V_cycle_solve<doublerealT>(Amat, Zcopy, vCopy, process_flow_logic, row_ptr_start,
 						row_ptr_end, residual_fine, diag, diag_minus_one, n_a, bonly_serial,
 						process_flow_beta, F_false_C_true, nu1, nu2, bILU2smoother,
@@ -2887,52 +2969,71 @@ bool solution_phase(Ak2& Amat,
 					//getchar();
 				}
 
+#pragma omp parallel for
 				for (integer i_1 = 0; i_1 < n75; i_1++) {
 					Z[i][i_1] = Zcopy[i_1 + 1];
 				}
 
 
-				// Совсем без предобуславливателя.
+				// РЎРѕРІСЃРµРј Р±РµР· РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ.
 				//for (i_1 = 0; i_1 < n75; i_1++) Z[i][i_1] = v[i][i_1];
 
-				// Закомментировано без предобуславливания.
+				// Р—Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°РЅРѕ Р±РµР· РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёСЏ.
 				//w = A * Z[i];
-				MatrixCRSByVector(val75, col_ind75, row_ptr75, Z[i], w, n75); // результат занесён в  w
+				MatrixCRSByVector(val75, col_ind75, row_ptr75, Z[i], w, n75); // СЂРµР·СѓР»СЊС‚Р°С‚ Р·Р°РЅРµСЃС‘РЅ РІ  w
 
 				for (k = 0; k <= i; k++) {
-					H[k][i] = Scal(w, v[k], n75);
+					doublereal hscal= Scal(w, v[k], n75);
+					H[k][i] = hscal;
 
+					// РµСЃР»Рё СЂР°СЃРєРѕРјРµРЅС‚РёСЂРѕРІР°С‚СЊ РїСЂРёР»РѕР¶РµРЅРёРµ РїР°РґР°РµС‚
+#pragma omp parallel for firstprivate(hscal, n75, k)
 					for (integer j_1 = 0; j_1 < n75; j_1++)
 					{
-						w[j_1] -= H[k][i] * v[k][j_1];
+						w[j_1] -= hscal * v[k][j_1];
 					}
 				}
 				H[i + 1][i] = NormaV_for_gmres(w, n75);
 
 
+				doublereal mult_for_w = (1.0 / H[i + 1][i]);
 
+				// РµСЃР»Рё СЂР°СЃРєРѕРјРµРЅС‚РёСЂРѕРІР°С‚СЊ РїСЂРёР»РѕР¶РµРЅРёРµ РїР°РґР°РµС‚
+#pragma omp parallel for firstprivate(n75, i, mult_for_w)
 				for (integer j_1 = 0; j_1 < n75; j_1++)
 				{
-					v[i + 1][j_1] = w[j_1] * (1.0 / H[i + 1][i]); // ??? w / H(i+1, i)
+					v[i + 1][j_1] = w[j_1] * mult_for_w; // ??? w / H(i+1, i)
 				}
-				// Окончание ортогонализации Арнольди.
-				// В v - хранится ортонормированный базис подпространства Крылова размерности m_restart.
-				// H - Верхнетреугольная матрица Хессенберга - матрица коэффициентов ортогонализации.
+				// РћРєРѕРЅС‡Р°РЅРёРµ РѕСЂС‚РѕРіРѕРЅР°Р»РёР·Р°С†РёРё РђСЂРЅРѕР»СЊРґРё.
+				// Р’ v - С…СЂР°РЅРёС‚СЃСЏ РѕСЂС‚РѕРЅРѕСЂРјРёСЂРѕРІР°РЅРЅС‹Р№ Р±Р°Р·РёСЃ РїРѕРґРїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР° РљСЂС‹Р»РѕРІР° СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё m_restart.
+				// H - Р’РµСЂС…РЅРµС‚СЂРµСѓРіРѕР»СЊРЅР°СЏ РјР°С‚СЂРёС†Р° РҐРµСЃСЃРµРЅР±РµСЂРіР° - РјР°С‚СЂРёС†Р° РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РѕСЂС‚РѕРіРѕРЅР°Р»РёР·Р°С†РёРё.
 
 
 				// 26.11.2017
-				// Это проверенный и испытанный кусок кода.
-				for (k = 0; k < i; k++)
+				// Р­С‚Рѕ РїСЂРѕРІРµСЂРµРЅРЅС‹Р№ Рё РёСЃРїС‹С‚Р°РЅРЅС‹Р№ РєСѓСЃРѕРє РєРѕРґР°.
+				for (k = 0; k < i; k++) {
+
 					ApplyPlaneRotation(H[k][i], H[k + 1][i], cs[k], sn[k]);
+				}
 
 				GeneratePlaneRotation(H[i][i], H[i + 1][i], cs[i], sn[i]);
-				ApplyPlaneRotation(H[i][i], H[i + 1][i], cs[i], sn[i]);
-				ApplyPlaneRotation(s[i], s[i + 1], cs[i], sn[i]);
+#pragma omp parallel sections
+				{// СЂР°СЃРїР°СЂР°Р»Р»РµР»РёРІР°РЅРёРµ РЅР° РґРІР° РїРѕС‚РѕРєР°.
+#pragma omp section
+					{
+						ApplyPlaneRotation(H[i][i], H[i + 1][i], cs[i], sn[i]);
+					}
+#pragma omp section
+					{
+						ApplyPlaneRotation(s[i], s[i + 1], cs[i], sn[i]);
+					}
+				}// omp sections
+
+				
 
 
-
-				// Вручную устраняем случай полного совпадения невязок на двух соседних итерациях,
-				// т.к. иначе это приводит к развалу решения.
+				// Р’СЂСѓС‡РЅСѓСЋ СѓСЃС‚СЂР°РЅСЏРµРј СЃР»СѓС‡Р°Р№ РїРѕР»РЅРѕРіРѕ СЃРѕРІРїР°РґРµРЅРёСЏ РЅРµРІСЏР·РѕРє РЅР° РґРІСѓС… СЃРѕСЃРµРґРЅРёС… РёС‚РµСЂР°С†РёСЏС…,
+				// С‚.Рє. РёРЅР°С‡Рµ СЌС‚Рѕ РїСЂРёРІРѕРґРёС‚ Рє СЂР°Р·РІР°Р»Сѓ СЂРµС€РµРЅРёСЏ.
 				//if (fabs(s[i] - s[i + 1]) < 1.0e-37) s[i + 1] = 1.05*s[i];
 
 				std::cout << j << " " << fabs(s[i + 1]) / normb <<" \n";
@@ -2949,6 +3050,7 @@ bool solution_phase(Ak2& Amat,
 					//tol = resid;
 					//maxit = j;
 
+#pragma omp parallel for
 					for (integer i_1 = 0; i_1 < n75; i_1++) {
 						x[i_1 + 1] = dx[i_1];
 						x_best_search[i_1 + 1] = dx[i_1];
@@ -2970,7 +3072,7 @@ bool solution_phase(Ak2& Amat,
 					delete[] Zcopy;
 					delete[] vCopy;
 
-					// Освобождение оперативной памяти.
+					// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
 					if (val75 != nullptr) {
 						delete[] val75;
 						val75 = nullptr;
@@ -2992,11 +3094,14 @@ bool solution_phase(Ak2& Amat,
 
 
 			// i-1 -> m_restart-1
-			Update(dx, i - 1, n75, H, s, Z);//i-1 //ERROR
+			Update(dx, i - 1, n75, H, s, Z);//i-1 
 
 											//r = M.solve(b - A * x);
-			MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // Результат занесён в r
-			for (integer i_1 = 0; i_1 < n75; i_1++) r[i_1] = b[i_1 + 1] - r[i_1];
+			MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // Р РµР·СѓР»СЊС‚Р°С‚ Р·Р°РЅРµСЃС‘РЅ РІ r
+#pragma omp parallel for
+			for (integer i_1 = 0; i_1 < n75; i_1++) {
+				r[i_1] = b[i_1 + 1] - r[i_1];
+			}
 
 			//beta = norm(r);
 			beta = NormaV_for_gmres(r, n75);
@@ -3011,6 +3116,7 @@ bool solution_phase(Ak2& Amat,
 				std::cout << "end" << std::endl;
 				//getchar();
 
+#pragma omp parallel for
 				for (integer i_1 = 0; i_1 < n75; i_1++) {
 					x[i_1 + 1] = dx[i_1];
 					x_best_search[i_1 + 1] = dx[i_1];
@@ -3032,7 +3138,7 @@ bool solution_phase(Ak2& Amat,
 				delete[] Zcopy;
 				delete[] vCopy;
 
-				// Освобождение оперативной памяти.
+				// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
 				if (val75 != nullptr) {
 					delete[] val75;
 					val75 = nullptr;
@@ -3054,12 +3160,13 @@ bool solution_phase(Ak2& Amat,
 
 		if (j-1 == maxit) {
 			// amg solver divergence detected 
-			// Превышено допустимое число итераций.
+			// РџСЂРµРІС‹С€РµРЅРѕ РґРѕРїСѓСЃС‚РёРјРѕРµ С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№.
 			return true;
 		}
 
 
 		//tol = resid;
+#pragma omp parallel for
 		for (integer i_1 = 0; i_1 < n75; i_1++) {
 			x[i_1 + 1] = dx[i_1];
 			x_best_search[i_1 + 1] = dx[i_1];
@@ -3081,7 +3188,7 @@ bool solution_phase(Ak2& Amat,
 		delete[] Zcopy;
 		delete[] vCopy;
 
-		// Освобождение оперативной памяти.
+		// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
 		if (val75 != nullptr) {
 			delete[] val75;
 			val75 = nullptr;
@@ -3148,7 +3255,7 @@ LABEL_FGMRES_CONTINUE:
 
 
 
-	// Внимание: именно эта строчка обеспечивает сходимость.
+	// Р’РЅРёРјР°РЅРёРµ: РёРјРµРЅРЅРѕ СЌС‚Р° СЃС‚СЂРѕС‡РєР° РѕР±РµСЃРїРµС‡РёРІР°РµС‚ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 #pragma omp parallel for
 	for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 		x[i47] = x_best_search[i47];
@@ -3163,7 +3270,7 @@ LABEL_FGMRES_CONTINUE:
 	if (identiti) {
 		if ((iVar != TOTALDEFORMATIONVAR) && (iVar != TURBULENT_KINETIK_ENERGY)) {
 			std::cout << "identity situation" << std::endl;
-			// если техника x_best_search вообще не дала результатов.
+			// РµСЃР»Рё С‚РµС…РЅРёРєР° x_best_search РІРѕРѕР±С‰Рµ РЅРµ РґР°Р»Р° СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ.
 #pragma omp parallel for
 			for (integer i47 = 1; i47 <= n_a[0]; i47++) {
 				x[i47] = x_best_search2[i47];
@@ -3171,12 +3278,12 @@ LABEL_FGMRES_CONTINUE:
 		}
 	}
 
-	// Метка к которой мы приходим если значение невязки превысило 1.0e7.
+	// РњРµС‚РєР° Рє РєРѕС‚РѕСЂРѕР№ РјС‹ РїСЂРёС…РѕРґРёРј РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РЅРµРІСЏР·РєРё РїСЂРµРІС‹СЃРёР»Рѕ 1.0e7.
 FULL_DIVERGENCE_DETECTED:
 
 	std::cout << "number of negative diagonals: ibsp_length=" << ibsp_length << std::endl;
 
-	// диагностическое сообщение какую переменную мы решаем.
+	// РґРёР°РіРЅРѕСЃС‚РёС‡РµСЃРєРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ РєР°РєСѓСЋ РїРµСЂРµРјРµРЅРЅСѓСЋ РјС‹ СЂРµС€Р°РµРј.
 	if (bprint_mesage_diagnostic) {
 		switch (iVar) {
 		case PAM: std::cout << "PAM" << std::endl;  break;
@@ -3195,7 +3302,7 @@ FULL_DIVERGENCE_DETECTED:
 	else {
 
 		//switch (iVar) {
-		// Радиатор водяного охлаждения 3л/мин ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+		// Р Р°РґРёР°С‚РѕСЂ РІРѕРґСЏРЅРѕРіРѕ РѕС…Р»Р°Р¶РґРµРЅРёСЏ 3Р»/РјРёРЅ ilevel_VX_VY_VZ=10, ilevel_PAM=5 РёР»Рё 6.
 
 		//case PAM: std::cout << "PAM "<< ilevel<<" "<< n_a[ilevel - 4] / n_a[ilevel - 3]<<" "<< n_a[ilevel - 3] / n_a[ilevel-2]<< " "<< n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl;  break;
 		//case VELOCITY_X_COMPONENT:  std::cout << "VELOCITY_X_COMPONENT "<< ilevel<<" "<< n_a[ilevel - 4] / n_a[ilevel - 3] <<" "<< n_a[ilevel - 3] / n_a[ilevel - 2] << " " << n_a[ilevel - 2] / n_a[ilevel - 1]<<" "<< n_a[ilevel - 1] / n_a[ilevel]<<std::endl; break;
@@ -3211,7 +3318,7 @@ FULL_DIVERGENCE_DETECTED:
 		//}
 
 		switch (iVar) {
-			// Радиатор водяного охлаждения 3л/мин ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+			// Р Р°РґРёР°С‚РѕСЂ РІРѕРґСЏРЅРѕРіРѕ РѕС…Р»Р°Р¶РґРµРЅРёСЏ 3Р»/РјРёРЅ ilevel_VX_VY_VZ=10, ilevel_PAM=5 РёР»Рё 6.
 
 		case PAM: std::cout << "PAM level="<<ilevel<<"  CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<" n_a[ilevel - 2]="<<n_a[ilevel - 2]<<" n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl;  break;
 		case VELOCITY_X_COMPONENT:  std::cout << "VELOCITY_X_COMPONENT level="<<ilevel<<" CopA="<<dr_grid_complexity<<" CopP="<<(doublereal)(nnz_P_memo_all / n_a[0])<<" nV="<<icount_V_cycle<<" res0="<<dres_initial<<"  n_a[ilevel - 2]="<<n_a[ilevel - 2]<<"  n_a[ilevel - 1]="<<n_a[ilevel - 1]<<" n_a[ilevel]="<< n_a[ilevel]<<std::endl; break;
@@ -3243,7 +3350,7 @@ FULL_DIVERGENCE_DETECTED:
 
 	// free	
 	if (bnested_desection_global_amg != nullptr) {
-		free(bnested_desection_global_amg);  // Глобальная память.
+		free(bnested_desection_global_amg);  // Р“Р»РѕР±Р°Р»СЊРЅР°СЏ РїР°РјСЏС‚СЊ.
 		bnested_desection_global_amg = nullptr;
 	}
 	for (integer i_scan_levels = 0; i_scan_levels <= maxlevel - 1; i_scan_levels++) {
@@ -3285,7 +3392,7 @@ FULL_DIVERGENCE_DETECTED:
 	}
 
 
-	// метод огрубления.
+	// РјРµС‚РѕРґ РѕРіСЂСѓР±Р»РµРЅРёСЏ.
 	my_amg_manager.icoarseningtype = memo_icoarseningtype;
 
 
@@ -3310,11 +3417,11 @@ FULL_DIVERGENCE_DETECTED:
 
 	
 
-	// освобождение оперативной памяти.
+	// РѕСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
 	free_level_additional_data(milu0, ilevel);
 	free_level_additional_data(milu2, ilevel);
 
-	// Освобождение общей памяти в ILU буфере.
+	// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕР±С‰РµР№ РїР°РјСЏС‚Рё РІ ILU Р±СѓС„РµСЂРµ.
 	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
 	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
 	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
@@ -3376,7 +3483,7 @@ FULL_DIVERGENCE_DETECTED:
 		x_best_search = nullptr;
 	}
 
-	// Для подстраховки:
+	// Р”Р»СЏ РїРѕРґСЃС‚СЂР°С…РѕРІРєРё:
 
 	if (row_ptr_start != nullptr) {
 		free(row_ptr_start);
@@ -3400,24 +3507,24 @@ FULL_DIVERGENCE_DETECTED:
 }
 
 
-// Разбиение множества узлов первоначальной сетки на С-узлы и 
-// F - узлы. С -узлы составят грубую сетку следующего уровня вложенности.
-// Значения же функции в F узлах должно быть восстановлено по значению функции
-// в ближайших С узлах (см. задачу интерполяции). 
+// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+// F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё). 
 template <typename doublerealT>
 void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	bool*& this_is_C_node, integer ilevel,
 	integer*& count_neighbour, integer*& n_a,
 	integer& newCcount,
-	doublereal*& threshold_quick_only_negative,
-	integer*& row_startA,
+	doublerealT*& threshold_quick_only_negative,
+	integer const *const row_startA,
 	Taccumulqtor_list**& hash_StrongTranspose_collection1,
 	bool bprint_mesage_diagnostic,
 	bool*& flag, integer iadd, 
 	bool bpositive_connections_CF_decomp,
 	bool bStrongTransposeON,
 	bool* &hash_table2,
-	integer* &istack, integer*& nnz_a,
+	integer* &istack, integer const *const nnz_a,
 	bool debug_reshime)
 {
 
@@ -3427,9 +3534,9 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	integer max_neighbour = 0;
 	integer icandidate = 0;
 
-	// Находим узел с наибольшим числом соседей и запоминаем его.
-	// Это первый встретившийся узел с наибольшим числом соседей.
-	// Это требуется для того чтобы стартовал алгоритм C/F разбиения.
+	// РќР°С…РѕРґРёРј СѓР·РµР» СЃ РЅР°РёР±РѕР»СЊС€РёРј С‡РёСЃР»РѕРј СЃРѕСЃРµРґРµР№ Рё Р·Р°РїРѕРјРёРЅР°РµРј РµРіРѕ.
+	// Р­С‚Рѕ РїРµСЂРІС‹Р№ РІСЃС‚СЂРµС‚РёРІС€РёР№СЃСЏ СѓР·РµР» СЃ РЅР°РёР±РѕР»СЊС€РёРј С‡РёСЃР»РѕРј СЃРѕСЃРµРґРµР№.
+	// Р­С‚Рѕ С‚СЂРµР±СѓРµС‚СЃСЏ РґР»СЏ С‚РѕРіРѕ С‡С‚РѕР±С‹ СЃС‚Р°СЂС‚РѕРІР°Р» Р°Р»РіРѕСЂРёС‚Рј C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 
 	for (integer i7 = 1; i7 <= ii_end1; i7++) {
 		if (count_neighbour[i7] > max_neighbour) {
@@ -3441,68 +3548,68 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 
 
-	// нужно выделить кто попал в coarse, а кто в этот раз попал в Fine Выделить всех кто соседствует
-	// с новыми Fine увеличить им счётчик соседей.
+	// РЅСѓР¶РЅРѕ РІС‹РґРµР»РёС‚СЊ РєС‚Рѕ РїРѕРїР°Р» РІ coarse, Р° РєС‚Рѕ РІ СЌС‚РѕС‚ СЂР°Р· РїРѕРїР°Р» РІ Fine Р’С‹РґРµР»РёС‚СЊ РІСЃРµС… РєС‚Рѕ СЃРѕСЃРµРґСЃС‚РІСѓРµС‚
+	// СЃ РЅРѕРІС‹РјРё Fine СѓРІРµР»РёС‡РёС‚СЊ РёРј СЃС‡С‘С‚С‡РёРє СЃРѕСЃРµРґРµР№.
 
 
 	const integer NULL_NEIGHBOUR = -1;
-	// Построение C/F разбиения.
+	// РџРѕСЃС‚СЂРѕРµРЅРёРµ C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 	integer vacant = NULL_NEIGHBOUR;
 	bool bcontinue_gl_1 = true;
-	// Построение C/F разбиения.
+	// РџРѕСЃС‚СЂРѕРµРЅРёРµ C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 	integer icountprohod = 0;
 
-	// храним те узлы которые уже были пройдены при конструировании.
-	// поначалу все узлы помечены как непосещённые.
+	// С…СЂР°РЅРёРј С‚Рµ СѓР·Р»С‹ РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ Р±С‹Р»Рё РїСЂРѕР№РґРµРЅС‹ РїСЂРё РєРѕРЅСЃС‚СЂСѓРёСЂРѕРІР°РЅРёРё.
+	// РїРѕРЅР°С‡Р°Р»Сѓ РІСЃРµ СѓР·Р»С‹ РїРѕРјРµС‡РµРЅС‹ РєР°Рє РЅРµРїРѕСЃРµС‰С‘РЅРЅС‹Рµ.
 	bool* bmarkervisit = nullptr;
-	if (bmarkervisit != nullptr) {
-		free(bmarkervisit);
-		bmarkervisit = nullptr;
-	}
+	//if (bmarkervisit != nullptr) {
+		//free(bmarkervisit);
+		//bmarkervisit = nullptr;
+	//}
 	bmarkervisit = my_declaration_array<bool>(n_a[ilevel - 1], false, "bmarkervisit");
 
 
-	// увеличение быстродействия достигается 
-	// сокращением пределов сканирования
-	// здесь хранится индекс начала сканирования flag.
+	// СѓРІРµР»РёС‡РµРЅРёРµ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІРёСЏ РґРѕСЃС‚РёРіР°РµС‚СЃСЏ 
+	// СЃРѕРєСЂР°С‰РµРЅРёРµРј РїСЂРµРґРµР»РѕРІ СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ
+	// Р·РґРµСЃСЊ С…СЂР°РЅРёС‚СЃСЏ РёРЅРґРµРєСЃ РЅР°С‡Р°Р»Р° СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ flag.
 	integer istartflag_scan = 1;
 	
-	// Задача 12mm hfet thermal resistance. 1.7млн неизвестных.
-	// AVL_TREE_ID   3мин 29с 590мс      {5}
-	// SPLAY_TREE_ID  3мин 16с 430мс {2}
-	// BINARY_HEAP 3мин 4с 0мс {1 *самая быстрая.}
-	// RANDOM_TREE_ID (Дерамида) 3мин 28с 90мс {4}
-	// RED_BLACK_TREE_ID 3мин 27с 210мс {3}
+	// Р—Р°РґР°С‡Р° 12mm hfet thermal resistance. 1.7РјР»РЅ РЅРµРёР·РІРµСЃС‚РЅС‹С….
+	// AVL_TREE_ID   3РјРёРЅ 29СЃ 590РјСЃ      {5}
+	// SPLAY_TREE_ID  3РјРёРЅ 16СЃ 430РјСЃ {2}
+	// BINARY_HEAP 3РјРёРЅ 4СЃ 0РјСЃ {1 *СЃР°РјР°СЏ Р±С‹СЃС‚СЂР°СЏ.}
+	// RANDOM_TREE_ID (Р”РµСЂР°РјРёРґР°) 3РјРёРЅ 28СЃ 90РјСЃ {4}
+	// RED_BLACK_TREE_ID 3РјРёРЅ 27СЃ 210РјСЃ {3}
 
 
-	const integer AVL_TREE_ID = 0;   // АВЛ дерево поиска. 12.12.2015.
-	const integer SPLAY_TREE_ID = 1; // Скошенное дерево поиска.
-	const integer BINARY_HEAP = 2; // Двоичная куча. 16.06.2017.
-	const integer RANDOM_TREE_ID = 3; // (Дерамида) Рандомизированное дерево поиска. 24.08.2017.
-	const integer RED_BLACK_TREE_ID = 4; // Красно-Чёрное дерево поиска. 22.06.2018.
-	const integer FIBONACCI_HEAP_ID = 5; // Фибоначчиева куча. 11.07.2018.
-	const integer VAN_EMDE_BOAS_TREE_ID = 6; // ван Эмде Боас дерево поиска. 30.06.2018
+	//const integer AVL_TREE_ID = 0;   // РђР’Р› РґРµСЂРµРІРѕ РїРѕРёСЃРєР°. 12.12.2015.
+	//const integer SPLAY_TREE_ID = 1; // РЎРєРѕС€РµРЅРЅРѕРµ РґРµСЂРµРІРѕ РїРѕРёСЃРєР°.
+	//const integer BINARY_HEAP = 2; // Р”РІРѕРёС‡РЅР°СЏ РєСѓС‡Р°. 16.06.2017.
+	//const integer RANDOM_TREE_ID = 3; // (Р”РµСЂР°РјРёРґР°) Р Р°РЅРґРѕРјРёР·РёСЂРѕРІР°РЅРЅРѕРµ РґРµСЂРµРІРѕ РїРѕРёСЃРєР°. 24.08.2017.
+	//const integer RED_BLACK_TREE_ID = 4; // РљСЂР°СЃРЅРѕ-Р§С‘СЂРЅРѕРµ РґРµСЂРµРІРѕ РїРѕРёСЃРєР°. 22.06.2018.
+	//const integer FIBONACCI_HEAP_ID = 5; // Р¤РёР±РѕРЅР°С‡С‡РёРµРІР° РєСѓС‡Р°. 11.07.2018.
+	//const integer VAN_EMDE_BOAS_TREE_ID = 6; // РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃ РґРµСЂРµРІРѕ РїРѕРёСЃРєР°. 30.06.2018
 	//integer id_tree = BINARY_HEAP; // AVL_TREE_ID; // SPLAY_TREE_ID; // BINARY_HEAP; // RANDOM_TREE_ID; // RED_BLACK_TREE_ID;
-	// 28.01.2018 На выбор пользователя.
+	// 28.01.2018 РќР° РІС‹Р±РѕСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
 
-	integer id_tree = my_amg_manager.iCFalgorithm_and_data_structure;
+	RS_COARSENING_KERNEL_DATA_STRUCTURE id_tree = my_amg_manager.iCFalgorithm_and_data_structure;
 
 	integer n = n_a[0];
 
-	// Выделяем память под двоичную кучу.
-	// Деструктор вызывается автоматом при уходе из области видимости области определения.
+	// Р’С‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РїРѕРґ РґРІРѕРёС‡РЅСѓСЋ РєСѓС‡Сѓ.
+	// Р”РµСЃС‚СЂСѓРєС‚РѕСЂ РІС‹Р·С‹РІР°РµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РѕРј РїСЂРё СѓС…РѕРґРµ РёР· РѕР±Р»Р°СЃС‚Рё РІРёРґРёРјРѕСЃС‚Рё РѕР±Р»Р°СЃС‚Рё РѕРїСЂРµРґРµР»РµРЅРёСЏ.
 	const integer isize_priority_queue01 = (integer)(0.4 * n); // 0.238
 	integer ikonst1 = isize_priority_queue01, ikonst2 = n;
-	if (id_tree != BINARY_HEAP) {
+	if (id_tree != RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP) {
 		ikonst1 = 0;
 		ikonst2 = 0;
 	}
-	PQ<integer> binary_heap(ikonst1, ikonst2); // 500K для 2.1M
+	PQ<integer> binary_heap(ikonst1, ikonst2); // 500K РґР»СЏ 2.1M
 
-	// Фибоначчиева куча.
+	// Р¤РёР±РѕРЅР°С‡С‡РёРµРІР° РєСѓС‡Р°.
 	FibonacciHeap<integer> fibo_heap;
 
-	if (id_tree == FIBONACCI_HEAP_ID) {
+	if (id_tree == RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP) {
 		fibo_heap.WakeUp2(n + 1);// alloc memory hash table
 	}
 
@@ -3510,31 +3617,31 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	Tree_splay* root_splay = 0;
 	size_splay_Tree = 0;
 	TreapNode* random_tree_root = nullptr;
-	RBtree RBroot; // Корень Красно-Чёрного дерева.
+	RBtree RBroot; // РљРѕСЂРµРЅСЊ РљСЂР°СЃРЅРѕ-Р§С‘СЂРЅРѕРіРѕ РґРµСЂРµРІР°.
 
 	root = 0;
 	root_splay = 0;
 	size_splay_Tree = 0;
 	random_tree_root = nullptr;
 
-	if (id_tree == BINARY_HEAP) {
+	if (id_tree == RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP) {
 		binary_heap.clear();
 	}
 
 
 	RBroot.Clear();
-	if (id_tree == FIBONACCI_HEAP_ID) {
+	if (id_tree == RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP) {
 		fibo_heap.UpdateSize(n_a[ilevel - 1] + 1);
 	}
 
 #if VEB_FLAG
 	int64_t res_vanEMDE_BOAS_Tree;
-	int64_t universe = 4294967296; // 2 ^32=2^(2^5) (4294 млн) работает
-	//int64_t universe = 67108864; // 2^26 не работает
-	//int64_t universe = 134217728; // 2^27 не работает
+	int64_t universe = 4294967296; // 2 ^32=2^(2^5) (4294 РјР»РЅ) СЂР°Р±РѕС‚Р°РµС‚
+	//int64_t universe = 67108864; // 2^26 РЅРµ СЂР°Р±РѕС‚Р°РµС‚
+	//int64_t universe = 134217728; // 2^27 РЅРµ СЂР°Р±РѕС‚Р°РµС‚
 	TvEB* vanEMDE_BOAS_Tree = nullptr;
 
-	if (id_tree == VAN_EMDE_BOAS_TREE_ID) {
+	if (id_tree == RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE) {
 		vanEMDE_BOAS_Tree = new TvEB(universe);
 	}
 #endif
@@ -3544,8 +3651,8 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	
 
 
-	// Нехорошо постоянно выделять и уничтожать память в длинном цикле, 
-	// более быстро выделить её один раз. См. выделение памяти под set.
+	// РќРµС…РѕСЂРѕС€Рѕ РїРѕСЃС‚РѕСЏРЅРЅРѕ РІС‹РґРµР»СЏС‚СЊ Рё СѓРЅРёС‡С‚РѕР¶Р°С‚СЊ РїР°РјСЏС‚СЊ РІ РґР»РёРЅРЅРѕРј С†РёРєР»Рµ, 
+	// Р±РѕР»РµРµ Р±С‹СЃС‚СЂРѕ РІС‹РґРµР»РёС‚СЊ РµС‘ РѕРґРёРЅ СЂР°Р·. РЎРј. РІС‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё РїРѕРґ set.
 	// 23.04.2017
 
 
@@ -3557,16 +3664,21 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	while (bcontinue_gl_1)
 	{
 
-		integer ic = 0;
-		integer ic_end_F_SiTranspose = 0;
-
+		
+		
 		integer ii = icandidate;
+		if (icandidate < 0) {
+			// 15.09.2020
+			icandidate = 0;
+			bcontinue_gl_1 = false;
+			break;
+		}
 		if (flag[Amat.i[ii]] == false) {
 
-			ic = 0; // Обязательная инициализация.
+			integer ic = 0; // РћР±СЏР·Р°С‚РµР»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
 
 
-			ic_end_F_SiTranspose = 0;
+			integer ic_end_F_SiTranspose = 0;
 			integer set0 = Amat.i[ii];
 
 
@@ -3577,21 +3689,21 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			this_is_C_node[set0] = true;
 			bmarkervisit[set0] = true;
 
-			doublerealT max_vnediagonal = -1.0; // максимальное значение модуля вне диагонального элемента. 
-												// добавляем диагональный элемент.
-												// узел set[0]==Amat.i[is0].
-												// Нахождение значения максимального внедиагонального элемента, с 
-												// учётом того что даже узел Дирихле связан с одним внутренним узлом расчётной области.
-												// 17 января 2016 правильное определение максимального внедиагонального элемента.
-												// Обязательная перемотка в самое начало строки.
+			doublerealT max_vnediagonal = -1.0; // РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РјРѕРґСѓР»СЏ РІРЅРµ РґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°. 
+												// РґРѕР±Р°РІР»СЏРµРј РґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
+												// СѓР·РµР» set[0]==Amat.i[is0].
+												// РќР°С…РѕР¶РґРµРЅРёРµ Р·РЅР°С‡РµРЅРёСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°, СЃ 
+												// СѓС‡С‘С‚РѕРј С‚РѕРіРѕ С‡С‚Рѕ РґР°Р¶Рµ СѓР·РµР» Р”РёСЂРёС…Р»Рµ СЃРІСЏР·Р°РЅ СЃ РѕРґРЅРёРј РІРЅСѓС‚СЂРµРЅРЅРёРј СѓР·Р»РѕРј СЂР°СЃС‡С‘С‚РЅРѕР№ РѕР±Р»Р°СЃС‚Рё.
+												// 17 СЏРЅРІР°СЂСЏ 2016 РїСЂР°РІРёР»СЊРЅРѕРµ РѕРїСЂРµРґРµР»РµРЅРёРµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°.
+												// РћР±СЏР·Р°С‚РµР»СЊРЅР°СЏ РїРµСЂРµРјРѕС‚РєР° РІ СЃР°РјРѕРµ РЅР°С‡Р°Р»Рѕ СЃС‚СЂРѕРєРё.
 			integer ii_back = ii;
 			while ((ii_back > iadd) && (Amat.i[ii_back] == set0)) ii_back--;
 			ii_back++;
 
 			doublerealT max_vnediagonal1 = -1.0e30;
 			
-			// Если делать по максимальному внедиагональному элементу то мы получим очень много элементов на грубых уровнях,
-			// и чрезвычайно медленную сходимость.
+			// Р•СЃР»Рё РґРµР»Р°С‚СЊ РїРѕ РјР°РєСЃРёРјР°Р»СЊРЅРѕРјСѓ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕРјСѓ СЌР»РµРјРµРЅС‚Сѓ С‚Рѕ РјС‹ РїРѕР»СѓС‡РёРј РѕС‡РµРЅСЊ РјРЅРѕРіРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° РіСЂСѓР±С‹С… СѓСЂРѕРІРЅСЏС…,
+			// Рё С‡СЂРµР·РІС‹С‡Р°Р№РЅРѕ РјРµРґР»РµРЅРЅСѓСЋ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 
 			if (bpositive_connections_CF_decomp) {
 				// 23_10_2016
@@ -3599,8 +3711,8 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 					if (Amat.j[is0] != set0) {
 						if (Amat.abs_aij[is0] > max_vnediagonal1) {
 							max_vnediagonal1 = Amat.abs_aij[is0]; //i,j
-							// Большое количество элементов на грубых уровнях,
-							// очень медленная сходимость.
+							// Р‘РѕР»СЊС€РѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° РіСЂСѓР±С‹С… СѓСЂРѕРІРЅСЏС…,
+							// РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅР°СЏ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 							//if (Amat.j[is0] == set[0]) break; 
 						}						
 					}
@@ -3612,8 +3724,8 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 						if (Amat.aij[is0] < 0.0) {
 							if (Amat.abs_aij[is0] > max_vnediagonal1) {
 								max_vnediagonal1 = Amat.abs_aij[is0]; //i,j
-								// Большое количество элементов на грубых уровнях,
-								// очень медленная сходимость.
+								// Р‘РѕР»СЊС€РѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° РіСЂСѓР±С‹С… СѓСЂРѕРІРЅСЏС…,
+								// РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅР°СЏ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 								//if (Amat.j[is0] == set[0]) break; 
 							}							
 						}
@@ -3623,31 +3735,31 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			
 			
 			//max_vnediagonal = max_vnediagonal1;  // 1			
-			// наиболее близка к оптимальной. -85%. но несомненно лучше max_vnediagonal = -1.0;
-			// 19 января 2016 установлено что важны все связи, не нужно учитывать threshold
-			// max_vnediagonal должно быть -1.0. Именно это значение обеспечивает наилучшую 
-			// скорость агломерации и наилучшую скорость сходимости.
-			max_vnediagonal = -1.0e30;  // все связи!!!											
+			// РЅР°РёР±РѕР»РµРµ Р±Р»РёР·РєР° Рє РѕРїС‚РёРјР°Р»СЊРЅРѕР№. -85%. РЅРѕ РЅРµСЃРѕРјРЅРµРЅРЅРѕ Р»СѓС‡С€Рµ max_vnediagonal = -1.0;
+			// 19 СЏРЅРІР°СЂСЏ 2016 СѓСЃС‚Р°РЅРѕРІР»РµРЅРѕ С‡С‚Рѕ РІР°Р¶РЅС‹ РІСЃРµ СЃРІСЏР·Рё, РЅРµ РЅСѓР¶РЅРѕ СѓС‡РёС‚С‹РІР°С‚СЊ threshold
+			// max_vnediagonal РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ -1.0. РРјРµРЅРЅРѕ СЌС‚Рѕ Р·РЅР°С‡РµРЅРёРµ РѕР±РµСЃРїРµС‡РёРІР°РµС‚ РЅР°РёР»СѓС‡С€СѓСЋ 
+			// СЃРєРѕСЂРѕСЃС‚СЊ Р°РіР»РѕРјРµСЂР°С†РёРё Рё РЅР°РёР»СѓС‡С€СѓСЋ СЃРєРѕСЂРѕСЃС‚СЊ СЃС…РѕРґРёРјРѕСЃС‚Рё.
+			max_vnediagonal = -1.0e30;  // РІСЃРµ СЃРІСЏР·Рё!!!											
 
 			ic++;
 
 
-			//  В set начиная с единицы и до <ic лежат кандидаты чтобы стать F.
+			//  Р’ set РЅР°С‡РёРЅР°СЏ СЃ РµРґРёРЅРёС†С‹ Рё РґРѕ <ic Р»РµР¶Р°С‚ РєР°РЅРґРёРґР°С‚С‹ С‡С‚РѕР±С‹ СЃС‚Р°С‚СЊ F.
 			// 5.01.2017
-			// 01.04.2017 Дополняемся F узлами из Si_Transpose связей.
+			// 01.04.2017 Р”РѕРїРѕР»РЅСЏРµРјСЃСЏ F СѓР·Р»Р°РјРё РёР· Si_Transpose СЃРІСЏР·РµР№.
 			if ((my_amg_manager.ipatch_number == 7) && (bStrongTransposeON)) {
 
 				integer imarker75_scan = 0;
 
-				// обычный линейный список.
+				// РѕР±С‹С‡РЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 				formirate_F_SiTranspose_hash_table_Gus2_struct02(hash_StrongTranspose_collection1[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);
 
 				ic = imarker75_scan + 1;
 			}
 
-			ic_end_F_SiTranspose = ic; // С этой позиции заканчиваются F которые из Si_Transpose.
+			ic_end_F_SiTranspose = ic; // РЎ СЌС‚РѕР№ РїРѕР·РёС†РёРё Р·Р°РєР°РЅС‡РёРІР°СЋС‚СЃСЏ F РєРѕС‚РѕСЂС‹Рµ РёР· Si_Transpose.
 
-									   // если узел j ещё не был добавлен в агрегат.
+									   // РµСЃР»Рё СѓР·РµР» j РµС‰С‘ РЅРµ Р±С‹Р» РґРѕР±Р°РІР»РµРЅ РІ Р°РіСЂРµРіР°С‚.
 			if (bpositive_connections_CF_decomp) {
 				if (flag[Amat.j[ii]] == false) {
 					if ((Amat.j[ii] != set0) && (Amat.abs_aij[ii] >= theta(ilevel) * max_vnediagonal)) {
@@ -3681,15 +3793,15 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 			//std::cout<<"sboi start";
 
-			// iscan = ii+1; // устаревший код
-			integer iscan = ii_back + 1; // важная модификация 19 января 2016г.
-								 // TODO 19 jan 2016.
+			// iscan = ii+1; // СѓСЃС‚Р°СЂРµРІС€РёР№ РєРѕРґ
+			integer iscan = ii_back + 1; // РІР°Р¶РЅР°СЏ РјРѕРґРёС„РёРєР°С†РёСЏ 19 СЏРЅРІР°СЂСЏ 2016Рі.
+			// 19 jan 2016.
 
 			if (bpositive_connections_CF_decomp) {
 				while ((iscan <= nnz_a[ilevel - 1] + iadd) && (Amat.i[iscan] == set0)) {
-					// 14 февраля 2016 код иногда приводящий к сбою.
-					//while (iscan <= row_startA[set0 + 1] - 1) { // код иногда приводящий к сбою по непонятной причине.
-					// если узел j ещё не был добавлен в агрегат.
+					// 14 С„РµРІСЂР°Р»СЏ 2016 РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ.
+					//while (iscan <= row_startA[set0 + 1] - 1) { // РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ РїРѕ РЅРµРїРѕРЅСЏС‚РЅРѕР№ РїСЂРёС‡РёРЅРµ.
+					// РµСЃР»Рё СѓР·РµР» j РµС‰С‘ РЅРµ Р±С‹Р» РґРѕР±Р°РІР»РµРЅ РІ Р°РіСЂРµРіР°С‚.
 					if (flag[Amat.j[iscan]] == false) {
 						if ((Amat.j[iscan] != set0) && (Amat.abs_aij[iscan] >= theta(ilevel) * max_vnediagonal)) {
 							// 21.05.2017
@@ -3702,7 +3814,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 							}
 
 							/*
-							// Медленная версия с линейным поиском.
+							// РњРµРґР»РµРЅРЅР°СЏ РІРµСЂСЃРёСЏ СЃ Р»РёРЅРµР№РЅС‹Рј РїРѕРёСЃРєРѕРј.
 							vacant = Amat.j[iscan];
 							for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
@@ -3725,9 +3837,9 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			}
 			else {
 				while ((iscan <= nnz_a[ilevel - 1] + iadd) && (Amat.i[iscan] == set0)) {
-					// 14 февраля 2016 код иногда приводящий к сбою.
-					//while (iscan <= row_startA[set0 + 1] - 1) { // код иногда приводящий к сбою по непонятной причине.
-					// если узел j ещё не был добавлен в агрегат.
+					// 14 С„РµРІСЂР°Р»СЏ 2016 РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ.
+					//while (iscan <= row_startA[set0 + 1] - 1) { // РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ РїРѕ РЅРµРїРѕРЅСЏС‚РЅРѕР№ РїСЂРёС‡РёРЅРµ.
+					// РµСЃР»Рё СѓР·РµР» j РµС‰С‘ РЅРµ Р±С‹Р» РґРѕР±Р°РІР»РµРЅ РІ Р°РіСЂРµРіР°С‚.
 					if (flag[Amat.j[iscan]] == false) {
 						if ((Amat.j[iscan] != set0) && (Amat.aij[iscan] < 0.0) && (Amat.abs_aij[iscan] >= theta(ilevel) * max_vnediagonal)) {
 							// 21.05.2017
@@ -3762,17 +3874,17 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			}
 
 			//std::cout<<"sboi end";
-			// Это была учтена только связь i,j
+			// Р­С‚Рѕ Р±С‹Р»Р° СѓС‡С‚РµРЅР° С‚РѕР»СЊРєРѕ СЃРІСЏР·СЊ i,j
 
 
 
 
 
 
-		// В этом месте множество set успешно сформировано:
-		// 1. Перепаковка из root_Gus_set в set.
-		// 2. root_Gus_set больше не используется.
-		// 3. Именно здесь надо выделить данные под set.
+		// Р’ СЌС‚РѕРј РјРµСЃС‚Рµ РјРЅРѕР¶РµСЃС‚РІРѕ set СѓСЃРїРµС€РЅРѕ СЃС„РѕСЂРјРёСЂРѕРІР°РЅРѕ:
+		// 1. РџРµСЂРµРїР°РєРѕРІРєР° РёР· root_Gus_set РІ set.
+		// 2. root_Gus_set Р±РѕР»СЊС€Рµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
+		// 3. РРјРµРЅРЅРѕ Р·РґРµСЃСЊ РЅР°РґРѕ РІС‹РґРµР»РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕРґ set.
 			integer* set = nullptr;
 			set = new integer[ic + 2];
 			//if (set == nullptr) {
@@ -3793,14 +3905,14 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 
 			for (integer isc = 1; isc < ic; isc++) {
-				this_is_F_node[set[isc]] = true; // это только новые F узлы.
+				this_is_F_node[set[isc]] = true; // СЌС‚Рѕ С‚РѕР»СЊРєРѕ РЅРѕРІС‹Рµ F СѓР·Р»С‹.
 				bmarkervisit[set[isc]] = true;
 			}
 
 
 
 
-			// Помечаем узлы как включённые в агрегат.
+			// РџРѕРјРµС‡Р°РµРј СѓР·Р»С‹ РєР°Рє РІРєР»СЋС‡С‘РЅРЅС‹Рµ РІ Р°РіСЂРµРіР°С‚.
 			for (integer js = 0; js < ic; js++) {
 				flag[set[js]] = true;
 			}
@@ -3810,11 +3922,11 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 
 
-			// Алгоритм (5 декабря 2015 revised) 
-			// 1. Сканируем все F которые соседи данного С на данном проходе.
-			// 2. Для каждого фиксированного F сканируем его "строчных" соседей.
-			// 3. Если узел еще не был включён в агрегат то ищем всех соседей данного узла на предмет 
-			// соседства с фиксированным набором F из пункта 1.
+			// РђР»РіРѕСЂРёС‚Рј (5 РґРµРєР°Р±СЂСЏ 2015 revised) 
+			// 1. РЎРєР°РЅРёСЂСѓРµРј РІСЃРµ F РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃРµРґРё РґР°РЅРЅРѕРіРѕ РЎ РЅР° РґР°РЅРЅРѕРј РїСЂРѕС…РѕРґРµ.
+			// 2. Р”Р»СЏ РєР°Р¶РґРѕРіРѕ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ F СЃРєР°РЅРёСЂСѓРµРј РµРіРѕ "СЃС‚СЂРѕС‡РЅС‹С…" СЃРѕСЃРµРґРµР№.
+			// 3. Р•СЃР»Рё СѓР·РµР» РµС‰Рµ РЅРµ Р±С‹Р» РІРєР»СЋС‡С‘РЅ РІ Р°РіСЂРµРіР°С‚ С‚Рѕ РёС‰РµРј РІСЃРµС… СЃРѕСЃРµРґРµР№ РґР°РЅРЅРѕРіРѕ СѓР·Р»Р° РЅР° РїСЂРµРґРјРµС‚ 
+			// СЃРѕСЃРµРґСЃС‚РІР° СЃ С„РёРєСЃРёСЂРѕРІР°РЅРЅС‹Рј РЅР°Р±РѕСЂРѕРј F РёР· РїСѓРЅРєС‚Р° 1.
 
 
 
@@ -3829,21 +3941,21 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			}
 			}
 			*/
-			// 12 декабря 2015.
-			// Надо удалить из АВЛ дерева C и F узлы.
-			// Это удаление очищает АВЛ дерево и приводит его к
-			// рабочему состоянию. Удаление несуществующих в дереве узлов
-			// производится корректно. Удаление производится за логарифмическое
-			// по основанию 2  время от количества элементов в дереве
-			// сбалансированность дерева при этом сохраняется.
+			// 12 РґРµРєР°Р±СЂСЏ 2015.
+			// РќР°РґРѕ СѓРґР°Р»РёС‚СЊ РёР· РђР’Р› РґРµСЂРµРІР° C Рё F СѓР·Р»С‹.
+			// Р­С‚Рѕ СѓРґР°Р»РµРЅРёРµ РѕС‡РёС‰Р°РµС‚ РђР’Р› РґРµСЂРµРІРѕ Рё РїСЂРёРІРѕРґРёС‚ РµРіРѕ Рє
+			// СЂР°Р±РѕС‡РµРјСѓ СЃРѕСЃС‚РѕСЏРЅРёСЋ. РЈРґР°Р»РµРЅРёРµ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РІ РґРµСЂРµРІРµ СѓР·Р»РѕРІ
+			// РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ РєРѕСЂСЂРµРєС‚РЅРѕ. РЈРґР°Р»РµРЅРёРµ РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ Р·Р° Р»РѕРіР°СЂРёС„РјРёС‡РµСЃРєРѕРµ
+			// РїРѕ РѕСЃРЅРѕРІР°РЅРёСЋ 2  РІСЂРµРјСЏ РѕС‚ РєРѕР»РёС‡РµСЃС‚РІР° СЌР»РµРјРµРЅС‚РѕРІ РІ РґРµСЂРµРІРµ
+			// СЃР±Р°Р»Р°РЅСЃРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РґРµСЂРµРІР° РїСЂРё СЌС‚РѕРј СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ.
 			for (integer js = 0; js < ic; js++) {
 				data_BalTree ddel;
 				ddel.i = set[js];
 				ddel.count_neighbour = count_neighbour[set[js]];
-				// Уникальный ключ для дерева ван Эмде Боаса.
+				// РЈРЅРёРєР°Р»СЊРЅС‹Р№ РєР»СЋС‡ РґР»СЏ РґРµСЂРµРІР° РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР°.
 #if VEB_FLAG
 				integer  veb_del_key = (count_neighbour[set[js]]) * (n_a[ilevel - 1] + 1) + (set[js]);
-				if (id_tree == VAN_EMDE_BOAS_TREE_ID) {
+				if (id_tree == RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE) {
 					if (veb_del_key > universe - 2) {
 						std::cout<<"overflow veb-Van Emde Boas 2^2^5"<<std::endl;
 						system("PAUSE");
@@ -3856,15 +3968,15 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 #endif
 				//ddel.ii = row_startA[ddel.i];
 				switch (id_tree) {
-				case AVL_TREE_ID: root = remove_AVL(root, ddel);
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE: root = remove_AVL(root, ddel);
 					break;
-				case SPLAY_TREE_ID: root_splay = delete_splay_Tree(ddel, root_splay);
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE: root_splay = delete_splay_Tree(ddel, root_splay);
 					break;
-				case BINARY_HEAP:
-					// Уникальным ключом удаления является set[js].
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP:
+					// РЈРЅРёРєР°Р»СЊРЅС‹Рј РєР»СЋС‡РѕРј СѓРґР°Р»РµРЅРёСЏ СЏРІР»СЏРµС‚СЃСЏ set[js].
 					binary_heap.remove(set[js]);
 					break;
-				case RANDOM_TREE_ID:
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP:
 					save_root = random_tree_root;
 					nrt_temp = search(random_tree_root, ddel);
 					random_tree_root = save_root;
@@ -3874,17 +3986,17 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 						random_tree_root = deleteNode(random_tree_root, ddel);
 					}
 					break;
-				case RED_BLACK_TREE_ID:
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE:
 					RBroot.Remove(ddel);
 					break;
-				case FIBONACCI_HEAP_ID:
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP:
 					if (!fibo_heap.isEmpty()) {
 						fibo_heap.deleteKey(ddel);
 					}
 					break;
-				case VAN_EMDE_BOAS_TREE_ID:
+				case RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE:
 #if VEB_FLAG
-					// Если элемент присутствует то мы его удалим.
+					// Р•СЃР»Рё СЌР»РµРјРµРЅС‚ РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚ С‚Рѕ РјС‹ РµРіРѕ СѓРґР°Р»РёРј.
 					res_vanEMDE_BOAS_Tree = vEB_find(vanEMDE_BOAS_Tree, veb_del_key);
 					if (!res_vanEMDE_BOAS_Tree) {
 
@@ -3908,14 +4020,14 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 			//std::cout<<"additional and modify new neighbour"<<std::endl;
 
-			// 10 января 2016. Новая логика.
-			// Устраним некоторые повторные модификации (это должно снизить нагрузку на АВЛ дерево).
-			// Эта модификация даёт сокращение количества V циклов которые требуются до сходимости
-			// Эта модификация наиболее близка к классической описанной в литературе чем все предыдущие.
-			// На момент 13 января 2016 это лучший вариант по скорости вычислений.
+			// 10 СЏРЅРІР°СЂСЏ 2016. РќРѕРІР°СЏ Р»РѕРіРёРєР°.
+			// РЈСЃС‚СЂР°РЅРёРј РЅРµРєРѕС‚РѕСЂС‹Рµ РїРѕРІС‚РѕСЂРЅС‹Рµ РјРѕРґРёС„РёРєР°С†РёРё (СЌС‚Рѕ РґРѕР»Р¶РЅРѕ СЃРЅРёР·РёС‚СЊ РЅР°РіСЂСѓР·РєСѓ РЅР° РђР’Р› РґРµСЂРµРІРѕ).
+			// Р­С‚Р° РјРѕРґРёС„РёРєР°С†РёСЏ РґР°С‘С‚ СЃРѕРєСЂР°С‰РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° V С†РёРєР»РѕРІ РєРѕС‚РѕСЂС‹Рµ С‚СЂРµР±СѓСЋС‚СЃСЏ РґРѕ СЃС…РѕРґРёРјРѕСЃС‚Рё
+			// Р­С‚Р° РјРѕРґРёС„РёРєР°С†РёСЏ РЅР°РёР±РѕР»РµРµ Р±Р»РёР·РєР° Рє РєР»Р°СЃСЃРёС‡РµСЃРєРѕР№ РѕРїРёСЃР°РЅРЅРѕР№ РІ Р»РёС‚РµСЂР°С‚СѓСЂРµ С‡РµРј РІСЃРµ РїСЂРµРґС‹РґСѓС‰РёРµ.
+			// РќР° РјРѕРјРµРЅС‚ 13 СЏРЅРІР°СЂСЏ 2016 СЌС‚Рѕ Р»СѓС‡С€РёР№ РІР°СЂРёР°РЅС‚ РїРѕ СЃРєРѕСЂРѕСЃС‚Рё РІС‹С‡РёСЃР»РµРЅРёР№.
 			integer itop_stack2 = 0;
 
-			// 10 января 2016. Старый вариант просто очищенный от устаревшего кода.
+			// 10 СЏРЅРІР°СЂСЏ 2016. РЎС‚Р°СЂС‹Р№ РІР°СЂРёР°РЅС‚ РїСЂРѕСЃС‚Рѕ РѕС‡РёС‰РµРЅРЅС‹Р№ РѕС‚ СѓСЃС‚Р°СЂРµРІС€РµРіРѕ РєРѕРґР°.
 			for (integer js = 1; js < ic; js++) {
 
 				integer i_11 = set[js];
@@ -3929,7 +4041,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				bool bvisitsos = false;
 				for (integer is0 = istart73; (is0 <= iend73); is0++) {
 					//for (integer is0 = istart73; (is0 <= iend5) && (Amat.i[is0] == Amat.i[ii_11]); is0++) {
-					// В пересечении с U!!!
+					// Р’ РїРµСЂРµСЃРµС‡РµРЅРёРё СЃ U!!!
 					if (flag[Amat.j[is0]] == false) {
 
 
@@ -3937,21 +4049,21 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 
 
-						// Избавляемся от повторных инкрементаций.
-						// В 2D на пятиточечном шаблоне повторные инкрементации составляют
-						// около 33%.
-						// Это даёт стандартный алгоритм сгрубления, описаный в статьях, но
-						// на ряде тестовых задач при таком подходе агломерация проходила очень
-						// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-						// Эта проблема проявилась на задачах:
-						// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
-						// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
-						// Проблема не в этом месте кода.
+						// РР·Р±Р°РІР»СЏРµРјСЃСЏ РѕС‚ РїРѕРІС‚РѕСЂРЅС‹С… РёРЅРєСЂРµРјРµРЅС‚Р°С†РёР№.
+						// Р’ 2D РЅР° РїСЏС‚РёС‚РѕС‡РµС‡РЅРѕРј С€Р°Р±Р»РѕРЅРµ РїРѕРІС‚РѕСЂРЅС‹Рµ РёРЅРєСЂРµРјРµРЅС‚Р°С†РёРё СЃРѕСЃС‚Р°РІР»СЏСЋС‚
+						// РѕРєРѕР»Рѕ 33%.
+						// Р­С‚Рѕ РґР°С‘С‚ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј СЃРіСЂСѓР±Р»РµРЅРёСЏ, РѕРїРёСЃР°РЅС‹Р№ РІ СЃС‚Р°С‚СЊСЏС…, РЅРѕ
+						// РЅР° СЂСЏРґРµ С‚РµСЃС‚РѕРІС‹С… Р·Р°РґР°С‡ РїСЂРё С‚Р°РєРѕРј РїРѕРґС…РѕРґРµ Р°РіР»РѕРјРµСЂР°С†РёСЏ РїСЂРѕС…РѕРґРёР»Р° РѕС‡РµРЅСЊ
+						// РїР»РѕС…Рѕ (РїРµСЂРµРїРѕР»РЅРµРЅРёРµ РїРѕ РїР°РјСЏС‚Рё, РЅРµ С…РІР°С‚Р°Р»Рѕ РґР°Р¶Рµ СЃРµРјРёРєСЂР°С‚РЅРѕРіРѕ СЂР°Р·РјРµСЂР° РёСЃС…РѕРґРЅРѕР№ РјР°С‚СЂРёС†С‹).
+						// Р­С‚Р° РїСЂРѕР±Р»РµРјР° РїСЂРѕСЏРІРёР»Р°СЃСЊ РЅР° Р·Р°РґР°С‡Р°С…:
+						// CGHV1J006D, РџРѕС‚РµРЅС†РёР°Р» С‚РѕСЂР°, Р­Р»РµРєС‚СЂРёС‡РµСЃРєРёР№ РїРѕС‚РµРЅС†РёР°Р» РІ FET, Module 2.
+						// РџР»РѕС…Р°СЏ СЃРєРѕСЂРѕСЃС‚СЊ Р°РіР»РѕРјРµСЂР°С†РёРё РїРѕР»СѓС‡Р°РµС‚СЃСЏ РіР»Р°РІРЅС‹Рј РѕР±СЂР°Р·РѕРј РёР·-Р·Р° С€РµСЃС‚РѕРіРѕ СЃРїРѕСЃРѕР±Р° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+						// РџСЂРѕР±Р»РµРјР° РЅРµ РІ СЌС‚РѕРј РјРµСЃС‚Рµ РєРѕРґР°.
 						if (hash_table2[isc] == false) {
 							hash_table2[isc] = true;
 							istack[itop_stack2] = isc;
 							itop_stack2++;
-							// закомментированный лучше.
+							// Р·Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ Р»СѓС‡С€Рµ.
 							//}
 
 							//21_12_2016
@@ -3965,9 +4077,9 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 							integer istopmarker2 = row_startA[Amat.i[ii_2] + 1] - 1;
 
 							// 22 _12_2016
-							// Это лучший вариант: обеспечивает корректное построение иерархии
-							// уровней на задаче passive module 6 в то время как все остальные 
-							// отличные от этого способа давали сбой.
+							// Р­С‚Рѕ Р»СѓС‡С€РёР№ РІР°СЂРёР°РЅС‚: РѕР±РµСЃРїРµС‡РёРІР°РµС‚ РєРѕСЂСЂРµРєС‚РЅРѕРµ РїРѕСЃС‚СЂРѕРµРЅРёРµ РёРµСЂР°СЂС…РёРё
+							// СѓСЂРѕРІРЅРµР№ РЅР° Р·Р°РґР°С‡Рµ passive module 6 РІ С‚Рѕ РІСЂРµРјСЏ РєР°Рє РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ 
+							// РѕС‚Р»РёС‡РЅС‹Рµ РѕС‚ СЌС‚РѕРіРѕ СЃРїРѕСЃРѕР±Р° РґР°РІР°Р»Рё СЃР±РѕР№.
 							doublerealT max_vnediagonal33 = -1.0e30;
 							for (integer is01 = istart72; (is01 <= istopmarker2); is01++) {
 								if (Amat.j[is01] != Amat.i[is01]) {
@@ -3977,14 +4089,14 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 								}
 							}
 							for (integer is01 = istart72; (is01 <= istopmarker2); is01++) {
-								// 0.2375 импирически подобрана для passive module 6.
+								// 0.2375 РёРјРїРёСЂРёС‡РµСЃРєРё РїРѕРґРѕР±СЂР°РЅР° РґР»СЏ passive module 6.
 								if ((Amat.aij[is01] < 0.0) && (Amat.abs_aij[is01] > 0.2375 * max_vnediagonal33)) {
 									if (Amat.j[is01] == set[js]) {
 										if ((my_amg_manager.ipatch_number == 7) && (bStrongTransposeON)) {
 											if (js < ic_end_F_SiTranspose) {
-												// Увеличиваем счётчики только тех соседей F узлов которые
-												// являются соседями F узлов которые были получены из Si_Transpose связей.
-												// Именно так написано у Джона Руге и Клауса Штубена.
+												// РЈРІРµР»РёС‡РёРІР°РµРј СЃС‡С‘С‚С‡РёРєРё С‚РѕР»СЊРєРѕ С‚РµС… СЃРѕСЃРµРґРµР№ F СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ
+												// СЏРІР»СЏСЋС‚СЃСЏ СЃРѕСЃРµРґСЏРјРё F СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ Р±С‹Р»Рё РїРѕР»СѓС‡РµРЅС‹ РёР· Si_Transpose СЃРІСЏР·РµР№.
+												// РРјРµРЅРЅРѕ С‚Р°Рє РЅР°РїРёСЃР°РЅРѕ Сѓ Р”Р¶РѕРЅР° Р СѓРіРµ Рё РљР»Р°СѓСЃР° РЁС‚СѓР±РµРЅР°.
 												ic2++;
 											}
 										}
@@ -3993,7 +4105,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 										}
 									}
 								}
-								// уменьшить счетчик слабого (weakly) соседа ?
+								// СѓРјРµРЅСЊС€РёС‚СЊ СЃС‡РµС‚С‡РёРє СЃР»Р°Р±РѕРіРѕ (weakly) СЃРѕСЃРµРґР° ?
 							}
 
 
@@ -4001,21 +4113,22 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 							dsearch.count_neighbour = count_neighbour[isc];
 							//dsearch.ii = ii_2;
 							dsearch.i = isc;
-							// Увеличиваем на количество связей с новыми F узлами.
+							// РЈРІРµР»РёС‡РёРІР°РµРј РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРІСЏР·РµР№ СЃ РЅРѕРІС‹РјРё F СѓР·Р»Р°РјРё.
 							count_neighbour[isc] += ic2;
 							data_BalTree dadd;
 							dadd.count_neighbour = count_neighbour[isc];
 							//dadd.ii = ii_2;
 							dadd.i = isc;
 
-							// Уникальный ключ для дерева ван Эмде Боаса.
+							// РЈРЅРёРєР°Р»СЊРЅС‹Р№ РєР»СЋС‡ РґР»СЏ РґРµСЂРµРІР° РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР°.
 							integer  veb_dadd_key = (dadd.count_neighbour) * (n_a[ilevel - 1] + 1) + (dadd.i);
 							integer  veb_dsearch_key = (dsearch.count_neighbour) * (n_a[ilevel - 1] + 1) + (dsearch.i);
 							//integer  veb_dadd_key = (dadd.count_neighbour)*(n + 1) + (dadd.i);
 							//integer  veb_dsearch_key = (dsearch.count_neighbour)*(n + 1) + (dsearch.i);
 
-#if VEB_FLAG
-							if (id_tree == VAN_EMDE_BOAS_TREE_ID) {
+							if (id_tree == RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE) {
+
+#if VEB_FLAG							
 								if (veb_dadd_key > universe - 2) {
 									std::cout<<"overflow veb-Van Emde Boas 2^2^5"<<std::endl;
 									system("PAUSE");
@@ -4024,79 +4137,83 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 									std::cout<<"overflow veb-Van Emde Boas 2^2^5"<<std::endl;
 									system("PAUSE");
 								}
-							}
+							
+
+							
+								if (veb_dadd_key < 1) {
+									std::cout << "overflow veb-Van Emde Boas <1 " << std::endl;
+									system("PAUSE");
+								}
+								if (veb_dsearch_key < 1) {
+									std::cout << "overflow veb-Van Emde Boas <1 " << std::endl;
+									system("PAUSE");
+								}
+
 #endif
-							if (veb_dadd_key < 1) {
-								std::cout<<"overflow veb-Van Emde Boas <1 "<<std::endl;
-								system("PAUSE");
-							}
-							if (veb_dsearch_key < 1) {
-								std::cout<<"overflow veb-Van Emde Boas <1 "<<std::endl;
-								system("PAUSE");
 							}
 
 
 							TreapNode* nrt_temp_1 = nullptr;
 							TreapNode* save_root_1 = nullptr;
 
-							// добавляем элемент в АВЛ дерево,
-							// причём если элемент уже находился в дереве то он модифицируется.
-							// 12 декабря 2015.
-							// Добавление узла происходит за логарифмическое по основанию 2 время,
-							// причём после добавления дерево остаётся сбалансированным.
-							// Г.М. Адельсон-Вельский и Е.М. Ландис 1962.
+							// РґРѕР±Р°РІР»СЏРµРј СЌР»РµРјРµРЅС‚ РІ РђР’Р› РґРµСЂРµРІРѕ,
+							// РїСЂРёС‡С‘Рј РµСЃР»Рё СЌР»РµРјРµРЅС‚ СѓР¶Рµ РЅР°С…РѕРґРёР»СЃСЏ РІ РґРµСЂРµРІРµ С‚Рѕ РѕРЅ РјРѕРґРёС„РёС†РёСЂСѓРµС‚СЃСЏ.
+							// 12 РґРµРєР°Р±СЂСЏ 2015.
+							// Р”РѕР±Р°РІР»РµРЅРёРµ СѓР·Р»Р° РїСЂРѕРёСЃС…РѕРґРёС‚ Р·Р° Р»РѕРіР°СЂРёС„РјРёС‡РµСЃРєРѕРµ РїРѕ РѕСЃРЅРѕРІР°РЅРёСЋ 2 РІСЂРµРјСЏ,
+							// РїСЂРёС‡С‘Рј РїРѕСЃР»Рµ РґРѕР±Р°РІР»РµРЅРёСЏ РґРµСЂРµРІРѕ РѕСЃС‚Р°С‘С‚СЃСЏ СЃР±Р°Р»Р°РЅСЃРёСЂРѕРІР°РЅРЅС‹Рј.
+							// Р“.Рњ. РђРґРµР»СЊСЃРѕРЅ-Р’РµР»СЊСЃРєРёР№ Рё Р•.Рњ. Р›Р°РЅРґРёСЃ 1962.
 							switch (id_tree)
 							{
-							case AVL_TREE_ID: root = insert_and_modify(root, dadd, dsearch);
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE: root = insert_and_modify(root, dadd, dsearch);
 								break;
-							case SPLAY_TREE_ID: root_splay = insert_and_modify(root_splay, dadd, dsearch);
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE: root_splay = insert_and_modify(root_splay, dadd, dsearch);
 								break;
-							case BINARY_HEAP:
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP:
 								if (binary_heap.isfound(isc)) {
-									// Найден
-									// Удаляем существующий элемент и вставляем новый.
+									// РќР°Р№РґРµРЅ
+									// РЈРґР°Р»СЏРµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№ СЌР»РµРјРµРЅС‚ Рё РІСЃС‚Р°РІР»СЏРµРј РЅРѕРІС‹Р№.
 									binary_heap.remove(isc);
-									// Осуществляем вставку нового элемента.
+									// РћСЃСѓС‰РµСЃС‚РІР»СЏРµРј РІСЃС‚Р°РІРєСѓ РЅРѕРІРѕРіРѕ СЌР»РµРјРµРЅС‚Р°.
 									binary_heap.insert(count_neighbour[isc], isc);
 								}
 								else {
-									// отсутствует.
-									// Осуществляем вставку нового элемента.
+									// РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚.
+									// РћСЃСѓС‰РµСЃС‚РІР»СЏРµРј РІСЃС‚Р°РІРєСѓ РЅРѕРІРѕРіРѕ СЌР»РµРјРµРЅС‚Р°.
 									binary_heap.insert(count_neighbour[isc], isc);
 								}
 								break;
-							case RANDOM_TREE_ID:
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP:
 								nrt_temp_1 = nullptr;
 								save_root_1 = random_tree_root;
 								nrt_temp_1 = search(random_tree_root, dsearch);
 								random_tree_root = save_root_1;
 								save_root_1 = nullptr;
 								if (nrt_temp_1 == nullptr) {
-									// Элемент в дереве отсутствует.
+									// Р­Р»РµРјРµРЅС‚ РІ РґРµСЂРµРІРµ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚.
 									random_tree_root = insert(random_tree_root, dadd);
 								}
 								else {
 									nrt_temp_1 = nullptr;
-									// Удаление
+									// РЈРґР°Р»РµРЅРёРµ
 									random_tree_root = deleteNode(random_tree_root, dsearch);
-									// Вставка
+									// Р’СЃС‚Р°РІРєР°
 									random_tree_root = insert(random_tree_root, dadd);
 								}
 								break;
-							case RED_BLACK_TREE_ID:
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE:
 								RBroot.InsertAndModify(dadd, dsearch);
 								break;
-							case FIBONACCI_HEAP_ID:
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP:
 								fibo_heap.insert_and_modify(-veb_dsearch_key, -veb_dadd_key);
 								break;
-							case VAN_EMDE_BOAS_TREE_ID:
+							case RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE:
 #if VEB_FLAG
 								res_vanEMDE_BOAS_Tree = vEB_find(vanEMDE_BOAS_Tree, veb_dsearch_key);
 								if (!res_vanEMDE_BOAS_Tree) {
-									// не найден
+									// РЅРµ РЅР°Р№РґРµРЅ
 									res_vanEMDE_BOAS_Tree = vEB_find(vanEMDE_BOAS_Tree, veb_dadd_key);
 									if (!res_vanEMDE_BOAS_Tree) {
-										// не найден
+										// РЅРµ РЅР°Р№РґРµРЅ
 										res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
 										if (!res_vanEMDE_BOAS_Tree) {
 											std::cout<<"insert problem veb veb_dadd_key=="<< veb_dadd_key<<std::endl;
@@ -4109,7 +4226,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 										std::cout<<"cannot be deleted post factum delete veb_dsearch_key=="<< veb_dsearch_key<<std::endl;
 										system("PAUSE");
 									}
-									// найден, удален м вставлен == заменен.
+									// РЅР°Р№РґРµРЅ, СѓРґР°Р»РµРЅ Рј РІСЃС‚Р°РІР»РµРЅ == Р·Р°РјРµРЅРµРЅ.
 									res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
 									if (!res_vanEMDE_BOAS_Tree) {
 										std::cout<<"insert problem veb veb_dadd_key=="<< veb_dadd_key<<std::endl;
@@ -4132,12 +4249,12 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				}
 			}
 
-			// Очистка (восстановление хеш-таблицы).
-			// НИ в коем случае не параллелить по OPENMP в этом месте.!!!
+			// РћС‡РёСЃС‚РєР° (РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ С…РµС€-С‚Р°Р±Р»РёС†С‹).
+			// РќР РІ РєРѕРµРј СЃР»СѓС‡Р°Рµ РЅРµ РїР°СЂР°Р»Р»РµР»РёС‚СЊ РїРѕ OPENMP РІ СЌС‚РѕРј РјРµСЃС‚Рµ.!!!
 			for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 				hash_table2[istack[i_54]] = false;
 			}
-			itop_stack2 = 0; // стек снова готов к работе.
+			itop_stack2 = 0; // СЃС‚РµРє СЃРЅРѕРІР° РіРѕС‚РѕРІ Рє СЂР°Р±РѕС‚Рµ.
 
 
 
@@ -4149,9 +4266,9 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			}
 
 			newCcount++;
-			// Один агрегат создан.
+			// РћРґРёРЅ Р°РіСЂРµРіР°С‚ СЃРѕР·РґР°РЅ.
 
-		} // узел не был ещё включён в агрегат.
+		} // СѓР·РµР» РЅРµ Р±С‹Р» РµС‰С‘ РІРєР»СЋС‡С‘РЅ РІ Р°РіСЂРµРіР°С‚.
 
 
 
@@ -4159,17 +4276,17 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 		for (integer i_1 = istartflag_scan; i_1 <= n_a[ilevel - 1]; i_1++) {
 			if (flag[i_1] == false) {
 				bcontinue_gl_1 = true;
-				istartflag_scan = i_1; // сокращаем пределы сканирования.
-				break; // досрочный выход из цикла for.
+				istartflag_scan = i_1; // СЃРѕРєСЂР°С‰Р°РµРј РїСЂРµРґРµР»С‹ СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ.
+				break; // РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· С†РёРєР»Р° for.
 			}
 		}
 
-		// Вычисление узла с максимальным количеством соседей.
+		// Р’С‹С‡РёСЃР»РµРЅРёРµ СѓР·Р»Р° СЃ РјР°РєСЃРёРјР°Р»СЊРЅС‹Рј РєРѕР»РёС‡РµСЃС‚РІРѕРј СЃРѕСЃРµРґРµР№.
 		icandidate = 0;
 
 
-		// Данный код чрезвычайно компактен.
-		// Надо найти максимальный элемент в АВЛ дереве.
+		// Р”Р°РЅРЅС‹Р№ РєРѕРґ С‡СЂРµР·РІС‹С‡Р°Р№РЅРѕ РєРѕРјРїР°РєС‚РµРЅ.
+		// РќР°РґРѕ РЅР°Р№С‚Рё РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚ РІ РђР’Р› РґРµСЂРµРІРµ.
 		node_AVL* emax = 0;
 		Tree_splay* emax_splay = 0;
 		TreapNode* emax_random_tree = nullptr;
@@ -4180,13 +4297,13 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 		switch (id_tree)
 		{
-		case AVL_TREE_ID: emax = findmax(root);
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE: emax = findmax(root);
 			break;
-		case SPLAY_TREE_ID: emax_splay = findmax(root_splay);
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE: emax_splay = findmax(root_splay);
 			break;
-		case BINARY_HEAP:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP:
 			if (!binary_heap.empty()) {
-				// Куча не пуста.
+				// РљСѓС‡Р° РЅРµ РїСѓСЃС‚Р°.
 				icandidate = row_startA[binary_heap.readkeymaxelm()];
 			}
 			else {
@@ -4195,7 +4312,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				bcontinue_gl_1 = false;
 			}
 			break;
-		case RANDOM_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP:
 			save_root = random_tree_root;
 			if (emax_random_tree != nullptr) {
 				delete[] emax_random_tree;
@@ -4206,10 +4323,10 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			save_root = nullptr;
 
 			break;
-		case RED_BLACK_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE:
 			dbt_emax = RBroot.GetMaxElm();
 			break;
-		case FIBONACCI_HEAP_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP:
 			if (fibo_heap.isEmpty()) {
 				dbt_emax.i = -1;
 			}
@@ -4219,12 +4336,12 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				dbt_emax.count_neighbour = ((ui_emax) / (n_a[ilevel - 1] + 1));
 			}
 			break;
-		case VAN_EMDE_BOAS_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE:
 #if VEB_FLAG
 			if (!((vanEMDE_BOAS_Tree == nullptr) || ((vanEMDE_BOAS_Tree->summary == nullptr) && (vanEMDE_BOAS_Tree->cluster == nullptr)))) {
 				vEB_max(vanEMDE_BOAS_Tree, ui_emax);
 				if (ui_emax <= 0) {
-					// дерево ван Эмде Боаса пустое.
+					// РґРµСЂРµРІРѕ РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР° РїСѓСЃС‚РѕРµ.
 					dbt_emax.i = -1;
 					dbt_emax.count_neighbour = -1;
 				}
@@ -4235,7 +4352,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 			}
 			else {
-				// дерево ван Эмде Боаса пустое.
+				// РґРµСЂРµРІРѕ РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР° РїСѓСЃС‚РѕРµ.
 				dbt_emax.i = -1;
 				dbt_emax.count_neighbour = -1;
 			}
@@ -4247,7 +4364,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 
 		switch (id_tree) {
-		case AVL_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE:
 			// AVL tree
 			if (emax != 0) {
 
@@ -4262,7 +4379,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 			}
 			break;
-		case SPLAY_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE:
 			// SPLAY tree
 			if (emax_splay != 0) {
 
@@ -4282,9 +4399,9 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 			}
 			break;
-		case BINARY_HEAP:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP:
 			break;
-		case RANDOM_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP:
 			// Random TREE
 			if (emax_random_tree != nullptr) {
 				icandidate = row_startA[emax_random_tree->key.i];
@@ -4300,7 +4417,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				bcontinue_gl_1 = false;
 			}
 			break;
-		case RED_BLACK_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE:
 			if (RBroot.Find(dbt_emax)) {
 				icandidate = row_startA[dbt_emax.i];
 			}
@@ -4313,10 +4430,10 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				bcontinue_gl_1 = false;
 			}
 			break;
-		case FIBONACCI_HEAP_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::FIBONACCI_HEAP:
 			if (dbt_emax.i == -1)
 			{
-				// Дерево пусто.
+				// Р”РµСЂРµРІРѕ РїСѓСЃС‚Рѕ.
 				RBroot.Clear();
 				root_splay = 0;
 				size_splay_Tree = 0;
@@ -4325,7 +4442,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				bcontinue_gl_1 = false;
 			}
 			else {
-				// искомый узел и дерево ван Эмде Боаса не пусто.
+				// РёСЃРєРѕРјС‹Р№ СѓР·РµР» Рё РґРµСЂРµРІРѕ РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР° РЅРµ РїСѓСЃС‚Рѕ.
 				if (!fibo_heap.isEmpty()) {
 					fibo_heap.removeMinimum();
 				}
@@ -4334,10 +4451,10 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 			}
 			break;
-		case VAN_EMDE_BOAS_TREE_ID:
+		case RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE:
 			if (dbt_emax.i == -1)
 			{
-				// Дерево пусто.
+				// Р”РµСЂРµРІРѕ РїСѓСЃС‚Рѕ.
 				RBroot.Clear();
 				root_splay = 0;
 				size_splay_Tree = 0;
@@ -4346,7 +4463,7 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 				bcontinue_gl_1 = false;
 			}
 			else {
-				// искомый узел и дерево ван Эмде Боаса не пусто.
+				// РёСЃРєРѕРјС‹Р№ СѓР·РµР» Рё РґРµСЂРµРІРѕ РІР°РЅ Р­РјРґРµ Р‘РѕР°СЃР° РЅРµ РїСѓСЃС‚Рѕ.
 				icandidate = row_startA[dbt_emax.i];
 				//std::cout << "row_startA = "<< icandidate << std::endl;
 			}
@@ -4380,31 +4497,31 @@ void Ruge_and_Stuben_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 		icountprohod++;
 
-	} // Построение C/F разбиения. создано.
+	} // РџРѕСЃС‚СЂРѕРµРЅРёРµ C/F СЂР°Р·Р±РёРµРЅРёСЏ. СЃРѕР·РґР°РЅРѕ.
 
 
-// Освобождение оперативной памяти из под АВЛ дерева.
-			// 12 декабря 2015.
+// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё РёР· РїРѕРґ РђР’Р› РґРµСЂРµРІР°.
+			// 12 РґРµРєР°Р±СЂСЏ 2015.
 	switch (id_tree)
 	{
-	case AVL_TREE_ID: clear_AVL(root);
+	case RS_COARSENING_KERNEL_DATA_STRUCTURE::AVL_TREE: clear_AVL(root);
 		root = 0;
 		break;
-	case SPLAY_TREE_ID:
+	case RS_COARSENING_KERNEL_DATA_STRUCTURE::SPLAY_TREE:
 		clear_SPLAY(root_splay);
 		root_splay = 0;
 		break;
-	case BINARY_HEAP:
+	case RS_COARSENING_KERNEL_DATA_STRUCTURE::BINARY_HEAP:
 		binary_heap.clear();
 		break;
-	case RANDOM_TREE_ID:
+	case RS_COARSENING_KERNEL_DATA_STRUCTURE::TREAP:
 		clear_random_tree(random_tree_root);
 		random_tree_root = nullptr;
 		break;
-	case RED_BLACK_TREE_ID:
+	case RS_COARSENING_KERNEL_DATA_STRUCTURE::RED_BLACK_TREE:
 		RBroot.Clear();
 		break;
-	case VAN_EMDE_BOAS_TREE_ID:
+	case RS_COARSENING_KERNEL_DATA_STRUCTURE::VAN_EMDE_BOAS_TREE:
 #if VEB_FLAG
 		if (!((vanEMDE_BOAS_Tree == nullptr) || ((vanEMDE_BOAS_Tree->summary == nullptr) && (vanEMDE_BOAS_Tree->cluster == nullptr)))) {
 			vanEMDE_BOAS_Tree->~TvEB();
@@ -4432,19 +4549,27 @@ struct greaters_Stuben {
 	}
 };
 
-#include <map>    //подключили библиотеку для работы с map
+#include <map>    //РїРѕРґРєР»СЋС‡РёР»Рё Р±РёР±Р»РёРѕС‚РµРєСѓ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ map
 //#include <iomanip>
 
-// Разбиение множества узлов первоначальной сетки на С-узлы и 
-// F - узлы. С -узлы составят грубую сетку следующего уровня вложенности.
-// Значения же функции в F узлах должно быть восстановлено по значению функции
-// в ближайших С узлах (см. задачу интерполяции). 
+// Р”Р°РЅРЅР°СЏ СЂРµР°Р»РёР·Р°С†РёСЏ РєРѕСЂСЂРµРєС‚РЅР° РЅРѕ РЅРµРїСЂРёРіРѕРґРЅР° РёР·-Р·Р° РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅРѕР№ СЃРєРѕСЂРѕСЃС‚Рё
+// СЂР°Р±РѕС‚С‹ С„СѓРЅРєС†РёРё  std::max_element(m1.begin(), m1.end(), greaters_Stuben());
+// РџРѕ РІРёРґРёРјРѕРјСѓ РјРµС‚РѕРґ std::max_element() СЂР°Р±РѕС‚Р°РµС‚ РѕС‡РµРЅСЊ РЅРµСЌС„С„РµРєС‚РёРІРЅРѕ Р·Р° Р»РёРЅРµР№РЅРѕРµ РІСЂРµРјСЏ.
+// Р”Р°РЅРЅР°СЏ  С„СѓРЅРєС†РёСЏ РЅРµ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ Рє РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЋ РёР·-Р·Р° РѕС‡РµРЅСЊ РЅРёР·РєРѕР№ РїСЂРѕРёР·РІРѕРґРёС‚РµР»СЊРЅРѕСЃС‚Рё.
+// РСЃРїРѕР»СЊР·СѓР№С‚Рµ РґР»СЏ С‚СЂС‘С…РјРµСЂРЅС‹С… Р·Р°РґР°С‡ С„СѓРЅРєС†РёСЋ PMIS_CF_decomposition() СЂРµР°Р»РёР·СѓСЋС‰СѓСЋ Р°Р»РіРѕСЂРёС‚Рј 
+// РѕРіСЂСѓР±Р»РµРЅРёСЏ PMIS (Parallel Modified Independed Set) РёР»Рё С„СѓРЅРєС†РёСЋ 
+// Ruge_and_Stuben_CF_decomposition() РґР»СЏ Р СѓРіРµ-РЁС‚СѓР±РµРЅР° РѕРіСЂСѓР±Р»РµРЅРёСЏ РЅР° РѕСЃРЅРѕРІРµ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІСѓСЋС‰РµРіРѕ 
+// РђРўР” (РђР±СЃС‚СЂР°РєС‚РЅРѕРіРѕ С‚РёРїР° РґР°РЅРЅС‹С…) Р¤РёР±РѕРЅР°С‡С‡РёРµРІРѕР№ РєСѓС‡Рё.
+// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+// F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё). 
 template <typename doublerealT>
 void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 	bool*& this_is_C_node, integer ilevel,
 	integer*& count_neighbour, integer*& n_a,
 	integer& newCcount,
-	doublereal*& threshold_quick_only_negative,
+	doublerealT*& threshold_quick_only_negative,
 	integer*& row_startA,
 	Taccumulqtor_list**& hash_StrongTranspose_collection1,
 	bool bprint_mesage_diagnostic,
@@ -4462,9 +4587,9 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 	integer max_neighbour = 0;
 	integer icandidate = 0;
 
-	// Находим узел с наибольшим числом соседей и запоминаем его.
-	// Это первый встретившийся узел с наибольшим числом соседей.
-	// Это требуется для того чтобы стартовал алгоритм C/F разбиения.
+	// РќР°С…РѕРґРёРј СѓР·РµР» СЃ РЅР°РёР±РѕР»СЊС€РёРј С‡РёСЃР»РѕРј СЃРѕСЃРµРґРµР№ Рё Р·Р°РїРѕРјРёРЅР°РµРј РµРіРѕ.
+	// Р­С‚Рѕ РїРµСЂРІС‹Р№ РІСЃС‚СЂРµС‚РёРІС€РёР№СЃСЏ СѓР·РµР» СЃ РЅР°РёР±РѕР»СЊС€РёРј С‡РёСЃР»РѕРј СЃРѕСЃРµРґРµР№.
+	// Р­С‚Рѕ С‚СЂРµР±СѓРµС‚СЃСЏ РґР»СЏ С‚РѕРіРѕ С‡С‚РѕР±С‹ СЃС‚Р°СЂС‚РѕРІР°Р» Р°Р»РіРѕСЂРёС‚Рј C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 
 	for (integer i7 = 1; i7 <= ii_end1; i7++) {
 		if (count_neighbour[i7] > max_neighbour) {
@@ -4476,19 +4601,19 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 
 
-	// нужно выделить кто попал в coarse, а кто в этот раз попал в Fine Выделить всех кто соседствует
-	// с новыми Fine увеличить им счётчик соседей.
+	// РЅСѓР¶РЅРѕ РІС‹РґРµР»РёС‚СЊ РєС‚Рѕ РїРѕРїР°Р» РІ coarse, Р° РєС‚Рѕ РІ СЌС‚РѕС‚ СЂР°Р· РїРѕРїР°Р» РІ Fine Р’С‹РґРµР»РёС‚СЊ РІСЃРµС… РєС‚Рѕ СЃРѕСЃРµРґСЃС‚РІСѓРµС‚
+	// СЃ РЅРѕРІС‹РјРё Fine СѓРІРµР»РёС‡РёС‚СЊ РёРј СЃС‡С‘С‚С‡РёРє СЃРѕСЃРµРґРµР№.
 
 
 	const integer NULL_NEIGHBOUR = -1;
-	// Построение C/F разбиения.
+	// РџРѕСЃС‚СЂРѕРµРЅРёРµ C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 	integer vacant = NULL_NEIGHBOUR;
 	bool bcontinue_gl_1 = true;
-	// Построение C/F разбиения.
+	// РџРѕСЃС‚СЂРѕРµРЅРёРµ C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 	integer icountprohod = 0;
 
-	// храним те узлы которые уже были пройдены при конструировании.
-	// поначалу все узлы помечены как непосещённые.
+	// С…СЂР°РЅРёРј С‚Рµ СѓР·Р»С‹ РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ Р±С‹Р»Рё РїСЂРѕР№РґРµРЅС‹ РїСЂРё РєРѕРЅСЃС‚СЂСѓРёСЂРѕРІР°РЅРёРё.
+	// РїРѕРЅР°С‡Р°Р»Сѓ РІСЃРµ СѓР·Р»С‹ РїРѕРјРµС‡РµРЅС‹ РєР°Рє РЅРµРїРѕСЃРµС‰С‘РЅРЅС‹Рµ.
 	bool* bmarkervisit = nullptr;
 	if (bmarkervisit != nullptr) {
 		free(bmarkervisit);
@@ -4497,17 +4622,17 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 	bmarkervisit = my_declaration_array<bool>(n_a[ilevel - 1], false, "bmarkervisit");
 
 
-	// увеличение быстродействия достигается 
-	// сокращением пределов сканирования
-	// здесь хранится индекс начала сканирования flag.
+	// СѓРІРµР»РёС‡РµРЅРёРµ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІРёСЏ РґРѕСЃС‚РёРіР°РµС‚СЃСЏ 
+	// СЃРѕРєСЂР°С‰РµРЅРёРµРј РїСЂРµРґРµР»РѕРІ СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ
+	// Р·РґРµСЃСЊ С…СЂР°РЅРёС‚СЃСЏ РёРЅРґРµРєСЃ РЅР°С‡Р°Р»Р° СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ flag.
 	integer istartflag_scan = 1;
 
-	// Задача 12mm hfet thermal resistance. 1.7млн неизвестных.
-	// AVL_TREE_ID   3мин 29с 590мс      {5}
-	// SPLAY_TREE_ID  3мин 16с 430мс {2}
-	// BINARY_HEAP 3мин 4с 0мс {1 *самая быстрая.}
-	// RANDOM_TREE_ID (Дерамида) 3мин 28с 90мс {4}
-	// RED_BLACK_TREE_ID 3мин 27с 210мс {3}
+	// Р—Р°РґР°С‡Р° 12mm hfet thermal resistance. 1.7РјР»РЅ РЅРµРёР·РІРµСЃС‚РЅС‹С….
+	// AVL_TREE_ID   3РјРёРЅ 29СЃ 590РјСЃ      {5}
+	// SPLAY_TREE_ID  3РјРёРЅ 16СЃ 430РјСЃ {2}
+	// BINARY_HEAP 3РјРёРЅ 4СЃ 0РјСЃ {1 *СЃР°РјР°СЏ Р±С‹СЃС‚СЂР°СЏ.}
+	// RANDOM_TREE_ID (Р”РµСЂР°РјРёРґР°) 3РјРёРЅ 28СЃ 90РјСЃ {4}
+	// RED_BLACK_TREE_ID 3РјРёРЅ 27СЃ 210РјСЃ {3}
 
 	integer n = n_a[0];
 
@@ -4517,8 +4642,8 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 	
 	newCcount = 0;
 
-	// Нехорошо постоянно выделять и уничтожать память в длинном цикле, 
-	// более быстро выделить её один раз. См. выделение памяти под set.
+	// РќРµС…РѕСЂРѕС€Рѕ РїРѕСЃС‚РѕСЏРЅРЅРѕ РІС‹РґРµР»СЏС‚СЊ Рё СѓРЅРёС‡С‚РѕР¶Р°С‚СЊ РїР°РјСЏС‚СЊ РІ РґР»РёРЅРЅРѕРј С†РёРєР»Рµ, 
+	// Р±РѕР»РµРµ Р±С‹СЃС‚СЂРѕ РІС‹РґРµР»РёС‚СЊ РµС‘ РѕРґРёРЅ СЂР°Р·. РЎРј. РІС‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё РїРѕРґ set.
 	// 23.04.2017
 
 
@@ -4534,7 +4659,7 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 		integer ii = icandidate;
 		if (flag[Amat.i[ii]] == false) {
 
-			ic = 0; // Обязательная инициализация.
+			ic = 0; // РћР±СЏР·Р°С‚РµР»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ.
 
 
 			ic_end_F_SiTranspose = 0;
@@ -4548,13 +4673,13 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 			this_is_C_node[set0] = true;
 			bmarkervisit[set0] = true;
 
-			doublerealT max_vnediagonal = -1.0; // максимальное значение модуля вне диагонального элемента. 
-												// добавляем диагональный элемент.
-												// узел set[0]==Amat.i[is0].
-												// Нахождение значения максимального внедиагонального элемента, с 
-												// учётом того что даже узел Дирихле связан с одним внутренним узлом расчётной области.
-												// 17 января 2016 правильное определение максимального внедиагонального элемента.
-												// Обязательная перемотка в самое начало строки.
+			doublerealT max_vnediagonal = -1.0; // РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РјРѕРґСѓР»СЏ РІРЅРµ РґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°. 
+												// РґРѕР±Р°РІР»СЏРµРј РґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
+												// СѓР·РµР» set[0]==Amat.i[is0].
+												// РќР°С…РѕР¶РґРµРЅРёРµ Р·РЅР°С‡РµРЅРёСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°, СЃ 
+												// СѓС‡С‘С‚РѕРј С‚РѕРіРѕ С‡С‚Рѕ РґР°Р¶Рµ СѓР·РµР» Р”РёСЂРёС…Р»Рµ СЃРІСЏР·Р°РЅ СЃ РѕРґРЅРёРј РІРЅСѓС‚СЂРµРЅРЅРёРј СѓР·Р»РѕРј СЂР°СЃС‡С‘С‚РЅРѕР№ РѕР±Р»Р°СЃС‚Рё.
+												// 17 СЏРЅРІР°СЂСЏ 2016 РїСЂР°РІРёР»СЊРЅРѕРµ РѕРїСЂРµРґРµР»РµРЅРёРµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°.
+												// РћР±СЏР·Р°С‚РµР»СЊРЅР°СЏ РїРµСЂРµРјРѕС‚РєР° РІ СЃР°РјРѕРµ РЅР°С‡Р°Р»Рѕ СЃС‚СЂРѕРєРё.
 			integer ii_back = ii;
 			while ((ii_back > iadd) && (Amat.i[ii_back] == set0)) ii_back--;
 			ii_back++;
@@ -4562,8 +4687,8 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 			doublerealT max_vnediagonal1 = -1.0e30;
 						
 
-			// Если делать по максимальному внедиагональному элементу то мы получим очень много элементов на грубых уровнях,
-			// и чрезвычайно медленную сходимость.
+			// Р•СЃР»Рё РґРµР»Р°С‚СЊ РїРѕ РјР°РєСЃРёРјР°Р»СЊРЅРѕРјСѓ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅРѕРјСѓ СЌР»РµРјРµРЅС‚Сѓ С‚Рѕ РјС‹ РїРѕР»СѓС‡РёРј РѕС‡РµРЅСЊ РјРЅРѕРіРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° РіСЂСѓР±С‹С… СѓСЂРѕРІРЅСЏС…,
+			// Рё С‡СЂРµР·РІС‹С‡Р°Р№РЅРѕ РјРµРґР»РµРЅРЅСѓСЋ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 
 			if (bpositive_connections_CF_decomp) {
 				// 23_10_2016
@@ -4572,8 +4697,8 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 						
 						if (Amat.abs_aij[is0] > max_vnediagonal1) {
 							max_vnediagonal1 = Amat.abs_aij[is0]; //i,j
-							// Большое количество элементов на грубых уровнях,
-							// очень медленная сходимость.
+							// Р‘РѕР»СЊС€РѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° РіСЂСѓР±С‹С… СѓСЂРѕРІРЅСЏС…,
+							// РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅР°СЏ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 							//if (Amat.j[is0] == set[0]) break; 
 						}						
 					}
@@ -4586,8 +4711,8 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 							
 							if (Amat.abs_aij[is0] > max_vnediagonal1) {
 								max_vnediagonal1 = Amat.abs_aij[is0]; //i,j
-								// Большое количество элементов на грубых уровнях,
-								// очень медленная сходимость.
+								// Р‘РѕР»СЊС€РѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РЅР° РіСЂСѓР±С‹С… СѓСЂРѕРІРЅСЏС…,
+								// РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅР°СЏ СЃС…РѕРґРёРјРѕСЃС‚СЊ.
 								//if (Amat.j[is0] == set[0]) break; 
 							}							
 						}
@@ -4597,31 +4722,31 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 			
 			
 			//max_vnediagonal = max_vnediagonal1;  // 1			
-			// наиболее близка к оптимальной. -85%. но несомненно лучше max_vnediagonal = -1.0;
-			// 19 января 2016 установлено что важны все связи, не нужно учитывать threshold
-			// max_vnediagonal должно быть -1.0. Именно это значение обеспечивает наилучшую 
-			// скорость агломерации и наилучшую скорость сходимости.
-			max_vnediagonal = -1.0e30;  // все связи!!!											
+			// РЅР°РёР±РѕР»РµРµ Р±Р»РёР·РєР° Рє РѕРїС‚РёРјР°Р»СЊРЅРѕР№. -85%. РЅРѕ РЅРµСЃРѕРјРЅРµРЅРЅРѕ Р»СѓС‡С€Рµ max_vnediagonal = -1.0;
+			// 19 СЏРЅРІР°СЂСЏ 2016 СѓСЃС‚Р°РЅРѕРІР»РµРЅРѕ С‡С‚Рѕ РІР°Р¶РЅС‹ РІСЃРµ СЃРІСЏР·Рё, РЅРµ РЅСѓР¶РЅРѕ СѓС‡РёС‚С‹РІР°С‚СЊ threshold
+			// max_vnediagonal РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ -1.0. РРјРµРЅРЅРѕ СЌС‚Рѕ Р·РЅР°С‡РµРЅРёРµ РѕР±РµСЃРїРµС‡РёРІР°РµС‚ РЅР°РёР»СѓС‡С€СѓСЋ 
+			// СЃРєРѕСЂРѕСЃС‚СЊ Р°РіР»РѕРјРµСЂР°С†РёРё Рё РЅР°РёР»СѓС‡С€СѓСЋ СЃРєРѕСЂРѕСЃС‚СЊ СЃС…РѕРґРёРјРѕСЃС‚Рё.
+			max_vnediagonal = -1.0e30;  // РІСЃРµ СЃРІСЏР·Рё!!!											
 
 			ic++;
 
 
-			//  В set начиная с единицы и до <ic лежат кандидаты чтобы стать F.
+			//  Р’ set РЅР°С‡РёРЅР°СЏ СЃ РµРґРёРЅРёС†С‹ Рё РґРѕ <ic Р»РµР¶Р°С‚ РєР°РЅРґРёРґР°С‚С‹ С‡С‚РѕР±С‹ СЃС‚Р°С‚СЊ F.
 			// 5.01.2017
-			// 01.04.2017 Дополняемся F узлами из Si_Transpose связей.
+			// 01.04.2017 Р”РѕРїРѕР»РЅСЏРµРјСЃСЏ F СѓР·Р»Р°РјРё РёР· Si_Transpose СЃРІСЏР·РµР№.
 			if ((my_amg_manager.ipatch_number == 7) && (bStrongTransposeON)) {
 
 				integer imarker75_scan = 0;
 
-				// обычный линейный список.
+				// РѕР±С‹С‡РЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 				formirate_F_SiTranspose_hash_table_Gus2_struct02(hash_StrongTranspose_collection1[Amat.i[ii]], imarker75_scan, this_is_F_node, this_is_C_node);
 
 				ic = imarker75_scan + 1;
 			}
 
-			ic_end_F_SiTranspose = ic; // С этой позиции заканчиваются F которые из Si_Transpose.
+			ic_end_F_SiTranspose = ic; // РЎ СЌС‚РѕР№ РїРѕР·РёС†РёРё Р·Р°РєР°РЅС‡РёРІР°СЋС‚СЃСЏ F РєРѕС‚РѕСЂС‹Рµ РёР· Si_Transpose.
 
-									   // если узел j ещё не был добавлен в агрегат.
+									   // РµСЃР»Рё СѓР·РµР» j РµС‰С‘ РЅРµ Р±С‹Р» РґРѕР±Р°РІР»РµРЅ РІ Р°РіСЂРµРіР°С‚.
 			if (bpositive_connections_CF_decomp) {
 				if (flag[Amat.j[ii]] == false) {
 					if ((Amat.j[ii] != set0) && (Amat.abs_aij[ii] >= theta(ilevel) * max_vnediagonal)) {
@@ -4655,15 +4780,15 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 			//std::cout << "sboi start";
 
-			// iscan = ii+1; // устаревший код
-			integer iscan = ii_back + 1; // важная модификация 19 января 2016г.
-								 // TODO 19 jan 2016.
+			// iscan = ii+1; // СѓСЃС‚Р°СЂРµРІС€РёР№ РєРѕРґ
+			integer iscan = ii_back + 1; // РІР°Р¶РЅР°СЏ РјРѕРґРёС„РёРєР°С†РёСЏ 19 СЏРЅРІР°СЂСЏ 2016Рі.
+			// 19 jan 2016.
 
 			if (bpositive_connections_CF_decomp) {
 				while ((iscan <= nnz_a[ilevel - 1] + iadd) && (Amat.i[iscan] == set0)) {
-					// 14 февраля 2016 код иногда приводящий к сбою.
-					//while (iscan <= row_startA[set0 + 1] - 1) { // код иногда приводящий к сбою по непонятной причине.
-					// если узел j ещё не был добавлен в агрегат.
+					// 14 С„РµРІСЂР°Р»СЏ 2016 РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ.
+					//while (iscan <= row_startA[set0 + 1] - 1) { // РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ РїРѕ РЅРµРїРѕРЅСЏС‚РЅРѕР№ РїСЂРёС‡РёРЅРµ.
+					// РµСЃР»Рё СѓР·РµР» j РµС‰С‘ РЅРµ Р±С‹Р» РґРѕР±Р°РІР»РµРЅ РІ Р°РіСЂРµРіР°С‚.
 					if (flag[Amat.j[iscan]] == false) {
 						if ((Amat.j[iscan] != set0) && (Amat.abs_aij[iscan] >= theta(ilevel) * max_vnediagonal)) {
 							// 21.05.2017
@@ -4676,7 +4801,7 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 							}
 
 							/*
-							// Медленная версия с линейным поиском.
+							// РњРµРґР»РµРЅРЅР°СЏ РІРµСЂСЃРёСЏ СЃ Р»РёРЅРµР№РЅС‹Рј РїРѕРёСЃРєРѕРј.
 							vacant = Amat.j[iscan];
 							for (integer js = 0; js < ic; js++) {
 							if (vacant == set[js]) {
@@ -4699,9 +4824,9 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 			}
 			else {
 				while ((iscan <= nnz_a[ilevel - 1] + iadd) && (Amat.i[iscan] == set0)) {
-					// 14 февраля 2016 код иногда приводящий к сбою.
-					//while (iscan <= row_startA[set0 + 1] - 1) { // код иногда приводящий к сбою по непонятной причине.
-					// если узел j ещё не был добавлен в агрегат.
+					// 14 С„РµРІСЂР°Р»СЏ 2016 РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ.
+					//while (iscan <= row_startA[set0 + 1] - 1) { // РєРѕРґ РёРЅРѕРіРґР° РїСЂРёРІРѕРґСЏС‰РёР№ Рє СЃР±РѕСЋ РїРѕ РЅРµРїРѕРЅСЏС‚РЅРѕР№ РїСЂРёС‡РёРЅРµ.
+					// РµСЃР»Рё СѓР·РµР» j РµС‰С‘ РЅРµ Р±С‹Р» РґРѕР±Р°РІР»РµРЅ РІ Р°РіСЂРµРіР°С‚.
 					if (flag[Amat.j[iscan]] == false) {
 						if ((Amat.j[iscan] != set0) && (Amat.aij[iscan] < 0.0) && (Amat.abs_aij[iscan] >= theta(ilevel) * max_vnediagonal)) {
 							// 21.05.2017
@@ -4736,17 +4861,17 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 			}
 
 			//std::cout << "sboi end";
-			// Это была учтена только связь i,j
+			// Р­С‚Рѕ Р±С‹Р»Р° СѓС‡С‚РµРЅР° С‚РѕР»СЊРєРѕ СЃРІСЏР·СЊ i,j
 
 
 
 
 
 
-		// В этом месте множество set успешно сформировано:
-		// 1. Перепаковка из root_Gus_set в set.
-		// 2. root_Gus_set больше не используется.
-		// 3. Именно здесь надо выделить данные под set.
+		// Р’ СЌС‚РѕРј РјРµСЃС‚Рµ РјРЅРѕР¶РµСЃС‚РІРѕ set СѓСЃРїРµС€РЅРѕ СЃС„РѕСЂРјРёСЂРѕРІР°РЅРѕ:
+		// 1. РџРµСЂРµРїР°РєРѕРІРєР° РёР· root_Gus_set РІ set.
+		// 2. root_Gus_set Р±РѕР»СЊС€Рµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
+		// 3. РРјРµРЅРЅРѕ Р·РґРµСЃСЊ РЅР°РґРѕ РІС‹РґРµР»РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕРґ set.
 			integer* set = nullptr;
 			set = new integer[ic + 2];
 			//if (set == nullptr) {
@@ -4767,29 +4892,29 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 
 			for (integer isc = 1; isc < ic; isc++) {
-				this_is_F_node[set[isc]] = true; // это только новые F узлы.
+				this_is_F_node[set[isc]] = true; // СЌС‚Рѕ С‚РѕР»СЊРєРѕ РЅРѕРІС‹Рµ F СѓР·Р»С‹.
 				bmarkervisit[set[isc]] = true;
 			}
 
-			// Помечаем узлы как включённые в агрегат.
+			// РџРѕРјРµС‡Р°РµРј СѓР·Р»С‹ РєР°Рє РІРєР»СЋС‡С‘РЅРЅС‹Рµ РІ Р°РіСЂРµРіР°С‚.
 			for (integer js = 0; js < ic; js++) {
 				flag[set[js]] = true;
 			}
 
-			// Алгоритм (5 декабря 2015 revised) 
-			// 1. Сканируем все F которые соседи данного С на данном проходе.
-			// 2. Для каждого фиксированного F сканируем его "строчных" соседей.
-			// 3. Если узел еще не был включён в агрегат то ищем всех соседей данного узла на предмет 
-			// соседства с фиксированным набором F из пункта 1.
+			// РђР»РіРѕСЂРёС‚Рј (5 РґРµРєР°Р±СЂСЏ 2015 revised) 
+			// 1. РЎРєР°РЅРёСЂСѓРµРј РІСЃРµ F РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃРµРґРё РґР°РЅРЅРѕРіРѕ РЎ РЅР° РґР°РЅРЅРѕРј РїСЂРѕС…РѕРґРµ.
+			// 2. Р”Р»СЏ РєР°Р¶РґРѕРіРѕ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ F СЃРєР°РЅРёСЂСѓРµРј РµРіРѕ "СЃС‚СЂРѕС‡РЅС‹С…" СЃРѕСЃРµРґРµР№.
+			// 3. Р•СЃР»Рё СѓР·РµР» РµС‰Рµ РЅРµ Р±С‹Р» РІРєР»СЋС‡С‘РЅ РІ Р°РіСЂРµРіР°С‚ С‚Рѕ РёС‰РµРј РІСЃРµС… СЃРѕСЃРµРґРµР№ РґР°РЅРЅРѕРіРѕ СѓР·Р»Р° РЅР° РїСЂРµРґРјРµС‚ 
+			// СЃРѕСЃРµРґСЃС‚РІР° СЃ С„РёРєСЃРёСЂРѕРІР°РЅРЅС‹Рј РЅР°Р±РѕСЂРѕРј F РёР· РїСѓРЅРєС‚Р° 1.
 
 			
-			// 12 декабря 2015.
-			// Надо удалить из АВЛ дерева C и F узлы.
-			// Это удаление очищает АВЛ дерево и приводит его к
-			// рабочему состоянию. Удаление несуществующих в дереве узлов
-			// производится корректно. Удаление производится за логарифмическое
-			// по основанию 2  время от количества элементов в дереве
-			// сбалансированность дерева при этом сохраняется.
+			// 12 РґРµРєР°Р±СЂСЏ 2015.
+			// РќР°РґРѕ СѓРґР°Р»РёС‚СЊ РёР· РђР’Р› РґРµСЂРµРІР° C Рё F СѓР·Р»С‹.
+			// Р­С‚Рѕ СѓРґР°Р»РµРЅРёРµ РѕС‡РёС‰Р°РµС‚ РђР’Р› РґРµСЂРµРІРѕ Рё РїСЂРёРІРѕРґРёС‚ РµРіРѕ Рє
+			// СЂР°Р±РѕС‡РµРјСѓ СЃРѕСЃС‚РѕСЏРЅРёСЋ. РЈРґР°Р»РµРЅРёРµ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РёС… РІ РґРµСЂРµРІРµ СѓР·Р»РѕРІ
+			// РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ РєРѕСЂСЂРµРєС‚РЅРѕ. РЈРґР°Р»РµРЅРёРµ РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ Р·Р° Р»РѕРіР°СЂРёС„РјРёС‡РµСЃРєРѕРµ
+			// РїРѕ РѕСЃРЅРѕРІР°РЅРёСЋ 2  РІСЂРµРјСЏ РѕС‚ РєРѕР»РёС‡РµСЃС‚РІР° СЌР»РµРјРµРЅС‚РѕРІ РІ РґРµСЂРµРІРµ
+			// СЃР±Р°Р»Р°РЅСЃРёСЂРѕРІР°РЅРЅРѕСЃС‚СЊ РґРµСЂРµРІР° РїСЂРё СЌС‚РѕРј СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ.
 			for (integer js = 0; js < ic; js++) {
 				
 				if (!m1.empty()) {
@@ -4804,14 +4929,14 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 			//std::cout<<"additional and modify new neighbour"<<std::endl;
 
-			// 10 января 2016. Новая логика.
-			// Устраним некоторые повторные модификации (это должно снизить нагрузку на АВЛ дерево).
-			// Эта модификация даёт сокращение количества V циклов которые требуются до сходимости
-			// Эта модификация наиболее близка к классической описанной в литературе чем все предыдущие.
-			// На момент 13 января 2016 это лучший вариант по скорости вычислений.
+			// 10 СЏРЅРІР°СЂСЏ 2016. РќРѕРІР°СЏ Р»РѕРіРёРєР°.
+			// РЈСЃС‚СЂР°РЅРёРј РЅРµРєРѕС‚РѕСЂС‹Рµ РїРѕРІС‚РѕСЂРЅС‹Рµ РјРѕРґРёС„РёРєР°С†РёРё (СЌС‚Рѕ РґРѕР»Р¶РЅРѕ СЃРЅРёР·РёС‚СЊ РЅР°РіСЂСѓР·РєСѓ РЅР° РђР’Р› РґРµСЂРµРІРѕ).
+			// Р­С‚Р° РјРѕРґРёС„РёРєР°С†РёСЏ РґР°С‘С‚ СЃРѕРєСЂР°С‰РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° V С†РёРєР»РѕРІ РєРѕС‚РѕСЂС‹Рµ С‚СЂРµР±СѓСЋС‚СЃСЏ РґРѕ СЃС…РѕРґРёРјРѕСЃС‚Рё
+			// Р­С‚Р° РјРѕРґРёС„РёРєР°С†РёСЏ РЅР°РёР±РѕР»РµРµ Р±Р»РёР·РєР° Рє РєР»Р°СЃСЃРёС‡РµСЃРєРѕР№ РѕРїРёСЃР°РЅРЅРѕР№ РІ Р»РёС‚РµСЂР°С‚СѓСЂРµ С‡РµРј РІСЃРµ РїСЂРµРґС‹РґСѓС‰РёРµ.
+			// РќР° РјРѕРјРµРЅС‚ 13 СЏРЅРІР°СЂСЏ 2016 СЌС‚Рѕ Р»СѓС‡С€РёР№ РІР°СЂРёР°РЅС‚ РїРѕ СЃРєРѕСЂРѕСЃС‚Рё РІС‹С‡РёСЃР»РµРЅРёР№.
 			integer itop_stack2 = 0;
 
-			// 10 января 2016. Старый вариант просто очищенный от устаревшего кода.
+			// 10 СЏРЅРІР°СЂСЏ 2016. РЎС‚Р°СЂС‹Р№ РІР°СЂРёР°РЅС‚ РїСЂРѕСЃС‚Рѕ РѕС‡РёС‰РµРЅРЅС‹Р№ РѕС‚ СѓСЃС‚Р°СЂРµРІС€РµРіРѕ РєРѕРґР°.
 			for (integer js = 1; js < ic; js++) {
 
 				integer i_11 = set[js];
@@ -4825,7 +4950,7 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 				bool bvisitsos = false;
 				for (integer is0 = istart73; (is0 <= iend73); is0++) {
 					//for (integer is0 = istart73; (is0 <= iend5) && (Amat.i[is0] == Amat.i[ii_11]); is0++) {
-					// В пересечении с U!!!
+					// Р’ РїРµСЂРµСЃРµС‡РµРЅРёРё СЃ U!!!
 					if (flag[Amat.j[is0]] == false) {
 
 
@@ -4833,21 +4958,21 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 
 
-						// Избавляемся от повторных инкрементаций.
-						// В 2D на пятиточечном шаблоне повторные инкрементации составляют
-						// около 33%.
-						// Это даёт стандартный алгоритм сгрубления, описаный в статьях, но
-						// на ряде тестовых задач при таком подходе агломерация проходила очень
-						// плохо (переполнение по памяти, не хватало даже семикратного размера исходной матрицы).
-						// Эта проблема проявилась на задачах:
-						// CGHV1J006D, Потенциал тора, Электрический потенциал в FET, Module 2.
-						// Плохая скорость агломерации получается главным образом из-за шестого способа интерполяции.
-						// Проблема не в этом месте кода.
+						// РР·Р±Р°РІР»СЏРµРјСЃСЏ РѕС‚ РїРѕРІС‚РѕСЂРЅС‹С… РёРЅРєСЂРµРјРµРЅС‚Р°С†РёР№.
+						// Р’ 2D РЅР° РїСЏС‚РёС‚РѕС‡РµС‡РЅРѕРј С€Р°Р±Р»РѕРЅРµ РїРѕРІС‚РѕСЂРЅС‹Рµ РёРЅРєСЂРµРјРµРЅС‚Р°С†РёРё СЃРѕСЃС‚Р°РІР»СЏСЋС‚
+						// РѕРєРѕР»Рѕ 33%.
+						// Р­С‚Рѕ РґР°С‘С‚ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј СЃРіСЂСѓР±Р»РµРЅРёСЏ, РѕРїРёСЃР°РЅС‹Р№ РІ СЃС‚Р°С‚СЊСЏС…, РЅРѕ
+						// РЅР° СЂСЏРґРµ С‚РµСЃС‚РѕРІС‹С… Р·Р°РґР°С‡ РїСЂРё С‚Р°РєРѕРј РїРѕРґС…РѕРґРµ Р°РіР»РѕРјРµСЂР°С†РёСЏ РїСЂРѕС…РѕРґРёР»Р° РѕС‡РµРЅСЊ
+						// РїР»РѕС…Рѕ (РїРµСЂРµРїРѕР»РЅРµРЅРёРµ РїРѕ РїР°РјСЏС‚Рё, РЅРµ С…РІР°С‚Р°Р»Рѕ РґР°Р¶Рµ СЃРµРјРёРєСЂР°С‚РЅРѕРіРѕ СЂР°Р·РјРµСЂР° РёСЃС…РѕРґРЅРѕР№ РјР°С‚СЂРёС†С‹).
+						// Р­С‚Р° РїСЂРѕР±Р»РµРјР° РїСЂРѕСЏРІРёР»Р°СЃСЊ РЅР° Р·Р°РґР°С‡Р°С…:
+						// CGHV1J006D, РџРѕС‚РµРЅС†РёР°Р» С‚РѕСЂР°, Р­Р»РµРєС‚СЂРёС‡РµСЃРєРёР№ РїРѕС‚РµРЅС†РёР°Р» РІ FET, Module 2.
+						// РџР»РѕС…Р°СЏ СЃРєРѕСЂРѕСЃС‚СЊ Р°РіР»РѕРјРµСЂР°С†РёРё РїРѕР»СѓС‡Р°РµС‚СЃСЏ РіР»Р°РІРЅС‹Рј РѕР±СЂР°Р·РѕРј РёР·-Р·Р° С€РµСЃС‚РѕРіРѕ СЃРїРѕСЃРѕР±Р° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+						// РџСЂРѕР±Р»РµРјР° РЅРµ РІ СЌС‚РѕРј РјРµСЃС‚Рµ РєРѕРґР°.
 						if (hash_table2[isc] == false) {
 							hash_table2[isc] = true;
 							istack[itop_stack2] = isc;
 							itop_stack2++;
-							// закомментированный лучше.
+							// Р·Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ Р»СѓС‡С€Рµ.
 							//}
 
 							//21_12_2016
@@ -4861,9 +4986,9 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 							integer istopmarker2 = row_startA[Amat.i[ii_2] + 1] - 1;
 
 							// 22 _12_2016
-							// Это лучший вариант: обеспечивает корректное построение иерархии
-							// уровней на задаче passive module 6 в то время как все остальные 
-							// отличные от этого способа давали сбой.
+							// Р­С‚Рѕ Р»СѓС‡С€РёР№ РІР°СЂРёР°РЅС‚: РѕР±РµСЃРїРµС‡РёРІР°РµС‚ РєРѕСЂСЂРµРєС‚РЅРѕРµ РїРѕСЃС‚СЂРѕРµРЅРёРµ РёРµСЂР°СЂС…РёРё
+							// СѓСЂРѕРІРЅРµР№ РЅР° Р·Р°РґР°С‡Рµ passive module 6 РІ С‚Рѕ РІСЂРµРјСЏ РєР°Рє РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ 
+							// РѕС‚Р»РёС‡РЅС‹Рµ РѕС‚ СЌС‚РѕРіРѕ СЃРїРѕСЃРѕР±Р° РґР°РІР°Р»Рё СЃР±РѕР№.
 							doublerealT max_vnediagonal33 = -1.0e30;
 							for (integer is01 = istart72; (is01 <= istopmarker2); is01++) {
 								if (Amat.j[is01] != Amat.i[is01]) {
@@ -4873,14 +4998,14 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 								}
 							}
 							for (integer is01 = istart72; (is01 <= istopmarker2); is01++) {
-								// 0.2375 импирически подобрана для passive module 6.
+								// 0.2375 РёРјРїРёСЂРёС‡РµСЃРєРё РїРѕРґРѕР±СЂР°РЅР° РґР»СЏ passive module 6.
 								if ((Amat.aij[is01] < 0.0) && (Amat.abs_aij[is01] > 0.2375 * max_vnediagonal33)) {
 									if (Amat.j[is01] == set[js]) {
 										if ((my_amg_manager.ipatch_number == 7) && (bStrongTransposeON)) {
 											if (js < ic_end_F_SiTranspose) {
-												// Увеличиваем счётчики только тех соседей F узлов которые
-												// являются соседями F узлов которые были получены из Si_Transpose связей.
-												// Именно так написано у Джона Руге и Клауса Штубена.
+												// РЈРІРµР»РёС‡РёРІР°РµРј СЃС‡С‘С‚С‡РёРєРё С‚РѕР»СЊРєРѕ С‚РµС… СЃРѕСЃРµРґРµР№ F СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ
+												// СЏРІР»СЏСЋС‚СЃСЏ СЃРѕСЃРµРґСЏРјРё F СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ Р±С‹Р»Рё РїРѕР»СѓС‡РµРЅС‹ РёР· Si_Transpose СЃРІСЏР·РµР№.
+												// РРјРµРЅРЅРѕ С‚Р°Рє РЅР°РїРёСЃР°РЅРѕ Сѓ Р”Р¶РѕРЅР° Р СѓРіРµ Рё РљР»Р°СѓСЃР° РЁС‚СѓР±РµРЅР°.
 												ic2++;
 											}
 										}
@@ -4889,7 +5014,7 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 										}
 									}
 								}
-								// уменьшить счетчик слабого (weakly) соседа ?
+								// СѓРјРµРЅСЊС€РёС‚СЊ СЃС‡РµС‚С‡РёРє СЃР»Р°Р±РѕРіРѕ (weakly) СЃРѕСЃРµРґР° ?
 							}
 
 
@@ -4897,23 +5022,23 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 							dsearch.count_neighbour = count_neighbour[isc];
 							//dsearch.ii = ii_2;
 							dsearch.i = isc;
-							// Увеличиваем на количество связей с новыми F узлами.
+							// РЈРІРµР»РёС‡РёРІР°РµРј РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРІСЏР·РµР№ СЃ РЅРѕРІС‹РјРё F СѓР·Р»Р°РјРё.
 							count_neighbour[isc] += ic2;
 							data_BalTree dadd;
 							dadd.count_neighbour = count_neighbour[isc];
 							//dadd.ii = ii_2;
 							dadd.i = isc;
 
-							std::map<integer, integer>::const_iterator it; // объявляем итератор
-							//it = m1.begin(); // присваиваем ему начало map-а
+							std::map<integer, integer>::const_iterator it; // РѕР±СЉСЏРІР»СЏРµРј РёС‚РµСЂР°С‚РѕСЂ
+							//it = m1.begin(); // РїСЂРёСЃРІР°РёРІР°РµРј РµРјСѓ РЅР°С‡Р°Р»Рѕ map-Р°
 							it = m1.find(isc);
 							if (it == m1.end()) {
-								// значения в map нету.
+								// Р·РЅР°С‡РµРЅРёСЏ РІ map РЅРµС‚Сѓ.
 								m1.insert(std::pair<integer, integer>(isc, count_neighbour[isc]));
 								//v1.push_back(std::pair<integer, integer>(isc, count_neighbour[isc]));
 							}
 							else {
-								// значение в map присутствует.
+								// Р·РЅР°С‡РµРЅРёРµ РІ map РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚.
 								m1.erase(isc);
 								//v1.erase(std::pair<integer, integer>(isc, dsearch.count_neighbour));
 								
@@ -4929,12 +5054,12 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 				}
 			}
 
-			// Очистка (восстановление хеш-таблицы).
-			// НИ в коем случае не параллелить по OPENMP в этом месте.!!!
+			// РћС‡РёСЃС‚РєР° (РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ С…РµС€-С‚Р°Р±Р»РёС†С‹).
+			// РќР РІ РєРѕРµРј СЃР»СѓС‡Р°Рµ РЅРµ РїР°СЂР°Р»Р»РµР»РёС‚СЊ РїРѕ OPENMP РІ СЌС‚РѕРј РјРµСЃС‚Рµ.!!!
 			for (integer i_54 = 0; i_54 < itop_stack2; i_54++) {
 				hash_table2[istack[i_54]] = false;
 			}
-			itop_stack2 = 0; // стек снова готов к работе.
+			itop_stack2 = 0; // СЃС‚РµРє СЃРЅРѕРІР° РіРѕС‚РѕРІ Рє СЂР°Р±РѕС‚Рµ.
 
 
 
@@ -4946,9 +5071,9 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 			}
 
 			newCcount++;
-			// Один агрегат создан.
+			// РћРґРёРЅ Р°РіСЂРµРіР°С‚ СЃРѕР·РґР°РЅ.
 
-		} // узел не был ещё включён в агрегат.
+		} // СѓР·РµР» РЅРµ Р±С‹Р» РµС‰С‘ РІРєР»СЋС‡С‘РЅ РІ Р°РіСЂРµРіР°С‚.
 
 
 
@@ -4956,33 +5081,33 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 		for (integer i_1 = istartflag_scan; i_1 <= n_a[ilevel - 1]; i_1++) {
 			if (flag[i_1] == false) {
 				bcontinue_gl_1 = true;
-				istartflag_scan = i_1; // сокращаем пределы сканирования.
-				break; // досрочный выход из цикла for.
+				istartflag_scan = i_1; // СЃРѕРєСЂР°С‰Р°РµРј РїСЂРµРґРµР»С‹ СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ.
+				break; // РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· С†РёРєР»Р° for.
 			}
 		}
 
-		// Вычисление узла с максимальным количеством соседей.
+		// Р’С‹С‡РёСЃР»РµРЅРёРµ СѓР·Р»Р° СЃ РјР°РєСЃРёРјР°Р»СЊРЅС‹Рј РєРѕР»РёС‡РµСЃС‚РІРѕРј СЃРѕСЃРµРґРµР№.
 		icandidate = 0;
 
 
-		// Данный код чрезвычайно компактен.
-		// Надо найти максимальный элемент в АВЛ дереве.
+		// Р”Р°РЅРЅС‹Р№ РєРѕРґ С‡СЂРµР·РІС‹С‡Р°Р№РЅРѕ РєРѕРјРїР°РєС‚РµРЅ.
+		// РќР°РґРѕ РЅР°Р№С‚Рё РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚ РІ РђР’Р› РґРµСЂРµРІРµ.
 		
 
 		if (!m1.empty()) {
-			std::map<integer, integer>::const_iterator it; // объявляем итератор
-			// Это очень медленный код.
+			std::map<integer, integer>::const_iterator it; // РѕР±СЉСЏРІР»СЏРµРј РёС‚РµСЂР°С‚РѕСЂ
+			// Р­С‚Рѕ РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅС‹Р№ РєРѕРґ.
 			it = std::max_element(m1.begin(), m1.end(), greaters_Stuben());
 			//std::cout << (*it).first << "= ";
 
 			
 
 			//std::make_heap(v1.begin(), v1.end(), greaters_Stuben());
-			//std::pop_heap(v1.begin(), v1.end(), greaters_Stuben()); // удалить максимальный элемент из кучи.
+			//std::pop_heap(v1.begin(), v1.end(), greaters_Stuben()); // СѓРґР°Р»РёС‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚ РёР· РєСѓС‡Рё.
 			
 
 			icandidate = row_startA[(*it).first];
-			//icandidate = row_startA[(v1.back()).first];  // посмотреть максимальный элемент.
+			//icandidate = row_startA[(v1.back()).first];  // РїРѕСЃРјРѕС‚СЂРµС‚СЊ РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
 		}
 		else {
 			icandidate = 0;
@@ -5001,11 +5126,11 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 		icountprohod++;
 
-	} // Построение C/F разбиения. создано.
+	} // РџРѕСЃС‚СЂРѕРµРЅРёРµ C/F СЂР°Р·Р±РёРµРЅРёСЏ. СЃРѕР·РґР°РЅРѕ.
 
 
-    // Освобождение оперативной памяти из под АВЛ дерева.
-	// 12 декабря 2015.
+    // РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё РёР· РїРѕРґ РђР’Р› РґРµСЂРµРІР°.
+	// 12 РґРµРєР°Р±СЂСЏ 2015.
 	m1.clear();
 	//v1.clear();
 
@@ -5018,32 +5143,49 @@ void Ruge_and_Stuben_CF_decomposition_std(Ak2& Amat, bool*& this_is_F_node,
 
 } // Ruge_and_Stuben_CF_decomposition_std
 
-// Разбиение множества узлов первоначальной сетки на С-узлы и 
-// F - узлы. С -узлы составят грубую сетку следующего уровня вложенности.
-// Значения же функции в F узлах должно быть восстановлено по значению функции
-// в ближайших С узлах (см. задачу интерполяции). 
-void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
-	bool*& this_is_C_node, integer ilevel, 
+
+// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+// F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё). 
+// РќР°С‡Р°Р»Рѕ РЅР°РїРёСЃР°РЅРёСЏ 20.09.2020. PMIS РїСЂРёРјРµРЅС‘РЅРЅС‹Р№ Рє РєРІР°РґСЂР°С‚Сѓ РјР°С‚СЂРёС†С‹ Рђ.
+// Р Р°СЃРїР°СЂР°Р»Р»РµР»РёР» 08.10.2020
+template <typename doublerealT>
+void PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Ak2& Amat, bool*& this_is_F_node,
+	bool*& this_is_C_node, integer ilevel,
 	integer*& count_neighbour, integer*& n_a,
-	integer &newCcount,
-	doublereal*& threshold_quick_only_negative,
+	integer& newCcount,
+	doublerealT*& threshold_quick_only_negative,
 	integer*& row_startA,
-	Taccumulqtor_list** &hash_StrongTranspose_collection1)
+	Taccumulqtor_list**& hash_StrongTranspose_collection1)
 {
+
+	bool bprint_mesage_diagnostic = true;
+	if (my_amg_manager.iprint_log == 0) {
+		bprint_mesage_diagnostic = false;
+	}
+
+#ifdef _OPENMP
+	int inum_core = number_cores();
+	int i_my_num_core_parallelesation = omp_get_max_threads();
+	omp_set_num_threads(inum_core); // РѕРїС‚РёРјР°Р»СЊРЅРѕ 8 РїРѕС‚РѕРєРѕРІ, 10 РїРѕС‚РѕРєРѕРІ СѓР¶Рµ РїСЂРѕРёРіСЂС‹С€ РїРѕ РІСЂРµРјРµРЅРё.
+#endif
 
 	integer ii_end1 = n_a[ilevel - 1];
 
-	doublereal* dcount_neighbour = new doublereal[n_a[ilevel - 1] + 1];
+	doublerealT* dcount_neighbour = new doublerealT[n_a[ilevel - 1] + 1];
 
 	integer inumber_isolated_F_nodes = 0;
+
+#pragma omp parallel for reduction(+ : inumber_isolated_F_nodes)
 	for (integer i7 = 1; i7 <= ii_end1; i7++) {
-		// число соседей плюс случайное число от нуля до единицы.
+		// С‡РёСЃР»Рѕ СЃРѕСЃРµРґРµР№ РїР»СЋСЃ СЃР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ РѕС‚ РЅСѓР»СЏ РґРѕ РµРґРёРЅРёС†С‹.
 		if (count_neighbour[i7] == 0) {
 			this_is_F_node[i7] = true;
 			inumber_isolated_F_nodes++;
 		}
-		// drand случайное вещественное число от нуля до единицы.
-		doublereal drand = (doublereal)(((double)(1.0 * rand()) / ((double)(RAND_MAX + 1))));
+		// drand СЃР»СѓС‡Р°Р№РЅРѕРµ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРµ С‡РёСЃР»Рѕ РѕС‚ РЅСѓР»СЏ РґРѕ РµРґРёРЅРёС†С‹.
+		doublerealT drand = (doublerealT)(((double)(1.0 * rand()) / ((double)(RAND_MAX + 1))));
 		dcount_neighbour[i7] = count_neighbour[i7] + drand;
 	}
 
@@ -5052,18 +5194,346 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 	bool bcontinue = true;
 	while (bcontinue) {
 		bcontinue = false;
-		integer inumber_of_nodes_viewed = 0; // Число просмотренных узлов на новом проходе (сканировании).
-		integer inumber_of_C_nodes = 0; // Число добавленных агрегатов.
+		integer inumber_of_nodes_viewed = 0; // Р§РёСЃР»Рѕ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅС‹С… СѓР·Р»РѕРІ РЅР° РЅРѕРІРѕРј РїСЂРѕС…РѕРґРµ (СЃРєР°РЅРёСЂРѕРІР°РЅРёРё).
+		integer inumber_of_C_nodes = 0; // Р§РёСЃР»Рѕ РґРѕР±Р°РІР»РµРЅРЅС‹С… Р°РіСЂРµРіР°С‚РѕРІ.
+
+#pragma omp parallel for reduction(+:inumber_of_nodes_viewed, inumber_of_C_nodes)
+		for (integer i7 = 1; i7 <= ii_end1; i7++) {
+			bool cnd = ((this_is_C_node[i7] == false) && (this_is_F_node[i7] == false));
+			if (!cnd) continue;
+
+			
+			inumber_of_nodes_viewed++;
+
+			if (bflag_empty) {
+				// РќРµРїРѕРЅСЏС‚РЅС‹Рµ РѕС€РјС‘С‚РєРё, РёС… РЅРµР±РѕР»СЊС€РѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РґРµР»Р°РµРј РЎ СѓР·Р»Р°РјРё.
+				inumber_of_C_nodes++;
+				newCcount++;
+				this_is_C_node[i7] = true;
+				//std::cout<<"lambdai="<< count_neighbour[i7]<<std::endl;
+				//system("PAUSE");
+			}
+			else {
+
+				bcontinue = true;
+
+				doublerealT id_diag = dcount_neighbour[i7];
+
+				// РћРїСЂРµРґРµР»РµРЅРёРµ S(i)
+				doublerealT max_vnediagonal = -1.0;
+				//for (integer is0 = row_startA[i7]; (is0 <= row_startA[i7 + 1] - 1); is0++) {
+					//if (Amat.j[is0] != i7) {
+						//if ((Amat.aij[is0]<0.0)&&(Amat.abs_aij[is0] > max_vnediagonal)) {
+							//max_vnediagonal = Amat.abs_aij[is0];
+						//}
+					//}
+				//}
+				max_vnediagonal = threshold_quick_only_negative[i7];
+				//  Р—Р°Р±С‹Р»Рё СѓС‡РµСЃС‚СЊ transpose(S(i)).
+				bool bunion_on = true;
+				//bool bOk = false;
+				integer is0_end = row_startA[i7 + 1] - 1;
+				for (integer is0 = row_startA[i7]; (is0 <= is0_end); is0++) {
+					bool cnd1 = (Amat.j[is0] != i7);
+					if (!cnd1) continue;
+					bool cnd2 = ((Amat.aij[is0] < 0.0) && (Amat.abs_aij[is0] > max_vnediagonal));
+					if (!cnd2) continue;
+					
+						
+
+					// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+					if ((this_is_C_node[Amat.j[is0]] == false) && (this_is_F_node[Amat.j[is0]] == false)) {
+
+						// РЎРѕСЃРµРґРё СЃРѕСЃРµРґРµР№.
+						integer i8 = Amat.j[is0];
+						doublerealT max_vnediagonal2 = threshold_quick_only_negative[i8];
+						integer is0_end2 = row_startA[i8 + 1] - 1;
+						for (integer is02 = row_startA[i8]; (is02 <= is0_end2); is02++) {
+							if ((Amat.j[is02] != i7)&&(Amat.j[is02] != i8)) {
+								if ((Amat.aij[is02] < 0.0) && (Amat.abs_aij[is02] > max_vnediagonal2)) {
+									if (dcount_neighbour[Amat.j[is02]] > id_diag) {
+										// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+										if ((this_is_C_node[Amat.j[is02]] == false) && (this_is_F_node[Amat.j[is02]] == false)) {
+											bunion_on = false;
+										}
+									}
+								}
+							}
+						}
 
 
+						if (dcount_neighbour[Amat.j[is0]] > id_diag) {									
+
+							bunion_on = false;
+						}
+						//else {
+							// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+							//if ((this_is_C_node[Amat.j[is0]] == false) && (this_is_F_node[Amat.j[is0]] == false)) {
+								//	bOk = true;
+							//	}
+						//}
+					}						
+					
+				}
+				// СѓС‡РёС‚С‹РІР°РµРј transpose(S(i)):
+				if (hash_StrongTranspose_collection1 != nullptr) {
+					if (hash_StrongTranspose_collection1[i7] != nullptr) {
+						Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
+						while (list_scan != nullptr) {
+							integer icandidate73 = list_scan->ikey;
+							if (icandidate73 != i7) {
+								
+								// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+								if ((this_is_C_node[icandidate73] == false) && (this_is_F_node[icandidate73] == false)) {
+
+									// СЃРѕСЃРµРґРё СЃРѕСЃРµРґРµР№.
+									if (hash_StrongTranspose_collection1[icandidate73] != nullptr) {
+										Taccumulqtor_list* list_scan2 = hash_StrongTranspose_collection1[icandidate73];
+										while (list_scan2 != nullptr) {
+											integer icandidate734 = list_scan2->ikey;
+											if ((icandidate734 != i7)&&(icandidate734 != icandidate73)) {
+												if (dcount_neighbour[icandidate734] > id_diag) {
+													// РЎРѕСЃРµРґ СЃРѕСЃРµРґРµР№ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+													if ((this_is_C_node[icandidate734] == false) && (this_is_F_node[icandidate734] == false)) {
+														bunion_on = false;
+													}
+												}
+											}
+											list_scan2 = list_scan2->next;
+										}
+									}
+
+
+									if (dcount_neighbour[icandidate73] > id_diag) {											
+
+										bunion_on = false;
+									}
+									//else {
+									//	if ((this_is_C_node[icandidate73] == false) && (this_is_F_node[icandidate73] == false)) {
+									//		bOk = true;
+									//	}
+									//}
+								}
+							}
+							list_scan = list_scan->next;
+						}
+					}
+				}
+				// РµСЃР»Рё bunion_on С‚Рѕ РЅР° РґРёР°РіРѕРЅР°Р»Рё СЃР°РјР°СЏ СЃРёР»СЊРЅР°СЏ СЃРІСЏР·СЊ Рё РјС‹ СЃРѕР·РґР°С‘Рј Р°РіСЂРµРіР°С‚.
+				// РЎСЋРґР° РІ Р°РіСЂРµРіР°С‚ РІС…РѕРґСЏС‚ СЃРІСЏР·Рё РёР· S(i).
+				/*
+				if (bunion_on) {
+					inumber_of_C_nodes++;
+					this_is_C_node[i7] = true;
+					// Р—РґРµСЃСЊ СЃРѕСЃРµРґРµР№ Р±СЂР°С‚СЊ С‚РѕР»СЊРєРѕ РёР· transpose(S(i)).
+					for (integer is0 = row_startA[i7]; (is0 <= row_startA[i7 + 1] - 1); is0++) {
+						// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+						if ((this_is_C_node[Amat.j[is0]] == false) && (this_is_F_node[Amat.j[is0]] == false)) {
+							if ((Amat.j[is0] != i7) && (Amat.abs_aij[is0] >= theta(ilevel) * max_vnediagonal)) {
+								this_is_F_node[Amat.j[is0]] = true;
+							}
+						}
+					}
+					newCcount++;
+					// РћРґРёРЅ Р°РіСЂРµРіР°С‚ СЃРѕР·РґР°РЅ.
+				}
+				*/
+				// РµСЃР»Рё bunion_on С‚Рѕ РЅР° РґРёР°РіРѕРЅР°Р»Рё СЃР°РјР°СЏ СЃРёР»СЊРЅР°СЏ СЃРІСЏР·СЊ Рё РјС‹ СЃРѕР·РґР°С‘Рј Р°РіСЂРµРіР°С‚.
+				// РЎСЋРґР° РІ Р°РіСЂРµРіР°С‚ РІС…РѕРґСЏС‚ СЃРІСЏР·Рё РёР· transpose(S(i)).
+				//if (true||bOk) 
+				{
+					if (bunion_on) {
+						inumber_of_C_nodes++;
+						this_is_C_node[i7] = true;
+
+						// РЈРІРµР»РёС‡РёРІР°РµС‚ С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№ СЃ 899 РґРѕ 998.
+						// РќРµ СѓРјРµРЅСЊС€Р°СЏ СЂР°Р·СЂРµР¶РµРЅРЅРѕСЃС‚СЊ РѕРїРµСЂР°С‚РѕСЂР°.
+						// Р’РѕРѕР±С‰Рµ РІСЃРµС… СЃРѕРµРґРёРЅРµРЅРЅС‹С… СЃ i7 РґРµР»Р°РµРј F СѓР·Р»Р°РјРё.
+						//integer is0_end3 = row_startA[i7 + 1] - 1;
+						//for (integer is02 = row_startA[i7]; (is02 <= is0_end3); is02++) {
+							//if (Amat.j[is02] != i7)  {
+								//not//if ((Amat.aij[is02] < 0.0) && (Amat.abs_aij[is02] > max_vnediagonal2)) 
+								//{
+
+									// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+									//if ((this_is_C_node[Amat.j[is02]] == false) && (this_is_F_node[Amat.j[is02]] == false)) {
+										//this_is_F_node[Amat.j[is02]] = true;
+									//}
+
+								//}
+							//}
+						//}
+
+
+						// Р—РґРµСЃСЊ СЃРѕСЃРµРґРµР№ Р±СЂР°С‚СЊ С‚РѕР»СЊРєРѕ РёР· transpose(S(i)).
+						if (hash_StrongTranspose_collection1 != nullptr) {
+							if (hash_StrongTranspose_collection1[i7] != nullptr) {
+								Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
+								while (list_scan != nullptr) {
+									integer icandidate72 = list_scan->ikey;
+									if (icandidate72 != i7) {
+
+										// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+										// Р·Р°РєРѕРјРµРЅС‚РёСЂРѕРІР°С‚СЊ. Р’С‹СЏСЃРЅРµРЅРѕ С‡С‚Рѕ Р±РµР· СЌС‚РѕРіРѕ Р»СѓС‡С€Рµ СЃС…РѕРґРёС‚СЃСЏ. //if ((this_is_C_node[icandidate72] == false) &&
+										// Р·Р°РєРѕРјРµРЅС‚РёСЂРѕРІР°С‚СЊ. Р’С‹СЏСЃРЅРµРЅРѕ С‡С‚Рѕ Р±РµР· СЌС‚РѕРіРѕ Р»СѓС‡С€Рµ СЃС…РѕРґРёС‚СЃСЏ. //(this_is_F_node[icandidate72] == false)) 
+										{
+
+											// СЃРѕСЃРµРґРё СЃРѕСЃРµРґРµР№ (РєРІР°РґСЂР°С‚ РјР°С‚СЂРёС†С‹).
+											if (hash_StrongTranspose_collection1[icandidate72] != nullptr) {
+												Taccumulqtor_list* list_scan2 = hash_StrongTranspose_collection1[icandidate72];
+												while (list_scan2 != nullptr) {
+													integer icandidate723 = list_scan2->ikey;
+													if ((icandidate723 != i7)&&(icandidate723 != icandidate72)) {
+														// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+														if ((this_is_C_node[icandidate723] == false) &&
+															(this_is_F_node[icandidate723] == false)) {
+															this_is_F_node[icandidate723] = true;
+														}
+													}
+													list_scan2 = list_scan2->next;
+												}
+											}
+
+											integer i8 = icandidate72;
+											integer is0_end2 = row_startA[i8 + 1] - 1;
+											
+											doublerealT max_vnediagonal2 = -1;
+
+											if (0) {
+												for (integer is02 = row_startA[i8]; (is02 <= is0_end2); is02++) {
+													if (Amat.j[is02] != i8) {
+														if (Amat.abs_aij[is02] > max_vnediagonal2) {
+															max_vnediagonal2 = Amat.abs_aij[is02];
+														}
+													}
+												}
+											}
+											else {
+												max_vnediagonal2 = threshold_quick_only_negative[i8];
+											}
+
+											max_vnediagonal2 *= 0.23;
+												
+											for (integer is02 = row_startA[i8]; (is02 <= is0_end2); is02++) {
+												if ((Amat.j[is02] != i7) && (Amat.j[is02] != i8)) {
+													if ((Amat.aij[is02] < 0.0) && (Amat.abs_aij[is02] > max_vnediagonal2)) 
+													{
+															
+														// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
+														if ((this_is_C_node[Amat.j[is02]] == false) &&
+															(this_is_F_node[Amat.j[is02]] == false)) {
+															this_is_F_node[Amat.j[is02]] = true;
+														}
+															
+													}
+												}
+											}
+
+
+											
+											this_is_F_node[icandidate72] = true;
+										}
+									}
+									list_scan = list_scan->next;
+								}
+							}
+						}
+						newCcount++;
+						// РћРґРёРЅ Р°РіСЂРµРіР°С‚ СЃРѕР·РґР°РЅ.
+					}
+				}
+				//else {
+					//this_is_F_node[i7] = true;
+					// РїСЂРёРІРѕРґРёС‚ Рє Р±РѕР»СЊС€РµР№ РѕРїРµСЂР°С‚РѕСЂРЅРѕР№ СЃР»РѕР¶РЅРѕСЃС‚Рё Рё Р±РѕР»СЊС€РµРјСѓ РІСЂРµРјРµРЅРё СЂР°СЃС‡РµС‚Р°
+				//}
+			}
+
+			
+		}
+
+		if ((inumber_of_C_nodes == 0) && (inumber_of_nodes_viewed > 0)) {
+			bflag_empty = true;
+		}
+
+		if (bprint_mesage_diagnostic) {
+			std::cout << "view candidates=" << inumber_of_nodes_viewed << " additional aggregates=";
+			std::cout << inumber_of_C_nodes << " inumber_isolated_F_nodes=" << inumber_isolated_F_nodes << "\n";
+		}
+		//getchar();
+	}
+
+	delete[]  dcount_neighbour;
+
+#ifdef _OPENMP
+	omp_set_num_threads(i_my_num_core_parallelesation);
+#endif
+
+}
+
+// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+// F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё). 
+template <typename doublerealT>
+void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
+	bool*& this_is_C_node, integer ilevel, 
+	integer*& count_neighbour, integer*& n_a,
+	integer &newCcount,
+	doublerealT*& threshold_quick_only_negative,
+	integer*& row_startA,
+	Taccumulqtor_list** &hash_StrongTranspose_collection1)
+{
+
+
+	bool bprint_mesage_diagnostic = true;
+	if (my_amg_manager.iprint_log == 0) {
+		bprint_mesage_diagnostic = false;
+	}
+
+#ifdef _OPENMP
+	int inum_core = number_cores();
+	int i_my_num_core_parallelesation = omp_get_max_threads();
+	omp_set_num_threads(inum_core); // РѕРїС‚РёРјР°Р»СЊРЅРѕ 8 РїРѕС‚РѕРєРѕРІ, 10 РїРѕС‚РѕРєРѕРІ СѓР¶Рµ РїСЂРѕРёРіСЂС‹С€ РїРѕ РІСЂРµРјРµРЅРё.
+#endif
+
+	integer ii_end1 = n_a[ilevel - 1];
+
+	doublerealT* dcount_neighbour = new doublerealT[n_a[ilevel - 1] + 1];
+
+	integer inumber_isolated_F_nodes = 0;
+
+	//printf("number thread=%d\n", omp_get_max_threads());
+	//system("PAUSE");
+
+#pragma omp parallel for reduction(+ : inumber_isolated_F_nodes)
+	for (integer i7 = 1; i7 <= ii_end1; i7++) {
+		// С‡РёСЃР»Рѕ СЃРѕСЃРµРґРµР№ РїР»СЋСЃ СЃР»СѓС‡Р°Р№РЅРѕРµ С‡РёСЃР»Рѕ РѕС‚ РЅСѓР»СЏ РґРѕ РµРґРёРЅРёС†С‹.
+		if (count_neighbour[i7] == 0) {
+			this_is_F_node[i7] = true;
+			inumber_isolated_F_nodes++;
+		}
+		// drand СЃР»СѓС‡Р°Р№РЅРѕРµ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРµ С‡РёСЃР»Рѕ РѕС‚ РЅСѓР»СЏ РґРѕ РµРґРёРЅРёС†С‹.
+		doublerealT drand = (doublerealT)(((double)(1.0 * rand()) / ((double)(RAND_MAX + 1))));
+		dcount_neighbour[i7] = count_neighbour[i7] + drand;
+	}
+
+
+	bool bflag_empty = false;
+	bool bcontinue = true;
+	while (bcontinue) {
+		bcontinue = false;
+		integer inumber_of_nodes_viewed = 0; // Р§РёСЃР»Рѕ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅС‹С… СѓР·Р»РѕРІ РЅР° РЅРѕРІРѕРј РїСЂРѕС…РѕРґРµ (СЃРєР°РЅРёСЂРѕРІР°РЅРёРё).
+		integer inumber_of_C_nodes = 0; // Р§РёСЃР»Рѕ РґРѕР±Р°РІР»РµРЅРЅС‹С… Р°РіСЂРµРіР°С‚РѕРІ.
+
+#pragma omp parallel for reduction(+:inumber_of_nodes_viewed, inumber_of_C_nodes)
 		for (integer i7 = 1; i7 <= ii_end1; i7++) {
 			if ((this_is_C_node[i7] == false) && (this_is_F_node[i7] == false)) {
 				inumber_of_nodes_viewed++;
 
 				if (bflag_empty) {
-					// Непонятные ошмётки, их небольшое количество делаем С узлами.
+					// РќРµРїРѕРЅСЏС‚РЅС‹Рµ РѕС€РјС‘С‚РєРё, РёС… РЅРµР±РѕР»СЊС€РѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РґРµР»Р°РµРј РЎ СѓР·Р»Р°РјРё.
 					inumber_of_C_nodes++;
-					newCcount++;
+					/*newCcount++;*/
 					this_is_C_node[i7] = true;
 					//std::cout<<"lambdai="<< count_neighbour[i7]<<std::endl;
 					//system("PAUSE");
@@ -5072,10 +5542,10 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 
 					bcontinue = true;
 
-					doublereal id_diag = dcount_neighbour[i7];
+					doublerealT id_diag = dcount_neighbour[i7];
 
-					// Определение S(i)
-					doublereal max_vnediagonal = -1.0;
+					// РћРїСЂРµРґРµР»РµРЅРёРµ S(i)
+					doublerealT max_vnediagonal = -1.0;
 					//for (integer is0 = row_startA[i7]; (is0 <= row_startA[i7 + 1] - 1); is0++) {
 						//if (Amat.j[is0] != i7) {
 							//if ((Amat.aij[is0]<0.0)&&(Amat.abs_aij[is0] > max_vnediagonal)) {
@@ -5084,7 +5554,7 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 						//}
 					//}
 					max_vnediagonal = threshold_quick_only_negative[i7];
-					//  Забыли учесть transpose(S(i)).
+					//  Р—Р°Р±С‹Р»Рё СѓС‡РµСЃС‚СЊ transpose(S(i)).
 					bool bunion_on = true;
 					//bool bOk = false;
 					integer is0_end = row_startA[i7 + 1] - 1;
@@ -5092,13 +5562,13 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 						if (Amat.j[is0] != i7) {
 							if ((Amat.aij[is0] < 0.0) && (Amat.abs_aij[is0] > max_vnediagonal)) {
 								if (dcount_neighbour[Amat.j[is0]] >= id_diag) {
-									// Сосед еще не обрабатывался.
+									// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
 									if ((this_is_C_node[Amat.j[is0]] == false) && (this_is_F_node[Amat.j[is0]] == false)) {
 										bunion_on = false;
 									}
 								}
 								//else {
-									// Сосед еще не обрабатывался.
+									// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
 									//if ((this_is_C_node[Amat.j[is0]] == false) && (this_is_F_node[Amat.j[is0]] == false)) {
 									//	bOk = true;
 								//	}
@@ -5106,7 +5576,7 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 							}
 						}
 					}
-					// учитываем transpose(S(i)):
+					// СѓС‡РёС‚С‹РІР°РµРј transpose(S(i)):
 					if (hash_StrongTranspose_collection1 != nullptr) {
 						if (hash_StrongTranspose_collection1[i7] != nullptr) {
 							Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
@@ -5114,7 +5584,7 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 								integer icandidate73 = list_scan->ikey;
 								if (icandidate73 != i7) {
 									if (dcount_neighbour[icandidate73] >= id_diag) {
-										// Сосед еще не обрабатывался.
+										// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
 										if ((this_is_C_node[icandidate73] == false) && (this_is_F_node[icandidate73] == false)) {
 											bunion_on = false;
 										}
@@ -5129,40 +5599,40 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 							}
 						}
 					}
-					// если bunion_on то на диагонали самая сильная связь и мы создаём агрегат.
-					// Сюда в агрегат входят связи из S(i).
+					// РµСЃР»Рё bunion_on С‚Рѕ РЅР° РґРёР°РіРѕРЅР°Р»Рё СЃР°РјР°СЏ СЃРёР»СЊРЅР°СЏ СЃРІСЏР·СЊ Рё РјС‹ СЃРѕР·РґР°С‘Рј Р°РіСЂРµРіР°С‚.
+					// РЎСЋРґР° РІ Р°РіСЂРµРіР°С‚ РІС…РѕРґСЏС‚ СЃРІСЏР·Рё РёР· S(i).
 					/*
 					if (bunion_on) {
 						inumber_of_C_nodes++;
 						this_is_C_node[i7] = true;
-						// Здесь соседей брать только из transpose(S(i)).
+						// Р—РґРµСЃСЊ СЃРѕСЃРµРґРµР№ Р±СЂР°С‚СЊ С‚РѕР»СЊРєРѕ РёР· transpose(S(i)).
 						for (integer is0 = row_startA[i7]; (is0 <= row_startA[i7 + 1] - 1); is0++) {
-							// Сосед еще не обрабатывался.
+							// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
 							if ((this_is_C_node[Amat.j[is0]] == false) && (this_is_F_node[Amat.j[is0]] == false)) {
 								if ((Amat.j[is0] != i7) && (Amat.abs_aij[is0] >= theta(ilevel) * max_vnediagonal)) {
 									this_is_F_node[Amat.j[is0]] = true;
 								}
 							}
 						}
-						newCcount++;
-						// Один агрегат создан.
+						//--->newCcount++;
+						// РћРґРёРЅ Р°РіСЂРµРіР°С‚ СЃРѕР·РґР°РЅ.
 					}
 					*/
-					// если bunion_on то на диагонали самая сильная связь и мы создаём агрегат.
-					// Сюда в агрегат входят связи из transpose(S(i)).
+					// РµСЃР»Рё bunion_on С‚Рѕ РЅР° РґРёР°РіРѕРЅР°Р»Рё СЃР°РјР°СЏ СЃРёР»СЊРЅР°СЏ СЃРІСЏР·СЊ Рё РјС‹ СЃРѕР·РґР°С‘Рј Р°РіСЂРµРіР°С‚.
+					// РЎСЋРґР° РІ Р°РіСЂРµРіР°С‚ РІС…РѕРґСЏС‚ СЃРІСЏР·Рё РёР· transpose(S(i)).
 					//if (true||bOk) 
 					{
 						if (bunion_on) {
 							inumber_of_C_nodes++;
 							this_is_C_node[i7] = true;
-							// Здесь соседей брать только из transpose(S(i)).
+							// Р—РґРµСЃСЊ СЃРѕСЃРµРґРµР№ Р±СЂР°С‚СЊ С‚РѕР»СЊРєРѕ РёР· transpose(S(i)).
 							if (hash_StrongTranspose_collection1 != nullptr) {
 								if (hash_StrongTranspose_collection1[i7] != nullptr) {
 									Taccumulqtor_list* list_scan = hash_StrongTranspose_collection1[i7];
 									while (list_scan != nullptr) {
 										integer icandidate72 = list_scan->ikey;
 										if (icandidate72 != i7) {
-											// Сосед еще не обрабатывался.
+											// РЎРѕСЃРµРґ РµС‰Рµ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°Р»СЃСЏ.
 											if ((this_is_C_node[icandidate72] == false) &&
 												(this_is_F_node[icandidate72] == false)) {
 												this_is_F_node[icandidate72] = true;
@@ -5172,13 +5642,13 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 									}
 								}
 							}
-							newCcount++;
-							// Один агрегат создан.
+							/*newCcount++;*/
+							// РћРґРёРЅ Р°РіСЂРµРіР°С‚ СЃРѕР·РґР°РЅ.
 						}
 					}
 					//else {
 						//this_is_F_node[i7] = true;
-						// приводит к большей операторной сложности и большему времени расчета
+						// РїСЂРёРІРѕРґРёС‚ Рє Р±РѕР»СЊС€РµР№ РѕРїРµСЂР°С‚РѕСЂРЅРѕР№ СЃР»РѕР¶РЅРѕСЃС‚Рё Рё Р±РѕР»СЊС€РµРјСѓ РІСЂРµРјРµРЅРё СЂР°СЃС‡РµС‚Р°
 					//}
 				}
 
@@ -5189,19 +5659,28 @@ void PMIS_CF_decomposition(Ak2& Amat, bool*& this_is_F_node,
 			bflag_empty = true;
 		}
 
-		std::cout << "view candidates=" << inumber_of_nodes_viewed << " additional aggregates=" << inumber_of_C_nodes << " inumber_isolated_F_nodes=" << inumber_isolated_F_nodes << "\n";
+		if (bprint_mesage_diagnostic) {
+			std::cout << "view candidates=" << inumber_of_nodes_viewed << " additional aggregates=" << inumber_of_C_nodes << " inumber_isolated_F_nodes=" << inumber_isolated_F_nodes << "\n";
+		}
 		//getchar();
 	}
 
 	delete[]  dcount_neighbour;
+
+#ifdef _OPENMP
+	omp_set_num_threads(i_my_num_core_parallelesation);
+#endif
+
 }
 
+// РћР±С‘СЂС‚РєР° РґР»СЏ СЃРёС€РЅРѕРіРѕ realloc().
+// Р’ РґР°РЅРЅРѕР№ С„СѓРЅРєС†РёРё РѕСЃСѓС‰РµСЃС‚РІР»СЏРµС‚СЃСЏ РїСЂРѕРІРµСЂРєР° РЅР° NULL.
 template <typename myARRT>
 void my_realloc_memory(myARRT* &x, integer n) {
-	if (x != nullptr) {
-		myARRT* x_temp = nullptr;
+	if (x != NULL) {
+		myARRT* x_temp = NULL;
 		x_temp = (myARRT*)realloc(x, ((n) * sizeof(myARRT)));
-		if (x_temp == nullptr) {
+		if (x_temp == NULL) {
 			std::cout<<"application crash for bx array in procedure my_realloc_memory."<<std::endl;
 			system("pause");
 			exit(1);
@@ -5212,124 +5691,139 @@ void my_realloc_memory(myARRT* &x, integer n) {
 	}
 }
 
-// 29.07.2018 - xx.xx.xxxx Версия 6 на основе версии 4.
-// 24.04.2020 Выделил алгоритм селектора(C/F разбиения) в отдельную функцию.
-// 14.04.2020 Разделил на две функции setup и solution phase.
-// 13.04.2020 Убрал сортировку CountingSort из параллельного умножения
-// разреженных матриц. Использование #pragma omp for schedule (static)
-// группирует работу нитей последовательно. Данные разбиты на 8 частей (потоков),
-// нулевая нить обрабатывает первую часть, первая вторую и т.д. Потом
-// после последовательного объединения работы нитей итоговая матрица А
-// окажется отсортированной по строкам. Это дало ускорение 12%.
-// 12.04.2020 Умножение разреженных матриц вынесено в отдельные функции.
-// 3.02.2019 Начало внедрения более гибкого типа данных Ak2, 
-// что позволит сэкономить оперативную память.
-// 25.04.2018 Версия №4 classic_aglomerative_amg4 это основная поддерживаемая версия.
-// Пятая версия classic_aglomerative_amg5 давно не поддерживается (заморожена).
-// июнь 2017 - добавлен Рунге-Кутта smoother, улучшена поддержка ilu0 разложения в алгоритме. 
-// июнь 2017 - Поддерживается максимальное количество уровней вложенности 100 и менее. 
-// зимние каникулы 2016-2017 года - добавлен bicgStab.
-// Лето 2017 - алгебраический многосеточный метод теперь всё чаще и чаще используется как
-// предобуславливатель к алгоритму Хенка ван дер Ворста BiCGStab.
-// Эта связка показывает более стабильную и
-// надежную работу чем просто отдельно amg.
-// 4-6 ноября 2016. Добавлен ILU0. Полностью удалён устаревший код из Solution Phase.
-// 9 августа 2016. Зейдель не справляется с большими спектральными радиусами матриц даже 
-// в составе данного amg. Это же проявляется и на классическом amg1r5. 
-// 9 августа решено уменьшить спектральный радиус в Зейделе 
-// на каждом уровне вложенности с помощью ILU2 декомпозиции. Это подтверждает статья 
-// Е.М.Андреева, Г.В.Муратова
-// "Многосеточный метод решения сильно несимметричных систем" ЮГИНФО РГУ, Ростов-на-Дону,
-// Россия. Там они
-// показывают расходимость мультигрида на основе Зейделя для задач с существенным спектральным
-// радиусом и рекомендуют заменить Зейделя на ТКМ2 метод
-// (треугольный кососимметричный метод). В данной 
-// программе у нас есть 
-// успешный опыт использования ILU2 предобуславливателя из библиотеки SPARSKIT2 Ю.Саада 
-// поэтому вместо ТКМ2 у нас 
-// будет ILU2.
-// 22 января 2016 текущий работоспособный вариант кода.
-// Планы: 1. сделать версию amg3. 
-// В ней: 2. заменить все проверки на невыделение оперативной памяти на универсальную 
-// функцию единую для всего.
-// это очевидно немного сократит программный код.
-// В ней 3. код V цикла оформить в виде цикла for. Тогда же можно будет попробовать вставить
-// direct метод для самого грубого уровня.
-// Это же откроет возможности сделать из amg алгоритма предобуславливатель для BiCGStab.
-// 15 января 2016 экономим память переходим на Ak1.
-// 10 января 2016 двоичный поиск заменён на хеширование.
-// 15 декабря 2015. Данная версия кода будет полностью очищена от устаревшего кода.
-// 13 декабря 2015. Внедрено АВЛ дерево. При внедрении АВЛ дерева исправлена логическая ошибка в
-// построении С/F разбиения, теперь C/F разбиение строится корректно.
-// Исправлен и внедрён quicksort (qs,qsj)
-// который в пять раз быстрее пирамидальной сортировки.
-// Полный отказ от band_size!!!.
-// Время работы алгоритма на 1.7М неизвестных в 3D составило ровно 1 минуту.
-// 18 октября 2015. Полностью работоспособный мультигрид.
-// Тестировалось на условиях Дирихле но должно работать на любых 
-// краевых задачах. 18 октября 2015 датируется версия 0.04. Версия 0.04 на треть
-// быстрее версии 0_03. Были ускорены как операции построения C/F разбиения, 
-// так и нахождение оператора Галёркина. При нахождении С/F разбиения 
-// учитывается уже построенная его часть и поэтому число сканирований на
-// на поздних циклах сокращается охватывая только не построенную часть.
-// При нахождении произведения Галёркина получена самая оптимальная по 
-// быстродействию версия,
-// Основанная на алгоритме слияния отсортированных списков.
-// 4 октября 2015 правильное построение последовательности вложенных графов.
-// 30 сентября 2015 продолжаем исправление метода. Делаем классический 
-// алгебраический многосеточный метод на основе  C/F разбиения.
-// 16 сентября 2015 года обнаружено что операции 
-// сгрубления и интерполяции сделаны совершенно неверно,
-// и если сгрубление еще в какой-то мере проецирует то интерполяция просто никакая.
-// Операции сгрубления и интерполяции будут сделаны заново на основе статьи 
-// К.Н. Волкова в новой версии солвера.
+
+
+// 29.07.2018 - xx.xx.xxxx Р’РµСЂСЃРёСЏ 6 РЅР° РѕСЃРЅРѕРІРµ РІРµСЂСЃРёРё 4.
+// 24.04.2020 Р’С‹РґРµР»РёР» Р°Р»РіРѕСЂРёС‚Рј СЃРµР»РµРєС‚РѕСЂР°(C/F СЂР°Р·Р±РёРµРЅРёСЏ) РІ РѕС‚РґРµР»СЊРЅСѓСЋ С„СѓРЅРєС†РёСЋ.
+// 14.04.2020 Р Р°Р·РґРµР»РёР» РЅР° РґРІРµ С„СѓРЅРєС†РёРё setup Рё solution phase.
+// 13.04.2020 РЈР±СЂР°Р» СЃРѕСЂС‚РёСЂРѕРІРєСѓ CountingSort РёР· РїР°СЂР°Р»Р»РµР»СЊРЅРѕРіРѕ СѓРјРЅРѕР¶РµРЅРёСЏ
+// СЂР°Р·СЂРµР¶РµРЅРЅС‹С… РјР°С‚СЂРёС†. РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ #pragma omp for schedule (static)
+// РіСЂСѓРїРїРёСЂСѓРµС‚ СЂР°Р±РѕС‚Сѓ РЅРёС‚РµР№ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ. Р”Р°РЅРЅС‹Рµ СЂР°Р·Р±РёС‚С‹ РЅР° 8 С‡Р°СЃС‚РµР№ (РїРѕС‚РѕРєРѕРІ),
+// РЅСѓР»РµРІР°СЏ РЅРёС‚СЊ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ РїРµСЂРІСѓСЋ С‡Р°СЃС‚СЊ, РїРµСЂРІР°СЏ РІС‚РѕСЂСѓСЋ Рё С‚.Рґ. РџРѕС‚РѕРј
+// РїРѕСЃР»Рµ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕРіРѕ РѕР±СЉРµРґРёРЅРµРЅРёСЏ СЂР°Р±РѕС‚С‹ РЅРёС‚РµР№ РёС‚РѕРіРѕРІР°СЏ РјР°С‚СЂРёС†Р° Рђ
+// РѕРєР°Р¶РµС‚СЃСЏ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕР№ РїРѕ СЃС‚СЂРѕРєР°Рј. Р­С‚Рѕ РґР°Р»Рѕ СѓСЃРєРѕСЂРµРЅРёРµ 12%.
+// 12.04.2020 РЈРјРЅРѕР¶РµРЅРёРµ СЂР°Р·СЂРµР¶РµРЅРЅС‹С… РјР°С‚СЂРёС† РІС‹РЅРµСЃРµРЅРѕ РІ РѕС‚РґРµР»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё.
+// 3.02.2019 РќР°С‡Р°Р»Рѕ РІРЅРµРґСЂРµРЅРёСЏ Р±РѕР»РµРµ РіРёР±РєРѕРіРѕ С‚РёРїР° РґР°РЅРЅС‹С… Ak2, 
+// С‡С‚Рѕ РїРѕР·РІРѕР»РёС‚ СЃСЌРєРѕРЅРѕРјРёС‚СЊ РѕРїРµСЂР°С‚РёРІРЅСѓСЋ РїР°РјСЏС‚СЊ.
+// 25.04.2018 Р’РµСЂСЃРёСЏ в„–4 classic_aglomerative_amg4 СЌС‚Рѕ РѕСЃРЅРѕРІРЅР°СЏ РїРѕРґРґРµСЂР¶РёРІР°РµРјР°СЏ РІРµСЂСЃРёСЏ.
+// РџСЏС‚Р°СЏ РІРµСЂСЃРёСЏ classic_aglomerative_amg5 РґР°РІРЅРѕ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ (Р·Р°РјРѕСЂРѕР¶РµРЅР°).
+// РёСЋРЅСЊ 2017 - РґРѕР±Р°РІР»РµРЅ Р СѓРЅРіРµ-РљСѓС‚С‚Р° smoother, СѓР»СѓС‡С€РµРЅР° РїРѕРґРґРµСЂР¶РєР° ilu0 СЂР°Р·Р»РѕР¶РµРЅРёСЏ РІ Р°Р»РіРѕСЂРёС‚РјРµ. 
+// РёСЋРЅСЊ 2017 - РџРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СѓСЂРѕРІРЅРµР№ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё 100 Рё РјРµРЅРµРµ. 
+// Р·РёРјРЅРёРµ РєР°РЅРёРєСѓР»С‹ 2016-2017 РіРѕРґР° - РґРѕР±Р°РІР»РµРЅ bicgStab.
+// Р›РµС‚Рѕ 2017 - Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ С‚РµРїРµСЂСЊ РІСЃС‘ С‡Р°С‰Рµ Рё С‡Р°С‰Рµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РєР°Рє
+// РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ Рє Р°Р»РіРѕСЂРёС‚РјСѓ РҐРµРЅРєР° РІР°РЅ РґРµСЂ Р’РѕСЂСЃС‚Р° BiCGStab.
+// Р­С‚Р° СЃРІСЏР·РєР° РїРѕРєР°Р·С‹РІР°РµС‚ Р±РѕР»РµРµ СЃС‚Р°Р±РёР»СЊРЅСѓСЋ Рё
+// РЅР°РґРµР¶РЅСѓСЋ СЂР°Р±РѕС‚Сѓ С‡РµРј РїСЂРѕСЃС‚Рѕ РѕС‚РґРµР»СЊРЅРѕ amg.
+// 4-6 РЅРѕСЏР±СЂСЏ 2016. Р”РѕР±Р°РІР»РµРЅ ILU0. РџРѕР»РЅРѕСЃС‚СЊСЋ СѓРґР°Р»С‘РЅ СѓСЃС‚Р°СЂРµРІС€РёР№ РєРѕРґ РёР· Solution Phase.
+// 9 Р°РІРіСѓСЃС‚Р° 2016. Р—РµР№РґРµР»СЊ РЅРµ СЃРїСЂР°РІР»СЏРµС‚СЃСЏ СЃ Р±РѕР»СЊС€РёРјРё СЃРїРµРєС‚СЂР°Р»СЊРЅС‹РјРё СЂР°РґРёСѓСЃР°РјРё РјР°С‚СЂРёС† РґР°Р¶Рµ 
+// РІ СЃРѕСЃС‚Р°РІРµ РґР°РЅРЅРѕРіРѕ amg. Р­С‚Рѕ Р¶Рµ РїСЂРѕСЏРІР»СЏРµС‚СЃСЏ Рё РЅР° РєР»Р°СЃСЃРёС‡РµСЃРєРѕРј amg1r5. 
+// 9 Р°РІРіСѓСЃС‚Р° СЂРµС€РµРЅРѕ СѓРјРµРЅСЊС€РёС‚СЊ СЃРїРµРєС‚СЂР°Р»СЊРЅС‹Р№ СЂР°РґРёСѓСЃ РІ Р—РµР№РґРµР»Рµ 
+// РЅР° РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё СЃ РїРѕРјРѕС‰СЊСЋ ILU2 РґРµРєРѕРјРїРѕР·РёС†РёРё. Р­С‚Рѕ РїРѕРґС‚РІРµСЂР¶РґР°РµС‚ СЃС‚Р°С‚СЊСЏ 
+// Р•.Рњ.РђРЅРґСЂРµРµРІР°, Р“.Р’.РњСѓСЂР°С‚РѕРІР°
+// "РњРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ СЂРµС€РµРЅРёСЏ СЃРёР»СЊРЅРѕ РЅРµСЃРёРјРјРµС‚СЂРёС‡РЅС‹С… СЃРёСЃС‚РµРј" Р®Р“РРќР¤Рћ Р Р“РЈ, Р РѕСЃС‚РѕРІ-РЅР°-Р”РѕРЅСѓ,
+// Р РѕСЃСЃРёСЏ. РўР°Рј РѕРЅРё
+// РїРѕРєР°Р·С‹РІР°СЋС‚ СЂР°СЃС…РѕРґРёРјРѕСЃС‚СЊ РјСѓР»СЊС‚РёРіСЂРёРґР° РЅР° РѕСЃРЅРѕРІРµ Р—РµР№РґРµР»СЏ РґР»СЏ Р·Р°РґР°С‡ СЃ СЃСѓС‰РµСЃС‚РІРµРЅРЅС‹Рј СЃРїРµРєС‚СЂР°Р»СЊРЅС‹Рј
+// СЂР°РґРёСѓСЃРѕРј Рё СЂРµРєРѕРјРµРЅРґСѓСЋС‚ Р·Р°РјРµРЅРёС‚СЊ Р—РµР№РґРµР»СЏ РЅР° РўРљРњ2 РјРµС‚РѕРґ
+// (С‚СЂРµСѓРіРѕР»СЊРЅС‹Р№ РєРѕСЃРѕСЃРёРјРјРµС‚СЂРёС‡РЅС‹Р№ РјРµС‚РѕРґ). Р’ РґР°РЅРЅРѕР№ 
+// РїСЂРѕРіСЂР°РјРјРµ Сѓ РЅР°СЃ РµСЃС‚СЊ 
+// СѓСЃРїРµС€РЅС‹Р№ РѕРїС‹С‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ ILU2 РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ РёР· Р±РёР±Р»РёРѕС‚РµРєРё SPARSKIT2 Р®.РЎР°Р°РґР° 
+// РїРѕСЌС‚РѕРјСѓ РІРјРµСЃС‚Рѕ РўРљРњ2 Сѓ РЅР°СЃ 
+// Р±СѓРґРµС‚ ILU2.
+// 22 СЏРЅРІР°СЂСЏ 2016 С‚РµРєСѓС‰РёР№ СЂР°Р±РѕС‚РѕСЃРїРѕСЃРѕР±РЅС‹Р№ РІР°СЂРёР°РЅС‚ РєРѕРґР°.
+// РџР»Р°РЅС‹: 1. СЃРґРµР»Р°С‚СЊ РІРµСЂСЃРёСЋ amg3. 
+// Р’ РЅРµР№: 2. Р·Р°РјРµРЅРёС‚СЊ РІСЃРµ РїСЂРѕРІРµСЂРєРё РЅР° РЅРµРІС‹РґРµР»РµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё РЅР° СѓРЅРёРІРµСЂСЃР°Р»СЊРЅСѓСЋ 
+// С„СѓРЅРєС†РёСЋ РµРґРёРЅСѓСЋ РґР»СЏ РІСЃРµРіРѕ.
+// СЌС‚Рѕ РѕС‡РµРІРёРґРЅРѕ РЅРµРјРЅРѕРіРѕ СЃРѕРєСЂР°С‚РёС‚ РїСЂРѕРіСЂР°РјРјРЅС‹Р№ РєРѕРґ.
+// Р’ РЅРµР№ 3. РєРѕРґ V С†РёРєР»Р° РѕС„РѕСЂРјРёС‚СЊ РІ РІРёРґРµ С†РёРєР»Р° for. РўРѕРіРґР° Р¶Рµ РјРѕР¶РЅРѕ Р±СѓРґРµС‚ РїРѕРїСЂРѕР±РѕРІР°С‚СЊ РІСЃС‚Р°РІРёС‚СЊ
+// direct РјРµС‚РѕРґ РґР»СЏ СЃР°РјРѕРіРѕ РіСЂСѓР±РѕРіРѕ СѓСЂРѕРІРЅСЏ.
+// Р­С‚Рѕ Р¶Рµ РѕС‚РєСЂРѕРµС‚ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё СЃРґРµР»Р°С‚СЊ РёР· amg Р°Р»РіРѕСЂРёС‚РјР° РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ РґР»СЏ BiCGStab.
+// 15 СЏРЅРІР°СЂСЏ 2016 СЌРєРѕРЅРѕРјРёРј РїР°РјСЏС‚СЊ РїРµСЂРµС…РѕРґРёРј РЅР° Ak1.
+// 10 СЏРЅРІР°СЂСЏ 2016 РґРІРѕРёС‡РЅС‹Р№ РїРѕРёСЃРє Р·Р°РјРµРЅС‘РЅ РЅР° С…РµС€РёСЂРѕРІР°РЅРёРµ.
+// 15 РґРµРєР°Р±СЂСЏ 2015. Р”Р°РЅРЅР°СЏ РІРµСЂСЃРёСЏ РєРѕРґР° Р±СѓРґРµС‚ РїРѕР»РЅРѕСЃС‚СЊСЋ РѕС‡РёС‰РµРЅР° РѕС‚ СѓСЃС‚Р°СЂРµРІС€РµРіРѕ РєРѕРґР°.
+// 13 РґРµРєР°Р±СЂСЏ 2015. Р’РЅРµРґСЂРµРЅРѕ РђР’Р› РґРµСЂРµРІРѕ. РџСЂРё РІРЅРµРґСЂРµРЅРёРё РђР’Р› РґРµСЂРµРІР° РёСЃРїСЂР°РІР»РµРЅР° Р»РѕРіРёС‡РµСЃРєР°СЏ РѕС€РёР±РєР° РІ
+// РїРѕСЃС‚СЂРѕРµРЅРёРё РЎ/F СЂР°Р·Р±РёРµРЅРёСЏ, С‚РµРїРµСЂСЊ C/F СЂР°Р·Р±РёРµРЅРёРµ СЃС‚СЂРѕРёС‚СЃСЏ РєРѕСЂСЂРµРєС‚РЅРѕ.
+// РСЃРїСЂР°РІР»РµРЅ Рё РІРЅРµРґСЂС‘РЅ quicksort (qs,qsj)
+// РєРѕС‚РѕСЂС‹Р№ РІ РїСЏС‚СЊ СЂР°Р· Р±С‹СЃС‚СЂРµРµ РїРёСЂР°РјРёРґР°Р»СЊРЅРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё.
+// РџРѕР»РЅС‹Р№ РѕС‚РєР°Р· РѕС‚ band_size!!!.
+// Р’СЂРµРјСЏ СЂР°Р±РѕС‚С‹ Р°Р»РіРѕСЂРёС‚РјР° РЅР° 1.7Рњ РЅРµРёР·РІРµСЃС‚РЅС‹С… РІ 3D СЃРѕСЃС‚Р°РІРёР»Рѕ СЂРѕРІРЅРѕ 1 РјРёРЅСѓС‚Сѓ.
+// 18 РѕРєС‚СЏР±СЂСЏ 2015. РџРѕР»РЅРѕСЃС‚СЊСЋ СЂР°Р±РѕС‚РѕСЃРїРѕСЃРѕР±РЅС‹Р№ РјСѓР»СЊС‚РёРіСЂРёРґ.
+// РўРµСЃС‚РёСЂРѕРІР°Р»РѕСЃСЊ РЅР° СѓСЃР»РѕРІРёСЏС… Р”РёСЂРёС…Р»Рµ РЅРѕ РґРѕР»Р¶РЅРѕ СЂР°Р±РѕС‚Р°С‚СЊ РЅР° Р»СЋР±С‹С… 
+// РєСЂР°РµРІС‹С… Р·Р°РґР°С‡Р°С…. 18 РѕРєС‚СЏР±СЂСЏ 2015 РґР°С‚РёСЂСѓРµС‚СЃСЏ РІРµСЂСЃРёСЏ 0.04. Р’РµСЂСЃРёСЏ 0.04 РЅР° С‚СЂРµС‚СЊ
+// Р±С‹СЃС‚СЂРµРµ РІРµСЂСЃРёРё 0_03. Р‘С‹Р»Рё СѓСЃРєРѕСЂРµРЅС‹ РєР°Рє РѕРїРµСЂР°С†РёРё РїРѕСЃС‚СЂРѕРµРЅРёСЏ C/F СЂР°Р·Р±РёРµРЅРёСЏ, 
+// С‚Р°Рє Рё РЅР°С…РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РѕСЂР° Р“Р°Р»С‘СЂРєРёРЅР°. РџСЂРё РЅР°С…РѕР¶РґРµРЅРёРё РЎ/F СЂР°Р·Р±РёРµРЅРёСЏ 
+// СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ СѓР¶Рµ РїРѕСЃС‚СЂРѕРµРЅРЅР°СЏ РµРіРѕ С‡Р°СЃС‚СЊ Рё РїРѕСЌС‚РѕРјСѓ С‡РёСЃР»Рѕ СЃРєР°РЅРёСЂРѕРІР°РЅРёР№ РЅР°
+// РЅР° РїРѕР·РґРЅРёС… С†РёРєР»Р°С… СЃРѕРєСЂР°С‰Р°РµС‚СЃСЏ РѕС…РІР°С‚С‹РІР°СЏ С‚РѕР»СЊРєРѕ РЅРµ РїРѕСЃС‚СЂРѕРµРЅРЅСѓСЋ С‡Р°СЃС‚СЊ.
+// РџСЂРё РЅР°С…РѕР¶РґРµРЅРёРё РїСЂРѕРёР·РІРµРґРµРЅРёСЏ Р“Р°Р»С‘СЂРєРёРЅР° РїРѕР»СѓС‡РµРЅР° СЃР°РјР°СЏ РѕРїС‚РёРјР°Р»СЊРЅР°СЏ РїРѕ 
+// Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІРёСЋ РІРµСЂСЃРёСЏ,
+// РћСЃРЅРѕРІР°РЅРЅР°СЏ РЅР° Р°Р»РіРѕСЂРёС‚РјРµ СЃР»РёСЏРЅРёСЏ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹С… СЃРїРёСЃРєРѕРІ.
+// 4 РѕРєС‚СЏР±СЂСЏ 2015 РїСЂР°РІРёР»СЊРЅРѕРµ РїРѕСЃС‚СЂРѕРµРЅРёРµ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РІР»РѕР¶РµРЅРЅС‹С… РіСЂР°С„РѕРІ.
+// 30 СЃРµРЅС‚СЏР±СЂСЏ 2015 РїСЂРѕРґРѕР»Р¶Р°РµРј РёСЃРїСЂР°РІР»РµРЅРёРµ РјРµС‚РѕРґР°. Р”РµР»Р°РµРј РєР»Р°СЃСЃРёС‡РµСЃРєРёР№ 
+// Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ РЅР° РѕСЃРЅРѕРІРµ  C/F СЂР°Р·Р±РёРµРЅРёСЏ.
+// 16 СЃРµРЅС‚СЏР±СЂСЏ 2015 РіРѕРґР° РѕР±РЅР°СЂСѓР¶РµРЅРѕ С‡С‚Рѕ РѕРїРµСЂР°С†РёРё 
+// СЃРіСЂСѓР±Р»РµРЅРёСЏ Рё РёРЅС‚РµСЂРїРѕР»СЏС†РёРё СЃРґРµР»Р°РЅС‹ СЃРѕРІРµСЂС€РµРЅРЅРѕ РЅРµРІРµСЂРЅРѕ,
+// Рё РµСЃР»Рё СЃРіСЂСѓР±Р»РµРЅРёРµ РµС‰Рµ РІ РєР°РєРѕР№-С‚Рѕ РјРµСЂРµ РїСЂРѕРµС†РёСЂСѓРµС‚ С‚Рѕ РёРЅС‚РµСЂРїРѕР»СЏС†РёСЏ РїСЂРѕСЃС‚Рѕ РЅРёРєР°РєР°СЏ.
+// РћРїРµСЂР°С†РёРё СЃРіСЂСѓР±Р»РµРЅРёСЏ Рё РёРЅС‚РµСЂРїРѕР»СЏС†РёРё Р±СѓРґСѓС‚ СЃРґРµР»Р°РЅС‹ Р·Р°РЅРѕРІРѕ РЅР° РѕСЃРЅРѕРІРµ СЃС‚Р°С‚СЊРё 
+// Рљ.Рќ. Р’РѕР»РєРѕРІР° РІ РЅРѕРІРѕР№ РІРµСЂСЃРёРё СЃРѕР»РІРµСЂР°.
 // 3 september 2015 Villa Borgese.
-// Возвращает divergence detected.
-// Использует внутри структуру данных my_amg_manager.
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ divergence detected.
+// РСЃРїРѕР»СЊР·СѓРµС‚ РІРЅСѓС‚СЂРё СЃС‚СЂСѓРєС‚СѓСЂСѓ РґР°РЅРЅС‹С… my_amg_manager.
 template <typename doublerealT>
 void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
-	integer nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
+	integer nsizeA, // РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІС‹РґРµР»РµРЅРЅРѕРµ РёР·РІРЅРµ РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° РјР°С‚СЂРёС† Рђ	
 	integer nnz, // number of non zero elements
 	integer n, // dimension of vectors x and b.	
-	doublereal* &x, //solution (решение) 
-	doublereal* &b, // rthdsd (правая часть).
-	doublerealT &ret74, 
+	doublereal* &x, //solution (СЂРµС€РµРЅРёРµ) 
+	doublereal* &b, // rthdsd (РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ).
+	real_mix_precision &ret74,
 	integer iVar,
 	bool bmemory_savings,
-	BLOCK* &my_body, integer &lb, integer maxelm_out,
-	// Параметры нужные только для solution phase.
+	// РџР°СЂР°РјРµС‚СЂС‹ РЅСѓР¶РЅС‹Рµ С‚РѕР»СЊРєРѕ РґР»СЏ solution phase.
 	amg_precond_param &amg_pp,
-	integer*& n_a, integer*& nnz_a, integer*& nnz_aRP,
+	integer*& n_a,  // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРёР·РІРµСЃС‚РЅС‹С… РЅР° РєР°Р¶РґРѕРј РёР· РїРѕСЃС‚СЂРѕРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№.
+	integer*& nnz_a, // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЅР° РєР°Р¶РґРѕРј РёР· РїРѕСЃС‚СЂРѕРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№.
+	integer*& nnz_aRP, // РљРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РЅР° РєР°Р¶РґРѕРј РёР· РїРѕСЃС‚СЂРѕРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№.
 	integer& ibsp_length,
 	BAD_STRING_PATCHING*& bsp,
 	integer i_bsp_LIMIT,
 	bool*& flag,
-	bool*& F_false_C_true, Ak1*& P,
+	bool*& F_false_C_true, // РЎ/F СЂР°Р·Р±РёРµРЅРёРµ РїРѕСЃС‚СЂРѕРµРЅРЅРѕРµ РґР°РЅРЅРѕР№ С„СѓРЅРєС†РёРµР№ РЅР° РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ Рё РїРµСЂР°РґР°РІР°РµРјРѕРµ РІ С„СѓРЅРєС†РёСЋ СЂРµС€РµРЅРёСЏ solution_phase.
+	Ak1*& P, // РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РїРѕСЃС‚СЂРѕРµРЅРЅС‹Р№ РґР°РЅРЅРѕР№ С„СѓРЅРєС†РёРµР№ РЅР° РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ Рё РїРµСЂРµРґР°РІР°РµРјС‹Р№ С‹РІ С„СѓРЅРєС†РёСЋ solution_phase РґР»СЏ СЂРµС€РµРЅРёСЏ.
 	bool bQuick_sort_for_reorder
 ) {
 
+	bool bprint_mesage_diagnostic = true;
+	if (my_amg_manager.iprint_log == 0) {
+		bprint_mesage_diagnostic = false;
+	}
 
-
-	// дополнительное упорядочивание по столбцам в строке в 
-	// надежде что кеш будет лучше использоваться.
-	// Его можно безболезненно выключить.
+	// РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ СѓРїРѕСЂСЏРґРѕС‡РёРІР°РЅРёРµ РїРѕ СЃС‚РѕР»Р±С†Р°Рј РІ СЃС‚СЂРѕРєРµ РІ 
+	// РЅР°РґРµР¶РґРµ С‡С‚Рѕ РєРµС€ Р±СѓРґРµС‚ Р»СѓС‡С€Рµ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ.
+	// Р•РіРѕ РјРѕР¶РЅРѕ Р±РµР·Р±РѕР»РµР·РЅРµРЅРЅРѕ РІС‹РєР»СЋС‡РёС‚СЊ.
 	//const bool bQuick_sort_for_reorder = false;
 
 	// Parallel Modifined Independed Set
 	bool bPMIS = false;
+	// PMIS РїСЂРёРјРµРЅС‘РЅРЅС‹Р№ Рє РєРІР°РґСЂР°С‚Сѓ РјР°С‚СЂРёС†С‹ Рђ. РЅР°С‡Р°Р»Рѕ 20.09.2020.
+	// Р’СЃС‘ СЂР°РІРЅРѕ РЅР° СЌС‚Р°РїРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РґР»СЏ СЃС…РѕРґРёРјРѕСЃС‚Рё РЅР°РґРѕ РґРѕР±Р°РІР»СЏС‚СЊ РЅРѕРІС‹Рµ РЎ СѓР·Р»С‹,
+	// Рё С‚РѕС‚ РІС‹РёРіСЂС‹С€ СЂР°Р·СЂРµР¶РµРЅРЅРѕСЃС‚Рё РєРѕС‚РѕСЂС‹Р№ РґРѕСЃС‚РёРіРЅСѓС‚ РїСЂРё C/F СЂР°Р·Р±РёРµРЅРёРё 
+	// РїСЂРёРјРµРЅРµРЅРЅРѕРіРѕ Рє РєРІР°РґСЂР°С‚Сѓ РјР°С‚СЂРёС†С‹ Рђ С‚РµСЂСЏРµС‚СЃСЏ РЅР° СЌС‚Р°РїРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РїСЂРё
+	// РґРѕР±Р°РІР»РµРЅРёРё РЅРѕРІС‹С… РЎ СѓР·Р»РѕРІ. Р•СЃР»Рё РЅР° СЌС‚Р°РїРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё СЃРѕС…СЂР°РЅСЏС‚СЊ СЂР°Р·СЂРµР¶РµРЅРЅРѕСЃС‚СЊ
+	// Рё РЅРµ РґРѕР±Р°РІР»СЏС‚СЊ РЅРѕРІС‹С… РЎ СѓР·Р»РѕРІ С‚Рѕ СЃС…РѕРґРёРјРѕСЃС‚СЊ РѕС‡РµРЅСЊ Р±С‹СЃС‚СЂРѕ СЃРёР»СЊРЅРѕ СѓС…СѓРґС‰Р°РµС‚СЃСЏ Рё 
+	// РІСЂРµРјСЏ СЂР°СЃС‡С‘С‚Р° РЅРµРїСЂРёРµРјР»РµРјРѕ РІРѕР·СЂР°СЃС‚Р°РµС‚. 21.09.2020.
+	bool bPMIS_applied_to_the_square_of_the_matrix = false;// true;
 
 	//doublereal theta = my_amg_manager.theta;
 	//doublereal theta83 = my_amg_manager.theta;
-	doublereal magic82 = my_amg_manager.magic;
-	doublereal magic83 = my_amg_manager.magic;
+	doublerealT magic82 = my_amg_manager.magic;
+	doublerealT magic83 = my_amg_manager.magic;
 
 
 	const bool b_REALLOC = false;
 
 	
 
-	// Не более 100 ошибочных строк
-	// с отрицательной диагональю.
+	// РќРµ Р±РѕР»РµРµ 100 РѕС€РёР±РѕС‡РЅС‹С… СЃС‚СЂРѕРє
+	// СЃ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕР№ РґРёР°РіРѕРЅР°Р»СЊСЋ.
 	//const int i_bsp_LIMIT = 100;
 	if (bsp != nullptr) {
 		delete[] bsp;
@@ -5338,23 +5832,90 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	bsp=new BAD_STRING_PATCHING[i_bsp_LIMIT];
 	ibsp_length = 0;
 
-	//integer &nsizePR, // Память под P в количествах n.
+	//integer &nsizePR, // РџР°РјСЏС‚СЊ РїРѕРґ P РІ РєРѕР»РёС‡РµСЃС‚РІР°С… n.
 	//Ak1* &R, // restriction
 	//Ak1* &P, // prolongation  
 
 	//Ak1* R = nullptr; 
-	// Оператор проекции равен оператору интерполяции с точностью до транспонирования.
+	// РћРїРµСЂР°С‚РѕСЂ РїСЂРѕРµРєС†РёРё СЂР°РІРµРЅ РѕРїРµСЂР°С‚РѕСЂСѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё СЃ С‚РѕС‡РЅРѕСЃС‚СЊСЋ РґРѕ С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРёСЏ.
 	//Ak1* P = nullptr;
 
-	integer nsizePR = 35;// Память под P в количествах n.
-	nsizePR = 135;
-	if (bonly_solid_calculation) {
-		// 31 октября 2016.
-		// По моим замерам с надёжным запасом в 30% для всех твёрдотельных 
-		// задач должно хватить значения 12.
-		nsizePR = 135; // было 12. 01,02,2020 стало 35.
-	}
+	// Р‘С‹Р»Рѕ Р·РЅР°С‡РµРЅРёРµ 35 РґРѕ 04.09.2020.
+	integer nsizePR = 12; // 04,09,2020 - РџР°РјСЏС‚СЊ РїРѕРґ P РІ РєРѕР»РёС‡РµСЃС‚РІР°С… n.
+	//nsizePR = 135;
+	if (iVar == TEMP) {
+		if (bonly_solid_calculation) {
+			// 31 РѕРєС‚СЏР±СЂСЏ 2016.
+			// РџРѕ РјРѕРёРј Р·Р°РјРµСЂР°Рј СЃ РЅР°РґС‘Р¶РЅС‹Рј Р·Р°РїР°СЃРѕРј РІ 30% РґР»СЏ РІСЃРµС… С‚РІС‘СЂРґРѕС‚РµР»СЊРЅС‹С… 
+			// Р·Р°РґР°С‡ РґРѕР»Р¶РЅРѕ С…РІР°С‚РёС‚СЊ Р·РЅР°С‡РµРЅРёСЏ 12*n.
+			//nsizePR = 135; // Р±С‹Р»Рѕ 12. 01,02,2020 СЃС‚Р°Р»Рѕ 35*n.
 
+			bool bmyconvective = false;
+			if (starting_speed_Vx * starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30) {
+				if (f[0].maxelm > 0) {
+					bmyconvective = true;
+				}
+			}
+			else {
+				// Р—Р°РіСЂСѓР·РєР° СЂР°СЃРїСЂРµРґРµР»РµРЅРёСЏ РЅР°С‡Р°Р»СЊРЅРѕР№ СЃРєРѕСЂРѕСЃС‚Рё.
+				
+				FILE* fp_inicialization_data = NULL;
+#ifdef MINGW_COMPILLER
+				int err_inicialization_data = 0;
+				fp_inicialization_data = fopen64("load.txt", "r");
+				if (fp_inicialization_data == NULL) err_inicialization_data = 1;
+#else
+				errno_t err_inicialization_data = 0;
+				err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+#endif
+
+				if (err_inicialization_data == 0) {
+					// РћС‚РєСЂС‹С‚РёРµ СѓРґР°С‡РЅРѕ Рё С„Р°Р№Р» РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚.
+					if (f[0].maxelm > 0) {
+						bmyconvective = true;
+					}
+					fclose(fp_inicialization_data);
+				}
+			}
+
+			if (!bmyconvective) {
+				if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM ::PMIS) ||
+					(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+				{
+					// PMIS, HMIS
+					if (my_amg_manager.number_interpolation_procedure == 2) {
+						nsizePR = 8;// 8;
+					}
+					else {
+						nsizePR = 5; // 12.09.2020
+					}
+				}
+				else {
+					nsizePR = 9; // 04.09.2020
+				}
+			}
+			else {
+				if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+					(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+				{
+					if (my_amg_manager.number_interpolation_procedure == 2) {
+						nsizePR = 8;
+					}
+					else {
+						nsizePR = 5; // 12.09.2020
+					}
+				}
+				else {
+					nsizePR = 12; // 04.09.2020 Р”Р°Р¶Рµ 9.1*n СѓР¶Рµ СЃ 30% Р·Р°РїР°СЃРѕРј.
+				}
+			}
+		}
+	}
+	if (iVar == TOTALDEFORMATIONVAR) {
+		// РњРµС…Р°РЅРёС‡РµСЃРєР°СЏ Р·Р°РґР°С‡Р°.
+		nsizePR = 22; // 04.09.2020
+	}
+	
 
 
 	//R = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
@@ -5367,23 +5928,25 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	char c1[22] = "my_agr_amg_loc_memory";
 	char c8[2] = "P";
 	handle_error<Ak1>(P, c8, c1, ((nsizePR * n) + 1));
-	std::cout<<"Prolongation alloc succseful..."<<std::endl;
+	if (bprint_mesage_diagnostic) {
+		std::cout << "Prolongation alloc succseful..." << std::endl;
+	}
 
 	//if (R != nullptr) {
-		// Используется только оператор P, оператор R точно такой же что и P с точностью до сортировки.
-		// Методы restriction и prolongation не чувствительны к сортировке.
+		// РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РѕРїРµСЂР°С‚РѕСЂ P, РѕРїРµСЂР°С‚РѕСЂ R С‚РѕС‡РЅРѕ С‚Р°РєРѕР№ Р¶Рµ С‡С‚Рѕ Рё P СЃ С‚РѕС‡РЅРѕСЃС‚СЊСЋ РґРѕ СЃРѕСЂС‚РёСЂРѕРІРєРё.
+		// РњРµС‚РѕРґС‹ restriction Рё prolongation РЅРµ С‡СѓРІСЃС‚РІРёС‚РµР»СЊРЅС‹ Рє СЃРѕСЂС‚РёСЂРѕРІРєРµ.
 		//free(R);
 		//R = nullptr;
 	//}
 
-	//  используем хеш-таблицу.
+	//  РёСЃРїРѕР»СЊР·СѓРµРј С…РµС€-С‚Р°Р±Р»РёС†Сѓ.
 	construct_hash_table_Gus_struct01(n);
 	
 
-	// 23.12.2016 ускорение счёта нелинейных задач:
-	// лучистые потоки обновляются после каждого V цикла,
-	// для этого внутрь передаётся 
-	// b и lb.
+	// 23.12.2016 СѓСЃРєРѕСЂРµРЅРёРµ СЃС‡С‘С‚Р° РЅРµР»РёРЅРµР№РЅС‹С… Р·Р°РґР°С‡:
+	// Р»СѓС‡РёСЃС‚С‹Рµ РїРѕС‚РѕРєРё РѕР±РЅРѕРІР»СЏСЋС‚СЃСЏ РїРѕСЃР»Рµ РєР°Р¶РґРѕРіРѕ V С†РёРєР»Р°,
+	// РґР»СЏ СЌС‚РѕРіРѕ РІРЅСѓС‚СЂСЊ РїРµСЂРµРґР°С‘С‚СЃСЏ 
+	// b Рё lb.
 
 
 	integer* row_ind_PE = nullptr;
@@ -5392,7 +5955,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	integer* row_ind_AE = nullptr;
 	integer* index_visit = nullptr;
 	doublerealT* vector_sum = nullptr;
-	integer istartAnew_mem;		
+			
 	integer* row_ind_ER = nullptr;
 	integer* row_ind_SR = nullptr;
 	integer iend_marker_position;
@@ -5416,21 +5979,21 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	bool identiti = true;
 	
 
-	// Вершина технологии решения плохообусловленных разреженных СЛАУ: BiCGStab + camg(РУМБА).
-	// 1. многосеточные технологии.
-	// 2. предобуславливание.
-	// 3. стабилизация.
-	// Если my_amg_manager.istabilization == 1 то мы используем метод бисопряженных градиентов со стабилизацией с предобуславливанием 
-	// классическим алгебраическим многосеточным методом РУМБА.
-	// Начало реализации 5.01.2017.(more robust).
-	// Если my_amg_manager.istabilization == 0 - То просто используется 
-	// многосеточный решатель без какого либо метода Крыловского подпространства.
-	// Если my_amg_manager.istabilization == 2 - То используется fgmres - 
-	// алгоритм Юсефа Саада и Мартина Г. Шульца (гибкий вариант обобщённого метода минимальных невязок) в котором 
-	// на каждой итерации алгоритма fgmres делается одно многосеточное предобуславливание (один V цикл). 
+	// Р’РµСЂС€РёРЅР° С‚РµС…РЅРѕР»РѕРіРёРё СЂРµС€РµРЅРёСЏ РїР»РѕС…РѕРѕР±СѓСЃР»РѕРІР»РµРЅРЅС‹С… СЂР°Р·СЂРµР¶РµРЅРЅС‹С… РЎР›РђРЈ: BiCGStab + camg(Р РЈРњР‘Рђ).
+	// 1. РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Рµ С‚РµС…РЅРѕР»РѕРіРёРё.
+	// 2. РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ.
+	// 3. СЃС‚Р°Р±РёР»РёР·Р°С†РёСЏ.
+	// Р•СЃР»Рё my_amg_manager.istabilization == 1 С‚Рѕ РјС‹ РёСЃРїРѕР»СЊР·СѓРµРј РјРµС‚РѕРґ Р±РёСЃРѕРїСЂСЏР¶РµРЅРЅС‹С… РіСЂР°РґРёРµРЅС‚РѕРІ СЃРѕ СЃС‚Р°Р±РёР»РёР·Р°С†РёРµР№ СЃ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµРј 
+	// РєР»Р°СЃСЃРёС‡РµСЃРєРёРј Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёРј РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Рј РјРµС‚РѕРґРѕРј Р РЈРњР‘Рђ.
+	// РќР°С‡Р°Р»Рѕ СЂРµР°Р»РёР·Р°С†РёРё 5.01.2017.(more robust).
+	// Р•СЃР»Рё my_amg_manager.istabilization == 0 - РўРѕ РїСЂРѕСЃС‚Рѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ 
+	// РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ СЂРµС€Р°С‚РµР»СЊ Р±РµР· РєР°РєРѕРіРѕ Р»РёР±Рѕ РјРµС‚РѕРґР° РљСЂС‹Р»РѕРІСЃРєРѕРіРѕ РїРѕРґРїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР°.
+	// Р•СЃР»Рё my_amg_manager.istabilization == 2 - РўРѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ fgmres - 
+	// Р°Р»РіРѕСЂРёС‚Рј Р®СЃРµС„Р° РЎР°Р°РґР° Рё РњР°СЂС‚РёРЅР° Р“. РЁСѓР»СЊС†Р° (РіРёР±РєРёР№ РІР°СЂРёР°РЅС‚ РѕР±РѕР±С‰С‘РЅРЅРѕРіРѕ РјРµС‚РѕРґР° РјРёРЅРёРјР°Р»СЊРЅС‹С… РЅРµРІСЏР·РѕРє) РІ РєРѕС‚РѕСЂРѕРј 
+	// РЅР° РєР°Р¶РґРѕР№ РёС‚РµСЂР°С†РёРё Р°Р»РіРѕСЂРёС‚РјР° fgmres РґРµР»Р°РµС‚СЃСЏ РѕРґРЅРѕ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅРѕРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°РЅРёРµ (РѕРґРёРЅ V С†РёРєР»). 
 	//bool bBiCGStab_plus_RUMBA_camg = true;
 	//if (my_amg_manager.istabilization == 0) {
-	// Просто многосеточный метод без какого-либо Крыловского подпространства.
+	// РџСЂРѕСЃС‚Рѕ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ Р±РµР· РєР°РєРѕРіРѕ-Р»РёР±Рѕ РљСЂС‹Р»РѕРІСЃРєРѕРіРѕ РїРѕРґРїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР°.
 	// none
 	//bBiCGStab_plus_RUMBA_camg = false;
 	//}
@@ -5441,44 +6004,44 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	bool from_re_operation_protection0 = true;
 	integer ifrom_re_operation_protection = 0;
 
-	// Универсальные сглаживающие процедуры. 4 ноября 2016.
+	// РЈРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Рµ СЃРіР»Р°Р¶РёРІР°СЋС‰РёРµ РїСЂРѕС†РµРґСѓСЂС‹. 4 РЅРѕСЏР±СЂСЏ 2016.
 	// ILU2 smoother
-	// 0 - ILU не используется. используется Gauss-Seidel.
-	// 1 - ILUk(k==lfil) используется.
+	// 0 - ILU РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ. РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Gauss-Seidel.
+	// 1 - ILUk(k==lfil) РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
 	// 2 - 
 	integer bILU2smoother = 0;
 	if (my_amg_manager.ilu2_smoother == 1) {
-		// Включаем ILUk(k==lfil) сглаживатель. 
-		// он ест больше памяти но более быстро сходится.
-		// Есть надежда что он справится с гораздо более плохообусловленными матрицами.
+		// Р’РєР»СЋС‡Р°РµРј ILUk(k==lfil) СЃРіР»Р°Р¶РёРІР°С‚РµР»СЊ. 
+		// РѕРЅ РµСЃС‚ Р±РѕР»СЊС€Рµ РїР°РјСЏС‚Рё РЅРѕ Р±РѕР»РµРµ Р±С‹СЃС‚СЂРѕ СЃС…РѕРґРёС‚СЃСЏ.
+		// Р•СЃС‚СЊ РЅР°РґРµР¶РґР° С‡С‚Рѕ РѕРЅ СЃРїСЂР°РІРёС‚СЃСЏ СЃ РіРѕСЂР°Р·РґРѕ Р±РѕР»РµРµ РїР»РѕС…РѕРѕР±СѓСЃР»РѕРІР»РµРЅРЅС‹РјРё РјР°С‚СЂРёС†Р°РјРё.
 
 		//---->bILU2smoother = 1; // ILU0
 
-						   // По - видимому алгоритм 
+						   // РџРѕ - РІРёРґРёРјРѕРјСѓ Р°Р»РіРѕСЂРёС‚Рј 
 						   // ilu0_(maxelm_plus_maxbound, milu0.val, milu0.col_ind, milu0.row_ptr, milu0.alu, milu0.jlu, milu0.ju, milu0.iw, ierr);
-						   // является дефектным. Я не получил с ним сходимости как ни пытался. Зато алгоритм iluk с lfil=0 проявил себя наилучшим 
-						   // образом и я его рекомендую к использованию. Это реализовано в ветке кода my_amg_manager.ilu2_smoother == 2.
-						   // Причём iluk с lfil=0 работает на всех уровнях и прекрасно себя проявляет.
+						   // СЏРІР»СЏРµС‚СЃСЏ РґРµС„РµРєС‚РЅС‹Рј. РЇ РЅРµ РїРѕР»СѓС‡РёР» СЃ РЅРёРј СЃС…РѕРґРёРјРѕСЃС‚Рё РєР°Рє РЅРё РїС‹С‚Р°Р»СЃСЏ. Р—Р°С‚Рѕ Р°Р»РіРѕСЂРёС‚Рј iluk СЃ lfil=0 РїСЂРѕСЏРІРёР» СЃРµР±СЏ РЅР°РёР»СѓС‡С€РёРј 
+						   // РѕР±СЂР°Р·РѕРј Рё СЏ РµРіРѕ СЂРµРєРѕРјРµРЅРґСѓСЋ Рє РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЋ. Р­С‚Рѕ СЂРµР°Р»РёР·РѕРІР°РЅРѕ РІ РІРµС‚РєРµ РєРѕРґР° my_amg_manager.ilu2_smoother == 2.
+						   // РџСЂРёС‡С‘Рј iluk СЃ lfil=0 СЂР°Р±РѕС‚Р°РµС‚ РЅР° РІСЃРµС… СѓСЂРѕРІРЅСЏС… Рё РїСЂРµРєСЂР°СЃРЅРѕ СЃРµР±СЏ РїСЂРѕСЏРІР»СЏРµС‚.
 
-		// Включаем ILU2 сглаживатель. 
-		// он ест больше памяти но более быстро сходится.
+		// Р’РєР»СЋС‡Р°РµРј ILU2 СЃРіР»Р°Р¶РёРІР°С‚РµР»СЊ. 
+		// РѕРЅ РµСЃС‚ Р±РѕР»СЊС€Рµ РїР°РјСЏС‚Рё РЅРѕ Р±РѕР»РµРµ Р±С‹СЃС‚СЂРѕ СЃС…РѕРґРёС‚СЃСЏ.
 
-		// Его рекомендуется применять только для исходной матрицы - уровень ноль.
-		// Если его применять на более глубоких уровнях то сходимость лишь замедляется.
+		// Р•РіРѕ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РїСЂРёРјРµРЅСЏС‚СЊ С‚РѕР»СЊРєРѕ РґР»СЏ РёСЃС…РѕРґРЅРѕР№ РјР°С‚СЂРёС†С‹ - СѓСЂРѕРІРµРЅСЊ РЅРѕР»СЊ.
+		// Р•СЃР»Рё РµРіРѕ РїСЂРёРјРµРЅСЏС‚СЊ РЅР° Р±РѕР»РµРµ РіР»СѓР±РѕРєРёС… СѓСЂРѕРІРЅСЏС… С‚Рѕ СЃС…РѕРґРёРјРѕСЃС‚СЊ Р»РёС€СЊ Р·Р°РјРµРґР»СЏРµС‚СЃСЏ.
 
-		 // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне: iluk с lfil=0.
-		// Возможно я ещё вернусь к ilu2 хотя-бы на нулевом уровне, т.к. там он особенно хорош.
+		 // ILU2 РµСЃС‚ СЃР»РёС€РєРѕРј РјРЅРѕРіРѕ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё Рё СЏ РµРіРѕ Р·Р°РјРµРЅРёР» РЅР° ILU0 СЃРіР»Р°Р¶РёРІР°С‚РµР»СЊ РЅР° РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ: iluk СЃ lfil=0.
+		// Р’РѕР·РјРѕР¶РЅРѕ СЏ РµС‰С‘ РІРµСЂРЅСѓСЃСЊ Рє ilu2 С…РѕС‚СЏ-Р±С‹ РЅР° РЅСѓР»РµРІРѕРј СѓСЂРѕРІРЅРµ, С‚.Рє. С‚Р°Рј РѕРЅ РѕСЃРѕР±РµРЅРЅРѕ С…РѕСЂРѕС€.
 
-						   // Перенаправление.
+						   // РџРµСЂРµРЅР°РїСЂР°РІР»РµРЅРёРµ.
 		bILU2smoother = 2; // ILU0 // ILU2
 	}
 
 	if (my_amg_manager.ilu2_smoother == 2) {
-		// Рунге Кутта сглаживатель третьего порядка.
+		// Р СѓРЅРіРµ РљСѓС‚С‚Р° СЃРіР»Р°Р¶РёРІР°С‚РµР»СЊ С‚СЂРµС‚СЊРµРіРѕ РїРѕСЂСЏРґРєР°.
 		my_amg_manager.iRunge_Kutta_smoother = 3;
 	}
 	if (my_amg_manager.ilu2_smoother == 3) {
-		// Рунге Кутта сглаживатель пятого порядка.
+		// Р СѓРЅРіРµ РљСѓС‚С‚Р° СЃРіР»Р°Р¶РёРІР°С‚РµР»СЊ РїСЏС‚РѕРіРѕ РїРѕСЂСЏРґРєР°.
 		my_amg_manager.iRunge_Kutta_smoother = 5;
 	}
 
@@ -5495,93 +6058,111 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	//bILU2smoother = 0; // only seidel sor smoother.
 	const doublerealT dapply_ilu_max_pattern_size = 9.2;
 
-	// Параметры отвечающие за автоматическую настройку SOR.
-	// По трём точкам мы построим параболу и на её основе 
-	// спрогнозируем улучшенный параметр релаксации omega_optimal.
-	// Парабола представляется намного лучшей чем простая линейная экстраполяция.
+	// РџР°СЂР°РјРµС‚СЂС‹ РѕС‚РІРµС‡Р°СЋС‰РёРµ Р·Р° Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєСѓСЋ РЅР°СЃС‚СЂРѕР№РєСѓ SOR.
+	// РџРѕ С‚СЂС‘Рј С‚РѕС‡РєР°Рј РјС‹ РїРѕСЃС‚СЂРѕРёРј РїР°СЂР°Р±РѕР»Сѓ Рё РЅР° РµС‘ РѕСЃРЅРѕРІРµ 
+	// СЃРїСЂРѕРіРЅРѕР·РёСЂСѓРµРј СѓР»СѓС‡С€РµРЅРЅС‹Р№ РїР°СЂР°РјРµС‚СЂ СЂРµР»Р°РєСЃР°С†РёРё omega_optimal.
+	// РџР°СЂР°Р±РѕР»Р° РїСЂРµРґСЃС‚Р°РІР»СЏРµС‚СЃСЏ РЅР°РјРЅРѕРіРѕ Р»СѓС‡С€РµР№ С‡РµРј РїСЂРѕСЃС‚Р°СЏ Р»РёРЅРµР№РЅР°СЏ СЌРєСЃС‚СЂР°РїРѕР»СЏС†РёСЏ.
 	bproblem_amg_convergence1 = false;
 	bproblem_amg_convergence2 = false;
 	bproblem_amg_convergence3 = false;
 	gold_const = 0.2;
 
-	bool bprint_mesage_diagnostic = true;
-	if (my_amg_manager.iprint_log == 0) {
-		bprint_mesage_diagnostic = false;
-	}
+	
 
 
 	bool bpositive_connections_CF_decomp = true;
-	integer memo_icoarseningtype = my_amg_manager.icoarseningtype;
-	if ((my_amg_manager.icoarseningtype >= 4)&&(my_amg_manager.icoarseningtype<=7)) {
+	MY_AMG_SPLITTING_COARSENING_ALGORITHM  memo_icoarseningtype = my_amg_manager.icoarseningtype;
+
+	if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_NEG_CONNECTION) {
 		// only negative connections 
-		// Внедиагональные положительные связи игнорируются при создании C/F разбиения.
+		// Р’РЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ СЃРІСЏР·Рё РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 		bpositive_connections_CF_decomp = false;
-		my_amg_manager.icoarseningtype -= 4;
+		my_amg_manager.icoarseningtype = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION;
 	}
-	else if (my_amg_manager.icoarseningtype == 8) {
+	if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_NEG_CONNECTION) {
+		// only negative connections 
+		// Р’РЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ СЃРІСЏР·Рё РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё C/F СЂР°Р·Р±РёРµРЅРёСЏ.
+		bpositive_connections_CF_decomp = false;
+		my_amg_manager.icoarseningtype = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION;
+	}
+	if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_NEG_CONNECTION) {
+		// only negative connections 
+		// Р’РЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ СЃРІСЏР·Рё РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё C/F СЂР°Р·Р±РёРµРЅРёСЏ.
+		bpositive_connections_CF_decomp = false;
+		my_amg_manager.icoarseningtype = MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ST_ALL_CONNECTION;
+	}
+	if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_NEG_CONNECTION) {
+		// only negative connections 
+		// Р’РЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ СЃРІСЏР·Рё РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё C/F СЂР°Р·Р±РёРµРЅРёСЏ.
+		bpositive_connections_CF_decomp = false;
+		my_amg_manager.icoarseningtype = MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION;
+	}
+
+	
+	if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) {
 		// Parallel Modified Independed Set.
 		bPMIS = true;
 	}
-	// 19.01.2016 Для построения C/F разбиения и интерполяции используется разная логика
-	// в области игнорирования и не игнорирования positive connections.
-	// Требует обсуждения следующий вопрос: 
-	// 1. При построении процедуры интерполяции важны все связи как позитив так и негатив.
-	// 2. При построении C/F декомпозиции важны только негатив связи. 
-	// Это гипотеза требующая подтверждения.
-	// Разделение между bpositive_connections_CF_decomp используемом при построении
-	// C/F декомпозиции и bpositive_connections
-	// Произошло 19.01.2017.
+	// 19.01.2016 Р”Р»СЏ РїРѕСЃС‚СЂРѕРµРЅРёСЏ C/F СЂР°Р·Р±РёРµРЅРёСЏ Рё РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЂР°Р·РЅР°СЏ Р»РѕРіРёРєР°
+	// РІ РѕР±Р»Р°СЃС‚Рё РёРіРЅРѕСЂРёСЂРѕРІР°РЅРёСЏ Рё РЅРµ РёРіРЅРѕСЂРёСЂРѕРІР°РЅРёСЏ positive connections.
+	// РўСЂРµР±СѓРµС‚ РѕР±СЃСѓР¶РґРµРЅРёСЏ СЃР»РµРґСѓСЋС‰РёР№ РІРѕРїСЂРѕСЃ: 
+	// 1. РџСЂРё РїРѕСЃС‚СЂРѕРµРЅРёРё РїСЂРѕС†РµРґСѓСЂС‹ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РІР°Р¶РЅС‹ РІСЃРµ СЃРІСЏР·Рё РєР°Рє РїРѕР·РёС‚РёРІ С‚Р°Рє Рё РЅРµРіР°С‚РёРІ.
+	// 2. РџСЂРё РїРѕСЃС‚СЂРѕРµРЅРёРё C/F РґРµРєРѕРјРїРѕР·РёС†РёРё РІР°Р¶РЅС‹ С‚РѕР»СЊРєРѕ РЅРµРіР°С‚РёРІ СЃРІСЏР·Рё. 
+	// Р­С‚Рѕ РіРёРїРѕС‚РµР·Р° С‚СЂРµР±СѓСЋС‰Р°СЏ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ.
+	// Р Р°Р·РґРµР»РµРЅРёРµ РјРµР¶РґСѓ bpositive_connections_CF_decomp РёСЃРїРѕР»СЊР·СѓРµРјРѕРј РїСЂРё РїРѕСЃС‚СЂРѕРµРЅРёРё
+	// C/F РґРµРєРѕРјРїРѕР·РёС†РёРё Рё bpositive_connections
+	// РџСЂРѕРёР·РѕС€Р»Рѕ 19.01.2017.
 
 
 	bool bpositive_connections = true;
-	// 23 октября 2016
+	// 23 РѕРєС‚СЏР±СЂСЏ 2016
 	if (bSIMPLErun_now_for_temperature) {
-		// Решаем cfd задачи.
+		// Р РµС€Р°РµРј cfd Р·Р°РґР°С‡Рё.
 		//bprint_mesage_diagnostic = false;
 
-		// Гипотеза в том, что positive connections 
-		// ускоряющие задачи теплопередачи в твёрдом теле приводят 
-		// к расходимости в гидродинамических задачах:
-		// гипотеза неверна, с убранными positive connections сходимость только хуже.
+		// Р“РёРїРѕС‚РµР·Р° РІ С‚РѕРј, С‡С‚Рѕ positive connections 
+		// СѓСЃРєРѕСЂСЏСЋС‰РёРµ Р·Р°РґР°С‡Рё С‚РµРїР»РѕРїРµСЂРµРґР°С‡Рё РІ С‚РІС‘СЂРґРѕРј С‚РµР»Рµ РїСЂРёРІРѕРґСЏС‚ 
+		// Рє СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё РІ РіРёРґСЂРѕРґРёРЅР°РјРёС‡РµСЃРєРёС… Р·Р°РґР°С‡Р°С…:
+		// РіРёРїРѕС‚РµР·Р° РЅРµРІРµСЂРЅР°, СЃ СѓР±СЂР°РЅРЅС‹РјРё positive connections СЃС…РѕРґРёРјРѕСЃС‚СЊ С‚РѕР»СЊРєРѕ С…СѓР¶Рµ.
 		//bpositive_connections = false;
 	}	
 
 	
-	// Для вычисления grid complexity оператора интерполяции:
+	// Р”Р»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ grid complexity РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё:
 	integer nnz_P_memo_0 = 0;
 	integer nnz_P_memo_all = 0;
 
-	// Надо заменить все new на malloc.
+	// РќР°РґРѕ Р·Р°РјРµРЅРёС‚СЊ РІСЃРµ new РЅР° malloc.
 	//theta = 0.25;
 
 	bool bonly_serial = true;	
 
-	// контроль числа сильных связей между переменными.
+	// РєРѕРЅС‚СЂРѕР»СЊ С‡РёСЃР»Р° СЃРёР»СЊРЅС‹С… СЃРІСЏР·РµР№ РјРµР¶РґСѓ РїРµСЂРµРјРµРЅРЅС‹РјРё.
 	// doublerealT theta = 0.25;  // 0.25 for 2D and 0.5 for 3D 
 
 
-	//const integer QUICK_SORT_ALG = 1; // Быстрая сортировка Ч. Хоара.
-	// Использовать ли quicksort qs and qsj.
-	// Сортировка с подсчётом быстрее quickSort.
-	// Использовать ли сортировку подсчётом которая 
-	//потребляет килотонну памяти (Короче для машин у которых море оперативки).
-	//const integer COUNTING_SORT_ALG = 0; // Сортировка с подсчётом лучший выбор.
-	// Сортировка с подсчётом подходит потому что ключи целочисленны и 
-	// лежат в заданном интервале непрерывно.
-	//const integer HEAP_SORT_ALG = 2; // пирамидальная сортировка.
-	// количество рекурсивных вызовов ограничено, поэтому QuickSort не подходит.
-	// В компиляторе надо увеличить размер стека до 4Мб.
-	//bmemory_savings =false при QUICK_SORT_ALG и HEAP_SORT_ALG;
-	integer imy_sort_algorithm = my_amg_manager.imySortAlgorithm;// COUNTING_SORT_ALG;
+	//const integer MY_SORT_ALGORITHM::QUICK_SORT = 1; // Р‘С‹СЃС‚СЂР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР° Р§. РҐРѕР°СЂР°.
+	// РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ Р»Рё quicksort qs and qsj.
+	// РЎРѕСЂС‚РёСЂРѕРІРєР° СЃ РїРѕРґСЃС‡С‘С‚РѕРј Р±С‹СЃС‚СЂРµРµ quickSort.
+	// РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ Р»Рё СЃРѕСЂС‚РёСЂРѕРІРєСѓ РїРѕРґСЃС‡С‘С‚РѕРј РєРѕС‚РѕСЂР°СЏ 
+	//РїРѕС‚СЂРµР±Р»СЏРµС‚ РєРёР»РѕС‚РѕРЅРЅСѓ РїР°РјСЏС‚Рё (РљРѕСЂРѕС‡Рµ РґР»СЏ РјР°С€РёРЅ Сѓ РєРѕС‚РѕСЂС‹С… РјРѕСЂРµ РѕРїРµСЂР°С‚РёРІРєРё).
+	//const integer MY_SORT_ALGORITHM:: COUNTING_SORT = 0; // РЎРѕСЂС‚РёСЂРѕРІРєР° СЃ РїРѕРґСЃС‡С‘С‚РѕРј Р»СѓС‡С€РёР№ РІС‹Р±РѕСЂ.
+	// РЎРѕСЂС‚РёСЂРѕРІРєР° СЃ РїРѕРґСЃС‡С‘С‚РѕРј РїРѕРґС…РѕРґРёС‚ РїРѕС‚РѕРјСѓ С‡С‚Рѕ РєР»СЋС‡Рё С†РµР»РѕС‡РёСЃР»РµРЅРЅС‹ Рё 
+	// Р»РµР¶Р°С‚ РІ Р·Р°РґР°РЅРЅРѕРј РёРЅС‚РµСЂРІР°Р»Рµ РЅРµРїСЂРµСЂС‹РІРЅРѕ.
+	//const integer MY_SORT_ALGORITHM::HEAP_SORT = 2; // РїРёСЂР°РјРёРґР°Р»СЊРЅР°СЏ СЃРѕСЂС‚РёСЂРѕРІРєР°.
+	// РєРѕР»РёС‡РµСЃС‚РІРѕ СЂРµРєСѓСЂСЃРёРІРЅС‹С… РІС‹Р·РѕРІРѕРІ РѕРіСЂР°РЅРёС‡РµРЅРѕ, РїРѕСЌС‚РѕРјСѓ QuickSort РЅРµ РїРѕРґС…РѕРґРёС‚.
+	// Р’ РєРѕРјРїРёР»СЏС‚РѕСЂРµ РЅР°РґРѕ СѓРІРµР»РёС‡РёС‚СЊ СЂР°Р·РјРµСЂ СЃС‚РµРєР° РґРѕ 4РњР±.
+	//bmemory_savings =false РїСЂРё MY_SORT_ALGORITHM::QUICK_SORT Рё MY_SORT_ALGORITHM::HEAP_SORT;
+	MY_SORT_ALGORITHM imy_sort_algorithm = my_amg_manager.imySortAlgorithm;// MY_SORT_ALGORITHM:: COUNTING_SORT;
 
-	const doublereal RealZERO = 1.0e-300;// 1.0e-10;
-	const doublereal divisionZERO = 1.0e-300;
-	const doublereal RealMAXIMUM = 1.0e300;
-	// включение/отключение отладочного режима.
+	const doublerealT RealZERO = 1.0e-30;// 1.0e-10;
+	const doublerealT divisionZERO = 1.0e-30;
+	const doublerealT RealMAXIMUM = 1.0e30;
+	// РІРєР»СЋС‡РµРЅРёРµ/РѕС‚РєР»СЋС‡РµРЅРёРµ РѕС‚Р»Р°РґРѕС‡РЅРѕРіРѕ СЂРµР¶РёРјР°.
 	bool debug_reshime = false;
 
 
-	const integer maxlevel = 201; // (101 до 16.02.2019) (51 до 5.06.2017) 30
+	const integer maxlevel = 201; // (101 РґРѕ 16.02.2019) (51 РґРѕ 5.06.2017) 30
 	integer ilevel = 1;
 	if (n_a != nullptr) {
 		delete[] n_a;
@@ -5602,8 +6183,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 	//#ifdef _NONAME_STUB29_10_2017
 #ifdef _OPENMP 
-	// Данные используемые для частичного формирователя суммы.
-	// iKnumber_thread=8 - Это число потоков.
+	// Р”Р°РЅРЅС‹Рµ РёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РґР»СЏ С‡Р°СЃС‚РёС‡РЅРѕРіРѕ С„РѕСЂРјРёСЂРѕРІР°С‚РµР»СЏ СЃСѓРјРјС‹.
+	// iKnumber_thread=8 - Р­С‚Рѕ С‡РёСЃР»Рѕ РїРѕС‚РѕРєРѕРІ.
 
 	Ak1** AccumulqtorA_m = nullptr;
 	AccumulqtorA_m = new Ak1*[iKnumber_thread];
@@ -5614,20 +6195,53 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	bool** hash_table_m = new bool*[iKnumber_thread];
 	integer* index_size_m = nullptr;
 	integer*  istartAnew_m = new integer[iKnumber_thread];
+	
 	index_size_m = new integer[iKnumber_thread];
-	// Были обнаружены задачи теплопередачи с очень сложной пространственной формой для 
-	// которых значение 5.55*А мало. Необходимое значение с запасом 11.0*А.
-	// Реальное значение не превышало 7.82*А.
-	//  Эти задачи - кольцевой радиатор для 1500Вт ВУМ и вторая задача - разномасштабная
-	// геометрия в пять порядков: от 17.5см до 0.5мкм. 
-	doublereal AccumulqtorA_m_SIZE8 = (doublereal)(2.0*my_amg_manager.memory_size); // было значение 5.55; 11; 30.
-	if (n > 20000000) {
-		// Экономим память
-		AccumulqtorA_m_SIZE8 = 11.0;
+	// Р‘С‹Р»Рё РѕР±РЅР°СЂСѓР¶РµРЅС‹ Р·Р°РґР°С‡Рё С‚РµРїР»РѕРїРµСЂРµРґР°С‡Рё СЃ РѕС‡РµРЅСЊ СЃР»РѕР¶РЅРѕР№ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРµРЅРЅРѕР№ С„РѕСЂРјРѕР№ РґР»СЏ 
+	// РєРѕС‚РѕСЂС‹С… Р·РЅР°С‡РµРЅРёРµ 5.55*Рђ РјР°Р»Рѕ. РќРµРѕР±С…РѕРґРёРјРѕРµ Р·РЅР°С‡РµРЅРёРµ СЃ Р·Р°РїР°СЃРѕРј 11.0*Рђ.
+	// Р РµР°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РЅРµ РїСЂРµРІС‹С€Р°Р»Рѕ 7.82*Рђ.
+	//  Р­С‚Рё Р·Р°РґР°С‡Рё - РєРѕР»СЊС†РµРІРѕР№ СЂР°РґРёР°С‚РѕСЂ РґР»СЏ 1500Р’С‚ Р’РЈРњ Рё РІС‚РѕСЂР°СЏ Р·Р°РґР°С‡Р° - СЂР°Р·РЅРѕРјР°СЃС€С‚Р°Р±РЅР°СЏ
+	// РіРµРѕРјРµС‚СЂРёСЏ РІ РїСЏС‚СЊ РїРѕСЂСЏРґРєРѕРІ: РѕС‚ 17.5СЃРј РґРѕ 0.5РјРєРј. 
+	// Р±С‹Р»Рѕ Р·РЅР°С‡РµРЅРёРµ 5.55; 11; 30.
+	//doublereal AccumulqtorA_m_SIZE8 = (doublereal)(1.3*my_amg_manager.memory_size); // Р±С‹Р»Рѕ Р·РЅР°С‡РµРЅРёРµ 2.0.
+	doublereal AccumulqtorA_m_SIZE8 = 8.0; // Р±С‹Р»Рѕ Р·РЅР°С‡РµРЅРёРµ 2.0.
+	
+	//if (bPMIS) 
+	if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS)||
+		(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS))
+	{
+		// PMIS or HMIS
+		if (b_on_adaptive_local_refinement_mesh) {
+			if (my_amg_manager.number_interpolation_procedure == 2) {
+
+				AccumulqtorA_m_SIZE8 = 2.2; // Р”Р°Р»СЊРЅРѕР±РѕР№РЅР°СЏ РёРЅС‚РµСЂРїРѕР»СЏС†РёСЏ.
+			}
+			else {
+
+				AccumulqtorA_m_SIZE8 = 2.2; // 2.0;
+			}
+		}
+		else {
+			if (my_amg_manager.number_interpolation_procedure == 2) {
+				
+				AccumulqtorA_m_SIZE8 = 2.2; // Р”Р°Р»СЊРЅРѕР±РѕР№РЅР°СЏ РёРЅС‚РµСЂРїРѕР»СЏС†РёСЏ.
+				
+			}
+			else {
+				AccumulqtorA_m_SIZE8 = 2.2;// 2.0;
+			}
+		}
 	}
-	for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
+	//if (n > 20000000) {// Р‘РѕР»РµРµ 20Рњ
+		// Р­РєРѕРЅРѕРјРёРј РїР°РјСЏС‚СЊ
+		//AccumulqtorA_m_SIZE8 = 11.0;
+	//}
+	for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
+
 		AccumulqtorA_m[i_9] = new Ak1[(integer)(0.125* AccumulqtorA_m_SIZE8 *nnz + 1)];
-		std::cout << "AccumulqtorA_m["<< i_9 <<"] alloc succseful..."<< std::endl;
+		if (bprint_mesage_diagnostic) {
+			std::cout << "AccumulqtorA_m[" << i_9 << "] alloc succseful..." << std::endl;
+		}
 		vector_sum_m[i_9] = new doublerealT[n + 1];
 		//vector_sum_m[i_9] = (doublerealT*)malloc((n + 1) * sizeof(doublerealT));
 		//handle_error<doublerealT>(vector_sum_m[i_9], "vector_sum_m[i_9]", "classic_aglomerative_amg_6", (n + 1));
@@ -5641,27 +6255,34 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		//handle_error<bool>(hash_table_m[i_9], "hash_table_m[i_9]", "classic_aglomerative_amg_6", (10 * n + 1));
 
 		integer i_91_end = 10 * n + 1;
-		for (integer i_91 = 0; i_91 < i_91_end; i_91++) hash_table_m[i_9][i_91] = false;// inicialization
+#pragma omp parallel for
+		for (integer i_91 = 0; i_91 < i_91_end; i_91++) {
+			hash_table_m[i_9][i_91] = false;// inicialization
+		}
+//#pragma omp parallel for
+	//	for (integer i_91 = 0; i_91 < n + 1; i_91++) {
+			//vector_sum_m[i_9][i_91] = 0.0;
+		//}
 		index_size_m[i_9] = 0;
 		istartAnew_m[i_9] = 0;
 	}
 #endif
 
-	// quick - вычисляется один раз, а потом везде только используется.
-	// threshold - пороговое значение контролирующее число сильных связей между переменными.
-	// Определяется по модулям внедиагональных коэффициентов.
-	// размер от 0 до n включительно.
+	// quick - РІС‹С‡РёСЃР»СЏРµС‚СЃСЏ РѕРґРёРЅ СЂР°Р·, Р° РїРѕС‚РѕРј РІРµР·РґРµ С‚РѕР»СЊРєРѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
+	// threshold - РїРѕСЂРѕРіРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ РєРѕРЅС‚СЂРѕР»РёСЂСѓСЋС‰РµРµ С‡РёСЃР»Рѕ СЃРёР»СЊРЅС‹С… СЃРІСЏР·РµР№ РјРµР¶РґСѓ РїРµСЂРµРјРµРЅРЅС‹РјРё.
+	// РћРїСЂРµРґРµР»СЏРµС‚СЃСЏ РїРѕ РјРѕРґСѓР»СЏРј РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹С… РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ.
+	// СЂР°Р·РјРµСЂ РѕС‚ 0 РґРѕ n РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ.
 	doublerealT* threshold_quick_all = my_declaration_array<doublerealT>(n, -1.0, "threshold_quick_all");
 
-	// threshold - пороговое значение контролирующее число сильных связей между переменными.
-	// Определяется только по отрицательным внедиагональным коэффициентам.
-	// размер от 0 до n включительно.
+	// threshold - РїРѕСЂРѕРіРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ РєРѕРЅС‚СЂРѕР»РёСЂСѓСЋС‰РµРµ С‡РёСЃР»Рѕ СЃРёР»СЊРЅС‹С… СЃРІСЏР·РµР№ РјРµР¶РґСѓ РїРµСЂРµРјРµРЅРЅС‹РјРё.
+	// РћРїСЂРµРґРµР»СЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїРѕ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹Рј РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рј РєРѕСЌС„С„РёС†РёРµРЅС‚Р°Рј.
+	// СЂР°Р·РјРµСЂ РѕС‚ 0 РґРѕ n РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ.
 	doublerealT* threshold_quick_only_negative = my_declaration_array<doublerealT>(n, -1.0, "threshold_quick_only_negative");
-	bool btreshold_on_new_vetv = true; // false откат изменений назад на старую стабильную ветвь кода.
+	bool btreshold_on_new_vetv = true; // false РѕС‚РєР°С‚ РёР·РјРµРЅРµРЅРёР№ РЅР°Р·Р°Рґ РЅР° СЃС‚Р°СЂСѓСЋ СЃС‚Р°Р±РёР»СЊРЅСѓСЋ РІРµС‚РІСЊ РєРѕРґР°.
 
 
 	// flag n+1	
-	// размер от 0 до n включительно.
+	// СЂР°Р·РјРµСЂ РѕС‚ 0 РґРѕ n РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ.
 	if (flag != nullptr) {
 		free(flag);
 		flag = nullptr;
@@ -5670,15 +6291,15 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	
 
 	// hash_table2  n+1
-	// Для построения C/F декомпозиции нам тоже потребуется хеш-таблица
-	// и стек для очистки хеш-таблицы.
-	// Инициализация требуется и выполнена. 
-	// размер от 0 до n включительно.
+	// Р”Р»СЏ РїРѕСЃС‚СЂРѕРµРЅРёСЏ C/F РґРµРєРѕРјРїРѕР·РёС†РёРё РЅР°Рј С‚РѕР¶Рµ РїРѕС‚СЂРµР±СѓРµС‚СЃСЏ С…РµС€-С‚Р°Р±Р»РёС†Р°
+	// Рё СЃС‚РµРє РґР»СЏ РѕС‡РёСЃС‚РєРё С…РµС€-С‚Р°Р±Р»РёС†С‹.
+	// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚СЂРµР±СѓРµС‚СЃСЏ Рё РІС‹РїРѕР»РЅРµРЅР°. 
+	// СЂР°Р·РјРµСЂ РѕС‚ 0 РґРѕ n РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ.
 	bool* hash_table2 = my_declaration_array<bool>(n, false, "hash_table2");
 
 	// istack n+1
-	// И теперь стек для очистки хеш-таблицы.
-	// размер от 0 до n включительно.
+	// Р С‚РµРїРµСЂСЊ СЃС‚РµРє РґР»СЏ РѕС‡РёСЃС‚РєРё С…РµС€-С‚Р°Р±Р»РёС†С‹.
+	// СЂР°Р·РјРµСЂ РѕС‚ 0 РґРѕ n РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ.
 	integer* istack = my_declaration_array<integer>(n, -1, "istack");
 	
 
@@ -5696,7 +6317,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	bool* this_is_C_node = my_declaration_array<bool>(n, false, "this_is_C_node");
 	bool* this_is_F_node = my_declaration_array<bool>(n, false, "this_is_F_node");
 
-	// инициализация требуется обязательно.
+	// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‚СЂРµР±СѓРµС‚СЃСЏ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ.
 	if (F_false_C_true != nullptr) {
 		free(F_false_C_true);
 		F_false_C_true = nullptr;
@@ -5705,8 +6326,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 	
 
-	bool bStrongTransposeON = true; // Как в литературе используем Strong Transpose.
-	if (my_amg_manager.icoarseningtype == 0) {
+	bool bStrongTransposeON = true; // РљР°Рє РІ Р»РёС‚РµСЂР°С‚СѓСЂРµ РёСЃРїРѕР»СЊР·СѓРµРј Strong Transpose.
+	if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::CLASSICAL_ALL_CONNECTION) {
 		bStrongTransposeON = false;
 	}
 	
@@ -5718,16 +6339,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue_global)) {
 		
 
-		// защита от повторного срабатывания на добавление в интерполяции.
+		// Р·Р°С‰РёС‚Р° РѕС‚ РїРѕРІС‚РѕСЂРЅРѕРіРѕ СЃСЂР°Р±Р°С‚С‹РІР°РЅРёСЏ РЅР° РґРѕР±Р°РІР»РµРЅРёРµ РІ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
 		from_re_operation_protection0 = true;
 		ifrom_re_operation_protection = 0;		
 
 		if (ilevel > 1) {
 
-			if (my_amg_manager.icoarseningtype == 9) {
+			if (my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS) {
 				// HMIS
 				// Hybrid Modifyed Independed Set.
-				// RS на первом уровне, PMIS на остальных уровнях.
+				// RS РЅР° РїРµСЂРІРѕРј СѓСЂРѕРІРЅРµ, PMIS РЅР° РѕСЃС‚Р°Р»СЊРЅС‹С… СѓСЂРѕРІРЅСЏС….
 				bPMIS = true;
 			}
 			
@@ -5750,23 +6371,23 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			// this_is_F_node
 			my_realloc_memory<bool>(this_is_F_node, ((n_a[ilevel - 1]) + 1));			
 			
-			// Выделяем оперативную память под хеш-таблицы экономно.
+			// Р’С‹РґРµР»СЏРµРј РѕРїРµСЂР°С‚РёРІРЅСѓСЋ РїР°РјСЏС‚СЊ РїРѕРґ С…РµС€-С‚Р°Р±Р»РёС†С‹ СЌРєРѕРЅРѕРјРЅРѕ.
 			construct_hash_table_Gus_struct01(n_a[ilevel - 1]+2);
 
 		}
 
-		// Константы размеров памяти 3.3 и 1.2 могут быть оспорены и изменены в последствии.
-		// для этого требуется тестирование на большом числе рабочих задач.
-		doublerealT dsize_memory_for_Amat = 3.9; // на задачах с конвекцией тоже надо 3.9.
-		if ((my_amg_manager.icoarseningtype == 1) || 
-			((my_amg_manager.icoarseningtype == 3))) {
-			// RS2 Активно. Джон Руге и Клаус Штубен второй проход.
+		// РљРѕРЅСЃС‚Р°РЅС‚С‹ СЂР°Р·РјРµСЂРѕРІ РїР°РјСЏС‚Рё 3.3 Рё 1.2 РјРѕРіСѓС‚ Р±С‹С‚СЊ РѕСЃРїРѕСЂРµРЅС‹ Рё РёР·РјРµРЅРµРЅС‹ РІ РїРѕСЃР»РµРґСЃС‚РІРёРё.
+		// РґР»СЏ СЌС‚РѕРіРѕ С‚СЂРµР±СѓРµС‚СЃСЏ С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµ РЅР° Р±РѕР»СЊС€РѕРј С‡РёСЃР»Рµ СЂР°Р±РѕС‡РёС… Р·Р°РґР°С‡.
+		doublerealT dsize_memory_for_Amat = 3.9; // РЅР° Р·Р°РґР°С‡Р°С… СЃ РєРѕРЅРІРµРєС†РёРµР№ С‚РѕР¶Рµ РЅР°РґРѕ 3.9.
+		if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION) ||
+			((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION))) {
+			// RS2 РђРєС‚РёРІРЅРѕ. Р”Р¶РѕРЅ Р СѓРіРµ Рё РљР»Р°СѓСЃ РЁС‚СѓР±РµРЅ РІС‚РѕСЂРѕР№ РїСЂРѕС…РѕРґ.
 			dsize_memory_for_Amat = 3.9;
 		}
 		if (b_on_adaptive_local_refinement_mesh) {
-			if ((1 && steady_or_unsteady_global_determinant == CFD_STEADY)) {
+			if ((1 && steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY)) {
 				if (iVar == PAM) {
-					// cfd для поправки давления на АЛИС сетке.
+					// cfd РґР»СЏ РїРѕРїСЂР°РІРєРё РґР°РІР»РµРЅРёСЏ РЅР° РђР›РРЎ СЃРµС‚РєРµ.
 					//dsize_memory_for_Amat = 10;
 					dsize_memory_for_Amat = 4.9;
 				}
@@ -5776,15 +6397,15 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			}
 		}
 		if (b_REALLOC) {
-			// Уменьшение памяти отводимой под хранение матрицы А.
-			// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
-			my_realloc_memory<doublerealT>(Amat.aij, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
-
-			my_realloc_memory<doublerealT>(Amat.abs_aij, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
+			// РЈРјРµРЅСЊС€РµРЅРёРµ РїР°РјСЏС‚Рё РѕС‚РІРѕРґРёРјРѕР№ РїРѕРґ С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ Рђ.
+			// РњР°С‚СЂРёС†Р° РґРѕР»Р¶РЅР° Р·Р°РЅРёРјР°С‚СЊ РІ РїР°РјСЏС‚Рё РЅРµ Р±РѕР»РµРµ С‡РµРј РїРѕРґ РЅРµС‘ РЅСѓР¶РЅРѕ Рё РЅРµ РјРµРіР°Р±Р°Р№С‚РѕРј Р±РѕР»СЊС€Рµ.
+			my_realloc_memory<real_mix_precision>(Amat.aij, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
 			
-			my_realloc_memory<integer>(Amat.i, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
+			my_realloc_memory<real_mix_precision>(Amat.abs_aij, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
 			
-			my_realloc_memory<integer>(Amat.j, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
+			my_realloc_memory<integer_mix_precision>(Amat.i, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
+			
+			my_realloc_memory<integer_mix_precision>(Amat.j, ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1]))));
 						
 			if (bprint_mesage_diagnostic) {
 				std::cout<<" 1 of 3 compleated.  OK!! ierarhion matrix Amat realloc successfully..."<<std::endl;
@@ -5819,57 +6440,58 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			this_is_C_node[ii] = this_is_F_node[ii] = false;
 		}
 
-		// Сортировка нужна лишь на первом уровне, т.к.
-		// результат алгоритма перемножения по Ф. Густавсону 1978 уже 
-		// даёт на выходе отсортированную по строкам матрицу.
+		// РЎРѕСЂС‚РёСЂРѕРІРєР° РЅСѓР¶РЅР° Р»РёС€СЊ РЅР° РїРµСЂРІРѕРј СѓСЂРѕРІРЅРµ, С‚.Рє.
+		// СЂРµР·СѓР»СЊС‚Р°С‚ Р°Р»РіРѕСЂРёС‚РјР° РїРµСЂРµРјРЅРѕР¶РµРЅРёСЏ РїРѕ Р¤. Р“СѓСЃС‚Р°РІСЃРѕРЅСѓ 1978 СѓР¶Рµ 
+		// РґР°С‘С‚ РЅР° РІС‹С…РѕРґРµ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅСѓСЋ РїРѕ СЃС‚СЂРѕРєР°Рј РјР°С‚СЂРёС†Сѓ.
 		if (ilevel == 1) {
-			// сортировка исходной  А  по i.
+			// СЃРѕСЂС‚РёСЂРѕРІРєР° РёСЃС…РѕРґРЅРѕР№  Рђ  РїРѕ i.
 			//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
 
-			// 7 января 2016. Обязательно нужна эта сортировка.
+			// 7 СЏРЅРІР°СЂСЏ 2016. РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅР° СЌС‚Р° СЃРѕСЂС‚РёСЂРѕРІРєР°.
 			switch (imy_sort_algorithm) {
-			case COUNTING_SORT_ALG:
-				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings,n_a[ilevel-1]);	//подходит именно n_a[ilevel - 1]			
+			case MY_SORT_ALGORITHM:: COUNTING_SORT:
+				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings,n_a[ilevel-1]);	//РїРѕРґС…РѕРґРёС‚ РёРјРµРЅРЅРѕ n_a[ilevel - 1]			
 				break;
-			case HEAP_SORT_ALG:
+			case MY_SORT_ALGORITHM::HEAP_SORT:
 				HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				//LeftistHeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				break;
-			case QUICK_SORT_ALG:
+			case MY_SORT_ALGORITHM::QUICK_SORT:
 				qs_abbys_heigh = 0;
 				// quicksort
 				qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-				// Библиотечный алгоритм. O(n*log2(n)).
-				// Не использует лишней памяти.
+				// Р‘РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј. O(n*log2(n)).
+				// РќРµ РёСЃРїРѕР»СЊР·СѓРµС‚ Р»РёС€РЅРµР№ РїР°РјСЏС‚Рё.
 				//std::sort(Amat + (1 + iadd) * sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd + 1) * sizeof(Ak1), compAi);
 
 				//QuickSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				
 				break;
-			case TIM_PETERSON_SORT_ALG:
-				// Сортировка Тима Петерсома 2002г.
+			case MY_SORT_ALGORITHM::TIM_SORT:
+				// РЎРѕСЂС‚РёСЂРѕРІРєР° РўРёРјР° РџРµС‚РµСЂСЃРѕРјР° 2002Рі.
 				timSort_amg(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 				break;
 			default:
-				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, n_a[ilevel - 1]);//подходит именно n_a[ilevel - 1]
+				Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, bmemory_savings, n_a[ilevel - 1]);//РїРѕРґС…РѕРґРёС‚ РёРјРµРЅРЅРѕ n_a[ilevel - 1]
 				break;
 			}
 
 		} // ilevel == 1
 
 
-		if (my_amg_manager.bMatrixPortrait == 1) {
-			// Печать портрета матрицы.
+		if (my_amg_manager.bMatrixPortrait) {
+			// РџРµС‡Р°С‚СЊ РїРѕСЂС‚СЂРµС‚Р° РјР°С‚СЂРёС†С‹.
 
 			FILE* fp_portrait = NULL;
-			errno_t err_portrait = 0;
+			
 #ifdef MINGW_COMPILLER
+			int err_portrait = 0;
 			fp_portrait = fopen64("matrix_load.txt", "w");
-			if (fp_portrait != NULL) {
+			if (fp_portrait != NULL) {				
 #if doubleintprecision == 1
 				fprintf(fp_portrait, "%lld %lld\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
 				for (integer i58 = 1 + iadd; i58 <= nnz_a[ilevel - 1] + iadd; i58++) {
-					fprintf(fp_portrait, "%lld %lld\n", Amat.i[i58], Amat.j[i58]);
+					fprintf(fp_portrait, "%d %d\n", Amat.i[i58], Amat.j[i58]);
 				}
 #else
 				fprintf(fp_portrait, "%d %d\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
@@ -5878,12 +6500,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 #endif
 		    }
+			else {
+				err_portrait = 1;
+			}
 #else
+			errno_t err_portrait = 0;
 			err_portrait = fopen_s(&fp_portrait, "matrix_load.txt", "w");
 #if doubleintprecision == 1
 			fprintf_s(fp_portrait, "%lld %lld\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
 			for (integer i58 = 1 + iadd; i58 <= nnz_a[ilevel - 1] + iadd; i58++) {
-				fprintf_s(fp_portrait, "%lld %lld\n", Amat.i[i58], Amat.j[i58]);
+				fprintf_s(fp_portrait, "%d %d\n", Amat.i[i58], Amat.j[i58]);
 			}
 #else
 			fprintf_s(fp_portrait, "%d %d\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
@@ -5906,7 +6532,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}
 
 		
-		// позиция начала каждой строки в матрице.
+		// РїРѕР·РёС†РёСЏ РЅР°С‡Р°Р»Р° РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё РІ РјР°С‚СЂРёС†Рµ.
 		if (row_startA != nullptr) {
 			free(row_startA);
 			row_startA = nullptr;
@@ -5927,7 +6553,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		if (bQuick_sort_for_reorder) {
 			for (integer ii = 1; ii <= ii_end1; ii++) {
 				// 14.04.2020
-				// В каждой строке i индексы столбца j отсортированы по возрастанию.		
+				// Р’ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРµ i РёРЅРґРµРєСЃС‹ СЃС‚РѕР»Р±С†Р° j РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ.		
 				qs_abbys_heigh = 0;
 				// quicksort
 				qsj(Amat, row_startA[ii], row_startA[ii + 1] - 1);
@@ -5936,33 +6562,45 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 		integer is_1 = row_startA[1];
 		integer is_e = row_startA[n_a[ilevel - 1] + 1] - 1;
-		// Заранее один раз вычисляем модуль элемента.
-		for (integer iscan = is_1; iscan <= is_e; iscan++) {
-			Amat.abs_aij[iscan] = fabs(Amat.aij[iscan]);
+		// Р—Р°СЂР°РЅРµРµ РѕРґРёРЅ СЂР°Р· РІС‹С‡РёСЃР»СЏРµРј РјРѕРґСѓР»СЊ СЌР»РµРјРµРЅС‚Р°.
+		if (is_e + 1 < ((iadd + 2 + (integer)(dsize_memory_for_Amat * nnz_a[ilevel - 1])))) {
+
+#pragma omp parallel for
+			for (integer iscan = is_1; iscan <= is_e; iscan++) {
+				Amat.abs_aij[iscan] = fabs(Amat.aij[iscan]);
+			}
+		}
+		else {
+			printf("overflow!!! You mast increase dsize_memory_for_Amat constant.\n");
+			system("PAUSE");
+			exit(1);
 		}
 
-		// вычисляем для каждого узла число его соседей.
-		// инициализация обязательна.
+		// РІС‹С‡РёСЃР»СЏРµРј РґР»СЏ РєР°Р¶РґРѕРіРѕ СѓР·Р»Р° С‡РёСЃР»Рѕ РµРіРѕ СЃРѕСЃРµРґРµР№.
+		// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РѕР±СЏР·Р°С‚РµР»СЊРЅР°.
 		if (count_neighbour != nullptr) {
 			free(count_neighbour);
 			count_neighbour = nullptr;
 		}
-		count_neighbour = my_declaration_array<integer>(n_a[ilevel - 1], 0, "count_neighbour"); // 0 - нет соседей.		
+		count_neighbour = my_declaration_array<integer>(n_a[ilevel - 1], 0, "count_neighbour"); // 0 - РЅРµС‚ СЃРѕСЃРµРґРµР№.		
 
 		if (bStrongTransposeON) 
 		{
-			// Освобождение ОЗУ.
-			// Используем.
+			// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РћР—РЈ.
+			// РСЃРїРѕР»СЊР·СѓРµРј.
 			//std::cout<<"usage strong transpose"<<std::endl;
 			//system("PAUSE"); // debug
 			
-			// Эта ветвь активна лес АВЛ деревьев ненужен.
+			// Р­С‚Р° РІРµС‚РІСЊ Р°РєС‚РёРІРЅР° Р»РµСЃ РђР’Р› РґРµСЂРµРІСЊРµРІ РЅРµРЅСѓР¶РµРЅ.
 
-			// Обычный накопитель - линейный список с быстрой вставкой.
+			// РћР±С‹С‡РЅС‹Р№ РЅР°РєРѕРїРёС‚РµР»СЊ - Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє СЃ Р±С‹СЃС‚СЂРѕР№ РІСЃС‚Р°РІРєРѕР№.
 			if (hash_StrongTranspose_collection1 != nullptr) {
-#pragma omp parallel for
+
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
+				// РќРµ РЅР°РґРѕ РѕРїРµСЂР°С†РёРё СЃ РїР°РјСЏС‚СЊСЋ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёРІР°С‚СЊ С‚.Рє. РѕРЅРё РїСЂРё
+				// РѕСЃРІРѕР±РѕР¶РґРµРЅРёРё СЂРµСЃСѓСЂСЃР° РґРµР»Р°РµС‚СЃСЏ Р·Р°РїСЂРѕСЃ Рє СЏРґСЂСѓ РћРЎ.
+				// WARNING NO #pragma
 				for (integer i_1 = 0; i_1 <= isize_memory_alloc_hash_StrongTranspose_collection1; i_1++)
 				{
 					clear_list(hash_StrongTranspose_collection1[i_1]);
@@ -5974,7 +6612,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
 			}
-			// Выделяем память под лес линейных однонаправленных списков.
+			// Р’С‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РїРѕРґ Р»РµСЃ Р»РёРЅРµР№РЅС‹С… РѕРґРЅРѕРЅР°РїСЂР°РІР»РµРЅРЅС‹С… СЃРїРёСЃРєРѕРІ.
 			hash_StrongTranspose_collection1 = new Taccumulqtor_list*[n_a[ilevel - 1] + 1];
 			ii_end1 = n_a[ilevel - 1];
 #pragma omp parallel for
@@ -5984,131 +6622,231 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 			isize_memory_alloc_hash_StrongTranspose_collection1 = n_a[ilevel - 1];
 			if (isize_hash_StrongTranspose_collection != nullptr) {
-				free(isize_hash_StrongTranspose_collection);
+				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
 			}
-			isize_hash_StrongTranspose_collection = my_declaration_array<integer>(n_a[ilevel - 1], 0, "isize_hash_StrongTranspose_collection");		
+			isize_hash_StrongTranspose_collection = new integer[n_a[ilevel - 1] + 1];
+
+			for (integer i_73 = 0; i_73 <= n_a[ilevel - 1]; i_73++) {
+				isize_hash_StrongTranspose_collection[i_73] = 0;// РќРµС‚ СЌР»РµРјРµРЅС‚РѕРІ.
+			}
 			
 		}
 
-		// При таком коде узел Дирихле тоже имеет соседа, сосед это 
-		// внутренний узел который связан с этим узлом Дирихле.
-		// Соседей вычисляем на самой первой матрице А (самой левой).
+		// РџСЂРё С‚Р°РєРѕРј РєРѕРґРµ СѓР·РµР» Р”РёСЂРёС…Р»Рµ С‚РѕР¶Рµ РёРјРµРµС‚ СЃРѕСЃРµРґР°, СЃРѕСЃРµРґ СЌС‚Рѕ 
+		// РІРЅСѓС‚СЂРµРЅРЅРёР№ СѓР·РµР» РєРѕС‚РѕСЂС‹Р№ СЃРІСЏР·Р°РЅ СЃ СЌС‚РёРј СѓР·Р»РѕРј Р”РёСЂРёС…Р»Рµ.
+		// РЎРѕСЃРµРґРµР№ РІС‹С‡РёСЃР»СЏРµРј РЅР° СЃР°РјРѕР№ РїРµСЂРІРѕР№ РјР°С‚СЂРёС†Рµ Рђ (СЃР°РјРѕР№ Р»РµРІРѕР№).
 		ii_end1 = nnz_a[ilevel - 1] + iadd;
-		for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
-			if (flag[Amat.i[ii]] == false) {
-				integer ic = -1;
-				
-				
-				
-				// Новейшая ветвь кода: 11.06.2017.
-				// Введение новой ветви вызвано желанием ускорить код избегая повторных массовых вычислений threshold.
-				// Ни в коем случае не ставить 0 в if.
-				// Это новая единственно верная ветка. Её убирание приводит к неработоспособности всего приложения.
+
+		if (bpositive_connections_CF_decomp) {
+
+			
+#pragma omp parallel for
+			for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+				bool cond = (flag[Amat.i[ii]] == false);
+				if (!cond) continue;
+
+				// РќРѕРІРµР№С€Р°СЏ РІРµС‚РІСЊ РєРѕРґР°: 11.06.2017.
+				// Р’РІРµРґРµРЅРёРµ РЅРѕРІРѕР№ РІРµС‚РІРё РІС‹Р·РІР°РЅРѕ Р¶РµР»Р°РЅРёРµРј СѓСЃРєРѕСЂРёС‚СЊ РєРѕРґ РёР·Р±РµРіР°СЏ РїРѕРІС‚РѕСЂРЅС‹С… РјР°СЃСЃРѕРІС‹С… РІС‹С‡РёСЃР»РµРЅРёР№ threshold.
+				// РќРё РІ РєРѕРµРј СЃР»СѓС‡Р°Рµ РЅРµ СЃС‚Р°РІРёС‚СЊ 0 РІ if.
+				// Р­С‚Рѕ РЅРѕРІР°СЏ РµРґРёРЅСЃС‚РІРµРЅРЅРѕ РІРµСЂРЅР°СЏ РІРµС‚РєР°. Р•С‘ СѓР±РёСЂР°РЅРёРµ РїСЂРёРІРѕРґРёС‚ Рє РЅРµСЂР°Р±РѕС‚РѕСЃРїРѕСЃРѕР±РЅРѕСЃС‚Рё РІСЃРµРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 				threshold_quick_all[Amat.i[ii]] = -1.0;
 				threshold_quick_only_negative[Amat.i[ii]] = -1.0;
 				integer is0_end = row_startA[Amat.i[ii] + 1] - 1;
 
-				if (bpositive_connections_CF_decomp) {
-					for (integer is0 = ii; (is0 <= is0_end); is0++) {
-						if (Amat.j[is0] != Amat.i[ii]) {
-							if (Amat.abs_aij[is0] > threshold_quick_all[Amat.i[ii]]) {
-								// Определяем максимальный внедиагональный элемент.
-								threshold_quick_all[Amat.i[ii]] = Amat.abs_aij[is0];
-							}
-						}
+
+				for (integer is0 = ii; (is0 <= is0_end); is0++) {
+					bool cond_diagonal = (Amat.j[is0] == Amat.i[ii]);
+					if (cond_diagonal) continue;
+
+
+					if (Amat.abs_aij[is0] > threshold_quick_all[Amat.i[ii]]) {
+						// РћРїСЂРµРґРµР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
+						threshold_quick_all[Amat.i[ii]] = Amat.abs_aij[is0];
 					}
+
 				}
-				else {
-					for (integer is0 = ii; (is0 <= is0_end); is0++) {
-						if (Amat.j[is0] != Amat.i[ii]) {
-							if (Amat.aij[is0] < 0.0) {
-								if (Amat.abs_aij[is0] > threshold_quick_only_negative[Amat.i[ii]]) {
-									// Определяем максимальный внедиагональный элемент.
-									threshold_quick_only_negative[Amat.i[ii]] = Amat.abs_aij[is0]; 
-								}
-							}
-						}
-					}
-				}
-					
-					
-				if (bpositive_connections_CF_decomp) {
-				    //doublerealT theta_threshold3 = theta(ilevel)*threshold;
-					doublerealT theta_threshold3 = theta(ilevel)*threshold_quick_all[Amat.i[ii]];
-					for (integer is0 = ii; (is0 <= is0_end); is0++) {
-						if (Amat.j[is0] != Amat.i[ii]) {
-							if (Amat.abs_aij[is0] > theta_threshold3) {
-								// Учитываем только сильно связанных соседей.
-								ic++; //i,j
-					    		 									
-								if (bStrongTransposeON) {
-									// O(1) вставка в начало линейного списка.
-									insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
-									isize_hash_StrongTranspose_collection[Amat.j[is0]]++;
-								}
-							}
-						}
-					}
-				}
-				else {
-					for (integer is0 = ii; (is0 <= is0_end); is0++) {
-						if (Amat.j[is0] != Amat.i[ii]) {
-							if (Amat.aij[is0] < 0.0) {
-								if (Amat.abs_aij[is0] > theta(ilevel)*threshold_quick_only_negative[Amat.i[ii]]) {
-									// Учитываем только сильно связанных соседей.
-									ic++; //i,j
-									 					 					
-									if (bStrongTransposeON) {
-										// O(1) вставка в начало линейного списка.
-										insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
-										isize_hash_StrongTranspose_collection[Amat.j[is0]]++;
-									}
-								}
-							}
-						}
-					}
-				}
+
+				flag[Amat.i[ii]] = true;
+
+			}
+
+			//for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+				//flag[Amat.i[ii]] = false;
+			//}
+
+#pragma omp parallel for
+			for (integer ii = 0; ii <= n_a[ilevel - 1]; ii++) {
+				flag[ii] = false;
+		    }
+
+			for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+				bool cond = (flag[Amat.i[ii]] == false);
+				if (!cond) continue;
+
 				
-				
-				
+
+				integer ic = -1;
+
+				integer is0_end = row_startA[Amat.i[ii] + 1] - 1;
+
+				//doublerealT theta_threshold3 = theta(ilevel)*threshold;
+				doublerealT theta_threshold3 = theta(ilevel) * threshold_quick_all[Amat.i[ii]];
+				for (integer is0 = ii; (is0 <= is0_end); is0++) {
+
+					bool cond_diagonal = (Amat.j[is0] == Amat.i[ii]);
+					if (cond_diagonal) continue;
+					bool cond_strong_connection = (Amat.abs_aij[is0] > theta_threshold3);
+					if (!cond_strong_connection) continue;
+
+
+					// РЈС‡РёС‚С‹РІР°РµРј С‚РѕР»СЊРєРѕ СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅРЅС‹С… СЃРѕСЃРµРґРµР№.
+					ic++; //i,j
+
+					if (bStrongTransposeON) {
+						// O(1) РІСЃС‚Р°РІРєР° РІ РЅР°С‡Р°Р»Рѕ Р»РёРЅРµР№РЅРѕРіРѕ СЃРїРёСЃРєР°.
+						insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
+						isize_hash_StrongTranspose_collection[Amat.j[is0]]++;
+					}
+
+				}
 
 				count_neighbour[Amat.i[ii]] = ic;
 				// 01.03.2019
-				// Это делается ниже в 895 строке.
+				// Р­С‚Рѕ РґРµР»Р°РµС‚СЃСЏ РЅРёР¶Рµ РІ 895 СЃС‚СЂРѕРєРµ.
 				//count_neighbour[Amat.i[ii]] = isize_hash_StrongTranspose_collection[Amat.i[ii]];
 				// 22_12_2016
 				if (ic == 0) {
-					// Большой вопрос уместно ли так делать 8.апреля 2017 ???
+					// Р‘РѕР»СЊС€РѕР№ РІРѕРїСЂРѕСЃ СѓРјРµСЃС‚РЅРѕ Р»Рё С‚Р°Рє РґРµР»Р°С‚СЊ 8.Р°РїСЂРµР»СЏ 2017 ???
 
-					// До начала работы алгоритма все условия Дирихле становятся F узлами.
+					// Р”Рѕ РЅР°С‡Р°Р»Р° СЂР°Р±РѕС‚С‹ Р°Р»РіРѕСЂРёС‚РјР° РІСЃРµ СѓСЃР»РѕРІРёСЏ Р”РёСЂРёС…Р»Рµ СЃС‚Р°РЅРѕРІСЏС‚СЃСЏ F СѓР·Р»Р°РјРё.
 					this_is_C_node[Amat.i[ii]] = false;
 					this_is_F_node[Amat.i[ii]] = true;
 
 				}
-				flag[Amat.i[ii]] = true;				
+				flag[Amat.i[ii]] = true;
+
+
+			}
+
+		}
+		else {
+
+			
+
+
+#pragma omp parallel for
+			for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+				bool cond = (flag[Amat.i[ii]] == false);
+				if (!cond) continue;
+
+				// РќРѕРІРµР№С€Р°СЏ РІРµС‚РІСЊ РєРѕРґР°: 11.06.2017.
+				// Р’РІРµРґРµРЅРёРµ РЅРѕРІРѕР№ РІРµС‚РІРё РІС‹Р·РІР°РЅРѕ Р¶РµР»Р°РЅРёРµРј СѓСЃРєРѕСЂРёС‚СЊ РєРѕРґ РёР·Р±РµРіР°СЏ РїРѕРІС‚РѕСЂРЅС‹С… РјР°СЃСЃРѕРІС‹С… РІС‹С‡РёСЃР»РµРЅРёР№ threshold.
+				// РќРё РІ РєРѕРµРј СЃР»СѓС‡Р°Рµ РЅРµ СЃС‚Р°РІРёС‚СЊ 0 РІ if.
+				// Р­С‚Рѕ РЅРѕРІР°СЏ РµРґРёРЅСЃС‚РІРµРЅРЅРѕ РІРµСЂРЅР°СЏ РІРµС‚РєР°. Р•С‘ СѓР±РёСЂР°РЅРёРµ РїСЂРёРІРѕРґРёС‚ Рє РЅРµСЂР°Р±РѕС‚РѕСЃРїРѕСЃРѕР±РЅРѕСЃС‚Рё РІСЃРµРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
+				threshold_quick_all[Amat.i[ii]] = -1.0;
+				threshold_quick_only_negative[Amat.i[ii]] = -1.0;
+				integer is0_end = row_startA[Amat.i[ii] + 1] - 1;
+
+
+				for (integer is0 = ii; (is0 <= is0_end); is0++) {
+					bool cond_diagonal = (Amat.j[is0] == Amat.i[ii]);
+					if (cond_diagonal) continue;
+					bool cond_negative_coefficient = (Amat.aij[is0] < 0.0);
+					if (!cond_negative_coefficient) continue;
+
+
+					if (Amat.abs_aij[is0] > threshold_quick_only_negative[Amat.i[ii]]) {
+						// РћРїСЂРµРґРµР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
+						threshold_quick_only_negative[Amat.i[ii]] = Amat.abs_aij[is0];
+					}
+
+				}
+
+
+				flag[Amat.i[ii]] = true;
+			}
+
+			//for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+				//flag[Amat.i[ii]] = false;
+			//}
+
+#pragma omp parallel for
+			for (integer ii = 0; ii <= n_a[ilevel - 1]; ii++) {
+				flag[ii] = false;
+			}
+
+			for (integer ii = 1 + iadd; ii <= ii_end1; ii++) {
+				bool cond = (flag[Amat.i[ii]] == false);
+				if (!cond) continue;
+
+				integer ic = -1;
+
 				
+				integer is0_end = row_startA[Amat.i[ii] + 1] - 1;
+
+				for (integer is0 = ii; (is0 <= is0_end); is0++) {
+
+					bool cond_diagonal = (Amat.j[is0] == Amat.i[ii]);
+					if (cond_diagonal) continue;
+					bool cond_negative_coefficient = (Amat.aij[is0] < 0.0);
+					if (!cond_negative_coefficient) continue;
+					doublereal barrier = theta(ilevel) * threshold_quick_only_negative[Amat.i[ii]];
+					bool cond_strong_connection = (Amat.abs_aij[is0] > barrier);
+					if (!cond_strong_connection) continue;
+
+
+					// РЈС‡РёС‚С‹РІР°РµРј С‚РѕР»СЊРєРѕ СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅРЅС‹С… СЃРѕСЃРµРґРµР№.
+					ic++; //i,j
+
+					if (bStrongTransposeON) {
+						// O(1) РІСЃС‚Р°РІРєР° РІ РЅР°С‡Р°Р»Рѕ Р»РёРЅРµР№РЅРѕРіРѕ СЃРїРёСЃРєР°.
+						insert_list(hash_StrongTranspose_collection1[Amat.j[is0]], Amat.i[ii]);
+						isize_hash_StrongTranspose_collection[Amat.j[is0]]++;
+					}
+				}
+				
+
+
+
+
+				count_neighbour[Amat.i[ii]] = ic;
+				// 01.03.2019
+				// Р­С‚Рѕ РґРµР»Р°РµС‚СЃСЏ РЅРёР¶Рµ РІ 895 СЃС‚СЂРѕРєРµ.
+				//count_neighbour[Amat.i[ii]] = isize_hash_StrongTranspose_collection[Amat.i[ii]];
+				// 22_12_2016
+				if (ic == 0) {
+					// Р‘РѕР»СЊС€РѕР№ РІРѕРїСЂРѕСЃ СѓРјРµСЃС‚РЅРѕ Р»Рё С‚Р°Рє РґРµР»Р°С‚СЊ 8.Р°РїСЂРµР»СЏ 2017 ???
+
+					// Р”Рѕ РЅР°С‡Р°Р»Р° СЂР°Р±РѕС‚С‹ Р°Р»РіРѕСЂРёС‚РјР° РІСЃРµ СѓСЃР»РѕРІРёСЏ Р”РёСЂРёС…Р»Рµ СЃС‚Р°РЅРѕРІСЏС‚СЃСЏ F СѓР·Р»Р°РјРё.
+					this_is_C_node[Amat.i[ii]] = false;
+					this_is_F_node[Amat.i[ii]] = true;
+
+				}
+				flag[Amat.i[ii]] = true;
 			}
 		}
 
 		if (bStrongTransposeON) {
 			// 5.01.2017. StrongTranspose.
-			// Счётчик lambda инициализирован согласно литературным описаниям через Strong Transpose.
+			// РЎС‡С‘С‚С‡РёРє lambda РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅ СЃРѕРіР»Р°СЃРЅРѕ Р»РёС‚РµСЂР°С‚СѓСЂРЅС‹Рј РѕРїРёСЃР°РЅРёСЏРј С‡РµСЂРµР· Strong Transpose.
 			ii_end1 = n_a[ilevel - 1];
+
+#pragma omp parallel for
 			for (integer i_1 = 1; i_1 <= ii_end1; i_1++) {
 
-				// 20.05.2017 Добавлен быстрый доступ по ключу для количества элементов в дереве.
+				// 20.05.2017 Р”РѕР±Р°РІР»РµРЅ Р±С‹СЃС‚СЂС‹Р№ РґРѕСЃС‚СѓРї РїРѕ РєР»СЋС‡Сѓ РґР»СЏ РєРѕР»РёС‡РµСЃС‚РІР° СЌР»РµРјРµРЅС‚РѕРІ РІ РґРµСЂРµРІРµ.
 				//count_neighbour[i_1] = getnumber_AVL_node_global(hash_StrongTranspose_collection[i_1]);
 				count_neighbour[i_1] = isize_hash_StrongTranspose_collection[i_1];
 				if (count_neighbour[i_1] == 0) {
-					// 14.04.2017 Важнейшая положительная модификация 
-					// сокращающая количество итераций:
-					// # задача; число ит. до; число ит. после;
+					// 14.04.2017 Р’Р°Р¶РЅРµР№С€Р°СЏ РїРѕР»РѕР¶РёС‚РµР»СЊРЅР°СЏ РјРѕРґРёС„РёРєР°С†РёСЏ 
+					// СЃРѕРєСЂР°С‰Р°СЋС‰Р°СЏ РєРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№:
+					// # Р·Р°РґР°С‡Р°; С‡РёСЃР»Рѕ РёС‚. РґРѕ; С‡РёСЃР»Рѕ РёС‚. РїРѕСЃР»Рµ;
 					// 1. passiv_module6; 179; 97;
 					// 2. CGHV 12mm HFET; 18, 8, 6, 3, 2; 17, 8, 6, 3, 2;
 					// 3. PIONER; 77; 73;
 
-					// До начала работы алгоритма все условия Дирихле становятся F узлами.
+					// Р”Рѕ РЅР°С‡Р°Р»Р° СЂР°Р±РѕС‚С‹ Р°Р»РіРѕСЂРёС‚РјР° РІСЃРµ СѓСЃР»РѕРІРёСЏ Р”РёСЂРёС…Р»Рµ СЃС‚Р°РЅРѕРІСЏС‚СЃСЏ F СѓР·Р»Р°РјРё.
 					this_is_C_node[i_1] = false;
 					this_is_F_node[i_1] = true;
 
@@ -6120,6 +6858,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		
 		
 		ii_end1 = n_a[ilevel - 1];
+
+#pragma omp parallel for
 		for (integer ii = 1; ii <= ii_end1; ii++) {
 			flag[ii] = false; // init flag
 		}
@@ -6127,26 +6867,47 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		
 
 		if (bPMIS) {
-			// Разбиение множества узлов первоначальной сетки на С-узлы и 
-			// F - узлы. С -узлы составят грубую сетку следующего уровня вложенности.
-			// Значения же функции в F узлах должно быть восстановлено по значению функции
-			// в ближайших С узлах (см. задачу интерполяции). 
-			PMIS_CF_decomposition(Amat, this_is_F_node,
-				this_is_C_node, ilevel,
-				count_neighbour, n_a,
-				newCcount,
-				threshold_quick_only_negative,
-				row_startA,
-				hash_StrongTranspose_collection1);
+			if (bPMIS_applied_to_the_square_of_the_matrix) {
+				// РџСЂРёРјРµРЅРµРЅРѕ Рє РєРІР°РґСЂР°С‚Сѓ РјР°С‚СЂРёС†С‹ Рђ.
+
+				// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+				// F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+				// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+				// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё).
+				// РЅР°С‡Р°Р»Рѕ РЅР°РїРёСЃР°РЅРёСЏ 20.09.2020.
+				PMIS_CF_decomposition_applied_to_the_square_of_the_matrix(Amat, this_is_F_node,
+					this_is_C_node, ilevel,
+					count_neighbour, n_a,
+					newCcount,
+					threshold_quick_only_negative,
+					row_startA,
+					hash_StrongTranspose_collection1);
+
+			}
+			else {
+				// РџСЂРёРјРµРЅРµРЅРѕ Рє РјР°С‚СЂРёС†Рµ Рђ.
+
+				// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+				// F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+				// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+				// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё). 
+				PMIS_CF_decomposition(Amat, this_is_F_node,
+					this_is_C_node, ilevel,
+					count_neighbour, n_a,
+					newCcount,
+					threshold_quick_only_negative,
+					row_startA,
+					hash_StrongTranspose_collection1);
+			}
 		}
 		else {
 			
 			integer max_neighbour = 0;
 			integer icandidate = 0;
 
-			// Находим узел с наибольшим числом соседей и запоминаем его.
-			// Это первый встретившийся узел с наибольшим числом соседей.
-			// Это требуется для того чтобы стартовал алгоритм C/F разбиения.
+			// РќР°С…РѕРґРёРј СѓР·РµР» СЃ РЅР°РёР±РѕР»СЊС€РёРј С‡РёСЃР»РѕРј СЃРѕСЃРµРґРµР№ Рё Р·Р°РїРѕРјРёРЅР°РµРј РµРіРѕ.
+			// Р­С‚Рѕ РїРµСЂРІС‹Р№ РІСЃС‚СЂРµС‚РёРІС€РёР№СЃСЏ СѓР·РµР» СЃ РЅР°РёР±РѕР»СЊС€РёРј С‡РёСЃР»РѕРј СЃРѕСЃРµРґРµР№.
+			// Р­С‚Рѕ С‚СЂРµР±СѓРµС‚СЃСЏ РґР»СЏ С‚РѕРіРѕ С‡С‚РѕР±С‹ СЃС‚Р°СЂС‚РѕРІР°Р» Р°Р»РіРѕСЂРёС‚Рј C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 
 			for (integer i7 = 1; i7 <= ii_end1; i7++) {
 				if (count_neighbour[i7] > max_neighbour) {
@@ -6155,20 +6916,20 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 			}
 
-			// 4 июля 2016.
-	        // это случай когда следующий уровень вложенности просто не из чего строить и это 
-	        // становится понятно только здесь.
+			// 4 РёСЋР»СЏ 2016.
+	        // СЌС‚Рѕ СЃР»СѓС‡Р°Р№ РєРѕРіРґР° СЃР»РµРґСѓСЋС‰РёР№ СѓСЂРѕРІРµРЅСЊ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё РїСЂРѕСЃС‚Рѕ РЅРµ РёР· С‡РµРіРѕ СЃС‚СЂРѕРёС‚СЊ Рё СЌС‚Рѕ 
+	        // СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РїРѕРЅСЏС‚РЅРѕ С‚РѕР»СЊРєРѕ Р·РґРµСЃСЊ.
 			if ((icandidate == 0) && (max_neighbour == 0)) {
 
 				//getchar();
-				// уровень построить нельзя поэтому досрочный выход из цикла.
+				// СѓСЂРѕРІРµРЅСЊ РїРѕСЃС‚СЂРѕРёС‚СЊ РЅРµР»СЊР·СЏ РїРѕСЌС‚РѕРјСѓ РґРѕСЃСЂРѕС‡РЅС‹Р№ РІС‹С…РѕРґ РёР· С†РёРєР»Р°.
 				break;
 			}
 
-			// Разбиение множества узлов первоначальной сетки на С-узлы и 
-            // F - узлы. С -узлы составят грубую сетку следующего уровня вложенности.
-			// Значения же функции в F узлах должно быть восстановлено по значению функции
-			// в ближайших С узлах (см. задачу интерполяции). 
+			// Р Р°Р·Р±РёРµРЅРёРµ РјРЅРѕР¶РµСЃС‚РІР° СѓР·Р»РѕРІ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ СЃРµС‚РєРё РЅР° РЎ-СѓР·Р»С‹ Рё 
+            // F - СѓР·Р»С‹. РЎ -СѓР·Р»С‹ СЃРѕСЃС‚Р°РІСЏС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё.
+			// Р—РЅР°С‡РµРЅРёСЏ Р¶Рµ С„СѓРЅРєС†РёРё РІ F СѓР·Р»Р°С… РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕ Р·РЅР°С‡РµРЅРёСЋ С„СѓРЅРєС†РёРё
+			// РІ Р±Р»РёР¶Р°Р№С€РёС… РЎ СѓР·Р»Р°С… (СЃРј. Р·Р°РґР°С‡Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё). 
 			Ruge_and_Stuben_CF_decomposition<doublerealT>(Amat, this_is_F_node,
 				this_is_C_node, ilevel,
 				count_neighbour, n_a,
@@ -6203,11 +6964,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			
 		if (!bPMIS) {
 
-			// Добавление новых С узлов для удовлетворения правил RS интерполяции.
+			// Р”РѕР±Р°РІР»РµРЅРёРµ РЅРѕРІС‹С… РЎ СѓР·Р»РѕРІ РґР»СЏ СѓРґРѕРІР»РµС‚РІРѕСЂРµРЅРёСЏ РїСЂР°РІРёР» RS РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
 
-			// В методе стандартной интерполяции присутствует шаг уменьшения разреженности,
-			// для того чтобы правильно аппроксимировать все F переменные C переменными надо
-			// увеличить количество С переменных.
+			// Р’ РјРµС‚РѕРґРµ СЃС‚Р°РЅРґР°СЂС‚РЅРѕР№ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚ С€Р°Рі СѓРјРµРЅСЊС€РµРЅРёСЏ СЂР°Р·СЂРµР¶РµРЅРЅРѕСЃС‚Рё,
+			// РґР»СЏ С‚РѕРіРѕ С‡С‚РѕР±С‹ РїСЂР°РІРёР»СЊРЅРѕ Р°РїРїСЂРѕРєСЃРёРјРёСЂРѕРІР°С‚СЊ РІСЃРµ F РїРµСЂРµРјРµРЅРЅС‹Рµ C РїРµСЂРµРјРµРЅРЅС‹РјРё РЅР°РґРѕ
+			// СѓРІРµР»РёС‡РёС‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ РЎ РїРµСЂРµРјРµРЅРЅС‹С….
 			the_number_of_neighbors_that_are_not_C_nodes = 0;
 			number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 			number_of_F_nodes_with_one_single_strong_C_neighborF = 0;
@@ -6228,78 +6989,89 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 #pragma omp parallel for
 				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) bvacant_candidates[i_1] = false;
 
-				// Построение пролонгации для узлов которые составляют F-nodes.
-				// Каждый F-nodes окружён C-nodes.
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РїСЂРѕР»РѕРЅРіР°С†РёРё РґР»СЏ СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃС‚Р°РІР»СЏСЋС‚ F-nodes.
+				// РљР°Р¶РґС‹Р№ F-nodes РѕРєСЂСѓР¶С‘РЅ C-nodes.
 #pragma omp parallel for
 				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) {
-					if (this_is_F_node[i_1] == true) {
-						// Найти соседей данного F-node которые C-node.
-						integer icsos = 0;
-						// старая версия до 10 января 2016.
-						//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-						// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
-						// 10 января 2016. на основе хеширования.
-						integer i_2 = row_startA[i_1];
+					bool cond1 = (this_is_F_node[i_1]);
+					if (!cond1) continue;
 
-						bool bvisit = false;
-						//for (integer is0 = i_2; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[i_2]); is0++) {
-						integer iend_merker_position = row_startA[Amat.i[i_2] + 1] - 1;
-						for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
-							if (Amat.j[is0] != Amat.i[i_2]) {
-								bvisit = true;
-								if (this_is_C_node[Amat.j[is0]] == true) {
-									icsos++;
-								}
-								else {
-									//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
-								}
-							}
+					
+					// РќР°Р№С‚Рё СЃРѕСЃРµРґРµР№ РґР°РЅРЅРѕРіРѕ F-node РєРѕС‚РѕСЂС‹Рµ C-node.
+					integer icsos = 0;
+					// СЃС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ РґРѕ 10 СЏРЅРІР°СЂСЏ 2016.
+					//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					// Р‘С‹СЃС‚СЂС‹Р№ РІР°СЂРёР°РЅС‚ Р±РµР· РїРѕРёСЃРєР°, РїСЂРѕСЃС‚Рѕ РёРЅРґРµРєСЃРёСЂРѕРІР°РЅРёРµ РЅР° РѕСЃРЅРѕРІРµ "С…РµС€ С‚Р°Р±Р»РёС†С‹".
+					// 10 СЏРЅРІР°СЂСЏ 2016. РЅР° РѕСЃРЅРѕРІРµ С…РµС€РёСЂРѕРІР°РЅРёСЏ.
+					integer i_2 = row_startA[i_1];
+
+					bool bvisit = false;
+					//for (integer is0 = i_2; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[i_2]); is0++) {
+					integer iend_merker_position = row_startA[Amat.i[i_2] + 1] - 1;
+					for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
+						bool cond_diagonal = (Amat.j[is0] == Amat.i[i_2]);
+						if (cond_diagonal) continue;
+
+						
+						bvisit = true;
+						if (this_is_C_node[Amat.j[is0]]) {
+							icsos++;
 						}
-						//if (icsos == 1) number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным С соседом.
-						// Если bvisit то внедиагональные элементы есть но они все F-nodes. Иначе там обособленное условие Дирихле.
-						if ((icsos == 0) && (bvisit)) {
-
-							// А если он F узел Дирихле без соседей, то сумма тоже может быть нулевой и это вызовет деление на ноль.
-							// Узлы Дирихле могли быть без соседей на начальных уровнях, они располагались в конце списка и были
-							// поглощены агломератами внутренних узлов и всё было в порядке.
-							// Чтобы преодолеть это затруднение нужен алгоритм с обратной связью.
-
-							// Нет С соседей, этот узел станет С узлом.
-							bvacant_candidates[i_1] = true;
+						else {
+							//the_number_of_neighbors_that_are_not_C_nodes++; // РїРѕРґСЃС‡РёС‚С‹РІР°РµРј РїСЂРѕР±Р»РµРјС‹ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё 
 						}
+						
 					}
+					//if (icsos == 1) number_of_F_nodes_with_one_single_strong_C_neighbor++; // РєРѕР»РёС‡РµСЃС‚РІРѕ F СѓР·Р»РѕРІ СЃ РѕРґРЅРёРј РµРґРёРЅСЃС‚РІРµРЅРЅС‹Рј РЎ СЃРѕСЃРµРґРѕРј.
+					// Р•СЃР»Рё bvisit С‚Рѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РµСЃС‚СЊ РЅРѕ РѕРЅРё РІСЃРµ F-nodes. РРЅР°С‡Рµ С‚Р°Рј РѕР±РѕСЃРѕР±Р»РµРЅРЅРѕРµ СѓСЃР»РѕРІРёРµ Р”РёСЂРёС…Р»Рµ.
+					if ((icsos == 0) && (bvisit)) {
+
+						// Рђ РµСЃР»Рё РѕРЅ F СѓР·РµР» Р”РёСЂРёС…Р»Рµ Р±РµР· СЃРѕСЃРµРґРµР№, С‚Рѕ СЃСѓРјРјР° С‚РѕР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅСѓР»РµРІРѕР№ Рё СЌС‚Рѕ РІС‹Р·РѕРІРµС‚ РґРµР»РµРЅРёРµ РЅР° РЅРѕР»СЊ.
+						// РЈР·Р»С‹ Р”РёСЂРёС…Р»Рµ РјРѕРіР»Рё Р±С‹С‚СЊ Р±РµР· СЃРѕСЃРµРґРµР№ РЅР° РЅР°С‡Р°Р»СЊРЅС‹С… СѓСЂРѕРІРЅСЏС…, РѕРЅРё СЂР°СЃРїРѕР»Р°РіР°Р»РёСЃСЊ РІ РєРѕРЅС†Рµ СЃРїРёСЃРєР° Рё Р±С‹Р»Рё
+						// РїРѕРіР»РѕС‰РµРЅС‹ Р°РіР»РѕРјРµСЂР°С‚Р°РјРё РІРЅСѓС‚СЂРµРЅРЅРёС… СѓР·Р»РѕРІ Рё РІСЃС‘ Р±С‹Р»Рѕ РІ РїРѕСЂСЏРґРєРµ.
+						// Р§С‚РѕР±С‹ РїСЂРµРѕРґРѕР»РµС‚СЊ СЌС‚Рѕ Р·Р°С‚СЂСѓРґРЅРµРЅРёРµ РЅСѓР¶РµРЅ Р°Р»РіРѕСЂРёС‚Рј СЃ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·СЊСЋ.
+
+						// РќРµС‚ РЎ СЃРѕСЃРµРґРµР№, СЌС‚РѕС‚ СѓР·РµР» СЃС‚Р°РЅРµС‚ РЎ СѓР·Р»РѕРј.
+						bvacant_candidates[i_1] = true;
+					}
+					
 				}
 
 
 #ifdef _OPENMP
-				// Параллельное исполнение не более чем в 40 потоков
-				integer newCcount_arr[40];
-				integer the_number_of_neighbors_that_are_not_C_nodes_arr[40];
-				integer number_of_F_nodes_with_one_single_strong_C_neighbor_arr[40];
-				bool bweSholdbeContinue_arr[40];
+				// РџР°СЂР°Р»Р»РµР»СЊРЅРѕРµ РёСЃРїРѕР»РЅРµРЅРёРµ РЅРµ Р±РѕР»РµРµ С‡РµРј РІ 40 РїРѕС‚РѕРєРѕРІ
+				const unsigned int MAX_THREAD_LOC = 40;
+				integer newCcount_arr[MAX_THREAD_LOC];
+				integer the_number_of_neighbors_that_are_not_C_nodes_arr[MAX_THREAD_LOC];
+				integer number_of_F_nodes_with_one_single_strong_C_neighbor_arr[MAX_THREAD_LOC];
+				bool bweSholdbeContinue_arr[MAX_THREAD_LOC];
 
-				for (integer i_1 = 0; i_1 < 40; i_1++) {
+				for (integer i_1 = 0; i_1 < MAX_THREAD_LOC; i_1++) {
 					newCcount_arr[i_1] = 0;
 					the_number_of_neighbors_that_are_not_C_nodes_arr[i_1] = 0;
 					number_of_F_nodes_with_one_single_strong_C_neighbor_arr[i_1] = 0;
 					bweSholdbeContinue_arr[i_1] = false;
 				}
 
-				// Построение пролонгации для узлов которые составляют F-nodes.
-				// Каждый F-nodes окружён C-nodes.
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РїСЂРѕР»РѕРЅРіР°С†РёРё РґР»СЏ СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃС‚Р°РІР»СЏСЋС‚ F-nodes.
+				// РљР°Р¶РґС‹Р№ F-nodes РѕРєСЂСѓР¶С‘РЅ C-nodes.
 #pragma omp parallel for
 				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++)
 				{
-					if (this_is_F_node[i_1] == true) {
+					if (this_is_F_node[i_1]) {
 
-						integer tid = omp_get_thread_num();
+#ifdef _OPENMP 
+						int tid = omp_get_thread_num();
+#else
+						int tid = 0;
+#endif
 
-						// Найти соседей данного F-node которые C-node.
+						// РќР°Р№С‚Рё СЃРѕСЃРµРґРµР№ РґР°РЅРЅРѕРіРѕ F-node РєРѕС‚РѕСЂС‹Рµ C-node.
 						integer icsos = 0;
-						// старая версия до 10 января 2016.
+						// СЃС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ РґРѕ 10 СЏРЅРІР°СЂСЏ 2016.
 						//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-						// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
-						// 10 января 2016. на основе хеширования.
+						// Р‘С‹СЃС‚СЂС‹Р№ РІР°СЂРёР°РЅС‚ Р±РµР· РїРѕРёСЃРєР°, РїСЂРѕСЃС‚Рѕ РёРЅРґРµРєСЃРёСЂРѕРІР°РЅРёРµ РЅР° РѕСЃРЅРѕРІРµ "С…РµС€ С‚Р°Р±Р»РёС†С‹".
+						// 10 СЏРЅРІР°СЂСЏ 2016. РЅР° РѕСЃРЅРѕРІРµ С…РµС€РёСЂРѕРІР°РЅРёСЏ.
 						integer i_2 = row_startA[i_1];
 
 						bool bvisit = false;
@@ -6308,40 +7080,40 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 						for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
 							if (Amat.j[is0] != Amat.i[i_2]) {
 								bvisit = true;
-								if (this_is_C_node[Amat.j[is0]] == true) {
+								if (this_is_C_node[Amat.j[is0]]) {
 									icsos++;
 								}
 								else {
-									//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+									//the_number_of_neighbors_that_are_not_C_nodes++; // РїРѕРґСЃС‡РёС‚С‹РІР°РµРј РїСЂРѕР±Р»РµРјС‹ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё 
 									the_number_of_neighbors_that_are_not_C_nodes_arr[tid]++;
 								}
 							}
 						}
 						if (icsos == 1) {
-							//	number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным сильным С соседом.
+							//	number_of_F_nodes_with_one_single_strong_C_neighbor++; // РєРѕР»РёС‡РµСЃС‚РІРѕ F СѓР·Р»РѕРІ СЃ РѕРґРЅРёРј РµРґРёРЅСЃС‚РІРµРЅРЅС‹Рј СЃРёР»СЊРЅС‹Рј РЎ СЃРѕСЃРµРґРѕРј.
 							number_of_F_nodes_with_one_single_strong_C_neighbor_arr[tid]++;
 						}
-						// Если bvisit то внедиагональные элементы есть но они все F-nodes. Иначе там обособленное условие Дирихле.
+						// Р•СЃР»Рё bvisit С‚Рѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РµСЃС‚СЊ РЅРѕ РѕРЅРё РІСЃРµ F-nodes. РРЅР°С‡Рµ С‚Р°Рј РѕР±РѕСЃРѕР±Р»РµРЅРЅРѕРµ СѓСЃР»РѕРІРёРµ Р”РёСЂРёС…Р»Рµ.
 						if ((icsos == 0) && (bvisit)) {
 
-							// А если он F узел Дирихле без соседей, то сумма тоже может быть нулевой и это вызовет деление на ноль.
-							// Узлы Дирихле могли быть без соседей на начальных уровнях, они располагались в конце списка и были
-							// поглощены агломератами внутренних узлов и всё было в порядке.
-							// Чтобы преодолеть это затруднение нужен алгоритм с обратной связью.							
+							// Рђ РµСЃР»Рё РѕРЅ F СѓР·РµР» Р”РёСЂРёС…Р»Рµ Р±РµР· СЃРѕСЃРµРґРµР№, С‚Рѕ СЃСѓРјРјР° С‚РѕР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅСѓР»РµРІРѕР№ Рё СЌС‚Рѕ РІС‹Р·РѕРІРµС‚ РґРµР»РµРЅРёРµ РЅР° РЅРѕР»СЊ.
+							// РЈР·Р»С‹ Р”РёСЂРёС…Р»Рµ РјРѕРіР»Рё Р±С‹С‚СЊ Р±РµР· СЃРѕСЃРµРґРµР№ РЅР° РЅР°С‡Р°Р»СЊРЅС‹С… СѓСЂРѕРІРЅСЏС…, РѕРЅРё СЂР°СЃРїРѕР»Р°РіР°Р»РёСЃСЊ РІ РєРѕРЅС†Рµ СЃРїРёСЃРєР° Рё Р±С‹Р»Рё
+							// РїРѕРіР»РѕС‰РµРЅС‹ Р°РіР»РѕРјРµСЂР°С‚Р°РјРё РІРЅСѓС‚СЂРµРЅРЅРёС… СѓР·Р»РѕРІ Рё РІСЃС‘ Р±С‹Р»Рѕ РІ РїРѕСЂСЏРґРєРµ.
+							// Р§С‚РѕР±С‹ РїСЂРµРѕРґРѕР»РµС‚СЊ СЌС‚Рѕ Р·Р°С‚СЂСѓРґРЅРµРЅРёРµ РЅСѓР¶РµРЅ Р°Р»РіРѕСЂРёС‚Рј СЃ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·СЊСЋ.							
 
-							// Нет С соседей, этот узел станет С узлом.
+							// РќРµС‚ РЎ СЃРѕСЃРµРґРµР№, СЌС‚РѕС‚ СѓР·РµР» СЃС‚Р°РЅРµС‚ РЎ СѓР·Р»РѕРј.
 							this_is_F_node[i_1] = false;
 							this_is_C_node[i_1] = true;
-							// F-node стал C-node!!! Идея стандартной интерполяции 
-							// приводит к уменьшению разреженности оператора Галёркина.
+							// F-node СЃС‚Р°Р» C-node!!! РРґРµСЏ СЃС‚Р°РЅРґР°СЂС‚РЅРѕР№ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё 
+							// РїСЂРёРІРѕРґРёС‚ Рє СѓРјРµРЅСЊС€РµРЅРёСЋ СЂР°Р·СЂРµР¶РµРЅРЅРѕСЃС‚Рё РѕРїРµСЂР°С‚РѕСЂР° Р“Р°Р»С‘СЂРєРёРЅР°.
 							bweSholdbeContinue_arr[tid] = true;
 							newCcount_arr[tid]++;
 						}
 
-						// 1 января 2015 Один сосед это недостаточно.
-						// Поэтому в случае одного соседа делаем такой узел С узлом.
+						// 1 СЏРЅРІР°СЂСЏ 2015 РћРґРёРЅ СЃРѕСЃРµРґ СЌС‚Рѕ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ.
+						// РџРѕСЌС‚РѕРјСѓ РІ СЃР»СѓС‡Р°Рµ РѕРґРЅРѕРіРѕ СЃРѕСЃРµРґР° РґРµР»Р°РµРј С‚Р°РєРѕР№ СѓР·РµР» РЎ СѓР·Р»РѕРј.
 						if ((false) && (icsos == 1)) {
-							// bvisit и так true т.к. icsos==1.
+							// bvisit Рё С‚Р°Рє true С‚.Рє. icsos==1.
 							this_is_F_node[i_1] = false;
 							this_is_C_node[i_1] = true;
 							//bweSholdbeContinue = true;
@@ -6352,7 +7124,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 				}
 
-				for (integer i_1 = 0; i_1 < 40; i_1++) {
+				for (integer i_1 = 0; i_1 < MAX_THREAD_LOC; i_1++) {
 					newCcount += newCcount_arr[i_1];
 					the_number_of_neighbors_that_are_not_C_nodes += the_number_of_neighbors_that_are_not_C_nodes_arr[i_1];
 					number_of_F_nodes_with_one_single_strong_C_neighbor += number_of_F_nodes_with_one_single_strong_C_neighbor_arr[i_1];
@@ -6362,26 +7134,26 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 #else
 
-				// Параллельное исполнение не более чем в 40 потоков
+				// РџР°СЂР°Р»Р»РµР»СЊРЅРѕРµ РёСЃРїРѕР»РЅРµРЅРёРµ РЅРµ Р±РѕР»РµРµ С‡РµРј РІ MAX_THREAD_LOC РїРѕС‚РѕРєРѕРІ
 				integer newCcount_arr = 0;
 				integer the_number_of_neighbors_that_are_not_C_nodes_arr = 0;
 				integer number_of_F_nodes_with_one_single_strong_C_neighbor_arr = 0;
 				bool bweSholdbeContinue_arr = false;
 
 
-				// Построение пролонгации для узлов которые составляют F-nodes.
-				// Каждый F-nodes окружён C-nodes.
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РїСЂРѕР»РѕРЅРіР°С†РёРё РґР»СЏ СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃС‚Р°РІР»СЏСЋС‚ F-nodes.
+				// РљР°Р¶РґС‹Р№ F-nodes РѕРєСЂСѓР¶С‘РЅ C-nodes.
 				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++)
 				{
-					if (this_is_F_node[i_1] == true) {
+					if (this_is_F_node[i_1]) {
 
 
-						// Найти соседей данного F-node которые C-node.
+						// РќР°Р№С‚Рё СЃРѕСЃРµРґРµР№ РґР°РЅРЅРѕРіРѕ F-node РєРѕС‚РѕСЂС‹Рµ C-node.
 						integer icsos = 0;
-						// старая версия до 10 января 2016.
+						// СЃС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ РґРѕ 10 СЏРЅРІР°СЂСЏ 2016.
 						//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-						// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
-						// 10 января 2016. на основе хеширования.
+						// Р‘С‹СЃС‚СЂС‹Р№ РІР°СЂРёР°РЅС‚ Р±РµР· РїРѕРёСЃРєР°, РїСЂРѕСЃС‚Рѕ РёРЅРґРµРєСЃРёСЂРѕРІР°РЅРёРµ РЅР° РѕСЃРЅРѕРІРµ "С…РµС€ С‚Р°Р±Р»РёС†С‹".
+						// 10 СЏРЅРІР°СЂСЏ 2016. РЅР° РѕСЃРЅРѕРІРµ С…РµС€РёСЂРѕРІР°РЅРёСЏ.
 						integer i_2 = row_startA[i_1];
 
 						bool bvisit = false;
@@ -6390,40 +7162,40 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 						for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
 							if (Amat.j[is0] != Amat.i[i_2]) {
 								bvisit = true;
-								if (this_is_C_node[Amat.j[is0]] == true) {
+								if (this_is_C_node[Amat.j[is0]]) {
 									icsos++;
 								}
 								else {
-									//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+									//the_number_of_neighbors_that_are_not_C_nodes++; // РїРѕРґСЃС‡РёС‚С‹РІР°РµРј РїСЂРѕР±Р»РµРјС‹ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё 
 									the_number_of_neighbors_that_are_not_C_nodes_arr++;
 								}
 							}
 						}
 						if (icsos == 1) {
-							//	number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным сильным С соседом.
+							//	number_of_F_nodes_with_one_single_strong_C_neighbor++; // РєРѕР»РёС‡РµСЃС‚РІРѕ F СѓР·Р»РѕРІ СЃ РѕРґРЅРёРј РµРґРёРЅСЃС‚РІРµРЅРЅС‹Рј СЃРёР»СЊРЅС‹Рј РЎ СЃРѕСЃРµРґРѕРј.
 							number_of_F_nodes_with_one_single_strong_C_neighbor_arr++;
 						}
-						// Если bvisit то внедиагональные элементы есть но они все F-nodes. Иначе там обособленное условие Дирихле.
+						// Р•СЃР»Рё bvisit С‚Рѕ РІРЅРµРґРёР°РіРѕРЅР°Р»СЊРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ РµСЃС‚СЊ РЅРѕ РѕРЅРё РІСЃРµ F-nodes. РРЅР°С‡Рµ С‚Р°Рј РѕР±РѕСЃРѕР±Р»РµРЅРЅРѕРµ СѓСЃР»РѕРІРёРµ Р”РёСЂРёС…Р»Рµ.
 						if ((icsos == 0) && (bvisit)) {
 
-							// А если он F узел Дирихле без соседей, то сумма тоже может быть нулевой и это вызовет деление на ноль.
-							// Узлы Дирихле могли быть без соседей на начальных уровнях, они располагались в конце списка и были
-							// поглощены агломератами внутренних узлов и всё было в порядке.
-							// Чтобы преодолеть это затруднение нужен алгоритм с обратной связью.							
+							// Рђ РµСЃР»Рё РѕРЅ F СѓР·РµР» Р”РёСЂРёС…Р»Рµ Р±РµР· СЃРѕСЃРµРґРµР№, С‚Рѕ СЃСѓРјРјР° С‚РѕР¶Рµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅСѓР»РµРІРѕР№ Рё СЌС‚Рѕ РІС‹Р·РѕРІРµС‚ РґРµР»РµРЅРёРµ РЅР° РЅРѕР»СЊ.
+							// РЈР·Р»С‹ Р”РёСЂРёС…Р»Рµ РјРѕРіР»Рё Р±С‹С‚СЊ Р±РµР· СЃРѕСЃРµРґРµР№ РЅР° РЅР°С‡Р°Р»СЊРЅС‹С… СѓСЂРѕРІРЅСЏС…, РѕРЅРё СЂР°СЃРїРѕР»Р°РіР°Р»РёСЃСЊ РІ РєРѕРЅС†Рµ СЃРїРёСЃРєР° Рё Р±С‹Р»Рё
+							// РїРѕРіР»РѕС‰РµРЅС‹ Р°РіР»РѕРјРµСЂР°С‚Р°РјРё РІРЅСѓС‚СЂРµРЅРЅРёС… СѓР·Р»РѕРІ Рё РІСЃС‘ Р±С‹Р»Рѕ РІ РїРѕСЂСЏРґРєРµ.
+							// Р§С‚РѕР±С‹ РїСЂРµРѕРґРѕР»РµС‚СЊ СЌС‚Рѕ Р·Р°С‚СЂСѓРґРЅРµРЅРёРµ РЅСѓР¶РµРЅ Р°Р»РіРѕСЂРёС‚Рј СЃ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·СЊСЋ.							
 
-							// Нет С соседей, этот узел станет С узлом.
+							// РќРµС‚ РЎ СЃРѕСЃРµРґРµР№, СЌС‚РѕС‚ СѓР·РµР» СЃС‚Р°РЅРµС‚ РЎ СѓР·Р»РѕРј.
 							this_is_F_node[i_1] = false;
 							this_is_C_node[i_1] = true;
-							// F node стал C_node!!! Идея стандартной интерполяции 
-							// приводит к уменьшению разреженности оператора Галёркина.
+							// F node СЃС‚Р°Р» C_node!!! РРґРµСЏ СЃС‚Р°РЅРґР°СЂС‚РЅРѕР№ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё 
+							// РїСЂРёРІРѕРґРёС‚ Рє СѓРјРµРЅСЊС€РµРЅРёСЋ СЂР°Р·СЂРµР¶РµРЅРЅРѕСЃС‚Рё РѕРїРµСЂР°С‚РѕСЂР° Р“Р°Р»С‘СЂРєРёРЅР°.
 							bweSholdbeContinue_arr = true;
 							newCcount_arr++;
 						}
 
-						// 1 января 2015 Один сосед это недостаточно.
-						// Поэтому в случае одного соседа делаем такой узел С узлом.
+						// 1 СЏРЅРІР°СЂСЏ 2015 РћРґРёРЅ СЃРѕСЃРµРґ СЌС‚Рѕ РЅРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ.
+						// РџРѕСЌС‚РѕРјСѓ РІ СЃР»СѓС‡Р°Рµ РѕРґРЅРѕРіРѕ СЃРѕСЃРµРґР° РґРµР»Р°РµРј С‚Р°РєРѕР№ СѓР·РµР» РЎ СѓР·Р»РѕРј.
 						if ((false) && (icsos == 1)) {
-							// bvisit и так true т.к. icsos==1.
+							// bvisit Рё С‚Р°Рє true С‚.Рє. icsos==1.
 							this_is_F_node[i_1] = false;
 							this_is_C_node[i_1] = true;
 							//bweSholdbeContinue = true;
@@ -6450,9 +7222,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 					std::cout << "newCcount=" << newCcount <<", n_a=" << n_a[ilevel - 1] <<" "<< 100.0 * newCcount / n_a[ilevel - 1] << "\n";
 
 				}
-				if (bvacant_candidates != nullptr) {
-					delete[] bvacant_candidates;
-				}
+				
+				delete[] bvacant_candidates;
+				
 
 				if (bprint_mesage_diagnostic) {
 					if (bweSholdbeContinue) {
@@ -6465,42 +7237,43 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 			}
 
-			// TODO ***
+			// ***
 
-			// 01.01.2017 Алгоритм улучшения качества C/F разбиения. Проход 2. RS2
-			// Цикл по всем F переменным, полученным после первого прохода.
-			// Пусть Fi текущая F переменная и у неё множество соседей не пусто.
-			// Сканируем строку элементов где Fi есть диагональный элемент.
-			// Amat. Определяем порог - threshold для каждой строки.
-			// В. Заносим всех сильных С соседей в специальный линейный список.
-			// C. Если мы встретили сильного F соседа  (Fj), так что Fi и Fj сильно связаны,
-			// то ищем всех сильных С соседей узла Fj и формируем из них линейный список.
-			// С помощью алгоритма слияния за линейное время сравниваем два предварительно отсортированных линейных
-			// списка на предмет общих С узлов.
-			// D. Если общий С узел есть то ничего не меняем.
-			// E. Если общего сильного С узла не обнаружено то один из узлов Fi или Fj становится С узлом.
-			// Среди Fi и Fj тот становится С узлом у которого больше сильных F соседей. Если С узлом стал Fj 
-			// то линейный список С соседей узла Fi обновляется. Если С узлом стал узел Fi то мы заканчиваем обработку Fi 
-			// возвращая всех помеченных Fj снова в F тип.
+			// 01.01.2017 РђР»РіРѕСЂРёС‚Рј СѓР»СѓС‡С€РµРЅРёСЏ РєР°С‡РµСЃС‚РІР° C/F СЂР°Р·Р±РёРµРЅРёСЏ. РџСЂРѕС…РѕРґ 2. RS2
+			// Р¦РёРєР» РїРѕ РІСЃРµРј F РїРµСЂРµРјРµРЅРЅС‹Рј, РїРѕР»СѓС‡РµРЅРЅС‹Рј РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ РїСЂРѕС…РѕРґР°.
+			// РџСѓСЃС‚СЊ Fi С‚РµРєСѓС‰Р°СЏ F РїРµСЂРµРјРµРЅРЅР°СЏ Рё Сѓ РЅРµС‘ РјРЅРѕР¶РµСЃС‚РІРѕ СЃРѕСЃРµРґРµР№ РЅРµ РїСѓСЃС‚Рѕ.
+			// РЎРєР°РЅРёСЂСѓРµРј СЃС‚СЂРѕРєСѓ СЌР»РµРјРµРЅС‚РѕРІ РіРґРµ Fi РµСЃС‚СЊ РґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
+			// Amat. РћРїСЂРµРґРµР»СЏРµРј РїРѕСЂРѕРі - threshold РґР»СЏ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё.
+			// Р’. Р—Р°РЅРѕСЃРёРј РІСЃРµС… СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№ РІ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
+			// C. Р•СЃР»Рё РјС‹ РІСЃС‚СЂРµС‚РёР»Рё СЃРёР»СЊРЅРѕРіРѕ F СЃРѕСЃРµРґР°  (Fj), С‚Р°Рє С‡С‚Рѕ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹,
+			// С‚Рѕ РёС‰РµРј РІСЃРµС… СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№ СѓР·Р»Р° Fj Рё С„РѕСЂРјРёСЂСѓРµРј РёР· РЅРёС… Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
+			// РЎ РїРѕРјРѕС‰СЊСЋ Р°Р»РіРѕСЂРёС‚РјР° СЃР»РёСЏРЅРёСЏ Р·Р° Р»РёРЅРµР№РЅРѕРµ РІСЂРµРјСЏ СЃСЂР°РІРЅРёРІР°РµРј РґРІР° РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹С… Р»РёРЅРµР№РЅС‹С…
+			// СЃРїРёСЃРєР° РЅР° РїСЂРµРґРјРµС‚ РѕР±С‰РёС… РЎ СѓР·Р»РѕРІ.
+			// D. Р•СЃР»Рё РѕР±С‰РёР№ РЎ СѓР·РµР» РµСЃС‚СЊ С‚Рѕ РЅРёС‡РµРіРѕ РЅРµ РјРµРЅСЏРµРј.
+			// E. Р•СЃР»Рё РѕР±С‰РµРіРѕ СЃРёР»СЊРЅРѕРіРѕ РЎ СѓР·Р»Р° РЅРµ РѕР±РЅР°СЂСѓР¶РµРЅРѕ С‚Рѕ РѕРґРёРЅ РёР· СѓР·Р»РѕРІ Fi РёР»Рё Fj СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ СѓР·Р»РѕРј.
+			// РЎСЂРµРґРё Fi Рё Fj С‚РѕС‚ СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ СѓР·Р»РѕРј Сѓ РєРѕС‚РѕСЂРѕРіРѕ Р±РѕР»СЊС€Рµ СЃРёР»СЊРЅС‹С… F СЃРѕСЃРµРґРµР№. Р•СЃР»Рё РЎ СѓР·Р»РѕРј СЃС‚Р°Р» Fj 
+			// С‚Рѕ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє РЎ СЃРѕСЃРµРґРµР№ СѓР·Р»Р° Fi РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ. Р•СЃР»Рё РЎ СѓР·Р»РѕРј СЃС‚Р°Р» СѓР·РµР» Fi С‚Рѕ РјС‹ Р·Р°РєР°РЅС‡РёРІР°РµРј РѕР±СЂР°Р±РѕС‚РєСѓ Fi 
+			// РІРѕР·РІСЂР°С‰Р°СЏ РІСЃРµС… РїРѕРјРµС‡РµРЅРЅС‹С… Fj СЃРЅРѕРІР° РІ F С‚РёРї.
 			//  30.12.2016
-			// 11.06.2017 Здесь для сортировки используется библиотечный std::sort на массиве.
+			// 11.06.2017 Р—РґРµСЃСЊ РґР»СЏ СЃРѕСЂС‚РёСЂРѕРІРєРё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ Р±РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ std::sort РЅР° РјР°СЃСЃРёРІРµ.
 			if (1) {
-				if ((my_amg_manager.icoarseningtype == 1) || ((my_amg_manager.icoarseningtype == 3))) { // RS2 Проход 2.
+				if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION) ||
+					((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION))) { // RS2 РџСЂРѕС…РѕРґ 2.
 
 					if (bprint_mesage_diagnostic) {
 						std::cout << "   ***   CAMG SELECTOR RS2 " << ilevel << "  ***\n"; 
 					}
 
 
-					for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_F_node[i_1] == true) {
-						// i_1 это F переменная Fi.
-						//Amat.Определяем порог - threshold для каждой строки.
+					for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_F_node[i_1]) {
+						// i_1 СЌС‚Рѕ F РїРµСЂРµРјРµРЅРЅР°СЏ Fi.
+						//Amat.РћРїСЂРµРґРµР»СЏРµРј РїРѕСЂРѕРі - threshold РґР»СЏ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё.
 						doublerealT thresholdRS = -1.0;
 						integer i_2 = row_startA[i_1];
 
-						// Очистка хеш-таблицы.
+						// РћС‡РёСЃС‚РєР° С…РµС€-С‚Р°Р±Р»РёС†С‹.
 						clear_hash_table_Gus_struct01();
-						// занесение данных из линейного списка в хеш-таблицу для дерева с корнем в Amat.i[i_2].
+						// Р·Р°РЅРµСЃРµРЅРёРµ РґР°РЅРЅС‹С… РёР· Р»РёРЅРµР№РЅРѕРіРѕ СЃРїРёСЃРєР° РІ С…РµС€-С‚Р°Р±Р»РёС†Сѓ РґР»СЏ РґРµСЂРµРІР° СЃ РєРѕСЂРЅРµРј РІ Amat.i[i_2].
 						//integer imarker75_scan = 0;
 						//formirate_F_SiTranspose_hash_table_Gus_struct02(hash_StrongTranspose_collection1[Amat.i[i_2]], imarker75_scan);
 
@@ -6515,86 +7288,91 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 							}
 						}
 						else {
-							// Новейшая ветвь кода: 11.06.2017.
+							// РќРѕРІРµР№С€Р°СЏ РІРµС‚РІСЊ РєРѕРґР°: 11.06.2017.
 							thresholdRS = threshold_quick_only_negative[Amat.i[i_2]];
 						}
 						if (thresholdRS > 0.0) {
-							// Множество соседей не пусто а порог равен thresholdRS.
+							// РњРЅРѕР¶РµСЃС‚РІРѕ СЃРѕСЃРµРґРµР№ РЅРµ РїСѓСЃС‚Рѕ Р° РїРѕСЂРѕРі СЂР°РІРµРЅ thresholdRS.
 							hashlist_i* ivacant_F2C = nullptr;
-							//  В. Заносим всех сильных С соседей в специальный линейный список.
+							//  Р’. Р—Р°РЅРѕСЃРёРј РІСЃРµС… СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№ РІ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 							hashlist_i* ibuffer_strongC = nullptr;
 							integer ibuffer_strongC_marker = -1;
 							integer inumber_strongF_count_Fi = 0;
 							hashlist_i* ibuffer_strongF = nullptr;
 							integer ibuffer_strongF_marker = -1;
 							for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
-								if (Amat.j[is0] != Amat.i[i_2]) {
-									if (Amat.aij[is0] < 0.0) {
-										if (fabs(Amat.aij[is0]) > theta(ilevel)* thresholdRS) {
-											if (this_is_C_node[Amat.j[is0]] == true) {
-												ibuffer_strongC_marker++;
-												insertion_list_i(ibuffer_strongC, Amat.j[is0]);
-												insert_hash_table_Gus_struct01(Amat.j[is0]);// 11.08.2018
-											}
-											if (this_is_F_node[Amat.j[is0]] == true) {
+								bool cond_diagonal = (Amat.j[is0] == Amat.i[i_2]);
+								if (cond_diagonal) continue;
+								bool cond_negative = (Amat.aij[is0] < 0.0);
+								if (!cond_negative) continue;
+								bool cond_strong_connection = (fabs(Amat.aij[is0]) > theta(ilevel) * thresholdRS);
+								if (!cond_strong_connection) continue;
 
-												//if (1) 19.01.2017
-												if (0) {// if (0) 11.08.2018
-													// Добавок 19.01.2017
+								
+								
+								
+								if (this_is_C_node[Amat.j[is0]]) {
+									ibuffer_strongC_marker++;
+									insertion_list_i(ibuffer_strongC, Amat.j[is0]);
+									insert_hash_table_Gus_struct01(Amat.j[is0]);// 11.08.2018
+								}
+								if (this_is_F_node[Amat.j[is0]]) {
 
-													// Внимание hash_StrongTranspose_collection должна быть инициализирована сначала
-													// в общем настроена для использования, а этого по видимому не сделано т.к. используется
-													//hash_StrongTranspose_collection1. Кстати операции isfound для hash_StrongTranspose_collection1
-													// нет т.к. она очень медленная т.к. он просто линейный список.
+									//if (1) 19.01.2017
+									if (0) {// if (0) 11.08.2018
+										// Р”РѕР±Р°РІРѕРє 19.01.2017
+										
+										// Р’РЅРёРјР°РЅРёРµ hash_StrongTranspose_collection РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅР° СЃРЅР°С‡Р°Р»Р°
+										// РІ РѕР±С‰РµРј РЅР°СЃС‚СЂРѕРµРЅР° РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ, Р° СЌС‚РѕРіРѕ РїРѕ РІРёРґРёРјРѕРјСѓ РЅРµ СЃРґРµР»Р°РЅРѕ С‚.Рє. РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ
+										//hash_StrongTranspose_collection1. РљСЃС‚Р°С‚Рё РѕРїРµСЂР°С†РёРё isfound РґР»СЏ hash_StrongTranspose_collection1
+										// РЅРµС‚ С‚.Рє. РѕРЅР° РѕС‡РµРЅСЊ РјРµРґР»РµРЅРЅР°СЏ С‚.Рє. РѕРЅ РїСЂРѕСЃС‚Рѕ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 
-													if (hash_StrongTranspose_collection != nullptr) {
-														data_BalTreeST dat_key;
-														dat_key.i = Amat.j[is0];
-														if (isfound(hash_StrongTranspose_collection[Amat.i[is0]], dat_key)) {
-															// конец добавка 19.01.2017
-
-															// Сильный Fj сосед найден.
-															// Элементы Fi и Fj сильно связаны.
-															inumber_strongF_count_Fi++;
-															ibuffer_strongF_marker++;
-															insertion_list_i(ibuffer_strongF, Amat.j[is0]);
-														}
-													}
-													else {
-														// Сильный Fj сосед найден.
-														// Элементы Fi и Fj сильно связаны.
-														inumber_strongF_count_Fi++;
-														ibuffer_strongF_marker++;
-														insertion_list_i(ibuffer_strongF, Amat.j[is0]);
-													}
-
-												}
-												else {
-													// Сильный Fj сосед найден.
-													// Элементы Fi и Fj сильно связаны.
-													inumber_strongF_count_Fi++;
-													ibuffer_strongF_marker++;
-
-													insertion_list_i(ibuffer_strongF, Amat.j[is0]);
-												}
+										if (hash_StrongTranspose_collection != nullptr) {
+											data_BalTreeST dat_key;
+											dat_key.i = Amat.j[is0];
+											if (isfound(hash_StrongTranspose_collection[Amat.i[is0]], dat_key)) {
+												// РєРѕРЅРµС† РґРѕР±Р°РІРєР° 19.01.2017
+												
+												// РЎРёР»СЊРЅС‹Р№ Fj СЃРѕСЃРµРґ РЅР°Р№РґРµРЅ.
+												// Р­Р»РµРјРµРЅС‚С‹ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹.
+												inumber_strongF_count_Fi++;
+												ibuffer_strongF_marker++;
+												insertion_list_i(ibuffer_strongF, Amat.j[is0]);
 											}
 										}
+										else {
+											// РЎРёР»СЊРЅС‹Р№ Fj СЃРѕСЃРµРґ РЅР°Р№РґРµРЅ.
+											// Р­Р»РµРјРµРЅС‚С‹ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹.
+											inumber_strongF_count_Fi++;
+											ibuffer_strongF_marker++;
+											insertion_list_i(ibuffer_strongF, Amat.j[is0]);
+										}
+
 									}
-								}
+									else {
+										// РЎРёР»СЊРЅС‹Р№ Fj СЃРѕСЃРµРґ РЅР°Р№РґРµРЅ.
+										// Р­Р»РµРјРµРЅС‚С‹ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹.
+										inumber_strongF_count_Fi++;
+										ibuffer_strongF_marker++;
+
+										insertion_list_i(ibuffer_strongF, Amat.j[is0]);
+									}
+								}																	
+								
 							}
-							// Очистка хеш-таблицы.
+							// РћС‡РёСЃС‚РєР° С…РµС€-С‚Р°Р±Р»РёС†С‹.
 							clear_hash_table_Gus_struct01();
-							// Сортировка буффера ibuffer_strongC по возрастанию.
-							// рекомендуется использовать iusage_old_version = 0
-							// при котором активируется использование быстродействующей хеш-таблицы.
-							// Достигается ускорение полного цикла решения задачи при включённом RS2 coarsening
-							// на 7.5% по сравнению с двоичным поиском на массиве. 
-							// Полностью отпадает необходимость в использовании алгоритма сортировки.
+							// РЎРѕСЂС‚РёСЂРѕРІРєР° Р±СѓС„С„РµСЂР° ibuffer_strongC РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ.
+							// СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ iusage_old_version = 0
+							// РїСЂРё РєРѕС‚РѕСЂРѕРј Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІСѓСЋС‰РµР№ С…РµС€-С‚Р°Р±Р»РёС†С‹.
+							// Р”РѕСЃС‚РёРіР°РµС‚СЃСЏ СѓСЃРєРѕСЂРµРЅРёРµ РїРѕР»РЅРѕРіРѕ С†РёРєР»Р° СЂРµС€РµРЅРёСЏ Р·Р°РґР°С‡Рё РїСЂРё РІРєР»СЋС‡С‘РЅРЅРѕРј RS2 coarsening
+							// РЅР° 7.5% РїРѕ СЃСЂР°РІРЅРµРЅРёСЋ СЃ РґРІРѕРёС‡РЅС‹Рј РїРѕРёСЃРєРѕРј РЅР° РјР°СЃСЃРёРІРµ. 
+							// РџРѕР»РЅРѕСЃС‚СЊСЋ РѕС‚РїР°РґР°РµС‚ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РІ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРё Р°Р»РіРѕСЂРёС‚РјР° СЃРѕСЂС‚РёСЂРѕРІРєРё.
 							// 11.06.2017.
-							//integer iusage_old_version = 0; // 1 старая рабочая версия. // 0 новая версия на основе хеш таблицы.
+							//integer iusage_old_version = 0; // 1 СЃС‚Р°СЂР°СЏ СЂР°Р±РѕС‡Р°СЏ РІРµСЂСЃРёСЏ. // 0 РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ РЅР° РѕСЃРЅРѕРІРµ С…РµС€ С‚Р°Р±Р»РёС†С‹.
 							
 							
-							// Вместо сортировки и двоичного поиска используем хеш-таблицу.
+							// Р’РјРµСЃС‚Рѕ СЃРѕСЂС‚РёСЂРѕРІРєРё Рё РґРІРѕРёС‡РЅРѕРіРѕ РїРѕРёСЃРєР° РёСЃРїРѕР»СЊР·СѓРµРј С…РµС€-С‚Р°Р±Р»РёС†Сѓ.
 							clear_hash_table_Gus_struct01();
 							hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
 							while (ibuffer_strongC_scan != nullptr) {
@@ -6605,12 +7383,12 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 							
 
 							
-							// Все сильные F-соседи занесены в буфер ibuffer_strongF. 
+							// Р’СЃРµ СЃРёР»СЊРЅС‹Рµ F-СЃРѕСЃРµРґРё Р·Р°РЅРµСЃРµРЅС‹ РІ Р±СѓС„РµСЂ ibuffer_strongF. 
 							hashlist_i* ibuffer_strongF_current = ibuffer_strongF;
 							for (integer i_3 = 0; i_3 <= ibuffer_strongF_marker; i_3++) {
 								if (ibuffer_strongF_current != nullptr) {
-									// Сканируем всех сильных F соседей последовательно.
-									//1. Определяем threshold для Fj.
+									// РЎРєР°РЅРёСЂСѓРµРј РІСЃРµС… СЃРёР»СЊРЅС‹С… F СЃРѕСЃРµРґРµР№ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ.
+									//1. РћРїСЂРµРґРµР»СЏРµРј threshold РґР»СЏ Fj.
 									doublerealT thresholdRS1 = -1.0;
 									integer i_4 = row_startA[ibuffer_strongF_current->item];
 									integer iend_merker_position1 = row_startA[Amat.i[i_4] + 1] - 1;
@@ -6624,11 +7402,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 										}
 									}
 									else {
-										// Новейшая ветвь кода: 11.06.2017.
+										// РќРѕРІРµР№С€Р°СЏ РІРµС‚РІСЊ РєРѕРґР°: 11.06.2017.
 										thresholdRS1 = threshold_quick_only_negative[Amat.i[i_4]];
 									}
 									integer inumber_strongF_count_Fj = 0;
-									// искомый порог thresholdRS1.
+									// РёСЃРєРѕРјС‹Р№ РїРѕСЂРѕРі thresholdRS1.
 
 									hashlist_i* ibuffer_strongCFj = nullptr;
 									integer ibuffer_strongCFj_marker = -1;
@@ -6636,43 +7414,43 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 										if (Amat.j[is01] != Amat.i[i_4]) {
 											if (Amat.aij[is01] < 0.0) {
 												if (fabs(Amat.aij[is01]) > theta(ilevel)* thresholdRS1) {
-													if (this_is_C_node[Amat.j[is01]] == true) {
+													if (this_is_C_node[Amat.j[is01]]) {
 														ibuffer_strongCFj_marker++;
 														insertion_list_i(ibuffer_strongCFj, Amat.j[is01]);
 													}
-													if (this_is_F_node[Amat.j[is01]] == true) {
+													if (this_is_F_node[Amat.j[is01]]) {
 														inumber_strongF_count_Fj++;
 													}
 												}
 											}
 										}
 									}
-									// В ibuffer_strongCFj список сильных С соседей.
+									// Р’ ibuffer_strongCFj СЃРїРёСЃРѕРє СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№.
 
-									// Есть ли общие С узлы за линейное время.
-									// Создаём на основе списка ibuffer_strongC
-									// целочисленный массив.
-									// Сортируем его. Делаем  ibuffer_strongCFj_marker 
-									// двоичных поисков в этом отсортированном массиве 
-									// до тех пор пока не встретится успешный поиск.
+									// Р•СЃС‚СЊ Р»Рё РѕР±С‰РёРµ РЎ СѓР·Р»С‹ Р·Р° Р»РёРЅРµР№РЅРѕРµ РІСЂРµРјСЏ.
+									// РЎРѕР·РґР°С‘Рј РЅР° РѕСЃРЅРѕРІРµ СЃРїРёСЃРєР° ibuffer_strongC
+									// С†РµР»РѕС‡РёСЃР»РµРЅРЅС‹Р№ РјР°СЃСЃРёРІ.
+									// РЎРѕСЂС‚РёСЂСѓРµРј РµРіРѕ. Р”РµР»Р°РµРј  ibuffer_strongCFj_marker 
+									// РґРІРѕРёС‡РЅС‹С… РїРѕРёСЃРєРѕРІ РІ СЌС‚РѕРј РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРј РјР°СЃСЃРёРІРµ 
+									// РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµ РІСЃС‚СЂРµС‚РёС‚СЃСЏ СѓСЃРїРµС€РЅС‹Р№ РїРѕРёСЃРє.
 									bool bfound_32 = false;
 									hashlist_i* ibuffer_strongCFj_scan = ibuffer_strongCFj;
 									
-									// Версия на основе хеш-таблицы.
+									// Р’РµСЂСЃРёСЏ РЅР° РѕСЃРЅРѕРІРµ С…РµС€-С‚Р°Р±Р»РёС†С‹.
 									while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
-										// Совпадение найдено мы ничего не делаем.
+										// РЎРѕРІРїР°РґРµРЅРёРµ РЅР°Р№РґРµРЅРѕ РјС‹ РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј.
 										bfound_32 = isfound_hash_table_Gus_struct01(ibuffer_strongCFj_scan->item);
 										ibuffer_strongCFj_scan = ibuffer_strongCFj_scan->next;
 									}
 									
 									ibuffer_strongCFj_scan = nullptr;
 									if (bfound_32 == false) {
-										// Один из них станет С узлом.
+										// РћРґРёРЅ РёР· РЅРёС… СЃС‚Р°РЅРµС‚ РЎ СѓР·Р»РѕРј.
 										if ((ibuffer_strongF_current->item > i_1) && (inumber_strongF_count_Fj >= inumber_strongF_count_Fi)) {
-											// Если Fj находится в ещё непросмотренной части списка F узлов и
-											// у него по сравнению с F узлом Fi больше сильных F связей.								
+											// Р•СЃР»Рё Fj РЅР°С…РѕРґРёС‚СЃСЏ РІ РµС‰С‘ РЅРµРїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№ С‡Р°СЃС‚Рё СЃРїРёСЃРєР° F СѓР·Р»РѕРІ Рё
+											// Сѓ РЅРµРіРѕ РїРѕ СЃСЂР°РІРЅРµРЅРёСЋ СЃ F СѓР·Р»РѕРј Fi Р±РѕР»СЊС€Рµ СЃРёР»СЊРЅС‹С… F СЃРІСЏР·РµР№.								
 
-											// Fj становится С.
+											// Fj СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ.
 											insertion_list_i(ivacant_F2C, ibuffer_strongF_current->item);
 											this_is_C_node[ibuffer_strongF_current->item] = true;
 											this_is_F_node[ibuffer_strongF_current->item] = false;
@@ -6680,23 +7458,23 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 											inumber_strongF_count_Fi--;
 											insertion_list_i(ibuffer_strongC, ibuffer_strongF_current->item);
 											
-											hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
+											hashlist_i* ibuffer_strongC_scan_2 = ibuffer_strongC;
 
-											// Очищаем хеш-таблицу и заполняем её по новой.
+											// РћС‡РёС‰Р°РµРј С…РµС€-С‚Р°Р±Р»РёС†Сѓ Рё Р·Р°РїРѕР»РЅСЏРµРј РµС‘ РїРѕ РЅРѕРІРѕР№.
 											clear_hash_table_Gus_struct01();
-											while (ibuffer_strongC_scan != nullptr) {
-												insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
-												ibuffer_strongC_scan = ibuffer_strongC_scan->next;
+											while (ibuffer_strongC_scan_2 != nullptr) {
+												insert_hash_table_Gus_struct01(ibuffer_strongC_scan_2->item);
+												ibuffer_strongC_scan_2 = ibuffer_strongC_scan_2->next;
 											}
 
-											ibuffer_strongC_scan = nullptr;
+											ibuffer_strongC_scan_2 = nullptr;
 											
 										}
 										else {
-											// Fi становится С.
+											// Fi СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ.
 											this_is_C_node[i_1] = true;
 											this_is_F_node[i_1] = false;
-											// Возвращаем все Fj с С на F.
+											// Р’РѕР·РІСЂР°С‰Р°РµРј РІСЃРµ Fj СЃ РЎ РЅР° F.
 											hashlist_i* ivacant_F2C_marker = ivacant_F2C;
 											while (ivacant_F2C_marker != nullptr) {
 												this_is_F_node[ivacant_F2C_marker->item] = true;
@@ -6709,32 +7487,32 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 												ivacant_F2C = nullptr;
 											}
 											ivacant_F2C = nullptr;
-											// Очищаем ОЗУ.
+											// РћС‡РёС‰Р°РµРј РћР—РЈ.
 											if (ibuffer_strongCFj != nullptr) {
 												clear_hash_list_i(ibuffer_strongCFj);
 												ibuffer_strongCFj = nullptr;
 											}
 											ibuffer_strongCFj = nullptr;
-											// Досрочно прерываем текущее сканирование 
-											// списка сильных F узлов.
+											// Р”РѕСЃСЂРѕС‡РЅРѕ РїСЂРµСЂС‹РІР°РµРј С‚РµРєСѓС‰РµРµ СЃРєР°РЅРёСЂРѕРІР°РЅРёРµ 
+											// СЃРїРёСЃРєР° СЃРёР»СЊРЅС‹С… F СѓР·Р»РѕРІ.
 											break;
 										}
 
 									}
 
 
-									// Очищаем ОЗУ.
+									// РћС‡РёС‰Р°РµРј РћР—РЈ.
 									if (ibuffer_strongCFj != nullptr) {
 										clear_hash_list_i(ibuffer_strongCFj);
 										ibuffer_strongCFj = nullptr;
 									}
 									ibuffer_strongCFj = nullptr;
-									// Переход к следующему кандидату.
+									// РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ РєР°РЅРґРёРґР°С‚Сѓ.
 									ibuffer_strongF_current = ibuffer_strongF_current->next;
 								}
 							}
 
-							// Освобождение ОЗУ.
+							// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РћР—РЈ.
 							if (ibuffer_strongC != nullptr) {
 								clear_hash_list_i(ibuffer_strongC);
 								ibuffer_strongC = nullptr;
@@ -6753,39 +7531,40 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 						}
 					}
-				} // Алгоритм улучшения качества C/F разбиения. Проход 2.
+				} // РђР»РіРѕСЂРёС‚Рј СѓР»СѓС‡С€РµРЅРёСЏ РєР°С‡РµСЃС‚РІР° C/F СЂР°Р·Р±РёРµРЅРёСЏ. РџСЂРѕС…РѕРґ 2.
 			}
 			else {
-				// мертвая экспериментальная ветвь. Можно удалить.
+				// РјРµСЂС‚РІР°СЏ СЌРєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅР°СЏ РІРµС‚РІСЊ. РњРѕР¶РЅРѕ СѓРґР°Р»РёС‚СЊ.
 
-				// 01.01.2017 Алгоритм улучшения качества C/F разбиения. Проход 2. 
-				// Цикл по всем F переменным, полученным после первого прохода.
-				// Пусть Fi текущая F переменная и у неё множество соседей не пусто.
-				// Сканируем строку элементов где Fi есть диагональный элемент.
-				// Amat. Определяем порог - threshold для каждой строки.
-				// В. Заносим всех сильных С соседей в специальный линейный список.
-				// C. Если мы встретили сильного F соседа  (Fj), так что Fi и Fj сильно связаны,
-				// то ищем всех сильных С соседей узла Fj и формируем из них линейный список.
-				// С помощью алгоритма слияния за линейное время сравниваем два предварительно отсортированных линейных
-				// списка на предмет общих С узлов.
-				// D. Если общий С узел есть то ничего не меняем.
-				// E. Если общего сильного С узла не обнаружено то один из узлов Fi или Fj становится С узлом.
-				// Среди Fi и Fj тот становится С узлом у которого больше сильных F соседей. Если С узлом стал Fj 
-				// то линейный список С соседей узла Fi обновляется. Если С узлом стал узел Fi то мы заканчиваем обработку Fi 
-				// возвращая всех помеченных Fj снова в F тип.
+				// 01.01.2017 РђР»РіРѕСЂРёС‚Рј СѓР»СѓС‡С€РµРЅРёСЏ РєР°С‡РµСЃС‚РІР° C/F СЂР°Р·Р±РёРµРЅРёСЏ. РџСЂРѕС…РѕРґ 2. 
+				// Р¦РёРєР» РїРѕ РІСЃРµРј F РїРµСЂРµРјРµРЅРЅС‹Рј, РїРѕР»СѓС‡РµРЅРЅС‹Рј РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ РїСЂРѕС…РѕРґР°.
+				// РџСѓСЃС‚СЊ Fi С‚РµРєСѓС‰Р°СЏ F РїРµСЂРµРјРµРЅРЅР°СЏ Рё Сѓ РЅРµС‘ РјРЅРѕР¶РµСЃС‚РІРѕ СЃРѕСЃРµРґРµР№ РЅРµ РїСѓСЃС‚Рѕ.
+				// РЎРєР°РЅРёСЂСѓРµРј СЃС‚СЂРѕРєСѓ СЌР»РµРјРµРЅС‚РѕРІ РіРґРµ Fi РµСЃС‚СЊ РґРёР°РіРѕРЅР°Р»СЊРЅС‹Р№ СЌР»РµРјРµРЅС‚.
+				// Amat. РћРїСЂРµРґРµР»СЏРµРј РїРѕСЂРѕРі - threshold РґР»СЏ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё.
+				// Р’. Р—Р°РЅРѕСЃРёРј РІСЃРµС… СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№ РІ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
+				// C. Р•СЃР»Рё РјС‹ РІСЃС‚СЂРµС‚РёР»Рё СЃРёР»СЊРЅРѕРіРѕ F СЃРѕСЃРµРґР°  (Fj), С‚Р°Рє С‡С‚Рѕ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹,
+				// С‚Рѕ РёС‰РµРј РІСЃРµС… СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№ СѓР·Р»Р° Fj Рё С„РѕСЂРјРёСЂСѓРµРј РёР· РЅРёС… Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
+				// РЎ РїРѕРјРѕС‰СЊСЋ Р°Р»РіРѕСЂРёС‚РјР° СЃР»РёСЏРЅРёСЏ Р·Р° Р»РёРЅРµР№РЅРѕРµ РІСЂРµРјСЏ СЃСЂР°РІРЅРёРІР°РµРј РґРІР° РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹С… Р»РёРЅРµР№РЅС‹С…
+				// СЃРїРёСЃРєР° РЅР° РїСЂРµРґРјРµС‚ РѕР±С‰РёС… РЎ СѓР·Р»РѕРІ.
+				// D. Р•СЃР»Рё РѕР±С‰РёР№ РЎ СѓР·РµР» РµСЃС‚СЊ С‚Рѕ РЅРёС‡РµРіРѕ РЅРµ РјРµРЅСЏРµРј.
+				// E. Р•СЃР»Рё РѕР±С‰РµРіРѕ СЃРёР»СЊРЅРѕРіРѕ РЎ СѓР·Р»Р° РЅРµ РѕР±РЅР°СЂСѓР¶РµРЅРѕ С‚Рѕ РѕРґРёРЅ РёР· СѓР·Р»РѕРІ Fi РёР»Рё Fj СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ СѓР·Р»РѕРј.
+				// РЎСЂРµРґРё Fi Рё Fj С‚РѕС‚ СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ СѓР·Р»РѕРј Сѓ РєРѕС‚РѕСЂРѕРіРѕ Р±РѕР»СЊС€Рµ СЃРёР»СЊРЅС‹С… F СЃРѕСЃРµРґРµР№. Р•СЃР»Рё РЎ СѓР·Р»РѕРј СЃС‚Р°Р» Fj 
+				// С‚Рѕ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє РЎ СЃРѕСЃРµРґРµР№ СѓР·Р»Р° Fi РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ. Р•СЃР»Рё РЎ СѓР·Р»РѕРј СЃС‚Р°Р» СѓР·РµР» Fi С‚Рѕ РјС‹ Р·Р°РєР°РЅС‡РёРІР°РµРј РѕР±СЂР°Р±РѕС‚РєСѓ Fi 
+				// РІРѕР·РІСЂР°С‰Р°СЏ РІСЃРµС… РїРѕРјРµС‡РµРЅРЅС‹С… Fj СЃРЅРѕРІР° РІ F С‚РёРї.
 				//  30.12.2016
-				if ((my_amg_manager.icoarseningtype == 1) || ((my_amg_manager.icoarseningtype == 3))) { // RS2 Проход 2.
-					for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_F_node[i_1] == true) {
-						// i_1 это F переменная Fi.
-						//Amat.Определяем порог - threshold для каждой строки.
+				if ((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ALL_CONNECTION) ||
+					((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::RS2_ST_ALL_CONNECTION))) { // RS2 РџСЂРѕС…РѕРґ 2.
+					for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_F_node[i_1]) {
+						// i_1 СЌС‚Рѕ F РїРµСЂРµРјРµРЅРЅР°СЏ Fi.
+						//Amat.РћРїСЂРµРґРµР»СЏРµРј РїРѕСЂРѕРі - threshold РґР»СЏ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё.
 						doublerealT thresholdRS = -1.0;
 						integer i_2 = row_startA[i_1];
 
-						// Очистка хеш-таблицы.
+						// РћС‡РёСЃС‚РєР° С…РµС€-С‚Р°Р±Р»РёС†С‹.
 						clear_hash_table_Gus_struct01();
-						// занесение данных из линейного списка в хеш-таблицу для дерева с корнем в Amat.i[i_2].
-						//!!!TODOinteger imarker75_scan = 0;
-						//!!!TODOformirate_F_SiTranspose_hash_table_Gus_struct02(hash_StrongTranspose_collection1[Amat.i[i_2]], imarker75_scan);
+						// Р·Р°РЅРµСЃРµРЅРёРµ РґР°РЅРЅС‹С… РёР· Р»РёРЅРµР№РЅРѕРіРѕ СЃРїРёСЃРєР° РІ С…РµС€-С‚Р°Р±Р»РёС†Сѓ РґР»СЏ РґРµСЂРµРІР° СЃ РєРѕСЂРЅРµРј РІ Amat.i[i_2].
+						//!!! СѓСЃС‚Р°СЂРµР»Рѕ 27.09.2020 integer imarker75_scan = 0;
+						//!!! СѓСЃС‚Р°СЂРµР»Рѕ 27.09.2020 formirate_F_SiTranspose_hash_table_Gus_struct02(hash_StrongTranspose_collection1[Amat.i[i_2]], imarker75_scan);
 
 
 						integer iend_merker_position = row_startA[Amat.i[i_2] + 1] - 1;
@@ -6799,13 +7578,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 							}
 						}
 						else {
-							// Новейшая ветвь кода: 11.06.2017.
+							// РќРѕРІРµР№С€Р°СЏ РІРµС‚РІСЊ РєРѕРґР°: 11.06.2017.
 							thresholdRS = threshold_quick_only_negative[Amat.i[i_2]];
 						}
 						if (thresholdRS > 0.0) {
-							// Множество соседей не пусто а порог равен thresholdRS.
+							// РњРЅРѕР¶РµСЃС‚РІРѕ СЃРѕСЃРµРґРµР№ РЅРµ РїСѓСЃС‚Рѕ Р° РїРѕСЂРѕРі СЂР°РІРµРЅ thresholdRS.
 							hashlist_i* ivacant_F2C = nullptr;
-							//  В. Заносим всех сильных С соседей в специальный линейный список.
+							//  Р’. Р—Р°РЅРѕСЃРёРј РІСЃРµС… СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№ РІ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 							hashlist_i* ibuffer_strongC = nullptr;
 							integer ibuffer_strongC_marker = -1;
 							integer inumber_strongF_count_Fi = 0;
@@ -6815,34 +7594,34 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 								if (Amat.j[is0] != Amat.i[i_2]) {
 									if (Amat.aij[is0] < 0.0) {
 										if (fabs(Amat.aij[is0]) > theta(ilevel)* thresholdRS) {
-											if (this_is_C_node[Amat.j[is0]] == true) {
+											if (this_is_C_node[Amat.j[is0]]) {
 												ibuffer_strongC_marker++;
 												insertion_list_i(ibuffer_strongC, Amat.j[is0]);
 												insert_hash_table_Gus_struct01(Amat.j[is0]);// 11.08.2018
 											}
-											if (this_is_F_node[Amat.j[is0]] == true) {
+											if (this_is_F_node[Amat.j[is0]]) {
 
 												//if (1) 19.01.2017
 												if (1) {// if (0) 11.08.2018
-														// Добавок 19.01.2017
+														// Р”РѕР±Р°РІРѕРє 19.01.2017
 
 													if (hash_StrongTranspose_collection1 != nullptr) {
 														//data_BalTreeST dat_key;
 														//dat_key.i = Amat.j[is0];
 														if (isfound(hash_StrongTranspose_collection1[Amat.i[i_2]], Amat.j[is0])) {
-															// конец добавка 19.01.2017
-															// Сюда почему-то вообще не заходит код исполнения???  TODO
+															// РєРѕРЅРµС† РґРѕР±Р°РІРєР° 19.01.2017
+															// РЎСЋРґР° РїРѕС‡РµРјСѓ-С‚Рѕ РІРѕРѕР±С‰Рµ РЅРµ Р·Р°С…РѕРґРёС‚ РєРѕРґ РёСЃРїРѕР»РЅРµРЅРёСЏ??? 
 
-															// Сильный Fj сосед найден.
-															// Элементы Fi и Fj сильно связаны.
+															// РЎРёР»СЊРЅС‹Р№ Fj СЃРѕСЃРµРґ РЅР°Р№РґРµРЅ.
+															// Р­Р»РµРјРµРЅС‚С‹ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹.
 															inumber_strongF_count_Fi++;
 															ibuffer_strongF_marker++;
 															insertion_list_i(ibuffer_strongF, Amat.j[is0]);
 														}
 													}
 													else {
-														// Сильный Fj сосед найден.
-														// Элементы Fi и Fj сильно связаны.
+														// РЎРёР»СЊРЅС‹Р№ Fj СЃРѕСЃРµРґ РЅР°Р№РґРµРЅ.
+														// Р­Р»РµРјРµРЅС‚С‹ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹.
 														inumber_strongF_count_Fi++;
 														ibuffer_strongF_marker++;
 														insertion_list_i(ibuffer_strongF, Amat.j[is0]);
@@ -6850,8 +7629,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 												}
 												else {
-													// Сильный Fj сосед найден.
-													// Элементы Fi и Fj сильно связаны.
+													// РЎРёР»СЊРЅС‹Р№ Fj СЃРѕСЃРµРґ РЅР°Р№РґРµРЅ.
+													// Р­Р»РµРјРµРЅС‚С‹ Fi Рё Fj СЃРёР»СЊРЅРѕ СЃРІСЏР·Р°РЅС‹.
 													inumber_strongF_count_Fi++;
 													ibuffer_strongF_marker++;
 
@@ -6863,18 +7642,18 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 								}
 							}
 							
-							// Сортировка буфера ibuffer_strongC по возрастанию.
-							// рекомендуется использовать iusage_old_version = 0
-							// при котором активируется использование быстродействующей хеш-таблицы.
-							// Достигается ускорение полного цикла решения задачи при включённом RS2 coarsening
-							// на 7.5% по сравнению с двоичным поиском на массиве. 
-							// Полностью отпадает необходимость в использовании алгоритма сортировки.
+							// РЎРѕСЂС‚РёСЂРѕРІРєР° Р±СѓС„РµСЂР° ibuffer_strongC РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ.
+							// СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ iusage_old_version = 0
+							// РїСЂРё РєРѕС‚РѕСЂРѕРј Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІСѓСЋС‰РµР№ С…РµС€-С‚Р°Р±Р»РёС†С‹.
+							// Р”РѕСЃС‚РёРіР°РµС‚СЃСЏ СѓСЃРєРѕСЂРµРЅРёРµ РїРѕР»РЅРѕРіРѕ С†РёРєР»Р° СЂРµС€РµРЅРёСЏ Р·Р°РґР°С‡Рё РїСЂРё РІРєР»СЋС‡С‘РЅРЅРѕРј RS2 coarsening
+							// РЅР° 7.5% РїРѕ СЃСЂР°РІРЅРµРЅРёСЋ СЃ РґРІРѕРёС‡РЅС‹Рј РїРѕРёСЃРєРѕРј РЅР° РјР°СЃСЃРёРІРµ. 
+							// РџРѕР»РЅРѕСЃС‚СЊСЋ РѕС‚РїР°РґР°РµС‚ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚СЊ РІ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРё Р°Р»РіРѕСЂРёС‚РјР° СЃРѕСЂС‚РёСЂРѕРІРєРё.
 							// 11.06.2017.
-							//integer iusage_old_version = 0; // 1 старая рабочая версия. // 0 новая версия на основе хеш-таблицы.
+							//integer iusage_old_version = 0; // 1 СЃС‚Р°СЂР°СЏ СЂР°Р±РѕС‡Р°СЏ РІРµСЂСЃРёСЏ. // 0 РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ РЅР° РѕСЃРЅРѕРІРµ С…РµС€-С‚Р°Р±Р»РёС†С‹.
 							
 
-							// Вместо сортировки и двоичного поиска используем хеш-таблицу.
-							// Очистка хеш-таблицы.
+							// Р’РјРµСЃС‚Рѕ СЃРѕСЂС‚РёСЂРѕРІРєРё Рё РґРІРѕРёС‡РЅРѕРіРѕ РїРѕРёСЃРєР° РёСЃРїРѕР»СЊР·СѓРµРј С…РµС€-С‚Р°Р±Р»РёС†Сѓ.
+							// РћС‡РёСЃС‚РєР° С…РµС€-С‚Р°Р±Р»РёС†С‹.
 							clear_hash_table_Gus_struct01();
 							hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
 							while (ibuffer_strongC_scan != nullptr) {
@@ -6884,14 +7663,14 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 							ibuffer_strongC_scan = nullptr;
 
 
-							// Сортировка целочисленного массива при индексации с нуля!!!
+							// РЎРѕСЂС‚РёСЂРѕРІРєР° С†РµР»РѕС‡РёСЃР»РµРЅРЅРѕРіРѕ РјР°СЃСЃРёРІР° РїСЂРё РёРЅРґРµРєСЃР°С†РёРё СЃ РЅСѓР»СЏ!!!
 
-							// Все сильные F соседи занесены в буфер ibuffer_strongF. 
+							// Р’СЃРµ СЃРёР»СЊРЅС‹Рµ F СЃРѕСЃРµРґРё Р·Р°РЅРµСЃРµРЅС‹ РІ Р±СѓС„РµСЂ ibuffer_strongF. 
 							hashlist_i* ibuffer_strongF_current = ibuffer_strongF;
 							for (integer i_3 = 0; i_3 <= ibuffer_strongF_marker; i_3++) {
 								if (ibuffer_strongF_current != nullptr) {
-									// Сканируем всех сильных F соседей последовательно.
-									//1. Определяем threshold для Fj.
+									// РЎРєР°РЅРёСЂСѓРµРј РІСЃРµС… СЃРёР»СЊРЅС‹С… F СЃРѕСЃРµРґРµР№ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ.
+									//1. РћРїСЂРµРґРµР»СЏРµРј threshold РґР»СЏ Fj.
 									doublerealT thresholdRS1 = -1.0;
 									integer i_4 = row_startA[ibuffer_strongF_current->item];
 									integer iend_merker_position1 = row_startA[Amat.i[i_4] + 1] - 1;
@@ -6905,11 +7684,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 										}
 									}
 									else {
-										// Новейшая ветвь кода: 11.06.2017.
+										// РќРѕРІРµР№С€Р°СЏ РІРµС‚РІСЊ РєРѕРґР°: 11.06.2017.
 										thresholdRS1 = threshold_quick_only_negative[Amat.i[i_4]];
 									}
 									integer inumber_strongF_count_Fj = 0;
-									// искомый порог thresholdRS1.
+									// РёСЃРєРѕРјС‹Р№ РїРѕСЂРѕРі thresholdRS1.
 
 									hashlist_i* ibuffer_strongCFj = nullptr;
 									integer ibuffer_strongCFj_marker = -1;
@@ -6917,11 +7696,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 										if (Amat.j[is01] != Amat.i[i_4]) {
 											if (Amat.aij[is01] < 0.0) {
 												if (fabs(Amat.aij[is01]) > theta(ilevel)* thresholdRS1) {
-													if (this_is_C_node[Amat.j[is01]] == true) {
+													if (this_is_C_node[Amat.j[is01]]) {
 														ibuffer_strongCFj_marker++;
 														insertion_list_i(ibuffer_strongCFj, Amat.j[is01]);
 													}
-													if (this_is_F_node[Amat.j[is01]] == true) {
+													if (this_is_F_node[Amat.j[is01]]) {
 														inumber_strongF_count_Fj++;
 													}
 												}
@@ -6929,20 +7708,20 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 										}
 									}
 
-									// В ibuffer_strongCFj список сильных С соседей.
+									// Р’ ibuffer_strongCFj СЃРїРёСЃРѕРє СЃРёР»СЊРЅС‹С… РЎ СЃРѕСЃРµРґРµР№.
 
-									// Есть ли общие С узлы за линейное время.
-									// Создаём на основе списка ibuffer_strongC
-									// целочисленный массив.
-									// Сортируем его. Делаем  ibuffer_strongCFj_marker 
-									// двоичных поисков в этом отсортированном массиве 
-									// до тех пор пока не встретится успешный поиск.
+									// Р•СЃС‚СЊ Р»Рё РѕР±С‰РёРµ РЎ СѓР·Р»С‹ Р·Р° Р»РёРЅРµР№РЅРѕРµ РІСЂРµРјСЏ.
+									// РЎРѕР·РґР°С‘Рј РЅР° РѕСЃРЅРѕРІРµ СЃРїРёСЃРєР° ibuffer_strongC
+									// С†РµР»РѕС‡РёСЃР»РµРЅРЅС‹Р№ РјР°СЃСЃРёРІ.
+									// РЎРѕСЂС‚РёСЂСѓРµРј РµРіРѕ. Р”РµР»Р°РµРј  ibuffer_strongCFj_marker 
+									// РґРІРѕРёС‡РЅС‹С… РїРѕРёСЃРєРѕРІ РІ СЌС‚РѕРј РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРј РјР°СЃСЃРёРІРµ 
+									// РґРѕ С‚РµС… РїРѕСЂ РїРѕРєР° РЅРµ РІСЃС‚СЂРµС‚РёС‚СЃСЏ СѓСЃРїРµС€РЅС‹Р№ РїРѕРёСЃРє.
 									bool bfound_32 = false;
 									hashlist_i* ibuffer_strongCFj_scan = ibuffer_strongCFj;
 									
-									// Версия на основе хеш-таблицы.
+									// Р’РµСЂСЃРёСЏ РЅР° РѕСЃРЅРѕРІРµ С…РµС€-С‚Р°Р±Р»РёС†С‹.
 									while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
-										// Совпадение найдено мы ничего не делаем.
+										// РЎРѕРІРїР°РґРµРЅРёРµ РЅР°Р№РґРµРЅРѕ РјС‹ РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј.
 										bfound_32 = isfound_hash_table_Gus_struct01(ibuffer_strongCFj_scan->item);
 										ibuffer_strongCFj_scan = ibuffer_strongCFj_scan->next;
 									}
@@ -6950,12 +7729,12 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 									ibuffer_strongCFj_scan = nullptr;
 
 									if (bfound_32 == false) {
-										// Один из них станет С узлом.
+										// РћРґРёРЅ РёР· РЅРёС… СЃС‚Р°РЅРµС‚ РЎ СѓР·Р»РѕРј.
 										if ((ibuffer_strongF_current->item > i_1) && (inumber_strongF_count_Fj >= inumber_strongF_count_Fi)) {
-											// Если Fj находится в ещё не просмотренной части списка F узлов и
-											// у него по сравнению с F узлом Fi больше сильных F связей.								
+											// Р•СЃР»Рё Fj РЅР°С…РѕРґРёС‚СЃСЏ РІ РµС‰С‘ РЅРµ РїСЂРѕСЃРјРѕС‚СЂРµРЅРЅРѕР№ С‡Р°СЃС‚Рё СЃРїРёСЃРєР° F СѓР·Р»РѕРІ Рё
+											// Сѓ РЅРµРіРѕ РїРѕ СЃСЂР°РІРЅРµРЅРёСЋ СЃ F СѓР·Р»РѕРј Fi Р±РѕР»СЊС€Рµ СЃРёР»СЊРЅС‹С… F СЃРІСЏР·РµР№.								
 
-											// Fj становится С.
+											// Fj СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ.
 											insertion_list_i(ivacant_F2C, ibuffer_strongF_current->item);
 											this_is_C_node[ibuffer_strongF_current->item] = true;
 											this_is_F_node[ibuffer_strongF_current->item] = false;
@@ -6965,7 +7744,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 											hashlist_i* ibuffer_strongC_scan_1 = ibuffer_strongC;
 											
-											// Очищаем хеш-таблицу и заполняем её по новой.
+											// РћС‡РёС‰Р°РµРј С…РµС€-С‚Р°Р±Р»РёС†Сѓ Рё Р·Р°РїРѕР»РЅСЏРµРј РµС‘ РїРѕ РЅРѕРІРѕР№.
 											clear_hash_table_Gus_struct01();
 											while (ibuffer_strongC_scan_1 != nullptr) {
 												insert_hash_table_Gus_struct01(ibuffer_strongC_scan_1->item);
@@ -6973,14 +7752,14 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 											}
 											
 											ibuffer_strongC_scan_1 = nullptr;
-											// Сортировка целочисленного массива при индексации с нуля!!!
+											// РЎРѕСЂС‚РёСЂРѕРІРєР° С†РµР»РѕС‡РёСЃР»РµРЅРЅРѕРіРѕ РјР°СЃСЃРёРІР° РїСЂРё РёРЅРґРµРєСЃР°С†РёРё СЃ РЅСѓР»СЏ!!!
 
 										}
 										else {
-											// Fi становится С.
+											// Fi СЃС‚Р°РЅРѕРІРёС‚СЃСЏ РЎ.
 											this_is_C_node[i_1] = true;
 											this_is_F_node[i_1] = false;
-											// Возвращаем все Fj с С на F.
+											// Р’РѕР·РІСЂР°С‰Р°РµРј РІСЃРµ Fj СЃ РЎ РЅР° F.
 											hashlist_i* ivacant_F2C_marker = ivacant_F2C;
 											while (ivacant_F2C_marker != nullptr) {
 												this_is_F_node[ivacant_F2C_marker->item] = true;
@@ -6993,32 +7772,32 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 												ivacant_F2C = nullptr;
 											}
 											ivacant_F2C = nullptr;
-											// Очищаем ОЗУ.
+											// РћС‡РёС‰Р°РµРј РћР—РЈ.
 											if (ibuffer_strongCFj != nullptr) {
 												clear_hash_list_i(ibuffer_strongCFj);
 												ibuffer_strongCFj = nullptr;
 											}
 											ibuffer_strongCFj = nullptr;
-											// Досрочно прерываем текущее сканирование 
-											// списка сильных F узлов.
+											// Р”РѕСЃСЂРѕС‡РЅРѕ РїСЂРµСЂС‹РІР°РµРј С‚РµРєСѓС‰РµРµ СЃРєР°РЅРёСЂРѕРІР°РЅРёРµ 
+											// СЃРїРёСЃРєР° СЃРёР»СЊРЅС‹С… F СѓР·Р»РѕРІ.
 											break;
 										}
 
 									}
 
 
-									// Очищаем ОЗУ.
+									// РћС‡РёС‰Р°РµРј РћР—РЈ.
 									if (ibuffer_strongCFj != nullptr) {
 										clear_hash_list_i(ibuffer_strongCFj);
 										ibuffer_strongCFj = nullptr;
 									}
 									ibuffer_strongCFj = nullptr;
-									// Переход к следующему кандидату.
+									// РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ РєР°РЅРґРёРґР°С‚Сѓ.
 									ibuffer_strongF_current = ibuffer_strongF_current->next;
 								}
 							}
 
-							// Освобождение ОЗУ.
+							// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РћР—РЈ.
 							if (ibuffer_strongC != nullptr) {
 								clear_hash_list_i(ibuffer_strongC);
 								ibuffer_strongC = nullptr;
@@ -7037,38 +7816,43 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 						}
 					}
-				} // Алгоритм улучшения качества C/F разбиения. Проход 2.
+				} // РђР»РіРѕСЂРёС‚Рј СѓР»СѓС‡С€РµРЅРёСЏ РєР°С‡РµСЃС‚РІР° C/F СЂР°Р·Р±РёРµРЅРёСЏ. РџСЂРѕС…РѕРґ 2.
 			}
 
 
 		}
-		// Освобождаем оперативную память как только можем. 
-		// Как только C/F разбиение построено данные hash_StrongTranspose_collection1 и аналог уже не используются.
+		// РћСЃРІРѕР±РѕР¶РґР°РµРј РѕРїРµСЂР°С‚РёРІРЅСѓСЋ РїР°РјСЏС‚СЊ РєР°Рє С‚РѕР»СЊРєРѕ РјРѕР¶РµРј. 
+		// РљР°Рє С‚РѕР»СЊРєРѕ C/F СЂР°Р·Р±РёРµРЅРёРµ РїРѕСЃС‚СЂРѕРµРЅРѕ РґР°РЅРЅС‹Рµ hash_StrongTranspose_collection1 Рё Р°РЅР°Р»РѕРі СѓР¶Рµ РЅРµ РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ.
 		if (bStrongTransposeON) {
-			// Освобождение ОЗУ.
+			// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РћР—РЈ.
 
-			// Обычный линейный список.
+			
+			// РћР±С‹С‡РЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 			if (hash_StrongTranspose_collection1 != nullptr) {
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
 				for (integer i_1 = 0; i_1 <= isize_memory_alloc_hash_StrongTranspose_collection1; i_1++)
 				{
-					clear_list(hash_StrongTranspose_collection1[i_1]);
+					if (hash_StrongTranspose_collection1[i_1] != NULL) {
+						if (hash_StrongTranspose_collection1[i_1] != nullptr) {
+							clear_list(hash_StrongTranspose_collection1[i_1]);
+						}
+					}
 				}
 				delete[] hash_StrongTranspose_collection1;
 				hash_StrongTranspose_collection1 = nullptr;
 			}
 
 			if (isize_hash_StrongTranspose_collection != nullptr) {
-				free(isize_hash_StrongTranspose_collection);
+				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
 			}
 		}
 
-		// Нужно корректно обработать узлы Дирихле,
-		// Если F узел окажется узлом Дирихле без соседей то его надо сделать С узлом,
-		// Но узнать такой узел можно лишь в процессе выполнения алгоритма дальше по ходу исполнения.
-		// Поэтому может потребоваться вернуться и начать заново (обратная связь).
+		// РќСѓР¶РЅРѕ РєРѕСЂСЂРµРєС‚РЅРѕ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ СѓР·Р»С‹ Р”РёСЂРёС…Р»Рµ,
+		// Р•СЃР»Рё F СѓР·РµР» РѕРєР°Р¶РµС‚СЃСЏ СѓР·Р»РѕРј Р”РёСЂРёС…Р»Рµ Р±РµР· СЃРѕСЃРµРґРµР№ С‚Рѕ РµРіРѕ РЅР°РґРѕ СЃРґРµР»Р°С‚СЊ РЎ СѓР·Р»РѕРј,
+		// РќРѕ СѓР·РЅР°С‚СЊ С‚Р°РєРѕР№ СѓР·РµР» РјРѕР¶РЅРѕ Р»РёС€СЊ РІ РїСЂРѕС†РµСЃСЃРµ РІС‹РїРѕР»РЅРµРЅРёСЏ Р°Р»РіРѕСЂРёС‚РјР° РґР°Р»СЊС€Рµ РїРѕ С…РѕРґСѓ РёСЃРїРѕР»РЅРµРЅРёСЏ.
+		// РџРѕСЌС‚РѕРјСѓ РјРѕР¶РµС‚ РїРѕС‚СЂРµР±РѕРІР°С‚СЊСЃСЏ РІРµСЂРЅСѓС‚СЊСЃСЏ Рё РЅР°С‡Р°С‚СЊ Р·Р°РЅРѕРІРѕ (РѕР±СЂР°С‚РЅР°СЏ СЃРІСЏР·СЊ).
 
 		if (C_numerate != nullptr) {
 			free(C_numerate);
@@ -7079,8 +7863,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		icounter = 1;
 		ap_coarse = nullptr;
 
-		// Мысль в том чтобы избавится от перезапуска и сделать всё за один проход, но это 
-		// сделает код менее понятным и главное ухудшит силу интерполяции.
+		// РњС‹СЃР»СЊ РІ С‚РѕРј С‡С‚РѕР±С‹ РёР·Р±Р°РІРёС‚СЃСЏ РѕС‚ РїРµСЂРµР·Р°РїСѓСЃРєР° Рё СЃРґРµР»Р°С‚СЊ РІСЃС‘ Р·Р° РѕРґРёРЅ РїСЂРѕС…РѕРґ, РЅРѕ СЌС‚Рѕ 
+		// СЃРґРµР»Р°РµС‚ РєРѕРґ РјРµРЅРµРµ РїРѕРЅСЏС‚РЅС‹Рј Рё РіР»Р°РІРЅРѕРµ СѓС…СѓРґС€РёС‚ СЃРёР»Сѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
 		//bool no_FeedBack = true;
 		
 
@@ -7089,6 +7873,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}
 
 		if (!bPMIS) {
+
+			bool bsuffix_work = true;
+
 			bweSholdbeContinue = true;
 			while (bweSholdbeContinue) {
 				bweSholdbeContinue = false;
@@ -7102,7 +7889,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 				
 				// debug
-				// проверка качества C/F разбиения.
+				// РїСЂРѕРІРµСЂРєР° РєР°С‡РµСЃС‚РІР° C/F СЂР°Р·Р±РёРµРЅРёСЏ.
 				//doublerealT* exp1 = new doublerealT[n_a[ilevel - 1] + 1];
 				//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) exp1[i_1] = 0.0;
 				//for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) exp1[i_1] = 2.0;
@@ -7116,20 +7903,20 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-				// C/F разбиение построено, самое время построить оператор интерполяции.
-				// потом найти оператор проекции, как транспонированный оператор интерполяции.
-				// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
+				// C/F СЂР°Р·Р±РёРµРЅРёРµ РїРѕСЃС‚СЂРѕРµРЅРѕ, СЃР°РјРѕРµ РІСЂРµРјСЏ РїРѕСЃС‚СЂРѕРёС‚СЊ РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+				// РїРѕС‚РѕРј РЅР°Р№С‚Рё РѕРїРµСЂР°С‚РѕСЂ РїСЂРѕРµРєС†РёРё, РєР°Рє С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРЅС‹Р№ РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+				// Р’СЃС‘ Р·Р°РІРµСЂС€Р°РµС‚ РїРѕСЃС‚СЂРѕРµРЅРёРµ РјР°С‚СЂРёС†С‹ РЅРѕРІРѕРіРѕ СЃРµС‚РѕС‡РЅРѕРіРѕ СѓСЂРѕРІРЅСЏ Рё РјРѕР¶РЅРѕ Р·Р°РїСѓСЃРєР°С‚СЊ РЅРѕРІС‹Р№ СѓСЂРѕРІРµРЅСЊ.
 
-				// Построение оператора интерполяции: 
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё: 
 				// coarse 2 fine.
 				//P*coarse==fine
 
 
-				// Занумеруем (упорядочим) узлы грубой сетки.
+				// Р—Р°РЅСѓРјРµСЂСѓРµРј (СѓРїРѕСЂСЏРґРѕС‡РёРј) СѓР·Р»С‹ РіСЂСѓР±РѕР№ СЃРµС‚РєРё.
 #pragma omp parallel for
 				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) C_numerate[i_1] = 0;
 				icounter = 1;
-				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1] == true) {
+				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) {
 
 					//std::cout<<"C ind= "<< i_1; system("PAUSE");
 
@@ -7139,10 +7926,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 				
 
-				// C_numerate - перенумерация на множестве Coarse узлов.
-				// Построение пролонгации для узлов которые составляют грубую сетку.
+				// C_numerate - РїРµСЂРµРЅСѓРјРµСЂР°С†РёСЏ РЅР° РјРЅРѕР¶РµСЃС‚РІРµ Coarse СѓР·Р»РѕРІ.
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РїСЂРѕР»РѕРЅРіР°С†РёРё РґР»СЏ СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃС‚Р°РІР»СЏСЋС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ.
 				icount1 = 1 + iaddR; // nnz_R
-				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1] == true) {
+				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) {
 					P[icount1].aij = 1.0;
 					P[icount1].i = C_numerate[i_1]; // coarse number
 					P[icount1].j = i_1; // fine number.
@@ -7157,12 +7944,12 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 
-				// значение icount1 нужно далее.НЕ трогать !!!.
+				// Р·РЅР°С‡РµРЅРёРµ icount1 РЅСѓР¶РЅРѕ РґР°Р»РµРµ.РќР• С‚СЂРѕРіР°С‚СЊ !!!.
 				numberofcoarcenodes = icount1 - 1 - iaddR;
 
 
 
-				// Для модификации R  надо transpose(P)/ap.
+				// Р”Р»СЏ РјРѕРґРёС„РёРєР°С†РёРё R  РЅР°РґРѕ transpose(P)/ap.
 				if (bprint_mesage_diagnostic) {
 
 					std::cout << "number of coarce nodes=" << numberofcoarcenodes << "\n"; 
@@ -7179,16 +7966,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-				// Для каждого С узла запоминаем в ap_coarse[C_numerate[i8]] 
-				// модуль диагонального элемента.
+				// Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РЎ СѓР·Р»Р° Р·Р°РїРѕРјРёРЅР°РµРј РІ ap_coarse[C_numerate[i8]] 
+				// РјРѕРґСѓР»СЊ РґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°.
 #pragma omp parallel for
 				for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) {
-					if (this_is_C_node[i8] == true) {
-						// Старая версия до 10 января 2016. Время O(log2(nnz))
+					if (this_is_C_node[i8]) {
+						// РЎС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ РґРѕ 10 СЏРЅРІР°СЂСЏ 2016. Р’СЂРµРјСЏ O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-						// 10 января 2016 новая версия на основе хеширования. Время O(1).
+						// 10 СЏРЅРІР°СЂСЏ 2016 РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ РЅР° РѕСЃРЅРѕРІРµ С…РµС€РёСЂРѕРІР°РЅРёСЏ. Р’СЂРµРјСЏ O(1).
 						integer ii1 = row_startA[i8];
-						// бинарный поиск должен гарантирует нахождение самого левого представителя.
+						// Р±РёРЅР°СЂРЅС‹Р№ РїРѕРёСЃРє РґРѕР»Р¶РµРЅ РіР°СЂР°РЅС‚РёСЂСѓРµС‚ РЅР°С…РѕР¶РґРµРЅРёРµ СЃР°РјРѕРіРѕ Р»РµРІРѕРіРѕ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»СЏ.
 						//for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 						integer iend_marker_position_1 = row_startA[Amat.i[ii1] + 1] - 1;
 						for (integer is0 = ii1; (is0 <= iend_marker_position_1); is0++) {
@@ -7216,7 +8003,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 				
 
-				// верно 2 октября.				
+				// РІРµСЂРЅРѕ 2 РѕРєС‚СЏР±СЂСЏ.	
+				doublerealT magic82f = (doublerealT)(magic82);
 
 				my_interpolation_procedure_universal<doublerealT>(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
@@ -7227,8 +8015,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 						iadd, n, C_numerate,
 						number_of_F_nodes_with_one_single_strong_C_neighborF,
 						btreshold_on_new_vetv, ifrom_re_operation_protection,
-						from_re_operation_protection0, magic82, threshold_quick_all,
-						threshold_quick_only_negative);
+						from_re_operation_protection0, magic82f, threshold_quick_all,
+						threshold_quick_only_negative, bsuffix_work);
 								
 
 				if (bprint_mesage_diagnostic) {
@@ -7237,6 +8025,17 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 				if (bweSholdbeContinue) {
+
+					// РќР° РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ РґРµР»Р°РµС‚СЃСЏ РІСЃРµРіРѕ РґРІР° РїСЂРѕС…РѕРґР°.
+					// РќР° РїРµСЂРІРѕРј РїСЂРѕС…РѕРґРµ РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ РІСЃРµ РЅРµРѕР±С…РѕРґРёРјС‹Рµ РЅРµРґРѕСЃС‚Р°СЋС‰РёРµ РЎ
+					// СѓР·Р»С‹. Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅРѕ СѓСЃС‚Р°РЅРѕРІР»РµРЅРѕ (РѕРїС‹С‚РЅС‹Рј РїСѓС‚РµРј) С‡С‚Рѕ 
+					// РІС‚РѕСЂРѕР№ РїСЂРѕС…РѕРґ РЅРµ РґРѕР±Р°РІР»СЏРµС‚ РЅРѕРІС‹С… РЎ СѓР·Р»РѕРІ Рё РїРѕСЌС‚РѕРјСѓ РїСЂРѕРІРµСЂРєСѓ
+					// РЅР° РґРѕР±Р°РІР»РµРЅРёРµ РјРѕР¶РЅРѕ РЅРµ РґРµР»Р°С‚СЊ. РћС‚РєР°Р· РѕС‚ РїСЂРѕРІРµСЂРєРё СЌРєРѕРЅРѕРјРёС‚ С„Р»РѕРїС‹ РїСЂРѕС†РµСЃСЃРѕСЂР° Рё 
+					// СѓРІРµР»РёС‡РёРІР°РµС‚ Р±С‹СЃС‚СЂРѕРґРµР№СЃС‚РІРёРµ РґР»СЏ РЇРєРѕР±Рё РёРЅС‚РµСЂРїРѕР»СЏС†РёРё, РґР»СЏ amg1r5 РёРЅС‚РµСЂРїРѕР»СЏС†РёРё 
+					// СѓСЃРєРѕСЂРµРЅРёСЏ РЅРµ РѕР±РЅР°СЂСѓР¶РµРЅРѕ.
+					// bsuffix_work = false; - РѕС‚РєР°Р· РѕС‚ РїСЂРѕРІРµСЂРєРё.
+					// bsuffix_work = true; - РїСЂРѕРІРµСЂРєСѓ РІСЃС‘ СЂР°РІРЅРѕ РґРµР»Р°С‚СЊ.
+					bsuffix_work = false; // recomended false for Jacoby interpolation.
 					//delete[] ap_coarse;
 					if (ap_coarse != nullptr) {
 						free(ap_coarse);
@@ -7248,9 +8047,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 				if (bprint_mesage_diagnostic) {
-					// отношение добавленных узлов к количеству С узлов на предыдущем уровне.
+					// РѕС‚РЅРѕС€РµРЅРёРµ РґРѕР±Р°РІР»РµРЅРЅС‹С… СѓР·Р»РѕРІ Рє РєРѕР»РёС‡РµСЃС‚РІСѓ РЎ СѓР·Р»РѕРІ РЅР° РїСЂРµРґС‹РґСѓС‰РµРј СѓСЂРѕРІРЅРµ.
 					//std::cout << "addition C nodes "<< (doublerealT)(100.0*iadditionalCstatistic / n_a[ilevel - 1])<<"%\n";
-					// отношение количества добавленных С узлов к первоначальному количеству С узлов на данном уровне.
+					// РѕС‚РЅРѕС€РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° РґРѕР±Р°РІР»РµРЅРЅС‹С… РЎ СѓР·Р»РѕРІ Рє РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕРјСѓ РєРѕР»РёС‡РµСЃС‚РІСѓ РЎ СѓР·Р»РѕРІ РЅР° РґР°РЅРЅРѕРј СѓСЂРѕРІРЅРµ.
 					std::cout << "addition C nodes = "<< (doublerealT)(100.0 * iadditionalCstatistic / n_coarce) <<"% firstable C nodes,  level population "<<(doublerealT)(100.0 * (n_coarce + iadditionalCstatistic) / n_a[ilevel - 1]) <<"%\n";
 				}
 				iadditionalCstatistic = 0;
@@ -7260,8 +8059,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			}
 		}
 		else {
-		    //Дальнобойная интерполяция PMIS
+		    //РёРЅС‚РµСЂРїРѕР»СЏС†РёСЏ PMIS РІ С‚РѕРј С‡РёСЃР»Рµ Рё РґР°Р»СЊРЅРѕР±РѕР№РЅС‹Р№ РІР°СЂРёР°РЅС‚ distance=3.
 			
+			bool bsuffix_work = true;
+
 			bweSholdbeContinue = true;
 			while (bweSholdbeContinue) {
 				bweSholdbeContinue = false;
@@ -7274,20 +8075,20 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 					}
 				}
 				
-				// C/F разбиение построено, самое время построить оператор интерполяции.
-				// потом найти оператор проекции, как транспонированный оператор интерполяции.
-				// Всё завершает построение матрицы нового сеточного уровня и можно запускать новый уровень.
+				// C/F СЂР°Р·Р±РёРµРЅРёРµ РїРѕСЃС‚СЂРѕРµРЅРѕ, СЃР°РјРѕРµ РІСЂРµРјСЏ РїРѕСЃС‚СЂРѕРёС‚СЊ РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+				// РїРѕС‚РѕРј РЅР°Р№С‚Рё РѕРїРµСЂР°С‚РѕСЂ РїСЂРѕРµРєС†РёРё, РєР°Рє С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРЅС‹Р№ РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+				// Р’СЃС‘ Р·Р°РІРµСЂС€Р°РµС‚ РїРѕСЃС‚СЂРѕРµРЅРёРµ РјР°С‚СЂРёС†С‹ РЅРѕРІРѕРіРѕ СЃРµС‚РѕС‡РЅРѕРіРѕ СѓСЂРѕРІРЅСЏ Рё РјРѕР¶РЅРѕ Р·Р°РїСѓСЃРєР°С‚СЊ РЅРѕРІС‹Р№ СѓСЂРѕРІРµРЅСЊ.
 
-				// Построение оператора интерполяции: 
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё: 
 				// coarse -> fine (2 == ->).
 				// P*coarse==fine
 
 
-				// Занумеруем (упорядочим) узлы грубой сетки.
+				// Р—Р°РЅСѓРјРµСЂСѓРµРј (СѓРїРѕСЂСЏРґРѕС‡РёРј) СѓР·Р»С‹ РіСЂСѓР±РѕР№ СЃРµС‚РєРё.
 #pragma omp parallel for
 				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) C_numerate[i_1] = 0;
 				icounter = 1;
-				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1] == true) {
+				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) {
 					//std::cout << "C ind= "<< i_1 << std::endl; system("PAUSE");
 
 					C_numerate[i_1] = icounter;
@@ -7295,10 +8096,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 				
-				// C_numerate - перенумерация на множестве Coarse узлов.
-				// Построение пролонгации для узлов которые составляют грубую сетку.
+				// C_numerate - РїРµСЂРµРЅСѓРјРµСЂР°С†РёСЏ РЅР° РјРЅРѕР¶РµСЃС‚РІРµ Coarse СѓР·Р»РѕРІ.
+				// РџРѕСЃС‚СЂРѕРµРЅРёРµ РїСЂРѕР»РѕРЅРіР°С†РёРё РґР»СЏ СѓР·Р»РѕРІ РєРѕС‚РѕСЂС‹Рµ СЃРѕСЃС‚Р°РІР»СЏСЋС‚ РіСЂСѓР±СѓСЋ СЃРµС‚РєСѓ.
 				icount1 = 1 + iaddR; // nnz_R
-				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1] == true) {
+				for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) {
 					P[icount1].aij = 1.0;
 					P[icount1].i = C_numerate[i_1]; // coarse number
 					P[icount1].j = i_1; // fine number.
@@ -7313,12 +8114,12 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 
-				// значение icount1 нужно далее.НЕ трогать !!!.
+				// Р·РЅР°С‡РµРЅРёРµ icount1 РЅСѓР¶РЅРѕ РґР°Р»РµРµ.РќР• С‚СЂРѕРіР°С‚СЊ !!!.
 				numberofcoarcenodes = icount1 - 1 - iaddR;
 
 
 
-				// Для модификации R  надо transpose(P)/ap.
+				// Р”Р»СЏ РјРѕРґРёС„РёРєР°С†РёРё R  РЅР°РґРѕ transpose(P)/ap.
 				if (bprint_mesage_diagnostic) {
 
 					std::cout << "number of coarce nodes=" << numberofcoarcenodes << "\n";
@@ -7335,16 +8136,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-				// Для каждого С узла запоминаем в ap_coarse[C_numerate[i8]] 
-				// модуль диагонального элемента.
+				// Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РЎ СѓР·Р»Р° Р·Р°РїРѕРјРёРЅР°РµРј РІ ap_coarse[C_numerate[i8]] 
+				// РјРѕРґСѓР»СЊ РґРёР°РіРѕРЅР°Р»СЊРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°.
 #pragma omp parallel for
 				for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) {
-					if (this_is_C_node[i8] == true) {
-						// Старая версия до 10 января 2016. Время O(log2(nnz))
+					if (this_is_C_node[i8]) {
+						// РЎС‚Р°СЂР°СЏ РІРµСЂСЃРёСЏ РґРѕ 10 СЏРЅРІР°СЂСЏ 2016. Р’СЂРµРјСЏ O(log2(nnz))
 						//integer ii1 = BinarySearchAi(Amat, i8, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-						// 10 января 2016 новая версия на основе хеширования. Время O(1).
+						// 10 СЏРЅРІР°СЂСЏ 2016 РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ РЅР° РѕСЃРЅРѕРІРµ С…РµС€РёСЂРѕРІР°РЅРёСЏ. Р’СЂРµРјСЏ O(1).
 						integer ii1 = row_startA[i8];
-						// бинарный поиск должен гарантирует нахождение самого левого представителя.
+						// Р±РёРЅР°СЂРЅС‹Р№ РїРѕРёСЃРє РґРѕР»Р¶РµРЅ РіР°СЂР°РЅС‚РёСЂСѓРµС‚ РЅР°С…РѕР¶РґРµРЅРёРµ СЃР°РјРѕРіРѕ Р»РµРІРѕРіРѕ РїСЂРµРґСЃС‚Р°РІРёС‚РµР»СЏ.
 						//for (integer is0 = ii1; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[ii1]); is0++) {
 						integer iend_marker_position_1 = row_startA[Amat.i[ii1] + 1] - 1;
 						for (integer is0 = ii1; (is0 <= iend_marker_position_1); is0++) {
@@ -7352,11 +8153,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 							if (Amat.j[is0] == Amat.i[ii1]) {
 
-								if (fabs(Amat.aij[is0]) > RealMAXIMUM) {
+								if (Amat.abs_aij[is0] > RealMAXIMUM) {
 									std::cout << "overflow error: fabs(Amat.aij["<< is0 <<"]) > RealMAXIMUM !" << std::endl;
 									system("pause");
 								}
-								ap_coarse[C_numerate[i8]] = fabs(Amat.aij[is0]);
+								ap_coarse[C_numerate[i8]] = Amat.abs_aij[is0];
 								//std::cout << "find = "<< fabs(Amat.aij[is0])<<std::endl;
 							}
 						}
@@ -7369,52 +8170,80 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				
 				//system("PAUSE");
 
+				// Р‘С‹Р»Рѕ СѓР¶Рµ СЂР°СЃСЃС‡РёС‚Р°РЅРѕ Рё Р·Р°РїРѕРјРЅРµРЅРѕ РІС‹С€Рµ РїРѕ РєРѕРґСѓ.
+				//integer is_1 = row_startA[1];
+				//integer is_e = row_startA[n_a[ilevel - 1] + 1] - 1;
+				// Р—Р°СЂР°РЅРµРµ РѕРґРёРЅ СЂР°Р· РІС‹С‡РёСЃР»СЏРµРј РјРѕРґСѓР»СЊ СЌР»РµРјРµРЅС‚Р°.
+				//for (integer iscan = is_1; iscan <= is_e; iscan++) {
+					//Amat.abs_aij[iscan] = fabs(Amat.aij[iscan]);
+				//}
 
-				integer is_1 = row_startA[1];
-				integer is_e = row_startA[n_a[ilevel - 1] + 1] - 1;
-				// Заранее один раз вычисляем модуль элемента.
-				for (integer iscan = is_1; iscan <= is_e; iscan++) {
-					Amat.abs_aij[iscan] = fabs(Amat.aij[iscan]);
-				}
-
-				// Интерполяция PMIS
+				// РРЅС‚РµСЂРїРѕР»СЏС†РёСЏ PMIS
 				// 1.04.2017; 28.04.2017;
-				// Главная идея в том чтобы разделить интерполяцию по знакам, отдельно положительные коэффициенты и отдельно положительные,
-				// в итоге учитывается и то и то.
+				// Р“Р»Р°РІРЅР°СЏ РёРґРµСЏ РІ С‚РѕРј С‡С‚РѕР±С‹ СЂР°Р·РґРµР»РёС‚СЊ РёРЅС‚РµСЂРїРѕР»СЏС†РёСЋ РїРѕ Р·РЅР°РєР°Рј, РѕС‚РґРµР»СЊРЅРѕ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ Рё РѕС‚РґРµР»СЊРЅРѕ РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ,
+				// РІ РёС‚РѕРіРµ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ Рё С‚Рѕ Рё С‚Рѕ.
 					
 
-				// Интерполяционная процедура №3.
-				// Улучшенный базовый вариант.
-				doublereal theta_loc = theta(ilevel);
-				doublereal theta83_loc = theta83(ilevel);
-				// 31,01,2020. Интерполяция при которой не добавляется ни одного нового С узла, приводит к тому
-				// что у многих F нет strong C соседа, хотя бы одного. Это приводит к сильнейшей деградации 
-				// сходимости. Обязательно нужно добавить C узлы чтобы у каждого F был хотя бы один Strong C узел.
-				my_interpolation_procedure_number3A_PMIS(the_number_of_neighbors_that_are_not_C_nodes,
-					number_of_F_nodes_with_one_single_strong_C_neighbor,
-					n_a, this_is_F_node, row_startA,
-					nnz_a, bpositive_connections, Amat,
-					bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
-					RealZERO, icount1, P, nsizePR, ilevel,
-					iadd, theta_loc, n, C_numerate,
-					number_of_F_nodes_with_one_single_strong_C_neighborF,
-					theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
-					from_re_operation_protection0, magic82, threshold_quick_all,
-					threshold_quick_only_negative);
-				/*
-				// Здесь происходит добавление необходимых С узлов и сходимость многократно улучшается.
-				my_interpolation_procedure_number3A(the_number_of_neighbors_that_are_not_C_nodes,
-					number_of_F_nodes_with_one_single_strong_C_neighbor,
-					n_a, this_is_F_node, row_startA,
-					nnz_a, bpositive_connections, Amat,
-					bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
-					RealZERO, icount1, P, nsizePR, ilevel,
-					iadd, theta_loc, n, C_numerate,
-					number_of_F_nodes_with_one_single_strong_C_neighborF,
-					theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
-					from_re_operation_protection0, magic82, threshold_quick_all,
-					threshold_quick_only_negative);
-					*/
+				
+
+				if (my_amg_manager.number_interpolation_procedure == 2) {
+					// Р”Р°Р»СЊРЅРѕР±РѕР№РЅР°СЏ РїСЂРѕС†РµРґСѓСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РЅР°
+			        // РѕСЃРЅРѕРІРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРѕРЅРЅРѕР№ РїСЂРѕС†РµРґСѓСЂС‹ в„–3.
+			        // РЈР»СѓС‡С€РµРЅРЅС‹Р№ Р±Р°Р·РѕРІС‹Р№ РІР°СЂРёР°РЅС‚.
+			        // РџСЂРёСЃРѕРµРґРёРЅРµРЅРёРµ 20.09.2020.
+			        // РРЅС‚РµСЂРїРѕР»СЏС†РёСЏ СЃ СЂР°СЃСЃС‚РѕСЏРЅРёРµРј 3 (РґР°Р»СЊРЅРѕР±РѕР№РЅР°СЏ).
+					doublerealT theta_loc = theta(ilevel);
+					doublerealT theta83_loc = theta(ilevel);//theta83
+					my_long_range3_interpolation_procedure_number3A_parallelx8(
+						the_number_of_neighbors_that_are_not_C_nodes,
+						number_of_F_nodes_with_one_single_strong_C_neighbor,
+						n_a, this_is_F_node, row_startA,
+						nnz_a, bpositive_connections, Amat,
+						bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+						RealZERO, icount1, P, nsizePR, ilevel,
+						iadd, theta_loc, n, C_numerate,
+						number_of_F_nodes_with_one_single_strong_C_neighborF,
+						theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+						from_re_operation_protection0, magic82, threshold_quick_all,
+						threshold_quick_only_negative, bsuffix_work);
+
+					bsuffix_work = false; // Р·Р°РїСѓСЃРєР°РµРј С‚РѕР»СЊРєРѕ РѕРґРёРЅ СЂР°Р· СЃСѓС„С„РёРєСЃРЅСѓСЋ СЂР°Р±РѕС‚Сѓ.
+				}
+				else {
+
+					// РРЅС‚РµСЂРїРѕР»СЏС†РёРѕРЅРЅР°СЏ РїСЂРѕС†РµРґСѓСЂР° в„–3.
+				    // РЈР»СѓС‡С€РµРЅРЅС‹Р№ Р±Р°Р·РѕРІС‹Р№ РІР°СЂРёР°РЅС‚.
+					doublerealT theta_loc = theta(ilevel);
+					doublerealT theta83_loc = theta(ilevel);//theta83
+					// 31,01,2020. РРЅС‚РµСЂРїРѕР»СЏС†РёСЏ РїСЂРё РєРѕС‚РѕСЂРѕР№ РЅРµ РґРѕР±Р°РІР»СЏРµС‚СЃСЏ РЅРё РѕРґРЅРѕРіРѕ РЅРѕРІРѕРіРѕ РЎ СѓР·Р»Р°, РїСЂРёРІРѕРґРёС‚ Рє С‚РѕРјСѓ
+					// С‡С‚Рѕ Сѓ РјРЅРѕРіРёС… F РЅРµС‚ strong C СЃРѕСЃРµРґР°, С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕРіРѕ. Р­С‚Рѕ РїСЂРёРІРѕРґРёС‚ Рє СЃРёР»СЊРЅРµР№С€РµР№ РґРµРіСЂР°РґР°С†РёРё 
+					// СЃС…РѕРґРёРјРѕСЃС‚Рё. РћР±СЏР·Р°С‚РµР»СЊРЅРѕ РЅСѓР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ C СѓР·Р»С‹ С‡С‚РѕР±С‹ Сѓ РєР°Р¶РґРѕРіРѕ F Р±С‹Р» С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ Strong C СѓР·РµР».
+					my_interpolation_procedure_number3A_PMIS_parallel8(the_number_of_neighbors_that_are_not_C_nodes,
+						number_of_F_nodes_with_one_single_strong_C_neighbor,
+						n_a, this_is_F_node, row_startA,
+						nnz_a, bpositive_connections, Amat,
+						bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+						RealZERO, icount1, P, nsizePR, ilevel,
+						iadd, theta_loc, n, C_numerate,
+						number_of_F_nodes_with_one_single_strong_C_neighborF,
+						theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+						from_re_operation_protection0, magic82, threshold_quick_all,
+						threshold_quick_only_negative);
+					/*
+					// Р—РґРµСЃСЊ РїСЂРѕРёСЃС…РѕРґРёС‚ РґРѕР±Р°РІР»РµРЅРёРµ РЅРµРѕР±С…РѕРґРёРјС‹С… РЎ СѓР·Р»РѕРІ Рё СЃС…РѕРґРёРјРѕСЃС‚СЊ РјРЅРѕРіРѕРєСЂР°С‚РЅРѕ СѓР»СѓС‡С€Р°РµС‚СЃСЏ.
+					my_interpolation_procedure_number3A(the_number_of_neighbors_that_are_not_C_nodes,
+						number_of_F_nodes_with_one_single_strong_C_neighbor,
+						n_a, this_is_F_node, row_startA,
+						nnz_a, bpositive_connections, Amat,
+						bweSholdbeContinue, this_is_C_node, iadditionalCstatistic,
+						RealZERO, icount1, P, nsizePR, ilevel,
+						iadd, theta_loc, n, C_numerate,
+						number_of_F_nodes_with_one_single_strong_C_neighborF,
+						theta83_loc, btreshold_on_new_vetv, ifrom_re_operation_protection,
+						from_re_operation_protection0, magic82, threshold_quick_all,
+						threshold_quick_only_negative);
+						*/
+				}
 
 				if (bprint_mesage_diagnostic) {
 					std::cout << "Additional C nodes in interpolation procedure. Statistics:\n";
@@ -7430,12 +8259,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 					if (bprint_mesage_diagnostic) {
 						std::cout << "Feedback restart...\n";
 					}
+					bsuffix_work = false; // recomended false for Jacoby interpolation.
 				}
 
 				if (bprint_mesage_diagnostic) {
-					// отношение добавленных узлов к количеству С узлов на предыдущем уровне.
+					// РѕС‚РЅРѕС€РµРЅРёРµ РґРѕР±Р°РІР»РµРЅРЅС‹С… СѓР·Р»РѕРІ Рє РєРѕР»РёС‡РµСЃС‚РІСѓ РЎ СѓР·Р»РѕРІ РЅР° РїСЂРµРґС‹РґСѓС‰РµРј СѓСЂРѕРІРЅРµ.
 					//std::cout << "addition C nodes "<< (doublerealT)(100.0*iadditionalCstatistic / n_a[ilevel - 1]) <<"%\n";
-					// отношение количества добавленных С узлов к первоначальному количеству С узлов на данном уровне.
+					// РѕС‚РЅРѕС€РµРЅРёРµ РєРѕР»РёС‡РµСЃС‚РІР° РґРѕР±Р°РІР»РµРЅРЅС‹С… РЎ СѓР·Р»РѕРІ Рє РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕРјСѓ РєРѕР»РёС‡РµСЃС‚РІСѓ РЎ СѓР·Р»РѕРІ РЅР° РґР°РЅРЅРѕРј СѓСЂРѕРІРЅРµ.
 					std::cout << "addition C nodes = " << (doublerealT)(100.0 * iadditionalCstatistic / n_coarce) <<"% firstable C nodes,  level population " << (doublerealT)(100.0 * (n_coarce + iadditionalCstatistic) / n_a[ilevel - 1])<<"%\n";
 				}
 				iadditionalCstatistic = 0;
@@ -7450,10 +8280,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}
 		//system("pause");
 
-		// нужно определить nnzR количество ненулевых элементов в матрице R и P.
+		// РЅСѓР¶РЅРѕ РѕРїСЂРµРґРµР»РёС‚СЊ nnzR РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ R Рё P.
 
-		// оператор restriction построен и он упорядочен по i.
-		// число ненулевых элементов nnzR-1.
+		// РѕРїРµСЂР°С‚РѕСЂ restriction РїРѕСЃС‚СЂРѕРµРЅ Рё РѕРЅ СѓРїРѕСЂСЏРґРѕС‡РµРЅ РїРѕ i.
+		// С‡РёСЃР»Рѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ nnzR-1.
 		// P=Copy(R);
 		iend_marker_position = iaddR + nnzR - 1;
 
@@ -7462,25 +8292,25 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		if (my_amg_manager.itruncation_interpolation == 1) {
 
 			/*
-			// Однопоточный вариант работает и без сортировки,
-			// что говорит о том что оператор интерполяции уже предварительно был отсортирован по j.
+			// РћРґРЅРѕРїРѕС‚РѕС‡РЅС‹Р№ РІР°СЂРёР°РЅС‚ СЂР°Р±РѕС‚Р°РµС‚ Рё Р±РµР· СЃРѕСЂС‚РёСЂРѕРІРєРё,
+			// С‡С‚Рѕ РіРѕРІРѕСЂРёС‚ Рѕ С‚РѕРј С‡С‚Рѕ РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё СѓР¶Рµ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕ Р±С‹Р» РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅ РїРѕ j.
 			switch (imy_sort_algorithm ) {
-			case COUNTING_SORT_ALG:
+			case MY_SORT_ALGORITHM:: COUNTING_SORT:
 			//Counting_Sortj(P, 1 + iaddR, iaddR + nnzR - 1, false);
 			qsj(P, 1 + iaddR, iaddR + nnzR - 1);
 			//HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 			break;
-			case QUICK_SORT_ALG:
+			case MY_SORT_ALGORITHM::QUICK_SORT:
 			qsj(P, 1 + iaddR, iaddR + nnzR - 1);
-			// Библиотечный алгоритм. O(nlog(n)).
-			// Не использует лишней памяти.
+			// Р‘РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј. O(nlog(n)).
+			// РќРµ РёСЃРїРѕР»СЊР·СѓРµС‚ Р»РёС€РЅРµР№ РїР°РјСЏС‚Рё.
 			//std::sort(P + (1 + iaddR) * sizeof(Ak1), P + (iaddR + nnzR - 1+1) * sizeof(Ak1), compAi);
 			break;
-			case HEAP_SORT_ALG:
+			case MY_SORT_ALGORITHM::HEAP_SORT:
 			HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 			break;
-			case TIM_PETERSON_SORT_ALG:
-				// Сортировка Тима Петерсона.
+			case MY_SORT_ALGORITHM::TIM_SORT:
+				// РЎРѕСЂС‚РёСЂРѕРІРєР° РўРёРјР° РџРµС‚РµСЂСЃРѕРЅР°.
 				timSort_amg_j(P, 1 + iaddR, iaddR + nnzR - 1);
 				break;
 			default:
@@ -7492,19 +8322,19 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			*/
 
 
-			// Большое число связей увеличивает сложность оператора Галёркина.
-			// Наличие слабых связей в процедуре интерполяции, приводит к замедлению 
-			// сходимости или расходимости.
-			// Алгоритм устранения слабых связей:
+			// Р‘РѕР»СЊС€РѕРµ С‡РёСЃР»Рѕ СЃРІСЏР·РµР№ СѓРІРµР»РёС‡РёРІР°РµС‚ СЃР»РѕР¶РЅРѕСЃС‚СЊ РѕРїРµСЂР°С‚РѕСЂР° Р“Р°Р»С‘СЂРєРёРЅР°.
+			// РќР°Р»РёС‡РёРµ СЃР»Р°Р±С‹С… СЃРІСЏР·РµР№ РІ РїСЂРѕС†РµРґСѓСЂРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё, РїСЂРёРІРѕРґРёС‚ Рє Р·Р°РјРµРґР»РµРЅРёСЋ 
+			// СЃС…РѕРґРёРјРѕСЃС‚Рё РёР»Рё СЂР°СЃС…РѕРґРёРјРѕСЃС‚Рё.
+			// РђР»РіРѕСЂРёС‚Рј СѓСЃС‚СЂР°РЅРµРЅРёСЏ СЃР»Р°Р±С‹С… СЃРІСЏР·РµР№:
 			//doublerealT const alpha_truncation = 0.2;
 			doublerealT alpha_truncation = my_amg_manager.truncation_interpolation;
-			// Рассмотрим каждую строку оператора интерполяции.
-			// Найдем сумму элементов данной строки каждого знака.
-			// Найдём максимальный по модулю элемент каждого знака.
-			// Удалим все элементы в операторе интерполяции каждого знака 
-			// которые меньше максимального по модулю того-же знака * на alpha_truncation.
-			// Проведём перемасштабирование чтобы сумма осталась неизменной.
-			// Сделаем это в памяти P. 17.02.2019
+			// Р Р°СЃСЃРјРѕС‚СЂРёРј РєР°Р¶РґСѓСЋ СЃС‚СЂРѕРєСѓ РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+			// РќР°Р№РґРµРј СЃСѓРјРјСѓ СЌР»РµРјРµРЅС‚РѕРІ РґР°РЅРЅРѕР№ СЃС‚СЂРѕРєРё РєР°Р¶РґРѕРіРѕ Р·РЅР°РєР°.
+			// РќР°Р№РґС‘Рј РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ РїРѕ РјРѕРґСѓР»СЋ СЌР»РµРјРµРЅС‚ РєР°Р¶РґРѕРіРѕ Р·РЅР°РєР°.
+			// РЈРґР°Р»РёРј РІСЃРµ СЌР»РµРјРµРЅС‚С‹ РІ РѕРїРµСЂР°С‚РѕСЂРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РєР°Р¶РґРѕРіРѕ Р·РЅР°РєР° 
+			// РєРѕС‚РѕСЂС‹Рµ РјРµРЅСЊС€Рµ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ РїРѕ РјРѕРґСѓР»СЋ С‚РѕРіРѕ-Р¶Рµ Р·РЅР°РєР° * РЅР° alpha_truncation.
+			// РџСЂРѕРІРµРґС‘Рј РїРµСЂРµРјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ С‡С‚РѕР±С‹ СЃСѓРјРјР° РѕСЃС‚Р°Р»Р°СЃСЊ РЅРµРёР·РјРµРЅРЅРѕР№.
+			// РЎРґРµР»Р°РµРј СЌС‚Рѕ РІ РїР°РјСЏС‚Рё P. 17.02.2019
 #pragma omp parallel for
 			for (integer i_1 = 1; i_1 <= n_a[ilevel-1]; i_1++) {
 				flag[i_1] = false; // init flag.
@@ -7512,10 +8342,18 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			integer icounter_truncation = iend_marker_position + 1;//1 + iaddR;
 
 			if (1) {
-				// Многопоточная версия.
+				// РњРЅРѕРіРѕРїРѕС‚РѕС‡РЅР°СЏ РІРµСЂСЃРёСЏ.
+
+				bool bstrong_trunc = false;
+				if (1&&((my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::PMIS) ||
+					(my_amg_manager.icoarseningtype == MY_AMG_SPLITTING_COARSENING_ALGORITHM::HMIS)))
+				{
+					// PMIS, HMIS
+					bstrong_trunc = true; // РЅРµ Р±РѕР»РµРµ 4 Р·Р°РїРёСЃРµР№ РІ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРµ РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
+				}
 
 				integer i_size_75 = 0;
-				// Это нельзя распараллелить.
+				// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 				for (integer ii = 1 + iaddR; ii <= iend_marker_position; ii++) {
 					if (flag[P[ii].j] == false) {
 						//row_ind_SRloc[P[ii].j] = ii;
@@ -7530,14 +8368,14 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 					flag[i_1] = false; // init flag.
 				}
 
-				// inicialization обязательна.
+				// inicialization РѕР±СЏР·Р°С‚РµР»СЊРЅР°.
 				integer* row_ind_SRloc = my_declaration_array<integer>(i_size_75, -1, "row_ind_SRloc");
 
 				//std::cout << "number of coarcenodes=" << numberofcoarcenodes << " i_size_75=" << i_size_75 <<"\n";
 
 				//system("pause");
 
-				// Это нельзя распараллелить.
+				// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ.
 				for (integer ii = 1 + iaddR; ii <= iend_marker_position; ii++) {
 					if (flag[P[ii].j] == false) {
 						row_ind_SRloc[P[ii].j] = ii;
@@ -7546,8 +8384,8 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 				//for (integer ii = 1 + iaddR; ii <= iend_marker_position; ii++) {
-				// Это нельзя распараллелить. 06.07.2019
-				// оператор интерполяции P заполняется строго последовательно.
+				// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёС‚СЊ. 06.07.2019
+				// РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё P Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ СЃС‚СЂРѕРіРѕ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ.
 				//#pragma omp parallel for
 				for (integer i_75 = 1; i_75 <= i_size_75; i_75++) {
 					if (row_ind_SRloc[i_75] != -1) {
@@ -7576,27 +8414,68 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 						doublerealT dsum_plus_new = 0.0;
 						doublerealT dsum_minus_new = 0.0;
 						
+						const integer IMAX_STRONG_TRUNC = 4;
+						integer icount_strong_trunc = 0;
+
 						while ((ii_65 <= iend_marker_position) && (P[ii_65].j == istr_65)) {
 							if ((P[ii_65].aij > 0) && (fabs(P[ii_65].aij) > alpha_truncation*dmax_plus)) {
-								dsum_plus_new += fabs(P[ii_65].aij);
+								if (bstrong_trunc) {
+									if (icount_strong_trunc < IMAX_STRONG_TRUNC) {
+										dsum_plus_new += fabs(P[ii_65].aij);
+									}
+									icount_strong_trunc++;
+								}
+								else {
+									dsum_plus_new += fabs(P[ii_65].aij);
+								}
 							}
 							if ((P[ii_65].aij < 0) && (fabs(P[ii_65].aij) > alpha_truncation*dmax_minus)) {
-								dsum_minus_new += fabs(P[ii_65].aij);
+								if (bstrong_trunc) {
+									if (icount_strong_trunc < IMAX_STRONG_TRUNC) {
+										dsum_minus_new += fabs(P[ii_65].aij);
+									}
+									icount_strong_trunc++;
+								}
+								else {
+									dsum_minus_new += fabs(P[ii_65].aij);
+								}
 							}
 							ii_65++;
 						}
-						// заполнение перемасштабированными.
+						// Р·Р°РїРѕР»РЅРµРЅРёРµ РїРµСЂРµРјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРЅС‹РјРё.
+
+						icount_strong_trunc = 0;
 						ii_65 = ii;
 						while ((ii_65 <= iend_marker_position) && (P[ii_65].j == istr_65)) {
 							if ((P[ii_65].aij > 0) && (fabs(P[ii_65].aij) > alpha_truncation*dmax_plus)) {
-								P[icounter_truncation] = P[ii_65];
-								P[icounter_truncation].aij = fabs(dsum_plus / dsum_plus_new)*P[ii_65].aij;
-								icounter_truncation++;
+								if (bstrong_trunc) {
+									if (icount_strong_trunc < IMAX_STRONG_TRUNC) {
+										P[icounter_truncation] = P[ii_65];
+										P[icounter_truncation].aij = fabs(dsum_plus / dsum_plus_new)*P[ii_65].aij;
+										icounter_truncation++;
+									}
+									icount_strong_trunc++;
+								}
+								else {
+									P[icounter_truncation] = P[ii_65];
+									P[icounter_truncation].aij = fabs(dsum_plus / dsum_plus_new)*P[ii_65].aij;
+									icounter_truncation++;
+								}
 							}
 							if ((P[ii_65].aij < 0) && (fabs(P[ii_65].aij) > alpha_truncation*dmax_minus)) {
-								P[icounter_truncation] = P[ii_65];
-								P[icounter_truncation].aij = fabs(dsum_minus / dsum_minus_new)*P[ii_65].aij;
-								icounter_truncation++;
+								if (bstrong_trunc) {
+									if (icount_strong_trunc < IMAX_STRONG_TRUNC) {
+										P[icounter_truncation] = P[ii_65];
+										P[icounter_truncation].aij = fabs(dsum_minus / dsum_minus_new)*P[ii_65].aij;
+										icounter_truncation++;
+									}
+									icount_strong_trunc++;
+								}
+								else {
+									P[icounter_truncation] = P[ii_65];
+									P[icounter_truncation].aij = fabs(dsum_minus / dsum_minus_new)*P[ii_65].aij;
+									icounter_truncation++;
+								}
 							}
 							ii_65++;
 						}
@@ -7609,7 +8488,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			}
 			else {
 
-				// Однопоточная версия.
+				// РћРґРЅРѕРїРѕС‚РѕС‡РЅР°СЏ РІРµСЂСЃРёСЏ.
 
 				for (integer ii = 1 + iaddR; ii <= iend_marker_position; ii++) {
 					if (flag[P[ii].j] == false) {
@@ -7644,7 +8523,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 							}
 							ii_65++;
 						}
-						// заполнение перемасштабированными.
+						// Р·Р°РїРѕР»РЅРµРЅРёРµ РїРµСЂРµРјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРЅС‹РјРё.
 						ii_65 = ii;
 						while ((ii_65 <= iend_marker_position) && (P[ii_65].j == istr_65)) {
 							if ((P[ii_65].aij > 0) && (fabs(P[ii_65].aij) > alpha_truncation*dmax_plus)) {
@@ -7664,10 +8543,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 				}
 			}
 
-			// Ужатие (обратное копирование).
+			// РЈР¶Р°С‚РёРµ (РѕР±СЂР°С‚РЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ).
 			integer ist_in_P = 1 + iaddR;
-			// Мы дописывали новые коэффициенты в конец матрицы интерполяции P.
-			// Это нельзя распараллеливать так явно.
+			// РњС‹ РґРѕРїРёСЃС‹РІР°Р»Рё РЅРѕРІС‹Рµ РєРѕСЌС„С„РёС†РёРµРЅС‚С‹ РІ РєРѕРЅРµС† РјР°С‚СЂРёС†С‹ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё P.
+			// Р­С‚Рѕ РЅРµР»СЊР·СЏ СЂР°СЃРїР°СЂР°Р»Р»РµР»РёРІР°С‚СЊ С‚Р°Рє СЏРІРЅРѕ.
 //#pragma omp parallel for
 			for (integer ii = iend_marker_position+1; ii <= icounter_truncation-1; ii++) {
 				P[ist_in_P++] = P[ii];
@@ -7687,40 +8566,40 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 		
 
-		// Этот оператор нужен для вычисления grid complexity для оператора 
-		// интерполяции и проекции. Данная информация важна для оптимизации количества выделяемой памяти.
+		// Р­С‚РѕС‚ РѕРїРµСЂР°С‚РѕСЂ РЅСѓР¶РµРЅ РґР»СЏ РІС‹С‡РёСЃР»РµРЅРёСЏ grid complexity РґР»СЏ РѕРїРµСЂР°С‚РѕСЂР° 
+		// РёРЅС‚РµСЂРїРѕР»СЏС†РёРё Рё РїСЂРѕРµРєС†РёРё. Р”Р°РЅРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ РІР°Р¶РЅР° РґР»СЏ РѕРїС‚РёРјРёР·Р°С†РёРё РєРѕР»РёС‡РµСЃС‚РІР° РІС‹РґРµР»СЏРµРјРѕР№ РїР°РјСЏС‚Рё.
 		if (ilevel - 1 == 0) {
 			nnz_P_memo_0 = iend_marker_position - (iaddR + 1) + 1;
 		}
 		nnz_P_memo_all = iend_marker_position;
 		
 
-		// где то надо разделить на ap, т.к. 
+		// РіРґРµ С‚Рѕ РЅР°РґРѕ СЂР°Р·РґРµР»РёС‚СЊ РЅР° ap, С‚.Рє. 
 		// R=P/ap. ????  
-		// НЕТ делить НЕ НАДО!!! т.к. в теории R=transpose(P).
+		// РќР•Рў РґРµР»РёС‚СЊ РќР• РќРђР”Рћ!!! С‚.Рє. РІ С‚РµРѕСЂРёРё R=transpose(P).
 
-		// Сортировка оператора интерполяции P по строкам 17.02.2018
+		// РЎРѕСЂС‚РёСЂРѕРІРєР° РѕРїРµСЂР°С‚РѕСЂР° РёРЅС‚РµСЂРїРѕР»СЏС†РёРё P РїРѕ СЃС‚СЂРѕРєР°Рј 17.02.2018
 		// heapsort(P,key==i,iaddR+1,iaddR+nnzR - 1);
 
 		
 		switch (imy_sort_algorithm) {
-		case COUNTING_SORT_ALG:
+		case MY_SORT_ALGORITHM:: COUNTING_SORT:
 			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, false, numberofcoarcenodes, indx_comparei);// numberofcoarcenodes <-> n_a[ilevel - 1]
 			break;
-		case QUICK_SORT_ALG:
+		case MY_SORT_ALGORITHM::QUICK_SORT:
 			//qs_abbys_heigh = 0;
 			//qs(P, 1 + iaddR, iaddR + nnzR - 1);
-			// Библиотечный алгоритм. O(nlog(n)).
-			// Не использует лишней памяти.
+			// Р‘РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј. O(nlog(n)).
+			// РќРµ РёСЃРїРѕР»СЊР·СѓРµС‚ Р»РёС€РЅРµР№ РїР°РјСЏС‚Рё.
 			std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
 			break;
-		case HEAP_SORT_ALG:
+		case MY_SORT_ALGORITHM::HEAP_SORT:
 			//HeapSort(P, 1 + iaddR, iaddR + nnzR - 1,comparei);
 			//LeftistHeapSort(P, 1 + iaddR, iaddR + nnzR - 1);
 			mySTDHeapSort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 			break;
-		case TIM_PETERSON_SORT_ALG:
-			// Сортировка Тима Петерсона 2002г.
+		case MY_SORT_ALGORITHM::TIM_SORT:
+			// РЎРѕСЂС‚РёСЂРѕРІРєР° РўРёРјР° РџРµС‚РµСЂСЃРѕРЅР° 2002Рі.
 			//timSort_amg(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparei);
 			gfx::timsort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1R);
 			break;
@@ -7735,10 +8614,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			std::cout << "first level size n="<< n <<"; number of coarcenodes="<< numberofcoarcenodes <<", procent = "<<100.0*numberofcoarcenodes/n<<"%\n";
 		}
 
-		// Проверка Restriction нет ли пропусков строк при интерполяции: 
-		// Роль R играет P сортированное по строкам (транспонированное).
-		if (1) {// Проверка обязательна. Она страхует от ошибок в новых версиях
-			// алгебраического многосеточного алгоритма.
+		// РџСЂРѕРІРµСЂРєР° Restriction РЅРµС‚ Р»Рё РїСЂРѕРїСѓСЃРєРѕРІ СЃС‚СЂРѕРє РїСЂРё РёРЅС‚РµСЂРїРѕР»СЏС†РёРё: 
+		// Р РѕР»СЊ R РёРіСЂР°РµС‚ P СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРµ РїРѕ СЃС‚СЂРѕРєР°Рј (С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРЅРѕРµ).
+		if (1) {// РџСЂРѕРІРµСЂРєР° РѕР±СЏР·Р°С‚РµР»СЊРЅР°. РћРЅР° СЃС‚СЂР°С…СѓРµС‚ РѕС‚ РѕС€РёР±РѕРє РІ РЅРѕРІС‹С… РІРµСЂСЃРёСЏС…
+			// Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРѕРіРѕ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅРѕРіРѕ Р°Р»РіРѕСЂРёС‚РјР°.
 #pragma omp parallel for
 			for (integer i_1 = 1; i_1 <= numberofcoarcenodes; i_1++) {
 				flag[i_1] = false; // init flag.
@@ -7761,7 +8640,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			for (integer i_1 = 1; i_1 <= numberofcoarcenodes; i_1++) {
 				if (flag[i_1] == false) {
 					//06.07.2019
-					// пропуск строки номер i_1
+					// РїСЂРѕРїСѓСЃРє СЃС‚СЂРѕРєРё РЅРѕРјРµСЂ i_1
 					std::cout << "fatal error!!! string number " << i_1 << " propushena\n";
 
 					system("PAUSE");
@@ -7779,7 +8658,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			ap_coarse = nullptr;
 		}
 	
-		// Освобождение оперативной памяти из под хеш-таблицы.02.02.2019
+		// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё РёР· РїРѕРґ С…РµС€-С‚Р°Р±Р»РёС†С‹.02.02.2019
 		free_hash_table_Gus_struct01();
 
 		if (bprint_mesage_diagnostic) {
@@ -7795,9 +8674,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 		// MARKER GUSTAVSON
 
-		// Нахождение матрицы грубосеточного уровня:
+		// РќР°С…РѕР¶РґРµРЅРёРµ РјР°С‚СЂРёС†С‹ РіСЂСѓР±РѕСЃРµС‚РѕС‡РЅРѕРіРѕ СѓСЂРѕРІРЅСЏ:
 		// Acorse=R*Afine*P;
-		// часть 1: R*Afine.
+		// С‡Р°СЃС‚СЊ 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -7817,10 +8696,10 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		integer istartAnew;
 
 
-		// Фред Густавсон IBM 1978.
-		// 23 октября 2015 года.
+		// Р¤СЂРµРґ Р“СѓСЃС‚Р°РІСЃРѕРЅ IBM 1978.
+		// 23 РѕРєС‚СЏР±СЂСЏ 2015 РіРѕРґР°.
 
-		// часть 1: R*Afine.
+		// С‡Р°СЃС‚СЊ 1: R*Afine.
 		//         xxxxxx
 		//         xxxxxx
 		//  xxxxxx xxxxxx xxxxxx
@@ -7828,24 +8707,24 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		//         xxxxxx
 		//         xxxxxx
 		//    R       Amat     [RA]
-		// Сортировка А по строкам.
+		// РЎРѕСЂС‚РёСЂРѕРІРєР° Рђ РїРѕ СЃС‚СЂРѕРєР°Рј.
 		/*
-		// 7 января 2016. Сортировка матрицы А была выполнена единожды при начале обработке данного уровня.
+		// 7 СЏРЅРІР°СЂСЏ 2016. РЎРѕСЂС‚РёСЂРѕРІРєР° РјР°С‚СЂРёС†С‹ Рђ Р±С‹Р»Р° РІС‹РїРѕР»РЅРµРЅР° РµРґРёРЅРѕР¶РґС‹ РїСЂРё РЅР°С‡Р°Р»Рµ РѕР±СЂР°Р±РѕС‚РєРµ РґР°РЅРЅРѕРіРѕ СѓСЂРѕРІРЅСЏ.
 		switch (imy_sort_algorithm) {
-		case COUNTING_SORT_ALG:
+		case MY_SORT_ALGORITHM:: COUNTING_SORT:
 		Counting_Sort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 		break;
-		case QUICK_SORT_ALG :
+		case MY_SORT_ALGORITHM::QUICK_SORT :
 		qs(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
-		// Библиотечный алгоритм. O(nlog(n)).
-		// Не использует лишней памяти.
+		// Р‘РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј. O(nlog(n)).
+		// РќРµ РёСЃРїРѕР»СЊР·СѓРµС‚ Р»РёС€РЅРµР№ РїР°РјСЏС‚Рё.
 		//std::sort(Amat + (1 + iadd)*sizeof(Ak1), Amat + (nnz_a[ilevel - 1] + iadd)*sizeof(Ak1), compAi);
 		break;
-		case HEAP_SORT_ALG:
+		case MY_SORT_ALGORITHM::HEAP_SORT:
 		HeapSort(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd, comparei);
 		break;
-		case TIM_PETERSON_SORT_ALG:
-			// Сортировка Тима Петерсона.
+		case MY_SORT_ALGORITHM::TIM_SORT:
+			// РЎРѕСЂС‚РёСЂРѕРІРєР° РўРёРјР° РџРµС‚РµСЂСЃРѕРЅР°.
 			timSort_amg(Amat, 1 + iadd, nnz_a[ilevel - 1] + iadd);
 			break;
 		default:
@@ -7853,7 +8732,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		break;
 		}
 		*/
-		// Преобразование к формату CRS.
+		// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ Рє С„РѕСЂРјР°С‚Сѓ CRS.
 
 		if (row_ind_SR != nullptr) {
 			free(row_ind_SR);
@@ -7875,13 +8754,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 		integer istart1 = 1 + iaddR;
 		integer iend1 = nnzR - 1 + iaddR;
-		// Роль R играет транспонированный (сортированный по строкам) оператор интерполяции.
+		// Р РѕР»СЊ R РёРіСЂР°РµС‚ С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРЅС‹Р№ (СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Р№ РїРѕ СЃС‚СЂРѕРєР°Рј) РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
 		calculate_row_ptr(istart1, iend1, row_ind_SR, row_ind_ER, flag, P);
 		
 			if (bQuick_sort_for_reorder) {
 				for (integer ii = 1; ii <= numberofcoarcenodes; ii++) {
 					// 14.04.2020
-					// В каждой строке i индексы столбца j отсортированы по возрастанию.		
+					// Р’ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРµ i РёРЅРґРµРєСЃС‹ СЃС‚РѕР»Р±С†Р° j РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ.		
 					//qs_abbys_heigh = 0;
 					// quicksort
 					//qsj(P, row_ind_SR[ii], row_ind_ER[ii]);
@@ -7895,16 +8774,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}			
 
 		istartAnew = nnz_a[ilevel - 1] + 1 + iadd;
-		istartAnew_mem = istartAnew;
+		//integer istartAnew_mem = istartAnew;
 
-		// Данные используемые для частичного формирователя суммы.
+		// Р”Р°РЅРЅС‹Рµ РёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РґР»СЏ С‡Р°СЃС‚РёС‡РЅРѕРіРѕ С„РѕСЂРјРёСЂРѕРІР°С‚РµР»СЏ СЃСѓРјРјС‹.
 		if (vector_sum != nullptr) {
 			free(vector_sum);
 			vector_sum = nullptr;
 		}
 		vector_sum = my_declaration_array<doublerealT>(n_a[ilevel - 1], 0.0, "vector_sum");
 
-		// Храним индексы ненулевых элементов в отсортированном порядке.
+		// РҐСЂР°РЅРёРј РёРЅРґРµРєСЃС‹ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРј РїРѕСЂСЏРґРєРµ.
 		if (index_visit != nullptr) {
 			free(index_visit);
 			index_visit = nullptr;
@@ -7913,18 +8792,25 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 		// hash_table nnz+1
-		// Огромного размера хеш-таблица.
-		// Огромный размер поэтому инициализация делается лишь единожды.
-		// размер от 0 до nnz включительно.
+		// РћРіСЂРѕРјРЅРѕРіРѕ СЂР°Р·РјРµСЂР° С…РµС€-С‚Р°Р±Р»РёС†Р°.
+		// РћРіСЂРѕРјРЅС‹Р№ СЂР°Р·РјРµСЂ РїРѕСЌС‚РѕРјСѓ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РґРµР»Р°РµС‚СЃСЏ Р»РёС€СЊ РµРґРёРЅРѕР¶РґС‹.
+		// СЂР°Р·РјРµСЂ РѕС‚ 0 РґРѕ nnz РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ.
 		bool* hash_table = my_declaration_array<bool>(n_a[ilevel - 1], false, "hash_table");
 
 
 		//#ifdef _NONAME_STUB29_10_2017
 #ifdef _OPENMP
 
-		// Параллельное умножение R*A. Результат пишется в А начиная с позиции istartAnew.
-        // P - это R, Amat - это А.
-		my_parallel8_sparse_matrix_by_matrix_multiplication_RA<doublereal>(Amat,
+	//	for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
+//#pragma omp parallel for
+			//for (integer i_91 = 0; i_91 < n + 1; i_91++) {
+				//vector_sum_m[i_9][i_91] = 0.0;
+			//}
+		//}
+
+		// РџР°СЂР°Р»Р»РµР»СЊРЅРѕРµ СѓРјРЅРѕР¶РµРЅРёРµ R*A. Р РµР·СѓР»СЊС‚Р°С‚ РїРёС€РµС‚СЃСЏ РІ Рђ РЅР°С‡РёРЅР°СЏ СЃ РїРѕР·РёС†РёРё istartAnew.
+        // P - СЌС‚Рѕ R, Amat - СЌС‚Рѕ Рђ.
+		my_parallel8_sparse_matrix_by_matrix_multiplication_RA<doublerealT>(Amat,
 			P, istartAnew, istartAnew_m,
 			row_ind_SR, row_ind_ER, row_startA, 
 			numberofcoarcenodes, iKnumber_thread,
@@ -7932,15 +8818,15 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			vector_sum_m, index_size_m,
 			nsizeA,n,nnz, ilevel,
 			bprint_mesage_diagnostic, n_a, AccumulqtorA_m_SIZE8,
-			AccumulqtorA_m, istartAnew_mem);
+			AccumulqtorA_m);
 
 #else
 
-		// Умножение R*A. Результат пишется в А начиная с позиции istartAnew.
-		// P - это R, Amat - это А.
-		  my_sparse_matrix_by_matrix_multiplication_RA<doublereal>(Amat, P, istartAnew,
+		// РЈРјРЅРѕР¶РµРЅРёРµ R*A. Р РµР·СѓР»СЊС‚Р°С‚ РїРёС€РµС‚СЃСЏ РІ Рђ РЅР°С‡РёРЅР°СЏ СЃ РїРѕР·РёС†РёРё istartAnew.
+		// P - СЌС‚Рѕ R, Amat - СЌС‚Рѕ Рђ.
+		  my_sparse_matrix_by_matrix_multiplication_RA<doublerealT>(Amat, P, istartAnew,
 			      row_ind_SR, row_ind_ER, row_startA, numberofcoarcenodes,
-				  // Вспомогательные данные.
+				  // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ.
 				  hash_table, index_visit, vector_sum, nsizeA);
 
 #endif
@@ -7966,69 +8852,69 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-		// Часть 2. [R*Afine]*P=Abuf*P.
-		// Сортировка [R*А] по i.
+		// Р§Р°СЃС‚СЊ 2. [R*Afine]*P=Abuf*P.
+		// РЎРѕСЂС‚РёСЂРѕРІРєР° [R*Рђ] РїРѕ i.
 		//heapsort(Amat, key=i*n_coarce + j, 1, nnz_a[ilevel - 1]);
 
-		// В результате работы алгоритма разреженного матричного умножения по Ф. Густавсону,
-		// мы и так имеем отсортированный по строкам результат, поэтому дополнительная 
-		// сортировка не требуется. Это проверено 11 января 2016.
-		// 11 января 2016.
+		// Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ СЂР°Р±РѕС‚С‹ Р°Р»РіРѕСЂРёС‚РјР° СЂР°Р·СЂРµР¶РµРЅРЅРѕРіРѕ РјР°С‚СЂРёС‡РЅРѕРіРѕ СѓРјРЅРѕР¶РµРЅРёСЏ РїРѕ Р¤. Р“СѓСЃС‚Р°РІСЃРѕРЅСѓ,
+		// РјС‹ Рё С‚Р°Рє РёРјРµРµРј РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅС‹Р№ РїРѕ СЃС‚СЂРѕРєР°Рј СЂРµР·СѓР»СЊС‚Р°С‚, РїРѕСЌС‚РѕРјСѓ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ 
+		// СЃРѕСЂС‚РёСЂРѕРІРєР° РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ. Р­С‚Рѕ РїСЂРѕРІРµСЂРµРЅРѕ 11 СЏРЅРІР°СЂСЏ 2016.
+		// 11 СЏРЅРІР°СЂСЏ 2016.
 
 		
 
 
-		// Prolongation должна быть упорядочена по j.
-		// Начальная позиция элементов матрицы грубосеточного уровня.
+		// Prolongation РґРѕР»Р¶РЅР° Р±С‹С‚СЊ СѓРїРѕСЂСЏРґРѕС‡РµРЅР° РїРѕ j.
+		// РќР°С‡Р°Р»СЊРЅР°СЏ РїРѕР·РёС†РёСЏ СЌР»РµРјРµРЅС‚РѕРІ РјР°С‚СЂРёС†С‹ РіСЂСѓР±РѕСЃРµС‚РѕС‡РЅРѕРіРѕ СѓСЂРѕРІРЅСЏ.
 		integer istartAnew2 = istartAnew;
 
 
 
-		// Быстрее этого кода на основе идеи слияния списков уже не будет.
-		// 17 октября 2015. Нужно двигаться в сторону Писсанецки.
+		// Р‘С‹СЃС‚СЂРµРµ СЌС‚РѕРіРѕ РєРѕРґР° РЅР° РѕСЃРЅРѕРІРµ РёРґРµРё СЃР»РёСЏРЅРёСЏ СЃРїРёСЃРєРѕРІ СѓР¶Рµ РЅРµ Р±СѓРґРµС‚.
+		// 17 РѕРєС‚СЏР±СЂСЏ 2015. РќСѓР¶РЅРѕ РґРІРёРіР°С‚СЊСЃСЏ РІ СЃС‚РѕСЂРѕРЅСѓ РџРёСЃСЃР°РЅРµС†РєРё.
 		if (bprint_mesage_diagnostic) {
 
 			std::cout << "nnz left operand=" << istartAnew - (nnz_a[ilevel - 1] + 1 + iadd) << ", nnz right operand="<< nnzR <<"\n";
 		}
 		
-		// Фред Густавсон IBM 1978
-		// В ядре кода Густавсона нету ни одного ветвления,
-		// а мы знаем что в результате профайлинга предыдущих версий кода:
-		// (наивный, слияние, Писсанецки) львиная доля вычислительной работы уходила
-		// на сравнения (ветвления) в отношении примерно 30 к 1. 30 сравнений на одно суммирование.
-		// 23 октября 2015 года.
-		// 6 января 2016 года Добавлено АВЛ дерево.
+		// Р¤СЂРµРґ Р“СѓСЃС‚Р°РІСЃРѕРЅ IBM 1978
+		// Р’ СЏРґСЂРµ РєРѕРґР° Р“СѓСЃС‚Р°РІСЃРѕРЅР° РЅРµС‚Сѓ РЅРё РѕРґРЅРѕРіРѕ РІРµС‚РІР»РµРЅРёСЏ,
+		// Р° РјС‹ Р·РЅР°РµРј С‡С‚Рѕ РІ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РїСЂРѕС„Р°Р№Р»РёРЅРіР° РїСЂРµРґС‹РґСѓС‰РёС… РІРµСЂСЃРёР№ РєРѕРґР°:
+		// (РЅР°РёРІРЅС‹Р№, СЃР»РёСЏРЅРёРµ, РџРёСЃСЃР°РЅРµС†РєРё) Р»СЊРІРёРЅР°СЏ РґРѕР»СЏ РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅРѕР№ СЂР°Р±РѕС‚С‹ СѓС…РѕРґРёР»Р°
+		// РЅР° СЃСЂР°РІРЅРµРЅРёСЏ (РІРµС‚РІР»РµРЅРёСЏ) РІ РѕС‚РЅРѕС€РµРЅРёРё РїСЂРёРјРµСЂРЅРѕ 30 Рє 1. 30 СЃСЂР°РІРЅРµРЅРёР№ РЅР° РѕРґРЅРѕ СЃСѓРјРјРёСЂРѕРІР°РЅРёРµ.
+		// 23 РѕРєС‚СЏР±СЂСЏ 2015 РіРѕРґР°.
+		// 6 СЏРЅРІР°СЂСЏ 2016 РіРѕРґР° Р”РѕР±Р°РІР»РµРЅРѕ РђР’Р› РґРµСЂРµРІРѕ.
 
 
-		// Рабочая версия алгоритма Фреда Густавсона.
+		// Р Р°Р±РѕС‡Р°СЏ РІРµСЂСЃРёСЏ Р°Р»РіРѕСЂРёС‚РјР° Р¤СЂРµРґР° Р“СѓСЃС‚Р°РІСЃРѕРЅР°.
 		// IBM 1978 Sparse Matrix multiplication.
 
-		// Сортировка обязательно требуется.
-		// Преобразование обоих матриц в формат CRS.
-		// Сортировка матрицы интерполяции по столбцам.
+		// РЎРѕСЂС‚РёСЂРѕРІРєР° РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ С‚СЂРµР±СѓРµС‚СЃСЏ.
+		// РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ РѕР±РѕРёС… РјР°С‚СЂРёС† РІ С„РѕСЂРјР°С‚ CRS.
+		// РЎРѕСЂС‚РёСЂРѕРІРєР° РјР°С‚СЂРёС†С‹ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё РїРѕ СЃС‚РѕР»Р±С†Р°Рј.
 		switch (imy_sort_algorithm) {
-		case COUNTING_SORT_ALG:
-			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej);//подходит именно n_a[ilevel - 1]
+		case MY_SORT_ALGORITHM::COUNTING_SORT:
+			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej);//РїРѕРґС…РѕРґРёС‚ РёРјРµРЅРЅРѕ n_a[ilevel - 1]
 			break;
-		case QUICK_SORT_ALG:
+		case MY_SORT_ALGORITHM::QUICK_SORT:
 			//qs_abbys_heigh = 0;
 			//qsj(P, 1 + iaddR, iaddR + nnzR - 1);
-			// Библиотечный алгоритм. O(nlog(n)).
-			// Не использует лишней памяти.
+			// Р‘РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј. O(nlog(n)).
+			// РќРµ РёСЃРїРѕР»СЊР·СѓРµС‚ Р»РёС€РЅРµР№ РїР°РјСЏС‚Рё.
 			std::sort(P + 1 + iaddR, P + iaddR + nnzR - 1+1, compareAk1P);
 			break;
-		case HEAP_SORT_ALG:
+		case MY_SORT_ALGORITHM::HEAP_SORT:
 			//HeapSort(P, 1 + iaddR, iaddR + nnzR - 1, comparej);
 			//LeftistHeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 			mySTDHeapSort(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			break;
-		case TIM_PETERSON_SORT_ALG:
-			// Сортировка Тима Петерсома 2002.
+		case MY_SORT_ALGORITHM::TIM_SORT:
+			// РЎРѕСЂС‚РёСЂРѕРІРєР° РўРёРјР° РџРµС‚РµСЂСЃРѕРјР° 2002.
 			//timSort_amg(P, 1 + iaddR, iaddR + nnzR - 1, indx_comparej);
 			gfx::timsort(P + 1 + iaddR, P + iaddR + nnzR - 1 + 1, compareAk1P);
 			break;
 		default:
-			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej);//подходит именно n_a[ilevel - 1]
+			Counting_Sort(P, 1 + iaddR, iaddR + nnzR - 1, n_a[ilevel - 1], indx_comparej);//РїРѕРґС…РѕРґРёС‚ РёРјРµРЅРЅРѕ n_a[ilevel - 1]
 			break;
 		}
 
@@ -8055,16 +8941,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		if (bQuick_sort_for_reorder) {
 			for (integer ii = 1; ii <= numberofcoarcenodes; ii++) {
 				// 14.04.2020
-				// В каждой строке i индексы столбца j отсортированы по возрастанию.		
+				// Р’ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРµ i РёРЅРґРµРєСЃС‹ СЃС‚РѕР»Р±С†Р° j РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ.		
 				qs_abbys_heigh = 0;
 				// quicksort
 				qsj(Amat, row_ind_AS[ii], row_ind_AE[ii]);
 			}
 		}
 
-		// Инициализация чрезвычайно важна, т.к. 
-		// обязательно присутствуют пустые строки которые
-		// надо корректно обрабатывать.
+		// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ С‡СЂРµР·РІС‹С‡Р°Р№РЅРѕ РІР°Р¶РЅР°, С‚.Рє. 
+		// РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РїСЂРёСЃСѓС‚СЃС‚РІСѓСЋС‚ РїСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё РєРѕС‚РѕСЂС‹Рµ
+		// РЅР°РґРѕ РєРѕСЂСЂРµРєС‚РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ.
 		if (row_ind_PS != nullptr) {
 			free(row_ind_PS);
 			row_ind_PS = nullptr;
@@ -8089,7 +8975,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		if (bQuick_sort_for_reorder) {
 			for (integer ii = 1; ii <= n_a[ilevel - 1]; ii++) {
 				// 14.04.2020
-				// В каждой строке j индексы столбца i отсортированы по возрастанию.		
+				// Р’ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРµ j РёРЅРґРµРєСЃС‹ СЃС‚РѕР»Р±С†Р° i РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ.		
 				//qs_abbys_heigh = 0;
 				// quicksort
 				//qs(P, row_ind_PS[ii], row_ind_PE[ii]);
@@ -8097,16 +8983,16 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			}
 		}
 
-		// Накопитель результата.
+		// РќР°РєРѕРїРёС‚РµР»СЊ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 		//vector_sum = new doublerealT[numberofcoarcenodes + 1];
 		/*
-		// Память уже была освобождена выше по тексту программы.
+		// РџР°РјСЏС‚СЊ СѓР¶Рµ Р±С‹Р»Р° РѕСЃРІРѕР±РѕР¶РґРµРЅР° РІС‹С€Рµ РїРѕ С‚РµРєСЃС‚Сѓ РїСЂРѕРіСЂР°РјРјС‹.
 		if (vector_sum != nullptr) {
 			free(vector_sum);
 			vector_sum = nullptr;
 		}
 		*/
-		// Данные используемые для частичного формирователя суммы.
+		// Р”Р°РЅРЅС‹Рµ РёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РґР»СЏ С‡Р°СЃС‚РёС‡РЅРѕРіРѕ С„РѕСЂРјРёСЂРѕРІР°С‚РµР»СЏ СЃСѓРјРјС‹.
 		if (vector_sum != nullptr) {
 			free(vector_sum);
 			vector_sum = nullptr;
@@ -8114,7 +9000,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		vector_sum = my_declaration_array<doublerealT>(numberofcoarcenodes, 0.0, "vector_sum");
 
 		//integer size_v = sizeof(doublerealT)*(1 + numberofcoarcenodes);
-		// Храним индексы ненулевых элементов в отсортированном порядке.
+		// РҐСЂР°РЅРёРј РёРЅРґРµРєСЃС‹ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅРЅРѕРј РїРѕСЂСЏРґРєРµ.
 		if (index_visit != nullptr) {
 			free(index_visit);
 			index_visit = nullptr;
@@ -8128,6 +9014,13 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		//#ifdef _NONAME_STUB29_10_2017
 #ifdef _OPENMP
 
+		//for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
+//#pragma omp parallel for
+			//for (integer i_91 = 0; i_91 < n_a[ilevel - 1] + 1; i_91++) {
+				//vector_sum_m[i_9][i_91] = 0.0;
+			//}
+		//}
+
 		my_parallel8_sparse_matrix_by_matrix_multiplication_AP<doublerealT>(Amat,
 			P,  istartAnew, istartAnew_m,
 			row_ind_AS, row_ind_AE, row_ind_PS, row_ind_PE,
@@ -8139,22 +9032,22 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			bprint_mesage_diagnostic,
 			n_a, AccumulqtorA_m_SIZE8,
 			AccumulqtorA_m, istartAnew2,
-			// для корректировки ошибочных строк
-	        // с отрицательной диагональю
+			// РґР»СЏ РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєРё РѕС€РёР±РѕС‡РЅС‹С… СЃС‚СЂРѕРє
+	        // СЃ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕР№ РґРёР°РіРѕРЅР°Р»СЊСЋ
 			ibsp_length, i_bsp_LIMIT, bsp, iVar,
 			bcontinue_global);
 
 #else
 
-		// Умножение разреженной матрицы A на разреженную матрицу P.
-		// Результат записывается в матрицу А начиная с позиции istartAnew2.
+		// РЈРјРЅРѕР¶РµРЅРёРµ СЂР°Р·СЂРµР¶РµРЅРЅРѕР№ РјР°С‚СЂРёС†С‹ A РЅР° СЂР°Р·СЂРµР¶РµРЅРЅСѓСЋ РјР°С‚СЂРёС†Сѓ P.
+		// Р РµР·СѓР»СЊС‚Р°С‚ Р·Р°РїРёСЃС‹РІР°РµС‚СЃСЏ РІ РјР°С‚СЂРёС†Сѓ Рђ РЅР°С‡РёРЅР°СЏ СЃ РїРѕР·РёС†РёРё istartAnew2.
 		my_sparse_matrix_by_matrix_multiplication_AP<doublerealT>(Amat,
 			P, istartAnew2,
 			row_ind_AS, row_ind_AE, row_ind_PS, row_ind_PE, numberofcoarcenodes,
-			// Вспомогательные данные.
+			// Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ.
 			hash_table, index_visit, vector_sum, nsizeA,
-			// для корректировки ошибочных строк
-			// с отрицательной диагональю
+			// РґР»СЏ РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєРё РѕС€РёР±РѕС‡РЅС‹С… СЃС‚СЂРѕРє
+			// СЃ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕР№ РґРёР°РіРѕРЅР°Р»СЊСЋ
 			ibsp_length, i_bsp_LIMIT, ilevel, bsp);
 
 #endif
@@ -8192,7 +9085,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}
 
 		
-		// Копируем матрицу А следующего уровня влево вплотную к матрице первоначального уровня.
+		// РљРѕРїРёСЂСѓРµРј РјР°С‚СЂРёС†Сѓ Рђ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓСЂРѕРІРЅСЏ РІР»РµРІРѕ РІРїР»РѕС‚РЅСѓСЋ Рє РјР°С‚СЂРёС†Рµ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕРіРѕ СѓСЂРѕРІРЅСЏ.
 		//integer icounter3 = 1;
 		 integer nsize = istartAnew2 - (istartAnew);
 		//doublereal mH = pow(icounter - 1, 0.33333);
@@ -8215,9 +9108,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		if (bprint_mesage_diagnostic) {
 			std::cout << "Prolongation is construct.\n";			 
 
-			// Общее количество узлов F у которых нет соседних С узлов.
+			// РћР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СѓР·Р»РѕРІ F Сѓ РєРѕС‚РѕСЂС‹С… РЅРµС‚ СЃРѕСЃРµРґРЅРёС… РЎ СѓР·Р»РѕРІ.
 			std::cout << "diagnostic: the number of neighbors that are not Coarse (C) nodes " << the_number_of_neighbors_that_are_not_C_nodes << "\n";
-			// Количество F узлов у которых только один интерполяционный С сосед.
+			// РљРѕР»РёС‡РµСЃС‚РІРѕ F СѓР·Р»РѕРІ Сѓ РєРѕС‚РѕСЂС‹С… С‚РѕР»СЊРєРѕ РѕРґРёРЅ РёРЅС‚РµСЂРїРѕР»СЏС†РёРѕРЅРЅС‹Р№ РЎ СЃРѕСЃРµРґ.
 			std::cout << "diagnostic: the number of Fine (F) nodes with one single strong Coarse (C) neighbor=" << number_of_F_nodes_with_one_single_strong_C_neighbor << " \n";
 			std::cout << "diagnostic: the number of Fine (F) nodes with one single strong Coarse (C) neighbor\n";
 			std::cout << "and to the same not having strong Fine(F) neighbors " << number_of_F_nodes_with_one_single_strong_C_neighborF << "\n";
@@ -8233,11 +9126,11 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			C_numerate = nullptr;
 		}
 
-		// Использование упорядочивания типа F/C ускоряет сходимость вычислительного процесса,
-		// сокращая число V циклов требуемых для достижения сходимости.
+		// РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СѓРїРѕСЂСЏРґРѕС‡РёРІР°РЅРёСЏ С‚РёРїР° F/C СѓСЃРєРѕСЂСЏРµС‚ СЃС…РѕРґРёРјРѕСЃС‚СЊ РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР°,
+		// СЃРѕРєСЂР°С‰Р°СЏ С‡РёСЃР»Рѕ V С†РёРєР»РѕРІ С‚СЂРµР±СѓРµРјС‹С… РґР»СЏ РґРѕСЃС‚РёР¶РµРЅРёСЏ СЃС…РѕРґРёРјРѕСЃС‚Рё.
 		integer iaddFCcolor = 0;
 		for (integer i_71 = 0; i_71 < ilevel - 1; i_71++) iaddFCcolor += n_a[i_71];
-		for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1] == true) {
+		for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++) if (this_is_C_node[i_1]) {
 			F_false_C_true[iaddFCcolor + i_1] = true;
 		}
 
@@ -8250,15 +9143,15 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 
 		if (bcontinue_global) {
-			// если bad string не встречалось.
+			// РµСЃР»Рё bad string РЅРµ РІСЃС‚СЂРµС‡Р°Р»РѕСЃСЊ.
 			ilevel++;	
 		}
 		
 
 		if (bStrongTransposeON) {
-			// Освобождение ОЗУ.
+			// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РћР—РЈ.
 
-			// Обычный линейный список.
+			// РћР±С‹С‡РЅС‹Р№ Р»РёРЅРµР№РЅС‹Р№ СЃРїРёСЃРѕРє.
 			if (hash_StrongTranspose_collection1 != nullptr) {
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
@@ -8271,7 +9164,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			}
 
 			if (isize_hash_StrongTranspose_collection != nullptr) {
-				delete isize_hash_StrongTranspose_collection;
+				delete[] isize_hash_StrongTranspose_collection;
 				isize_hash_StrongTranspose_collection = nullptr;
 			}
 		}
@@ -8288,7 +9181,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}
 
 
-		// построение иерархии уровней досрочно прекращено.
+		// РїРѕСЃС‚СЂРѕРµРЅРёРµ РёРµСЂР°СЂС…РёРё СѓСЂРѕРІРЅРµР№ РґРѕСЃСЂРѕС‡РЅРѕ РїСЂРµРєСЂР°С‰РµРЅРѕ.
 	//BAD_STRING_MARKER:
 
 		
@@ -8297,17 +9190,17 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		}
 		if (debug_reshime) system("pause");	
 
-		//проверка конец
+		//РїСЂРѕРІРµСЂРєР° РєРѕРЅРµС†
 
-	} // иерархия сеток построена.
+	} // РёРµСЂР°СЂС…РёСЏ СЃРµС‚РѕРє РїРѕСЃС‚СЂРѕРµРЅР°.
 
 	if (bprint_mesage_diagnostic) {
 		std::cout << "   ***   CAMG ITERATOR   ***" << std::endl;
 	}
 
 
-	 // Освобождение памяти используемой на этапе построения иерархии матриц.
-	 // Освобождение оперативной памяти.
+	 // РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РїР°РјСЏС‚Рё РёСЃРїРѕР»СЊР·СѓРµРјРѕР№ РЅР° СЌС‚Р°РїРµ РїРѕСЃС‚СЂРѕРµРЅРёСЏ РёРµСЂР°СЂС…РёРё РјР°С‚СЂРёС†.
+	 // РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕРїРµСЂР°С‚РёРІРЅРѕР№ РїР°РјСЏС‚Рё.
 	if (threshold_quick_all != nullptr) {
 		free(threshold_quick_all);
 		threshold_quick_all = nullptr;
@@ -8339,38 +9232,36 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 	ilevel--; // 4.01.2017
 	if (n_a[ilevel] < 5) {
-		// Чтобы не было последних уровней где меньше 5 узлов сетки.
+		// Р§С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РїРѕСЃР»РµРґРЅРёС… СѓСЂРѕРІРЅРµР№ РіРґРµ РјРµРЅСЊС€Рµ 5 СѓР·Р»РѕРІ СЃРµС‚РєРё.
 		ilevel--;
 	}
 
 	
 
-	// Вычисляем и запоминаем grid complexity
-	// Операторная сложность.
+	// Р’С‹С‡РёСЃР»СЏРµРј Рё Р·Р°РїРѕРјРёРЅР°РµРј grid complexity
+	// РћРїРµСЂР°С‚РѕСЂРЅР°СЏ СЃР»РѕР¶РЅРѕСЃС‚СЊ.
 	doublerealT dr_grid_complexity = (((double)(1.0*iadd)) / ((double)(1.0*nnz_a[0])));
 	if (bprint_mesage_diagnostic) {
 		printf("grid complexity is %1.2f\n", dr_grid_complexity);
 		printf("Prolongation operator complexity is |Psigma|/|P1|=%1.2f %1.2f*n\n", (doublerealT)(1.0*nnz_P_memo_all / nnz_P_memo_0), (doublerealT)(1.0*nnz_P_memo_all / n_a[0]));
 		doublerealT sizegb = 16 * iadd / 1.0e9;
 		printf("memory usage is %e Gb. reserved %e Gb. ratio is equal = %e\n", sizegb, 16 * nsizeA / 1.0e9, sizegb / (16 * nsizeA / 1.0e9));
-	}
-
 	
-
-	// 31.224s [50.986] 2D m=81 debug x64 acumulqtor
-	// 13.792 [18.156] 2D m=81 realese x64 acumulqtor
-	// 8.028s 2D m=81 debug x64 rozetka
-	// 3.827 2D m=81 realese x64 rozetka
-	if (bprint_mesage_diagnostic) {
+		
+	    // 31.224s [50.986] 2D m=81 debug x64 acumulqtor
+	    // 13.792 [18.156] 2D m=81 realese x64 acumulqtor
+	    // 8.028s 2D m=81 debug x64 rozetka
+	    // 3.827 2D m=81 realese x64 rozetka
+	
 		std::cout << "number of levels=" << ilevel << std::endl;
-		std::cout << "levels   unknowns        nonzeros     sample_pattern"<<std::endl;
+		std::cout << "levels    unknowns			nonzeros     sample_pattern"<<std::endl;
 		// <= ilevel 4.01.2017
 		for (integer i_1 = 0; i_1 <= ilevel; i_1++) {
 			if (i_1 == 0) {
-				std::cout << i_1 << " \t " << n_a[i_1]<< "       " << nnz_a[i_1] << "    \t " << (integer)(nnz_a[i_1] / n_a[i_1]) << "\n";
+				std::cout << std::setw(2) << std::right << i_1 << " \t " << std::setw(9) << std::right << n_a[i_1]<<  "            " << std::setw(11) << std::right << nnz_a[i_1] <<  "         "<< "\t" << std::setfill(' ') << std::setw(4) << std::right << (integer)(nnz_a[i_1] / n_a[i_1]) << "\n";
 			}
 			else {
-				std::cout << i_1 << " \t " << n_a[i_1] << " " << (100.0 * n_a[i_1] / n_a[i_1 - 1]) << "%   " << nnz_a[i_1] << " " << (100.0 * nnz_a[i_1] / nnz_a[i_1 - 1]) << "% \t " << (integer)(nnz_a[i_1] / n_a[i_1]) << "\n";
+				std::cout << std::setw(2) << std::right << i_1 << " \t " << std::setw(9) << std::right << n_a[i_1] << " " << std::setfill(' ') << std::setw(7) << std::right <<  (100.0 * n_a[i_1] / n_a[i_1 - 1]) << "%   " << std::setw(11) << std::right << nnz_a[i_1] << " " << std::setfill(' ') << std::setw(7) << std::right << (100.0 * nnz_a[i_1] / nnz_a[i_1 - 1]) << "% \t " << std::setw(4) << std::right << (integer)(nnz_a[i_1] / n_a[i_1]) << "\n";
 			}
 		}
 		std::cout << "Graph(Mesh) ierarhion is construct sucsseful..." << std::endl;
@@ -8384,9 +9275,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		std::cout << "memory optimization 13 november 2016."<< std::endl;
 		std::cout << "ierarhion matrix Amat..."<< std::endl;
 	}
-		// Уменьшение памяти отводимой под хранение матрицы А.
-		// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
-		my_realloc_memory<doublerealT>(Amat.aij, ((iadd + 2)));
+		// РЈРјРµРЅСЊС€РµРЅРёРµ РїР°РјСЏС‚Рё РѕС‚РІРѕРґРёРјРѕР№ РїРѕРґ С…СЂР°РЅРµРЅРёРµ РјР°С‚СЂРёС†С‹ Рђ.
+		// РњР°С‚СЂРёС†Р° РґРѕР»Р¶РЅР° Р·Р°РЅРёРјР°С‚СЊ РІ РїР°РјСЏС‚Рё РЅРµ Р±РѕР»РµРµ С‡РµРј РїРѕРґ РЅРµС‘ РЅСѓР¶РЅРѕ Рё РЅРµ РјРµРіР°Р±Р°Р№С‚РѕРј Р±РѕР»СЊС€Рµ.
+		my_realloc_memory<real_mix_precision>(Amat.aij, ((iadd + 2)));
 		
 		
 		if (Amat.abs_aij != nullptr) {
@@ -8395,9 +9286,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 			Amat.abs_aij = nullptr;
 		}
 
-		my_realloc_memory<integer>(Amat.i, ((iadd + 2)));
+		my_realloc_memory<integer_mix_precision>(Amat.i, ((iadd + 2)));
 				
-		my_realloc_memory<integer>(Amat.j, ((iadd + 2)));
+		my_realloc_memory<integer_mix_precision>(Amat.j, ((iadd + 2)));
 		
 		
 		if (bprint_mesage_diagnostic) {
@@ -8412,9 +9303,9 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 		//#ifdef	_NONAME_STUB29_10_2017
 #ifdef _OPENMP
-	// Освобождение озу ГУСТАВСОН умножение разреженных матриц.
-	// Единожды!!!
-		for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
+	// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ РѕР·Сѓ Р“РЈРЎРўРђР’РЎРћРќ СѓРјРЅРѕР¶РµРЅРёРµ СЂР°Р·СЂРµР¶РµРЅРЅС‹С… РјР°С‚СЂРёС†.
+	// Р•РґРёРЅРѕР¶РґС‹!!!
+		for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 			//free(vector_sum_m[i_9]);
 			//free(index_visit_m[i_9]);
 			//free(hash_table_m[i_9]);
@@ -8432,7 +9323,7 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 		hash_table_m = nullptr;
 		index_size_m = nullptr;
 
-		for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
+		for (int i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 			delete[] AccumulqtorA_m[i_9];
 			AccumulqtorA_m[i_9] = nullptr;
 		}
@@ -8459,15 +9350,21 @@ void setup_phase_classic_aglomerative_amg6(Ak2 &Amat,
 
 } // setup_phase_classic_aglomerative_amg6
 
-
+// Р’РµСЂСЃРёСЏ classic_aglomerative_amg6 РЅР° РѕСЃРЅРѕРІРµ РІРµСЂСЃРёРё
+// classic_aglomerative_amg4. 
+// Setup Рё Solution С„Р°Р·С‹ РѕС‚РґРµР»РµРЅС‹ РґСЂСѓРі РѕС‚ РґСЂСѓРіР°.
+// РўРµРїРµСЂСЊ РІ classic_aglomerative_amg6 СЃРѕРґРµСЂР¶РёС‚СЃСЏ С‚РѕР»СЊРєРѕ РІС‹Р·РѕРІ 
+// setup Рё solution С„Р°Р·. РЎРј. РѕС‚РґРµР»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё РґР»СЏ РїРѕРґСЂРѕР±РЅРѕСЃС‚РµР№.
+// Р’ РІРµСЂСЃРёРё classic_aglomerative_amg4 СЂР°Р·РґРµР»РµРЅРёРµ Setup Рё Solution С„Р°Р·
+// РїСЂРѕРёР·РІРµРґРµРЅРѕ РЅРµ Р±С‹Р»Рѕ.
 template <typename doublerealT>
 bool classic_aglomerative_amg6(Ak2& Amat,
-	integer nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
+	integer nsizeA, // РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІС‹РґРµР»РµРЅРЅРѕРµ РёР·РІРЅРµ РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° РјР°С‚СЂРёС† Рђ	
 	integer nnz, // number of non zero elements
 	integer n, // dimension of vectors x and b.	
-	doublereal*& x, //solution (решение) 
-	doublereal*& b, // rthdsd (правая часть).
-	doublerealT& ret74,
+	doublereal*& x, //solution (СЂРµС€РµРЅРёРµ) 
+	doublereal*& b, // rthdsd (РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ).
+	real_mix_precision& ret74,
 	integer iVar,
 	bool bmemory_savings,
 	BLOCK*& my_body, integer& lb, integer maxelm_out
@@ -8475,39 +9372,38 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 
 	amg_precond_param amg_pp;
 	
-	// Не более 100 ошибочных строк
-	// с отрицательной диагональю.
+	// РќРµ Р±РѕР»РµРµ 100 РѕС€РёР±РѕС‡РЅС‹С… СЃС‚СЂРѕРє
+	// СЃ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕР№ РґРёР°РіРѕРЅР°Р»СЊСЋ.
 	const int i_bsp_LIMIT = 100;
 	BAD_STRING_PATCHING* bsp = nullptr;
 	integer ibsp_length = 0;
 
-	// Оператор проекции равен оператору интерполяции с точностью до транспонирования.
-	Ak1* P = nullptr;
+	// РћРїРµСЂР°С‚РѕСЂ РїСЂРѕРµРєС†РёРё СЂР°РІРµРЅ РѕРїРµСЂР°С‚РѕСЂСѓ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё СЃ С‚РѕС‡РЅРѕСЃС‚СЊСЋ РґРѕ С‚СЂР°РЅСЃРїРѕРЅРёСЂРѕРІР°РЅРёСЏ.
+	Ak1* P = nullptr; // РѕРїРµСЂР°С‚РѕСЂ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё.
 
-	integer* n_a = nullptr; // число неизвестных на каждом из уровней.
-	integer* nnz_a = nullptr; // число ненулевых коэффициентов в матрице А
-	bool* flag = nullptr;
+	integer* n_a = nullptr; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С… РЅР° РєР°Р¶РґРѕРј РёР· СѓСЂРѕРІРЅРµР№.
+	integer* nnz_a = nullptr; // С‡РёСЃР»Рѕ РЅРµРЅСѓР»РµРІС‹С… РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ Рђ
+	bool* flag = nullptr; 
 
-	integer* nnz_aRP = nullptr;
-	bool* F_false_C_true = nullptr;
+	integer* nnz_aRP = nullptr; // С‡РёСЃР»Рѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РѕРїРµСЂР°С‚РѕСЂРµ РёРЅС‚РµСЂРїРѕР»СЏС†РёРё P РЅР° РєР°Р¶РґРѕРј РёР· СѓСЂРѕРІРЅРµР№.
+	bool* F_false_C_true = nullptr; // C/F - СЂР°Р·Р±РёРµРЅРёРµ.
 
-	// дополнительное упорядочивание по столбцам в строке в 
-	// надежде что кеш будет лучше использоваться.
-	// Его можно безболезненно выключить.
+	// РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ СѓРїРѕСЂСЏРґРѕС‡РёРІР°РЅРёРµ РїРѕ СЃС‚РѕР»Р±С†Р°Рј РІ СЃС‚СЂРѕРєРµ РІ 
+	// РЅР°РґРµР¶РґРµ С‡С‚Рѕ РєРµС€ Р±СѓРґРµС‚ Р»СѓС‡С€Рµ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ.
+	// Р•РіРѕ РјРѕР¶РЅРѕ Р±РµР·Р±РѕР»РµР·РЅРµРЅРЅРѕ РІС‹РєР»СЋС‡РёС‚СЊ.
 	const bool bQuick_sort_for_reorder = false;
 
-	// Фаза подготовки вызывается один раз для фиксированной матрицы СЛАУ.
+	// Р¤Р°Р·Р° РїРѕРґРіРѕС‚РѕРІРєРё РІС‹Р·С‹РІР°РµС‚СЃСЏ РѕРґРёРЅ СЂР°Р· РґР»СЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕР№ РјР°С‚СЂРёС†С‹ РЎР›РђРЈ.
 	setup_phase_classic_aglomerative_amg6<doublerealT>(Amat,
-		nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
+		nsizeA, // РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІС‹РґРµР»РµРЅРЅРѕРµ РёР·РІРЅРµ РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° РјР°С‚СЂРёС† Рђ	
 		nnz, // number of non zero elements
 		n, // dimension of vectors x and b.	
-		x, //solution (решение) 
-		b, // rthdsd (правая часть).
+		x, //solution (СЂРµС€РµРЅРёРµ) 
+		b, // rthdsd (РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ).
 		ret74,
 		iVar,
 		bmemory_savings,
-		my_body, lb, maxelm_out,
-		// Параметры нужные только для solution phase.
+		// РџР°СЂР°РјРµС‚СЂС‹ РЅСѓР¶РЅС‹Рµ С‚РѕР»СЊРєРѕ РґР»СЏ solution phase.
 		amg_pp,
 		n_a, nnz_a, nnz_aRP,
 		ibsp_length,
@@ -8518,23 +9414,23 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 		bQuick_sort_for_reorder);
 
 
-	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = ZERO_INIT;
+	INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14 imyinit = INIT_SELECTOR_CASE_CAMG_RUMBAv_0_14::ZERO_INIT;
 
-	// Фаза решения может вызываться многократно,
-	// требуется обновлять правую часть СЛАУ.
-	// Матрица СЛАУ не должна меняться.
+	// Р¤Р°Р·Р° СЂРµС€РµРЅРёСЏ РјРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РјРЅРѕРіРѕРєСЂР°С‚РЅРѕ,
+	// С‚СЂРµР±СѓРµС‚СЃСЏ РѕР±РЅРѕРІР»СЏС‚СЊ РїСЂР°РІСѓСЋ С‡Р°СЃС‚СЊ РЎР›РђРЈ.
+	// РњР°С‚СЂРёС†Р° РЎР›РђРЈ РЅРµ РґРѕР»Р¶РЅР° РјРµРЅСЏС‚СЊСЃСЏ.
 	bool ret_value = false;
 	ret_value = solution_phase<doublerealT>(Amat,
-		nsizeA, // количество ячеек выделенное извне для хранилища матриц А	
+		nsizeA, // РєРѕР»РёС‡РµСЃС‚РІРѕ СЏС‡РµРµРє РІС‹РґРµР»РµРЅРЅРѕРµ РёР·РІРЅРµ РґР»СЏ С…СЂР°РЅРёР»РёС‰Р° РјР°С‚СЂРёС† Рђ	
 		nnz, // number of non zero elements
 		n, // dimension of vectors x and b.	
-		x, // solution (решение) 
-		b, // rthdsd (правая часть).
+		x, // solution (СЂРµС€РµРЅРёРµ) 
+		b, // rthdsd (РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ).
 		ret74,
 		iVar,
 		bmemory_savings,
 		my_body, lb, maxelm_out,
-		// данные для solution phase
+		// РґР°РЅРЅС‹Рµ РґР»СЏ solution phase
 		amg_pp,
 		n_a, nnz_a, nnz_aRP,
 		ibsp_length,
@@ -8571,7 +9467,7 @@ bool classic_aglomerative_amg6(Ak2& Amat,
 	return ret_value;
 } // classic_aglomerative_amg6
 
-// Специальная нелинейная версия amg1r5 алгоритма.
+// РЎРїРµС†РёР°Р»СЊРЅР°СЏ РЅРµР»РёРЅРµР№РЅР°СЏ РІРµСЂСЃРёСЏ amg1r5 Р°Р»РіРѕСЂРёС‚РјР°.
 #include "amg1r5_nonlinear.cpp"
 
 #endif /*CLASSIC_AGLOMERATIVE_AMG6_2018YEAR_CPP*/
