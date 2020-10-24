@@ -54,7 +54,7 @@ https://www.paraview.org/download/
 
 ## Quick compilation mini Guide
 
-#Windows
+# Windows
 
 You are using a computer running Windows 10 from Microsoft. The following discusses the use of only
 free (opensource) software.
@@ -78,7 +78,7 @@ which was written to disk after the AliceFlow_v0_48.exe program terminated. Inse
 on your computer) and select the packages mingw32-pthreads-w32 there.
 11. After installation, being in the C: \ src folder, run g ++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt to create a parallel version of the program.
 
-#Linux
+# Linux
 
 1. You are working on a computer running Linux Ubuntu-20.04.1-desktop-amdx64. http://releases.ubuntu.com/20.04/
 2. The AliceFlow_v0_48 solver program can be compiled and run under Linux OS. AliceMesh_v0_45.exe interface program
