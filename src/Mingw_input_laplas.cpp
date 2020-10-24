@@ -6,6 +6,78 @@
 #ifndef _MINGW_INPUT_LAPLAS_CPP_
 #define _MINGW_INPUT_LAPLAS_CPP_ 1
 
+//#include <stdlib.h>
+
+// В ОС Линукс (Linux) отсутствует функция itoa().
+// Здесь приводится её реализация.
+static char* my_itoa(integer value, char* str, int base)
+{
+	int i, n = 2, tmp;
+	char buf[65];
+
+
+	switch (base)
+	{
+	case 16:
+		for (i = 0; i < 65; ++i)
+		{
+			if (value / base > 0)
+			{
+				n++;
+			}
+		}
+		snprintf(str, n, "%x", value);
+		break;
+	case 10:
+		for (i = 0; i < 65; ++i)
+		{
+			if (value / base > 0)
+			{
+				n++;
+			}
+		}
+		snprintf(str, n, "%d", value);
+		break;
+	case 8:
+		for (i = 0; i < 65; ++i)
+		{
+			if (value / base > 0)
+			{
+				n++;
+			}
+		}
+		snprintf(str, n, "%o", value);
+		break;
+	case 2:
+		for (i = 0, tmp = value; i < 65; ++i)
+		{
+			if (tmp / base > 0)
+			{
+				n++;
+			}
+			tmp /= base;
+		}
+		for (i = 1, tmp = value; i < n; ++i)
+		{
+			if (tmp % 2 != 0)
+			{
+				buf[n - i - 1] = '1';
+			}
+			else
+			{
+				buf[n - i - 1] = '0';
+			}
+			tmp /= base;
+		}
+		buf[n - 1] = '\0';
+		strcpy(str, buf);
+		break;
+	default:
+		return NULL;
+	}
+	return str;
+}
+
 
 void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& ls, integer& lw, TPROP*& matlist, BLOCK*& b, SOURCE*& s, WALL*& w,
 	doublereal& dgx, doublereal& dgy, doublereal& dgz, integer& inx, integer& iny, integer& inz, doublereal& operatingtemperature,
@@ -35,6 +107,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 		if (fp != nullptr) {
 
 			fclose(fp);
+			fp = NULL;
 
 			double fin = 0.0;
 			integer din = 0;
@@ -84,6 +157,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
+
+			
 
 			if (fmakesource("mlength", fin)) {
 				// Найдено успешно.
@@ -444,7 +519,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-
+			
 
 			if (imakesource("snap_to_grid", idin)) {
 				// Найдено успешно.
@@ -1272,7 +1347,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			//fscanf(fp, "%lld", &din);
 			//my_amg_manager.inumberadaptpass = din;
 
-
+			
 			// 23.02.2018
 			// print matrix portrait
 			if (imakesource("TemperatureMatrixPortrait", idin)) {
@@ -2432,7 +2507,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				if (bSTOP_Reading) system("pause");
 			}
 
-
+			
 			// выделение оперативной памяти.
 			gtdps = new TEMP_DEP_POWER[ltdp];
 			matlist = new TPROP[lmatmax];
@@ -2440,6 +2515,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			s = new SOURCE[ls];
 			w = new WALL[lw];
 			int i = 0; // счётчик цикла for
+
+			
 
 			for (i = 0; i < ltdp; i++) {
 				// считывание имён файлов.
@@ -2457,6 +2534,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			}
 
+			
+
 			char buffer[1000];
 
 			// считывание базы материалов
@@ -2467,7 +2546,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				char name0[1000] = "matherial";
 
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				//my_itoa(i, buffer,10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 
 				strcat(name0, "_rho");
@@ -2484,7 +2564,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "n_cp");
 				// теплоёмкость при постоянном давлении
@@ -2521,11 +2601,11 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					// Температура в C.
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "temp_cp");
 
-					buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
@@ -2540,10 +2620,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "arr_cp");
-					buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
@@ -2561,7 +2641,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "n_lam");
 
@@ -2596,10 +2676,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				for (int i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "temp_lam");
-					buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 					// Температура в C.
 					if (fmakesource(name0, fin)) {
@@ -2616,10 +2696,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "arr_lam");
-					buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 
 					if (fmakesource(name0, fin)) {
@@ -2636,7 +2716,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// ортотропность теплопроводности:
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_lam_x");
 
@@ -2653,7 +2733,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_lam_y");
 
@@ -2670,7 +2750,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_lam_z");
 
@@ -2688,7 +2768,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// 28.08.2020.
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Linear_expansion_coefficient_x");
 
@@ -2705,7 +2785,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Linear_expansion_coefficient_y");
 
@@ -2722,7 +2802,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Linear_expansion_coefficient_z");
 
@@ -2740,7 +2820,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// Ортотропность модуля Юнга.
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Young_Module_x");
 
@@ -2757,7 +2837,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Young_Module_y");
 
@@ -2774,7 +2854,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Young_Module_z");
 
@@ -2792,7 +2872,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// mult_Poisson_ratio_xy
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Poisson_ratio_xy");
 
@@ -2810,7 +2890,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// mult_Poisson_ratio_xz
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Poisson_ratio_xz");
 
@@ -2828,7 +2908,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// mult_Poisson_ratio_yz
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Poisson_ratio_yz");
 
@@ -2846,7 +2926,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// mult_Poisson_ratio_yx
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Poisson_ratio_yx");
 
@@ -2864,7 +2944,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// mult_Poisson_ratio_zx
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Poisson_ratio_zx");
 
@@ -2882,7 +2962,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// mult_Poisson_ratio_zy
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mult_Poisson_ratio_zy");
 
@@ -2900,7 +2980,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//bShearModuleActive
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "bShearModuleActive");
 
@@ -2923,7 +3003,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//ShearModuleGxy
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "ShearModuleGxy");
 
@@ -2941,7 +3021,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//ShearModuleGyz
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "ShearModuleGyz");
 
@@ -2959,7 +3039,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//ShearModuleGxz
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "ShearModuleGxz");
 
@@ -2982,7 +3062,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			
 				//name0[0] = '\0'; strcat(name0, "matherial");
 				//buffer[0] = '\0';
-				//_itoa(i, buffer, 10);
+				//my_itoa(i, buffer,10);
 				//strcat(name0, buffer);
 				//strcat(name0, "Poisson_ratio");
 
@@ -3007,7 +3087,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "n_Poisson_ratio");
 				// Коэффициент Пуассона
@@ -3019,8 +3099,12 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					matlist[i].n_Poisson_ratio = (integer)(idin);
 					//printf("matlist[i].n_Poisson_ratio =%lld\n",matlist[i].n_Poisson_ratio);
 
-					delete[] matlist[i].arr_Poisson_ratio;
-					delete[] matlist[i].temp_Poisson_ratio;
+					//if (matlist[i].arr_Poisson_ratio != nullptr) {
+						//delete[] matlist[i].arr_Poisson_ratio;
+					//}
+					//if (matlist[i].temp_Poisson_ratio != nullptr) {
+						//delete[] matlist[i].temp_Poisson_ratio;
+					//}
 
 					matlist[i].arr_Poisson_ratio = nullptr;
 					matlist[i].temp_Poisson_ratio = nullptr;
@@ -3040,11 +3124,11 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						// Температура в C.
 						name0[0] = '\0'; strcat(name0, "matherial");
 						buffer[0] = '\0';
-						_itoa(i, buffer, 10);
+						my_itoa(i, buffer,10);
 						strcat(name0, buffer);
 						strcat(name0, "temp_Poisson_ratio");
 
-						buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+						buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 						if (fmakesource(name0, fin)) {
 							// Найдено успешно.
@@ -3060,10 +3144,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 						name0[0] = '\0'; strcat(name0, "matherial");
 						buffer[0] = '\0';
-						_itoa(i, buffer, 10);
+						my_itoa(i, buffer,10);
 						strcat(name0, buffer);
 						strcat(name0, "arr_Poisson_ratio");
-						buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+						buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 						if (fmakesource(name0, fin)) {
 							// Найдено успешно.
@@ -3087,7 +3171,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					printf("matlist[i].n_Poisson_ratio =%lld\n", matlist[i].n_Poisson_ratio);
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "Poisson_ratio");
 
@@ -3115,7 +3199,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "n_Young_Module");
 				// Модуль Юнга
@@ -3145,11 +3229,11 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						// Температура в C.
 						name0[0] = '\0'; strcat(name0, "matherial");
 						buffer[0] = '\0';
-						_itoa(i, buffer, 10);
+						my_itoa(i, buffer,10);
 						strcat(name0, buffer);
 						strcat(name0, "temp_Young_Module");
 
-						buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+						buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 						if (fmakesource(name0, fin)) {
 							// Найдено успешно.
@@ -3165,10 +3249,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 						name0[0] = '\0'; strcat(name0, "matherial");
 						buffer[0] = '\0';
-						_itoa(i, buffer, 10);
+						my_itoa(i, buffer,10);
 						strcat(name0, buffer);
 						strcat(name0, "arr_Young_Module");
-						buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+						buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 						if (fmakesource(name0, fin)) {
 							// Найдено успешно.
@@ -3192,7 +3276,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					printf("matlist[i].n_YoungModule =%lld\n", matlist[i].n_YoungModule);
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "Young_Module");
 
@@ -3222,7 +3306,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "n_Linear_expansion_coefficient");
 				// теплоёмкость при постоянном давлении
@@ -3252,11 +3336,11 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						// Температура в C.
 						name0[0] = '\0'; strcat(name0, "matherial");
 						buffer[0] = '\0';
-						_itoa(i, buffer, 10);
+						my_itoa(i, buffer,10);
 						strcat(name0, buffer);
 						strcat(name0, "temp_Linear_expansion_coefficient");
 
-						buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+						buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 						if (fmakesource(name0, fin)) {
 							// Найдено успешно.
@@ -3273,10 +3357,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 						name0[0] = '\0'; strcat(name0, "matherial");
 						buffer[0] = '\0';
-						_itoa(i, buffer, 10);
+						my_itoa(i, buffer,10);
 						strcat(name0, buffer);
 						strcat(name0, "arr_Linear_expansion_coefficient");
-						buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+						buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 						if (fmakesource(name0, fin)) {
 							// Найдено успешно.
@@ -3300,7 +3384,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					printf("matlist[i].n_beta_t_solid =%lld\n", matlist[i].n_beta_t_solid);
 					name0[0] = '\0'; strcat(name0, "matherial");
 					buffer[0] = '\0';
-					_itoa(i, buffer, 10);
+					my_itoa(i, buffer,10);
 					strcat(name0, buffer);
 					strcat(name0, "Linear_expansion_coefficient");
 
@@ -3331,7 +3415,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// коэффициент динамической вязкости
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "mu");
 
@@ -3349,7 +3433,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// коэффициент линейного температурного расширения
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "beta_t");
 
@@ -3367,7 +3451,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// признак библиотечности материала
 				name0[0] = '\0'; strcat(name0, "matherial");
 				buffer[0] = '\0';
-				_itoa(i, buffer, 10);
+				my_itoa(i, buffer,10);
 				strcat(name0, buffer);
 				strcat(name0, "blibmat");
 
@@ -3384,7 +3468,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// номер материала в библиотеке
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "ilibident");
 
 				if (imakesource(name0, idin)) {
@@ -3428,7 +3512,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// номер закона для зависимости динамической вязкости от напряжения сдвига
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "ilawmu");
 
 				if (imakesource(name0, idin)) {
@@ -3444,7 +3528,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// минимальное значение динамической вязкости
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "mumin");
 
 				if (fmakesource(name0, fin)) {
@@ -3460,7 +3544,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				// максимальное значение динамической вязкости
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "mumax");
 
 				if (fmakesource(name0, fin)) {
@@ -3475,7 +3559,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// параметры модельных законов для зависимости вязкости от напряжения сдвига
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Amu");
 
 				if (fmakesource(name0, fin)) {
@@ -3490,7 +3574,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Bmu");
 
 				if (fmakesource(name0, fin)) {
@@ -3505,7 +3589,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Cmu");
 
 				if (fmakesource(name0, fin)) {
@@ -3520,7 +3604,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "matherial");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "degreennmu");
 				// показатель степени
 
@@ -3554,11 +3638,16 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 			}
 
+			
+
 			// считывание блоков
 			for (i = 0; i < lb; i++) {
 
 				char name0[1000] = "body";
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; 
+				//my_itoa(i, buffer,10); 
+				my_itoa(i, buffer,10);
+				strcat(name0, buffer);
 				strcat(name0, "name");
 
 				if (smakesource(name0, b[i].name)) {
@@ -3574,7 +3663,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iunion");
 
 				if (imakesource(name0, idin)) {
@@ -3591,7 +3680,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "igeometry_type");
 
 				if (imakesource(name0, idin)) {
@@ -3609,7 +3698,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "bvisible");
 
 				if (imakesource(name0, idin)) {
@@ -3632,7 +3721,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				// геометрия
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xS");
 
 				if (fmakesource(name0, fin)) {
@@ -3647,7 +3736,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yS");
 
 				if (fmakesource(name0, fin)) {
@@ -3662,7 +3751,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zS");
 
 				if (fmakesource(name0, fin)) {
@@ -3677,7 +3766,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xE");
 
 				if (fmakesource(name0, fin)) {
@@ -3692,7 +3781,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yE");
 
 				if (fmakesource(name0, fin)) {
@@ -3707,7 +3796,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zE");
 
 				if (fmakesource(name0, fin)) {
@@ -3740,7 +3829,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				// Cylinder
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iPlane");
 
 				if (imakesource(name0, idin)) {
@@ -3756,7 +3845,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xC");
 
 				if (fmakesource(name0, fin)) {
@@ -3771,7 +3860,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yC");
 
 				if (fmakesource(name0, fin)) {
@@ -3786,7 +3875,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zC");
 
 				if (fmakesource(name0, fin)) {
@@ -3801,7 +3890,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Hcyl");
 
 				if (fmakesource(name0, fin)) {
@@ -3832,7 +3921,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "R_out_cyl");
 
 				if (fmakesource(name0, fin)) {
@@ -3847,7 +3936,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "R_in_cyl");
 
 				if (fmakesource(name0, fin)) {
@@ -3864,7 +3953,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// Polygon
 				//printf("Polygon\n");
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iPlane_obj2");
 
 				if (imakesource(name0, idin)) {
@@ -3884,7 +3973,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//printf("iPlane_obj2=%d\n", b[i].g.iPlane_obj2);
 #endif			
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "nsizei");
 
 				if (imakesource(name0, idin)) {
@@ -3909,10 +3998,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				b[i].g.zi = new doublereal[b[i].g.nsizei];
 				for (int i73 = 0; i73 < b[i].g.nsizei; i73++) {
 					name0[0] = '\0'; strcat(name0, "body");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "hi");
 
-					buffer[0] = '\0'; _itoa(i73, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i73, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
@@ -3925,9 +4014,9 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "body");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "xi");
-					buffer[0] = '\0'; _itoa(i73, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i73, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
@@ -3940,9 +4029,9 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "body");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "yi");
-					buffer[0] = '\0'; _itoa(i73, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i73, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
@@ -3955,9 +4044,9 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "body");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "zi");
-					buffer[0] = '\0'; _itoa(i73, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i73, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
@@ -4049,7 +4138,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// Ввод предполагается корректным.
 				// emissivity
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "emissW");
 
 				if (fmakesource(name0, fin)) {
@@ -4064,7 +4153,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "emissE");
 
 				if (fmakesource(name0, fin)) {
@@ -4079,7 +4168,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "emissS");
 
 				if (fmakesource(name0, fin)) {
@@ -4094,7 +4183,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "emissN");
 
 				if (fmakesource(name0, fin)) {
@@ -4109,7 +4198,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "emissB");
 
 				if (fmakesource(name0, fin)) {
@@ -4124,7 +4213,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "emissT");
 
 				if (fmakesource(name0, fin)) {
@@ -4139,7 +4228,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "binternalRadiation");
 
 				if (imakesource(name0, idin)) {
@@ -4182,7 +4271,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 				// идентификатор материала в базе материалов
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "imatid");
 
 				if (imakesource(name0, idin)) {
@@ -4198,7 +4287,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "bCylinderFixed");
 
 				if (imakesource(name0, idin)) {
@@ -4225,7 +4314,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//b[i].Sc = fin;
 				// 19 november 2016 температурно зависимая мощность тепловыделения.
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "n_power");
 
 				if (imakesource(name0, idin)) {
@@ -4254,16 +4343,22 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					system("pause");
 					exit(1);
 				}
+
+				// Объём полигона.
+				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+
 				for (int i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
 					name0[0] = '\0'; strcat(name0, "body");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "temp_power");
-					buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
-						// Найдено успешно.
-						b[i].temp_Sc[i_4] = (doublereal)(fin);
+						// Найдено успешно.					
+						
+						b[i].temp_Sc[i_4] = (doublereal)(fin);						
+
 					}
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
@@ -4272,17 +4367,30 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "body");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "arr_power");
-					buffer[0] = '\0'; _itoa(i_4, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i_4, buffer, 10); strcat(name0, buffer);
 
 					if (fmakesource(name0, fin)) {
 						// Найдено успешно.
 						if (fin != fin) {
-							b[i].arr_Sc[i_4] = 0.0;
+
+							    b[i].arr_Sc[i_4] = 0.0;				
+
 						}
 						else {
-							b[i].arr_Sc[i_4] = (doublereal)(fin);
+							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+							// Для единообразия здесь мощность преобразуется в удельную мощность.
+
+							if (vol_poly > 1.0e-30) {
+							    b[i].arr_Sc[i_4] = (doublereal)(fin) / vol_poly;
+							}
+							else {
+								printf("error zero volume in polygon...\n");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 					}
 					else {
@@ -4302,7 +4410,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				// 0 - не зависит от времени, 1 - square wave зависимость, 
 				// 2 - square wave #2 зависимость, 3 - hot cold режим.
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "ipower_time_depend");
 
 				if (imakesource(name0, idin)) {
@@ -4331,7 +4439,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// тип блока
 				name0[0] = '\0'; strcat(name0, "body");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "itype");
 
 				if (imakesource(name0, idin)) {
@@ -4370,7 +4478,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			for (i = 0; i < ls; i++) {
 
 				char name0[1000] = "source";
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0';
+				//my_itoa(i, buffer,10);
+				my_itoa(i, buffer,10);
+				strcat(name0, buffer);
 				strcat(name0, "name");
 
 				if (smakesource(name0, s[i].name)) {
@@ -4386,7 +4497,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 								
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iunion");
 
 				if (imakesource(name0, idin)) {
@@ -4402,7 +4513,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Power");
 
 				if (fmakesource(name0, fin)) {
@@ -4418,7 +4529,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "itempdep");
 
 				if (imakesource(name0, idin)) {
@@ -4451,7 +4562,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "id_table");
 
 				// уникальный номер таблицы.
@@ -4468,7 +4579,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "operatingoffsetdrain");
 
 
@@ -4511,7 +4622,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iPlane");
 
 				if (imakesource(name0, idin)) {
@@ -4527,7 +4638,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// геометрия
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xS");
 
 				if (fmakesource(name0, fin)) {
@@ -4542,7 +4653,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yS");
 
 				if (fmakesource(name0, fin)) {
@@ -4557,7 +4668,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zS");
 
 				if (fmakesource(name0, fin)) {
@@ -4572,7 +4683,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xE");
 
 				if (fmakesource(name0, fin)) {
@@ -4587,7 +4698,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yE");
 
 				if (fmakesource(name0, fin)) {
@@ -4602,7 +4713,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "source");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zE");
 
 				if (fmakesource(name0, fin)) {
@@ -4643,11 +4754,14 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 
 			// считывание твёрдых стенок
-
+			
 			for (i = 0; i < lw; i++) {
 
 				char name0[1000] = "wall";
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; 
+				//my_itoa(i, buffer,10);
+				my_itoa(i, buffer,10);
+				strcat(name0, buffer);
 				strcat(name0, "name");
 
 				if (smakesource(name0, w[i].name)) {
@@ -4663,7 +4777,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}				
 				
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iunion");
 
 				if (imakesource(name0, idin)) {
@@ -4679,7 +4793,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "family");
 
 				if (imakesource(name0, idin)) {
@@ -4706,7 +4820,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				switch (din) {
 				case 1:
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "Tamb");
 
 					if (fmakesource(name0, fin)) {
@@ -4721,11 +4835,11 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "heat_transfer_coefficient_vs_emissivity");
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "ViewFactor");
 
 					// Stefan Bolcman
@@ -4737,7 +4851,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "HF");
 
 
@@ -4746,7 +4860,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					break; // первого рода
 				case 2:
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "Tamb");
 
 					if (fmakesource(name0, fin)) {
@@ -4761,11 +4875,11 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "heat_transfer_coefficient_vs_emissivity");
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "ViewFactor");
 
 					// Stefan Bolcman
@@ -4775,7 +4889,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					w[i].ViewFactor = 1.0; // Фактор видимости.
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "HF");
 
 
@@ -4784,7 +4898,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					break; // однородное условие Неймана
 				case 3:
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "Tamb");
 
 					if (fmakesource(name0, fin)) {
@@ -4799,7 +4913,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "heat_transfer_coefficient_vs_emissivity");
 
 					// Stefan Bolcman
@@ -4817,13 +4931,13 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "ViewFactor");
 
 					w[i].ViewFactor = 1.0; // Фактор видимости.
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "HF");
 										
 
@@ -4833,7 +4947,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				case 4:
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "Tamb");
 
 					if (fmakesource(name0, fin)) {
@@ -4848,7 +4962,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "heat_transfer_coefficient_vs_emissivity");
 
 					// Stefan Bolcman
@@ -4866,7 +4980,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "ViewFactor");
 
 					if (fmakesource(name0, fin)) {
@@ -4882,7 +4996,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "wall");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "HF");
 
 					w[i].hf = 0.0;
@@ -4895,7 +5009,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "bsymmetry");
 
 				if (imakesource(name0, idin)) {
@@ -4911,7 +5025,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "bpressure");
 
 				if (imakesource(name0, idin)) {
@@ -4927,7 +5041,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "bopening");
 
 				if (imakesource(name0, idin)) {
@@ -4943,7 +5057,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Vx");
 
 				if (fmakesource(name0, fin)) {
@@ -4958,7 +5072,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Vy");
 
 				if (fmakesource(name0, fin)) {
@@ -4972,7 +5086,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "Vz");
 
 				if (fmakesource(name0, fin)) {
@@ -4986,7 +5100,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "P");
 
 				if (fmakesource(name0, fin)) {
@@ -5001,7 +5115,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "ithermal_stress_boundary_condition");
 
 				if (imakesource(name0, idin)) {
@@ -5065,7 +5179,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xForce");
 
 				if (fmakesource(name0, fin)) {
@@ -5079,7 +5193,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yForce");
 
 				if (fmakesource(name0, fin)) {
@@ -5093,7 +5207,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zForce");
 
 				if (fmakesource(name0, fin)) {
@@ -5110,7 +5224,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				//system("PAUSE");
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iPlane");
 
 				if (imakesource(name0, idin)) {
@@ -5126,7 +5240,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 				// геометрия
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xS");
 
 				if (fmakesource(name0, fin)) {
@@ -5141,7 +5255,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yS");
 
 				if (fmakesource(name0, fin)) {
@@ -5156,7 +5270,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zS");
 
 				if (fmakesource(name0, fin)) {
@@ -5171,7 +5285,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xE");
 
 				if (fmakesource(name0, fin)) {
@@ -5186,7 +5300,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yE");
 
 				if (fmakesource(name0, fin)) {
@@ -5201,7 +5315,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "wall");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zE");
 
 				if (fmakesource(name0, fin)) {
@@ -5271,7 +5385,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			for (i = 0; i < lu; i++) {
 
 				char name0[1000] = "assembles";
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0';
+				//my_itoa(i, buffer,10); 
+				my_itoa(i, buffer,10);
+				strcat(name0, buffer);
 				strcat(name0, "xS");
 
 				if (fmakesource(name0, fin)) {
@@ -5286,7 +5403,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "xE");
 
 				if (fmakesource(name0, fin)) {
@@ -5301,7 +5418,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yS");
 
 				if (fmakesource(name0, fin)) {
@@ -5316,7 +5433,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "yE");
 
 				if (fmakesource(name0, fin)) {
@@ -5331,7 +5448,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zS");
 
 				if (fmakesource(name0, fin)) {
@@ -5346,7 +5463,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "zE");
 
 				if (fmakesource(name0, fin)) {
@@ -5361,7 +5478,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "identifire");
 
 				if (imakesource(name0, idin)) {
@@ -5377,7 +5494,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "inx");
 
 				if (imakesource(name0, idin)) {
@@ -5393,7 +5510,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "iny");
 
 				if (imakesource(name0, idin)) {
@@ -5409,7 +5526,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				}
 
 				name0[0] = '\0'; strcat(name0, "assembles");
-				buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+				buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 				strcat(name0, "inz");
 
 				if (imakesource(name0, idin)) {
@@ -5458,6 +5575,9 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 				printf(" eqin.imaxflD=%lld\n", eqin.imaxflD);
 				if (bSTOP_Reading) system("pause");
 			}
+
+			
+
 			//printf("itemper=%lld eqin.imaxflD=%lld\n", eqin.itemper, eqin.imaxflD);
 			//system("PAUSE");
 			if (eqin.imaxflD == 0) {
@@ -5466,15 +5586,18 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			else
 			{
 				// выделение оперативной памяти
-				if (eqin.fluidinfo != nullptr) {
-					delete eqin.fluidinfo;
-					eqin.fluidinfo = nullptr;
-				}
+				//if (eqin.fluidinfo != nullptr) {
+					//delete eqin.fluidinfo;
+					//eqin.fluidinfo = nullptr;
+				//}
 				eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
+
+				
+
 				for (i = 0; i < eqin.imaxflD; i++) {
 					// Считывание координат опорной точки
 					char name0[1000] = "egddata";
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "xc");
 
 					if (fmakesource(name0, fin)) {
@@ -5489,7 +5612,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "yc");
 
 					if (fmakesource(name0, fin)) {
@@ -5504,7 +5627,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "zc");
 
 					if (fmakesource(name0, fin)) {
@@ -5519,7 +5642,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "iflow");
 
 					if (imakesource(name0, idin)) {
@@ -5535,7 +5658,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "iflowregime");
 
 					if (imakesource(name0, idin)) {
@@ -5557,7 +5680,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "iturbmodel");
 
 					if (imakesource(name0, idin)) {
@@ -5590,7 +5713,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "SmagConst");
 
 					if (fmakesource(name0, fin)) {
@@ -5605,7 +5728,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "iDynamicStressGermano");
 
 					if (imakesource(name0, idin)) {
@@ -5628,7 +5751,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "iLimitersCs");
 
 					if (imakesource(name0, idin)) {
@@ -5650,7 +5773,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "minCs");
 
 					if (fmakesource(name0, fin)) {
@@ -5664,7 +5787,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "maxCs");
 
 
@@ -5679,7 +5802,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "itypeFiltrGermano");
 
 					if (imakesource(name0, idin)) {
@@ -5694,7 +5817,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "roughness");
 
 					if (fmakesource(name0, fin)) {
@@ -5708,7 +5831,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "rRimult");
 
 					if (fmakesource(name0, fin)) {
@@ -5723,7 +5846,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "rSelectiveAngle");
 
 					if (fmakesource(name0, fin)) {
@@ -5737,8 +5860,10 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "ipowerroughness");
+
+					
 
 					if (imakesource(name0, idin)) {
 						// Найдено успешно.
@@ -5752,7 +5877,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "itypefiltr");
 
 					if (imakesource(name0, idin)) {
@@ -5767,7 +5892,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "bfdelta");
 
 					if (imakesource(name0, idin)) {
@@ -5782,7 +5907,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "bSmagorinsky_Lilly");
 
 					if (imakesource(name0, idin)) {
@@ -5797,7 +5922,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "bsurface_roughness");
 
 					if (imakesource(name0, idin)) {
@@ -5812,7 +5937,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "bSwirlamendment");
 
 					if (imakesource(name0, idin)) {
@@ -5834,7 +5959,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat(name0, "egddata");
-					buffer[0] = '\0'; _itoa(i, buffer, 10); strcat(name0, buffer);
+					buffer[0] = '\0'; my_itoa(i, buffer,10); strcat(name0, buffer);
 					strcat(name0, "bSelectiveSmagorinsky");
 
 					if (imakesource(name0, idin)) {
@@ -5912,6 +6037,8 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 					if (bSTOP_Reading) system("pause");
 				}
 
+				
+
 				if (imakesource("number_processors", idin)) {
 					// Найдено успешно.
 					number_processors_global_var = (int)(idin);
@@ -5984,12 +6111,18 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 			}
 
-
 			
-
-			fclose(fp); // закрытие файла
+			
+			if (fp != NULL) {
+				// ree(): double free detected in tcache 2
+				// Aborted(core dumped)
+				fclose(fp); // закрытие файла
+				fp = NULL;
+			}
 		}
 	}
+
+	
 #endif
 } // mingw_input_new
 
@@ -6038,6 +6171,9 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 				std::cout << "ionly_solid_visible =" << "WHAT_VISIBLE_OPTION::ONLY_SOLID_BODY_VISIBLE" << std::endl;
 				break;
 			}
+
+			
+
 			fscanf(fp, "%f", &fin);
 			scale = fin;
 			fscanf(fp, "%d", &din);
@@ -6121,7 +6257,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			default: bsnap_TO_global = 1;  break;
 			}
 
-
+			
 
 			fscanf(fp, "%d", &din);
 			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства: либо amg1r5 либо BiCGStab+ILU2.
@@ -7372,6 +7508,10 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					system("pause");
 					exit(1);
 				}
+
+				// Объём полигона.
+				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+
 				for (integer i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
 					fscanf(fp, "%f", &fin);
@@ -7381,7 +7521,18 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 						b[i].arr_Sc[i_4] = 0.0;
 					}
 					else {
-						b[i].arr_Sc[i_4] = fin;
+
+						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+						// Для единообразия здесь мощность преобразуется в удельную мощность.
+						if (vol_poly > 1.0e-30) {
+						    b[i].arr_Sc[i_4] = fin / vol_poly;
+						}
+						else {
+							printf("error zero volume in polygon...\n");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 
@@ -7748,10 +7899,10 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			else
 			{
 				// выделение оперативной памяти
-				if (eqin.fluidinfo != nullptr) {
-					delete eqin.fluidinfo;
-					eqin.fluidinfo = nullptr;
-				}
+				//if (eqin.fluidinfo != nullptr) {
+					//delete eqin.fluidinfo;
+					//eqin.fluidinfo = nullptr;
+			//	}
 				eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
 				for (i = 0; i < eqin.imaxflD; i++) {
 					// Считывание координат опорной точки
@@ -7930,6 +8081,7 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 			}
 
 			fclose(fp); // закрытие файла
+			fp = NULL;
 		}
 
 	}

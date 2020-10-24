@@ -1294,6 +1294,410 @@ typedef struct TBLOCK {
 } BLOCK;
 
 
+// 1.09.2017.
+doublereal my_sign(doublereal a) {
+	if (a >= 0.0) {
+		return 1.0;
+	}
+	else {
+		return -1.0;
+	}
+} // my_sign
+
+
+  // метод суммирования углов.
+  // 1.09.2017.
+bool in_polygon_check(TOCHKA p, integer nsizei,
+	doublereal* &xi, doublereal* &yi, doublereal* &zi,
+	doublereal* &hi, integer iPlane_obj2, integer &k,
+	integer ib)
+{
+
+	bool bfound = false;
+
+	doublereal sumphi = 0.0;
+	integer i_73 = 0;
+
+	switch (iPlane_obj2) {
+	case XY_PLANE:
+		for (i_73 = 0; i_73 < nsizei - 1; i_73++) {
+			sumphi += acos(((xi[i_73] - p.x)*(xi[i_73 + 1] - p.x) + (yi[i_73] - p.y)*(yi[i_73 + 1] - p.y)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (yi[i_73] - p.y)*(yi[i_73] - p.y))*sqrt((xi[i_73 + 1] - p.x)*(xi[i_73 + 1] - p.x) + (yi[i_73 + 1] - p.y)*(yi[i_73 + 1] - p.y))))*my_sign((xi[i_73] - p.x)*(yi[i_73 + 1] - p.y) - (xi[i_73 + 1] - p.x)*(yi[i_73] - p.y));
+		}
+		i_73 = nsizei - 1;
+		sumphi += acos(((xi[i_73] - p.x)*(xi[0] - p.x) + (yi[i_73] - p.y)*(yi[0] - p.y)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (yi[i_73] - p.y)*(yi[i_73] - p.y))*sqrt((xi[0] - p.x)*(xi[0] - p.x) + (yi[0] - p.y)*(yi[0] - p.y))))*my_sign((xi[i_73] - p.x)*(yi[0] - p.y) - (xi[0] - p.x)*(yi[i_73] - p.y));
+		break;
+	case XZ_PLANE:
+		for (i_73 = 0; i_73 < nsizei - 1; i_73++) {
+			sumphi += acos(((xi[i_73] - p.x)*(xi[i_73 + 1] - p.x) + (zi[i_73] - p.z)*(zi[i_73 + 1] - p.z)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((xi[i_73 + 1] - p.x)*(xi[i_73 + 1] - p.x) + (zi[i_73 + 1] - p.z)*(zi[i_73 + 1] - p.z))))*my_sign((xi[i_73] - p.x)*(zi[i_73 + 1] - p.z) - (xi[i_73 + 1] - p.x)*(zi[i_73] - p.z));
+		}
+		i_73 = nsizei - 1;
+		sumphi += acos(((xi[i_73] - p.x)*(xi[0] - p.x) + (zi[i_73] - p.z)*(zi[0] - p.z)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((xi[0] - p.x)*(xi[0] - p.x) + (zi[0] - p.z)*(zi[0] - p.z))))*my_sign((xi[i_73] - p.x)*(zi[0] - p.z) - (xi[0] - p.x)*(zi[i_73] - p.z));
+		break;
+	case YZ_PLANE:
+		for (i_73 = 0; i_73 < nsizei - 1; i_73++) {
+			sumphi += acos(((yi[i_73] - p.y)*(yi[i_73 + 1] - p.y) + (zi[i_73] - p.z)*(zi[i_73 + 1] - p.z)) / (sqrt((yi[i_73] - p.y)*(yi[i_73] - p.y) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((yi[i_73 + 1] - p.y)*(yi[i_73 + 1] - p.y) + (zi[i_73 + 1] - p.z)*(zi[i_73 + 1] - p.z))))*my_sign((yi[i_73] - p.y)*(zi[i_73 + 1] - p.z) - (yi[i_73 + 1] - p.y)*(zi[i_73] - p.z));
+		}
+		i_73 = nsizei - 1;
+		sumphi += acos(((yi[i_73] - p.y)*(yi[0] - p.y) + (zi[i_73] - p.z)*(zi[0] - p.z)) / (sqrt((yi[i_73] - p.y)*(yi[i_73] - p.y) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((yi[0] - p.y)*(yi[0] - p.y) + (zi[0] - p.z)*(zi[0] - p.z))))*my_sign((yi[i_73] - p.y)*(zi[0] - p.z) - (yi[0] - p.y)*(zi[i_73] - p.z));
+		break;
+	}
+
+	if (fabs(sumphi) > 1.0e-7) {
+		// точка лежит внутри полигона.
+		switch (iPlane_obj2) {
+		case XY_PLANE:
+			if ((p.z >= zi[0]) && (p.z <= zi[0] + hi[0])) {
+				k = ib;
+				bfound = true;
+			}
+			break;
+		case XZ_PLANE:
+			if ((p.y >= yi[0]) && (p.y <= yi[0] + hi[0])) {
+				k = ib;
+				bfound = true;
+			}
+			break;
+		case YZ_PLANE:
+			if ((p.x >= xi[0]) && (p.x <= xi[0] + hi[0])) {
+				k = ib;
+				bfound = true;
+			}
+			break;
+		}
+	}
+
+	return bfound;
+
+} // in_polygon_check
+
+bool in_polygon_check_first(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, doublereal* &hi, integer iPlane_obj2, integer &k, integer ib) {
+
+	bool bfound = false;
+
+	doublereal dpolygon_tolerance = 1e-3;
+
+	// Polygon
+	// точка принадлежит полигону если она принадлежит одному из треугольников его образующих.
+	// Задача триангуляции выпуклого полигона состоит из вычисления его центра масс и образования треугольников
+	// каждый из которых имеет вершину в этом центре масс и ребро на одной из сторон выпуклого многогранника.
+	// Точка принадлежит треугольнику только когда площадь треугольника в точности равна сумме трёх площадей треугольников,
+	// образуемых этой точкой и одной из строн первоначального треугольника.
+
+	// Работает только для выпуклого многоугольника и только когда
+	// все начальные уровни и все высоты одинаковы.
+	doublereal xavg = 0.0, yavg = 0.0, zavg = 0.0;
+	for (integer i_73 = 0; i_73 < nsizei; i_73++) {
+		xavg += xi[i_73] / nsizei;
+		yavg += yi[i_73] / nsizei;
+		zavg += zi[i_73] / nsizei;
+	}
+	doublereal Sgl = 0.0;
+	doublereal Sloc = 0.0;
+	doublereal minx84, maxx84, miny84, maxy84, minz84, maxz84;
+	doublereal epsilon_tri = 1.0e-8;
+
+	switch (iPlane_obj2) {
+	case XY_PLANE:
+		minx84 = 1.0e40;
+		maxx84 = -1.0e40;
+		miny84 = 1.0e40;
+		maxy84 = -1.0e40;
+		minz84 = 1.0e40;
+		maxz84 = -1.0e40;
+		for (integer i_73 = 0; i_73 < nsizei; i_73++) {
+			// minimum
+			if (xi[i_73] < minx84) minx84 = xi[i_73];
+			if (yi[i_73] < miny84) miny84 = yi[i_73];
+			if (zi[i_73] < minz84) minz84 = zi[i_73];
+			// maximum
+			if (xi[i_73] > maxx84) maxx84 = xi[i_73];
+			if (yi[i_73] > maxy84) maxy84 = yi[i_73];
+			if (zi[i_73] > maxz84) maxz84 = zi[i_73];
+		}
+		//printf("epsilon_tri=%e length=%e\n", epsilon_tri, fabs((maxx84 - minx84)*(maxy84 - miny84)));
+		//system("pause");
+		//epsilon_tri = dpolygon_tolerance*sqrt((maxx84 - minx84)*(maxx84 - minx84) + (maxy84 - miny84)*(maxy84 - miny84));
+		epsilon_tri = dpolygon_tolerance*fabs((maxx84 - minx84)*(maxy84 - miny84));
+
+		for (integer i_73 = 0; i_73 < nsizei - 1; i_73++) {
+			Sgl = 0.0;
+			Sgl = 0.5*((xi[i_73 + 1] - xi[i_73])*(yavg - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(xavg - xi[i_73]));
+			Sgl = fabs(Sgl);
+
+			Sloc = 0.5*((p.x - xi[i_73])*(yavg - yi[i_73]) - (p.y - yi[i_73])*(xavg - xi[i_73]));
+			Sgl -= fabs(Sloc);
+			Sloc = 0.5*((xi[i_73 + 1] - p.x)*(yavg - p.y) - (yi[i_73 + 1] - p.y)*(xavg - p.x));
+			Sgl -= fabs(Sloc);
+			Sloc = 0.5*((xi[i_73 + 1] - xi[i_73])*(p.y - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(p.x - xi[i_73]));
+			Sgl -= fabs(Sloc);
+
+			if (fabs(Sgl) < epsilon_tri) {
+				if ((p.z >= zi[0]) && (p.z <= zi[0] + hi[0])) {
+					k = ib;
+					bfound = true;
+				}
+			}
+		}
+		Sgl = 0.0;
+		Sgl = 0.5*((xi[0] - xi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(xavg - xi[nsizei - 1]));
+		Sgl = fabs(Sgl);
+
+		Sloc = 0.5*((p.x - xi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (p.y - yi[nsizei - 1])*(xavg - xi[nsizei - 1]));
+		Sgl -= fabs(Sloc);
+		Sloc = 0.5*((xi[0] - p.x)*(yavg - p.y) - (yi[0] - p.y)*(xavg - p.x));
+		Sgl -= fabs(Sloc);
+		Sloc = 0.5*((xi[0] - xi[nsizei - 1])*(p.y - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(p.x - xi[nsizei - 1]));
+		Sgl -= fabs(Sloc);
+
+		if (fabs(Sgl) < epsilon_tri) {
+			if ((p.z >= zi[0]) && (p.z <= zi[0] + hi[0])) {
+				k = ib;
+				bfound = true;
+			}
+		}
+		break;
+	case XZ_PLANE:
+		minx84 = 1.0e40;
+		maxx84 = -1.0e40;
+		miny84 = 1.0e40;
+		maxy84 = -1.0e40;
+		minz84 = 1.0e40;
+		maxz84 = -1.0e40;
+		for (integer i_73 = 0; i_73 < nsizei; i_73++) {
+			// minimum
+			if (xi[i_73] < minx84) minx84 = xi[i_73];
+			if (yi[i_73] < miny84) miny84 = yi[i_73];
+			if (zi[i_73] < minz84) minz84 = zi[i_73];
+			// maximum
+			if (xi[i_73] > maxx84) maxx84 = xi[i_73];
+			if (yi[i_73] > maxy84) maxy84 = yi[i_73];
+			if (zi[i_73] > maxz84) maxz84 = zi[i_73];
+		}
+		//printf("epsilon_tri=%e length=%e\n", epsilon_tri, fabs((maxx84 - minx84)*(maxz84 - minz84)));
+		//system("pause");
+		//epsilon_tri = dpolygon_tolerance*sqrt((maxx84 - minx84)*(maxx84 - minx84) + (maxz84 - minz84)*(maxz84 - minz84));
+		epsilon_tri = dpolygon_tolerance*fabs((maxx84 - minx84)*(maxz84 - minz84));
+
+		for (integer i_73 = 0; i_73 < nsizei - 1; i_73++) {
+			Sgl = 0.0;
+			Sgl = 0.5*((xi[i_73 + 1] - xi[i_73])*(zavg - zi[i_73]) - (zi[i_73 + 1] - zi[i_73])*(xavg - xi[i_73]));
+			Sgl = fabs(Sgl);
+
+			Sloc = 0.5*((p.x - xi[i_73])*(zavg - zi[i_73]) - (p.z - zi[i_73])*(xavg - xi[i_73]));
+			Sgl -= fabs(Sloc);
+			Sloc = 0.5*((xi[i_73 + 1] - p.x)*(zavg - p.z) - (zi[i_73 + 1] - p.z)*(xavg - p.x));
+			Sgl -= fabs(Sloc);
+			Sloc = 0.5*((xi[i_73 + 1] - xi[i_73])*(p.z - zi[i_73]) - (zi[i_73 + 1] - zi[i_73])*(p.x - xi[i_73]));
+			Sgl -= fabs(Sloc);
+
+			if (fabs(Sgl) < epsilon_tri) {
+				if ((p.y >= yi[0]) && (p.y <= yi[0] + hi[0])) {
+					k = ib;
+					bfound = true;
+				}
+			}
+		}
+		Sgl = 0.0;
+		Sgl = 0.5*((xi[0] - xi[nsizei - 1])*(zavg - zi[nsizei - 1]) - (zi[0] - zi[nsizei - 1])*(xavg - xi[nsizei - 1]));
+		Sgl = fabs(Sgl);
+
+		Sloc = 0.5*((p.x - xi[nsizei - 1])*(zavg - zi[nsizei - 1]) - (p.z - zi[nsizei - 1])*(xavg - xi[nsizei - 1]));
+		Sgl -= fabs(Sloc);
+		Sloc = 0.5*((xi[0] - p.x)*(zavg - p.z) - (zi[0] - p.z)*(xavg - p.x));
+		Sgl -= fabs(Sloc);
+		Sloc = 0.5*((xi[0] - xi[nsizei - 1])*(p.z - zi[nsizei - 1]) - (zi[0] - zi[nsizei - 1])*(p.x - xi[nsizei - 1]));
+		Sgl -= fabs(Sloc);
+
+		if (fabs(Sgl) < epsilon_tri) {
+			if ((p.y >= yi[0]) && (p.y <= yi[0] + hi[0])) {
+				k = ib;
+				bfound = true;
+			}
+		}
+		break;
+	case YZ_PLANE:
+		minx84 = 1.0e40;
+		maxx84 = -1.0e40;
+		miny84 = 1.0e40;
+		maxy84 = -1.0e40;
+		minz84 = 1.0e40;
+		maxz84 = -1.0e40;
+		for (integer i_73 = 0; i_73 < nsizei; i_73++) {
+			// minimum
+			if (xi[i_73] < minx84) minx84 = xi[i_73];
+			if (yi[i_73] < miny84) miny84 = yi[i_73];
+			if (zi[i_73] < minz84) minz84 = zi[i_73];
+			// maximum
+			if (xi[i_73] > maxx84) maxx84 = xi[i_73];
+			if (yi[i_73] > maxy84) maxy84 = yi[i_73];
+			if (zi[i_73] > maxz84) maxz84 = zi[i_73];
+		}
+		//printf("epsilon_tri=%e length=%e\n", epsilon_tri, fabs((maxz84 - minz84)*(maxy84 - miny84)));
+		//system("pause");
+		//epsilon_tri = dpolygon_tolerance*sqrt((maxz84 - minz84)*(maxz84 - minz84) + (maxy84 - miny84)*(maxy84 - miny84));
+		epsilon_tri = dpolygon_tolerance*fabs((maxz84 - minz84)*(maxy84 - miny84));
+
+		for (integer i_73 = 0; i_73 < nsizei - 1; i_73++) {
+			Sgl = 0.0;
+			Sgl = 0.5*((zi[i_73 + 1] - zi[i_73])*(yavg - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(zavg - zi[i_73]));
+			Sgl = fabs(Sgl);
+
+			Sloc = 0.5*((p.z - zi[i_73])*(yavg - yi[i_73]) - (p.y - yi[i_73])*(zavg - zi[i_73]));
+			Sgl -= fabs(Sloc);
+			Sloc = 0.5*((zi[i_73 + 1] - p.z)*(yavg - p.y) - (yi[i_73 + 1] - p.y)*(zavg - p.z));
+			Sgl -= fabs(Sloc);
+			Sloc = 0.5*((zi[i_73 + 1] - zi[i_73])*(p.y - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(p.z - zi[i_73]));
+			Sgl -= fabs(Sloc);
+
+			if (fabs(Sgl) < epsilon_tri) {
+				if ((p.x >= xi[0]) && (p.x <= xi[0] + hi[0])) {
+					k = ib;
+					bfound = true;
+				}
+			}
+		}
+		Sgl = 0.0;
+		Sgl = 0.5*((zi[0] - zi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(zavg - zi[nsizei - 1]));
+		Sgl = fabs(Sgl);
+
+		Sloc = 0.5*((p.z - zi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (p.y - yi[nsizei - 1])*(zavg - zi[nsizei - 1]));
+		Sgl -= fabs(Sloc);
+		Sloc = 0.5*((zi[0] - p.z)*(yavg - p.y) - (yi[0] - p.y)*(zavg - p.z));
+		Sgl -= fabs(Sloc);
+		Sloc = 0.5*((zi[0] - zi[nsizei - 1])*(p.y - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(p.z - zi[nsizei - 1]));
+		Sgl -= fabs(Sloc);
+
+		if (fabs(Sgl) < epsilon_tri) {
+			if ((p.x >= xi[0]) && (p.x <= xi[0] + hi[0])) {
+				k = ib;
+				bfound = true;
+			}
+		}
+		break;
+	}
+
+	return bfound;
+
+} // in_polygon_check_first
+
+
+bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, doublereal* &hi, integer iPlane_obj2, integer &k, integer ib) {
+
+	bool bfound = false;
+
+	// Первоначальная самописная реализация основанная на идее равентва площадей.
+	// Сначала мноугольник разбивается на треугольники (триангулируется), а затем
+	// сканируются все треугольники по очереди и если точка принадлежит треугольнику то площадь 
+	// треугольника равна сумме площадей трёх треугольников образованных исследуемой точкой и вршинами первоначального треугольника. 
+	//bfound = in_polygon_check_first(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib);
+
+	// Теоретическиобоснованная версия проверки алгоритм которой найден в википедии.
+	bfound = in_polygon_check(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib);
+
+	return bfound;
+
+}
+
+
+
+// Приближенно вычисляет объем полигона.
+// 23.10.2020
+doublereal Volume_polygon(integer nsizei,
+	doublereal* &xi, doublereal* &yi, doublereal* &zi,
+	doublereal* &hi, integer iPlane_obj2)
+{
+
+	// точность увеличивается при увеличении величины resolution_x и resolution_y.
+	doublereal resolution_x = 100.0;
+	doublereal resolution_y = 100.0;
+	doublereal resolution_z = 100.0;
+
+	doublereal xS = 1.0e30;
+	doublereal xE = -1.0e30;
+	doublereal yS = 1.0e30;
+	doublereal yE = -1.0e30;
+	doublereal zS = 1.0e30;
+	doublereal zE = -1.0e30;
+	doublereal hx = 0.0, hy = 0.0, hz = 0.0;
+	TOCHKA p;
+	integer k, ib;
+	doublereal vol = 0.0;
+
+	switch (iPlane_obj2) {
+	case XY_PLANE:
+
+		for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
+			if (xi[i_73] < xS) xS = xi[i_73];
+			if (xi[i_73] > xE) xE = xi[i_73];
+			if (yi[i_73] < yS) yS = yi[i_73];
+			if (yi[i_73] > yE) yE = yi[i_73];
+		}
+		hx = fabs(xE - xS) / resolution_x;
+		hy = fabs(yE - yS) / resolution_y;
+#pragma omp parallel for private(k, ib)
+		for (integer i_73 = 0; i_73 < (integer)(resolution_x); i_73++) {
+			for (integer j_73 = 0; j_73 < (integer)(resolution_y); j_73++) {
+				p.x = xS + i_73*hx + 0.5*hx;
+				p.y = yS + j_73*hy + 0.5*hy;
+				p.z = zi[0] + 0.5*hi[0];
+				if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
+					vol += hi[0] * hx*hy;
+				}
+			}
+		}
+		break;
+
+	case XZ_PLANE:
+		for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
+			if (xi[i_73] < xS) xS = xi[i_73];
+			if (xi[i_73] > xE) xE = xi[i_73];
+			if (zi[i_73] < zS) zS = zi[i_73];
+			if (zi[i_73] > zE) zE = zi[i_73];
+		}
+		hx = fabs(xE - xS) / resolution_x;
+		hz = fabs(zE - zS) / resolution_z;
+#pragma omp parallel for private(k, ib)
+		for (integer i_73 = 0; i_73 < (integer)(resolution_x); i_73++) {
+			for (integer j_73 = 0; j_73 < (integer)(resolution_z); j_73++) {
+				p.x = xS + i_73*hx + 0.5*hx;
+				p.z = zS + j_73*hz + 0.5*hz;
+				p.y = yi[0] + 0.5*hi[0];
+				if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
+					vol += hi[0] * hx*hz;
+				}
+			}
+		}
+		break;
+
+	case YZ_PLANE:
+		for (integer i_73 = 0; i_73 <= nsizei - 1; i_73++) {
+			if (yi[i_73] < yS) yS = yi[i_73];
+			if (yi[i_73] > yE) yE = yi[i_73];
+			if (zi[i_73] < zS) zS = zi[i_73];
+			if (zi[i_73] > zE) zE = zi[i_73];
+		}
+		hy = fabs(yE - yS) / resolution_y;
+		hz = fabs(zE - zS) / resolution_z;
+#pragma omp parallel for private(k, ib)
+		for (integer i_73 = 0; i_73 < (integer)(resolution_y); i_73++) {
+			for (integer j_73 = 0; j_73 < (integer)(resolution_z); j_73++) {
+				p.y = yS + i_73*hy + 0.5*hy;
+				p.z = zS + j_73*hz + 0.5*hz;
+				p.x = xi[0] + 0.5*hi[0];
+				if (in_polygon(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib)) {
+					vol += hi[0] * hy*hz;
+				}
+			}
+		}
+		break;
+	}
+
+	return vol;
+}
+
+
+
+
 integer ihash_key_shorter(doublereal g, doublereal min_g, doublereal max_g )
 {
 	return ((integer)(isize_shorter_hash*((g - min_g) / (1.05*(max_g - min_g)))));
@@ -3096,6 +3500,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 	bool bOk = true;
 	const doublereal dcheck_eps = 1e-10; // 1.0e-10 подобрано для tgf*
 	
+	// Нельзя распараллеливать т.к. там вложенный параллелизм при вычислении объёма полигона.
+
 	for (integer i = lb - 1; i >= 0; i--) {
 		// Проверка типа геометрии.
 
@@ -3738,6 +4144,15 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 					bOk = false;
 				}
+				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+				if (vol_poly < 1.0e-30) {
+					printf("ERROR POLYGON. Your model is incorrect.\n");
+					std::cout << "body[" << i << "].name = " << b[i].name << " body[" << i << "] volume polygon=" << vol_poly << " is very small." << std::endl;
+					system("pause");
+
+					bOk = false;
+				}
+
 
 			}
 
@@ -5669,6 +6084,8 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					system("pause");
 					exit(1);
 				}
+				// Объём полигона.
+				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
 				for (integer i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
 					fscanf(fp, "%f", &fin);
@@ -5678,7 +6095,17 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].arr_Sc[i_4] = 0.0;
 					}
 					else {
-						b[i].arr_Sc[i_4] = fin;
+						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+						// Для единообразия здесь мощность преобразуется в удельную мощность.
+						if (vol_poly > 1.0e-30) {
+							b[i].arr_Sc[i_4] = fin/ vol_poly;
+						}
+						else {
+							printf("error zero volume in polygon...\n");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 
@@ -6265,6 +6692,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			fclose(fp); // закрытие файла
+			fp = NULL;
 		}
 	
 	}
@@ -6392,11 +6820,20 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			ipoly++;
 			if (b[i_1].n_Sc > 0) {
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
-				if (pdiss > 0.0) {
-					ilb_p++;
-					printf("ERROR: non zero power in polygon object.\n");
+				// Объём полигона.
+				doublereal vol_poly = Volume_polygon(b[i_1].g.nsizei, b[i_1].g.xi, b[i_1].g.yi, b[i_1].g.zi, b[i_1].g.hi, b[i_1].g.iPlane_obj2);
+				if (vol_poly < 1.0e-40) {
+					printf("ERROR: zero volume in POLYGON block number %lld\n", i_1);
 					system("PAUSE");
 					exit(1);
+				}
+				if (pdiss > 0.0) {
+					ilb_p++;
+
+					dpower += pdiss*vol_poly;
+					//printf("ERROR: non zero power in polygon object.\n");
+					//system("PAUSE");
+					//exit(1);
 				}
 			}
 		}
@@ -7832,6 +8269,9 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					system("pause");
 					exit(1);
 				}
+				// Объём полигона.
+				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+
 				for (integer i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
 					fscanf_s(fp, "%f", &fin);
@@ -7841,7 +8281,17 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].arr_Sc[i_4] = 0.0;
 					}
 					else {
-						b[i].arr_Sc[i_4] = fin;
+						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+						// Для единообразия здесь мощность преобразуется в удельную мощность.
+						if (vol_poly > 1.0e-30) {
+						    b[i].arr_Sc[i_4] = fin / vol_poly;
+						}
+						else {
+							printf("error zero volume in polygon...\n");
+							system("PAUSE");
+							exit(1);
+						}
 					}
 				}
 
@@ -8431,6 +8881,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 			fclose(fp); // закрытие файла
+			fp = NULL;
 		}
 	}
 
@@ -9877,6 +10328,9 @@ else
 				system("pause");
 				exit(1);
 			}
+			// Объём полигона.
+			doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+
 			for (integer i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 				// Температура в C.
 				fscanf_s(fp, "%f", &fin);
@@ -9886,7 +10340,17 @@ else
 					b[i].arr_Sc[i_4] = 0.0;
 				}
 				else {
-					b[i].arr_Sc[i_4] = fin;
+					// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+					// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+					// Для единообразия здесь мощность преобразуется в удельную мощность.
+					if (vol_poly > 1.0e-30) {
+					     b[i].arr_Sc[i_4] = fin / vol_poly;
+					}
+					else {
+						printf("error zero volume in polygon...\n");
+						system("PAUSE");
+						exit(1);
+					}
 				}
 			}
 
@@ -10737,11 +11201,23 @@ else
 				ipoly++;
 				if (b[i_1].n_Sc > 0) {
 					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
-					if (pdiss > 0.0) {
-						ilb_p++;
-						printf("ERROR: non zero power in polygon object.\n");
+
+					// Объём полигона.
+					doublereal vol_poly = Volume_polygon(b[i_1].g.nsizei, b[i_1].g.xi, b[i_1].g.yi, b[i_1].g.zi, b[i_1].g.hi, b[i_1].g.iPlane_obj2);
+					if (vol_poly < 1.0e-40) {
+						printf("ERROR: zero volume in POLYGON block number %lld\n", i_1);
 						system("PAUSE");
 						exit(1);
+					}
+
+					if (pdiss > 0.0) {
+						ilb_p++;
+						
+						dpower += pdiss*vol_poly;
+						
+						//printf("ERROR: non zero power in polygon object.\n");
+						//system("PAUSE");
+						//exit(1);
 					}
 				}
 			}
@@ -10770,6 +11246,7 @@ else
 		printf("number of units lu=%lld\n", lu);
 
 		fclose(fp); // закрытие файла
+		fp = NULL;
 	}
 }
 
@@ -10913,6 +11390,7 @@ void loadFromFile()
 				free(buf);
 			}
 			fclose(fp);
+			fp = NULL;
 
 		}
 	}
@@ -11705,6 +12183,7 @@ bool imakesource_old(char *name0, int &iret)
 				free(buf);
 			}
 			fclose(fp);
+			fp = NULL;
 
 			return bfound;
 		}
@@ -11843,6 +12322,7 @@ bool fmakesource_old(char *name0, double &fret)
 
 
 			fclose(fp);
+			fp = NULL;
 
 			return bfound;
 		}
@@ -11862,6 +12342,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	integer &ltdp, TEMP_DEP_POWER* &gtdps, integer &lu, UNION* &my_union, bool bSTOP_Reading)
 {
 
+	
 
 	doublereal dmult = 1.0 / rdivision_interval;
 
@@ -12038,11 +12519,23 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 					if (b[i_1].n_Sc > 0) {
 						doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
-						if (pdiss > 0.0) {
-							ilb_p++;
-							printf("ERROR: non zero power in polygon object.\n");
+
+						// Объём полигона.
+						doublereal vol_poly = Volume_polygon(b[i_1].g.nsizei, b[i_1].g.xi, b[i_1].g.yi, b[i_1].g.zi, b[i_1].g.hi, b[i_1].g.iPlane_obj2);
+						if (vol_poly < 1.0e-40) {
+							printf("ERROR: zero volume in POLYGON block number %lld\n", i_1);
 							system("PAUSE");
 							exit(1);
+						}
+
+						if (pdiss > 0.0) {
+							ilb_p++;
+
+							dpower += pdiss*vol_poly;
+
+							//printf("ERROR: non zero power in polygon object.\n");
+							//system("PAUSE");
+							//exit(1);
 						}
 					}
 				}
@@ -12105,6 +12598,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 		if (fp != NULL) {
 
 			fclose(fp);
+			fp = NULL;
 
 			double fin = 0.0;
 			integer din = 0;
@@ -16546,6 +17040,9 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					system("pause");
 					exit(1);
 				}
+				// Объём полигона.
+				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+
 				for (int i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
 					name0[0] = '\0'; strcat_s(name0, "body");
@@ -16574,7 +17071,17 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							b[i].arr_Sc[i_4] = 0.0;
 						}
 						else {
-							b[i].arr_Sc[i_4] = (doublereal)(fin);
+							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+							// Для единообразия здесь мощность преобразуется в удельную мощность.
+							if (vol_poly > 1.0e-30) {
+							    b[i].arr_Sc[i_4] = (doublereal)(fin) / vol_poly;
+							}
+							else {
+								printf("error zero volume in polygon...\n");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 					}
 					else {
@@ -18581,11 +19088,23 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						if (b[i_1].itype != PHYSICS_TYPE_IN_BODY::HOLLOW) {
 							if (b[i_1].n_Sc > 0) {
 								doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
-								if (pdiss > 0.0) {
-									ilb_p++;
-									printf("ERROR: non zero power in polygon object.\n");
+
+								// Объём полигона.
+								doublereal vol_poly = Volume_polygon(b[i_1].g.nsizei, b[i_1].g.xi, b[i_1].g.yi, b[i_1].g.zi, b[i_1].g.hi, b[i_1].g.iPlane_obj2);
+								if (vol_poly < 1.0e-40) {
+									printf("ERROR: zero volume in POLYGON block number %lld\n", i_1);
 									system("PAUSE");
 									exit(1);
+								}
+								
+								if (pdiss > 0.0) {
+									ilb_p++;
+
+									dpower += pdiss*vol_poly;
+
+									//printf("ERROR: non zero power in polygon object.\n");
+									//system("PAUSE");
+									//exit(1);
 								}
 							}
 						}
@@ -18619,6 +19138,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			std::cout << "number of units lu=" <<  lu << std::endl;
 
 			fclose(fp); // закрытие файла
+			fp = NULL;
 		}
 	}
 
@@ -18668,6 +19188,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 		if (fp != nullptr) {
 
 			fclose(fp);
+			fp = NULL;
 
 			int idin = 0;
 
@@ -18676,7 +19197,11 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				lb = (integer)(idin);
 				//printf("lb =%lld\n", lb);
 
-				if (lb > 0) {
+				if ((lb > 0)&&(lb < 100000)) {
+
+					
+
+
 					// начало 21.08.2019 - окончание 23.08.2019
 			        // Сдержит простейший парсер.
 					bool bSTOP_Reading = true;
@@ -18685,13 +19210,15 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				}
 				else {
 					printf("ERROR!!! your model incorrect...\n");
+					printf("Number of blocks is equal = %lld \n",lb);
 					system("pause");
 					exit(1);
 				}
 			}
 			else {
 				// Если файл записан в старом формате то поддерживается возможность его быстрого считывания.
-				// Начиная с 23.08.2019 старый формат начинает считаться устаревшим.
+				// Начиная с 23.08.2019 старый формат начинает считаться устаревшим.				
+
 
 				// Стабильная и быстрая версия.
 			    premeshin_old(fname, lmatmax, lb, ls, lw, matlist, b, s, w, dgx, dgy, dgz, inx, iny, inz,

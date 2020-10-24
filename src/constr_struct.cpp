@@ -2172,6 +2172,7 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
    // Быстрая проверка принадлежности для параллелипипедов
    // Она использует быстрый двоичный поиск.
    integer kprism = myisblock_id_PRISM_only(lb,b,p); 
+
    k = lb; ib = lb;
 
    bool bfound_out = false;
@@ -9671,6 +9672,8 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 					else inDomain = false;
 					break;
 				}
+
+				
 
 				if (inDomain) {
 					if (l < maxelm)

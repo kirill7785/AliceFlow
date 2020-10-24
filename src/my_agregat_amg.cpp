@@ -186,7 +186,7 @@
 #include <float.h>
 #include <time.h>
 //#include <omp.h>
-#include <windows.h>
+//#include <windows.h>
 //#pragma comment(linker, "/STACK:16777216") // увеличение размера стека для быстрой сортировки
 
 
@@ -76197,16 +76197,18 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 		nsizePR = 12;
 	}
 
-	MEMORYSTATUSEX statex;
-	statex.dwLength = sizeof(statex);
-	GlobalMemoryStatusEx(&statex);
-	char divisor[2] = "M";
-	if (my_amg_manager.iprint_log == 1) {
-		printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
-		printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
-		printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1))), divisor);
+	// Требует заголовочного файла windows.h
+	// Зависимый от ОС Windows код.
+	//MEMORYSTATUSEX statex;
+	//statex.dwLength = sizeof(statex);
+	//GlobalMemoryStatusEx(&statex);
+	//char divisor[2] = "M";
+	//if (my_amg_manager.iprint_log == 1) {
+		//printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
+		//printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+		//printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1))), divisor);
 		//system("pause");
-	}
+	//}
 
 	Amat = (Ak1*)malloc(nsizeA * sizeof(Ak1));  // 9
 	char c1[5] = "Amat";
@@ -76933,16 +76935,18 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		nsizePR = 12;
 	}
 
-	MEMORYSTATUSEX statex;
-	statex.dwLength = sizeof(statex);
-	GlobalMemoryStatusEx(&statex);
-	char divisor[2] = "M";
-	if (my_amg_manager.iprint_log == 1) {
-		printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
-		printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
-		printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1))), divisor);
+	// Требует заголовочного файла windows.h
+	// Зависимый от ОС Windows код.
+	//MEMORYSTATUSEX statex;
+	//statex.dwLength = sizeof(statex);
+	//GlobalMemoryStatusEx(&statex);
+	//char divisor[2] = "M";
+	//if (my_amg_manager.iprint_log == 1) {
+		//printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
+		//printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+		//printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1))), divisor);
 		//system("pause");
-	}
+	//}
 
 	Amat.i = (integer_mix_precision*)malloc(nsizeA * sizeof(integer_mix_precision));  // 9
 	char c1[5] = "Amat";
@@ -77860,16 +77864,18 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 			nsizePR = 12;
 		}
 
-		MEMORYSTATUSEX statex;
-		statex.dwLength = sizeof(statex);
-		GlobalMemoryStatusEx(&statex);
-		char divisor[2] = "M";
-		if (my_amg_manager.iprint_log == 1) {
-			printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
-			printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
-			printf("required %lld %sbytes\n", (integer)((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1)), divisor);
+		// Требует заголовочного файла windows.h
+		// Зависимый от ОС Windows код.
+		//MEMORYSTATUSEX statex;
+		//statex.dwLength = sizeof(statex);
+		//GlobalMemoryStatusEx(&statex);
+		//char divisor[2] = "M";
+		//if (my_amg_manager.iprint_log == 1) {
+			//printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
+			//printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+			//printf("required %lld %sbytes\n", (integer)((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1)), divisor);
 			//system("pause");
-		}
+		//}
 
 		char c1[22] = "my_agr_amg_loc_memory";
 		char c2[5] = "Amat";
@@ -79251,16 +79257,18 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 #ifndef VISUAL_TUDIO_2008_COMPILLER
 
-		MEMORYSTATUSEX statex;
-		statex.dwLength = sizeof(statex);
-		GlobalMemoryStatusEx(&statex);
-		char divisor[2] = "M";
-		if (my_amg_manager.iprint_log == 1) {
-			printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024*1024), divisor);
-			printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
-			printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024*1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024*1024))* nnu) + 1) * sizeof(Ak1))),divisor);
+		// Требует заголовочного файла windows.h
+		// Зависимый от ОС Windows код.
+		//MEMORYSTATUSEX statex;
+		//statex.dwLength = sizeof(statex);
+		//GlobalMemoryStatusEx(&statex);
+		//char divisor[2] = "M";
+		//if (my_amg_manager.iprint_log == 1) {
+			//printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024*1024), divisor);
+			//printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+			//printf("required %lld %sbytes\n", (integer)(((nsizeA / (1024*1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024*1024))* nnu) + 1) * sizeof(Ak1))),divisor);
 			//system("pause");
-		}
+		//}
 #endif
 
 //system("PAUSE");

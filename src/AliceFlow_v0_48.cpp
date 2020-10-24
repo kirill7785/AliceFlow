@@ -954,13 +954,19 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			dgx, dgy, dgz, inx, iny, inz, operatingtemperature, ltdp, gtdps, lu, my_union);
 		freeStringList();
 
+		
+
 		// Проверяет если ли выход за пределы кабинета
 		// среди блоков, стенок и источников тепла. 02.08.2019.
 		// а также асемблесов. 23.07.2020
 		BODY_CHECK(b, lb, w, lw, s, ls, my_union, lu);
 
+		
+
 		init_QSBid(lb, b, w, lw, s, ls); // Для ускоренной работы функции myisblock_id.
 		
+		
+
 		if ((steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_STEADY) ||
 			(steady_or_unsteady_global_determinant == PHYSICAL_MODEL_SWITCH::CFD_UNSTEADY)) {
 			// При решении уравнений гидродинамики мы удаляем старый load.txt файл.
@@ -973,6 +979,8 @@ int main_body(char ch_EXPORT_ALICE_ONLY = 'y') {
 			tecplot360patcher_for_print_in_report();
 			exit(1);
 		}
+
+		
 
 		integer iCabinetMarker = 0;
 		if (iswitchMeshGenerator == CONFORMAL_MESH_GENERATOR_SELECTOR::SIMPLEMESHGEN_MESHER) {

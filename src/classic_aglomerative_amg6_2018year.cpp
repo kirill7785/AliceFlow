@@ -24,7 +24,7 @@
 #define CLASSIC_AGLOMERATIVE_AMG6_2018YEAR_CPP 1
 
 // для функции setw().
-#include <conio.h>
+//#include <conio.h>
 #include <iostream>
 #include <iomanip>
 #include <stdlib.h>

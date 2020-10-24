@@ -110,7 +110,7 @@ void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir,
 	}
 
 	bool bfind=false;
-	for (integer i=0; i<=in; i++) if (fabs(rb[i]-g)<eps/*admission*/) bfind=true;
+	for (integer i=0; i<=in; i++) if (fabs(rb[i]-g) < eps/*admission*/) bfind=true;
 	if (!bfind) {
         SetLength(rb, in+1, in+2);
 		in++;
@@ -2030,309 +2030,7 @@ void patch_mesh_refinement_21_11_2019(integer &inx,
 	std::cout << "apostoriory refinement: inx=" << inx <<" iny=" << iny << " inz="<< inz << "\n";
 }// patch_mesh_refinement_21_11_2019
 
-// 1.09.2017.
-doublereal my_sign(doublereal a) {
-	if (a >= 0.0) {
-		return 1.0;
-	}
-	else {
-		return -1.0;
-	}
-} // my_sign
 
-
-// метод суммирования углов.
-// 1.09.2017.
-bool in_polygon_check(TOCHKA p, integer nsizei,
-	doublereal* &xi, doublereal* &yi, doublereal* &zi,
-	doublereal* &hi, integer iPlane_obj2, integer &k,
-	integer ib)
-{
-
-	bool bfound = false;
-
-	doublereal sumphi = 0.0;
-	integer i_73 = 0;
-
-	switch (iPlane_obj2) {
-	case XY_PLANE:
-		for (i_73 = 0; i_73 < nsizei - 1; i_73++) {
-			sumphi += acos(((xi[i_73]-p.x)*(xi[i_73+1]-p.x)+ (yi[i_73] - p.y)*(yi[i_73 + 1] - p.y))/(sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x)+(yi[i_73] - p.y)*(yi[i_73] - p.y))*sqrt((xi[i_73+1] - p.x)*(xi[i_73+1] - p.x) + (yi[i_73+1] - p.y)*(yi[i_73+1] - p.y))))*my_sign((xi[i_73] - p.x)*(yi[i_73+1] - p.y)- (xi[i_73+1] - p.x)*(yi[i_73] - p.y));
-		}
-		i_73 = nsizei - 1;
-		sumphi += acos(((xi[i_73] - p.x)*(xi[0] - p.x) + (yi[i_73] - p.y)*(yi[0] - p.y)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (yi[i_73] - p.y)*(yi[i_73] - p.y))*sqrt((xi[0] - p.x)*(xi[0] - p.x) + (yi[0] - p.y)*(yi[0] - p.y))))*my_sign((xi[i_73] - p.x)*(yi[0] - p.y) - (xi[0] - p.x)*(yi[i_73] - p.y));
-		break;
-	case XZ_PLANE:
-		for (i_73 = 0; i_73 < nsizei - 1; i_73++) {
-			sumphi += acos(((xi[i_73] - p.x)*(xi[i_73 + 1] - p.x) + (zi[i_73] - p.z)*(zi[i_73 + 1] - p.z)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((xi[i_73 + 1] - p.x)*(xi[i_73 + 1] - p.x) + (zi[i_73 + 1] - p.z)*(zi[i_73 + 1] - p.z))))*my_sign((xi[i_73] - p.x)*(zi[i_73 + 1] - p.z) - (xi[i_73 + 1] - p.x)*(zi[i_73] - p.z));
-		}
-		i_73 = nsizei - 1;
-		sumphi += acos(((xi[i_73] - p.x)*(xi[0] - p.x) + (zi[i_73] - p.z)*(zi[0] - p.z)) / (sqrt((xi[i_73] - p.x)*(xi[i_73] - p.x) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((xi[0] - p.x)*(xi[0] - p.x) + (zi[0] - p.z)*(zi[0] - p.z))))*my_sign((xi[i_73] - p.x)*(zi[0] - p.z) - (xi[0] - p.x)*(zi[i_73] - p.z));
-		break;
-	case YZ_PLANE:
-		for (i_73 = 0; i_73 < nsizei - 1; i_73++) {
-			sumphi += acos(((yi[i_73] - p.y)*(yi[i_73 + 1] - p.y) + (zi[i_73] - p.z)*(zi[i_73 + 1] - p.z)) / (sqrt((yi[i_73] - p.y)*(yi[i_73] - p.y) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((yi[i_73 + 1] - p.y)*(yi[i_73 + 1] - p.y) + (zi[i_73 + 1] - p.z)*(zi[i_73 + 1] - p.z))))*my_sign((yi[i_73] - p.y)*(zi[i_73 + 1] - p.z) - (yi[i_73 + 1] - p.y)*(zi[i_73] - p.z));
-		}
-		i_73 = nsizei - 1;
-		sumphi += acos(((yi[i_73] - p.y)*(yi[0] - p.y) + (zi[i_73] - p.z)*(zi[0] - p.z)) / (sqrt((yi[i_73] - p.y)*(yi[i_73] - p.y) + (zi[i_73] - p.z)*(zi[i_73] - p.z))*sqrt((yi[0] - p.y)*(yi[0] - p.y) + (zi[0] - p.z)*(zi[0] - p.z))))*my_sign((yi[i_73] - p.y)*(zi[0] - p.z) - (yi[0] - p.y)*(zi[i_73] - p.z));
-		break;
-	}
-
-	if (fabs(sumphi) > 1.0e-7) {
-		// точка лежит внутри полигона.
-		switch (iPlane_obj2) {
-		case XY_PLANE:
-			if ((p.z >= zi[0]) && (p.z <= zi[0] + hi[0])) {
-				k = ib;
-				bfound = true;
-			}
-			break;
-		case XZ_PLANE:
-			if ((p.y >= yi[0]) && (p.y <= yi[0] + hi[0])) {
-				k = ib;
-				bfound = true;
-			}
-			break;
-		case YZ_PLANE:
-			if ((p.x >= xi[0]) && (p.x <= xi[0] + hi[0])) {
-				k = ib;
-				bfound = true;
-			}
-			break;
-		}
-	}
-
-	return bfound;
-
-} // in_polygon_check
-
-bool in_polygon_check_first(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, doublereal* &hi, integer iPlane_obj2, integer &k, integer ib) {
-	
-	bool bfound = false;
-
-	doublereal dpolygon_tolerance = 1e-3;
-
-	// Polygon
-	// точка принадлежит полигону если она принадлежит одному из треугольников его образующих.
-	// Задача триангуляции выпуклого полигона состоит из вычисления его центра масс и образования треугольников
-	// каждый из которых имеет вершину в этом центре масс и ребро на одной из сторон выпуклого многогранника.
-	// Точка принадлежит треугольнику только когда площадь треугольника в точности равна сумме трёх площадей треугольников,
-	// образуемых этой точкой и одной из строн первоначального треугольника.
-
-	// Работает только для выпуклого многоугольника и только когда
-	// все начальные уровни и все высоты одинаковы.
-	doublereal xavg = 0.0, yavg = 0.0, zavg = 0.0;
-	for (integer i_73 = 0; i_73 < nsizei; i_73++) {
-		xavg += xi[i_73] / nsizei;
-		yavg += yi[i_73] / nsizei;
-		zavg += zi[i_73] / nsizei;
-	}
-	doublereal Sgl = 0.0;
-	doublereal Sloc = 0.0;
-	doublereal minx84, maxx84, miny84, maxy84, minz84, maxz84;
-	doublereal epsilon_tri = 1.0e-8;
-
-	switch (iPlane_obj2) {
-	case XY_PLANE:
-		minx84 = 1.0e40;
-		maxx84 = -1.0e40;
-		miny84 = 1.0e40;
-		maxy84 = -1.0e40;
-		minz84 = 1.0e40;
-		maxz84 = -1.0e40;
-		for (integer i_73 = 0; i_73 < nsizei; i_73++) {
-			// minimum
-			if (xi[i_73] < minx84) minx84 = xi[i_73];
-			if (yi[i_73] < miny84) miny84 = yi[i_73];
-			if (zi[i_73] < minz84) minz84 = zi[i_73];
-			// maximum
-			if (xi[i_73] > maxx84) maxx84 = xi[i_73];
-			if (yi[i_73] > maxy84) maxy84 = yi[i_73];
-			if (zi[i_73] > maxz84) maxz84 = zi[i_73];
-		}
-		//printf("epsilon_tri=%e length=%e\n", epsilon_tri, fabs((maxx84 - minx84)*(maxy84 - miny84)));
-		//system("pause");
-		//epsilon_tri = dpolygon_tolerance*sqrt((maxx84 - minx84)*(maxx84 - minx84) + (maxy84 - miny84)*(maxy84 - miny84));
-		epsilon_tri = dpolygon_tolerance*fabs((maxx84 - minx84)*(maxy84 - miny84));
-
-		for (integer i_73 = 0; i_73 < nsizei - 1; i_73++) {
-			Sgl = 0.0;
-			Sgl = 0.5*((xi[i_73 + 1] - xi[i_73])*(yavg - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(xavg - xi[i_73]));
-			Sgl = fabs(Sgl);
-
-			Sloc = 0.5*((p.x - xi[i_73])*(yavg - yi[i_73]) - (p.y - yi[i_73])*(xavg - xi[i_73]));
-			Sgl -= fabs(Sloc);
-			Sloc = 0.5*((xi[i_73 + 1] - p.x)*(yavg - p.y) - (yi[i_73 + 1] - p.y)*(xavg - p.x));
-			Sgl -= fabs(Sloc);
-			Sloc = 0.5*((xi[i_73 + 1] - xi[i_73])*(p.y - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(p.x - xi[i_73]));
-			Sgl -= fabs(Sloc);
-
-			if (fabs(Sgl) < epsilon_tri) {
-				if ((p.z >= zi[0]) && (p.z <= zi[0] + hi[0])) {
-					k = ib;
-					bfound = true;
-				}
-			}
-		}
-		Sgl = 0.0;
-		Sgl = 0.5*((xi[0] - xi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(xavg - xi[nsizei - 1]));
-		Sgl = fabs(Sgl);
-
-		Sloc = 0.5*((p.x - xi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (p.y - yi[nsizei - 1])*(xavg - xi[nsizei - 1]));
-		Sgl -= fabs(Sloc);
-		Sloc = 0.5*((xi[0] - p.x)*(yavg - p.y) - (yi[0] - p.y)*(xavg - p.x));
-		Sgl -= fabs(Sloc);
-		Sloc = 0.5*((xi[0] - xi[nsizei - 1])*(p.y - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(p.x - xi[nsizei - 1]));
-		Sgl -= fabs(Sloc);
-
-		if (fabs(Sgl) < epsilon_tri) {
-			if ((p.z >= zi[0]) && (p.z <= zi[0] + hi[0])) {
-				k = ib;
-				bfound = true;
-			}
-		}
-		break;
-	case XZ_PLANE:
-		minx84 = 1.0e40;
-		maxx84 = -1.0e40;
-		miny84 = 1.0e40;
-		maxy84 = -1.0e40;
-		minz84 = 1.0e40;
-		maxz84 = -1.0e40;
-		for (integer i_73 = 0; i_73 < nsizei; i_73++) {
-			// minimum
-			if (xi[i_73] < minx84) minx84 = xi[i_73];
-			if (yi[i_73] < miny84) miny84 = yi[i_73];
-			if (zi[i_73] < minz84) minz84 = zi[i_73];
-			// maximum
-			if (xi[i_73] > maxx84) maxx84 = xi[i_73];
-			if (yi[i_73] > maxy84) maxy84 = yi[i_73];
-			if (zi[i_73] > maxz84) maxz84 = zi[i_73];
-		}
-		//printf("epsilon_tri=%e length=%e\n", epsilon_tri, fabs((maxx84 - minx84)*(maxz84 - minz84)));
-		//system("pause");
-		//epsilon_tri = dpolygon_tolerance*sqrt((maxx84 - minx84)*(maxx84 - minx84) + (maxz84 - minz84)*(maxz84 - minz84));
-		epsilon_tri = dpolygon_tolerance*fabs((maxx84 - minx84)*(maxz84 - minz84));
-
-		for (integer i_73 = 0; i_73 < nsizei - 1; i_73++) {
-			Sgl = 0.0;
-			Sgl = 0.5*((xi[i_73 + 1] - xi[i_73])*(zavg - zi[i_73]) - (zi[i_73 + 1] - zi[i_73])*(xavg - xi[i_73]));
-			Sgl = fabs(Sgl);
-
-			Sloc = 0.5*((p.x - xi[i_73])*(zavg - zi[i_73]) - (p.z - zi[i_73])*(xavg - xi[i_73]));
-			Sgl -= fabs(Sloc);
-			Sloc = 0.5*((xi[i_73 + 1] - p.x)*(zavg - p.z) - (zi[i_73 + 1] - p.z)*(xavg - p.x));
-			Sgl -= fabs(Sloc);
-			Sloc = 0.5*((xi[i_73 + 1] - xi[i_73])*(p.z - zi[i_73]) - (zi[i_73 + 1] - zi[i_73])*(p.x - xi[i_73]));
-			Sgl -= fabs(Sloc);
-
-			if (fabs(Sgl) < epsilon_tri) {
-				if ((p.y >= yi[0]) && (p.y <= yi[0] + hi[0])) {
-					k = ib;
-					bfound = true;
-				}
-			}
-		}
-		Sgl = 0.0;
-		Sgl = 0.5*((xi[0] - xi[nsizei - 1])*(zavg - zi[nsizei - 1]) - (zi[0] - zi[nsizei - 1])*(xavg - xi[nsizei - 1]));
-		Sgl = fabs(Sgl);
-
-		Sloc = 0.5*((p.x - xi[nsizei - 1])*(zavg - zi[nsizei - 1]) - (p.z - zi[nsizei - 1])*(xavg - xi[nsizei - 1]));
-		Sgl -= fabs(Sloc);
-		Sloc = 0.5*((xi[0] - p.x)*(zavg - p.z) - (zi[0] - p.z)*(xavg - p.x));
-		Sgl -= fabs(Sloc);
-		Sloc = 0.5*((xi[0] - xi[nsizei - 1])*(p.z - zi[nsizei - 1]) - (zi[0] - zi[nsizei - 1])*(p.x - xi[nsizei - 1]));
-		Sgl -= fabs(Sloc);
-
-		if (fabs(Sgl) < epsilon_tri) {
-			if ((p.y >= yi[0]) && (p.y <= yi[0] + hi[0])) {
-				k = ib;
-				bfound = true;
-			}
-		}
-		break;
-	case YZ_PLANE:
-		minx84 = 1.0e40;
-		maxx84 = -1.0e40;
-		miny84 = 1.0e40;
-		maxy84 = -1.0e40;
-		minz84 = 1.0e40;
-		maxz84 = -1.0e40;
-		for (integer i_73 = 0; i_73 < nsizei; i_73++) {
-			// minimum
-			if (xi[i_73] < minx84) minx84 = xi[i_73];
-			if (yi[i_73] < miny84) miny84 = yi[i_73];
-			if (zi[i_73] < minz84) minz84 = zi[i_73];
-			// maximum
-			if (xi[i_73] > maxx84) maxx84 = xi[i_73];
-			if (yi[i_73] > maxy84) maxy84 = yi[i_73];
-			if (zi[i_73] > maxz84) maxz84 = zi[i_73];
-		}
-		//printf("epsilon_tri=%e length=%e\n", epsilon_tri, fabs((maxz84 - minz84)*(maxy84 - miny84)));
-		//system("pause");
-		//epsilon_tri = dpolygon_tolerance*sqrt((maxz84 - minz84)*(maxz84 - minz84) + (maxy84 - miny84)*(maxy84 - miny84));
-		epsilon_tri = dpolygon_tolerance*fabs((maxz84 - minz84)*(maxy84 - miny84));
-
-		for (integer i_73 = 0; i_73 < nsizei - 1; i_73++) {
-			Sgl = 0.0;
-			Sgl = 0.5*((zi[i_73 + 1] - zi[i_73])*(yavg - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(zavg - zi[i_73]));
-			Sgl = fabs(Sgl);
-
-			Sloc = 0.5*((p.z - zi[i_73])*(yavg - yi[i_73]) - (p.y - yi[i_73])*(zavg - zi[i_73]));
-			Sgl -= fabs(Sloc);
-			Sloc = 0.5*((zi[i_73 + 1] - p.z)*(yavg - p.y) - (yi[i_73 + 1] - p.y)*(zavg - p.z));
-			Sgl -= fabs(Sloc);
-			Sloc = 0.5*((zi[i_73 + 1] - zi[i_73])*(p.y - yi[i_73]) - (yi[i_73 + 1] - yi[i_73])*(p.z - zi[i_73]));
-			Sgl -= fabs(Sloc);
-
-			if (fabs(Sgl) < epsilon_tri) {
-				if ((p.x >= xi[0]) && (p.x <= xi[0] + hi[0])) {
-					k = ib;
-					bfound = true;
-				}
-			}
-		}
-		Sgl = 0.0;
-		Sgl = 0.5*((zi[0] - zi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(zavg - zi[nsizei - 1]));
-		Sgl = fabs(Sgl);
-
-		Sloc = 0.5*((p.z - zi[nsizei - 1])*(yavg - yi[nsizei - 1]) - (p.y - yi[nsizei - 1])*(zavg - zi[nsizei - 1]));
-		Sgl -= fabs(Sloc);
-		Sloc = 0.5*((zi[0] - p.z)*(yavg - p.y) - (yi[0] - p.y)*(zavg - p.z));
-		Sgl -= fabs(Sloc);
-		Sloc = 0.5*((zi[0] - zi[nsizei - 1])*(p.y - yi[nsizei - 1]) - (yi[0] - yi[nsizei - 1])*(p.z - zi[nsizei - 1]));
-		Sgl -= fabs(Sloc);
-
-		if (fabs(Sgl) < epsilon_tri) {
-			if ((p.x >= xi[0]) && (p.x <= xi[0] + hi[0])) {
-				k = ib;
-				bfound = true;
-			}
-		}
-		break;
-	}
-
-	return bfound;
-
-} // in_polygon_check_first
-
-
-bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, doublereal* &hi, integer iPlane_obj2, integer &k, integer ib) {
-	
-	bool bfound = false;
-
-	// Первоначальная самописная реализация основанная на идее равентва площадей.
-	// Сначала мноугольник разбивается на треугольники (триангулируется), а затем
-	// сканируются все треугольники по очереди и если точка принадлежит треугольнику то площадь 
-	// треугольника равна сумме площадей трёх треугольников образованных исследуемой точкой и вршинами первоначального треугольника. 
-	//bfound = in_polygon_check_first(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib);
-
-	// Теоретическиобоснованная версия проверки алгоритм которой найден в википедии.
-	bfound = in_polygon_check(p, nsizei, xi, yi, zi, hi, iPlane_obj2, k, ib);
-
-	return bfound;
-
-}
 
 // проверяет принадлежит ли контрольный объём
 // гидродинамической модели || hollow block.
@@ -4832,6 +4530,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd, integer &iunion_id_p1)
 {
+
+	
+
 	// Значение 0.1 подобрано и его лучше не трогать.
 	doublereal deltavolkov = 0.1; // Неравномерная сетка в кубе по Волкову.
 
@@ -4888,6 +4589,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	integer i;
 
+	
 
     integer *ixintervalcount; // число интервалов
 	ixintervalcount = new integer [inumboundaryx]; // на один меньше чем число границ.
@@ -4916,7 +4618,21 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				 }
 				 // определяет номер блока по координате точки.
 				 //myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-				 if (!((((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID))) || ((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) || (((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
+				 if (!((((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||
+					 (b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) && 
+					 ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||
+					 (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) &&
+						 ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)||
+					 (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID))) || 
+							 ((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) &&
+					 (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID) && 
+								 (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::SOLID)) || 
+								 (((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||
+					 (b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) && 
+									 ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||
+									 (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)) &&
+										 ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::FLUID)||
+									 (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == PHYSICS_TYPE_IN_BODY::HOLLOW)))))
 				 {
 					 // нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 					 b2div = true;
@@ -4949,6 +4665,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
          
 	} //*/
     //getchar();
+
+	
 
 	// заполнение масива положения узлов.
 	integer iposmark = 1;
@@ -5031,6 +4749,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		addboundary(xpos, inx, xposadd[i_28],YZ_PLANE, b, lb, w, lw, s, ls);
 	}
 	Sort_method<doublereal>(xpos,inx);
+
+	
 
 	for (i=0; i<adapt_x; i++) simplecorrect_meshgen_x(xpos, inx, lb, ls, lw, b, s, w);
 
@@ -6159,6 +5879,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd, integer &iunion_id_p1)
 {
+
+	
 
 	//*****************************************************************************************************************
 	// Изменяемые параметры автоматического сеточного генератора
