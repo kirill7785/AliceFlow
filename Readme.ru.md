@@ -57,6 +57,8 @@ https://www.paraview.org/download/
   
 ## Быстрая инструкция по сборке проекта
 
+### Windows
+
 1. Вы работаете на компьютере под управлением ОС Windows 10 от Microsoft. Далее рассматривается использование только
 свободных (opensource) программных средств.
 2. Установите компилятор MinGW GNU g++. Для этого нужно подключение к сети интернет на вашем компьютере.
@@ -79,6 +81,8 @@ https://www.youtube.com/watch?v=sXW2VLrQ3Bs
 на вашем компьютере) и выберите в нём пакеты  mingw32-pthreads-w32.
 11. После установки находясь в папке C:\src выполните g++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt для создания 
 параллельной версии программы AliceFlow_v0_48.exe.
+
+### Linux
 
 1. Вы работаете на компьютере под управлением ОС Linux Ubuntu-20.04.1-desktop-amdx64. http://releases.ubuntu.com/20.04/
 2. Программа солвер AliceFlow_v0_48 может быть откомпилирована и работать под ОС Linux. Программа интерфес AliceMesh_v0_45.exe
