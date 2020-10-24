@@ -54,7 +54,7 @@ https://www.paraview.org/download/
 
 ## Quick compilation mini Guide
 
-1. You are using a computer running Windows 10 from Microsoft. The following discusses the use of only
+You are using a computer running Windows 10 from Microsoft. The following discusses the use of only
 free (opensource) software.
 2. Install the MinGW GNU g ++ compiler. To do this, you need an Internet connection on your computer.
 How to install MinGW compiler (GCC / G ++) Compiller in Windows 10
@@ -62,20 +62,19 @@ https://www.youtube.com/watch?v=sXW2VLrQ3Bs
 3. Download from GitHub https://github.com/kirill7785/AliceFlow
 src folder and copy it to C drive. Navigate to C: \ src folder.
 4. Start Windows PowerShell. Navigate to the cd C: \ src source folder.
-5. Type g ++ in terminal AliceFlow_v0_48.cpp 2> gcc_log.txt This will result in the file a.exe.
-6. Rename a.exe to AliceFlow_v0_48.exe.
-7. Create an Alice_EXE folder on your desktop. Place the AliceMesh_v0_45.exe interface program written in Delphi into the Alice_EXE folder
+5. Enter in terminal g++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp 2> gcc_log.txt This will result in the file AliceFlow_v0_48.exe.
+6. Create an Alice_EXE folder on your desktop. Place the AliceMesh_v0_45.exe interface program written in Delphi into the Alice_EXE folder
 (downloaded from GitHub https://github.com/kirill7785/AliceFlow).
 Inside the Alice_EXE folder, create a test_pattern \ solver \ x64 folder hierarchy. Put the executable in the Alice_EXE \ test_pattern \ solver \ x64 folder
 file AliceFlow_v0_48.exe.
-8. On the GitHub site in the AliceEXE folder there are examples for the AliceMesh_v0_45.exe program. Place them in the AliceEXE folder on your desktop.
-9. You can use. Run AliceMesh_v0_45.exe read one of the examples File-> Read. Run the Solve-> Run example.
+7. On the GitHub site in the AliceEXE folder there are examples for the AliceMesh_v0_45.exe program. Place them in the AliceEXE folder on your desktop.
+8. You can use. Run AliceMesh_v0_45.exe read one of the examples File-> Read. Run the Solve-> Run example.
 The AliceMesh_v0_45.exe interface program will automatically call the AliceFlow_v0_48.exe solver program.
-10. Install tecplot360 software or a free equivalent - ParaView software. PLT file in tecplot360 (or ParaView)
+9. Install tecplot360 software or a free equivalent - ParaView software. PLT file in tecplot360 (or ParaView)
 which was written to disk after the AliceFlow_v0_48.exe program terminated. Insert pictures into the report in MS Word.
-11. For those who want to use the parallel version of the program, run mingw-get in the terminal (This requires an Internet connection
+10. For those who want to use the parallel version of the program, run mingw-get in the terminal (This requires an Internet connection
 on your computer) and select the packages mingw32-pthreads-w32 there.
-12. After installation, being in the C: \ src folder, run g ++ AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt to create a parallel version of the program.
+11. After installation, being in the C: \ src folder, run g ++ -o AliceFlow_v0_48.exe AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt to create a parallel version of the program.
 
 
 ## Primers
