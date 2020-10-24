@@ -4379,17 +4379,24 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 
 						}
 						else {
-							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
-							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
-							// Для единообразия здесь мощность преобразуется в удельную мощность.
 
-							if (vol_poly > 1.0e-30) {
-							    b[i].arr_Sc[i_4] = (doublereal)(fin) / vol_poly;
+							if (b[i].g.itypegeom == POLYGON) {
+
+								// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+								// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+								// Для единообразия здесь мощность преобразуется в удельную мощность.
+
+								if (vol_poly > 1.0e-30) {
+									b[i].arr_Sc[i_4] = (doublereal)(fin) / vol_poly;
+								}
+								else {
+									printf("error zero volume in polygon...\n");
+									system("PAUSE");
+									exit(1);
+								}
 							}
 							else {
-								printf("error zero volume in polygon...\n");
-								system("PAUSE");
-								exit(1);
+								b[i].arr_Sc[i_4] = (doublereal)(fin);
 							}
 						}
 					}
@@ -6114,7 +6121,7 @@ void mingw_input_new(const char* fname, integer& lmatmax, integer& lb, integer& 
 			
 			
 			if (fp != NULL) {
-				// ree(): double free detected in tcache 2
+				// free(): double free detected in tcache 2
 				// Aborted(core dumped)
 				fclose(fp); // закрытие файла
 				fp = NULL;
@@ -6133,8 +6140,8 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 #ifdef MINGW_COMPILLER
 	// eqin - информация о наборе решаемых уравнений.
 
-		// dgx, dgy, dgz - вектор силы тяжести.
-		// inx, iny, inz - количество точек по каждой из осей.
+	// dgx, dgy, dgz - вектор силы тяжести.
+	// inx, iny, inz - количество точек по каждой из осей.
 
 	FILE* fp;
 	int err1 = 0;
@@ -7522,16 +7529,22 @@ void mingw_input_old(const char* fname, integer& lmatmax, integer& lb, integer& 
 					}
 					else {
 
-						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
-						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
-						// Для единообразия здесь мощность преобразуется в удельную мощность.
-						if (vol_poly > 1.0e-30) {
-						    b[i].arr_Sc[i_4] = fin / vol_poly;
+						if (b[i].g.itypegeom == POLYGON) {
+
+							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+							// Для единообразия здесь мощность преобразуется в удельную мощность.
+							if (vol_poly > 1.0e-30) {
+								b[i].arr_Sc[i_4] = fin / vol_poly;
+							}
+							else {
+								printf("error zero volume in polygon...\n");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 						else {
-							printf("error zero volume in polygon...\n");
-							system("PAUSE");
-							exit(1);
+							b[i].arr_Sc[i_4] = fin;
 						}
 					}
 				}

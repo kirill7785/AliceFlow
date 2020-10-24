@@ -6095,16 +6095,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].arr_Sc[i_4] = 0.0;
 					}
 					else {
-						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
-						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
-						// Для единообразия здесь мощность преобразуется в удельную мощность.
-						if (vol_poly > 1.0e-30) {
-							b[i].arr_Sc[i_4] = fin/ vol_poly;
+
+						if (b[i].g.itypegeom == POLYGON) {
+
+							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+							// Для единообразия здесь мощность преобразуется в удельную мощность.
+							if (vol_poly > 1.0e-30) {
+								b[i].arr_Sc[i_4] = fin / vol_poly;
+							}
+							else {
+								printf("error zero volume in polygon...\n");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 						else {
-							printf("error zero volume in polygon...\n");
-							system("PAUSE");
-							exit(1);
+							b[i].arr_Sc[i_4] = fin;
 						}
 					}
 				}
@@ -6691,8 +6698,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 			}
 
-			fclose(fp); // закрытие файла
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp); // закрытие файла
+				fp = NULL;
+			}
 		}
 	
 	}
@@ -8281,16 +8290,23 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 						b[i].arr_Sc[i_4] = 0.0;
 					}
 					else {
-						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
-						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
-						// Для единообразия здесь мощность преобразуется в удельную мощность.
-						if (vol_poly > 1.0e-30) {
-						    b[i].arr_Sc[i_4] = fin / vol_poly;
+
+						if (b[i].g.itypegeom == POLYGON) {
+
+							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+							// Для единообразия здесь мощность преобразуется в удельную мощность.
+							if (vol_poly > 1.0e-30) {
+								b[i].arr_Sc[i_4] = fin / vol_poly;
+							}
+							else {
+								printf("error zero volume in polygon...\n");
+								system("PAUSE");
+								exit(1);
+							}
 						}
 						else {
-							printf("error zero volume in polygon...\n");
-							system("PAUSE");
-							exit(1);
+							b[i].arr_Sc[i_4] = fin;
 						}
 					}
 				}
@@ -8880,8 +8896,10 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				}
 			}
 
-			fclose(fp); // закрытие файла
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp); // закрытие файла
+				fp = NULL;
+			}
 		}
 	}
 
@@ -10340,16 +10358,24 @@ else
 					b[i].arr_Sc[i_4] = 0.0;
 				}
 				else {
-					// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
-					// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
-					// Для единообразия здесь мощность преобразуется в удельную мощность.
-					if (vol_poly > 1.0e-30) {
-					     b[i].arr_Sc[i_4] = fin / vol_poly;
+
+					if (b[i].g.itypegeom == POLYGON) {
+
+						// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+						// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+						// Для единообразия здесь мощность преобразуется в удельную мощность.
+						if (vol_poly > 1.0e-30) {
+							b[i].arr_Sc[i_4] = fin / vol_poly;
+						}
+						else {
+							printf("error zero volume in polygon...\n");
+							system("PAUSE");
+							exit(1);
+						}
+
 					}
 					else {
-						printf("error zero volume in polygon...\n");
-						system("PAUSE");
-						exit(1);
+						b[i].arr_Sc[i_4] = fin;
 					}
 				}
 			}
@@ -11245,8 +11271,10 @@ else
 		printf("number of walls lw=%lld\n",lw);
 		printf("number of units lu=%lld\n", lu);
 
-		fclose(fp); // закрытие файла
-		fp = NULL;
+		if (fp != NULL) {
+			fclose(fp); // закрытие файла
+			fp = NULL;
+		}
 	}
 }
 
@@ -11389,8 +11417,10 @@ void loadFromFile()
 
 				free(buf);
 			}
-			fclose(fp);
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp);
+				fp = NULL;
+			}
 
 		}
 	}
@@ -12182,8 +12212,10 @@ bool imakesource_old(char *name0, int &iret)
 				}
 				free(buf);
 			}
-			fclose(fp);
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp);
+				fp = NULL;
+			}
 
 			return bfound;
 		}
@@ -12320,9 +12352,10 @@ bool fmakesource_old(char *name0, double &fret)
 				free(buf);
 			}
 
-
-			fclose(fp);
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp);
+				fp = NULL;
+			}
 
 			return bfound;
 		}
@@ -12597,8 +12630,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	{
 		if (fp != NULL) {
 
-			fclose(fp);
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp);
+				fp = NULL;
+			}
 
 			double fin = 0.0;
 			integer din = 0;
@@ -17041,7 +17076,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					exit(1);
 				}
 				// Объём полигона.
-				doublereal vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+				doublereal vol_poly;
+				if (b[i].g.itypegeom == POLYGON) {
+					vol_poly = Volume_polygon(b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2);
+				}
 
 				for (int i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
@@ -17071,16 +17109,25 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 							b[i].arr_Sc[i_4] = 0.0;
 						}
 						else {
-							// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
-							// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
-							// Для единообразия здесь мощность преобразуется в удельную мощность.
-							if (vol_poly > 1.0e-30) {
-							    b[i].arr_Sc[i_4] = (doublereal)(fin) / vol_poly;
+
+							if (b[i].g.itypegeom == POLYGON) {
+								// Для полигона передается из интерфейса просто мощность, а не удельная мощность.
+								// Т.к. интерфейс не содержит функцию расчёта объёма полигона.
+								// Для единообразия здесь мощность преобразуется в удельную мощность.
+
+								if (vol_poly > 1.0e-30) {
+
+									b[i].arr_Sc[i_4] = (doublereal)(fin) / vol_poly;
+
+								}
+								else {
+									printf("error zero volume in polygon...\n");
+									system("PAUSE");
+									exit(1);
+								}
 							}
 							else {
-								printf("error zero volume in polygon...\n");
-								system("PAUSE");
-								exit(1);
+								b[i].arr_Sc[i_4] = (doublereal)(fin);
 							}
 						}
 					}
@@ -19137,8 +19184,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			std::cout << "number of walls lw=" <<  lw << std::endl;
 			std::cout << "number of units lu=" <<  lu << std::endl;
 
-			fclose(fp); // закрытие файла
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp); // закрытие файла
+				fp = NULL;
+			}
+			
 		}
 	}
 
@@ -19185,10 +19235,12 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	}
 	else
 	{
-		if (fp != nullptr) {
+		if (fp != NULL) {
 
-			fclose(fp);
-			fp = NULL;
+			if (fp != NULL) {
+				fclose(fp);
+				fp = NULL;
+			}
 
 			int idin = 0;
 
