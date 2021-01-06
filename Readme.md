@@ -120,7 +120,7 @@ Wrap around a cube based on high resolution schemes
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
 
-Flow around wing
+Flow around wing Re = 3164, Pr = 0.7.
 
 ![alt_text](https://github.com/kirill7785/AliceFlow/blob/master/picture/speed_around_wing.png)
 
