@@ -120,6 +120,10 @@ Wrap around a cube based on high resolution schemes
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
 
+Flow around wing
+
+![alt_text](https://github.com/kirill7785/AliceFlow/blob/master/picture/speed_around_wing.png)
+
 Modeling natural convection in laboratory condition
 Ra=6.4E+7; Pr=0.7; L/H=6.
 
