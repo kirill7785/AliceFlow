@@ -131,7 +131,7 @@ AliceMesh_v0_45.exe не требовательна к ресурсам ПК т.
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
 
-Обтекание крыла
+Обтекание крыла Re = 3164, Pr = 0.7.
 
 ![alt_text](https://github.com/kirill7785/AliceFlow/blob/master/picture/speed_around_wing.png)
 
