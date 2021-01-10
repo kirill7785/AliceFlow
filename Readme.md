@@ -11,7 +11,7 @@ The program Alice_Flow_v0.48 is intended for calculating the temperature field i
   Analitic or load from file or zero velocity component (vx,vy,vz) depend.
   Newton Richman or Stefan Bolcman boundary condition.
 * 3D cfd Semi Implicit Method for Pressure Linked Equation (SIMPLE [1972]). Stationary or non-stationary fluid dynamics solver are available.
-* Pressure monotonizer S.M. Rhee and W.L. Chow [1984] See Ibrahim Cezai's article.
+* Pressure monotonizer S.M. Rhee and W.L. Chow [1984] See Ibrahim Sezai's article.
 * Adaptive Local Refinement Mesh (unstructured grid). Coarse MESH or Medium Mesh selector.
 * High-resolution schemes for convection approximation on both structured and Adaptive Local Refinement Mesh  irregular meshes: WACEB, SMARTER, SUPER-C, etc.
 * Algebraic Multigrid : in house or imported. 
