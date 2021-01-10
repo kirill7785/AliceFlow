@@ -6,13 +6,14 @@ The program Alice_Flow_v0.48 is intended for calculating the temperature field i
 
 ## Algorithms
 
+* The curvilinear boundary of the computational domain acts as steps. The subgrid resolution method is not implemented (missing). It is recommended to use rectangular       computational areas (volumes 3D).
 * 3D Temperature solver for conjugate heat transfer. Finite Volume Method. Stacionary or transient.
   Analitic or load from file or zero velocity component (vx,vy,vz) depend.
   Newton Richman or Stefan Bolcman boundary condition.
-* 3D cfd Semi Implicit Method for Pressure Linked Equation (SIMPLE [1972]). Stacionary.
-* Rhie-Chow [1983].
+* 3D cfd Semi Implicit Method for Pressure Linked Equation (SIMPLE [1972]). Stationary or non-stationary fluid dynamics solver are available.
+* Pressure monotonizer S.M. Rhee and W.L. Chow [1984] See Ibrahim Cezai's article.
 * Adaptive Local Refinement Mesh (unstructured grid). Coarse MESH or Medium Mesh selector.
-* High Resolution Scheme for covection term on uneven structural grid: WACEB, SMARTER, SUPER-C etc.
+* High-resolution schemes for convection approximation on both structured and Adaptive Local Refinement Mesh  irregular meshes: WACEB, SMARTER, SUPER-C, etc.
 * Algebraic Multigrid : in house or imported. 
 imported amg: 1. CUSP NVIDIA library. 2. AMGCL ddemidov library. 3. amg1r5 (r6) Ruge Stueben[1987].
 BiCGStab or FGMRes(m). smoothed aggregation or Ruge Stueben amg.  ilu0 smoother. openMP support. etc.
@@ -22,6 +23,8 @@ More effective priorite queue on Fibonacci Heap for RS coarsening.
 * Turbulent models: Spalart Allmares, SST K-Omega Menter.
 * Bussinesk Approach. Congruate heat transfer for Natural convection.
 * User freandly GUI on Embarcadero® Delphi XE8 Version 22.0.19027.8951.
+* A graph method for solving the heat equation in a nonstationary setting. The nonlinear Stefan-Boltzmann boundary condition and the model of the gap (s) with heat exchange by radiation between the gap boundaries are supported. SLAE is solved by two algebraic multigrid methods to choose from: amg1r5 or Rumba.v.0.14.
+* Graphic renderer in FWGL OpenGL in C ++ built into the program code. Visualization of calculation results in 3D, animation of non-stationary CFD calculation results.
 
 
 ## System requirements:
@@ -36,7 +39,7 @@ More effective priorite queue on Fibonacci Heap for RS coarsening.
 * 2.1. OS Windows x64
 * 2.2. compiller: Visual Studio 2017 (or 2019) community
 * 2.3. boost 1.7.0 library
-* 2.4. amgcl 12.05.2019 library
+* 2.4. amgcl 10.01.2021 library
 * 2.5. compile with option /bigobj
 * 2.6. openmp on or off option is worked.
 3. variant c)
@@ -53,6 +56,8 @@ https://www.paraview.org/download/
 
 
 ## Quick compilation mini Guide
+
+(Deprecated. The program is assembled by the Microsoft Visual Studio 2019 compiler with the written FWGL OpenGL graphics library).
 
 ### Windows
 
